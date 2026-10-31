@@ -38,6 +38,21 @@
 // number checks (the number was moved correctly in #1295 — that half was never broken), and
 // two counterweights.
 // SOURCE-TEXT SCAN (§1): no symbol is called, so nothing here needs `@testable` (#1337).
+//
+// ⛔ 2026-10-29 (GM28, W6 STORE): THE TWO `release_notes.txt` SURFACES LEFT `enumerating`. The
+// store text now describes Echoel Studio 11.0.0 (builds 10004–10017 on the same App Store
+// record), and the Studio has no genre roster by design (`docs/dev/NEUPLANUNG_2026-10-18.md`:
+// "no genres, no generated notes") — `MusicStyle.offered` is the EARLIER app's roster, which the
+// website still enumerates, so `docs/tools.html` and `docs/brainstorming.html` stay. Claim 3's
+// first counterweight ("curated genres" in the en-US notes) is INVERTED rather than deleted: the
+// Studio release notes must not name a curated roster, in either locale, because a Studio buyer
+// would read it as a feature of the app they download. If a roster ever ships in the Studio, put
+// its surfaces back into `enumerating` and let claims 1 and 2 pin the list — the message says so.
+// Grading for this change (§0, Python, both texts): claim 3's inverted half is RED on the earlier
+// release notes (both carried "curated genres"/"kuratierte Genres") and GREEN on the Studio's;
+// claims 1 and 2 are unchanged on the two website surfaces. The tally above is history; since
+// 2026-10-29 the file makes 8 assertions (claim 1 = 3 including the anchor, claim 2 = 2,
+// claim 3 = 3), counted as assertions MADE, not statements (#1334).
 
 import Foundation
 import XCTest
@@ -45,11 +60,17 @@ import XCTest
 final class TheGenreListsMatchTheirOwnCountTests: XCTestCase {
 
     /// Surfaces that enumerate the genres, with the sentence's spelled-out number.
+    /// ⛔ The two `fastlane/metadata/*/release_notes.txt` entries left on 2026-10-29 — see the
+    /// header; `storeNotes` below holds them for the inverted counterweight.
     private static let enumerating = [
-        "fastlane/metadata/en-US/release_notes.txt",
-        "fastlane/metadata/de-DE/release_notes.txt",
         "docs/tools.html",
         "docs/brainstorming.html",
+    ]
+
+    /// The Studio store text that must NOT enumerate a genre roster (2026-10-29).
+    private static let storeNotes = [
+        "fastlane/metadata/en-US/release_notes.txt",
+        "fastlane/metadata/de-DE/release_notes.txt",
     ]
 
     private static let spelled: [String: Int] = [
@@ -107,12 +128,20 @@ final class TheGenreListsMatchTheirOwnCountTests: XCTestCase {
     }
 
     /// Claim 3 — counterweights. Without these, claims 1 and 2 pass on a tree that deleted the
-    /// enumerations outright, which is not the repair.
+    /// enumerations outright, which is not the repair. ⛔ 2026-10-29: the first half is INVERTED —
+    /// the store text describes Echoel Studio, which has no genre roster, so the release notes
+    /// must not name a curated one (header). The website half is unchanged.
     func testTheSurfacesStillCarryAListAndANumber() throws {
-        let notes = try Self.text("fastlane/metadata/en-US/release_notes.txt")
-        XCTAssertTrue(notes.contains("curated genres"),
-                      "the App Store release notes no longer name the genre offer at all. "
-                      + "Deleting the claim is not how this guard is satisfied.")
+        for path in Self.storeNotes {
+            let notes = try Self.text(path).lowercased()
+            XCTAssertFalse(notes.contains("curated genre") || notes.contains("kuratierte genre"), """
+                \(path) names a curated genre roster, but the Echoel Studio build on this App Store \
+                record has no genres (GM28; NEUPLANUNG: "no genres"). That is the earlier app's \
+                release note returning to a listing that no longer describes it. If a roster ships \
+                in the Studio, add this surface back to `enumerating` in the SAME commit so claims 1 \
+                and 2 pin its list and its number — do not leave a roster claim unguarded.
+                """)
+        }
         XCTAssertTrue(try Self.text("docs/tools.html").contains("curated genres across"),
                       "`docs/tools.html` no longer enumerates the genres. The list is what a "
                       + "visitor reads; a bare number says nothing about whether their music is "

@@ -1,1 +1,1 @@
-synthesizer,generative,ambient,techno,heart,rate,HRV,breath,MIDI,OSC,DMX,artnet,sACN,light,VJ
+daw,synth,piano,roll,drums,sampler,midi,auv3,mixer,recorder,automation,stems,ipad,plugin

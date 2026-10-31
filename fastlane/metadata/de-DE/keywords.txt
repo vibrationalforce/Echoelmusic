@@ -1,1 +1,1 @@
-Synthesizer,generativ,Ambient,Techno,Herzfrequenz,HRV,Atem,Biofeedback,MIDI,OSC,DMX,ArtNet,Licht,VJ
+daw,synthesizer,pianoroll,drums,sampler,midi,auv3,mixer,aufnahme,automation,stems,ipad,plugin

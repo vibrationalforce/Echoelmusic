@@ -1,59 +1,44 @@
-Dein Körper spielt es. Herzfrequenz, HRV und Atem steuern Synthesizer, Live-Visual und Dein Licht-Rig in Echtzeit — auf dem iPhone, on-device, ohne Konto.
-Finger auf die Kamera, der Puls rastet ein, die Musik bewegt sich mit Dir. Berühre das Visual, und jeder Finger landet in der Tonart.
-Dann raus damit: OSC, MIDI und MPE out, Art-Net- und sACN-Licht, ADM-OSC-Raumobjekte. Echoel sitzt im Rig, das Du schon hast.
+Echoel ist eine Musik-Workstation für iPhone und iPad: Instrumente, Effekte, Pianorolle, Drum-Raster, Arrangement, Session-Raster für Live-Sets, Audio- und MIDI-Aufnahme, Mischen, Automation und Export. Songs sind offene Dateien auf deinem Gerät; die App braucht kein Konto. Die Oberfläche ist auf Englisch.
 
 
-DER KÖRPER ALS CONTROLLER
+SPUREN UND KLANG
 
-Dein Puls kommt aus Apple Health (z. B. Apple Watch), von einem Bluetooth-Brustgurt oder von der iPhone-Kamera (rPPG):
-
-- Herzfrequenz formt Tempo und Vibrato
-- HRV und Kohärenz formen Brillanz, Harmonizität und Textur
-- Atem formt die Hüllkurve — der Klang schwillt mit jedem Atemzug an und legt sich wieder
-- Das Bild ist spielbar: Berühre das Visual, und Deine Finger werden zu Noten in Tonart und Skala des Takes
-
-Nicht jede Quelle misst alles: Kamera = Puls, HRV, Atem; Brustgurt = Puls, HRV; Apple Watch = Herzfrequenz über Health. Ungemessenes moduliert nicht.
-
-Keine zwei Takes sind gleich.
+- Ein Song hat Instrument-, Audio- und Return-Spuren (bis zu 32, 64 und 8). Eine neue Schlagzeugspur bringt ein leeres Ein-Takt-Muster zum Füllen mit. Spuren umfärben, stumm- oder soloschalten und löschen.
+- Der eingebaute Synth mit 16 Stimmen und sechs Engines (Classic, Supersaw, FM, Sub, Morph und Mallet), je einem Character-Regler, Clean- oder Ladder-Filter und Presets.
+- Ein synthetisches Schlagzeug mit acht Teilen auf den General-MIDI-Notennummern.
+- Ein Sampler spielt eine importierte Audiodatei (bis zu zehn Minuten) über die Tastatur, in Originalhöhe auf C4.
+- Installierte Audio-Unit-Instrumente anderer Hersteller (Stereo) mit eigener Oberfläche; ihre Einstellungen speichert der Song.
+- Je Spur und am Master eine Insert-Kette mit bis zu acht Effekten: Echoel EQ, Compressor, Delay, Reverb, Chorus, Phaser und Flanger oder installierte Stereo-Audio-Unit-Effekte.
+- Die sieben Echoel-Effekte gibt es auch als Audio Units für andere Apps.
 
 
-ERSCHAFFEN
+SPIELEN UND ARRANGIEREN
 
-- Bio-reaktive additive Synthese-Engine (DDSP) — vDSP-beschleunigt, ohne externe Abhängigkeiten
-- Eigene Patches gestalten und speichern
-- Komposition: Genre und Tonart wählen; Dein Körper erzeugt Material in der Tonart, das Du mit Klang- und Charakter-Reglern formst
-- Kammerton (A4) auf den Cent genau; BPM für tighte Loops sperren oder sync-frei bleiben
-- Effekte: Reverb, Delay, Chorus, Flanger, Phaser, Tremolo, Sättigung und mehr
-- Immersives Visual: Deine Noten werden in Echtzeit zu Farbe (Tonfrequenz oktavweise ins Licht transponiert) und folgen Musik und Körper
-- Rückwirkend aufnehmen: den Loop behalten, den Du gerade gespielt hast
-- Export des Loops als Audio (WAV) oder MIDI (.mid) für Deine DAW — die MIDI-Datei trägt Tempo, 4/4 und Tonart, in ganzen Takten
+- Jede Instrumentspur über die Bildschirmtasten spielen oder live von einem MIDI-Keyboard oder Controller über USB, Bluetooth oder Netzwerk-MIDI. Synth und Plugin-Instrumente folgen Pitch Bend, Modulationsrad und Sustain-Pedal; Schlagzeug und Sampler spielen Noten.
+- Eine Pianorolle für Synth-, Sampler- und Plugin-Spuren: Tippen setzt oder entfernt eine Note, Ziehen verschiebt sie oder ändert ihre Länge, im Raster von 1/4 bis 1/32 oder in 1/8- und 1/16-Triolen.
+- Ein Step-Raster für Schlagzeugspuren mit einer Zeile je Kit-Teil. Tippen setzt oder löscht einen Schlag, Halten setzt einen Akzent.
+- Clips auf einer Takt-Zeitleiste anordnen: in ganzen Takten ziehen, duplizieren oder herausnehmen. Ein Tipp auf eine Audiospur importiert eine Datei an einem Takt, verschiebbar und an beiden Kanten kürzbar.
+- Ein Session-Raster startet Clips und Szenen zum nächsten Takt, zur nächsten Viertel oder sofort, stoppt eine Spur oder alle Clips und gibt jede Spur ans Arrangement zurück.
 
 
-VERBINDEN
+MIDI
 
-- MIDI-Noten-Eingang und -Ausgang (Ausgang im Routing-Panel aktivierbar)
-- MPE-Ausgang an Dein Rig — Zone angekündigt, Noten auf den Member-Kanälen 2-16 mit Glide, Slide und Druck (zwei Schalter im Routing-Panel, standardmäßig aus; der Eingang bleibt einfaches MIDI)
-- OSC-Ausgabe für Live-Rigs und Visuals
-- ADM-OSC-Objekt-Ausgabe — an einer Raum-Anlage bewegt Dein Körper den Klang: Atem schwenkt ihn links und rechts, Ruhe hebt ihn, Kohärenz zieht ihn heran
-- Natives Art-Net-Lichtsignal für Installationen und Bühne
-- sACN-Lichtausgabe (E1.31) — Unicast an eine Adresse Deiner Wahl; kein Multicast unter iOS
-- Externer Bildschirm: das Visual bespielt Monitor oder Beamer (USB-C/HDMI oder AirPlay) als eigene Bühne; das Telefon bleibt das Instrument
+- Eine MIDI-Performance auf eine aufnahmebereite Instrumentspur aufnehmen; jeder Take wird ein neuer Clip mit Noten, Pitch Bend und Controllern, ein Rückgängig-Schritt.
+- MIDI Learn legt einen Regler oder Fader auf Mixer-, Synth- oder eingebaute Effekt-Parameter.
+- MIDI-Clock an die gewählten Ausgänge senden oder einer externen MIDI-Clock folgen.
+- Novation Launchpad Mini MK3, X und Pro MK3 werden zum Fenster auf das Session-Raster.
 
 
-PRIVATSPHÄRE
+AUFNAHME, MIX, EXPORT
 
-Deine Biometrie bleibt auf Deinem Gerät. Keine Konten, keine Werbung, kein Tracking, keine Analyse; die App spricht mit keinem Server von uns.
-
-Bio-Werte verlassen das Gerät nur, wenn Du eine Ausgabe einschaltest, und nur in Deinem lokalen Netzwerk: OSC, ADM-OSC, Art-Net- oder sACN-Licht (Herzfrequenz, HRV, Atem und Kohärenz werden zu DMX-Werten) oder eine geteilte Session in der Nähe. Optional: Herz- und Atemfrequenz in Apple Health schreiben; Standort für den Ort im Session-Namen oder lokales Wetter (Apple Weather), das die Musik formt — beides standardmäßig aus, Koordinaten nie gespeichert. Was Du erschaffst, gehört Dir.
-
-
-BARRIEREFREIHEIT
-
-Accessibility-first: VoiceOver, große, gut lesbare Bio-Anzeigen, exakte numerische Eingabe für jeden numerischen Parameter, 3-Hz-Blitzratenbegrenzung für photosensitive Sicherheit.
+- Mono-Audio vom Mikrofon oder einem Interface-Eingang auf eine aufnahmebereite Audiospur aufnehmen; Takes bleiben auf dem Gerät.
+- Ein Kanalzug je Spur und für den Master mit Fader, Pan und Peak-Meter; Sends auf bis zu acht Return-Spuren; eigene Ausgangspaare an einem Mehrkanal-Interface je Spur.
+- Automation für Lautstärke, Pan, Sends, Synth- und Plugin-Parameter zeichnen oder beim Abspielen durch Bewegen des Bedienelements aufnehmen.
+- Ein Bluetooth-Herzfrequenz-Brustgurt kann Modulationsquelle sein: Herzfrequenz, HRV oder Kohärenz auf Fader, Pan, Send oder Synth-Parameter legen, mit Tiefe und Umkehrung je Route. Ohne Gurt bleibt das Bedienelement, wo es steht; ein Export liest den Gurt nie.
+- Export des Arrangements als Stereo-WAV (24 Bit, 48 kHz) mit gemeldeter Lautheit (LUFS) und True Peak, als Stems (eine WAV je Spur, vor den Master-Effekten) oder als Standard-MIDI-Datei.
+- Songs speichern sich selbst als .echoel-Dateien (offenes, dokumentiertes JSON), sichtbar in der Dateien-App; ein per AirDrop gesendeter Song öffnet sich in Echoel.
 
 
-In aktiver Entwicklung — Feedback willkommen: echoel@tropicaldrones.com
+Kein Konto, keine Werbung, kein Tracking, kein Server von uns.
 
-Dies ist kein medizinisches Gerät. Biofeedback-Funktionen dienen nur kreativen und Selbstbeobachtungs-Zwecken — nicht der Diagnose oder Behandlung.
-
-echoelmusic.com
+Echoel ist in aktiver Entwicklung. Feedback willkommen: echoel@tropicaldrones.com

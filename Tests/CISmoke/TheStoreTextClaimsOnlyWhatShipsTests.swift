@@ -1,5 +1,14 @@
 //  TheStoreTextClaimsOnlyWhatShipsTests.swift
 //
+//  ⭐ 2026-10-29 (GM28, W6 STORE): `fastlane/metadata/{en-US,de-DE}` DESCRIBES ECHOEL STUDIO 11.0.0.
+//  Builds 10004–10017 on this App Store record are the Studio; the text that stood here described
+//  the earlier bio instrument. Every claim in this file still asks the same question — is something
+//  SOLD that the build does not ship — but the build is now `EchoelStudio/`, so claim 3's needle
+//  list was re-measured against it (its doc comment carries the per-needle reasons and the grading
+//  against both texts). Claims 1, 2, 4, 5, 6, 7 and 8 are unchanged: 5 skips the Studio text (it
+//  names no Art-Net/sACN, so there is no CONNECT/PRIVACY pair to compare) and the others stay as
+//  counterweights that keep the earlier app's over-claims from returning.
+//
 //  THE FOURTH SURFACE. A user-visible claim in this repo has four homes — the app's own copy
 //  (Swift), `docs/**`, `ContentPipeline/CLAIMS.md`, and `fastlane/metadata`. #496 struck three
 //  producerless bio channels (`breathDepth`, `lfHf`, `coherenceTrend` — ⛔ #980: that is what
@@ -83,6 +92,7 @@
 //  Connect — a claim edited in the web UI never passes through this file. And it judges three
 //  named channels, not truthfulness in general; a fresh false claim about something else walks
 //  straight past it.
+import Foundation
 import XCTest
 
 final class TheStoreTextClaimsOnlyWhatShipsTests: XCTestCase {
@@ -348,39 +358,84 @@ final class TheStoreTextClaimsOnlyWhatShipsTests: XCTestCase {
     ///     without claiming it" — true until #794, which ADDED an MPE-output line to both
     ///     locales. The word is now guarded by claim 6, not merely left unbanned here.
     /// A ban that catches honest copy gets deleted, and the law goes with it.
+    ///
+    /// ⭐ 2026-10-29 (GM28, W6 STORE): THE LIST NOW DESCRIBES ECHOEL STUDIO 11.0.0, the app that
+    /// builds 10004–10017 put on this App Store record. The needles are measured against
+    /// `EchoelStudio/` (`ContentPipeline/CLAIMS.md`, Nachtrag 5), and the list moved in BOTH
+    /// directions, each needle for a stated reason — exactly what the message below asks for:
+    ///   · GONE, because the Studio BUILT them and the text sells them: `auv3`/`audio unit` (the
+    ///     `EchoelPlugins` extension registers ten units, `Plugins/AUv3/Info.plist`, and
+    ///     `PluginHost` loads third-party units onto tracks); `piano roll`/`pianoroll`/`note
+    ///     editor` (the clip editor); `step sequencer`/`drum machine`/`beat maker` (the drum kit
+    ///     with its step grid — a ban on the ordinary name of a shipped surface is #364).
+    ///   · KEPT: `rtmp`/`live stream`/`broadcast`/`srt` (nothing in the Studio links a streaming
+    ///     library), `multitrack`/`mehrspur` (the Studio arms ONE audio track and records one
+    ///     mono input, CLAIMS §11 Nachtrag 2 — simultaneous multitrack recording is not built),
+    ///     every video spelling (the Studio has no camera and no video path).
+    ///   · NEW, because the Studio build does NOT have them while other waves build them in
+    ///     parallel: the camera pulse (`camera`, `kamera`, `rppg`), the light and network outputs
+    ///     (`art-net`, `artnet`, `sacn`; `adm-osc` falls to the whole word `osc`), the earlier
+    ///     app's pulse sources (`healthkit`,
+    ///     `apple health`), the external display, the curated genre roster (NEUPLANUNG: no
+    ///     genres), and three WHOLE-WORD needles below — `osc` (a substring would hit
+    ///     "oscillator", an honest synth word), `mpe` (no MPE in either direction in the Studio),
+    ///     `ddsp` (the seventh engine is on a branch, not in 10017). Each returns to honest copy
+    ///     only with the build that ships it: delete the needle in the SAME commit as the code.
+    /// Grading (§0, Python, both texts): with this list the EARLIER app's text is RED (camera,
+    /// Art-Net, sACN, ADM-OSC, Apple Health, rPPG, external display, MPE — one finding per term
+    /// per file) and the Studio text is GREEN; with the OLD list the Studio text was RED in eleven
+    /// places (`auv3`, `audio unit`, `piano roll`, `pianoroll`) for capabilities it really has.
     func testNoRemovedCapabilityIsSoldAgain() throws {
         let removed = [
-            "auv3", "audio unit",                                   // target deleted 2026-07-24
-            "rtmp", "live stream", "livestream", "broadcast", "srt", // never linked
-            "multitrack", "multi-track", "mehrspur",                 // built, flag-gated off, doorless
-            "beat maker", "beatmaker", "drum machine", "drumcomputer",
-            "step sequencer", "step-sequencer", "schrittsequenzer",  // #166/#167
-            "piano roll", "pianoroll", "note editor", "noten-editor", // #475
-            "video edit", "videoschnitt",                            // #121 Slice 3
+            "rtmp", "live stream", "livestream", "broadcast", "srt", // never linked, in either app
+            "multitrack", "multi-track", "mehrspur",                 // one armed track, one mono input
+            "video edit", "videoschnitt",                            // #121 Slice 3; no video in the Studio
             // #1304 — video CAPTURE, founder 2026-09-12 "Kein Video Capture". The bare word
-            // "video" stays legal (the copy says video is NOT part of Echoelmusic); what is
-            // banned is any spelling that SELLS a recording. ".mp4" is deliberately not here:
-            // the store text never wrote it, and a bare "mp4" could honestly name a format in
-            // a sentence about what the app does not do.
+            // "video" stays legal; what is banned is any spelling that SELLS a recording. ".mp4"
+            // is deliberately not here: a bare "mp4" could honestly name a format in a sentence
+            // about what the app does not do.
             "video capture", "video recording", "record the visual", "share-ready mp4",
-            "videoaufnahme", "visual aufnehmen", "visual im spielen aufnehmen"
+            "videoaufnahme", "visual aufnehmen", "visual im spielen aufnehmen",
+            // 2026-10-29 — the earlier app's sources and outputs, not in the Studio build 10017
+            "camera", "kamera", "rppg",                              // W1 builds the camera pulse
+            "art-net", "artnet", "sacn",                             // W4 builds the connections; "adm-osc" is caught by the whole word `osc`
+            "healthkit", "apple health",                             // earlier app's pulse sources
+            "external display", "externer bildschirm",               // `ExternalDisplayScene`, earlier app
+            "curated genre", "kuratierte genre"                      // the earlier app's roster
         ]
+        // Whole words, because each is a substring of an honest word ("oscillator", "tempe…"):
+        // matched with word boundaries, lower-cased, over the same five leaves per locale.
+        // `mpe` here is about PRESENCE (the Studio has no MPE in either direction); claim 6 below
+        // keeps governing the DIRECTION word for the day MPE out returns — then `mpe` leaves this
+        // list and claim 6 is the only law on it (#416: one decision per claim, two claims).
+        let removedWords = ["osc", "mpe", "ddsp"]
         var offenders: [String] = []
         for file in try storeCopy() {
             let flat = file.text.lowercased()
             for term in removed where flat.contains(term) {
                 offenders.append("\(file.path): \"\(term)\"")
             }
+            for word in removedWords {
+                let pattern = "(?<![a-z0-9])" + NSRegularExpression.escapedPattern(for: word) + "(?![a-z0-9])"
+                guard let regex = try? NSRegularExpression(pattern: pattern) else {
+                    XCTFail("the whole-word pattern for `\(word)` does not compile — fix the pattern, not the copy")
+                    continue
+                }
+                let range = NSRange(flat.startIndex..., in: flat)
+                if regex.firstMatch(in: flat, range: range) != nil {
+                    offenders.append("\(file.path): \"\(word)\" (whole word)")
+                }
+            }
         }
         XCTAssertTrue(offenders.isEmpty, """
-            The App Store listing names a capability this repo removed: \
+            The App Store listing names a capability the Echoel Studio build does not have: \
             \(offenders.joined(separator: ", ")).
 
             #184 already removed twelve such claims from this text; a false capability claim \
-            here is a 2.3 rejection, not a stale sentence. If one of these was genuinely built, \
-            that is welcome — delete its needle in the SAME commit as the code, and pull \
-            `ContentPipeline/CLAIMS.md`, `docs/**` and the app's own copy along with it. Do not \
-            delete the needle to get the gate green.
+            here is a 2.3 rejection, not a stale sentence. If one of these was genuinely built \
+            and SHIPS in the build on this record, that is welcome — delete its needle in the \
+            SAME commit as the code, and pull `ContentPipeline/CLAIMS.md`, `docs/**` and the \
+            app's own copy along with it. Do not delete the needle to get the gate green.
             """)
     }
 

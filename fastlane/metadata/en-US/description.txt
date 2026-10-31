@@ -1,59 +1,44 @@
-Your body plays it. Heart rate, HRV and breath drive a synthesizer, a live visual and your light rig in real time — on iPhone, on-device, no account.
-Finger on the camera, pulse locks, and the music moves with you. Touch the visual and every finger lands in key.
-Then send it on: OSC, MIDI and MPE out, Art-Net and sACN light, ADM-OSC spatial objects. Echoel sits inside the rig you already have.
+Echoel is a music workstation for iPhone and iPad: instruments, effects, a piano roll and a drum grid, an arrangement timeline, a session grid for live sets, audio and MIDI recording, mixing, automation and export. Your songs are files on your device in an open, documented format, and the app needs no account.
 
 
-THE BODY AS CONTROLLER
+TRACKS AND SOUND
 
-Read your pulse from Apple Health (e.g. Apple Watch), a Bluetooth heart-rate strap, or the iPhone camera (rPPG):
-
-- Heart rate shapes tempo and vibrato
-- HRV and coherence shape brightness, harmonicity and texture
-- Breath shapes the amplitude envelope — the sound swells and settles once with each breath
-- The picture is playable: touch the visual and your fingers become notes, quantized to the take's key and scale
-
-Not every source measures everything: camera = pulse, HRV, breath; chest strap = pulse, HRV; Apple Watch = heart rate via Health. What isn't measured doesn't modulate.
-
-No two takes are the same.
+- Songs hold instrument, audio and return tracks (up to 32, 64 and 8). Add any kind, or add a drum track that comes with an empty one-bar pattern to fill. Recolor, mute, solo and delete tracks.
+- The built-in 16-voice synth with six engines (Classic, Supersaw, FM, Sub, Morph and Mallet), one Character control per engine, a Clean or Ladder filter, presets and adjustable sound parameters.
+- A synthesized eight-piece drum kit (kick, snare, clap, two toms, closed and open hi-hat, crash) on General MIDI drum note numbers.
+- A sampler that plays an imported audio file (mixed to mono, up to ten minutes) across the keyboard, at its original pitch on C4.
+- Installed third-party Audio Unit instruments (stereo), with their own interface on the track's Sound page; their settings are saved with the song.
+- An insert chain of up to eight effects on every track and the master: Echoel EQ, Compressor, Delay, Reverb, Chorus, Phaser and Flanger, or installed stereo Audio Unit effects.
+- The seven Echoel effects are also available as Audio Units for other apps.
 
 
-CREATE
+PLAY, WRITE AND ARRANGE
 
-- Bio-reactive additive synthesis engine (DDSP) — vDSP-accelerated, no external dependencies
-- Design and save your own patches
-- Composition: pick a genre and a key; your body generates in-key material you shape with the sound and character controls
-- Concert pitch (A4 / Kammerton) set exactly to the cent; lock a BPM for tight loops or stay sync-free
-- Effects: reverb, delay, chorus, flanger, phaser, tremolo, saturation and more
-- Immersive visual: the notes you play become color in real time — each tone's frequency transposed by whole octaves into visible light — reacting to the music and your body
-- Retroactive capture: keep the loop you just played
-- Export the loop as audio (WAV) or MIDI (.mid) for your DAW — the MIDI file carries tempo, 4/4 and the key signature, in whole bars
+- Play any instrument track from the on-screen keys, or live from a MIDI keyboard or controller by USB, Bluetooth or network MIDI. The synth and plugin instruments follow pitch bend, the mod wheel and the sustain pedal; the drum kit and sampler play notes.
+- A piano roll for synth, sampler and plugin tracks: tap to add or remove a note, drag to move it or change its length, on a grid from 1/4 to 1/32 or 1/8 and 1/16 triplets.
+- A step grid for drum tracks, with one row for each kit piece. Tap a step to set or clear a hit, hold it for an accent.
+- Arrange clips on a bar timeline: drag them in whole bars, duplicate them or take them off the timeline. Tap an audio track to import a file at a bar, then move it and trim either edge to the beat.
+- A session grid launches clips and scenes on the next bar, the next quarter note or at once, stops a track or all session clips, and hands every track back to the arrangement.
 
 
-CONNECT
+MIDI
 
-- MIDI note input and output (output enabled in the routing panel)
-- MPE output to your rig — the zone is announced, notes spread over member channels 2-16, each carrying glide, slide and pressure (two switches in the routing panel, both off by default; the input side stays plain MIDI notes)
-- OSC output for live rigs and visuals
-- ADM-OSC immersive object output — on a connected spatial rig this is where your body moves the sound in space: breath sweeps it left and right, calm lifts it, coherence pulls it close
-- Art-Net native light output for installations and stage
-- sACN (E1.31) light output — unicast to an address you set; multicast is not available on iOS
-- External display: the visual plays on a connected screen or projector (USB-C/HDMI or AirPlay) as its own stage; the phone stays the instrument
+- Record a MIDI performance onto an armed instrument track. Each take becomes a new clip with its notes, pitch bend and controllers, as one undo step.
+- MIDI Learn maps a knob or fader to a mixer control, a synth parameter or a built-in effect parameter.
+- Send MIDI clock to the outputs you choose, or follow an external MIDI clock.
+- Novation Launchpad Mini MK3, X and Pro MK3 become a window onto the session grid.
 
 
-PRIVACY
+RECORD, MIX, EXPORT
 
-Your biometrics stay on your device. There are no accounts, no ads, no tracking and no analytics, and the app talks to no server of ours.
-
-Bio values leave the device only when you switch an output on, and only on your local network: OSC, ADM-OSC, Art-Net or sACN light (heart rate, HRV, breath and coherence become DMX values), or a nearby shared session. Optional: write heart rate and respiratory rate to Apple Health; use your location for the place in a session name or local weather (Apple Weather) shaping the music — both off by default, coordinates never stored. What you create is yours.
-
-
-ACCESSIBILITY
-
-Accessibility-first: VoiceOver, large legible bio readouts, exact numeric entry for every numeric parameter, and a 3 Hz visual flash cap for photosensitive safety.
+- Record mono audio from the microphone or one interface input onto an armed audio track. Takes stay on the device.
+- A channel strip for every track and the master, with fader, pan and a peak meter; sends to up to eight return tracks; any track can go to its own output pair of a multichannel interface.
+- Draw automation for volume, pan, sends, synth and plugin parameters, or record it by moving the control while the song plays.
+- A Bluetooth heart-rate chest strap can be a modulation source: route heart rate, HRV or coherence to a fader, pan, send or synth parameter, with depth and inversion per route. With no strap, the control stays where you set it, and an export never reads the strap.
+- Export the arrangement as a 24-bit, 48 kHz stereo WAV with its loudness (LUFS) and true peak reported, as stems (one WAV per track, before the master effects), or as a Standard MIDI file (.mid).
+- Songs save automatically as .echoel files, an open and documented JSON format. The Files app shows them, and a song sent by AirDrop opens in Echoel.
 
 
-In active development — feedback welcome: echoel@tropicaldrones.com
+No account, no ads, no tracking, no server of ours.
 
-This is not a medical device. Biofeedback features are for creative and self-observation purposes only — not for diagnosis or treatment.
-
-echoelmusic.com
+Echoel is in active development. Feedback welcome: echoel@tropicaldrones.com

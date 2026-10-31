@@ -30,6 +30,42 @@ Spuren (`EchoelStudio/App/Engine/PluginHost.swift`, `AUAudioUnit.instantiate`), 
 ist „spielt Audio Units anderer Apps auf Spuren, noch nicht auf einem Gerät geprüft“; die Verneinung des Hostens
 in diesem Register gilt der Alt-App. Fremde Audio Units laufen unter den Bedingungen ihres Herstellers
 (`docs/privacy.html`, Abschnitt „Echoel Studio“).
+(5) **2026-10-29, Store-Text (GM28, Founder: „Du entscheidest jetzt alles“):** `fastlane/metadata/{en-US,de-DE}` trägt
+seit diesem Tag den Studio-Text für Build 10017 — der Alt-App-Text (Puls, Kamera, HealthKit, Genres, Licht, OSC) ist dort
+weg. Der Text erweitert die 36 Sätze unten um FÜNF Behauptungen, jede im Code von 10017 gemessen, nicht aus `RELEASE`
+übernommen: sechs Synth-Engines (`EchoelStudio/DSP/Sources/EchoelDSP/SynthEngine.swift`: `classic, supersaw, fm, sub,
+morph, mallet`) · sieben eingebaute Effekte, Chorus/Phaser/Flanger dazu (`Core/Sources/EchoelCore/OwnPlugins.swift`,
+`StandardEffect`), alle sieben als Audio Units in `Plugins/AUv3/Info.plist` registriert — sagbar ist „auch als Audio
+Units für andere Apps“, weiter NICHT „in AUM/Logic/GarageBand“ · Bildschirmtasten (`App/Views/PlayKeysView.swift`) ·
+Stems-Export mit Tür „Export Stems“ (`App/Documents/DocumentController.swift` `exportStems`, eine WAV je Spur, VOR den
+Master-Effekten — die „stems“-Zeile unter „Nicht sagen“ ist entsprechend datiert) · der Bluetooth-Herzfrequenz-Gurt als
+Modulationsquelle (Herzfrequenz/HRV/Kohärenz auf Fader, Pan, Send, Synth-Parameter; ohne Gurt bleibt der Regler, ein
+Export liest den Gurt nie — `EchoelStudio/project.yml` Bluetooth-Text, Builds 10012–10017). Der Satz oben „nichts aus
+den Körper-Zeilen“ meint die ALT-APP-Zeilen (Kamera-rPPG, Apple Health, Watch); der Gurt des Studios ist eine
+Studio-Fähigkeit und wird nur als MECHANISMUS beschrieben (§2), nie als Wirkung. **Weiter NICHT im Store-Text,
+gemessen:** die eigenen Instrumente als Audio Units in fremden Hosts — sie laufen dort im Demo-Gate („two seconds of
+silence every thirty“, `Plugins/Shared/PluginControlsView.swift`), und der Freischalt-Kauf ist nicht im Verkauf (§7,
+Nachtrag 1); das Field (Visual), Loop/Overdub, Tonsysteme, der Assistent, der Import alter Songs. „Beta“ steht in
+einem Store-Text nicht; stattdessen „Echoel is in active development“ plus Feedback-Adresse. Kein Satz ist auf einem
+Gerät geprüft — die Reihenfolge aus `docs/dev/APP_STORE_LISTING_STUDIO_11.md` (erst Gerät) ist damit umgekehrt worden,
+auf Founder-Freigabe; was ein Gerät widerlegt, fliegt aus beiden Sprachen im selben Commit. Die Release Notes sagen
+dazu, dass Songs früherer Versionen nicht importiert werden (F17 offen, siehe `EchoelStudio/RELEASE`). ⚠️ **Vier
+Wächter pinnen noch den ALT-APP-Store-Text und werden auf diesem Text rot** (transkribiert 2026-10-29, 9 Zusicherungen):
+`TheStoreFrontLinesSellTheRigTests` (Ansprüche 4–7: Kamera/Visual/OSC-Falz, Promo-Protokolle, externer Bildschirm,
+Multicast-/MPE-/Medizin-Sätze), `TheStoreTextClaimsOnlyWhatShipsTests.testNoRemovedCapabilityIsSoldAgain` („auv3“,
+„audio unit“, „piano roll“ — im Studio GEBAUT, die Nadeln gehören laut eigener Fehlermeldung mit dem Code gelöscht),
+`ThePictureIsSoldAsPlayableTests.testBothStoreLocalesSayThePictureIsPlayable`, `TheGenreListsMatchTheirOwnCountTests`
+(alle drei, Release Notes). Der Store-Commit fasst `Tests/` absichtlich nicht an (W6-Zuschnitt, kein Gate, kein Upload);
+die Wächter sind im selben Merge nach `main` zu ziehen, sonst landet das Rot auf dem nächsten fremden Code-Commit.
+⭐ **Nachgezogen am selben Tag, zweite W6-Scheibe (`test(store): guards pin the Echoel Studio listing (GM28)`, gleicher
+Branch):** die vier Wächter pinnen jetzt den Studio-Text — `TheStoreFrontLinesSellTheRigTests` 4–7 umgeschrieben (Falz =
+Workstation-Satz, Promo = Engines/Drumkit/Sampler/Audio Unit/WAV/MIDI, Export-Zahlen 24 Bit/48 kHz/LUFS/True Peak,
+Ehrlichkeitssätze Konto/Takes/Import), `testNoRemovedCapabilityIsSoldAgain` misst gegen `EchoelStudio/` (AUv3, Pianorolle,
+Step-Raster raus; Kamera, Art-Net, sACN, OSC, MPE, DDSP, HealthKit, externer Bildschirm, kuratierte Genres als „nicht in
+10017“ rein), `ThePictureIsSoldAsPlayableTests` Anspruch 2 von Präsenz auf Abwesenheit gedreht, die Release Notes aus der
+Genre-Aufzählung genommen und als Gegen-Gewicht invertiert. Transkribiert (§0): 7 umgeschriebene Zusicherungen ROT auf dem
+Alt-Text, GRÜN auf dem Studio-Text; 0 rot auf dem Studio-Text. Jede Nadel dieser Liste geht mit dem Build, der die Fähigkeit
+liefert — im selben Commit wie der Code.
 Der Merge nach `main` ist erfolgt (gemessen 2026-10-26). Die Studio-Hinweise in `docs/roadmap.html`,
 `docs/privacy.html` und `docs/claims.html` stehen inzwischen auf `main`. `docs/privacy.html` nennt den
 Studio-Mikrofonzugriff beim Scharfschalten einer Audiospur oder beim Abhören ihres Eingangs ausdrücklich.
@@ -126,7 +162,10 @@ erweitern nicht.
   seit 2026-10-25 im Studio-Code gebaut (`4ab8ba4`, `8f6d94a`); compile-only, noch nicht auf einem
   Gerät geprüft. Nur mit Kennzeichnung **„Beta“** behaupten, nie als stabil.
 - „everything is undoable“: Werte der eingebauten Effekte sind kein Undo-Schritt.
-- „mastering“, „normalised export“, „stems“: der Export misst und warnt, er normalisiert nicht; nur das Arrangement, keine Session-Starts.
+- „mastering“, „normalised export“, ~~„stems“~~: der Export misst und warnt, er normalisiert nicht; nur das Arrangement, keine Session-Starts.
+  ⭐ **„stems“ ist seit 2026-10-29 SAGBAR** (Nachtrag 5 oben): `DocumentController.exportStems` mit der Tür „Export Stems“
+  rendert eine WAV je gehörter Spur; die Summe ist der Mix VOR den Master-Effekten (`Engine/Tests/.../StemRenderTests.swift`
+  pinnt die Summe, die Notiz in `exportStems` nennt die ausgelassenen Master-Effekte). Sagbar ist „stems (one WAV per track, before the master effects)“ — „mastering“ und „normalised“ bleiben verboten.
 - „works in AUM, Logic, GarageBand“, „plugin you can buy“: Studios Audio Units liefen in keinem Host auf einem Gerät (§1, Nachtrag 3); nichts ist im Verkauf (§7, Nachtrag 1).
 - „imports your old Echoelmusic songs“: die App verlangt die App Group `group.com.echoelmusic` seit `a14e1960a` wieder (F17 erledigt 21.10.), ausgeliefert erst mit dem nächsten TestFlight-Build und auf keinem Gerät geprüft. Bis ein Gerät es zeigt, nicht behaupten; in 10004–10009 fand der Import nichts.
 - „AI that writes your song“: der Assistent ist nur mit Apple Intelligence sichtbar, ändert Tempo, Spuren, Sounds, Mix und einfache Muster, und lief auf keinem Gerät. Nie „KI komponiert“, nie „Superintelligenz“.
