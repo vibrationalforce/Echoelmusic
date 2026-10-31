@@ -9,6 +9,9 @@ final class MIDIFileImportTests: XCTestCase {
 
     private func vlq(_ value: UInt32) -> [UInt8] { MIDIFile.variableLength(value) }
 
+    /// Byte runs joined in order; one long `+` chain of literals times out the type checker.
+    private func join(_ parts: [UInt8]...) -> [UInt8] { parts.flatMap { $0 } }
+
     private func chunk(_ tag: String, _ body: [UInt8]) -> [UInt8] {
         let n = UInt32(body.count)
         let length: [UInt8] = [UInt8(n >> 24 & 0xFF), UInt8(n >> 16 & 0xFF), UInt8(n >> 8 & 0xFF), UInt8(n & 0xFF)]
@@ -58,7 +61,7 @@ final class MIDIFileImportTests: XCTestCase {
 
     func testTicksAreScaledToTheDocumentResolution() throws {
         // 96 per quarter: a quarter note at the second beat lands on 960, one quarter long.
-        let track: [UInt8] = vlq(96) + [0x90, 60, 100] + vlq(96) + [0x80, 60, 0]
+        let track = join(vlq(96), [0x90, 60, 100], vlq(96), [0x80, 60, 0])
         let content = try MIDIFileImport.read(file(format: 1, division: 96, tracks: [track]))
         XCTAssertEqual(notes(content.tracks[0]), ["960+960 p60 v100"])
         XCTAssertNil(content.tempo, "a file without a tempo leaves the song's")
@@ -66,15 +69,14 @@ final class MIDIFileImportTests: XCTestCase {
 
     func testRunningStatusAndANoteOnAtVelocityZeroEndANote() throws {
         // One status byte, then data only; the second "on" at velocity 0 is the off.
-        let track: [UInt8] = [0x00, 0x91, 62, 80] + vlq(480) + [62, 0] + [0x00, 64, 70] + vlq(240) + [64, 0]
+        let track = join([0x00, 0x91, 62, 80], vlq(480), [62, 0], [0x00, 64, 70], vlq(240), [64, 0])
         let content = try MIDIFileImport.read(file(format: 1, division: 960, tracks: [track]))
         XCTAssertEqual(notes(content.tracks[0]), ["0+480 p62 v80", "480+240 p64 v70"])
     }
 
     func testFormatZeroIsSplitByChannelAndChannelTenIsTheDrumKit() throws {
-        let track: [UInt8] = [0x00, 0xFF, 0x03, 0x04] + Array("Song".utf8)
-            + [0x00, 0x90, 60, 100, 0x00, 0x99, 36, 110]
-            + vlq(480) + [0x80, 60, 0, 0x00, 0x89, 36, 0]
+        let track = join([0x00, 0xFF, 0x03, 0x04], Array("Song".utf8), [0x00, 0x90, 60, 100, 0x00, 0x99, 36, 110],
+                         vlq(480), [0x80, 60, 0, 0x00, 0x89, 36, 0])
         let content = try MIDIFileImport.read(file(format: 0, division: 960, tracks: [track]))
         XCTAssertEqual(content.tracks.count, 2)
         XCTAssertEqual(content.tracks.map(\.isDrums), [false, true])
@@ -82,14 +84,15 @@ final class MIDIFileImportTests: XCTestCase {
     }
 
     func testControllersProgramsAndSystemExclusiveAreSteppedOver() throws {
-        let track: [UInt8] = [0x00, 0xC0, 5, 0x00, 0xB0, 7, 100, 0x00, 0xF0, 0x03, 0x7E, 0x00, 0xF7,
-                              0x00, 0xE0, 0x00, 0x40, 0x00, 0xD0, 50, 0x00, 0x90, 67, 90] + vlq(960) + [0x80, 67, 0]
+        let head: [UInt8] = [0x00, 0xC0, 5, 0x00, 0xB0, 7, 100, 0x00, 0xF0, 0x03, 0x7E, 0x00, 0xF7,
+                             0x00, 0xE0, 0x00, 0x40, 0x00, 0xD0, 50, 0x00, 0x90, 67, 90]
+        let track = join(head, vlq(960), [0x80, 67, 0])
         let content = try MIDIFileImport.read(file(format: 1, division: 960, tracks: [track]))
         XCTAssertEqual(notes(content.tracks[0]), ["0+960 p67 v90"])
     }
 
     func testANoteNeverEndedStopsWhereItsTrackDoes() throws {
-        let track: [UInt8] = [0x00, 0x90, 60, 100] + vlq(1_920) + [0xFF, 0x01, 0x00]
+        let track = join([0x00, 0x90, 60, 100], vlq(1_920), [0xFF, 0x01, 0x00])
         let content = try MIDIFileImport.read(file(format: 1, division: 960, tracks: [track]))
         XCTAssertEqual(notes(content.tracks[0]), ["0+1920 p60 v100"])
     }
@@ -125,11 +128,11 @@ final class MIDIFileImportTests: XCTestCase {
     // MARK: Commands
 
     private func twoTrackContent() throws -> MIDIFileImport.Content {
-        let lead: [UInt8] = [0x00, 0xFF, 0x03, 0x04] + Array("Lead".utf8) + [0x00, 0x90, 72, 100] + vlq(4_000) + [0x80, 72, 0]
-        let beat: [UInt8] = [0x00, 0x99, 36, 100] + vlq(240) + [0x89, 36, 0]
-        let conductor: [UInt8] = [0x00, 0xFF, 0x51, 0x03, 0x07, 0xA1, 0x20,   // 500 000 µs = 120 BPM
-                                  0x00, 0xFF, 0x58, 0x04, 0x06, 0x03, 24, 8]   // 6/8
-            + vlq(UInt32(4 * 960)) + [0xFF, 0x51, 0x03, 0x09, 0x27, 0xC0]       // 600 000 µs = 100 BPM
+        let lead = join([0x00, 0xFF, 0x03, 0x04], Array("Lead".utf8), [0x00, 0x90, 72, 100], vlq(4_000), [0x80, 72, 0])
+        let beat = join([0x00, 0x99, 36, 100], vlq(240), [0x89, 36, 0])
+        let start: [UInt8] = [0x00, 0xFF, 0x51, 0x03, 0x07, 0xA1, 0x20,   // 500 000 µs = 120 BPM
+                              0x00, 0xFF, 0x58, 0x04, 0x06, 0x03, 24, 8]   // 6/8
+        let conductor = join(start, vlq(4 * 960), [0xFF, 0x51, 0x03, 0x09, 0x27, 0xC0])   // 600 000 µs = 100 BPM
         return try MIDIFileImport.read(file(format: 1, division: 960, tracks: [conductor, lead, beat]))
     }
 
@@ -141,7 +144,7 @@ final class MIDIFileImportTests: XCTestCase {
             try store.perform(commands, title: "Import MIDI")
             let project = store.project
             XCTAssertEqual(project.tracks.map(\.name), ["Lead", "Groove 2"])
-            XCTAssertEqual(project.tracks.map(\.instrument.device).last, .drums)
+            XCTAssertEqual(project.tracks.last?.instrument.device, InstrumentDevice.drums)
             XCTAssertEqual(project.timeSignature, TimeSignature(6, 8))
             XCTAssertEqual(project.tempo, 120, accuracy: 0.001)
             XCTAssertEqual(project.tempoChanges.map(\.tick), [4 * 960])
