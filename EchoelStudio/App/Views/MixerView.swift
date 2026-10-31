@@ -9,7 +9,7 @@ struct MixerView: View {
 
     var body: some View {
         ScrollView(.horizontal) {
-            HStack(alignment: .top, spacing: 1) {
+            HStack(alignment: .top, spacing: Theme.Space.hairline) {
                 // A video track is never heard, so it has no strip.
                 ForEach(store.project.tracks.filter { $0.kind != .video }) { track in
                     ChannelStrip(title: track.name, color: Theme.Color.track(track.colorIndex),
@@ -50,7 +50,7 @@ struct ChannelStrip: View {
                 .lineLimit(1)
             if let track {
                 let active = track.inserts.filter { !$0.isBypassed }.count
-                Button(track.inserts.isEmpty ? "FX" : "FX \(active)/\(track.inserts.count)") {
+                Button(track.inserts.isEmpty ? "Effects" : "Effects \(active)/\(track.inserts.count)") {
                     router.sheet = .effects(track.id)
                 }
                 .buttonStyle(ToolButtonStyle(isActive: active > 0))
@@ -59,11 +59,11 @@ struct ChannelStrip: View {
             } else {
                 let inserts = store.project.masterInserts
                 let active = inserts.filter { !$0.isBypassed }.count
-                Button(inserts.isEmpty ? "FX" : "FX \(active)/\(inserts.count)") {
+                Button(inserts.isEmpty ? "Effects" : "Effects \(active)/\(inserts.count)") {
                     router.sheet = .masterEffects
                 }
                 .buttonStyle(ToolButtonStyle(isActive: active > 0))
-                .accessibilityLabel("Master effects")
+                .accessibilityLabel("Master Effects")
                 .accessibilityValue(inserts.isEmpty ? "None" : "\(active) of \(inserts.count) on")
             }
             if let track, track.kind != .returnTrack {
@@ -135,7 +135,7 @@ struct PeakMeter: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1.0 / 30)) { _ in
             let level = engine.meterLevel(track)
-            HStack(spacing: 2) {
+            HStack(spacing: Theme.Space.xxs) {
                 bar(level.left)
                 bar(level.right)
             }

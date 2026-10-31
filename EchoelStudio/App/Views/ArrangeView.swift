@@ -27,7 +27,7 @@ struct ArrangeView: View {
         let laneWidth = CGFloat(bars) * pointsPerBar
         ScrollView(.vertical) {
             HStack(alignment: .top, spacing: 0) {
-                VStack(spacing: 1) {
+                VStack(spacing: Theme.Space.hairline) {
                     Text("\(Arranging.songBars(of: project)) bars")
                         .font(Theme.Font.caption)
                         .foregroundStyle(Theme.Color.textSecondary)
@@ -65,7 +65,7 @@ struct ArrangeView: View {
                 }
                 .frame(width: nameWidth)
                 ScrollView(.horizontal) {
-                    VStack(alignment: .leading, spacing: 1) {
+                    VStack(alignment: .leading, spacing: Theme.Space.hairline) {
                         BarRuler(bars: bars, pointsPerBar: pointsPerBar)
                         ForEach(project.tracks) { track in
                             ArrangeLane(track: track, project: project, pointsPerBar: pointsPerBar,
@@ -480,7 +480,7 @@ private struct RegionBlock: View {
         Rectangle()
             .fill(Theme.Color.track(track.colorIndex).opacity(0.6))
             .frame(width: 4)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, Theme.Space.s)
             .contentShape(Rectangle())
             .highPriorityGesture(
                 DragGesture(minimumDistance: 2, coordinateSpace: .named(ArrangeLane.space))
