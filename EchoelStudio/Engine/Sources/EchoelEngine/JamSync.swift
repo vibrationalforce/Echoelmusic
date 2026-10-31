@@ -2,9 +2,10 @@ import EchoelCore
 import Foundation
 
 /// The host's clock as a guest reads it, from pings and NTP's arithmetic: each answer gives the
-/// offset between the two clocks (host minus guest) and the round trip it took. An answer that
-/// waited in a queue on one leg is off by half the wait, so the estimate is the median offset of the
-/// faster half of the newest answers — several measurements, never one.
+/// offset between the two clocks (host minus guest) and the round trip it took. No leg of a trip
+/// takes less than nothing, so each answer bounds the true offset to its own ± half its round trip;
+/// the estimate is the middle of where the newest answers all agree — several measurements, never
+/// one, and an answer that waited in a queue only widens its own bound.
 public struct JamClockEstimate: Equatable, Sendable {
     public struct Sample: Equatable, Sendable {
         /// Host time minus guest time, in seconds.
@@ -39,9 +40,16 @@ public struct JamClockEstimate: Equatable, Sendable {
         return true
     }
 
-    /// Host time minus guest time, in seconds; nil before `minimumSamples` answers came back.
+    /// Host time minus guest time, in seconds; nil before `minimumSamples` answers came back. The
+    /// middle of the bounds all kept answers agree on (an intersection, as NTP's), which keeps two
+    /// phones' errors small enough not to add up past a few milliseconds; should the bounds not meet —
+    /// clocks that drifted apart further than the answers are wide — the median offset of the faster
+    /// half.
     public var offset: Double? {
         guard samples.count >= Self.minimumSamples else { return nil }
+        let low = samples.map { $0.offset - $0.roundTrip / 2 }.max() ?? -Double.infinity
+        let high = samples.map { $0.offset + $0.roundTrip / 2 }.min() ?? Double.infinity
+        if low <= high { return (low + high) / 2 }
         let fastest = samples.sorted { $0.roundTrip < $1.roundTrip }
         let kept = Array(fastest.prefix(Swift.max(Self.minimumSamples / 2, fastest.count / 2)))
         return Self.median(kept.map { $0.offset })
@@ -101,10 +109,12 @@ public struct JamTimeline: Equatable, Sendable {
     }
 
     /// The host's next bar line at least `lead` seconds after `now` on the guest's clock, and when
-    /// the guest hears it there (`offset`: host minus guest); nil while the host is stopped.
+    /// the guest hears it there (`offset`: host minus guest); nil while the host is stopped. Never
+    /// before the anchor: a start the host announced ahead (`JamCountIn`) is joined on its own
+    /// downbeat, also from more than a bar away — not a bar early.
     public func start(afterLocal now: Double, offset: Double, lead: Double) -> JamStart? {
         guard state.isPlaying, now.isFinite, offset.isFinite, lead.isFinite else { return nil }
-        let line = barLine(atOrAfter: position(atHostTime: now + offset + Swift.max(0, lead)))
+        let line = barLine(atOrAfter: Swift.max(position(atHostTime: now + offset + Swift.max(0, lead)), state.anchorTick))
         guard let host = hostTime(ofTick: line) else { return nil }
         return JamStart(hostTick: line, localTime: host - offset)
     }
@@ -141,6 +151,51 @@ public enum JamCorrection: Equatable, Sendable {
     case nudge(seconds: Double)
     /// Jump by this many ticks, as a seek: too far off to nudge.
     case relock(ticks: Double)
+
+    /// The first check after a start, for a guest and for the host alike: inside `PhaseLock.deadband`
+    /// nothing; up to `JamFollower.trimLimit` a nudge for the whole error, which cuts no note; beyond
+    /// it a relock. `gap`: the ticks the song is behind, folded into one bar.
+    static func firstTrim(gap: Double, ticksPerSecond: Double) -> JamCorrection {
+        let error = -gap / ticksPerSecond
+        guard error.isFinite, Swift.abs(error) > PhaseLock.deadband else { return .none }
+        return Swift.abs(error) <= JamFollower.trimLimit ? .nudge(seconds: -error) : .relock(ticks: gap)
+    }
+}
+
+/// A host's Play while phones are connected (founder 2026-10-31): not at once, but on the next bar
+/// line of the jam's grid — the host's clock cut into bars of its tempo and time signature, counted
+/// from the clock's zero — at least `lead` ahead, so the word reaches every phone first and everyone
+/// comes in on the same downbeat, their bar 1 (Ableton Link starts the same way). The song starts
+/// from the start of the bar its playhead stands in. The host announces the start before anyone
+/// hears it, and holds itself to that word with the same first trim a guest takes (`correction`).
+/// A phone the word reaches too late for that downbeat comes in on the bar line after it.
+public struct JamCountIn: Equatable, Sendable {
+    /// A quarter second for the word to reach the phones, and then their own `JamFollower.startLead`
+    /// to prepare the audio.
+    public static let lead = JamFollower.startLead + 0.25
+
+    /// The start as the host announces it: its song from `anchorTick`, heard at `anchorTime` on its clock.
+    public let state: JamState
+
+    /// Nil for a tempo outside `Tempo.range`, a signature no song can have, or a time that is not one.
+    public init?(playhead: Tick, now: Double, tempo: Double, signature: TimeSignature, lead: Double = JamCountIn.lead) {
+        guard now.isFinite, lead.isFinite, tempo.isFinite, Tempo.range.contains(tempo), signature.isValid else { return nil }
+        let bar = MusicalTime.ticksPerBar(signature)
+        let barSeconds = Double(bar) * 60 / (tempo * Double(MusicalTime.ticksPerQuarter))
+        guard bar > 0, barSeconds > 0 else { return nil }
+        let time = ((now + Swift.max(0, lead)) / barSeconds).rounded(.up) * barSeconds
+        state = JamState(tempo: tempo, signature: signature, isPlaying: true,
+                         anchorTick: Double(Swift.max(0, playhead) / bar * bar), anchorTime: time)
+    }
+
+    /// The host's first check after its start: what it hears at `time` on its own clock, brought onto
+    /// what it announced.
+    public func correction(heard: Double, atHostTime time: Double) -> JamCorrection {
+        guard heard.isFinite, time.isFinite else { return .none }
+        let timeline = JamTimeline(state)
+        let gap = JamTimeline.phase(timeline.position(atHostTime: time) - heard, bar: timeline.barTicks)
+        return JamCorrection.firstTrim(gap: gap, ticksPerSecond: timeline.ticksPerSecond)
+    }
 }
 
 /// A guest's side of the jam, decided without a clock or a device, so it is tested: what the
@@ -292,9 +347,9 @@ public struct JamFollower: Sendable {
         if needsLock {
             needsLock = false
             lock.reset()
-            guard Swift.abs(error) > PhaseLock.deadband else { return .none }
-            settledAt = now + Self.settle
-            return Swift.abs(error) <= Self.trimLimit ? .nudge(seconds: -error) : .relock(ticks: gap)
+            let trim = JamCorrection.firstTrim(gap: gap, ticksPerSecond: timeline.ticksPerSecond)
+            if trim != .none { settledAt = now + Self.settle }
+            return trim
         }
         switch lock.correct(error: error) {
         case .none:

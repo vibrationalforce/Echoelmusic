@@ -286,6 +286,46 @@ final class JamTests: XCTestCase {
         XCTAssertNil(beacon.due(broken))
     }
 
+    func testTheHostsPlayWaitsForTheGridsNextBarLineAndStartsFromTheStartOfItsBar() throws {
+        let bar = 3_840.0 / 1_604                             // a 4/4 bar at 100.25 BPM, in seconds
+        let countIn = try XCTUnwrap(JamCountIn(playhead: 5_000, now: 7.3, tempo: 100.25, signature: TimeSignature(4, 4)))
+        XCTAssertEqual(countIn.state.anchorTime, 4 * bar, accuracy: 1e-9, "7.3 s is in the grid's fourth bar: the next bar line")
+        XCTAssertEqual(countIn.state.anchorTick, 3_840, "the song starts from the start of the bar its playhead stands in")
+        XCTAssertTrue(countIn.state.isPlaying)
+        XCTAssertEqual(countIn.state.tempo, 100.25)
+        XCTAssertEqual(countIn.state.signature, TimeSignature(4, 4))
+        let nearLine = try XCTUnwrap(JamCountIn(playhead: 0, now: 5 * bar - 0.1, tempo: 100.25, signature: TimeSignature(4, 4)))
+        XCTAssertEqual(nearLine.state.anchorTime, 6 * bar, accuracy: 1e-9, "a bar line too close for the word to reach the phones: the next one")
+        let compound = try XCTUnwrap(JamCountIn(playhead: 5_000, now: 0, tempo: 100.25, signature: TimeSignature(6, 8)))
+        XCTAssertEqual(compound.state.anchorTick, 2_880, "a 6/8 bar is 2880 ticks")
+        XCTAssertEqual(compound.state.anchorTime, 2_880.0 / 1_604, accuracy: 1e-9)
+        XCTAssertNil(JamCountIn(playhead: 0, now: 1, tempo: .nan, signature: TimeSignature(4, 4)))
+        XCTAssertNil(JamCountIn(playhead: 0, now: 1, tempo: 10, signature: TimeSignature(4, 4)), "outside the tempo range")
+        XCTAssertNil(JamCountIn(playhead: 0, now: 1, tempo: 120, signature: TimeSignature(4, 0)), "no song has it")
+        XCTAssertNil(JamCountIn(playhead: 0, now: .infinity, tempo: 120, signature: TimeSignature(4, 4)))
+
+        // The host's own audio starts 9 ms late; its first check, 80 ms on, takes that out.
+        let downbeat = countIn.state.anchorTime
+        guard case .nudge(let trim) = countIn.correction(heard: 3_840 + 0.080 * 1_604, atHostTime: downbeat + 0.089) else {
+            return XCTFail("a late start is nudged onto the announced bar line")
+        }
+        XCTAssertEqual(trim, 0.009, accuracy: 1e-9)
+        XCTAssertEqual(countIn.correction(heard: 3_840 + 0.088 * 1_604, atHostTime: downbeat + 0.089), .none,
+                       "a millisecond is left to the phase lock")
+        guard case .relock(let ticks) = countIn.correction(heard: 3_840, atHostTime: downbeat + 960.0 / 1_604) else {
+            return XCTFail("a quarter note off is a jump")
+        }
+        XCTAssertEqual(ticks, 960, accuracy: 1e-6)
+        XCTAssertEqual(countIn.correction(heard: .nan, atHostTime: downbeat), .none)
+
+        // A phone that hears of a start more than a bar ahead comes in on that downbeat, not a bar early.
+        let soon = try XCTUnwrap(JamCountIn(playhead: 0, now: 4 * bar - 0.49, tempo: 100.25, signature: TimeSignature(4, 4)))
+        XCTAssertEqual(soon.state.anchorTime, 5 * bar, accuracy: 1e-9)
+        let guest = try XCTUnwrap(JamTimeline(soon.state).start(afterLocal: 4 * bar - 0.48, offset: 0, lead: JamFollower.startLead))
+        XCTAssertEqual(guest.hostTick, 0)
+        XCTAssertEqual(guest.localTime, 5 * bar, accuracy: 1e-9)
+    }
+
     // MARK: - Two phones, five minutes
 
     /// The guest's clock reads 7.3 s behind the host's and runs 40 ppm fast, its audio runs 30 ppm
@@ -378,5 +418,176 @@ final class JamTests: XCTestCase {
         XCTAssertEqual(follower.phase, .following)
         XCTAssertGreaterThan(looks, 50_000, "measured over nearly the whole five minutes")
         XCTAssertLessThanOrEqual(worst, 0.010, "the bar lines of two phones, worst moment of five minutes")
+    }
+
+    // MARK: - Three phones, one downbeat
+
+    /// The host presses Play at 7.3 s — in the middle of a bar of the jam's grid — with two phones
+    /// connected. One phone's clock reads 7.3 s behind the host's and runs 40 ppm fast, the other's
+    /// 123.4 s ahead and 25 ppm slow; every message takes 4 to 29 ms each way, and one answer in
+    /// five waits 300 ms in a queue. The host's audio starts 9 ms late and runs 10 ppm fast, the
+    /// phones' 13 ms late and 30 ppm slow, and 4 ms early and 20 ppm fast. All three begin on the
+    /// same next bar line, from bar 1, and stay within 10 ms of one another.
+    func testWhenTheHostPressesPlayMidBarEveryoneBeginsOnTheSameNextBarLine() throws {
+        enum Arrival {
+            case state(JamState)
+            case pong(JamPong)
+        }
+        let tempo = 100.25
+        let perSecond = tempo * Double(MusicalTime.ticksPerQuarter) / 60
+        let bar = 3_840.0
+        let press = 7.3
+        let behind = [7.3, -123.4]                            // each phone's clock reads this far behind the host's
+        let fast = [40e-6, -25e-6]                            // and runs this much fast
+        let late = [0.013, -0.004]                            // each phone's audio starts this late
+        let drift = [10e-6, -30e-6, 20e-6]                    // the host's audio, then the phones'
+        func phoneClock(_ guest: Int, _ time: Double) -> Double { (time - behind[guest]) * (1 + fast[guest]) }
+        func trueTime(_ guest: Int, _ local: Double) -> Double { local / (1 + fast[guest]) + behind[guest] }
+        var random = JamTestRandom(seed: 21)
+        func leg() -> Double { 0.004 + random.next() * 0.025 }
+
+        var beacon = JamBeacon()
+        var followers = [JamFollower(), JamFollower()]
+        var inboxes: [[(at: Double, what: Arrival)]] = [[], []]
+        var heard: [Double?] = [nil, nil, nil]               // the host's tick, then the phones'; nil while stopped
+        var planned: [JamStart?] = [nil, nil]
+        var firstPlans: [JamStart?] = [nil, nil]
+        var started: [Double?] = [nil, nil, nil]
+        var trimAt: [Double?] = [nil, nil]
+        var pings: [UInt32] = [0, 0]
+        var countIn: JamCountIn?
+        var counting = false
+        var hostTrimAt: Double?
+        var downbeat: Double?
+        var worst = 0.0
+        var looks = 0
+        let step = 0.005
+        for guest in 0..<2 { followers[guest].joined(at: phoneClock(guest, 0)) }
+
+        func act(_ guest: Int, _ action: JamFollower.Action) {
+            switch action {
+            case .none: break
+            case .pause: heard[guest + 1] = nil
+            case .start(let start):
+                planned[guest] = start
+                if firstPlans[guest] == nil { firstPlans[guest] = start }
+            }
+        }
+
+        for index in 0..<8_000 {
+            let now = Double(index) * step
+            // The host presses Play mid-bar: its word goes out at once, for the grid's next bar line.
+            if index == Int((press / step).rounded()) {
+                let announced = try XCTUnwrap(JamCountIn(playhead: 0, now: now, tempo: tempo, signature: TimeSignature(4, 4)))
+                let due = try XCTUnwrap(beacon.due(announced.state))
+                for guest in 0..<2 { inboxes[guest].append((at: now + leg(), what: .state(due))) }
+                countIn = announced
+                counting = true
+                downbeat = announced.state.anchorTime
+            }
+            // Four times a second the host speaks — not while it counts in, nor before it held its word.
+            if index % 50 == 0, countIn == nil {
+                let state = JamState(tempo: tempo, signature: TimeSignature(4, 4), isPlaying: heard[0] != nil,
+                                     anchorTick: heard[0] ?? 0, anchorTime: now)
+                if let due = beacon.due(state) {
+                    for guest in 0..<2 { inboxes[guest].append((at: now + leg(), what: .state(due))) }
+                }
+            }
+            // The phones ask the time eight times a second at first, then twice.
+            if index % (index < 200 ? 25 : 100) == 0 {
+                for guest in 0..<2 {
+                    pings[guest] &+= 1
+                    let out = leg()
+                    var back = leg()
+                    if pings[guest] % 5 == 0 { back += 0.300 }
+                    let received = now + out
+                    let pong = JamPong(id: pings[guest], guestSentAt: phoneClock(guest, now), hostReceivedAt: received,
+                                       hostSentAt: received + 0.0002)
+                    inboxes[guest].append((at: received + 0.0002 + back, what: .pong(pong)))
+                }
+            }
+            for guest in 0..<2 {
+                inboxes[guest].sort { $0.at < $1.at }
+                while let first = inboxes[guest].first, first.at <= now {
+                    inboxes[guest].removeFirst()
+                    switch first.what {
+                    case .state(let state):
+                        act(guest, followers[guest].received(state, at: phoneClock(guest, now), playing: heard[guest + 1] != nil))
+                    case .pong(let pong):
+                        followers[guest].received(pong, at: phoneClock(guest, now))
+                    }
+                }
+                if index % 25 == 0 {
+                    act(guest, followers[guest].check(at: phoneClock(guest, now), playing: heard[guest + 1] != nil))
+                }
+            }
+            // The host's audio starts 9 ms after the bar line it announced; 80 ms on it trims itself onto it.
+            if counting, let announced = countIn, now >= announced.state.anchorTime + 0.009 {
+                counting = false
+                heard[0] = announced.state.anchorTick
+                started[0] = now
+                hostTrimAt = now + 0.08
+            }
+            if !counting, let announced = countIn, let trimTime = hostTrimAt, now >= trimTime, let tick = heard[0] {
+                switch announced.correction(heard: tick, atHostTime: now) {
+                case .none: break
+                case .nudge(let seconds): heard[0] = tick + seconds * perSecond
+                case .relock(let ticks): heard[0] = tick + ticks
+                }
+                countIn = nil
+                hostTrimAt = nil
+            }
+            // The phones' audio starts as planned, late or early; their first check is 80 ms on,
+            // then one every quarter second.
+            for guest in 0..<2 {
+                if let start = planned[guest], phoneClock(guest, now) >= start.localTime + late[guest] {
+                    planned[guest] = nil
+                    heard[guest + 1] = Double(start.songTick(loop: nil))
+                    started[guest + 1] = now
+                    followers[guest].started(true)
+                    trimAt[guest] = now + 0.08
+                }
+                guard let tick = heard[guest + 1] else { continue }
+                let trimming = trimAt[guest].map { now >= $0 } ?? false
+                guard trimming || index % 50 == 25 else { continue }
+                if trimming { trimAt[guest] = nil }
+                switch followers[guest].correct(heard: tick, atLocal: phoneClock(guest, now)) {
+                case .none: break
+                case .nudge(let seconds): heard[guest + 1] = tick + seconds * perSecond
+                case .relock(let ticks): heard[guest + 1] = tick + ticks
+                }
+            }
+            // From half a second after the downbeat: each phone's distance from the grid's bar line.
+            if let downbeat, now >= downbeat + 0.5, now <= 39 {
+                let ticks = heard.compactMap { $0 }
+                if ticks.count == 3, started.allSatisfy({ $0 != nil }) {
+                    let phases = ticks.map { (tick: Double) -> Double in
+                        JamTimeline.phase(tick - (now - downbeat) * perSecond, bar: bar) / perSecond
+                    }
+                    for first in 0..<3 {
+                        for second in (first + 1)..<3 {
+                            worst = Swift.max(worst, Swift.abs(phases[first] - phases[second]))
+                        }
+                    }
+                    looks += 1
+                }
+            }
+            for phone in 0..<3 {
+                if let tick = heard[phone] { heard[phone] = tick + step * perSecond * (1 + drift[phone]) }
+            }
+        }
+        let beat = try XCTUnwrap(downbeat)
+        for guest in 0..<2 {
+            let plan = try XCTUnwrap(firstPlans[guest])
+            XCTAssertEqual(plan.hostTick, 0, "phone \(guest + 1) comes in on the announced downbeat: the host's bar 1")
+            XCTAssertEqual(trueTime(guest, plan.localTime), beat, accuracy: 0.008, "and knows when it falls")
+        }
+        for phone in 0..<3 {
+            XCTAssertEqual(try XCTUnwrap(started[phone]), beat, accuracy: 0.03, "nobody a bar early or late")
+        }
+        XCTAssertEqual(heard.compactMap { $0 }.count, 3, "all three play")
+        XCTAssertEqual(followers.map(\.phase), [.following, .following])
+        XCTAssertGreaterThan(looks, 5_000, "measured over half a minute")
+        XCTAssertLessThanOrEqual(worst, 0.010, "the bar lines of three phones, worst moment")
     }
 }
