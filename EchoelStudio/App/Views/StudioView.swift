@@ -32,97 +32,19 @@ struct StudioView: View {
     var body: some View {
         @Bindable var router = router
         ZStack {
-            VStack(spacing: 0) {
-                TransportBar()
-                Divider().overlay(Theme.Color.border)
-                ZStack(alignment: .bottomTrailing) {
-                    surfaceView
-                    if showsVideoWindow, hasVideo, !fieldFullscreen {
-                        VideoWindow(close: { showsVideoWindow = false })
-                            .padding(Theme.Space.m)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                            .transition(.opacity)
-                    }
-                    // One picture at a time: the window rests while the Field or the sky is the view,
-                    // or the Field fills the screen.
-                    if showsFieldWindow, surface != .field, surface != .sky, !fieldFullscreen {
-                        FieldWindow(expand: { openFieldFullscreen() }, close: { showsFieldWindow = false })
-                            .padding(Theme.Space.m)
-                            .transition(.opacity)
-                    }
-                    // `isLive`/`isStarting` change only at Go Live and Stop; the clock ticks in the badge.
-                    if streaming.isLive || streaming.isStarting {
-                        StreamLiveBadge(open: { router.sheet = .streaming })
-                            .padding(Theme.Space.m)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                    }
-                }
-                if showsKeys {
-                    Divider().overlay(Theme.Color.border)
-                    PlayKeysView()
-                }
-                // The earlier instrument's chip bar at the bottom: one chip per view, in thumb reach.
-                SurfaceBar(selection: $surface)
-            }
-            // A typed value (the tempo, a mixer strip) opens Echoel's number pad at the bottom
-            // edge — a layer, not a presentation, so the sheet slot stays one (Law 7).
-            .numberPadHost()
+            studio
+                // While the Field fills the screen the studio under it is not drawn at all: a
+                // cross-fade let the arrange playhead show through the picture as a white bar
+                // (device video 10021). Hidden, not removed, so nothing in it stops or reloads.
+                .opacity(fieldFullscreen ? 0 : 1)
+                .accessibilityHidden(fieldFullscreen)
             if fieldFullscreen {
                 FieldFullscreen(close: { closeFieldFullscreen() })
-                    .transition(.opacity)
                     .zIndex(1)
             }
         }
         .sheet(item: $router.sheet, onDismiss: { router.sheetClosed() }) { sheet in
-            switch sheet {
-            case .clipEditor(let track): ClipEditorView(trackID: track)
-            case let .clip(track, clip): ClipEditorView(trackID: track, clipID: clip)
-            case .share(let url): ShareSheet(url: url).ignoresSafeArea()
-            case .effects(let track): EffectsView(owner: .track(track))
-            case .masterEffects: EffectsView(owner: .master)
-            case .store: StoreView()
-            case .agent: AgentView()
-            case .about: AboutView()
-            case .renameSong: RenameSongView()
-            case .rename(let target): RenameView(target: target)
-            case .streaming: StreamingView()
-            case .connections: ConnectionsView()
-            case let .importAudio(track, start):
-                AudioFilePicker(pick: { url in
-                    router.sheet = nil
-                    Task { await documents.importAudio(url, placingOn: track, at: start) }
-                }, cancel: { router.sheet = nil })
-                .ignoresSafeArea()
-            case let .importVideoFromPhotos(track, start):
-                VideoLibraryPicker(pick: { url in
-                    router.sheet = nil
-                    Task {
-                        await documents.importVideo(url, onto: track, at: start)
-                        try? FileManager.default.removeItem(at: url)
-                    }
-                }, cancel: { router.sheet = nil })
-                .ignoresSafeArea()
-            case let .importVideoFromFiles(track, start):
-                AudioFilePicker(pick: { url in
-                    router.sheet = nil
-                    Task { await documents.importVideo(url, onto: track, at: start) }
-                }, cancel: { router.sheet = nil }, types: [.movie])
-                .ignoresSafeArea()
-            case .cameraTake(let track): CameraTakeView(track: track)
-            case .exportVideo: VideoExportView()
-            case .importMIDI:
-                AudioFilePicker(pick: { url in
-                    router.sheet = nil
-                    documents.importMIDI(url)
-                }, cancel: { router.sheet = nil }, types: [.midi])
-                .ignoresSafeArea()
-            case let .importClip(track, scene):
-                AudioFilePicker(pick: { url in
-                    router.sheet = nil
-                    Task { await documents.importAudioClip(url, onto: track, scene: scene) }
-                }, cancel: { router.sheet = nil })
-                .ignoresSafeArea()
-            }
+            sheetContent(sheet)
         }
         .environment(router)
         .environment(streaming)
@@ -135,6 +57,96 @@ struct StudioView: View {
         }
         .onChange(of: store.project) { _, project in engine.update(project) }
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
+    }
+
+    private var studio: some View {
+        VStack(spacing: 0) {
+            TransportBar()
+            Divider().overlay(Theme.Color.border)
+            ZStack(alignment: .bottomTrailing) {
+                surfaceView
+                if showsVideoWindow, hasVideo, !fieldFullscreen {
+                    VideoWindow(close: { showsVideoWindow = false })
+                        .padding(Theme.Space.m)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .transition(.opacity)
+                }
+                // One picture at a time: the window rests while the Field or the sky is the view,
+                // or the Field fills the screen.
+                if showsFieldWindow, surface != .field, surface != .sky, !fieldFullscreen {
+                    FieldWindow(expand: { openFieldFullscreen() }, close: { showsFieldWindow = false })
+                        .padding(Theme.Space.m)
+                        .transition(.opacity)
+                }
+                // `isLive`/`isStarting` change only at Go Live and Stop; the clock ticks in the badge.
+                if streaming.isLive || streaming.isStarting {
+                    StreamLiveBadge(open: { router.sheet = .streaming })
+                        .padding(Theme.Space.m)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                }
+            }
+            if showsKeys {
+                Divider().overlay(Theme.Color.border)
+                PlayKeysView()
+            }
+            // The earlier instrument's chip bar at the bottom: one chip per view, in thumb reach.
+            SurfaceBar(selection: $surface)
+        }
+        // A typed value (the tempo, a mixer strip) opens Echoel's number pad at the bottom
+        // edge — a layer, not a presentation, so the sheet slot stays one (Law 7).
+        .numberPadHost()
+    }
+
+    @ViewBuilder private func sheetContent(_ sheet: StudioSheet) -> some View {
+        switch sheet {
+        case .clipEditor(let track): ClipEditorView(trackID: track)
+        case let .clip(track, clip): ClipEditorView(trackID: track, clipID: clip)
+        case .share(let url): ShareSheet(url: url).ignoresSafeArea()
+        case .effects(let track): EffectsView(owner: .track(track))
+        case .masterEffects: EffectsView(owner: .master)
+        case .store: StoreView()
+        case .agent: AgentView()
+        case .about: AboutView()
+        case .renameSong: RenameSongView()
+        case .rename(let target): RenameView(target: target)
+        case .streaming: StreamingView()
+        case .connections: ConnectionsView()
+        case let .importAudio(track, start):
+            AudioFilePicker(pick: { url in
+                router.sheet = nil
+                Task { await documents.importAudio(url, placingOn: track, at: start) }
+            }, cancel: { router.sheet = nil })
+            .ignoresSafeArea()
+        case let .importVideoFromPhotos(track, start):
+            VideoLibraryPicker(pick: { url in
+                router.sheet = nil
+                Task {
+                    await documents.importVideo(url, onto: track, at: start)
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }, cancel: { router.sheet = nil })
+            .ignoresSafeArea()
+        case let .importVideoFromFiles(track, start):
+            AudioFilePicker(pick: { url in
+                router.sheet = nil
+                Task { await documents.importVideo(url, onto: track, at: start) }
+            }, cancel: { router.sheet = nil }, types: [.movie])
+            .ignoresSafeArea()
+        case .cameraTake(let track): CameraTakeView(track: track)
+        case .exportVideo: VideoExportView()
+        case .importMIDI:
+            AudioFilePicker(pick: { url in
+                router.sheet = nil
+                documents.importMIDI(url)
+            }, cancel: { router.sheet = nil }, types: [.midi])
+            .ignoresSafeArea()
+        case let .importClip(track, scene):
+            AudioFilePicker(pick: { url in
+                router.sheet = nil
+                Task { await documents.importAudioClip(url, onto: track, scene: scene) }
+            }, cancel: { router.sheet = nil })
+            .ignoresSafeArea()
+        }
     }
 
     /// Whether the song has a picture to show: a video track with a part on it. Changes only with
@@ -170,11 +182,12 @@ struct StudioView: View {
     }
 
     private func openFieldFullscreen() {
-        withAnimation(.easeOut(duration: 0.15)) { fieldFullscreen = true }
+        // At once, without a cross-fade: the fade was where the studio showed through.
+        fieldFullscreen = true
     }
 
     private func closeFieldFullscreen() {
-        withAnimation(.easeOut(duration: 0.15)) { fieldFullscreen = false }
+        fieldFullscreen = false
     }
 }
 
@@ -754,7 +767,7 @@ struct SongMenu: View {
                 // camera, one at a time; only then does iOS ask for Bluetooth or the camera. The pulse
                 // shows beside Record while it is measured.
                 BodySourceMenu()
-                Button("Live Stream…", systemImage: "dot.radiowaves.left.and.right") { router.sheet = .streaming }
+                Button("Go Live…", systemImage: "dot.radiowaves.left.and.right") { router.sheet = .streaming }
             }
             Section("App") {
                 if agent.isOffered {

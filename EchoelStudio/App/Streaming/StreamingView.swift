@@ -140,7 +140,7 @@ struct StreamingView: View {
 
     /// One decimal in the reader's number format (a comma where the locale writes one).
     static func megabits(_ kbps: Int) -> String {
-        (Double(kbps) / 1_000).formatted(.number.precision(.fractionLength(1))) + " Mbit/s"
+        NumberText.string(Double(kbps) / 1_000, decimals: 1, unit: "Mbit/s")
     }
 }
 

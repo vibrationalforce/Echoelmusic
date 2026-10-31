@@ -189,7 +189,7 @@ struct SkyFrame {
 
     /// One decimal, in the reader's own number format (a comma where the locale writes one).
     static func number(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(1)))
+        NumberText.string(value, decimals: 1)
     }
 
     /// The star's colour in words, from its B−V index (the Morgan–Keenan bands, coarse): the
