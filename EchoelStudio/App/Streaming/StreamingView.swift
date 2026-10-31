@@ -226,6 +226,8 @@ struct StreamTargetEditor: View {
                 Section { Text(problem).foregroundStyle(Theme.Color.record) }
             }
         }
+        // The video rate is typed on Echoel's number pad, docked at the page's bottom edge.
+        .numberPadHost()
         .navigationTitle(target.name)
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: target) { _, changed in streaming.update(changed) }
@@ -291,30 +293,35 @@ struct StreamTargetEditor: View {
     }
 }
 
-/// A bit rate you drag, the look of `ParameterField` (label above, value, a bar): up or down to
-/// change it in steps of 100 kbit/s, double-tap for the platform's recommendation. A device
-/// setting, not a song parameter, so it writes the binding rather than a command.
+/// A bit rate in Echoel's value field (`ParameterField`): label above, value, a bar. Drag up or
+/// down — slowly for fine steps, quickly across the range (`DragPrecision`) — in steps of
+/// 100 kbit/s, with a tick at either end and at the platform's recommendation; double-tap for
+/// that recommendation, tap to type it on the number pad. A device setting, not a song
+/// parameter, so it writes the binding rather than a command.
 private struct StreamRateField: View {
+    @Environment(NumberPadController.self) private var pad: NumberPadController?
     let title: String
     @Binding var kbps: Int
     let range: ClosedRange<Int>
     let recommended: Int
-    @State private var start: Int?
+    /// The drag in progress: the unrounded rate it has reached and the translation last read.
+    @State private var drag: (rate: Double, translation: CGFloat)?
 
-    /// Points of vertical travel for the full range.
+    /// Points of vertical travel for the full range at full speed.
     private static let travel: CGFloat = 240
     private static let step = 100
 
     var body: some View {
         let span = Double(range.upperBound - range.lowerBound)
         let position = span > 0 ? Double(kbps - range.lowerBound) / span : 0
+        let engaged = drag != nil || pad?.request?.owner == owner
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
             Text(title)
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
             Text("\(kbps) kbit/s")
                 .font(Theme.Font.value)
-                .foregroundStyle(Theme.Color.text)
+                .foregroundStyle(engaged ? Theme.Color.accent : Theme.Color.text)
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Rectangle().fill(Theme.Color.surfaceRaised)
@@ -325,24 +332,50 @@ private struct StreamRateField: View {
             .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity, minHeight: Theme.Size.touch, alignment: .leading)
+        .animation(Theme.Motion.quick, value: engaged)
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 2)
-                .onChanged { drag in
-                    let origin = start ?? kbps
-                    start = origin
-                    let moved = -Double(drag.translation.height / Self.travel) * span
-                    kbps = Self.snapped(origin + Int(moved), in: range)
+                .onChanged { gesture in
+                    let reached = drag ?? (rate: Double(kbps), translation: 0)
+                    let moved = gesture.translation.height - reached.translation
+                    let scale = DragPrecision.scale(speed: Double(gesture.velocity.height))
+                    let rate = Swift.min(Swift.max(reached.rate - Double(moved / Self.travel) * span * scale,
+                                                   Double(range.lowerBound)), Double(range.upperBound))
+                    drag = (rate: rate, translation: gesture.translation.height)
+                    kbps = Self.snapped(Int(rate.rounded()), in: range)
                 }
-                .onEnded { _ in start = nil }
+                .onEnded { _ in drag = nil }
         )
         .onTapGesture(count: 2) { kbps = Self.snapped(recommended, in: range) }
+        .onTapGesture(perform: typeRate)
+        .sensoryFeedback(.selection, trigger: kbps) { old, new in
+            drag != nil && DragPrecision.reachesDetent(from: Double(old), to: Double(new),
+                                                       standard: Double(Self.snapped(recommended, in: range)),
+                                                       range: Double(range.lowerBound)...Double(range.upperBound))
+        }
         .accessibilityElement()
         .accessibilityLabel(title)
         .accessibilityValue("\(kbps) kilobits a second")
         .accessibilityAdjustableAction { direction in
             kbps = Self.snapped(kbps + (direction == .increment ? Self.step : -Self.step), in: range)
         }
+        .accessibilityAction(named: "Type a bit rate", typeRate)
+    }
+
+    private var owner: String { "stream.rate.\(title)" }
+
+    /// The rate on Echoel's number pad, whole kbit/s; it lands on the 100 kbit/s grid.
+    private func typeRate() {
+        guard let pad else { return }
+        let binding = $kbps
+        let bounds = range
+        pad.open(NumberPadRequest(owner: owner, title: "\(title) bit rate",
+                                  format: NumberEntryFormat(scale: 1, decimals: 0, unit: "kbit/s"),
+                                  range: Double(bounds.lowerBound)...Double(bounds.upperBound),
+                                  value: Double(kbps), standard: Double(Self.snapped(recommended, in: bounds))) { typed in
+            binding.wrappedValue = Self.snapped(Int(typed.rounded()), in: bounds)
+        })
     }
 
     private static func snapped(_ value: Int, in range: ClosedRange<Int>) -> Int {
