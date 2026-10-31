@@ -11,23 +11,23 @@ struct StoreView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section {
+                EchoelSection("Instruments", footer: footer) {
                     ForEach(OwnPlugin.instruments) { plugin in row(plugin) }
                     purchase
-                } footer: {
-                    Text(footer)
                 }
-                Section("Free") {
+                EchoelSection("Free") {
                     ForEach(OwnPlugin.free) { plugin in row(plugin) }
                 }
-                Section {
+                EchoelSection {
                     Button("Restore Purchases") { Task { await store.restore() } }
+                        .buttonStyle(EchoelRowButtonStyle())
                         .disabled(store.isBusy)
                 }
                 if let message = store.message {
-                    Section { Text(message).foregroundStyle(Theme.Color.textSecondary) }
+                    EchoelSection { NoteText(message) }
                 }
             }
+            .echoelList()
             .navigationTitle("Echoel Plugins")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
@@ -49,18 +49,23 @@ struct StoreView: View {
 
     private func row(_ plugin: OwnPlugin) -> some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
-            Text(plugin.component.name).font(Theme.Font.body)
+            Text(plugin.component.name)
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.Color.text)
             Text(plugin.summary)
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
         }
         .padding(.vertical, Theme.Space.xs)
+        .accessibilityElement(children: .combine)
     }
 
     /// One purchase unlocks all of them.
     private var purchase: some View {
         HStack {
-            Text("All \(OwnPlugin.instruments.count) instruments in other apps").font(Theme.Font.body)
+            Text("All \(OwnPlugin.instruments.count) instruments in other apps")
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.Color.text)
             Spacer()
             if store.isOwned {
                 Text("Owned")
@@ -70,7 +75,7 @@ struct StoreView: View {
                 ProgressView()
             } else if let product = store.product {
                 Button(product.displayPrice) { Task { await store.buy() } }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(ToolButtonStyle(isActive: true))
                     .accessibilityLabel("Buy \(PluginUnlock.name) for \(product.displayPrice)")
             } else if store.isLoading {
                 ProgressView()

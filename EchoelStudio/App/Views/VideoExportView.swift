@@ -20,7 +20,7 @@ struct VideoExportView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Frame") {
+                EchoelSection("Frame") {
                     Picker("Frame", selection: $options.shape) {
                         ForEach(VideoExportPlan.Shape.allCases, id: \.self) { Text($0.title).tag($0) }
                     }
@@ -30,9 +30,9 @@ struct VideoExportView: View {
                         Text("Fit").tag(VideoExportPlan.Fit.fit)
                     }
                     .pickerStyle(.segmented)
-                    .accessibilityHint("Fill crops the picture to the frame in the export only; Fit shows all of it on black.")
+                    NoteText("Fill crops the picture to the frame in the export only; Fit shows all of it on black.")
                 }
-                Section("Length") {
+                EchoelSection("Length") {
                     Picker("Length", selection: $shortSeconds) {
                         Text("Whole Song").tag(Double?.none)
                         ForEach(VideoExportPlan.shortFormSeconds, id: \.self) { seconds in
@@ -41,24 +41,23 @@ struct VideoExportView: View {
                     }
                     if let range = shortRange {
                         let seconds = VideoExportPlan.seconds(of: range, in: store.project)
-                        Text(rangeText(range, seconds: seconds.to - seconds.from))
-                            .font(Theme.Font.caption)
-                            .foregroundStyle(Theme.Color.textSecondary)
+                        NoteText(rangeText(range, seconds: seconds.to - seconds.from))
                     }
                 }
-                Section("Encoding") {
+                EchoelSection("Encoding") {
                     Picker("Codec", selection: $options.codec) {
                         Text("H.264").tag(VideoExportPlan.Codec.h264)
                         Text("HEVC").tag(VideoExportPlan.Codec.hevc)
                     }
                     .pickerStyle(.segmented)
                     Toggle("Mix at −14 LUFS", isOn: $options.normalizesLoudness)
-                        .accessibilityHint("Brings the mix to the loudness social platforms play at, under a −1 dBTP peak.")
+                    NoteText("Brings the mix to the loudness social platforms play at, under a −1 dBTP peak.")
                 }
                 if let progress = documents.exportProgress {
-                    Text(progress).font(Theme.Font.caption).foregroundStyle(Theme.Color.textSecondary)
+                    EchoelSection { NoteText(progress) }
                 }
             }
+            .echoelList()
             .navigationTitle("Export Video")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -70,6 +69,7 @@ struct VideoExportView: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
         .interactiveDismissDisabled(documents.isExporting)
         .onAppear {
             // The bar the playhead stands in: read once, never observed.
