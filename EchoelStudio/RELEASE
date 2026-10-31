@@ -1,26 +1,23 @@
-11.0.0, seventeenth upload — the Echoel identity end to end: one look, one voice, one number format
+11.0.0, eighteenth upload — the identity finished: two-row transport, one vocabulary, every audit finding closed
 
-What is new since 10023. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10025. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- The transport fits a phone: nothing is cut off at the edges; the "A" button is now "Write"
-  (Write Automation).
-- The song menu has five sections: Song, Export, Play and Sync, Connect, App; Live Stream is now
-  Go Live.
-- Connections and Go Live look like the Studio: Echoel switches and lists, no system blue;
-  port, universe and channel are typed on Echoel's number pad.
-- Sky names a star in words ("Bright Star 7194", "Magnitude 2.6 · White") instead of catalogue
-  shorthand; the debug line is gone.
-- One number format that follows your language (76,5 BPM and -5,6 dB alike).
-- Session grid anchored top left with readable names; mixer faders take the height; piano roll
-  keys read as white and black keys; an empty song says what to do.
-- Field fullscreen opens and closes without the studio showing through.
-- Error messages say what happened and what to do.
-- The plug-in in AUM, Logic and GarageBand wears Echoel's look and font, and hosts list it as
-  "Echoel: Synth", "Echoel: EQ" and so on.
-- The app's system accent is bio-green; the launch screen is black.
+- Transport in two rows on a phone; Click, MIDI Learn, Keys, Field Window and Write Automation
+  sit behind More (it lights while Learn or Write is on).
+- American English throughout (license, color, center, gray); one word per thing in menus and
+  undo titles (Rename Song, Move Region, Undo Assistant).
+- Piano roll: a tap selects a note, a double tap (or Delete Note) deletes it.
+- Trim grip and drum step cells are full 44 pt touch targets.
+- Every number, including the tempo and percentages, uses the one number format; the plug-in
+  shows its values the same way (kHz, ms, dB, BPM, 50%).
+- One drum map line in app and plug-in, checked against the kit.
+- Error messages in the store, opening a song, export, the camera and the plug-in say what to do.
+- The plug-in uses Echoel's switch; a song keeps a plug-in's state when it is chosen again
+  under its new name; effects show as "EQ — Echoel".
+- Go Live badge is a full touch target and reads "Live 0:12:03".
 
-Previous: 11.0.0 (10023), sixteenth upload — voice effects, Bake Effects, song settings, MIDI
-import, rename and reorder. 10021 and earlier: see git history of this file.
+Previous: 11.0.0 (10025), seventeenth upload — the Echoel identity end to end (round one).
+10023 and earlier: see git history of this file.
 group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -29,11 +26,9 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Portrait iPhone, standard text size: every transport control is fully visible, nothing is cut
-   off at either edge.
-2. Song menu: five labelled sections; Go Live… opens a page with no blue, and its fine print is
-   readable.
-3. Connections: tap Port; Echoel's number pad opens and the typed value is kept.
-4. Field fullscreen, open and close it a few times: no white vertical bar appears.
-5. AUM (or GarageBand): the plug-in list shows "Echoel: Synth" and the plug-in window is black
-   with Echoel's font.
+1. Portrait iPhone, standard text size: exactly two transport rows, nothing cut off, and More
+   opens a menu with Click, MIDI Learn, Keys, Field Window and Write Automation.
+2. Piano roll: one tap selects a note (green outline), a double tap deletes it.
+3. With German as the phone language: tempo and dB both show a comma (76,5 BPM, -5,6 dB).
+4. Arrange: drag a region's trim edge with a fingertip; it catches on the first try.
+5. AUM: an Echoel effect's switch is the Echoel switch, and its values read like the app's.
