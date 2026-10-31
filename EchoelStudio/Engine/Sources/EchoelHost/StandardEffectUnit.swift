@@ -122,6 +122,12 @@ public final class StandardEffectUnit: AUAudioUnit {
 
     public override var canProcessInPlace: Bool { true }
 
+    /// The pitch correction plays its output a little behind its input (`PitchCorrector`); a host
+    /// that compensates delay (Logic, AUM) lines the track up with this. The other effects have none.
+    public override var latency: TimeInterval {
+        render.kernel.latencySeconds
+    }
+
     /// Unlocked, the unit always plays. Locked, it plays as a demo: two seconds of silence every
     /// thirty. Every unit starts unlocked, and no shell locks an effect: the effects are free in
     /// the app and in other hosts (founder 2026-10-18). The instruments' demo lives in their own

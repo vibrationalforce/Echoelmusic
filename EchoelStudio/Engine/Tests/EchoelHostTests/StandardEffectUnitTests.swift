@@ -49,6 +49,12 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertNil(u.parameterTree?.parameter(withAddress: 3)?.valueStrings, "a number has no names")
     }
 
+    func testOnlyThePitchCorrectionReportsALatency() throws {
+        XCTAssertEqual(try unit(.pitchCorrection).latency, 0.019, accuracy: 0.0005)
+        XCTAssertEqual(try unit(.harmonizer).latency, 0)
+        XCTAssertEqual(try unit(.equalizer).latency, 0)
+    }
+
     func testTheExtensionCopyIsTheSameEffectAndPlaysAsADemoUntilUnlocked() throws {
         let paid = try StandardEffectUnit(componentDescription: StandardEffectUnit.audioComponent(StandardEffect.equalizer.extensionComponent))
         try paid.allocateRenderResources()
