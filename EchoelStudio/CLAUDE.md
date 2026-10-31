@@ -48,11 +48,15 @@ A module may depend only on modules below it — never the other way round.
 7. **One presentation slot.** Modals go through one `.sheet(item:)` with an enum. A presented sheet may own ONE presentation of its own (the Sound page's file picker), because it cannot use the root slot without closing itself.
 8. **Tests test behaviour.** No test reads source text or prose.
 9. **Swift 6 language mode, strict concurrency.** No `print`, no force unwrap.
-10. **Network only where the musician turns it on** (NEUPLANUNG §6, rule 3). Today there are
-    exactly two places: StoreKit (the app sells the one purchase; the extension asks StoreKit
-    only when the shared record says nothing, `PluginLicense`) and Network MIDI, off until the toggle in the MIDI settings turns it on (`MIDIInput.setNetwork`). A new
-    connection waits for the one connections module (P3/P4), is off by default and shows there.
-    Measure, do not trust this line: `git grep -n -E "import Network\b|URLSession|NWConnection|MIDINetworkSession|import StoreKit" -- 'EchoelStudio/**/*.swift'`.
+10. **Network only where the musician turns it on** (NEUPLANUNG §6, rule 3). The places are the
+    files `studio.yml`'s "Network only where named" lists, and only they: StoreKit (the app sells
+    the one purchase; the extension asks StoreKit only when the shared record says nothing,
+    `PluginLicense`); Network MIDI, off until its toggle in the Song menu (`MIDIInput.setNetwork`);
+    the live stream, off until Go Live (`StreamPublisher`); the Connections module, each connection
+    off until switched on (`UDPSender`); and the Jam (W16), MultipeerConnectivity, off until the
+    musician hosts or joins one on its page (Song menu, Connect, Jam…) — `JamLink`. A new connection
+    is off by default, shows in the Song menu's Connect section, and joins that list in the same commit.
+    Measure, do not trust this line: `git grep -n -E "import (Network|StoreKit|MultipeerConnectivity|HaishinKit|RTMPHaishinKit|SRTHaishinKit)\b|URLSession|NWConnection|MIDINetworkSession" -- 'EchoelStudio/**/*.swift'`.
 
 ## Build lessons (each cost one red CI round, 2026-10-17)
 
