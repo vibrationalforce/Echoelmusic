@@ -16,6 +16,7 @@ public struct ParameterSpec: Equatable, Sendable {
     public enum ValueType: String, Sendable {
         case string, number, integer, boolean, ticks, trackID, clipID, placementID, sceneID, mediaID, regionID, insertID
         case noteList, noteIDList, timeSignature, trackKind, mixerTarget, pointList, controlList
+        case placementIDList, regionIDList
     }
 
     public let name: String
@@ -49,6 +50,7 @@ extension Command {
         case placeClip, movePlacement, removePlacement
         case placeAudio, moveRegion, trimRegion, removeRegion
         case placeVideo, splitRegion
+        case splitPlacement, consolidatePlacements, consolidateRegions
         case addScene, removeScene, renameScene, setSlot
     }
 
@@ -118,6 +120,9 @@ extension Command {
         case .moveRegion: .moveRegion
         case .trimRegion: .trimRegion
         case .removeRegion: .removeRegion
+        case .splitPlacement: .splitPlacement
+        case .consolidatePlacements: .consolidatePlacements
+        case .consolidateRegions: .consolidateRegions
         case .addScene: .addScene
         case .removeScene: .removeScene
         case .renameScene: .renameScene
@@ -449,6 +454,25 @@ public enum CommandCatalog {
             return CommandSpec(name: "audio.remove", title: "Delete Audio",
                                summary: "Removes an audio or video region from the timeline; the file stays in the song.",
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region.")])
+        case .splitPlacement:
+            return CommandSpec(name: "arrangement.split", title: "Split Clip",
+                               summary: "Cuts a placed clip in two at a position inside it. A note across the cut ends there and sounds again from it; both halves become clips of their own.",
+                               parameters: [P("track", .trackID, "The track."), P("placement", .placementID, "The placement."),
+                                            P("at", .ticks, "Song position of the cut in ticks, inside the placed clip."),
+                                            P("head", .clipID, "Identifier for the clip before the cut."),
+                                            P("tail", .clipID, "Identifier for the clip after the cut."),
+                                            P("newPlacement", .placementID, "Identifier for the placement of the part after the cut.")])
+        case .consolidatePlacements:
+            return CommandSpec(name: "arrangement.consolidate", title: "Consolidate Clips",
+                               summary: "Joins two or more placed clips of one track into one new clip that plays what they played.",
+                               parameters: [P("track", .trackID, "The track."),
+                                            P("placements", .placementIDList, "The placements to join, at least two."),
+                                            P("clip", .clipID, "Identifier for the joined clip.")])
+        case .consolidateRegions:
+            return CommandSpec(name: "audio.consolidate", title: "Join Audio",
+                               summary: "Joins audio regions that are consecutive pieces of one file (as a split leaves them) into one. Overlapping or separate audio needs a bounce and is refused.",
+                               parameters: [P("track", .trackID, "The audio track."),
+                                            P("regions", .regionIDList, "The regions to join, at least two.")])
         case .addScene:
             return CommandSpec(name: "scene.add", title: "Add Scene",
                                summary: "Adds a scene (a row of clip slots) to the session view.",

@@ -92,6 +92,16 @@ public enum Command: Codable, Equatable, Sendable {
     case placeClip(track: TrackID, id: PlacementID, clip: ClipID, start: Tick)
     case movePlacement(track: TrackID, PlacementID, start: Tick)
     case removePlacement(track: TrackID, PlacementID)
+    /// Cuts a placed clip in two at `at` (song ticks, strictly inside it). The placement plays a
+    /// new clip `head` up to the cut; a new placement `placement` plays a new clip `tail` from it.
+    /// A note across the cut ends there in the head and sounds again from the cut in the tail. The
+    /// old clip goes when nothing plays it any more; a clip a slot or another placement uses stays.
+    case splitPlacement(track: TrackID, PlacementID, at: Tick, head: ClipID, tail: ClipID, placement: PlacementID)
+    /// Joins two or more placements of one track into one new clip `clip`, spanning the earliest
+    /// start to the latest end: the notes and controller moves the placements played, in song
+    /// order, with overlaps of one pitch resolved as playback resolves them. The earliest
+    /// placement plays the new clip, the others go; a clip nothing uses any more goes with them.
+    case consolidatePlacements(track: TrackID, [PlacementID], clip: ClipID)
 
     // Audio regions
     case placeAudio(track: TrackID, id: RegionID, media: MediaID, start: Tick)
@@ -102,6 +112,10 @@ public enum Command: Codable, Equatable, Sendable {
     case moveRegion(track: TrackID, RegionID, start: Tick)
     case trimRegion(track: TrackID, RegionID, offset: Int, length: Int)
     case removeRegion(track: TrackID, RegionID)
+    /// Joins two or more audio regions of one track into the earliest of them — only where no
+    /// rendering is needed: pieces of one file that follow each other in the file and on the
+    /// timeline, as a split leaves them. Overlapping or separate audio needs a bounce and is refused.
+    case consolidateRegions(track: TrackID, [RegionID])
 
     // Session
     case addScene(id: SceneID, name: String, index: Int?)
@@ -714,6 +728,60 @@ extension Command {
             guard let p = project.tracks[t].placementIndex(id) else { throw CommandError.unknownPlacement(id) }
             project.tracks[t].placements.remove(at: p)
 
+        case let .splitPlacement(trackID, id, cut, headID, tailID, placementID):
+            let t = try project.requireTrack(trackID)
+            guard let p = project.tracks[t].placementIndex(id) else { throw CommandError.unknownPlacement(id) }
+            let placement = project.tracks[t].placements[p]
+            guard let c = project.tracks[t].clipIndex(placement.clip) else { throw CommandError.unknownClip(placement.clip) }
+            let clip = project.tracks[t].clips[c]
+            guard cut > placement.start, cut < placement.start + clip.length else {
+                throw CommandError.invalidValue(parameter: "at", reason: "must lie inside the placed clip, after its first tick")
+            }
+            for newID in [headID, tailID] where project.clipLocation(newID) != nil {
+                throw CommandError.duplicateID(newID.description)
+            }
+            guard headID != tailID else { throw CommandError.duplicateID(tailID.description) }
+            guard project.tracks[t].placementIndex(placementID) == nil else { throw CommandError.duplicateID(placementID.description) }
+            let (head, tail) = Self.split(clip, at: cut - placement.start, head: headID, tail: tailID)
+            var track = project.tracks[t]
+            track.placements[p].clip = headID
+            track.placements.append(Placement(id: placementID, clip: tailID, start: cut))
+            track.placements.sort { $0.start < $1.start }
+            track.clips.insert(contentsOf: [head, tail], at: c + 1)
+            track.removeClipIfUnused(clip.id)
+            project.tracks[t] = track
+
+        case let .consolidatePlacements(trackID, ids, clipID):
+            let t = try project.requireTrack(trackID)
+            guard ids.count >= 2 else {
+                throw CommandError.invalidValue(parameter: "placements", reason: "needs at least two placements")
+            }
+            guard Set(ids).count == ids.count else { throw CommandError.duplicateID("placements") }
+            guard project.clipLocation(clipID) == nil else { throw CommandError.duplicateID(clipID.description) }
+            var track = project.tracks[t]
+            for id in ids where track.placementIndex(id) == nil { throw CommandError.unknownPlacement(id) }
+            let chosen = Set(ids)
+            // In the track's order, which is the order playback reads them in.
+            var parts: [(placement: Placement, clip: Clip)] = []
+            for placement in track.placements where chosen.contains(placement.id) {
+                guard let clip = track.clips.first(where: { $0.id == placement.clip }) else {
+                    throw CommandError.unknownClip(placement.clip)
+                }
+                parts.append((placement, clip))
+            }
+            guard let first = parts.min(by: { $0.placement.start < $1.placement.start }) else {
+                throw CommandError.invalidValue(parameter: "placements", reason: "needs at least two placements")
+            }
+            let merged = Self.consolidated(parts, id: clipID, name: first.clip.name)
+            try Self.validateLength(merged.length)
+            let sources = parts.map { $0.clip.id }
+            let at = track.clips.firstIndex { sources.contains($0.id) } ?? track.clips.count
+            track.placements.removeAll { chosen.contains($0.id) && $0.id != first.placement.id }
+            if let p = track.placementIndex(first.placement.id) { track.placements[p].clip = clipID }
+            track.clips.insert(merged, at: at)
+            for source in Set(sources) { track.removeClipIfUnused(source) }
+            project.tracks[t] = track
+
         case let .placeAudio(trackID, id, mediaID, start):
             let t = try project.requireTrack(trackID)
             guard project.tracks[t].kind == .audio else {
@@ -790,6 +858,25 @@ extension Command {
             guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
             project.tracks[t].regions.remove(at: r)
 
+        case let .consolidateRegions(trackID, ids):
+            let t = try project.requireTrack(trackID)
+            guard ids.count >= 2 else {
+                throw CommandError.invalidValue(parameter: "regions", reason: "needs at least two regions")
+            }
+            guard Set(ids).count == ids.count else { throw CommandError.duplicateID("regions") }
+            var regions: [AudioRegion] = []
+            for id in ids {
+                guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+                regions.append(project.tracks[t].regions[r])
+            }
+            guard let joined = project.joinedWithoutRendering(regions) else {
+                throw CommandError.invalidValue(parameter: "regions",
+                                                reason: "only pieces of one file that follow each other join without a bounce; overlapping or separate audio needs a bounce")
+            }
+            let chosen = Set(ids)
+            project.tracks[t].regions.removeAll { chosen.contains($0.id) && $0.id != joined.id }
+            if let r = project.tracks[t].regionIndex(joined.id) { project.tracks[t].regions[r] = joined }
+
         case let .addScene(id, name, index):
             guard project.sceneIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
             let at = index ?? project.scenes.count
@@ -859,6 +946,92 @@ extension Command {
         }
     }
 
+    /// A clip cut at `point` (clip ticks, inside it) into two new clips with the clip's name.
+    /// What the placement played sounds the same up to the cut: a note across it is shortened to
+    /// the cut in the head and starts again at the cut in the tail (with its id — ids are unique
+    /// within a clip). A bend or controller in effect at the cut is set again at the tail's start
+    /// unless the tail sets it there itself, so the tail plays the same alone or launched.
+    static func split(_ clip: Clip, at point: Tick, head headID: ClipID, tail tailID: ClipID) -> (Clip, Clip) {
+        var headNotes: [Note] = []
+        var tailNotes: [Note] = []
+        for note in clip.notes where note.start < clip.length {
+            let end = Swift.min(note.start + note.length, clip.length)
+            if note.start < point {
+                var kept = note
+                kept.length = Swift.min(end, point) - note.start
+                headNotes.append(kept)
+                if end > point {
+                    var rest = note
+                    rest.start = 0
+                    rest.length = end - point
+                    tailNotes.append(rest)
+                }
+            } else {
+                var moved = note
+                moved.start -= point
+                tailNotes.append(moved)
+            }
+        }
+        let headControls = clip.controls.filter { $0.start < point }
+        var tailControls = clip.controls.filter { $0.start >= point && $0.start < clip.length }.map { change in
+            var moved = change
+            moved.start -= point
+            return moved
+        }
+        var carried: [ControlChange] = []
+        for change in headControls.reversed() where !carried.contains(where: { $0.kind == change.kind }) {
+            carried.append(change)
+        }
+        let restated = carried.reversed().filter { last in
+            !tailControls.contains { $0.kind == last.kind && $0.start == 0 } && last.rest != last.value
+        }.map { ControlChange(kind: $0.kind, start: 0, value: $0.value) }
+        tailControls.insert(contentsOf: restated, at: 0)
+        return (Clip(id: headID, name: clip.name, length: point, notes: headNotes.sorted(by: noteOrder), controls: headControls),
+                Clip(id: tailID, name: clip.name, length: clip.length - point,
+                     notes: tailNotes.sorted(by: noteOrder), controls: tailControls))
+    }
+
+    /// What `parts` played, as one clip from the earliest start to the latest end. Notes come
+    /// through playback's own overlap rule (`PlaybackPlan.resolvingOverlaps`), so the clip holds
+    /// what was heard, not a second reading of it. A placement that bent or held the pedal and
+    /// ends inside the span returns them to rest there, as playback did. Ids are new: two parts
+    /// may play the same clip, and its ids are unique only within it.
+    static func consolidated(_ parts: [(placement: Placement, clip: Clip)], id: ClipID, name: String) -> Clip {
+        let start = parts.map { $0.placement.start }.min() ?? 0
+        let stop = parts.map { $0.placement.start + $0.clip.length }.max() ?? start
+        var intervals: [PlaybackPlan.Interval] = []
+        var returns: [ControlChange] = []
+        var changes: [ControlChange] = []
+        for (placement, clip) in parts {
+            let shift = placement.start - start
+            for note in clip.notes where note.start < clip.length {
+                let end = Swift.min(note.start + note.length, clip.length)
+                intervals.append(PlaybackPlan.Interval(start: shift + note.start, end: shift + end,
+                                                       pitch: note.pitch, velocity: note.velocity))
+            }
+            var moved: [ControlChange.Kind] = []
+            for control in clip.controls where control.start < clip.length {
+                changes.append(ControlChange(kind: control.kind, start: shift + control.start, value: control.value))
+                if !moved.contains(control.kind) { moved.append(control.kind) }
+            }
+            let end = shift + clip.length
+            guard end < stop - start else { continue }
+            for kind in moved {
+                if let rest = ControlChange(kind: kind, start: end, value: 0).rest {
+                    returns.append(ControlChange(kind: kind, start: end, value: rest))
+                }
+            }
+        }
+        let notes = PlaybackPlan.resolvingOverlaps(intervals).map { interval in
+            Note(pitch: interval.pitch, velocity: interval.velocity, start: interval.start, length: interval.end - interval.start)
+        }
+        // Stable: at one tick a return to rest comes before a new value, as in playback.
+        let controls = (returns + changes).enumerated()
+            .sorted { $0.element.start != $1.element.start ? $0.element.start < $1.element.start : $0.offset < $1.offset }
+            .map(\.element)
+        return Clip(id: id, name: name, length: stop - start, notes: notes.sorted(by: noteOrder), controls: controls)
+    }
+
     /// Notes are kept sorted by start, then pitch, so the document has one canonical order
     /// and two equal edits compare equal.
     static func noteOrder(_ a: Note, _ b: Note) -> Bool {
@@ -873,7 +1046,34 @@ public enum Palette {
     public static let trackColorCount = 12
 }
 
+extension Track {
+    /// Removes a clip nothing plays any more — no placement and no session slot — after an edit
+    /// replaced it with new clips. A clip still in use stays.
+    mutating func removeClipIfUnused(_ id: ClipID) {
+        guard !placements.contains(where: { $0.clip == id }), !slots.contains(where: { $0.clip == id }) else { return }
+        clips.removeAll { $0.id == id }
+    }
+}
+
 extension Project {
+    /// The one region that plays what `regions` play, when no rendering is needed: pieces of one
+    /// file of the song, each starting in the file where the one before it ends and on the
+    /// timeline where it stops (within a tick, the rounding of a split). Nil otherwise —
+    /// overlapping regions both sound, and audio from different files or places needs a bounce.
+    /// The result keeps the earliest region's id.
+    public func joinedWithoutRendering(_ regions: [AudioRegion]) -> AudioRegion? {
+        let ordered = regions.sorted { $0.start < $1.start }
+        guard let first = ordered.first, ordered.count >= 2, mediaFile(first.media) != nil else { return nil }
+        var joined = first
+        for (before, next) in zip(ordered, ordered.dropFirst()) {
+            guard next.media == first.media, next.start > before.start,
+                  next.offset == before.offset + before.length,
+                  let stop = Arranging.end(of: before, in: self), abs(next.start - stop) <= 1 else { return nil }
+            joined.length += next.length
+        }
+        return joined
+    }
+
     func requireTrack(_ id: TrackID) throws -> Int {
         guard let t = trackIndex(id) else { throw CommandError.unknownTrack(id) }
         return t
