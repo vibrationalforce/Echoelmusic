@@ -787,7 +787,7 @@ final class DocumentController {
         do {
             try store.perform([.renameProject(name: name)], title: "Rename Song")
         } catch {
-            lastError = "Could not rename the song."
+            lastError = "Could not rename the song. Try again with another name."
             return
         }
         saveNow()
@@ -1094,7 +1094,7 @@ final class DocumentController {
                 ? "A plugin stopped rendering during the export, so the file would have had gaps. Nothing was saved."
                 : error as? WAVWriter.WriteError == .tooLong
                 ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz)."
-                : "Could not export the song."
+                : "Could not export the song. Try again; if it fails again, share the diagnostics from About Echoel."
             return nil
         }
     }
@@ -1197,7 +1197,7 @@ final class DocumentController {
                     ? "A plugin stopped rendering during the export, so the stems would have had gaps. Nothing was saved."
                     : error as? WAVWriter.WriteError == .tooLong
                     ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz)."
-                    : "Could not export the stems."
+                    : "Could not export the stems. Try again; if it fails again, share the diagnostics from About Echoel."
             }
             return nil
         }
@@ -1420,7 +1420,7 @@ final class DocumentController {
         case .failure(let error):
             log.error("share copy failed — \(error.localizedDescription, privacy: .private)")
             lastExportIsNews = false
-            lastError = "Could not prepare \(songName) for sharing."
+            lastError = "Could not prepare \(songName) for sharing. Try again."
             return nil
         }
     }
@@ -1438,7 +1438,7 @@ final class DocumentController {
             return url
         } catch {
             log.error("MIDI export failed — \(error.localizedDescription, privacy: .private)")
-            lastError = "Could not export the MIDI file."
+            lastError = "Could not export the MIDI file. Try again."
             return nil
         }
     }
@@ -1458,7 +1458,7 @@ final class DocumentController {
             lastError = refusal.explanation
         } catch {
             log.error("MIDI import failed — \(String(describing: error), privacy: .public)")
-            lastError = "Could not import the MIDI file."
+            lastError = "Could not import the MIDI file. Check that it is a Standard MIDI File (.mid) and try again."
         }
     }
 
@@ -1545,7 +1545,7 @@ final class DocumentController {
             if !store.project.media.contains(where: { $0.id == file.id }) { try? FileManager.default.removeItem(at: copy) }
         case .failure(let error):
             log.error("video import failed — \(error.localizedDescription, privacy: .private)")
-            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not import the video."
+            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not import the video. Try again, or choose another file."
         }
     }
 
@@ -1673,7 +1673,7 @@ final class DocumentController {
         case .failure(let error):
             log.error("video export failed — \(error.localizedDescription, privacy: .private)")
             lastExportIsNews = false
-            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not export the video."
+            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not export the video. Try again; if it fails again, share the diagnostics from About Echoel."
             return nil
         }
     }
@@ -1746,7 +1746,7 @@ final class DocumentController {
             return (file: imported.file, commands: commands)
         case .failure(let error):
             log.error("import failed — \(error.localizedDescription, privacy: .private)")
-            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not import the file."
+            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not import the file. Try again, or choose another file."
             return nil
         }
     }
@@ -1868,7 +1868,7 @@ final class DocumentController {
         do {
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         } catch {
-            lastError = "Could not prepare the song's Media folder."
+            lastError = "Could not prepare the song's Media folder. Try again."
             return nil
         }
         if isUnwritten || awaitsFirstWriteAtFreeName { starterMadeFolder = true }
@@ -2026,7 +2026,7 @@ final class DocumentController {
             lastError = nil
         } catch {
             log.error("import rejected — \(String(describing: error), privacy: .public)")
-            lastError = "Could not add the file to the song."
+            lastError = "Could not add the file to the song. Try again."
         }
     }
 

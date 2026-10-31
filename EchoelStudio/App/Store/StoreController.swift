@@ -99,7 +99,7 @@ final class StoreController {
             return
         } catch {
             log.error("restore failed — \(error.localizedDescription, privacy: .public)")
-            message = "Could not reach the App Store."
+            message = "Could not reach the App Store. Check the connection and try again."
             return
         }
         await refreshOwned()
