@@ -48,6 +48,7 @@ extension Command {
         case addNotes, updateNotes, removeNotes, setControls
         case placeClip, movePlacement, removePlacement
         case placeAudio, moveRegion, trimRegion, removeRegion
+        case placeVideo, splitRegion
         case addScene, removeScene, renameScene, setSlot
     }
 
@@ -112,6 +113,8 @@ extension Command {
         case .movePlacement: .movePlacement
         case .removePlacement: .removePlacement
         case .placeAudio: .placeAudio
+        case .placeVideo: .placeVideo
+        case .splitRegion: .splitRegion
         case .moveRegion: .moveRegion
         case .trimRegion: .trimRegion
         case .removeRegion: .removeRegion
@@ -418,20 +421,33 @@ public enum CommandCatalog {
                                             P("id", .regionID, "Identifier for the region."),
                                             P("media", .mediaID, "A file in the song's media."),
                                             P("start", .ticks, "Position on the timeline in ticks.")])
+        case .placeVideo:
+            return CommandSpec(name: "video.place", title: "Place Video",
+                               summary: "Puts a whole video file from the song's media on a video track's timeline; the song's mix is its sound.",
+                               parameters: [P("track", .trackID, "A video track."),
+                                            P("id", .regionID, "Identifier for the region."),
+                                            P("media", .mediaID, "A video file in the song's media."),
+                                            P("start", .ticks, "Position on the timeline in ticks.")])
+        case .splitRegion:
+            return CommandSpec(name: "region.split", title: "Split",
+                               summary: "Cuts an audio or video region in two where a tick sounds; both parts together play what it played.",
+                               parameters: [P("track", .trackID, "The audio or video track."), P("region", .regionID, "The region."),
+                                            P("at", .ticks, "Where the cut falls, inside the region, in ticks."),
+                                            P("newID", .regionID, "Identifier for the second part.")])
         case .moveRegion:
             return CommandSpec(name: "audio.move", title: "Move Audio",
-                               summary: "Moves an audio region to a new position on the timeline.",
+                               summary: "Moves an audio or video region to a new position on the timeline.",
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
                                             P("start", .ticks, "New position in ticks.")])
         case .trimRegion:
             return CommandSpec(name: "audio.trim", title: "Trim Audio",
-                               summary: "Chooses which part of the file an audio region plays, in frames of the file.",
+                               summary: "Chooses which part of the file an audio or video region plays, in frames of the file (a video's in 48 000 units per second).",
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
                                             P("offset", .integer, "First frame that plays."),
                                             P("length", .integer, "Frames that play, at least 1, ending at or before the file's end.")])
         case .removeRegion:
             return CommandSpec(name: "audio.remove", title: "Delete Audio",
-                               summary: "Removes an audio region from the timeline; the file stays in the song.",
+                               summary: "Removes an audio or video region from the timeline; the file stays in the song.",
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region.")])
         case .addScene:
             return CommandSpec(name: "scene.add", title: "Add Scene",

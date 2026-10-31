@@ -6,7 +6,8 @@ public struct Project: Codable, Equatable, Sendable {
     /// (`ProjectCodec`), so an old build never silently drops what it does not understand.
     /// 2 (2026-10-20): a parameter address is stored as its text form (`docs/FORMAT.md`).
     /// 3 (2026-10-28): `modRoutes`, required; an older file opens with none (wave W2).
-    public static let currentFormatVersion = 3
+    /// 4 (2026-10-29): video tracks and video media files; an older file has neither (wave W7).
+    public static let currentFormatVersion = 4
 
     /// Always `currentFormatVersion` in memory: an older file is read into today's shape, so the
     /// next save writes today's number over today's shape and never an old number over it.
@@ -25,7 +26,7 @@ public struct Project: Codable, Equatable, Sendable {
     /// Effects on the master mix, in order, after the master fader — where a final limiter goes.
     /// Tracks on their own outputs skip the master, and its inserts with it.
     public var masterInserts: [Insert]
-    /// Audio files imported into the song, in import order.
+    /// Audio and video files imported into the song, in import order.
     public var media: [MediaFile]
     /// Controllers learned for this song, one target per control.
     public var midiMappings: [MIDIMapping]
@@ -103,6 +104,18 @@ public struct Project: Codable, Equatable, Sendable {
         } else {
             modRoutes = try c.decode([ModulationRoute].self, forKey: .modRoutes)
         }
+        // Video arrived with format 4; an older build never wrote a video track or a video file,
+        // so one in an older file came from somewhere this reader cannot vouch for.
+        if stored < 4 {
+            guard !tracks.contains(where: { $0.kind == .video }) else {
+                throw DecodingError.dataCorruptedError(forKey: .tracks, in: c,
+                                                       debugDescription: "format \(stored) has no video tracks")
+            }
+            guard !media.contains(where: { $0.kind == .video }) else {
+                throw DecodingError.dataCorruptedError(forKey: .media, in: c,
+                                                       debugDescription: "format \(stored) has no video files")
+            }
+        }
     }
 
     /// Whether one more track of `kind` fits (`Track.limit(for:)`).
@@ -156,6 +169,9 @@ public enum TrackKind: String, Codable, Sendable, CaseIterable {
     case audio
     /// Receives sends from other tracks; holds effects only, no clips.
     case returnTrack
+    /// Shows video files on the timeline (format 4): regions of video media, nothing that sounds —
+    /// no clips, effects, sends or output. The song's mix is the sound of a video export.
+    case video
 }
 
 public struct Track: Codable, Equatable, Sendable, Identifiable {
@@ -171,7 +187,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     public var placements: [Placement]
     /// Session view: which clip sits in which scene's slot.
     public var slots: [SlotAssignment]
-    /// Audio on the timeline, sorted by start. Only audio tracks have any.
+    /// Audio on the timeline, sorted by start — or, on a video track, pictures. Only audio and
+    /// video tracks have any, each of its own kind of file.
     public var regions: [AudioRegion]
     /// The synth sound. Instrument tracks play it; other kinds keep the default and ignore it.
     public var instrument: InstrumentSettings
@@ -204,6 +221,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         case .instrument: 32
         case .audio: 64
         case .returnTrack: 8
+        case .video: 8
         }
     }
 

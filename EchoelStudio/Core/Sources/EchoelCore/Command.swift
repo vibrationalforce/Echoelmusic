@@ -95,6 +95,10 @@ public enum Command: Codable, Equatable, Sendable {
 
     // Audio regions
     case placeAudio(track: TrackID, id: RegionID, media: MediaID, start: Tick)
+    /// A whole video file on a video track's timeline (format 4); moved, trimmed and removed as a region.
+    case placeVideo(track: TrackID, id: RegionID, media: MediaID, start: Tick)
+    /// Cuts a region (audio or video) in two where `at` sounds; the second part is `newID`.
+    case splitRegion(track: TrackID, RegionID, at: Tick, newID: RegionID)
     case moveRegion(track: TrackID, RegionID, start: Tick)
     case trimRegion(track: TrackID, RegionID, offset: Int, length: Int)
     case removeRegion(track: TrackID, RegionID)
@@ -312,7 +316,12 @@ extension Command {
             guard project.tracks[t].kind == .instrument else {
                 throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
             }
-            if let media, project.mediaFile(media) == nil { throw CommandError.unknownMedia(media) }
+            if let media {
+                guard let file = project.mediaFile(media) else { throw CommandError.unknownMedia(media) }
+                guard file.kind == .audio else {
+                    throw CommandError.invalidValue(parameter: "media", reason: "a sampler plays an audio file, not a video")
+                }
+            }
             project.tracks[t].instrument.sample = media
 
         case let .setInstrumentPlugin(id, component):
@@ -352,6 +361,9 @@ extension Command {
 
         case let .addInsert(trackID, id, plugin, index):
             let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind != .video else {
+                throw CommandError.invalidValue(parameter: "track", reason: "a video track has no sound to process")
+            }
             guard !project.hasInsert(id) else { throw CommandError.duplicateID(id.description) }
             guard plugin.role == .effect else {
                 throw CommandError.invalidValue(parameter: "plugin", reason: "must be an effect (type aufx)")
@@ -485,6 +497,9 @@ extension Command {
             guard project.tracks[t].kind != .returnTrack else {
                 throw CommandError.invalidValue(parameter: "track", reason: "a return track does not send")
             }
+            guard project.tracks[t].kind != .video || db == nil else {
+                throw CommandError.invalidValue(parameter: "track", reason: "a video track has no sound to send")
+            }
             guard let db else {
                 project.tracks[t].sends.removeAll { $0.target == targetID }
                 break
@@ -501,6 +516,9 @@ extension Command {
         case let .setOutput(id, channel):
             let t = try project.requireTrack(id)
             if let channel {
+                guard project.tracks[t].kind != .video else {
+                    throw CommandError.invalidValue(parameter: "track", reason: "a video track has no sound to route")
+                }
                 guard Track.isValidOutput(channel) else {
                     throw CommandError.invalidValue(parameter: "channel",
                                                     reason: "an even channel from 2 to \(Track.outputChannelLimit - 2); 0/1 is the master")
@@ -702,9 +720,48 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "track", reason: "only audio tracks hold audio regions")
             }
             guard let file = project.mediaFile(mediaID) else { throw CommandError.unknownMedia(mediaID) }
+            guard file.kind == .audio else {
+                throw CommandError.invalidValue(parameter: "media", reason: "a video goes on a video track")
+            }
             guard project.tracks.allSatisfy({ $0.regionIndex(id) == nil }) else { throw CommandError.duplicateID(id.description) }
             try Self.validateStart(start)
             project.tracks[t].regions.append(AudioRegion(id: id, media: mediaID, start: start, length: file.frameCount))
+            project.tracks[t].regions.sort { $0.start < $1.start }
+
+        case let .placeVideo(trackID, id, mediaID, start):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .video else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only video tracks show video")
+            }
+            guard let file = project.mediaFile(mediaID) else { throw CommandError.unknownMedia(mediaID) }
+            guard file.kind == .video else {
+                throw CommandError.invalidValue(parameter: "media", reason: "an audio file goes on an audio track")
+            }
+            guard project.tracks.allSatisfy({ $0.regionIndex(id) == nil }) else { throw CommandError.duplicateID(id.description) }
+            try Self.validateStart(start)
+            project.tracks[t].regions.append(AudioRegion(id: id, media: mediaID, start: start, length: file.frameCount))
+            project.tracks[t].regions.sort { $0.start < $1.start }
+
+        case let .splitRegion(trackID, id, tick, newID):
+            let t = try project.requireTrack(trackID)
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            guard project.tracks.allSatisfy({ $0.regionIndex(newID) == nil }) else {
+                throw CommandError.duplicateID(newID.description)
+            }
+            let region = project.tracks[t].regions[r]
+            guard let file = project.mediaFile(region.media) else { throw CommandError.unknownMedia(region.media) }
+            // The cut falls where `tick` sounds: the file time from the region's start to it, over the
+            // song's tempo map. Nothing of the file is lost — the two parts play what the one did.
+            let map = project.tempoMap
+            let elapsed = (map.seconds(at: tick) - map.seconds(at: region.start)) * file.sampleRate
+            guard elapsed.isFinite, tick > region.start, elapsed.rounded() >= 1,
+                  elapsed.rounded() < Double(region.length) else {
+                throw CommandError.invalidValue(parameter: "at", reason: "must fall inside the region")
+            }
+            let head = Int(elapsed.rounded())
+            project.tracks[t].regions[r].length = head
+            project.tracks[t].regions.append(AudioRegion(id: newID, media: region.media, start: tick,
+                                                         offset: region.offset + head, length: region.length - head))
             project.tracks[t].regions.sort { $0.start < $1.start }
 
         case let .moveRegion(trackID, id, start):
@@ -841,6 +898,9 @@ extension Project {
     /// Rejects audio that does not lie within a file of the song.
     func validate(_ audio: ClipAudio) throws {
         guard let file = mediaFile(audio.media) else { throw CommandError.unknownMedia(audio.media) }
+        guard file.kind == .audio else {
+            throw CommandError.invalidValue(parameter: "audio", reason: "an audio clip plays an audio file, not a video")
+        }
         guard audio.offset >= 0, audio.length >= 1, audio.offset < file.frameCount,
               audio.length <= file.frameCount - audio.offset else {
             throw CommandError.invalidValue(parameter: "audio", reason: "must lie within the file")

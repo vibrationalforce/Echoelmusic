@@ -1,5 +1,6 @@
 import EchoelCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The root surface: transport on top, tracks below. Every edit goes through the store as a
 /// command, so every edit is undoable — the transport's Undo/Redo show that from day one.
@@ -17,6 +18,8 @@ struct StudioView: View {
     @AppStorage(FieldWindow.shownKey) private var showsFieldWindow = true
     /// The Field over the whole studio. A layer, not a presentation: the sheet slot stays one.
     @State private var fieldFullscreen = false
+    /// The song's video as a small window (wave W7); on by default while the song has video.
+    @AppStorage(VideoWindow.shownKey) private var showsVideoWindow = true
 
     enum Surface: Hashable { case tracks, arrange, session, mixer, field }
 
@@ -39,6 +42,12 @@ struct StudioView: View {
                 .background(Theme.Color.surface)
                 ZStack(alignment: .bottomTrailing) {
                     surfaceView
+                    if showsVideoWindow, hasVideo, !fieldFullscreen {
+                        VideoWindow(close: { showsVideoWindow = false })
+                            .padding(Theme.Space.m)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                            .transition(.opacity)
+                    }
                     // One picture at a time: the window rests while the Field is the view or fills the screen.
                     if showsFieldWindow, surface != .field, !fieldFullscreen {
                         FieldWindow(expand: { openFieldFullscreen() }, close: { showsFieldWindow = false })
@@ -74,6 +83,23 @@ struct StudioView: View {
                     Task { await documents.importAudio(url, placingOn: track, at: start) }
                 }, cancel: { router.sheet = nil })
                 .ignoresSafeArea()
+            case let .importVideoFromPhotos(track, start):
+                VideoLibraryPicker(pick: { url in
+                    router.sheet = nil
+                    Task {
+                        await documents.importVideo(url, onto: track, at: start)
+                        try? FileManager.default.removeItem(at: url)
+                    }
+                }, cancel: { router.sheet = nil })
+                .ignoresSafeArea()
+            case let .importVideoFromFiles(track, start):
+                AudioFilePicker(pick: { url in
+                    router.sheet = nil
+                    Task { await documents.importVideo(url, onto: track, at: start) }
+                }, cancel: { router.sheet = nil }, types: [.movie])
+                .ignoresSafeArea()
+            case .cameraTake(let track): CameraTakeView(track: track)
+            case .exportVideo: VideoExportView()
             case let .importClip(track, scene):
                 AudioFilePicker(pick: { url in
                     router.sheet = nil
@@ -92,6 +118,12 @@ struct StudioView: View {
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
     }
 
+    /// Whether the song has a picture to show: a video track with a part on it. Changes only with
+    /// an edit, never with the clock.
+    private var hasVideo: Bool {
+        store.project.tracks.contains { $0.kind == .video && !$0.regions.isEmpty }
+    }
+
     /// The chosen view. While the Field fills the screen its own view rests, so the GPU draws one
     /// picture, not two.
     @ViewBuilder private var surfaceView: some View {
@@ -99,7 +131,10 @@ struct StudioView: View {
         case .tracks: TrackListView { router.sheet = .clipEditor($0) }
         case .arrange:
             ArrangeView(open: { router.sheet = .clip($0, $1) },
-                        importAudio: { router.sheet = .importAudio($0, $1) })
+                        importAudio: { track, tick in
+                            router.sheet = store.project.track(track)?.kind == .video
+                                ? .importVideoFromPhotos(track, tick) : .importAudio(track, tick)
+                        })
         case .session:
             SessionView(open: { router.sheet = .clip($0, $1) }, importClip: { router.sheet = .importClip($0, $1) })
         case .mixer: MixerView()
@@ -576,6 +611,9 @@ struct SongMenu: View {
                 if let url = documents.exportMIDI() { router.share(url) }
             }
             .disabled(!store.project.arrangementHasEvents)
+            // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
+            Button("Export Video", systemImage: "film") { router.sheet = .exportVideo }
+                .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)
             // The song itself, with its audio, for another device running Echoel Studio.
             Button("Share Song", systemImage: "square.and.arrow.up.on.square") {
                 Task {

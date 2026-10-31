@@ -56,6 +56,7 @@ struct TrackRow: View {
             }
 
             if track.kind == .audio || track.kind == .instrument { ArmButton(track: track) }
+            if track.kind == .video { VideoTrackButtons(track: track) }
             if track.kind == .instrument {
                 let isLive = engine.liveTrackID(in: store.project) == track.id
                 Button {
@@ -178,6 +179,7 @@ extension TrackKind {
         case .instrument: "Instrument"
         case .audio: "Audio"
         case .returnTrack: "Return"
+        case .video: "Video"
         }
     }
 }
@@ -186,5 +188,39 @@ extension Track {
     /// What the track list calls it: an instrument track says which instrument it plays.
     var typeName: String {
         kind == .instrument ? instrument.device.title : kind.displayName
+    }
+}
+
+/// A video track's doors (wave W7): film a take with the rear camera, import a video from the
+/// photo library or the Files app at the end of the track, and show the video window again.
+struct VideoTrackButtons: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(StudioRouter.self) private var router
+    @AppStorage(VideoWindow.shownKey) private var showsVideoWindow = true
+    let track: Track
+
+    var body: some View {
+        Button { router.sheet = .cameraTake(track.id) } label: { Image(systemName: "video") }
+            .buttonStyle(ToolButtonStyle())
+            .accessibilityLabel("Film a Take on \(track.name)")
+            .accessibilityHint("Plays the song and films with the rear camera.")
+        Menu {
+            Button("From Photos", systemImage: "photo.on.rectangle") { router.sheet = .importVideoFromPhotos(track.id, end) }
+            Button("From Files", systemImage: "folder") { router.sheet = .importVideoFromFiles(track.id, end) }
+            Button(showsVideoWindow ? "Hide Video Window" : "Show Video Window", systemImage: "film") {
+                showsVideoWindow.toggle()
+            }
+        } label: {
+            Image(systemName: "plus.rectangle.on.rectangle")
+        }
+        .buttonStyle(ToolButtonStyle())
+        .accessibilityLabel("Add Video to \(track.name)")
+    }
+
+    /// The first bar after the track's last part.
+    private var end: Tick {
+        let project = store.project
+        let last = track.regions.compactMap { Arranging.end(of: $0, in: project) }.max() ?? 0
+        return Arranging.barStart(last + MusicalTime.ticksPerBar(project.timeSignature) - 1, signature: project.timeSignature)
     }
 }

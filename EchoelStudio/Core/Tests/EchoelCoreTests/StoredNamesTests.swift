@@ -29,7 +29,9 @@ final class StoredNamesTests: XCTestCase {
     func testEveryStoredNameStillReadsAsTheSameThing() {
         XCTAssertEqual(Scale.allCases.map(\.rawValue), scales, "never rename or reorder; a new scale goes at the end")
         XCTAssertEqual(TuningSystem.library.map(\.id), toneSystems, "never rename or reorder; a new one goes at the end")
-        XCTAssertEqual(TrackKind.allCases.map(\.rawValue), ["instrument", "audio", "returnTrack"])
+        XCTAssertEqual(TrackKind.allCases.map(\.rawValue), ["instrument", "audio", "returnTrack", "video"])
+        // A media file names its kind from format 4 on; absent is audio.
+        XCTAssertEqual(MediaKind.allCases.map(\.rawValue), ["audio", "video"])
         XCTAssertEqual(MonitorMode.allCases.map(\.rawValue), ["auto", "in", "off"])
         // A modulation route stores its source, curve and polarity by name (W2).
         XCTAssertEqual(ModulationSource.allCases.map(\.rawValue),

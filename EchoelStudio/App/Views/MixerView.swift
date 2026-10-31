@@ -10,7 +10,8 @@ struct MixerView: View {
     var body: some View {
         ScrollView(.horizontal) {
             HStack(alignment: .top, spacing: 1) {
-                ForEach(store.project.tracks) { track in
+                // A video track is never heard, so it has no strip.
+                ForEach(store.project.tracks.filter { $0.kind != .video }) { track in
                     ChannelStrip(title: track.name, color: Theme.Color.track(track.colorIndex),
                                  volume: .volume(track.id), pan: .pan(track.id), track: track)
                 }

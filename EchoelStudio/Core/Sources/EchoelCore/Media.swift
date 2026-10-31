@@ -1,23 +1,75 @@
 import Foundation
 
-/// An audio file that belongs to the song. The file itself is copied into the song's package
-/// (`<song>.echoel/Media/…`) when it is imported, so a song moved, shared or backed up keeps
-/// its sounds; the document stores only the path inside the package and what it measured.
+/// What a song file holds (format 4). Stored by name; a name this build does not know refuses the
+/// song, because what a file is decides which track may play it.
+public enum MediaKind: String, Codable, Sendable, CaseIterable {
+    /// Sound: decoded and played by audio regions, audio clips and the sampler.
+    case audio
+    /// A picture (with or without its own sound, which Echoel does not play): shown by the
+    /// regions of a video track, never decoded as audio.
+    case video
+}
+
+/// An audio or video file that belongs to the song. The file itself is copied into the song's
+/// package (`<song>.echoel/Media/…`) when it is imported, so a song moved, shared or backed up
+/// keeps its sounds and pictures; the document stores only the path inside the package and what
+/// it measured.
 public struct MediaFile: Codable, Equatable, Sendable, Identifiable {
     public var id: MediaID
     /// What the musician sees, usually the original file name without extension.
     public var name: String
     /// Path relative to the song package, e.g. `Media/3F2A….wav`. Never absolute, never `..`.
     public var path: String
+    /// An audio file's length in its frames. A video's length in units of `sampleRate` per second
+    /// — Echoel measures a video at `videoTimeBase` — so a region cuts audio and picture alike.
     public var frameCount: Int
     public var sampleRate: Double
+    /// Stored only for a video; absent is audio, as every file before format 4 is.
+    public var kind: MediaKind
 
-    public init(id: MediaID = MediaID(), name: String, path: String, frameCount: Int, sampleRate: Double) {
+    public init(id: MediaID = MediaID(), name: String, path: String, frameCount: Int, sampleRate: Double,
+                kind: MediaKind = .audio) {
         self.id = id
         self.name = name
         self.path = path
         self.frameCount = frameCount
         self.sampleRate = sampleRate
+        self.kind = kind
+    }
+
+    private enum CodingKeys: String, CodingKey { case id, name, path, frameCount, sampleRate, kind }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(MediaID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        path = try c.decode(String.self, forKey: .path)
+        frameCount = try c.decode(Int.self, forKey: .frameCount)
+        sampleRate = try c.decode(Double.self, forKey: .sampleRate)
+        kind = try c.decodeIfPresent(MediaKind.self, forKey: .kind) ?? .audio
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(path, forKey: .path)
+        try c.encode(frameCount, forKey: .frameCount)
+        try c.encode(sampleRate, forKey: .sampleRate)
+        // An audio file writes what it wrote before format 4, so its bytes do not change.
+        if kind != .audio { try c.encode(kind, forKey: .kind) }
+    }
+
+    /// The units per second a video's length is measured in: fine enough for any frame rate, and
+    /// the rate the song's mix is rendered at, so a cut lands on the same sample in both.
+    public static let videoTimeBase: Double = 48_000
+
+    /// The measurement of a video `seconds` long, nil when the length is not a usable one.
+    public static func videoLength(seconds: Double) -> Int? {
+        guard seconds.isFinite, seconds > 0 else { return nil }
+        let units = (seconds * videoTimeBase).rounded()
+        guard units >= 1, units <= Double(maximumFrameCount) else { return nil }
+        return Int(units)
     }
 
     /// The folder inside a song package that holds its media.
@@ -104,7 +156,8 @@ extension Project {
         let heard = Set(audible)
         var order: [MediaID] = []
         var seen = Set<MediaID>()
-        for id in audible + media.map(\.id) {
+        // A video is shown, never decoded: it costs no audio memory and is never loaded here.
+        for id in audible + media.filter({ $0.kind == .audio }).map(\.id) {
             if seen.insert(id).inserted { order.append(id) }
         }
         let files = Dictionary(media.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
@@ -126,10 +179,10 @@ extension Project {
 
     /// The files the song plays, in the order a load plan takes them: the audio regions and the
     /// audio clips in a slot or placed, track by track, then the samples of tracks the sampler
-    /// plays. A clip in no slot plays nowhere, so it is a leftover too (second night review,
+    /// plays. A video track's regions are pictures, not sound, and are not among them. A clip in no slot plays nowhere, so it is a leftover too (second night review,
     /// 2026-10-23). May repeat an id.
     public var audibleMedia: [MediaID] {
-        let played: [MediaID] = tracks.flatMap { (track: Track) -> [MediaID] in
+        let played: [MediaID] = tracks.filter { $0.kind == .audio }.flatMap { (track: Track) -> [MediaID] in
             let used = Set(track.slots.map(\.clip) + track.placements.map(\.clip))
             return track.regions.map(\.media) + track.clips.filter { used.contains($0.id) }.compactMap { $0.audio?.media }
         }

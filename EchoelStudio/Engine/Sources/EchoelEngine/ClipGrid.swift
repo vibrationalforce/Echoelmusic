@@ -34,7 +34,8 @@ public struct ClipGrid: Equatable, Sendable {
     /// never shows less than it could.
     public init(project: Project, playing: [TrackID: ClipID], queued: [TrackID: ClipID],
                 trackOffset: Int, sceneOffset: Int) {
-        let allTracks = project.tracks.filter { $0.kind != .returnTrack }
+        // A return holds effects and a video track pictures: neither has a clip to launch.
+        let allTracks = project.tracks.filter { $0.kind == .instrument || $0.kind == .audio }
         let allScenes = project.scenes
         let tracksFrom = Self.clamp(trackOffset, count: allTracks.count)
         let scenesFrom = Self.clamp(sceneOffset, count: allScenes.count)

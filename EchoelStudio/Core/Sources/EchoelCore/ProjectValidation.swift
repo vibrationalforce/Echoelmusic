@@ -126,6 +126,9 @@ extension Project {
             for region in track.regions {
                 guard regionIDs.insert(region.id).inserted else { throw CommandError.duplicateID(region.id.description) }
                 guard let file = mediaFile(region.media) else { throw CommandError.unknownMedia(region.media) }
+                guard (file.kind == .video) == (track.kind == .video) else {
+                    throw Self.invalid("regions", "a video track shows video files, an audio track plays audio files")
+                }
                 try Command.validateStart(region.start)
                 guard region.offset >= 0, region.length >= 1, region.offset < file.frameCount,
                       region.length <= file.frameCount - region.offset else {
@@ -152,7 +155,8 @@ extension Project {
 
     /// What a track holds matches its kind, as the commands keep it: an instrument track plays
     /// MIDI clips and no audio regions, an audio track audio clips and regions, a return track
-    /// effects only. (An audio clip off an audio track is refused in the clip loop.)
+    /// effects only, a video track video regions only. (An audio clip off an audio track is
+    /// refused in the clip loop, a region of the wrong kind of file in the region loop.)
     private static func validateContent(of track: Track) throws {
         switch track.kind {
         case .instrument:
@@ -162,6 +166,11 @@ extension Project {
         case .returnTrack:
             guard track.clips.isEmpty, track.placements.isEmpty, track.slots.isEmpty, track.regions.isEmpty else {
                 throw invalid("tracks", "a return track holds effects only")
+            }
+        case .video:
+            guard track.clips.isEmpty, track.placements.isEmpty, track.slots.isEmpty, track.inserts.isEmpty,
+                  track.sends.isEmpty, track.output == nil else {
+                throw invalid("tracks", "a video track holds video regions only")
             }
         }
     }
@@ -183,7 +192,10 @@ extension Project {
                 throw Self.invalid(key, "must be within \(parameter.range)")
             }
         }
-        if let sample = instrument.sample, mediaFile(sample) == nil { throw CommandError.unknownMedia(sample) }
+        if let sample = instrument.sample {
+            guard let file = mediaFile(sample) else { throw CommandError.unknownMedia(sample) }
+            guard file.kind == .audio else { throw Self.invalid("instrument", "a sampler plays an audio file") }
+        }
         if instrument.device == .plugin, instrument.plugin == nil { throw Self.invalid("instrument", "plays a plugin it does not name") }
         if let state = instrument.pluginState, state.count > PluginComponent.maximumStateBytes {
             throw Self.invalid("pluginState", "larger than \(PluginComponent.maximumStateBytes) bytes")
