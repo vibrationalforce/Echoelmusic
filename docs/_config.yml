@@ -1,0 +1,17 @@
+# GitHub Pages builds this folder with Jekyll (source: branch main, /docs). Only the website is
+# published (decision 2026-10-31, E20): working files under docs/ stay in the repository but never
+# reach echoelmusic.com. Every page here is plain HTML without front matter, so Jekyll copies it
+# unchanged. The same list is enforced in .github/workflows/pages.yml for the Actions deploy.
+include:
+  - .well-known
+exclude:
+  - dev
+  - adr
+  - research
+  - CLAUDE.md
+  - ECHOEL_SESSION_PROTOCOL.md
+  - SPATIAL_EXPANSION_AUDIT.md
+  - _headers
+  - _redirects
+# No theme: every page is plain HTML; a theme would only wrap converted Markdown in its layout.
+theme: null
