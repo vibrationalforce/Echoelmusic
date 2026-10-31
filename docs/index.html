@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v10.25.0 — Echoel: the brand. Echoel Studio: the app in TestFlight. Echoelmusic: the project and repository. -->
+<!-- v10.26.0 — Echoel: the brand. Echoel Studio: the app in TestFlight. Echoelmusic: the project and repository. -->
 <html lang="en-US">
 <head>
     <meta charset="UTF-8">
@@ -12,7 +12,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops — runs BEFORE anything else -->
     <script>
-    (function(){var V='10.25.0',K='echoel-nuke';try{
+    (function(){var V='10.26.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -163,7 +163,7 @@
             font-family: var(--font);
             background: var(--bg); color: var(--text);
             -webkit-font-smoothing: antialiased; line-height: 1.6;
-            overflow-x: hidden; max-width: 100vw; font-size: 14px;
+            overflow-x: hidden; max-width: 100vw; font-size: 16px;
         }
 
         a, a:visited, a:active { color: inherit; text-decoration: none; }
@@ -247,6 +247,8 @@
 
         @media (min-width: 900px) {
             .nav-links { display: flex; }
+            /* The word sits beside the mark here; centred, it ran into the links at 1024 px. */
+            .nav-logo span { position: static; transform: none; }
             .burger { display: none !important; }
         }
 
@@ -336,6 +338,8 @@
             opacity: 0; animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 1.15s forwards;
         }
         .hero-sub strong { color: var(--text); font-weight: 600; }
+        /* A link in running text is underlined: colour alone is not a cue (WCAG 1.4.1). */
+        .hero-sub a { text-decoration: underline; text-underline-offset: 2px; }
 
         .hero-category {
             font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
@@ -593,7 +597,7 @@
             :root { --dim: rgba(224,224,224,0.9); --border: rgba(224,224,224,0.2); }
         }
         @media (max-width: 320px) {
-            body { font-size: 15px; }
+            body { font-size: 16px; }
             .h1-create, .h1-within { font-size: clamp(48px, 14vw, 80px); letter-spacing: -2px; }
         }
     </style>
@@ -652,10 +656,10 @@
                     <span class="h1-line h1-within">Within</span>
                 </h1>
 
-                <p class="hero-claim">The multidimensional production instrument.</p>
+                <p class="hero-claim">Echoel Studio: an instrument and a production studio, with your body as a controller.</p>
 
                 <p class="hero-sub">
-                    Your heartbeat and breath play <strong>sound, space, light — and vibration</strong> in real time. One body, many dimensions, over open standards: compose music that <strong>changes as your body settles &mdash; observe yourself</strong> or <strong>export to Ableton, Logic, and FL Studio</strong>; send your pulse as a spatial-audio object (ADM-OSC) and as light (Art-Net/sACN); a sub-bass voice an octave below the bass line, felt on a subwoofer or headphones. Immersive 360° and multichannel render are in active development. Integrating a rig? <a href="integrations.html">Every address, port and DMX channel</a>.
+                    A music workstation for <strong>iPhone and iPad</strong>: synths, a drum kit and a sampler, a piano roll and a session grid, MIDI and audio recording, mixing and export. A <strong>Bluetooth heart-rate strap</strong> can move any fader, send or sound you route it to. Video tracks, a Sky view, <strong>OSC, ADM-OSC, Art-Net and sACN</strong> out, and a live stream that starts only when you press Go Live. In TestFlight, still being tested on devices. Integrating a rig? <a href="integrations.html">Every address, port and DMX channel</a>.
                 </p>
 
                 <p class="hero-category">
@@ -675,49 +679,49 @@
                 </div>
 
                 <!-- Capability Map -->
-                <div class="cap-map" role="img" aria-label="Echoelmusic dimensions: Body, Sound, Space, Light, Vibration, Data">
+                <div class="cap-map" role="img" aria-label="Echoel Studio: Body, Sound, Space, Light, Picture, Data">
                     <div class="cap-flow">
                         <div class="cap-node">
                             <div class="cap-icon">
                                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
                             </div>
                             <span class="cap-label">Body</span>
-                            <span class="cap-detail">HRV &middot; Heart Rate<br>Breath &middot; Coherence</span>
+                            <span class="cap-detail">Heart-rate strap<br>HRV &middot; Coherence</span>
                         </div>
                         <div class="cap-node">
                             <div class="cap-icon">
                                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg>
                             </div>
                             <span class="cap-label">Sound</span>
-                            <span class="cap-detail">Bio synthesis<br>Compose &middot; FX</span>
+                            <span class="cap-detail">Synths &middot; Drums<br>Sampler &middot; Effects</span>
                         </div>
                         <div class="cap-node">
                             <div class="cap-icon">
                                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg>
                             </div>
                             <span class="cap-label">Space</span>
-                            <span class="cap-detail">ADM-OSC object<br>spatial source</span>
+                            <span class="cap-detail">ADM-OSC<br>objects out</span>
                         </div>
                         <div class="cap-node">
                             <div class="cap-icon">
                                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
                             </div>
                             <span class="cap-label">Light</span>
-                            <span class="cap-detail">Art-Net &middot; sACN<br>fixtures live</span>
+                            <span class="cap-detail">Art-Net &middot; sACN<br>off until on</span>
                         </div>
                         <div class="cap-node">
                             <div class="cap-icon">
                                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h3l2-7 4 14 2-7h3"/><path d="M19 9v6"/><path d="M22 11v2"/></svg>
                             </div>
-                            <span class="cap-label">Vibration</span>
-                            <span class="cap-detail">Sub-bass / LFE<br>felt &middot; haptics</span>
+                            <span class="cap-label">Picture</span>
+                            <span class="cap-detail">Video tracks<br>Go Live stream</span>
                         </div>
                         <div class="cap-node">
                             <div class="cap-icon">
                                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><circle cx="4" cy="6" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="4" cy="18" r="1.5"/></svg>
                             </div>
                             <span class="cap-label">Data</span>
-                            <span class="cap-detail">OSC &middot; MIDI<br>ADM-OSC &middot; Art-Net</span>
+                            <span class="cap-detail">OSC &middot; MIDI<br>MPE out &middot; WAV &middot; stems</span>
                         </div>
                     </div>
                 </div>
@@ -734,6 +738,8 @@
                 <li>Play from the on-screen keys or a MIDI keyboard. Record MIDI as clips, and mono audio from the microphone or an interface input; takes stay on the device.</li>
                 <li>A mixer with sends to return tracks, automation, and up to eight effects on every track and the master.</li>
                 <li>A Bluetooth heart-rate strap can be a modulation source: heart rate, HRV or coherence on a fader, pan, send or synth parameter.</li>
+                <li>Video tracks from the photo library, and a Sky view of the stars above you. OSC, ADM-OSC, Art-Net and sACN out, each off until you switch it on; body values leave only while you allow it. A live stream over RTMP, RTMPS or SRT starts only when you press Go Live.</li>
+                <li>Split clips at the playhead, import MIDI files, and bake a track&rsquo;s effects into audio. Eighteen built-in effects, MPE out to your synths.</li>
                 <li>Export a 24-bit, 48&nbsp;kHz WAV with its loudness and true peak reported, stems, or a MIDI file. Songs are open .echoel files. No account.</li>
             </ul>
             <p class="section-sub reveal" style="margin-top:24px;">Which parts of the earlier app come back, and when, is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>.</p>
@@ -752,6 +758,11 @@
         </div>
 
         <!-- ========== HOW IT WORKS ========== -->
+        <div id="earlier" class="section">
+            <h2 class="section-title reveal">The earlier instrument (10.79)</h2>
+            <p class="section-sub reveal">Before Echoel Studio there was an instrument played by the body: a camera pulse reading, generative visuals and light. It is frozen at version 10.79.515 and no longer in TestFlight. The sections below describe it as it was; its parts return to Echoel Studio in the order on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>.</p>
+        </div>
+
         <div id="how" class="section">
             <h2 class="section-title reveal">Heartbeat to art form</h2>
             <p class="section-sub reveal">One signal chain. Your biology is the instrument, the score, and the conductor.</p>
