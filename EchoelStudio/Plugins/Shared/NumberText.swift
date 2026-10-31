@@ -8,6 +8,10 @@ import Foundation
 ///
 /// Every number shown in a view goes through here — `ParameterFormat` does, and so must a new
 /// readout in any module. Typed numbers use the same style on the number pad.
+///
+/// It lives in `Plugins/Shared` and is Foundation-only, so the AUv3 extension compiles the same
+/// file (`project.yml`: the app lists it by path, like `EchoelBrand`): a value in the plugin
+/// window reads exactly as the same value in the Studio.
 enum NumberText {
     /// `value` with exactly `decimals` digits after the separator.
     static func string(_ value: Double, decimals: Int) -> String {
