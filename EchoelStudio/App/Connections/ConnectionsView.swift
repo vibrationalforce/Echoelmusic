@@ -35,6 +35,7 @@ struct ConnectionsView: View {
         EchoelSection("Body") {
             Toggle(isOn: Binding(get: { connections.consent.sharesBody }, set: { connections.setSharesBody($0) })) {
                 Label("Share Body Data", systemImage: "heart.text.square")
+                    .foregroundStyle(Theme.Color.text)
             }
             NoteText(bodyExplanation)
         }
@@ -58,6 +59,7 @@ private struct ConnectionSection: View {
         EchoelSection {
             Toggle(isOn: Binding(get: { connections.isOn(kind) }, set: { connections.setOn($0, kind) })) {
                 Label(kind.title, systemImage: kind.isLight ? "lightbulb" : "antenna.radiowaves.left.and.right")
+                    .foregroundStyle(Theme.Color.text)
             }
             ReceiverFields(kind: kind)
             if kind.isLight { lightFields }

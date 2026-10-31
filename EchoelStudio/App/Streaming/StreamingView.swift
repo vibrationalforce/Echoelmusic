@@ -104,6 +104,7 @@ struct StreamingView: View {
             } label: {
                 Image(systemName: "slider.horizontal.3")
                     .frame(minWidth: Theme.Size.touch, minHeight: Theme.Size.touch)
+                    .foregroundStyle(Theme.Color.text)
             }
             .buttonStyle(.borderless)
             .accessibilityLabel("Edit \(target.name)")
@@ -117,14 +118,12 @@ struct StreamingView: View {
     }
 
     private var uploadSection: some View {
-        EchoelSection("Destinations at Once",
+        EchoelSection("Upload",
                       footer: "Each destination is its own upload from the phone. To reach many platforms, stream once to a relay (Restream, or your own MediaMTX server, open source) and let it forward the stream.") {
-            Picker("At Once", selection: Binding(get: { streaming.plan.simultaneousLimit },
-                                                 set: { streaming.setSimultaneousLimit($0) })) {
-                ForEach(Array(StreamPlan.limitRange), id: \.self) { Text("\($0)").tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .disabled(streaming.isLive || streaming.isStarting)
+            SettingField(title: "Destinations at Once", value: streaming.plan.simultaneousLimit,
+                         range: StreamPlan.limitRange,
+                         standard: StreamPlan.limitRange.lowerBound) { streaming.setSimultaneousLimit($0) }
+                .disabled(streaming.isLive || streaming.isStarting)
             ValueRow("Upload Needed", value: Self.megabits(streaming.plan.uploadKbps))
             if let refusal = streaming.plan.refusal, refusal != .noTarget {
                 NoteText(refusal.explanation, tone: .problem)
@@ -139,8 +138,9 @@ struct StreamingView: View {
         }
     }
 
+    /// One decimal in the reader's number format (a comma where the locale writes one).
     static func megabits(_ kbps: Int) -> String {
-        String(format: "%.1f Mbit/s", Double(kbps) / 1_000)
+        (Double(kbps) / 1_000).formatted(.number.precision(.fractionLength(1))) + " Mbit/s"
     }
 }
 
