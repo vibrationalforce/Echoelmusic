@@ -225,7 +225,7 @@ struct TransportBar: View {
                 Image(systemName: engine.isStalled ? "arrow.clockwise" : engine.isPlaying ? "stop.fill" : "play.fill")
             }
             .buttonStyle(ToolButtonStyle(isActive: engine.isPlaying, activeColor: Theme.Color.play))
-            .accessibilityLabel(engine.isStalled ? "Restart audio" : engine.isPlaying ? "Stop" : "Play")
+            .accessibilityLabel(engine.isStalled ? "Restart Audio" : engine.isPlaying ? "Stop" : "Play")
             // When audio could not start, this is the way to try again (ultra-audit R1).
             .disabled(!engine.isRunning && !engine.isStalled)
 
@@ -300,7 +300,7 @@ struct TransportBar: View {
                 Text(unsaved)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.record)
-                    .padding(.bottom, 2)
+                    .padding(.bottom, Theme.Space.xxs)
             }
             // The menu closed and the export may first wait for the song's audio to decode: without
             // this line nothing on screen said anything was under way (review 2026-10-22).
@@ -308,7 +308,7 @@ struct TransportBar: View {
                 Text(documents.exportProgress ?? "Exporting the song…")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
-                    .padding(.bottom, 2)
+                    .padding(.bottom, Theme.Space.xxs)
             }
             // The learn banner leads the strip and hides nothing under it: a message raised while
             // learning is as true as one raised before (round 4, C4).
@@ -316,7 +316,7 @@ struct TransportBar: View {
                 Text(midi.learnTarget == nil ? "MIDI Learn: tap a control, or move one in a plugin." : "MIDI Learn: move a knob or fader on your device.")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.accent)
-                    .padding(.bottom, 2)
+                    .padding(.bottom, Theme.Space.xxs)
             }
             // What the fingertip on the camera should do (wave W1); its own leaf, so this strip
             // never observes the camera.
@@ -336,33 +336,31 @@ struct TransportBar: View {
                 Text(audio)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.record)
-                    .padding(.bottom, 2)
+                    .padding(.bottom, Theme.Space.xxs)
             }
             if let document = documents.lastError {
                 Text(document)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.record)
-                    .padding(.bottom, 2)
+                    .padding(.bottom, Theme.Space.xxs)
             }
             if quiet, let notice {
                 Text(notice)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
-                    .padding(.bottom, 2)
+                    .padding(.bottom, Theme.Space.xxs)
             }
             if let note = documents.launchNote {
                 Text(note)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.record)
-                    .padding(.bottom, 2)
+                    .padding(.bottom, Theme.Space.xxs)
             }
             // A safe start holds plugins of other makers; this is the one door that loads them.
             if engine.plugins.holdsPlugins {
-                Button("Load plugins from other makers") { engine.plugins.loadHeldPlugins() }
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.accent)
-                    .buttonStyle(.plain)
-                    .padding(.bottom, 2)
+                Button("Load Plugins from Other Makers") { engine.plugins.loadHeldPlugins() }
+                    .buttonStyle(ToolButtonStyle())
+                    .padding(.bottom, Theme.Space.xxs)
             }
             if let warning = documents.earlierSongsWarning {
                 earlierSongsWarning(warning)
@@ -371,7 +369,7 @@ struct TransportBar: View {
                 Text(note)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
-                    .padding(.bottom, 2)
+                    .padding(.bottom, Theme.Space.xxs)
             }
             // The export just made stands under a message; an older one only alone.
             if let loudness = documents.lastExportLoudness,
@@ -381,15 +379,15 @@ struct TransportBar: View {
                 // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
                 Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
                     .font(Theme.Font.caption.monospacedDigit())
-                    .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.accent : Theme.Color.textSecondary)
-                    .padding(.bottom, 2)
+                    .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.warning : Theme.Color.textSecondary)
+                    .padding(.bottom, Theme.Space.xxs)
             }
         }
     }
 
     /// Still true after a Play or another song, so it stays until the musician hides it.
     private func earlierSongsWarning(_ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
+        HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
             Text(text)
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.record)
@@ -397,11 +395,13 @@ struct TransportBar: View {
                 Image(systemName: "xmark")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
+                    .frame(minWidth: Theme.Size.touch, minHeight: Theme.Size.touch)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Hide this message")
+            .accessibilityLabel("Hide This Message")
         }
-        .padding(.bottom, 2)
+        .padding(.bottom, Theme.Space.xxs)
     }
 
     /// Both notices when both stand — a pause and a plugin that came back — so the later one is
@@ -583,9 +583,9 @@ struct SongMenu: View {
             keyAndScale
             timeSignatureMenu
             if agent.isOffered {
-                Button("Assistant", systemImage: "text.bubble") { router.sheet = .agent }
+                Button("Assistant…", systemImage: "text.bubble") { router.sheet = .agent }
             }
-            Button("Echoel Plugins", systemImage: "puzzlepiece.extension") { router.sheet = .store }
+            Button("Echoel Plugins…", systemImage: "puzzlepiece.extension") { router.sheet = .store }
             Button("About Echoel", systemImage: "info.circle") { router.sheet = .about }
             Button("Live Stream…", systemImage: "dot.radiowaves.left.and.right") { router.sheet = .streaming }
             Menu("Send MIDI Clock", systemImage: "metronome") {
@@ -669,7 +669,7 @@ struct SongMenu: View {
             // A Standard MIDI File as new instrument tracks; an empty song takes its tempo and meter.
             Button("Import MIDI…", systemImage: "square.and.arrow.down") { router.sheet = .importMIDI }
             // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
-            Button("Export Video", systemImage: "film") { router.sheet = .exportVideo }
+            Button("Export Video…", systemImage: "film") { router.sheet = .exportVideo }
                 .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)
             // The song itself, with its audio, for another device running Echoel Studio.
             Button("Share Song", systemImage: "square.and.arrow.up.on.square") {
@@ -816,7 +816,7 @@ struct SongMenu: View {
     /// MPE out (W5b): off until an output is chosen; the live track's notes then go out as a
     /// lower zone, pressure and slide following the body.
     private var mpeMenu: some View {
-        Menu("Send MPE", systemImage: "pianokeys") {
+        Menu("MPE Out", systemImage: "pianokeys") {
             ForEach(engine.mpe.destinations) { destination in
                 Button { engine.mpe.toggle(destination) } label: {
                     if engine.mpe.isChosen(destination) {
