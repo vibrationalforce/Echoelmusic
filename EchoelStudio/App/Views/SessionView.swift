@@ -20,7 +20,7 @@ struct SessionView: View {
         let tracks = store.project.tracks.filter { $0.kind == .instrument || $0.kind == .audio }
         VStack(spacing: 0) {
             ScrollView([.horizontal, .vertical]) {
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: Theme.Space.hairline) {
                     header(tracks)
                     ForEach(store.project.scenes) { scene in
                         row(scene, tracks)
@@ -36,7 +36,7 @@ struct SessionView: View {
     }
 
     private func header(_ tracks: [Track]) -> some View {
-        HStack(spacing: 1) {
+        HStack(spacing: Theme.Space.hairline) {
             Color.clear.frame(width: Self.sceneWidth, height: 1)
             ForEach(tracks) { track in
                 SessionTrackHeader(track: track)
@@ -45,7 +45,7 @@ struct SessionView: View {
     }
 
     private func row(_ scene: EchoelCore.Scene, _ tracks: [Track]) -> some View {
-        HStack(spacing: 1) {
+        HStack(spacing: Theme.Space.hairline) {
             SceneButton(scene: scene)
             ForEach(tracks) { track in
                 SessionCell(track: track, scene: scene, open: open, importClip: importClip)

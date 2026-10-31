@@ -10,7 +10,7 @@ struct TrackListView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 1) {
+            LazyVStack(spacing: Theme.Space.hairline) {
                 ForEach(store.project.tracks) { track in
                     TrackRow(track: track, open: open)
                 }
