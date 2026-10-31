@@ -27,8 +27,8 @@ struct SoundPanel: View {
                 devicePicker
                 switch track.instrument.device {
                 case .drums:
-                    // The one wording of the kit map; the AUv3 drum page says the same (CI pass 2026-10-31).
-                    Text("General MIDI drum notes: Kick 36 · Snare 38 · Clap 39 · Closed Hat 42 · Open Hat 46 · Low Tom 45 · High Tom 50 · Crash 49.")
+                    // The kit map's one source, shared with the AUv3 drum page and pinned by a test.
+                    Text(DrumNoteMap.line)
                         .font(Theme.Font.caption)
                         .foregroundStyle(Theme.Color.textSecondary)
                     deviceFields(.drums)
