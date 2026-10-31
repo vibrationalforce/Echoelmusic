@@ -280,7 +280,14 @@ public enum AgentTools {
                                                  "stereowidth": .stereoWidth, "width": .stereoWidth, "widener": .stereoWidth,
                                                  "ringmodulator": .ringModulator, "ringmod": .ringModulator, "ring": .ringModulator,
                                                  "frequencyshifter": .frequencyShifter, "frequencyshift": .frequencyShifter,
-                                                 "freqshift": .frequencyShifter, "shifter": .frequencyShifter]
+                                                 "freqshift": .frequencyShifter, "shifter": .frequencyShifter,
+                                                 "pitchcorrection": .pitchCorrection, "autotune": .pitchCorrection,
+                                                 "tuning": .pitchCorrection, "tune": .pitchCorrection,
+                                                 "pitchcorrect": .pitchCorrection,
+                                                 "harmonizer": .harmonizer, "harmoniser": .harmonizer,
+                                                 "harmony": .harmonizer, "harmonies": .harmonizer,
+                                                 "granular": .granular, "grain": .granular, "grains": .granular,
+                                                 "echoelgrain": .granular]
         guard let effect = aliases[key] else {
             throw AgentError.invalid("There is no effect \"\(name)\". Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).")
         }
