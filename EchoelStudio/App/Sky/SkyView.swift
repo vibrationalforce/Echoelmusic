@@ -334,8 +334,10 @@ extension SkyCanvas {
         var line = centred.name ?? SkyFrame.designation(centred)
         line += "  ·  Magnitude " + SkyFrame.number(centred.magnitude)
         if let index = centred.colorIndex { line += "  ·  " + SkyFrame.tint(colorIndex: index).capitalized }
+        // Centred one value line plus a large gap above the bottom edge (the home indicator).
+        let fromBottom = Theme.Space.xl + Theme.Space.s
         canvas.draw(Text(line).font(Theme.Font.value).foregroundStyle(ink(frame.isNight, 0.9)),
-                    at: CGPoint(x: middle.x, y: size.height - 34))
+                    at: CGPoint(x: middle.x, y: size.height - fromBottom))
     }
 }
 
@@ -369,7 +371,8 @@ private struct SkyControls: View {
                     .font(Theme.Font.caption)
                     .frame(minHeight: Theme.Size.touch)
             }
-            .accessibilityLabel("Place, \(placeLine)")
+            .accessibilityLabel("Place")
+            .accessibilityValue(placeLine)
             .accessibilityHint("Chooses the place whose sky is drawn.")
             Spacer(minLength: 0)
             if pointing.steering == .finger, pointing.canFollowPhone {
