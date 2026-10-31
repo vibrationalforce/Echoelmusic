@@ -20,7 +20,7 @@ private struct MIDILearnable: ViewModifier {
                         .contentShape(Rectangle())
                         .onTapGesture { midi.choose(address) }
                         .accessibilityLabel(mapped.map { "Mapped to \($0.description)" } ?? "Not mapped")
-                        .accessibilityHint("Move a control on your MIDI device to map it here")
+                        .accessibilityHint("Move a control on your MIDI device to map it here.")
                         .accessibilityAddTraits(.isButton)
                 }
             }
@@ -52,6 +52,6 @@ struct MIDILearnButton: View {
         .buttonStyle(ToolButtonStyle(isActive: midi.isLearning))
         .accessibilityLabel("MIDI Learn")
         .accessibilityValue(midi.isLearning ? "On" : "Off")
-        .accessibilityHint("Tap a control, then move a knob on your MIDI device")
+        .accessibilityHint("Tap a control, then move a knob on your MIDI device.")
     }
 }

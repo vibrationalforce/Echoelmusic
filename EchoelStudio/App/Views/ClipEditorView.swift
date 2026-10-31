@@ -160,16 +160,16 @@ struct PianoRoll: View {
     private func key(_ pitch: Int) -> some View {
         let black = NoteEditing.isBlackKey(pitch)
         return ZStack(alignment: .leading) {
-            Rectangle().fill(Theme.Color.text)
+            Rectangle().fill(Theme.Color.keyWhite)
             if black {
                 Rectangle()
-                    .fill(Theme.Color.background)
+                    .fill(Theme.Color.keyBlack)
                     .frame(width: keyWidth * 0.6)
             }
             if pitch % 12 == 0 {
                 Text(NoteEditing.name(of: pitch))
                     .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.onAccent)
+                    .foregroundStyle(Theme.Color.keyLabel)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.trailing, Theme.Space.xs)
             }

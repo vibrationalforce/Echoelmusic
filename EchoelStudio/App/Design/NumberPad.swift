@@ -156,7 +156,7 @@ struct NumberPad: View {
         .buttonStyle(.plain)
         .disabled(atDefault)
         .accessibilityLabel("Default \(number(shown)) \(request.format.unit)")
-        .accessibilityHint("Types the default; OK confirms it")
+        .accessibilityHint("Types the default; OK confirms it.")
     }
 
     // MARK: Keys
