@@ -22,7 +22,7 @@ struct StepGridView: View {
             HStack(alignment: .top, spacing: Theme.Space.xs) {
                 laneNames
                 ScrollView(.horizontal) {
-                    VStack(spacing: 2) {
+                    VStack(spacing: Theme.Space.xxs) {
                         ForEach(lanes) { lane in
                             laneRow(lane, count: count)
                         }
@@ -35,7 +35,7 @@ struct StepGridView: View {
     }
 
     private var laneNames: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: Theme.Space.xxs) {
             ForEach(lanes) { lane in
                 Text(lane.name)
                     .font(Theme.Font.label)
@@ -53,7 +53,7 @@ struct StepGridView: View {
     }
 
     private func laneRow(_ lane: DrumLane, count: Int) -> some View {
-        HStack(spacing: 2) {
+        HStack(spacing: Theme.Space.xxs) {
             ForEach(0..<count, id: \.self) { index in
                 stepCell(lane, index)
             }

@@ -74,7 +74,7 @@ struct EffectsView: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
         } else {
-            VStack(spacing: 1) {
+            VStack(spacing: Theme.Space.hairline) {
                 ForEach(Array(inserts.enumerated()), id: \.element.id) { index, insert in
                     row(insert, index: index, count: inserts.count)
                 }
@@ -88,7 +88,7 @@ struct EffectsView: View {
             Button {
                 selected = selected == insert.id ? nil : insert.id
             } label: {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Space.xxs) {
                     Text(insert.plugin.name)
                         .font(Theme.Font.body)
                         .foregroundStyle(insert.isBypassed ? Theme.Color.textSecondary : Theme.Color.text)

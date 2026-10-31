@@ -86,6 +86,10 @@ struct EchoelStudioApp: App {
                 .environment(strap)
                 .environment(camera)
                 .preferredColorScheme(.dark)
+                // The system's own controls — a sheet's Done, a menu's checkmark, a segmented
+                // picker, an alert — take the bio-green accent instead of the system blue, so
+                // nothing on screen speaks in a second colour.
+                .tint(Theme.Color.accent)
                 .task {
                     documents.restore()
                     // Before the engine starts, so no sync loads a plugin of another maker first.

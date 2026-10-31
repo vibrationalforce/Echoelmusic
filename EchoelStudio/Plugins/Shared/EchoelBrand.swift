@@ -37,6 +37,10 @@ enum EchoelBrand {
     }
 
     enum Space {
+        /// The gap that draws a hairline between rows laid on the border colour.
+        static let hairline: CGFloat = 1
+        /// The breath between stacked lines of one strip, or the cells of a dense grid.
+        static let xxs: CGFloat = 2
         static let xs: CGFloat = 4
         static let s: CGFloat = 8
         static let m: CGFloat = 12

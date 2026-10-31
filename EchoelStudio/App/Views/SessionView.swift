@@ -13,14 +13,16 @@ struct SessionView: View {
     /// Picks a file for an audio track's empty slot.
     let importClip: (TrackID, SceneID) -> Void
 
-    static let columnWidth: CGFloat = 120
-    static let sceneWidth: CGFloat = 104
+    /// Wide enough for a track's name of about twelve letters beside its stop button (device
+    /// video 10021: "Instr…").
+    static let columnWidth: CGFloat = 152
+    static let sceneWidth: CGFloat = 112
 
     var body: some View {
         let tracks = store.project.tracks.filter { $0.kind == .instrument || $0.kind == .audio }
         VStack(spacing: 0) {
             ScrollView([.horizontal, .vertical]) {
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: Theme.Space.hairline) {
                     header(tracks)
                     ForEach(store.project.scenes) { scene in
                         row(scene, tracks)
@@ -29,6 +31,9 @@ struct SessionView: View {
                 }
                 .padding(Theme.Space.s)
             }
+            // Anchored top left, where a grid starts, rather than floating small in the middle
+            // of the screen while it is smaller than the view (device video 10021).
+            .defaultScrollAnchor(.topLeading)
             Divider().overlay(Theme.Color.border)
             SessionFooter()
         }
@@ -36,7 +41,7 @@ struct SessionView: View {
     }
 
     private func header(_ tracks: [Track]) -> some View {
-        HStack(spacing: 1) {
+        HStack(spacing: Theme.Space.hairline) {
             Color.clear.frame(width: Self.sceneWidth, height: 1)
             ForEach(tracks) { track in
                 SessionTrackHeader(track: track)
@@ -45,7 +50,7 @@ struct SessionView: View {
     }
 
     private func row(_ scene: EchoelCore.Scene, _ tracks: [Track]) -> some View {
-        HStack(spacing: 1) {
+        HStack(spacing: Theme.Space.hairline) {
             SceneButton(scene: scene)
             ForEach(tracks) { track in
                 SessionCell(track: track, scene: scene, open: open, importClip: importClip)
@@ -78,15 +83,17 @@ struct SessionTrackHeader: View {
             Text(track.name)
                 .font(Theme.Font.label)
                 .foregroundStyle(Theme.Color.text)
-                .lineLimit(1)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Button { engine.stopClip(on: track.id) } label: { Image(systemName: "stop.fill") }
                 .buttonStyle(ToolButtonStyle(isActive: isPlaying))
                 .disabled(!isPlaying)
-                .accessibilityLabel("Stop clip on \(track.name)")
+                .accessibilityLabel("Stop Clip on \(track.name)")
         }
         .padding(.horizontal, Theme.Space.xs)
-        .frame(width: SessionView.columnWidth, height: Theme.Size.touch)
+        .frame(width: SessionView.columnWidth)
+        .frame(minHeight: Theme.Size.touch)
         .background(Theme.Color.surface)
     }
 }
@@ -151,7 +158,7 @@ struct SessionCell: View {
                     .font(Theme.Font.caption)
                     .foregroundStyle(isPlaying ? Theme.Color.play : Theme.Color.textSecondary)
                 Text(clip.name)
-                    .font(Theme.Font.caption)
+                    .font(Theme.Font.label)
                     .foregroundStyle(Theme.Color.text)
                     .lineLimit(1)
                 Spacer(minLength: 0)
@@ -248,35 +255,65 @@ struct SessionFooter: View {
     ]
 
     var body: some View {
-        HStack(spacing: Theme.Space.s) {
+        // One row where it fits; on a phone in portrait the launch choice takes a row of its own
+        // rather than squeezing the buttons (device video 10021).
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: Theme.Space.s) {
+                buttons
+                Spacer(minLength: Theme.Space.s)
+                quantization
+            }
+            VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                HStack(spacing: Theme.Space.s) { buttons }
+                quantization
+            }
+        }
+        .padding(.horizontal, Theme.Space.m)
+        .padding(.vertical, Theme.Space.xs)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Color.surface)
+    }
+
+    private var buttons: some View {
+        Group {
             Button("Stop All", systemImage: "stop.fill") { engine.stopAllClips() }
                 .buttonStyle(ToolButtonStyle())
                 .disabled(engine.session.playing.isEmpty)
             Button("Back to Arrangement", systemImage: "arrow.uturn.backward.circle") { engine.backToArrangement() }
                 .buttonStyle(ToolButtonStyle(isActive: !engine.session.detached.isEmpty, activeColor: Theme.Color.accent))
                 .disabled(engine.session.detached.isEmpty)
-            Spacer(minLength: Theme.Space.s)
-            Menu {
-                ForEach(Self.choices, id: \.self) { choice in
-                    Button {
-                        engine.setLaunchQuantum(choice.ticks)
-                    } label: {
-                        if engine.session.quantum == choice.ticks {
-                            Label(choice.name, systemImage: "checkmark")
-                        } else {
-                            Text(choice.name)
-                        }
+        }
+    }
+
+    private var quantization: some View {
+        Menu {
+            ForEach(Self.choices, id: \.self) { choice in
+                Button {
+                    engine.setLaunchQuantum(choice.ticks)
+                } label: {
+                    if engine.session.quantum == choice.ticks {
+                        Label(choice.name, systemImage: "checkmark")
+                    } else {
+                        Text(choice.name)
                     }
                 }
-            } label: {
-                Text("Launch: \(Self.choices.first { $0.ticks == engine.session.quantum }?.name ?? "1 Bar")")
+            }
+        } label: {
+            HStack(spacing: Theme.Space.xs) {
+                Text("Launch")
+                    .font(Theme.Font.label)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                Text(Self.choices.first { $0.ticks == engine.session.quantum }?.name ?? "1 Bar")
+                    .font(Theme.Font.value)
+                    .foregroundStyle(Theme.Color.text)
+                Image(systemName: "chevron.down")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
-                    .frame(minHeight: Theme.Size.touch)
+                    .accessibilityHidden(true)
             }
-            .accessibilityLabel("Launch quantization")
+            .frame(minHeight: Theme.Size.touch)
         }
-        .padding(.horizontal, Theme.Space.m)
-        .background(Theme.Color.surface)
+        .accessibilityLabel("Launch Quantization")
+        .accessibilityValue(Self.choices.first { $0.ticks == engine.session.quantum }?.name ?? "1 Bar")
     }
 }

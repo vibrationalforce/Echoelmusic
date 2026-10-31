@@ -18,7 +18,7 @@ struct RenameSongView: View {
     var body: some View {
         NavigationStack {
             form
-                .navigationTitle("Song")
+                .navigationTitle("Song Settings")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { toolbar }
                 .onAppear {
@@ -82,13 +82,13 @@ struct RenameSongView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Clear name")
+                .accessibilityLabel("Clear Name")
             }
         }
         .padding(.leading, Theme.Space.s)
         .frame(minHeight: Theme.Size.touch)
-        .background(Theme.Color.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.medium))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.border, lineWidth: 1))
+        .background(Theme.Color.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.medium))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.borderStrong, lineWidth: 1))
     }
 
     /// Done keeps a new name; the groove and tempo changes are already in the song.

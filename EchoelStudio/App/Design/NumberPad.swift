@@ -167,17 +167,17 @@ struct NumberPad: View {
             GridRow { digit(4); digit(5); digit(6) }
             GridRow { digit(1); digit(2); digit(3) }
             GridRow {
-                key(enabled: entry.allowsNegative, label: "Make negative", action: { entry.setNegative(true) }) {
+                key(enabled: entry.allowsNegative, label: "Make Negative", action: { entry.setNegative(true) }) {
                     Image(systemName: "minus")
                 }
                 digit(0)
                 key(label: "Delete", action: { entry.deleteLast() }) { Image(systemName: "delete.left") }
             }
             GridRow {
-                key(enabled: entry.allowsNegative, label: "Make positive", action: { entry.setNegative(false) }) {
+                key(enabled: entry.allowsNegative, label: "Make Positive", action: { entry.setNegative(false) }) {
                     Image(systemName: "plus")
                 }
-                key(enabled: entry.allowsDecimal, label: "Decimal separator", action: { entry.typeDecimal() }) {
+                key(enabled: entry.allowsDecimal, label: "Decimal Separator", action: { entry.typeDecimal() }) {
                     Text(Self.separator)
                 }
                 key(primary: true, label: "OK, set \(request.title)", action: commit) { Text("OK") }

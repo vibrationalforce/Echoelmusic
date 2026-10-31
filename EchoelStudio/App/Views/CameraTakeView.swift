@@ -48,7 +48,7 @@ struct CameraTakeView: View {
                 .accessibilityLabel("Camera picture")
         } else {
             RoundedRectangle(cornerRadius: Theme.Radius.large)
-                .fill(Color.black)
+                .fill(Theme.Color.background)
                 .aspectRatio(9 / 16, contentMode: .fit)
                 .accessibilityHidden(true)
         }

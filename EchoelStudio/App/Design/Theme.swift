@@ -78,6 +78,10 @@ enum Theme {
     }
 
     enum Space {
+        /// The gap that draws a hairline between rows and strips laid on the border colour.
+        static let hairline = EchoelBrand.Space.hairline
+        /// The breath between stacked lines of one status strip, or the cells of a dense grid.
+        static let xxs = EchoelBrand.Space.xxs
         static let xs = EchoelBrand.Space.xs
         static let s = EchoelBrand.Space.s
         static let m = EchoelBrand.Space.m

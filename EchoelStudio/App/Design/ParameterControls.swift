@@ -9,20 +9,20 @@ enum ParameterFormat {
     static func text(_ value: Double, unit: ParameterUnit) -> String {
         switch unit {
         case .decibel:
-            return value <= MixerStrip.volumeRange.lowerBound ? "−∞ dB" : String(format: "%.1f dB", value)
+            return value <= MixerStrip.volumeRange.lowerBound ? "−∞ dB" : NumberText.string(value, decimals: 1, unit: "dB")
         case .pan:
             let percent = Int((abs(value) * 100).rounded())
             return percent == 0 ? "C" : (value < 0 ? "L\(percent)" : "R\(percent)")
         case .bpm:
-            return String(format: "%.1f BPM", value)
+            return NumberText.string(value, decimals: 1, unit: "BPM")
         case .hertz:
-            return value >= 1_000 ? String(format: "%.2f kHz", value / 1_000) : String(format: "%.0f Hz", value)
+            return value >= 1_000 ? NumberText.string(value / 1_000, decimals: 2, unit: "kHz") : NumberText.string(value, decimals: 0, unit: "Hz")
         case .seconds:
-            return value >= 1 ? String(format: "%.2f s", value) : String(format: "%.0f ms", value * 1_000)
+            return value >= 1 ? NumberText.string(value, decimals: 2, unit: "s") : NumberText.string(value * 1_000, decimals: 0, unit: "ms")
         case .octaves:
-            return String(format: "%.1f oct", value)
+            return NumberText.string(value, decimals: 1, unit: "oct")
         case .amount:
-            return String(format: "%.2f", value)
+            return NumberText.string(value, decimals: 2)
         case .choice:
             return String(Int(value.rounded()))
         }
@@ -240,7 +240,7 @@ struct ParameterField: View {
             let step = Self.step(descriptor)
             writer.set(address, normalized: position + (direction == .increment ? step : -step), gesture: false)
         }
-        .accessibilityAction(named: "Type a value") { openPad(descriptor, value: value) }
+        .accessibilityAction(named: "Type a Value") { openPad(descriptor, value: value) }
         .midiLearnable(address)
     }
 
