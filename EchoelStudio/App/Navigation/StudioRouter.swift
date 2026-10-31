@@ -27,6 +27,8 @@ enum StudioSheet: Identifiable, Hashable {
     case about
     /// A new name for the open song, which its package takes too.
     case renameSong
+    /// A new name for a track, a clip or a scene.
+    case rename(RenameTarget)
     /// Pick a video from the photo library to place at a tick, on a video track or a new one (W7).
     case importVideoFromPhotos(TrackID?, Tick)
     /// The same from the Files app.

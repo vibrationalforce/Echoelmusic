@@ -84,6 +84,7 @@ struct StudioView: View {
             case .agent: AgentView()
             case .about: AboutView()
             case .renameSong: RenameSongView()
+            case .rename(let target): RenameView(target: target)
             case .streaming: StreamingView()
             case .connections: ConnectionsView()
             case let .importAudio(track, start):
