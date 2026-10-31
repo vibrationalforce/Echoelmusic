@@ -200,6 +200,31 @@ final class DocumentController {
     init(store: ProjectStore, directory: URL = DocumentController.defaultDirectory) {
         self.store = store
         library = ProjectLibrary(directory: directory)
+        #if canImport(UIKit)
+        // The block is NS_SWIFT_SENDABLE and delivered on the main queue.
+        memoryObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.memoryWarned() }
+        }
+        #endif
+    }
+
+    @ObservationIgnored private var memoryObserver: NSObjectProtocol?
+
+    /// iOS is short of memory: the decoded files nothing in the song plays are let go, so what
+    /// plays keeps sounding (`Project.releasableMedia`). Each is marked as not loaded for want of
+    /// memory, so an export or an Undo that plays it again names it, and the next open loads it.
+    private func memoryWarned() {
+        let released = store.project.releasableMedia(among: samples.keys)
+        DiagnosticLog.app.note("memory: warning", [("released", Double(released.count)), ("loaded", Double(samples.count))])
+        guard !released.isEmpty else { return }
+        for id in released {
+            samples[id] = nil
+            unfitMedia[id] = .noFreeMemory
+        }
+        mediaRevision += 1
+        log.info("memory warning — released \(released.count, privacy: .public) unplayed file(s)")
     }
 
     /// The app's Documents folder, which the Files app shows under the app's name.
@@ -588,10 +613,52 @@ final class DocumentController {
                     .compactMap { $0 }.joined(separator: " ")
             }
             loadMedia(of: project)
+            recoverLostTakes(in: url, of: project)
             return url
         } catch {
             log.error("open failed — \(error.localizedDescription, privacy: .private)")
             throw error
+        }
+    }
+
+    /// Takes the app ended on before the song named them (`TakeRecovery`): found off the main
+    /// thread after the song opens, and put back on a new audio track through the door, as one
+    /// Undo step, said in the status line. Not while a take is being recorded or committed, whose
+    /// file is in the folder for a moment before the song names it.
+    private func recoverLostTakes(in package: URL, of project: Project) {
+        guard takesInFlight.isEmpty else { return }
+        let song = songsOpened
+        Task { [weak self] in
+            let takes = await Task.detached(priority: .utility) { () -> [TakeRecovery.Take] in
+                let files = FileManager.default
+                let folder = package.appendingPathComponent(MediaFile.directory, isDirectory: true)
+                guard let urls = try? files.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentModificationDateKey],
+                                                                options: [.skipsHiddenFiles]) else { return [] }
+                let listed = urls.map { url in
+                    TakeRecovery.FolderFile(name: url.lastPathComponent,
+                                            modified: (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
+                                                .contentModificationDate ?? .distantPast)
+                }
+                let document = package.appendingPathComponent(ProjectLibrary.documentName)
+                let saved = (try? files.attributesOfItem(atPath: document.path))?[.modificationDate] as? Date
+                return TakeRecovery.orphans(in: project, files: listed, documentModified: saved).compactMap { lost in
+                    let probe = MediaFile(id: lost.id, name: TakeRecovery.takeName, path: lost.path, frameCount: 1, sampleRate: 1)
+                    guard let url = probe.url(in: package), let header = try? AudioFileImport.header(of: url) else { return nil }
+                    return TakeRecovery.Take(id: lost.id, path: lost.path, frameCount: header.frameCount, sampleRate: header.sampleRate)
+                }
+            }.value
+            guard let self, self.songsOpened == song, self.takesInFlight.isEmpty, !takes.isEmpty,
+                  let commands = TakeRecovery.commands(for: self.store.project, takes: takes) else { return }
+            self.log.error("found \(takes.count, privacy: .public) take(s) the song did not name — recovering")
+            DiagnosticLog.app.note("document: recovered takes", [("takes", Double(takes.count))])
+            let standing = self.lastError
+            self.perform(commands, title: "Recover Takes")
+            guard self.lastError == nil else { return }
+            let line = takes.count == 1
+                ? "A take that was not saved in the song was found and put on the track \(TakeRecovery.trackName)."
+                : "\(takes.count) takes that were not saved in the song were found and put on the track \(TakeRecovery.trackName)."
+            self.lastError = standing.map { "\($0) \(line)" } ?? line
+            self.loadMedia(of: self.store.project)
         }
     }
 

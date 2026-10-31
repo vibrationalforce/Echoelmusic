@@ -23,6 +23,8 @@ struct EchoelStudioApp: App {
     init() {
         // First, so a launch that dies anywhere below still names its build (NEUPLANUNG §6).
         DiagnosticLog.beginApp()
+        // The system's reports on how earlier runs ended go into that log, never off the device.
+        CrashReports.shared.start()
         // The standard effects load like any Audio Unit once they are registered in this process.
         StandardEffectUnit.register()
         let store = ProjectStore(project: .starter())
@@ -86,6 +88,8 @@ struct EchoelStudioApp: App {
                 .preferredColorScheme(.dark)
                 .task {
                     documents.restore()
+                    // Before the engine starts, so no sync loads a plugin of another maker first.
+                    if documents.startsSafe { engine.plugins.holdPlugins() }
                     engine.start()
                     midi.start()
                     launchpad.start()

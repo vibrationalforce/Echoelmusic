@@ -192,6 +192,14 @@ extension Project {
         return played + samples
     }
 
+    /// Of the decoded files in `loaded`, the ones nothing in the song plays — a sample kept for a
+    /// track that plays another device, a file no region or placed clip uses any more — in a
+    /// stable order. Under memory pressure these go first: dropping them silences nothing.
+    public func releasableMedia(among loaded: some Sequence<MediaID>) -> [MediaID] {
+        let heard = Set(audibleMedia)
+        return Set(loaded).subtracting(heard).sorted { $0.description < $1.description }
+    }
+
     /// What this song would leave silent within `budget` that `before` did not: a file it plays
     /// that no longer fits, or one it newly plays that does not fit. A change that places a new
     /// file is judged with the file placed — appended alone, nothing points at it yet and it would

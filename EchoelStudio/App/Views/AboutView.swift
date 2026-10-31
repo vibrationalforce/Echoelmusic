@@ -1,3 +1,4 @@
+import EchoelCore
 import SwiftUI
 
 /// What Echoel is, what this build holds, and what happens to the musician's data. Every
@@ -5,6 +6,7 @@ import SwiftUI
 /// changes while it is open.
 struct AboutView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(StudioRouter.self) private var router
 
     private static let sourceURL = URL(string: "https://github.com/vibrationalforce/Echoelmusic")
     private static let siteURL = URL(string: "https://echoelmusic.com")
@@ -20,6 +22,12 @@ struct AboutView: View {
                 Section("Your data") {
                     paragraph("No account, no ads, no tracking, no server of ours. Songs are files on this device, in an open, documented format.")
                     paragraph("Echoel uses the network only for the App Store (at launch, to check whether you bought Echoel Plugins, and when you open the store: prices, buying, Restore Purchases), for Network MIDI when you turn it on, and for a live stream, from Go Live to Stop, to the servers you enter.")
+                    paragraph("A diagnostics log stays on this device: what the audio and the app did, and how earlier runs ended as iOS reports it — numbers only, never a name you typed. It leaves only when you share it.")
+                    // The share comes up once this page has closed: the one sheet slot waits for it.
+                    Button("Share Diagnostics") {
+                        router.share(DiagnosticLog.app.url)
+                        dismiss()
+                    }
                 }
                 Section("Open source") {
                     paragraph("The source code is public under the MIT licence. These links open in your browser.")

@@ -54,6 +54,7 @@ struct MetalFieldView: UIViewRepresentable {
         view.isUserInteractionEnabled = false
         // The battery level is a detail input; iOS reports it only while asked to.
         UIDevice.current.isBatteryMonitoringEnabled = true
+        FieldMemory.observe()
         return view
     }
 
@@ -69,6 +70,27 @@ struct MetalFieldView: UIViewRepresentable {
 
 /// Owns the command queue and the pipeline and renders each frame. `MTKView` calls the delegate on
 /// the main thread (its display link), so the snapshot is read under `MainActor.assumeIsolated`.
+/// When iOS last warned that memory runs short, for the detail level (`FieldDetail.level`). One
+/// observer for the process, set up by the first Field; it touches only this stamp, so its block
+/// (NS_SWIFT_SENDABLE, delivered on the main queue) captures no renderer.
+@MainActor
+enum FieldMemory {
+    static private(set) var warnedAt: CFAbsoluteTime = -.infinity
+    private static var observer: NSObjectProtocol?
+
+    static func observe() {
+        guard observer == nil else { return }
+        observer = NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main
+        ) { _ in
+            MainActor.assumeIsolated {
+                FieldMemory.warnedAt = CFAbsoluteTimeGetCurrent()
+                DiagnosticLog.app.note("field: memory warning, detail down")
+            }
+        }
+    }
+}
+
 final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     /// The numbers the shader reads. Mirrored by BYTE LAYOUT, not by name, in the MSL `Uniforms`
     /// struct in `shaderSource` — no compiler checks the two agree, so a field is only ever
@@ -342,7 +364,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         let charging = device.batteryState == .charging || device.batteryState == .full
         let level = FieldDetail.level(thermal: thermal, lowPower: info.isLowPowerModeEnabled,
                                       batteryLevel: Double(device.batteryLevel), charging: charging,
-                                      measuredFrameRate: measured)
+                                      measuredFrameRate: measured,
+                                      memoryWarned: now - FieldMemory.warnedAt < FieldDetail.memoryWarningSeconds)
         if level == candidateLevel {
             candidateSamples += 1
         } else {
