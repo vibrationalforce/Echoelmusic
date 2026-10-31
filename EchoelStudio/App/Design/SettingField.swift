@@ -20,6 +20,9 @@ struct SettingField: View {
     var standard: Int?
     /// Spoken after the number instead of `unit` ("kilobits a second").
     var spokenUnit: String?
+    /// False where every change reopens something (a live connection's port): the value is then
+    /// typed or stepped, never dragged through thousands of intermediate values.
+    var drags = true
     let commit: (Int) -> Void
     /// The drag in progress: the unrounded value it has reached and the translation last read.
     @State private var drag: (value: Double, translation: CGFloat)?
@@ -69,7 +72,8 @@ struct SettingField: View {
                     let landed = snapped(Int(next.rounded()))
                     if landed != value { commit(landed) }
                 }
-                .onEnded { _ in drag = nil }
+                .onEnded { _ in drag = nil },
+            including: drags ? .all : .subviews
         )
         .onTapGesture(count: 2) { if let standard { commit(snapped(standard)) } }
         .onTapGesture(perform: typeValue)

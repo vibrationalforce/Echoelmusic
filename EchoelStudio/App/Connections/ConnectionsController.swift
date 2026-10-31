@@ -43,7 +43,7 @@ final class ConnectionsController {
             switch self {
             case .osc: "The song's tempo, key, beat and level to a visual or sound tool (/echoelmusic/music/…); with body sharing on, the pulse, HRV and coherence (/echoelmusic/bio/…)."
             case .admOSC: "Every track as an audio object for an immersive renderer: its pan as the position, its level as the gain (/adm/obj/n/…)."
-            case .artNet: "One DMX fixture — dimmer, red, green, blue — in the key's colour, lit by the level and the beat, to a node or a lighting desk."
+            case .artNet: "One DMX fixture — dimmer, red, green, blue — in the key's color, lit by the level and the beat, to a node or a lighting desk."
             case .sacn: "The same fixture as sACN, for a desk or node that speaks E1.31."
             }
         }
