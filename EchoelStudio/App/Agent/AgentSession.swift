@@ -398,7 +398,7 @@ struct MixTool: Tool {
         var track: String
         @Guide(description: "Fader in dB, at most 6. 0 is unity.")
         var volumeDB: Double?
-        @Guide(description: "-1 left to 1 right, 0 centre.")
+        @Guide(description: "-1 left to 1 right, 0 center.")
         var pan: Double?
         var mute: Bool?
         var solo: Bool?

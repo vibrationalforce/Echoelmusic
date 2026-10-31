@@ -88,7 +88,7 @@ private struct RouteActions: View {
             Button("Depth \(Int(depth * 100))%") { change { $0.depth = depth * ($0.depth < 0 ? -1 : 1) } }
         }
         Button("Invert") { change { $0.depth = -$0.depth } }
-        Button(route.polarity == .unipolar ? "Centre the Source (bipolar)" : "Source From Zero (unipolar)") {
+        Button(route.polarity == .unipolar ? "Center the Source (bipolar)" : "Source From Zero (unipolar)") {
             change { $0.polarity = $0.polarity == .unipolar ? .bipolar : .unipolar }
         }
         Button(route.enabled ? "Turn Off" : "Turn On") { change { $0.enabled.toggle() } }

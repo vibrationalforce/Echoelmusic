@@ -201,8 +201,8 @@ public enum CommandCatalog {
                                parameters: [P("track", .trackID, "The track."), P("toIndex", .integer, "New position, 0 is first.")])
         case .setTrackColor:
             return CommandSpec(name: "track.color", title: "Change Track Color",
-                               summary: "Chooses one of the 12 track colours.",
-                               parameters: [P("track", .trackID, "The track."), P("colorIndex", .integer, "Colour 0–11.")])
+                               summary: "Chooses one of the 12 track colors.",
+                               parameters: [P("track", .trackID, "The track."), P("colorIndex", .integer, "Color 0–11.")])
         case .setInstrumentParameter:
             return CommandSpec(name: "instrument.parameter", title: "Change Sound",
                                summary: "Sets one value of an instrument track's built-in instrument, e.g. synth.cutoff in Hz.",
@@ -348,7 +348,7 @@ public enum CommandCatalog {
                                             P("target", .string, "The parameter address, e.g. track/<id>/mixer.volume."),
                                             P("depth", .number, "−1…1 of the parameter's travel."),
                                             P("curve", .string, "linear or square.", optional: true),
-                                            P("polarity", .string, "unipolar (0…1) or bipolar (centred).", optional: true)])
+                                            P("polarity", .string, "unipolar (0…1) or bipolar (centered).", optional: true)])
         case .removeModRoute:
             return CommandSpec(name: "modulation.remove", title: "Remove Modulation",
                                summary: "Removes one modulation route.",
