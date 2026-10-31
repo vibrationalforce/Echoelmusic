@@ -91,7 +91,9 @@ targets:
         # Bio-green for every system control (alerts, pickers, file browser): the asset carries
         # the same components as `EchoelBrand.Color.accent` (an asset catalog cannot read Swift).
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        # The launch screen is the Studio's black ground (`UILaunchScreen` in Support/Info.plist,
+        # colour asset LaunchBackground), drawn before any Swift runs — so the first frame the
+        # musician sees matches the app instead of whatever the system background happens to be.
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIRequiresFullScreen: NO
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
