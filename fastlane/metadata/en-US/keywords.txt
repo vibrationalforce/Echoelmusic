@@ -1,1 +1,1 @@
-daw,synth,piano,roll,drums,sampler,midi,auv3,mixer,recorder,automation,stems,ipad,plugin
+daw,synth,piano,roll,drums,sampler,midi,recording,mixer,recorder,automation,stems,ipad,plugin
