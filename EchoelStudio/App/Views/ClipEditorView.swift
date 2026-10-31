@@ -141,21 +141,44 @@ struct PianoRoll: View {
         }
     }
 
+    /// A keyboard on its side: white keys in the light text colour, black keys as shorter black
+    /// bars over them, as on an instrument — the two told apart by shade and by length (device
+    /// video 10021 showed only grey bars). Each C is named.
     private var keys: some View {
         VStack(spacing: 0) {
             ForEach(Note.pitchRange.reversed(), id: \.self) { pitch in
-                let black = NoteEditing.isBlackKey(pitch)
-                Text(pitch % 12 == 0 ? NoteEditing.name(of: pitch) : "")
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(black ? Theme.Color.textSecondary : Theme.Color.background)
-                    .frame(width: keyWidth, height: rowHeight, alignment: .trailing)
-                    .padding(.trailing, Theme.Space.xs)
-                    .background(black ? Theme.Color.surface : Theme.Color.textSecondary)
-                    .overlay(alignment: .bottom) { Rectangle().fill(Theme.Color.background).frame(height: 1) }
-                    .id(pitch)
-                    .accessibilityHidden(true)
+                key(pitch)
             }
         }
+    }
+
+    private func key(_ pitch: Int) -> some View {
+        let black = NoteEditing.isBlackKey(pitch)
+        return ZStack(alignment: .leading) {
+            Rectangle().fill(Theme.Color.text)
+            if black {
+                Rectangle()
+                    .fill(Theme.Color.background)
+                    .frame(width: keyWidth * 0.6)
+            }
+            if pitch % 12 == 0 {
+                Text(NoteEditing.name(of: pitch))
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.onAccent)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, Theme.Space.xs)
+            }
+        }
+        .frame(width: keyWidth, height: rowHeight)
+        // The line between two white keys: under B (above C) and under E (above F) a full key
+        // ends; elsewhere a black key sits between them.
+        .overlay(alignment: .bottom) {
+            if pitch % 12 == 0 || pitch % 12 == 5 {
+                Rectangle().fill(Theme.Color.textSecondary).frame(height: Theme.Space.hairline)
+            }
+        }
+        .id(pitch)
+        .accessibilityHidden(true)
     }
 
     private var noteGrid: some View {

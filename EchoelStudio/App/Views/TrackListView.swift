@@ -16,6 +16,16 @@ struct TrackListView: View {
                 }
                 AddTrackMenu()
                     .padding(Theme.Space.m)
+                // A song of one or two tracks left most of the page empty (device video 10021):
+                // say what a track is for, and the one way to open its editor.
+                if store.project.tracks.count < 3 {
+                    Text("Each part of the song is a track: instrument and drum tracks play notes, audio and video tracks hold files and takes, return tracks carry shared effects. Tap an instrument track to edit it.")
+                        .font(Theme.Font.label)
+                        .foregroundStyle(Theme.Color.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, Theme.Space.m)
+                }
             }
         }
         .background(Theme.Color.background)
@@ -36,7 +46,7 @@ struct TrackRow: View {
                 .frame(width: 6)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: Theme.Space.xs / 2) {
+            VStack(alignment: .leading, spacing: Theme.Space.xxs) {
                 Text(track.name)
                     .font(Theme.Font.body)
                     .foregroundStyle(Theme.Color.text)
@@ -162,8 +172,9 @@ struct AddTrackMenu: View {
                 .foregroundStyle(Theme.Color.text)
                 .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
                 .background(
+                    // A control's boundary (3.6:1), not a divider.
                     RoundedRectangle(cornerRadius: Theme.Radius.medium)
-                        .stroke(Theme.Color.border, lineWidth: 1)
+                        .stroke(Theme.Color.borderStrong, lineWidth: 1)
                 )
         }
     }
