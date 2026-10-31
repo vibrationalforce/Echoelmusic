@@ -11,7 +11,8 @@ struct StepGridView: View {
     /// Step length in ticks: the editor's grid.
     let step: Tick
 
-    @ScaledMetric(relativeTo: .body) private var cell: CGFloat = 40
+    /// One step, a full touch target (44 pt) at the standard text size and growing with it.
+    @ScaledMetric(relativeTo: .body) private var cell: CGFloat = 44
     @ScaledMetric(relativeTo: .body) private var nameWidth: CGFloat = 92
 
     private let lanes = DrumLane.standardKit

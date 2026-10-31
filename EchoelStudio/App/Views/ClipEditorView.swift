@@ -109,8 +109,8 @@ struct ClipEditorView: View {
     }
 }
 
-/// Keys on the left, the note grid on the right. Tap empty space to add a note, tap a note
-/// to remove it, drag a note to move it, drag its right edge to change its length. Drags on
+/// Keys on the left, the note grid on the right. Tap empty space to add a note, tap a note to
+/// choose it, double-tap it (or Delete Note) to remove it, drag a note to move it, drag its right edge to change its length. Drags on
 /// empty space scroll. One drag is one undo step.
 struct PianoRoll: View {
     @Environment(ProjectStore.self) private var store
@@ -122,6 +122,10 @@ struct PianoRoll: View {
     @ScaledMetric(relativeTo: .caption) private var keyWidth: CGFloat = 52
     /// Points per sixteenth note; the horizontal zoom.
     private let pointsPerSixteenth: CGFloat = 28
+    /// The note a single tap chose. Rows are 18 pt, under a fingertip, so a single tap never
+    /// deletes (a slip took a note away, CI audit 2026-10-31): a tap chooses, a double tap or
+    /// Delete Note removes.
+    @State private var selected: NoteID?
 
     private var pointsPerTick: CGFloat { pointsPerSixteenth / 240 }
     private var gridWidth: CGFloat { CGFloat(clip.length) * pointsPerTick }
@@ -139,6 +143,7 @@ struct PianoRoll: View {
             }
             .onAppear { proxy.scrollTo(72, anchor: .top) }   // C5 near the top: the middle octaves in view
         }
+        .overlay(alignment: .bottomTrailing) { selectionBar }
     }
 
     /// A keyboard on its side: white keys in the light text colour, black keys as shorter black
@@ -186,17 +191,33 @@ struct PianoRoll: View {
             Canvas { context, size in drawGrid(in: &context, size: size) }
                 .frame(width: gridWidth, height: gridHeight)
                 .contentShape(Rectangle())
-                .onTapGesture { location in tap(at: location) }
-                .accessibilityLabel("Note grid")
+                .onTapGesture { location in
+                    selected = nil
+                    tap(at: location)
+                }
+                .accessibilityLabel("Note Grid")
                 .accessibilityHint("Each note below can be moved, resized or deleted from its actions.")
 
             ForEach(clip.notes) { note in
                 NoteBlock(note: note, clip: clip, color: color, grid: grid,
-                          pointsPerTick: pointsPerTick, rowHeight: rowHeight)
+                          pointsPerTick: pointsPerTick, rowHeight: rowHeight,
+                          isSelected: selected == note.id, select: { selected = note.id })
             }
         }
         .frame(width: gridWidth, height: gridHeight, alignment: .topLeading)
         .coordinateSpace(.named(NoteBlock.gridSpace))
+    }
+
+    /// While a note is chosen: the one button that deletes it, in reach of the thumb.
+    @ViewBuilder private var selectionBar: some View {
+        if let id = selected, clip.notes.contains(where: { $0.id == id }) {
+            Button("Delete Note", systemImage: "trash", role: .destructive) {
+                try? store.perform(.removeNotes(clip.id, [id]))
+                selected = nil
+            }
+            .buttonStyle(ToolButtonStyle())
+            .padding(Theme.Space.m)
+        }
     }
 
     private func tap(at location: CGPoint) {
@@ -228,8 +249,9 @@ struct PianoRoll: View {
     }
 }
 
-/// One note: a block in the track colour, brighter with velocity. Tap removes it, dragging
-/// moves it, dragging the right edge resizes it. Its VoiceOver actions do the same.
+/// One note: a block in the track color, brighter with velocity. A tap chooses it (outlined in
+/// the accent), a double tap removes it, dragging moves it, dragging the right edge resizes it.
+/// Its VoiceOver actions do the same.
 struct NoteBlock: View {
     @Environment(ProjectStore.self) private var store
     let note: Note
@@ -238,6 +260,8 @@ struct NoteBlock: View {
     let grid: Tick
     let pointsPerTick: CGFloat
     let rowHeight: CGFloat
+    var isSelected = false
+    var select: () -> Void = {}
 
     @State private var origin: Note?
 
@@ -251,7 +275,8 @@ struct NoteBlock: View {
             .fill(color.opacity(0.45 + 0.55 * Double(note.velocity) / 127))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.small)
-                    .stroke(Theme.Color.background.opacity(0.6), lineWidth: 1)
+                    .stroke(isSelected ? Theme.Color.accent : Theme.Color.background.opacity(0.6),
+                            lineWidth: isSelected ? 2 : 1)
             )
             .overlay(alignment: .trailing) {
                 // The resize handle, visible so the edge is findable.
@@ -264,12 +289,14 @@ struct NoteBlock: View {
             }
             .frame(width: width, height: rowHeight - 1)
             .contentShape(Rectangle())
-            .onTapGesture { perform(.removeNotes(clip.id, [note.id])) }
+            .onTapGesture(count: 2) { perform(.removeNotes(clip.id, [note.id])) }
+            .onTapGesture { select() }
             .highPriorityGesture(drag)
             .offset(x: CGFloat(note.start) * pointsPerTick,
                     y: CGFloat(Note.pitchRange.upperBound - note.pitch) * rowHeight)
             .accessibilityElement()
-            .accessibilityLabel("\(NoteEditing.name(of: note.pitch)) note")
+            .accessibilityLabel("\(NoteEditing.name(of: note.pitch)) Note")
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
             .accessibilityValue("starts at tick \(note.start), \(note.length) ticks long, velocity \(note.velocity)")
             .accessibilityAction(named: "Delete") { perform(.removeNotes(clip.id, [note.id])) }
             .accessibilityAction(named: "Up a Semitone") { nudge(semitones: 1) }
