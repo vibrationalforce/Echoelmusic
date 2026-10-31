@@ -1751,6 +1751,101 @@ final class DocumentController {
         }
     }
 
+    /// Bake Effects (W8): one audio region played through its track's inserts, rendered offline
+    /// into a new file in the song's Media folder (`RegionBake`). The baked region goes onto a new
+    /// audio track right below, with the same fader and pan and no inserts — on its own track the
+    /// effects would play a second time over what is baked in — and the original region leaves its
+    /// track. One undo step brings it all back; the original file stays in the song either way.
+    /// Nothing live reaches the bake: the render uses the song's own state, never the body.
+    func bakeEffects(region regionID: RegionID, on trackID: TrackID, plugins: PluginHost) async {
+        guard !isExporting else { return }
+        guard let track = store.project.track(trackID), let region = track.regions.first(where: { $0.id == regionID }),
+              let file = store.project.mediaFile(region.media) else { return }
+        guard track.inserts.contains(where: { !$0.isBypassed }) else {
+            lastError = "\(track.name) has no effect to bake."
+            return
+        }
+        isExporting = true
+        exportProgress = "Baking effects…"
+        defer {
+            isExporting = false
+            exportProgress = nil
+            followRenamedSong()
+        }
+        let song = songsOpened
+        await mediaLoaded(for: song)
+        guard song == songsOpened else { return }
+        plugins.store(into: store)
+        let project = store.project
+        let buffers = samples
+        guard buffers[region.media] != nil else {
+            lastError = "\(file.name) is not loaded, so there is nothing to bake."
+            return
+        }
+        guard let cut = RegionBake.project(project, track: trackID, region: regionID) else { return }
+        let rate = file.sampleRate
+        let offline = await plugins.offlineUnits(for: cut, sampleRate: rate)
+        guard offline.missing.isEmpty else {
+            lastError = "Nothing was baked: \(offline.missing.joined(separator: ", ")) could not load."
+            return
+        }
+        guard song == songsOpened, let target = newTakeTarget(fileExtension: "wav") else { return }
+        let url = target.url
+        let result: Result<(count: Int, buffer: SampleBuffer?), Error> = await Task.detached(priority: .userInitiated) {
+            Result {
+                let chain = offline.chains[trackID].map { $0 as [any HostedProcessor] } ?? []
+                guard let frames = RegionBake.render(project, track: trackID, region: regionID, sampleRate: rate,
+                                                     samples: buffers, effects: chain), !frames.isEmpty else {
+                    throw CancellationError()
+                }
+                guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
+                let writer = try WAVWriter(url: url, sampleRate: rate)
+                try frames.withUnsafeBufferPointer { pointer in
+                    guard let base = pointer.baseAddress else { return }
+                    try writer.append(left: base, right: base, count: pointer.count)
+                }
+                try writer.finish()
+                return (frames.count, SampleBuffer(samples: frames, sampleRate: rate))
+            }
+        }.value
+        guard song == songsOpened, case .success(let baked) = result else {
+            try? FileManager.default.removeItem(at: url)
+            takeAbandoned(target)
+            if song == songsOpened, case .failure(let error) = result {
+                log.error("bake failed — \(String(describing: error), privacy: .public)")
+                lastError = error is PluginRenderFailed
+                    ? "A plugin stopped rendering during the bake. Nothing was changed."
+                    : "Could not bake the effects. Nothing was changed."
+            }
+            return
+        }
+        defer { takeLanded(target.id) }
+        if let buffer = baked.buffer {
+            samples[target.id] = buffer
+            mediaRevision += 1
+        }
+        let baker = TrackID()
+        let index = store.project.tracks.firstIndex { $0.id == trackID }.map { $0 + 1 }
+        let media = MediaFile(id: target.id, name: "\(file.name) (baked)", path: target.path,
+                              frameCount: baked.count, sampleRate: rate)
+        let commands: [Command] = [
+            .addTrack(id: baker, name: "\(track.name) Baked", kind: .audio, index: index),
+            .setVolume(.track(baker), db: track.mixer.volumeDB),
+            .setPan(.track(baker), pan: track.mixer.pan),
+            .addMedia(media),
+            .placeAudio(track: baker, id: RegionID(), media: media.id, start: region.start),
+            .removeRegion(track: trackID, regionID),
+        ]
+        do {
+            try store.perform(commands, title: "Bake Effects")
+            lastError = nil
+        } catch {
+            log.error("bake rejected — \(String(describing: error), privacy: .public)")
+            lastError = "Could not place the baked region. Its file stays in the song's Media folder."
+        }
+        dropBufferUnlessHeld(target.id)
+    }
+
     /// Where the next take is written: a fresh file in the open song's Media folder.
     struct TakeTarget: Sendable {
         let id: MediaID
