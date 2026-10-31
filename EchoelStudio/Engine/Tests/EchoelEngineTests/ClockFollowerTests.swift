@@ -101,4 +101,18 @@ final class ClockFollowerTests: XCTestCase {
         XCTAssertEqual(ClockFollower.played(song, tempo: 1).tempo, Tempo.range.lowerBound)
         XCTAssertEqual(ClockFollower.played(song, tempo: 5_000).tempo, Tempo.range.upperBound)
     }
+
+    /// A jam's host owns the time signature too (W16): the engine plays it in place of the song's,
+    /// and the song keeps its own underneath. A MIDI clock passes none.
+    func testAJamHostsTimeSignatureIsPlayedAndTheSongKeepsItsOwn() throws {
+        var song = Project(tempo: 100)
+        try Command.setTimeSignature(TimeSignature(3, 4)).apply(to: &song)
+        let played = ClockFollower.played(song, tempo: 100.25, signature: TimeSignature(6, 8))
+        XCTAssertEqual(played.timeSignature, TimeSignature(6, 8))
+        XCTAssertEqual(played.tempo, 100.25)
+        XCTAssertEqual(song.timeSignature, TimeSignature(3, 4), "the song itself is not written")
+        XCTAssertEqual(ClockFollower.played(song, tempo: 100).timeSignature, TimeSignature(3, 4), "a MIDI clock carries none")
+        XCTAssertEqual(ClockFollower.played(song, tempo: 100, signature: TimeSignature(0, 4)).timeSignature,
+                       TimeSignature(3, 4), "one no song can have is not played")
+    }
 }
