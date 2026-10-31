@@ -5,7 +5,9 @@ import Synchronization
 
 /// One parameter of a standard effect, as its Audio Unit publishes it.
 public struct EffectParameter: Sendable, Equatable {
-    public enum Unit: Sendable { case seconds, hertz, decibels, ratio, amount, boolean }
+    /// `choice`: the value is the index of one of `choices`, which have names (a harmony interval,
+    /// a scale) — a menu, never a number.
+    public enum Unit: Sendable { case seconds, hertz, decibels, ratio, amount, boolean, choice }
 
     public let address: Int
     public let identifier: String
@@ -13,6 +15,15 @@ public struct EffectParameter: Sendable, Equatable {
     public let range: ClosedRange<Float>
     public let defaultValue: Float
     public let unit: Unit
+    /// The names of a `choice` parameter's values, index 0 first; empty for every other unit.
+    public let choices: [String]
+
+    /// The name of the choice at `value`, for a `choice` parameter.
+    public func choice(at value: Float) -> String? {
+        guard unit == .choice, value.isFinite else { return nil }
+        let index = Int(Swift.min(Swift.max(value.rounded(), 0), Float(Swift.max(choices.count - 1, 0))))
+        return choices.indices.contains(index) ? choices[index] : nil
+    }
 }
 
 /// A standard effect's processor with its parameters held in atomics: any thread may set a
@@ -240,7 +251,13 @@ public final class EffectKernel: @unchecked Sendable {
         var list: [EffectParameter] = []
         func add(_ id: String, _ title: String, _ range: ClosedRange<Float>, _ value: Float, _ unit: EffectParameter.Unit) {
             list.append(EffectParameter(address: list.count, identifier: id, title: title, range: range,
-                                        defaultValue: value, unit: unit))
+                                        defaultValue: value, unit: unit, choices: []))
+        }
+        // A named choice: its value is the index, so the order of `names` is stored (Law 3).
+        func choose(_ id: String, _ title: String, _ names: [String], _ index: Int) {
+            list.append(EffectParameter(address: list.count, identifier: id, title: title,
+                                        range: 0...Float(Swift.max(names.count - 1, 0)), defaultValue: Float(index),
+                                        unit: .choice, choices: names))
         }
         switch effect {
         case .equalizer:

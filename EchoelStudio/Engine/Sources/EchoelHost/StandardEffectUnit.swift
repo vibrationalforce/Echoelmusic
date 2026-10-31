@@ -90,13 +90,16 @@ public final class StandardEffectUnit: AUAudioUnit {
             case .ratio: .ratio
             case .amount: .generic
             case .boolean: .boolean
+            case .choice: .indexed
             }
             let node = AUParameterTree.createParameter(
                 withIdentifier: parameter.identifier, name: parameter.title,
                 address: AUParameterAddress(parameter.address),
                 min: parameter.range.lowerBound, max: parameter.range.upperBound, unit: unit, unitName: nil,
                 // No `.flag_CanRamp`: a ramp event is taken as its end value, so the host ramps (A9).
-                flags: [.flag_IsReadable, .flag_IsWritable], valueStrings: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                // A named choice reaches a host as its names: GarageBand and AUM show a menu.
+                valueStrings: parameter.choices.isEmpty ? nil : parameter.choices,
                 dependentParameters: nil)
             node.value = parameter.defaultValue
             return node
