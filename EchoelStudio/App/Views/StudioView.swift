@@ -21,7 +21,7 @@ struct StudioView: View {
     /// The song's video as a small window (wave W7); on by default while the song has video.
     @AppStorage(VideoWindow.shownKey) private var showsVideoWindow = true
 
-    enum Surface: Hashable { case tracks, arrange, session, mixer, field }
+    enum Surface: Hashable { case tracks, arrange, session, mixer, field, sky }
 
     var body: some View {
         @Bindable var router = router
@@ -35,6 +35,7 @@ struct StudioView: View {
                     Text("Session").tag(Surface.session)
                     Text("Mixer").tag(Surface.mixer)
                     Text("Field").tag(Surface.field)
+                    Text("Sky").tag(Surface.sky)
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, Theme.Space.m)
@@ -48,8 +49,9 @@ struct StudioView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                             .transition(.opacity)
                     }
-                    // One picture at a time: the window rests while the Field is the view or fills the screen.
-                    if showsFieldWindow, surface != .field, !fieldFullscreen {
+                    // One picture at a time: the window rests while the Field or the sky is the view,
+                    // or the Field fills the screen.
+                    if showsFieldWindow, surface != .field, surface != .sky, !fieldFullscreen {
                         FieldWindow(expand: { openFieldFullscreen() }, close: { showsFieldWindow = false })
                             .padding(Theme.Space.m)
                             .transition(.opacity)
@@ -144,6 +146,9 @@ struct StudioView: View {
             } else {
                 FieldSurface(expand: { openFieldFullscreen() })
             }
+        case .sky:
+            // The sky drawn from the star table, place, time and the phone's attitude (Sky S2).
+            SkySurface()
         }
     }
 
