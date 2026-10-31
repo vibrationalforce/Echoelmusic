@@ -361,10 +361,11 @@ private struct PlacementBlock: View {
 
 /// A placed audio region: the file's name over its length. Drag moves it by whole bars, one
 /// undo step on release; drag an edge to trim it to the beat; hold for Duplicate, Split at
-/// Playhead Bar, Consolidate (pieces of one file only) and Delete.
+/// Playhead Bar, Consolidate (pieces of one file only), Bake Effects and Delete.
 private struct RegionBlock: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
+    @Environment(DocumentController.self) private var documents
     let track: Track
     let region: AudioRegion
     let file: MediaFile
@@ -433,6 +434,9 @@ private struct RegionBlock: View {
         if Arranging.consolidated(region, in: track, project: store.project) != nil {
             Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
         }
+        if canBake {
+            Button("Bake Effects", systemImage: "square.and.arrow.down.on.square") { bake() }
+        }
         Button("Delete", systemImage: "trash", role: .destructive) { remove() }
         // The file itself: every region and clip that plays it, and a sampler holding it (undoable).
         Button("Remove File from Song", systemImage: "trash.slash", role: .destructive) { removeFile() }
@@ -440,6 +444,19 @@ private struct RegionBlock: View {
 
     private func removeFile() {
         try? store.perform(.removeMedia(file.id))
+    }
+
+    /// An audio region on a track with an effect switched on, and no export or bake under way.
+    private var canBake: Bool {
+        file.kind == .audio && track.inserts.contains(where: { !$0.isBypassed }) && !documents.isExporting
+    }
+
+    /// Renders the track's effects into a new file and swaps the region for it, one undo step
+    /// (`DocumentController.bakeEffects`).
+    private func bake() {
+        let documents = documents, plugins = engine.plugins
+        let region = region.id, track = track.id
+        Task { await documents.bakeEffects(region: region, on: track, plugins: plugins) }
     }
 
     private func accessible(_ view: some View) -> some View {
@@ -451,6 +468,7 @@ private struct RegionBlock: View {
             .accessibilityAction(named: "Duplicate") { duplicate() }
             .accessibilityAction(named: "Split at Playhead Bar") { split() }
             .accessibilityAction(named: "Consolidate") { consolidate() }
+            .accessibilityAction(named: "Bake Effects") { if canBake { bake() } }
             .accessibilityAction(named: "Delete") { remove() }
             .accessibilityAction(named: "Trim Start One Beat Later") { trim(.start, beats: 1) }
             .accessibilityAction(named: "Trim End One Beat Earlier") { trim(.end, beats: -1) }
