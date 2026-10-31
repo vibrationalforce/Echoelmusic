@@ -83,7 +83,7 @@ struct SessionTrackHeader: View {
             Button { engine.stopClip(on: track.id) } label: { Image(systemName: "stop.fill") }
                 .buttonStyle(ToolButtonStyle(isActive: isPlaying))
                 .disabled(!isPlaying)
-                .accessibilityLabel("Stop clip on \(track.name)")
+                .accessibilityLabel("Stop Clip on \(track.name)")
         }
         .padding(.horizontal, Theme.Space.xs)
         .frame(width: SessionView.columnWidth, height: Theme.Size.touch)
@@ -274,7 +274,7 @@ struct SessionFooter: View {
                     .foregroundStyle(Theme.Color.textSecondary)
                     .frame(minHeight: Theme.Size.touch)
             }
-            .accessibilityLabel("Launch quantization")
+            .accessibilityLabel("Launch Quantization")
         }
         .padding(.horizontal, Theme.Space.m)
         .background(Theme.Color.surface)

@@ -117,7 +117,7 @@ struct ChannelStrip: View {
         .disabled(pad == nil)
         .accessibilityLabel("\(title) level")
         .accessibilityValue(ParameterFormat.text(level, unit: .decibel))
-        .accessibilityHint("Type an exact level")
+        .accessibilityHint("Type an exact level.")
     }
 }
 
