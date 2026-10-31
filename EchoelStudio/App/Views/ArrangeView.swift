@@ -262,9 +262,14 @@ private struct PlacementBlock: View {
     private var lengthBars: Int { Int((clip.length + ticksPerBar - 1) / Swift.max(1, ticksPerBar)) }
 
     var body: some View {
+        accessible(block.contextMenu { menu })
+    }
+
+    /// The block itself: shape, name, size, position and the move drag.
+    private var block: some View {
         let color = Theme.Color.track(track.colorIndex)
         let width = Swift.max(8, CGFloat(Double(clip.length) / ticksPerPoint))
-        RoundedRectangle(cornerRadius: Theme.Radius.small)
+        return RoundedRectangle(cornerRadius: Theme.Radius.small)
             .fill(color.opacity(0.35))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.small).stroke(color, lineWidth: 1)
@@ -291,15 +296,21 @@ private struct PlacementBlock: View {
                         }
                     }
             )
-            .contextMenu {
-                Button("Edit Notes", systemImage: "pianokeys") { open(track.id, clip.id) }
-                Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
-                Button("Split at Playhead", systemImage: "scissors") { splitAtPlayhead() }
-                if Arranging.consolidated(placement, in: track) != nil {
-                    Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
-                }
-                Button("Delete", systemImage: "trash", role: .destructive) { remove() }
-            }
+    }
+
+    /// The hold menu, apart from the block so each expression stays small enough to type-check.
+    @ViewBuilder private var menu: some View {
+        Button("Edit Notes", systemImage: "pianokeys") { open(track.id, clip.id) }
+        Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
+        Button("Split at Playhead", systemImage: "scissors") { splitAtPlayhead() }
+        if Arranging.consolidated(placement, in: track) != nil {
+            Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
+        }
+        Button("Delete", systemImage: "trash", role: .destructive) { remove() }
+    }
+
+    private func accessible(_ view: some View) -> some View {
+        view
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(clip.name), bar \(startBar), \(lengthBars) bars")
             .accessibilityAddTraits(.isButton)
@@ -362,11 +373,21 @@ private struct RegionBlock: View {
     private var ticksPerPoint: Double { Double(ticksPerBar) / Double(pointsPerBar) }
     private var startBar: Int { Int(region.start / Swift.max(1, ticksPerBar)) + 1 }
     private var seconds: Double { file.sampleRate > 0 ? Double(region.length) / file.sampleRate : 0 }
+    private var spokenLabel: String {
+        let kind = file.kind == .video ? "video" : "audio"
+        let time = seconds.formatted(.number.precision(.fractionLength(1)))
+        return "\(file.name), \(kind), bar \(startBar), \(time) seconds"
+    }
 
     var body: some View {
+        accessible(block.contextMenu { menu })
+    }
+
+    /// The block itself: shape, name, size, position and the move drag.
+    private var block: some View {
         let color = Theme.Color.track(track.colorIndex)
         let width = Swift.max(8, CGFloat(Double(length) / ticksPerPoint) - trimLeft + trimRight)
-        RoundedRectangle(cornerRadius: Theme.Radius.small)
+        return RoundedRectangle(cornerRadius: Theme.Radius.small)
             .fill(color.opacity(0.25))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.small).stroke(color, lineWidth: 1)
@@ -394,16 +415,22 @@ private struct RegionBlock: View {
                         }
                     }
             )
-            .contextMenu {
-                Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
-                Button("Split at Playhead Bar", systemImage: "scissors") { split() }
-                if Arranging.consolidated(region, in: track, project: store.project) != nil {
-                    Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
-                }
-                Button("Delete", systemImage: "trash", role: .destructive) { remove() }
-            }
+    }
+
+    /// The hold menu, apart from the block so each expression stays small enough to type-check.
+    @ViewBuilder private var menu: some View {
+        Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
+        Button("Split at Playhead Bar", systemImage: "scissors") { split() }
+        if Arranging.consolidated(region, in: track, project: store.project) != nil {
+            Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
+        }
+        Button("Delete", systemImage: "trash", role: .destructive) { remove() }
+    }
+
+    private func accessible(_ view: some View) -> some View {
+        view
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(file.name), \(file.kind == .video ? "video" : "audio"), bar \(startBar), \(seconds.formatted(.number.precision(.fractionLength(1)))) seconds")
+            .accessibilityLabel(spokenLabel)
             .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
             .accessibilityAction(named: "Duplicate") { duplicate() }
