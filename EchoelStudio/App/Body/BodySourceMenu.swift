@@ -57,7 +57,7 @@ struct CameraPulseCueLine: View {
             Text(line)
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
-                .padding(.bottom, 2)
+                .padding(.bottom, Theme.Space.xs)
         }
     }
 
@@ -66,9 +66,9 @@ struct CameraPulseCueLine: View {
         case .off: nil
         case .unavailable(let reason): reason
         case .denied: PulseCue.cameraDenied.fullHint
-        case .starting: "Opening the camera…"
+        case .starting: "Opening the camera."
         case .measuring: cue == .locked ? nil : "Camera: \(cue.fullHint)"
-        case .interrupted: "Camera paused by iOS — it resumes when the camera is free again"
+        case .interrupted: "iOS paused the camera. It resumes when the camera is free again."
         }
     }
 }
