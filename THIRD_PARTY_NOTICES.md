@@ -54,11 +54,18 @@ _Last reviewed: 2026-09-12._
   required. (The earlier Hans Cousto "Cosmic Octave" colour-wheel and planetary-tone tunings
   were removed in 10.76.40.)
 
-### External Swift packages — NONE currently ship
-- `Package.swift` `dependencies: []`; the Xcode app target `dependencies: []`
-  (`project.yml`). No third-party libraries are linked into the shipping binary today.
-- **If RTMP/SRT streaming is enabled later via HaishinKit (BSD-3-Clause):** add HaishinKit's BSD-3-Clause
-  license + copyright here and to the in-app acknowledgments before shipping that build.
+### External Swift packages — one, in Echoel Studio (live streaming)
+- Echoel Studio (`EchoelStudio/project.yml`) links ONE outside package since 2026-10-31 (wave W14,
+  live streaming), pinned exactly, used only under `EchoelStudio/App/Streaming/`, never by the
+  Audio Unit extension:
+  - **HaishinKit.swift 2.2.5** (HaishinKit, RTMPHaishinKit, SRTHaishinKit) — BSD-3-Clause,
+    https://github.com/HaishinKit/HaishinKit.swift
+  - **Logboard** (pulled in by HaishinKit) — BSD-3-Clause.
+  - **libsrt** (binary xcframework pulled in by SRTHaishinKit, Haivision SRT library, unmodified) —
+    MPL-2.0; source: https://github.com/Haivision/srt
+  - Their full licence texts and copyright lines must be shown in the in-app acknowledgments before
+    a build with streaming reaches the App Store (action item below).
+- The earlier app (`Package.swift`, `Sources/`) links none: `dependencies: []`.
 
 ---
 
@@ -88,5 +95,6 @@ The Echoel source is MIT-licensed — see `LICENSE` (© 2024–2025 Echoelmusic)
       the same attention as one that understates it.
 - [ ] Add an in-app **Acknowledgments** screen surfacing this file (font OFL notice).
       Nice-to-have for OFL; standard for App Store apps.
-- [ ] Re-add HaishinKit's BSD-3-Clause notice here **if/when** streaming is enabled.
+- [ ] Show the HaishinKit, Logboard (BSD-3-Clause) and libsrt (MPL-2.0) licence texts in the app's acknowledgments before the App Store release.
+- [ ] Export compliance: libsrt can encrypt with its own code when an SRT passphrase is used; decide before the store release whether to forbid a passphrase in SRT addresses or to file the encryption self-classification (`ITSAppUsesNonExemptEncryption` is NO today).
 - [ ] Counsel review before release.

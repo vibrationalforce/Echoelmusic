@@ -34,6 +34,13 @@ packages:
     path: DSP
   EchoelEngine:
     path: Engine
+  # The first package from outside (wave W14, conductor 2026-10-29): HaishinKit, BSD-3, for live
+  # streams over RTMP, RTMPS and SRT. Pinned exactly; the app takes three of its products, the
+  # extension none. Its own dependencies (Logboard, BSD-3; the libsrt xcframework, MPL-2.0, the SRT
+  # library as Haivision publishes it) come with it. Imported only under App/Streaming/ (studio.yml).
+  HaishinKit:
+    url: https://github.com/HaishinKit/HaishinKit.swift
+    exactVersion: 2.2.5
 
 targets:
   EchoelStudio:
@@ -57,12 +64,22 @@ targets:
       # The Audio Unit side (hosted units, our own effect unit, sample files), a third library.
       - package: EchoelEngine
         product: EchoelHost
+      # Live streaming (W14): the core, RTMP/RTMPS and SRT. Never a dependency of the extension.
+      - package: HaishinKit
+        product: HaishinKit
+      - package: HaishinKit
+        product: RTMPHaishinKit
+      - package: HaishinKit
+        product: SRTHaishinKit
       # Our own Audio Units ship inside the app (PlugIns/); they are sold as in-app purchases.
       - target: EchoelPlugins
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         PRODUCT_NAME: Echoel
+        # The libsrt xcframework HaishinKit's SRT links has no Intel simulator slice, so the app's
+        # simulator build is Apple silicon only (every CI runner and current Mac). Devices: arm64 as ever.
+        "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Echoel

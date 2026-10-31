@@ -191,6 +191,44 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             settleDrawable(of: view)
         }
 
+        step(seconds: seconds)
+
+        // The picture cannot have changed: skip the pass and leave the last frame on the layer.
+        // Not a pause — the display link keeps its cadence, and the next change encodes at once.
+        if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncoded) { return }
+
+        guard let drawable = view.currentDrawable,
+              let pass = view.currentRenderPassDescriptor,
+              let queue = commandQueue,
+              let buffer = queue.makeCommandBuffer() else { return }
+        // Recorded after the guard: a frame without a drawable was not shown.
+        lastEncoded = uniforms
+        hasEncodedOnce = true
+
+        if let pipeline, let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
+            encoder.setRenderPipelineState(pipeline)
+            var sent = uniforms
+            encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
+            encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
+            encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+            encoder.endEncoding()
+        } else {
+            // No shader: a calm, guarded grey from the centre light, never a crash.
+            let glow = 0.01 + 0.05 * Double(uniforms.centreLight)
+            pass.colorAttachments[0].clearColor = MTLClearColor(red: glow, green: glow, blue: glow, alpha: 1)
+            buffer.makeRenderCommandEncoder(descriptor: pass)?.endEncoding()
+        }
+
+        // Synchronous present in the current transaction (`presentsWithTransaction`): commit, wait
+        // until scheduled, present the drawable itself — never `buffer.present(drawable)`.
+        buffer.commit()
+        buffer.waitUntilScheduled()
+        drawable.present()
+    }
+
+    /// Advances the clocks by `seconds` and sets this frame's uniforms from `frame` — the one
+    /// computation the window and the live stream share.
+    private func step(seconds: Double) {
         let still = reduceMotion || detail.isStill
         if !hasSeeded { seed() }
 
@@ -224,38 +262,48 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         uniforms.density = Float(density)
         uniforms.hasPulse = frame.pulse == nil ? 0 : 1
         uniforms.hasCoherence = frame.coherence == nil ? 0 : 1
+    }
 
-        // The picture cannot have changed: skip the pass and leave the last frame on the layer.
-        // Not a pause — the display link keeps its cadence, and the next change encodes at once.
-        if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncoded) { return }
-
-        guard let drawable = view.currentDrawable,
-              let pass = view.currentRenderPassDescriptor,
-              let queue = commandQueue,
-              let buffer = queue.makeCommandBuffer() else { return }
-        // Recorded after the guard: a frame without a drawable was not shown.
-        lastEncoded = uniforms
-        hasEncodedOnce = true
-
-        if let pipeline, let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
-            encoder.setRenderPipelineState(pipeline)
-            var sent = uniforms
-            encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
-            encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
-            encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
-            encoder.endEncoding()
+    /// Draws the next frame into `texture` — the live stream's picture (wave W14): the same
+    /// snapshot, clocks, flash guards and shader as the window, at the texture's own size and
+    /// aspect, so a 9:16, 16:9, 1:1 or 4:5 frame is the same Field framed for its shape. Commits and
+    /// returns at once; `completed` runs on Metal's thread when the GPU has written the texture.
+    /// False when nothing was encoded (no queue yet). Never in the background: iOS refuses GPU work there.
+    @MainActor
+    func render(into texture: MTLTexture, completed: @escaping @Sendable () -> Void) -> Bool {
+        let now = CFAbsoluteTimeGetCurrent()
+        let seconds = Swift.min(Swift.max(now - lastFrameTime, 0), 0.1)
+        lastFrameTime = now
+        if let store, let engine {
+            frame = FieldFrame.current(store: store, engine: engine)
+        }
+        uniforms.aspect = texture.height > 0 ? Float(texture.width) / Float(texture.height) : 1
+        step(seconds: seconds)
+        guard let queue = commandQueue, let buffer = queue.makeCommandBuffer() else { return false }
+        let pass = MTLRenderPassDescriptor()
+        pass.colorAttachments[0].texture = texture
+        pass.colorAttachments[0].loadAction = .clear
+        pass.colorAttachments[0].storeAction = .store
+        if let pipeline {
+            pass.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+            if let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
+                encoder.setRenderPipelineState(pipeline)
+                var sent = uniforms
+                encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
+                encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
+                encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+                encoder.endEncoding()
+            }
         } else {
-            // No shader: a calm, guarded grey from the centre light, never a crash.
             let glow = 0.01 + 0.05 * Double(uniforms.centreLight)
             pass.colorAttachments[0].clearColor = MTLClearColor(red: glow, green: glow, blue: glow, alpha: 1)
             buffer.makeRenderCommandEncoder(descriptor: pass)?.endEncoding()
         }
-
-        // Synchronous present in the current transaction (`presentsWithTransaction`): commit, wait
-        // until scheduled, present the drawable itself — never `buffer.present(drawable)`.
+        // @Sendable: formed on the main actor, run on Metal's thread — without it the closure would
+        // carry a main-actor check into that thread and trap there.
+        buffer.addCompletedHandler { @Sendable _ in completed() }
         buffer.commit()
-        buffer.waitUntilScheduled()
-        drawable.present()
+        return true
     }
 
     /// The first frame shows the song and the body as they are, with no glide from defaults.

@@ -105,6 +105,34 @@ final class AudioEngine {
     /// The instrument track a controller plays. Nil: the first instrument track.
     private(set) var liveTrack: TrackID?
 
+    /// The live stream's ear on the master (W14), while a stream runs; nil otherwise. Installed on
+    /// the source node — the whole mix, before the interface — and again after every rebuild.
+    @ObservationIgnored private var streamTap: MasterAudioTap?
+    @ObservationIgnored private var tappedNode: AVAudioNode?
+
+    func setStreamTap(_ tap: MasterAudioTap?) {
+        removeStreamTap()
+        streamTap = tap
+        installStreamTap()
+    }
+
+    private func installStreamTap() {
+        guard let tap = streamTap, let node = sourceNode, tappedNode == nil else { return }
+        step("graph: install stream tap")
+        if tap.install(on: node) {
+            tappedNode = node
+        } else {
+            DiagnosticLog.app.note("graph: stream tap refused the format")
+        }
+    }
+
+    private func removeStreamTap() {
+        guard let node = tappedNode else { return }
+        step("graph: remove stream tap")
+        node.removeTap(onBus: 0)
+        tappedNode = nil
+    }
+
     func setLiveTrack(_ track: TrackID?) {
         liveTrack = track
         if let project { publish(project) }
@@ -308,6 +336,7 @@ final class AudioEngine {
         step("engine: replace after media services reset")
         engine.stop()
         sourceNode = nil
+        tappedNode = nil            // the stream tap went with the old engine; the rebuild adds it again
         sinkNode = nil
         recorder = nil
         isRunning = false
@@ -633,6 +662,7 @@ final class AudioEngine {
         // latency of a route the take was not stamped for (review 2026-10-28, 2.1).
         recorder = nil
         if let sourceNode {
+            removeStreamTap()
             step("graph: detach source node")
             engine.detach(sourceNode)
             self.sourceNode = nil
@@ -749,6 +779,7 @@ final class AudioEngine {
                 engine.connect(engine.inputNode, to: sink, format: inputFormat)
             }
 
+            installStreamTap()
             clock.attach(current, sampleRate: sampleRate, latency: session.outputLatency)
             mpe.start()
             mpe.attach(current, sampleRate: sampleRate, latency: session.outputLatency, modulation: modulation)

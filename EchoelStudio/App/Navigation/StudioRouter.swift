@@ -35,6 +35,8 @@ enum StudioSheet: Identifiable, Hashable {
     case cameraTake(TrackID?)
     /// The song as an MP4: frame, fit, codec, whole song or a stretch of bars.
     case exportVideo
+    /// The live stream: destinations, Go Live and Stop (wave W14).
+    case streaming
 
     var id: Self { self }
 }
