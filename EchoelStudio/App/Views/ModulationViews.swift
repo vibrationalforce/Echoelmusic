@@ -73,8 +73,8 @@ struct ModulateMenu: View {
     static func title(of route: ModulationRoute, in project: Project) -> String {
         let source = sources.first { $0.0 == route.source }?.1 ?? route.source.rawValue
         let target = project.descriptor(for: route.target)?.title ?? route.target.description
-        let depth = Int((route.depth * 100).rounded())
-        return "\(source) → \(target) \(depth > 0 ? "+" : "")\(depth)%\(route.enabled ? "" : " (off)")"
+        let depth = NumberText.percent((route.depth * 100).rounded(), signed: true)
+        return "\(source) → \(target) \(depth)\(route.enabled ? "" : " (off)")"
     }
 }
 
@@ -85,10 +85,10 @@ private struct RouteActions: View {
 
     var body: some View {
         ForEach(ModulateMenu.depths, id: \.self) { depth in
-            Button("Depth \(Int(depth * 100))%") { change { $0.depth = depth * ($0.depth < 0 ? -1 : 1) } }
+            Button("Depth " + NumberText.percent(depth * 100)) { change { $0.depth = depth * ($0.depth < 0 ? -1 : 1) } }
         }
         Button("Invert") { change { $0.depth = -$0.depth } }
-        Button(route.polarity == .unipolar ? "Center the Source (bipolar)" : "Source From Zero (unipolar)") {
+        Button(route.polarity == .unipolar ? "Center the Source (Bipolar)" : "Source from Zero (Unipolar)") {
             change { $0.polarity = $0.polarity == .unipolar ? .bipolar : .unipolar }
         }
         Button(route.enabled ? "Turn Off" : "Turn On") { change { $0.enabled.toggle() } }

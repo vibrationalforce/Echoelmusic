@@ -24,6 +24,15 @@ enum NumberText {
         string(value, decimals: decimals) + " " + unit
     }
 
+    /// A percentage, US style without a space before the sign: "50%", "+25%" when `signed`.
+    static func percent(_ value: Double, decimals: Int = 0, signed: Bool = false) -> String {
+        guard value.isFinite else { return "–%" }
+        let style = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(decimals)).grouping(.never)
+        let number = signed ? value.formatted(style.sign(strategy: .always(includingZero: false)))
+            : value.formatted(style)
+        return number + "%"
+    }
+
     /// With its sign always shown, for an offset or a gain that can go either way: "+3,0 dB".
     static func signed(_ value: Double, decimals: Int, unit: String) -> String {
         guard value.isFinite else { return "– " + unit }

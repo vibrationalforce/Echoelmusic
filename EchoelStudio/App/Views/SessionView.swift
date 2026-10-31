@@ -120,7 +120,7 @@ struct SceneButton: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
-            Button("Rename…", systemImage: "pencil") { router.sheet = .rename(.scene(scene.id)) }
+            Button("Rename Scene…", systemImage: "pencil") { router.sheet = .rename(.scene(scene.id)) }
             Button("Delete Scene", systemImage: "trash", role: .destructive) {
                 try? store.perform(.removeScene(scene.id))
             }
@@ -175,11 +175,11 @@ struct SessionCell: View {
         .buttonStyle(.plain)
         .contextMenu {
             if clip.audio == nil {
-                Button("Edit", systemImage: "pianokeys") { open(track.id, clip.id) }
+                Button("Edit Notes", systemImage: "pianokeys") { open(track.id, clip.id) }
             } else {
                 loopMenu(clip)
             }
-            Button("Rename…", systemImage: "pencil") { router.sheet = .rename(.clip(clip.id)) }
+            Button("Rename Clip…", systemImage: "pencil") { router.sheet = .rename(.clip(clip.id)) }
             Button("Remove from Slot", systemImage: "minus.circle") {
                 try? store.perform(.setSlot(track: track.id, scene: scene.id, clip: nil))
             }
@@ -192,7 +192,7 @@ struct SessionCell: View {
         .accessibilityValue(isPlaying ? "Playing" : isQueued ? "Starts on the next bar" : "Stopped")
         .accessibilityHint("Launches the clip.")
         .accessibilityActions {
-            if clip.audio == nil { Button("Edit") { open(track.id, clip.id) } }
+            if clip.audio == nil { Button("Edit Notes") { open(track.id, clip.id) } }
             Button("Rename Clip") { router.sheet = .rename(.clip(clip.id)) }
             Button("Delete Clip") { try? store.perform(.deleteClip(clip.id)) }
         }
