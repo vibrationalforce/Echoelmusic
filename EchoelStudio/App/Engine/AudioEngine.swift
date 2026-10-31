@@ -1294,7 +1294,7 @@ final class AudioEngine {
             case .noFormat: "The output offers no audio format Echoel can use. Choose another output, then tap Restart Audio."
             case let .inputUnusable(input, output):
                 input > 0
-                    ? "The input runs at \(Int(input)) Hz and the output at \(Int(output)) Hz; set both to the same rate, then arm the track or choose Always again (if the track still shows armed, turn it off and on)."
+                    ? "The input runs at \(NumberText.string(input, decimals: 0, unit: "Hz")) and the output at \(NumberText.string(output, decimals: 0, unit: "Hz")); set both to the same rate, then arm the track or choose Always again (if the track still shows armed, turn it off and on)."
                     : "No audio input is available."
             case .inputClosed: "Arm a track before recording."
             }

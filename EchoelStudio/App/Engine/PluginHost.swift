@@ -203,7 +203,7 @@ final class PluginHost {
             restarts[slot] = recent
             let count = recent.count
             if count > Self.restartLimit {
-                let reason = "\(entry.component.name) stopped working and was not loaded again."
+                let reason = "\(entry.component.name) stopped working and was not loaded again. Choose it again to retry, or use another plugin."
                 fail(slot, entry.component, reason: reason, detail: "stopped \(count) times")
                 refused.insert(slot)
                 reloads.refused(name: entry.component.name, reason: reason)
@@ -357,7 +357,7 @@ final class PluginHost {
         requests[slot] = nil
         loading.remove(slot)
         guard let unit else {
-            fail(slot, request.component, reason: "\(request.component.name) is not installed on this device.", detail: failure)
+            fail(slot, request.component, reason: "\(request.component.name) is not installed on this device. Install it from the App Store, or choose another plugin.", detail: failure)
             return
         }
         let isEffect = slot.isInsert
@@ -366,7 +366,7 @@ final class PluginHost {
             log.info("plugin: allocate \(request.component.name, privacy: .public)")
             try Self.prepare(unit, isEffect: isEffect, sampleRate: request.sampleRate, state: state, clock: clock)
         } catch {
-            fail(slot, request.component, reason: "\(request.component.name) cannot play in stereo at this rate.",
+            fail(slot, request.component, reason: "\(request.component.name) cannot play in stereo at this sample rate. Choose another plugin, or another audio output.",
                  detail: error.localizedDescription)
             return
         }

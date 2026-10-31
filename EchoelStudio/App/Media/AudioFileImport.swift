@@ -27,7 +27,7 @@ enum AudioFileImport {
         if seconds >= maximumSeconds { return "ten minutes" }
         let minutes = seconds / 60
         if minutes >= 1 {
-            let shown = minutes.formatted(.number.precision(.fractionLength(0...1)))
+            let shown = NumberText.string(minutes, decimalsUpTo: 1)
             return "\(shown) \(shown == "1" ? "minute" : "minutes")"
         }
         return "\(Int(seconds)) seconds"
