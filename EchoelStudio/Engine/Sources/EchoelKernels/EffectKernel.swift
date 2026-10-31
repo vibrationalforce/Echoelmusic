@@ -58,6 +58,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let frequencyShifter: FrequencyShifter?
     private let pitchCorrector: PitchCorrector?
     private let harmonizer: Harmonizer?
+    private let granulator: Granulator?
     /// The correction's targets, worked out once here so a change of key on the render thread
     /// only looks them up: each scale's pitch classes above C, and each tone system's cents for
     /// every root (`tuning × 12 + root`).
@@ -91,6 +92,7 @@ public final class EffectKernel: @unchecked Sendable {
         frequencyShifter = effect == .frequencyShifter ? FrequencyShifter(sampleRate: self.sampleRate) : nil
         pitchCorrector = effect == .pitchCorrection ? PitchCorrector(sampleRate: self.sampleRate) : nil
         harmonizer = effect == .harmonizer ? Harmonizer(sampleRate: self.sampleRate) : nil
+        granulator = effect == .granular ? Granulator(sampleRate: self.sampleRate) : nil
         scaleMasks = effect == .pitchCorrection
             ? Scale.allCases.map { PitchCorrector.Settings.mask(root: 0, steps: $0.intervals) } : []
         toneSystemCents = effect == .pitchCorrection ? Self.toneSystemCents() : []
@@ -144,6 +146,7 @@ public final class EffectKernel: @unchecked Sendable {
         frequencyShifter?.reset()
         pitchCorrector?.reset()
         harmonizer?.reset()
+        granulator?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -176,6 +179,7 @@ public final class EffectKernel: @unchecked Sendable {
         case .frequencyShifter: frequencyShifter?.process(left: left, right: right, frames: frames)
         case .pitchCorrection: pitchCorrector?.process(left: left, right: right, frames: frames)
         case .harmonizer: harmonizer?.process(left: left, right: right, frames: frames)
+        case .granular: granulator?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -274,11 +278,16 @@ public final class EffectKernel: @unchecked Sendable {
         case .harmonizer:
             guard let harmonizer else { return }
             func shift(_ address: Int) -> Double? {
-                HarmonyInterval(index: parameter(address)).semitones.map(Double.init)
+                HarmonyInterval(index: parameter(address)).semitones.map { Double($0) }
             }
             let s = Harmonizer.Settings(first: shift(0), second: shift(1), third: shift(2), level: value(3),
                                         spread: value(4))
             if s != harmonizer.settings { harmonizer.settings = s }
+        case .granular:
+            guard let granulator else { return }
+            let s = Granulator.Settings(size: value(0), density: value(1), pitch: value(2), position: value(3),
+                                        spray: value(4), spread: value(5), mix: value(6))
+            if s != granulator.settings { granulator.settings = s }
         }
     }
 
@@ -398,6 +407,14 @@ public final class EffectKernel: @unchecked Sendable {
             choose("voice3", "Voice 3", intervals, HarmonyInterval.off.rawValue)
             add("level", "Level", 0...1, 0.5, .amount)
             add("spread", "Spread", 0...1, 0.5, .amount)
+        case .granular:
+            add("size", "Grain Size", 0.01...0.5, 0.08, .seconds)
+            add("density", "Density", 0...1, 0.5, .amount)
+            add("pitch", "Pitch", -24...24, 0, .amount)
+            add("position", "Position", 0...2, 0.25, .seconds)
+            add("spray", "Spray", 0...0.5, 0.05, .seconds)
+            add("spread", "Spread", 0...1, 0.5, .amount)
+            add("mix", "Mix", 0...1, 0.5, .amount)
         }
         return list
     }
