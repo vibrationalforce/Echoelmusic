@@ -78,6 +78,8 @@ targets:
         INFOPLIST_KEY_NSCameraUsageDescription: "Echoel measures your pulse from the rear camera when you choose Camera as a body source, and films a video take when you record one. Pulse frames are never stored; a take is saved only in your song, and nothing leaves the device."
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Echoel saves a video you export to your photo library when you choose Save Video."
         INFOPLIST_KEY_NSMicrophoneUsageDescription: "Echoel records your microphone or audio interface onto the audio track you arm."
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Echoel uses your approximate location once to draw the sky above you in the Sky view. It stays on this device."
+        INFOPLIST_KEY_NSMotionUsageDescription: "Echoel uses the phone's orientation to turn the Sky view with the direction you point the phone."
         # Network MIDI (CoreMIDI's RTP-MIDI session): the prompt shows the first time it is
         # turned on. NSBonjourServices is an array, which the generated plist cannot carry, so
         # it comes from the small Info.plist below and the two are merged. So do the song type
