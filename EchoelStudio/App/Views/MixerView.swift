@@ -8,22 +8,38 @@ struct MixerView: View {
     @Environment(ProjectStore.self) private var store
 
     var body: some View {
-        ScrollView(.horizontal) {
-            HStack(alignment: .top, spacing: Theme.Space.hairline) {
-                // A video track is never heard, so it has no strip.
-                ForEach(store.project.tracks.filter { $0.kind != .video }) { track in
-                    ChannelStrip(title: track.name, color: Theme.Color.track(track.colorIndex),
-                                 volume: .volume(track.id), pan: .pan(track.id), track: track)
+        // The faders take the height the view has (device video 10021: small faders under a lot
+        // of empty space); the strips scroll both ways when the screen is shorter than a strip.
+        GeometryReader { geometry in
+            let height = faderHeight(in: geometry.size.height)
+            ScrollView([.horizontal, .vertical]) {
+                HStack(alignment: .top, spacing: Theme.Space.hairline) {
+                    // A video track is never heard, so it has no strip.
+                    ForEach(store.project.tracks.filter { $0.kind != .video }) { track in
+                        ChannelStrip(title: track.name, color: Theme.Color.track(track.colorIndex),
+                                     volume: .volume(track.id), pan: .pan(track.id), track: track,
+                                     faderHeight: height)
+                    }
+                    ChannelStrip(title: "Master", color: Theme.Color.text,
+                                 volume: .masterVolume, pan: .masterPan, track: nil, faderHeight: height)
+                        .padding(.leading, Theme.Space.s)
                 }
-                ChannelStrip(title: "Master", color: Theme.Color.text,
-                             volume: .masterVolume, pan: .masterPan, track: nil)
-                    .padding(.leading, Theme.Space.s)
+                .padding(Theme.Space.m)
             }
-            .padding(Theme.Space.m)
+            .defaultScrollAnchor(.topLeading)
         }
         .background(Theme.Color.background)
         // No pad host of its own: the mixer is only ever a surface of the studio, whose host
         // serves it, so a level and the tempo never open two pads at once.
+    }
+
+    /// The strip's rows other than the fader take about this much height; each return adds a
+    /// send field. What is left is the fader's, between a usable minimum and a reach a thumb
+    /// still covers.
+    private func faderHeight(in available: CGFloat) -> CGFloat {
+        let returns = store.project.tracks.filter { $0.kind == .returnTrack }.count
+        let rows = ChannelStrip.fixedHeight + CGFloat(returns) * ChannelStrip.sendHeight + 2 * Theme.Space.m
+        return Swift.min(Swift.max(available - rows, ChannelStrip.minimumFader), ChannelStrip.maximumFader)
     }
 }
 
@@ -38,6 +54,14 @@ struct ChannelStrip: View {
     let pan: ParameterAddress
     /// Nil for the master, which has no mute or solo.
     let track: Track?
+    var faderHeight: CGFloat = 180
+
+    static let width: CGFloat = 120
+    /// Colour bar, name, effects, pan, level, mute/solo and output, with their gaps.
+    static let fixedHeight: CGFloat = 360
+    static let sendHeight: CGFloat = 76
+    static let minimumFader: CGFloat = 160
+    static let maximumFader: CGFloat = 420
     /// The level an automation pass is writing under the fader, for the readout below it.
     @State private var passedVolume: Double?
 
@@ -73,8 +97,8 @@ struct ChannelStrip: View {
             }
             PanControl(address: pan)
             HStack(alignment: .bottom, spacing: Theme.Space.xs) {
-                Fader(address: volume, passed: $passedVolume)
-                PeakMeter(track: track?.id, height: 180)
+                Fader(address: volume, passed: $passedVolume, height: faderHeight)
+                PeakMeter(track: track?.id, height: faderHeight)
             }
             levelReadout
             if let track {
@@ -92,7 +116,7 @@ struct ChannelStrip: View {
                 OutputMenu(track: track)
             }
         }
-        .frame(width: 104)
+        .frame(width: Self.width)
         .padding(.vertical, Theme.Space.s)
         .background(Theme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
@@ -108,8 +132,10 @@ struct ChannelStrip: View {
                       title: "\(title) Level", owner: "\(volume)", writer: writer)
         } label: {
             Text(ParameterFormat.text(level, unit: .decibel))
-                .font(Theme.Font.caption.monospacedDigit())
-                .foregroundStyle(typed ? Theme.Color.accent : Theme.Color.textSecondary)
+                .font(Theme.Font.value)
+                .foregroundStyle(typed ? Theme.Color.accent : Theme.Color.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .frame(minWidth: Theme.Size.touch, minHeight: Theme.Size.touch)
                 .contentShape(Rectangle())
         }
@@ -169,7 +195,7 @@ struct PeakMeter: View {
 
     static func spoken(_ peak: Float) -> String {
         guard peak > 0, peak.isFinite, 20 * Foundation.log10(peak) > floor else { return "Silent" }
-        return String(format: "%.0f decibels", 20 * Foundation.log10(peak))
+        return NumberText.string(Double(20 * Foundation.log10(peak)), decimals: 0, unit: "decibels")
     }
 }
 
@@ -189,7 +215,7 @@ struct OutputMenu: View {
             }
         } label: {
             Text(label)
-                .font(Theme.Font.caption)
+                .font(Theme.Font.label)
                 .foregroundStyle(isMissing ? Theme.Color.record : Theme.Color.textSecondary)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
@@ -248,7 +274,7 @@ struct InputMenu: View {
             }
         } label: {
             Text(label)
-                .font(Theme.Font.caption)
+                .font(Theme.Font.label)
                 .foregroundStyle(isMissing ? Theme.Color.record : Theme.Color.textSecondary)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
