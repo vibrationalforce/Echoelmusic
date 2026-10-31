@@ -1,28 +1,28 @@
-11.0.0, twelfth upload — six synth engines, the tone system and concert pitch in the Key menu, the body moves a send
+11.0.0, fifteenth upload — video tracks, live streaming, MPE out, eight new effects, connections, the night sky, clip editing
 
-What is new since 10014. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10020. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- Two more Engine choices on the Sound page: Morph (sine, triangle, saw and square blended by
-  Character, no wavetables) and Mallet (a struck object of six decaying modes; Character is the
-  material, wood to metal). Six engines in all; a saved song or host session keeps its index.
-- The Key menu chooses the Tone System (sixteen, now with Archytas and Ptolemy) and the Concert
-  Pitch (A between 400 and 480 Hz, with named historical values). Until now only the assistant
-  could set them. A song stores both.
-- Modulate lists each send a track has: a route on a send moves the send's level along the
-  fader's travel and leaves the track's own fader alone; absent, it is exactly the stored level.
-- The Modulate menu's first line names which body sources are measured right now (Heart Rate,
-  HRV, Coherence), or says that nothing is measured yet or the strap is off; each source in the
-  route list carries " · measuring" while it has a value.
-- Sky arithmetic in Core (sidereal time, altitude and azimuth of a catalogue position for a place
-  and moment, tested against Meeus 12.a). No catalogue, no sensors and no door yet: nothing to
-  see on the device, named here so the build's contents are complete.
+- Video tracks (song format 4): import from Photos or Files, play in time with the song, cut on
+  the bar, a camera take, export as MP4. Earlier songs open unchanged.
+- Live streaming (RTMP, RTMPS, SRT): the Field picture with the master mix to the destinations
+  you enter. Off until you press Go Live.
+- MPE out: Song menu, Send MPE. Off until an output is chosen.
+- Eight effects: limiter, saturation, tremolo, bitcrusher, tape, stereo width, ring modulator,
+  frequency shifter.
+- Connections: OSC, ADM-OSC, Art-Net and sACN out to the devices you enter; each is off by
+  default, body values only after you allow them.
+- Sky: the night sky drawn from a catalogue for your rounded location, pointing with the phone,
+  a night camera layer.
+- Clips: Split at Playhead and Consolidate for MIDI clips; Duplicate and Consolidate for audio
+  and video regions; every step undoes.
+- Safety: a take lost to a crash is offered back at the next start; a plug-in that crashed is
+  held at the next start; memory pressure and diagnostics (Share Diagnostics in About).
+- The Echoel look: the chip bar sits at the bottom, the tempo and the stream bit rate are typed
+  on Echoel's number pad.
 
-Previous: 11.0.0 (10014), eleventh upload — HRV and coherence as sources, the body moves the
-instrument, four synth engines, a ladder filter, the Field. 10013 — your pulse moves the mix, a
-flanger, songs that store modulation. 10012 — heart rate strap, chorus and phaser, two keyboards
-on one key. 10011 — loop, overdub, record without arming. 10010 — play it with the phone alone.
-10009 — the app survives what a device does to it. 10008 — the plugin purchase in the App
-Group. Before that: 10007, 10006, 10005, 10004 (the first Echoel Studio build).
+Previous: 11.0.0 (10020), fourteenth upload — pulse from the camera, the Field in Metal, a
+seventh synth engine, the Echoel look and number pad, a safer take. 10014 and earlier: see git
+history of this file.
 group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -31,14 +31,13 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Sound page, Engine = Morph: hold a chord and turn Character from 0 to 1. The sound travels
-   sine → triangle → saw → square without a step or a click.
-2. Engine = Mallet: short notes at Character 0 (wood) and 1 (metal). Wood dies away fast and
-   dull, metal rings longer and brighter; no note sticks, none clicks.
-3. Key menu: switch Tone System to Archytas or Ptolemy and Concert Pitch to 432 Hz while a Keys
-   track plays. The pitch changes audibly, every voice follows, and the choice survives closing
-   and reopening the song.
-4. Strap on, a track with a send to a return: long-press the track, Modulate, the send, Heart
-   Rate. The return gets louder as your pulse rises while the track's own fader does not move.
-5. Open Modulate with the strap off, then on: the first line says the strap is off, then after
-   a few beats names Heart Rate as measured; HRV follows after about 8 beats, Coherence after 16.
+1. Import a short video from Photos into a new video track and press Play. Picture and music
+   start together and stay together for the whole clip.
+2. Long-press a MIDI clip, Split at Playhead, then Consolidate the two halves. It sounds the same
+   before and after, and Undo brings back each step.
+3. Effects: put Tape and then Bitcrusher on a Keys track. Each one is audible, and turning it
+   off returns the dry sound without a click.
+4. Connections: switch OSC on with your computer's address and port. The status line says it is
+   sending; switching it off stops it at once.
+5. Sky, outside at night: the stars on the screen move with the phone as you point it, and
+   the night camera layer shows the real sky behind them.
