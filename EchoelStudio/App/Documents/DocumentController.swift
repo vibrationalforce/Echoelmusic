@@ -200,6 +200,31 @@ final class DocumentController {
     init(store: ProjectStore, directory: URL = DocumentController.defaultDirectory) {
         self.store = store
         library = ProjectLibrary(directory: directory)
+        #if canImport(UIKit)
+        // The block is NS_SWIFT_SENDABLE and delivered on the main queue.
+        memoryObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.memoryWarned() }
+        }
+        #endif
+    }
+
+    @ObservationIgnored private var memoryObserver: NSObjectProtocol?
+
+    /// iOS is short of memory: the decoded files nothing in the song plays are let go, so what
+    /// plays keeps sounding (`Project.releasableMedia`). Each is marked as not loaded for want of
+    /// memory, so an export or an Undo that plays it again names it, and the next open loads it.
+    private func memoryWarned() {
+        let released = store.project.releasableMedia(among: samples.keys)
+        DiagnosticLog.app.note("memory: warning", [("released", Double(released.count)), ("loaded", Double(samples.count))])
+        guard !released.isEmpty else { return }
+        for id in released {
+            samples[id] = nil
+            unfitMedia[id] = .noFreeMemory
+        }
+        mediaRevision += 1
+        log.info("memory warning — released \(released.count, privacy: .public) unplayed file(s)")
     }
 
     /// The app's Documents folder, which the Files app shows under the app's name.

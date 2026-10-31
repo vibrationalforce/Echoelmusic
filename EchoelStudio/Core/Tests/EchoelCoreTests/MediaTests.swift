@@ -21,6 +21,22 @@ final class MediaTests: XCTestCase {
         XCTAssertEqual(p.mediaFile(f.id)?.duration ?? 0, 0.5, accuracy: 1e-9)
     }
 
+    /// Under memory pressure only buffers nothing plays may go: a region's file and a sampler's
+    /// sample stay, a file whose region was deleted and a sample of a track that plays the synth go.
+    func testOnlyFilesNothingPlaysAreReleasable() throws {
+        var (p, _) = try project()
+        let audio = TrackID()
+        try Command.addTrack(id: audio, name: "Vox", kind: .audio, index: nil).apply(to: &p)
+        let placed = file(path: "Media/vox.wav")
+        let leftover = file(path: "Media/old.wav")
+        try Command.addMedia(placed).apply(to: &p)
+        try Command.addMedia(leftover).apply(to: &p)
+        try Command.placeAudio(track: audio, id: RegionID(), media: placed.id, start: 0).apply(to: &p)
+        XCTAssertEqual(p.releasableMedia(among: [placed.id, leftover.id]), [leftover.id])
+        XCTAssertEqual(p.releasableMedia(among: [placed.id]), [], "what plays is never released")
+        XCTAssertEqual(p.releasableMedia(among: []), [])
+    }
+
     func testOnlyPathsInsideTheMediaFolderAreAccepted() throws {
         var (p, _) = try project()
         let before = p
