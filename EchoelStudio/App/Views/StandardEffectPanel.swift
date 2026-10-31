@@ -16,7 +16,7 @@ struct StandardEffectPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
-            if effect == .compressor { ReductionMeter(slot: .insert(insert)) }
+            if effect == .compressor || effect == .limiter { ReductionMeter(slot: .insert(insert)) }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: Theme.Space.s)],
                       alignment: .leading, spacing: Theme.Space.s) {
                 ForEach(EffectKernel.parameters(for: effect), id: \.address) { parameter in

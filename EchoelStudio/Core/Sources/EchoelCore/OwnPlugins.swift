@@ -56,7 +56,7 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
 /// saved, automated and learned the same way.
 public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
     // A new effect goes at the end: a saved insert names its component, never this order.
-    case equalizer, compressor, delay, reverb, chorus, phaser, flanger
+    case equalizer, compressor, delay, reverb, chorus, phaser, flanger, limiter, saturation, tremolo, bitcrusher, tape, stereoWidth, ringModulator, frequencyShifter
 
     public var id: String { rawValue }
 
@@ -69,6 +69,14 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .chorus: "Chorus"
         case .phaser: "Phaser"
         case .flanger: "Flanger"
+        case .limiter: "Limiter"
+        case .saturation: "Saturation"
+        case .tremolo: "Tremolo"
+        case .bitcrusher: "Bitcrusher"
+        case .tape: "Tape"
+        case .stereoWidth: "Stereo Width"
+        case .ringModulator: "Ring Modulator"
+        case .frequencyShifter: "Frequency Shifter"
         }
     }
 
@@ -81,6 +89,14 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .chorus: "eCho"
         case .phaser: "ePhs"
         case .flanger: "eFlg"
+        case .limiter: "eLim"
+        case .saturation: "eSat"
+        case .tremolo: "eTrm"
+        case .bitcrusher: "eBit"
+        case .tape: "eTap"
+        case .stereoWidth: "eWid"
+        case .ringModulator: "eRng"
+        case .frequencyShifter: "eFsh"
         }
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",
@@ -99,6 +115,14 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .chorus: "xCho"
         case .phaser: "xPhs"
         case .flanger: "xFlg"
+        case .limiter: "xLim"
+        case .saturation: "xSat"
+        case .tremolo: "xTrm"
+        case .bitcrusher: "xBit"
+        case .tape: "xTap"
+        case .stereoWidth: "xWid"
+        case .ringModulator: "xRng"
+        case .frequencyShifter: "xFsh"
         }
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",

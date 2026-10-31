@@ -37,6 +37,14 @@ public final class EffectKernel: @unchecked Sendable {
     private let chorus: Chorus?
     private let phaser: Phaser?
     private let flanger: Flanger?
+    private let limiter: Limiter?
+    private let saturation: Saturation?
+    private let tremolo: Tremolo?
+    private let bitcrusher: Bitcrusher?
+    private let tape: Tape?
+    private let stereoWidth: StereoWidth?
+    private let ringModulator: RingModulator?
+    private let frequencyShifter: FrequencyShifter?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -55,6 +63,14 @@ public final class EffectKernel: @unchecked Sendable {
         chorus = effect == .chorus ? Chorus(sampleRate: self.sampleRate) : nil
         phaser = effect == .phaser ? Phaser(sampleRate: self.sampleRate) : nil
         flanger = effect == .flanger ? Flanger(sampleRate: self.sampleRate) : nil
+        limiter = effect == .limiter ? Limiter(sampleRate: self.sampleRate) : nil
+        saturation = effect == .saturation ? Saturation(sampleRate: self.sampleRate) : nil
+        tremolo = effect == .tremolo ? Tremolo(sampleRate: self.sampleRate) : nil
+        bitcrusher = effect == .bitcrusher ? Bitcrusher(sampleRate: self.sampleRate) : nil
+        tape = effect == .tape ? Tape(sampleRate: self.sampleRate) : nil
+        stereoWidth = effect == .stereoWidth ? StereoWidth(sampleRate: self.sampleRate) : nil
+        ringModulator = effect == .ringModulator ? RingModulator(sampleRate: self.sampleRate) : nil
+        frequencyShifter = effect == .frequencyShifter ? FrequencyShifter(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -83,7 +99,7 @@ public final class EffectKernel: @unchecked Sendable {
     /// Every value, in address order, to carry into a new kernel.
     public var allValues: [Float] { parameters.indices.map(parameter) }
 
-    /// The compressor's gain reduction in dB (0 or less); 0 for the other effects.
+    /// The compressor's or the limiter's gain reduction in dB (0 or less); 0 for the other effects.
     public var gainReduction: Float { Float(bitPattern: reductionBits.load(ordering: .relaxed)) }
 
     /// Empties delay lines and tails.
@@ -95,6 +111,14 @@ public final class EffectKernel: @unchecked Sendable {
         chorus?.reset()
         phaser?.reset()
         flanger?.reset()
+        limiter?.reset()
+        saturation?.reset()
+        tremolo?.reset()
+        bitcrusher?.reset()
+        tape?.reset()
+        stereoWidth?.reset()
+        ringModulator?.reset()
+        frequencyShifter?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -114,6 +138,17 @@ public final class EffectKernel: @unchecked Sendable {
         case .chorus: chorus?.process(left: left, right: right, frames: frames)
         case .phaser: phaser?.process(left: left, right: right, frames: frames)
         case .flanger: flanger?.process(left: left, right: right, frames: frames)
+        case .limiter:
+            guard let limiter else { return }
+            limiter.process(left: left, right: right, frames: frames)
+            reductionBits.store(limiter.reduction.bitPattern, ordering: .relaxed)
+        case .saturation: saturation?.process(left: left, right: right, frames: frames)
+        case .tremolo: tremolo?.process(left: left, right: right, frames: frames)
+        case .bitcrusher: bitcrusher?.process(left: left, right: right, frames: frames)
+        case .tape: tape?.process(left: left, right: right, frames: frames)
+        case .stereoWidth: stereoWidth?.process(left: left, right: right, frames: frames)
+        case .ringModulator: ringModulator?.process(left: left, right: right, frames: frames)
+        case .frequencyShifter: frequencyShifter?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -166,6 +201,38 @@ public final class EffectKernel: @unchecked Sendable {
             guard let flanger else { return }
             let s = Flanger.Settings(rate: value(0), depth: value(1), feedback: value(2), mix: value(3))
             if s != flanger.settings { flanger.settings = s }
+        case .limiter:
+            guard let limiter else { return }
+            let s = Limiter.Settings(gain: value(0), ceiling: value(1), release: value(2))
+            if s != limiter.settings { limiter.settings = s }
+        case .saturation:
+            guard let saturation else { return }
+            let s = Saturation.Settings(drive: value(0), tone: value(1), mix: value(2))
+            if s != saturation.settings { saturation.settings = s }
+        case .tremolo:
+            guard let tremolo else { return }
+            let s = Tremolo.Settings(rate: value(0), depth: value(1), pan: value(2) >= 0.5)
+            if s != tremolo.settings { tremolo.settings = s }
+        case .bitcrusher:
+            guard let bitcrusher else { return }
+            let s = Bitcrusher.Settings(bits: value(0), downsample: value(1), mix: value(2))
+            if s != bitcrusher.settings { bitcrusher.settings = s }
+        case .tape:
+            guard let tape else { return }
+            let s = Tape.Settings(wow: value(0), saturation: value(1), tone: value(2))
+            if s != tape.settings { tape.settings = s }
+        case .stereoWidth:
+            guard let stereoWidth else { return }
+            let s = StereoWidth.Settings(width: value(0))
+            if s != stereoWidth.settings { stereoWidth.settings = s }
+        case .ringModulator:
+            guard let ringModulator else { return }
+            let s = RingModulator.Settings(frequency: value(0), mix: value(1))
+            if s != ringModulator.settings { ringModulator.settings = s }
+        case .frequencyShifter:
+            guard let frequencyShifter else { return }
+            let s = FrequencyShifter.Settings(shift: value(0), mix: value(1))
+            if s != frequencyShifter.settings { frequencyShifter.settings = s }
         }
     }
 
@@ -221,6 +288,34 @@ public final class EffectKernel: @unchecked Sendable {
             add("rate", "Rate", 0.05...8, 0.25, .hertz)
             add("depth", "Depth", 0...1, 0.7, .amount)
             add("feedback", "Feedback", -0.95...0.95, 0.5, .amount)
+            add("mix", "Mix", 0...1, 0.5, .amount)
+        case .limiter:
+            add("gain", "Gain", 0...24, 0, .decibels)
+            add("ceiling", "Ceiling", -24...0, -0.3, .decibels)
+            add("release", "Release", 0.005...1, 0.06, .seconds)
+        case .saturation:
+            add("drive", "Drive", 0...1, 0.4, .amount)
+            add("tone", "Tone", 0...1, 0.85, .amount)
+            add("mix", "Mix", 0...1, 0.6, .amount)
+        case .tremolo:
+            add("rate", "Rate", 0.1...20, 5, .hertz)
+            add("depth", "Depth", 0...1, 0.5, .amount)
+            add("pan", "Pan", 0...1, 0, .boolean)
+        case .bitcrusher:
+            add("bits", "Bits", 1...16, 8, .ratio)
+            add("downsample", "Downsample", 1...64, 4, .ratio)
+            add("mix", "Mix", 0...1, 1, .amount)
+        case .tape:
+            add("wow", "Wow", 0...1, 0.35, .amount)
+            add("saturation", "Saturation", 0...1, 0.25, .amount)
+            add("tone", "Tone", 0...1, 0.8, .amount)
+        case .stereoWidth:
+            add("width", "Width", 0...2, 1.4, .ratio)
+        case .ringModulator:
+            add("frequency", "Frequency", 1...5_000, 440, .hertz)
+            add("mix", "Mix", 0...1, 0.5, .amount)
+        case .frequencyShifter:
+            add("shift", "Shift", -1_000...1_000, 100, .hertz)
             add("mix", "Mix", 0...1, 0.5, .amount)
         }
         return list

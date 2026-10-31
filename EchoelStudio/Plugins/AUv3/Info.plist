@@ -239,6 +239,166 @@
 				</dict>
 				<dict>
 					<key>name</key>
+					<string>Echoel: Echoel Limiter</string>
+					<key>description</key>
+					<string>Limiter from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xLim</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Echoel Saturation</string>
+					<key>description</key>
+					<string>Saturation from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xSat</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Echoel Tremolo</string>
+					<key>description</key>
+					<string>Tremolo from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xTrm</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Echoel Bitcrusher</string>
+					<key>description</key>
+					<string>Bitcrusher from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xBit</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Echoel Tape</string>
+					<key>description</key>
+					<string>Tape from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xTap</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Echoel Stereo Width</string>
+					<key>description</key>
+					<string>Stereo Width from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xWid</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Echoel Ring Modulator</string>
+					<key>description</key>
+					<string>Ring Modulator from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xRng</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Echoel Frequency Shifter</string>
+					<key>description</key>
+					<string>Frequency Shifter from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xFsh</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
 					<string>Echoel: Echoel Synth (earlier sessions)</string>
 					<key>description</key>
 					<string>Opens sessions saved with the earlier Echoelmusic instrument; plays Echoel Synth from Echoel</string>
