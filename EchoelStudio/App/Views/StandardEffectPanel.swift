@@ -100,14 +100,14 @@ private struct ReductionMeter: View {
                     }
                 }
                 .frame(height: 6)
-                Text(String(format: "%.1f dB", reduction))
+                Text(NumberText.string(Double(reduction), decimals: 1, unit: "dB"))
                     .font(Theme.Font.caption.monospacedDigit())
                     .foregroundStyle(Theme.Color.text)
                     .frame(width: 64, alignment: .trailing)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Gain reduction")
-            .accessibilityValue(String(format: "%.1f decibels", reduction))
+            .accessibilityValue(NumberText.string(Double(reduction), decimals: 1, unit: "decibels"))
         }
     }
 }
@@ -317,9 +317,9 @@ private struct EffectParameterField: View {
         switch parameter.unit {
         case .hertz: ParameterFormat.text(value, unit: .hertz)
         case .seconds: ParameterFormat.text(value, unit: .seconds)
-        case .decibels: String(format: "%+.1f dB", value)
-        case .ratio: parameter.identifier == "ratio" ? String(format: "%.1f : 1", value) : String(format: "%.2f", value)
-        case .amount: String(format: "%.2f", value)
+        case .decibels: NumberText.signed(value, decimals: 1, unit: "dB")
+        case .ratio: parameter.identifier == "ratio" ? NumberText.string(value, decimals: 1) + " : 1" : NumberText.string(value, decimals: 2)
+        case .amount: NumberText.string(value, decimals: 2)
         case .boolean: value >= 0.5 ? "On" : "Off"
         case .choice: parameter.choice(at: Float(value)) ?? ""
         }
