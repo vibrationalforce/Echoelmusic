@@ -59,7 +59,8 @@ final class RegionBakeTests: XCTestCase {
                                                      samples: samples, effects: []))
         XCTAssertGreaterThanOrEqual(frames.count, 2_000)
         XCTAssertLessThan(frames.dropFirst(2_000).map { abs($0) }.max() ?? 0, 1e-6, "nothing after the region")
-        for i in stride(from: 0, to: 2_000, by: 97) {
+        // The engine fades a region's first and last 64 frames, in playback and in the bake alike.
+        for i in stride(from: 64, to: 2_000 - 64, by: 97) {
             XCTAssertEqual(frames[i], file[100 + i], accuracy: 1e-4, "frame \(i)")
         }
     }
@@ -71,7 +72,7 @@ final class RegionBakeTests: XCTestCase {
         let second = try XCTUnwrap(RegionBake.render(project, track: track, region: region, sampleRate: rate,
                                                      samples: samples, effects: [Gain(0.5, sampleRate: rate)]))
         XCTAssertEqual(first, second, "a bake is deterministic")
-        for i in stride(from: 0, to: 2_000, by: 101) {
+        for i in stride(from: 64, to: 2_000 - 64, by: 101) {
             XCTAssertEqual(first[i], file[100 + i] * 0.5, accuracy: 1e-4, "frame \(i)")
         }
     }
