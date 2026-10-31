@@ -62,17 +62,17 @@ struct PlayKeysView: View {
                 Button { lowest = clampedLowest - 12 } label: { Image(systemName: "minus") }
                     .buttonStyle(ToolButtonStyle())
                     .disabled(clampedLowest <= Self.lowestC)
-                    .accessibilityLabel("Octave down")
+                    .accessibilityLabel("Octave Down")
                 Text(Keyboard.name(of: clampedLowest))
                     .font(Theme.Font.value)
                     .foregroundStyle(Theme.Color.text)
-                    .frame(minWidth: 36)
+                    .frame(minWidth: Theme.Size.touch)
                     .accessibilityLabel("Lowest key")
                     .accessibilityValue(Keyboard.name(of: clampedLowest))
                 Button { lowest = clampedLowest + 12 } label: { Image(systemName: "plus") }
                     .buttonStyle(ToolButtonStyle())
                     .disabled(clampedLowest >= Self.highestC)
-                    .accessibilityLabel("Octave up")
+                    .accessibilityLabel("Octave Up")
             }
         }
     }

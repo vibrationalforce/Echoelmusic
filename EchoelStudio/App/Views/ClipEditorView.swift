@@ -235,8 +235,8 @@ struct NoteBlock: View {
                 Rectangle()
                     .fill(Theme.Color.background.opacity(0.35))
                     .frame(width: 2)
-                    .padding(.vertical, 3)
-                    .padding(.trailing, 3)
+                    .padding(.vertical, Theme.Space.xxs)
+                    .padding(.trailing, Theme.Space.xxs)
                     .accessibilityHidden(true)
             }
             .frame(width: width, height: rowHeight - 1)
@@ -249,10 +249,10 @@ struct NoteBlock: View {
             .accessibilityLabel("\(NoteEditing.name(of: note.pitch)) note")
             .accessibilityValue("starts at tick \(note.start), \(note.length) ticks long, velocity \(note.velocity)")
             .accessibilityAction(named: "Delete") { perform(.removeNotes(clip.id, [note.id])) }
-            .accessibilityAction(named: "Up a semitone") { nudge(semitones: 1) }
-            .accessibilityAction(named: "Down a semitone") { nudge(semitones: -1) }
-            .accessibilityAction(named: "Later by one step") { nudge(ticks: grid) }
-            .accessibilityAction(named: "Earlier by one step") { nudge(ticks: -grid) }
+            .accessibilityAction(named: "Up a Semitone") { nudge(semitones: 1) }
+            .accessibilityAction(named: "Down a Semitone") { nudge(semitones: -1) }
+            .accessibilityAction(named: "Later by One Step") { nudge(ticks: grid) }
+            .accessibilityAction(named: "Earlier by One Step") { nudge(ticks: -grid) }
     }
 
     private var key: String { "note.drag.\(note.id.description)" }
