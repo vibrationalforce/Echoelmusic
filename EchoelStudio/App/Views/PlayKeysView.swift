@@ -67,7 +67,7 @@ struct PlayKeysView: View {
                     .font(Theme.Font.value)
                     .foregroundStyle(Theme.Color.text)
                     .frame(minWidth: Theme.Size.touch)
-                    .accessibilityLabel("Lowest key")
+                    .accessibilityLabel("Lowest Key")
                     .accessibilityValue(Keyboard.name(of: clampedLowest))
                 Button { lowest = clampedLowest + 12 } label: { Image(systemName: "plus") }
                     .buttonStyle(ToolButtonStyle())
@@ -194,7 +194,7 @@ private struct PlayKey: View {
                 if let label {
                     Text(label)
                         .font(Theme.Font.caption)
-                        .foregroundStyle(style == .white ? Color(white: 0.25) : Theme.Color.textSecondary)
+                        .foregroundStyle(style == .white ? Theme.Color.keyLabel : Theme.Color.textSecondary)
                         .padding(.bottom, style == .pad ? 0 : Theme.Space.xs)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -220,8 +220,8 @@ private struct PlayKey: View {
     private var fill: Color {
         if struck != nil { return Theme.Color.accent }
         switch style {
-        case .white: return Color(white: 0.88)
-        case .black: return Color(white: 0.12)
+        case .white: return Theme.Color.keyWhite
+        case .black: return Theme.Color.keyBlack
         case .pad: return Theme.Color.surfaceRaised
         }
     }

@@ -40,6 +40,10 @@ enum Theme {
         static let play = accent
         static let record = EchoelBrand.Color.record
         static let warning = EchoelBrand.Color.warning
+        /// The keys of a keyboard (play keys, the piano roll's side).
+        static let keyWhite = EchoelBrand.Color.keyWhite
+        static let keyBlack = EchoelBrand.Color.keyBlack
+        static let keyLabel = EchoelBrand.Color.keyLabel
 
         /// The 12 track colours. `Track.colorIndex` stores an index into this list.
         static let tracks: [SwiftUI.Color] = [

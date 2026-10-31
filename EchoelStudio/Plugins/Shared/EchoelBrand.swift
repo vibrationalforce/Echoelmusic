@@ -34,6 +34,11 @@ enum EchoelBrand {
         static let onAccent = SwiftUI.Color.black
         static let record = SwiftUI.Color(red: 0.90, green: 0.30, blue: 0.30)
         static let warning = SwiftUI.Color(red: 0.90, green: 0.62, blue: 0.20)
+        /// A keyboard's keys, as an instrument has them: white keys the light neutral, black keys
+        /// a step above the ground so they stay visible on it, and the name on a white key dark.
+        static let keyWhite = neutral
+        static let keyBlack = SwiftUI.Color(white: 0.12)
+        static let keyLabel = SwiftUI.Color(white: 0.25)
     }
 
     enum Space {
