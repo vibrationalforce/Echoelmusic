@@ -25,6 +25,7 @@ struct TrackListView: View {
 struct TrackRow: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
+    @Environment(StudioRouter.self) private var router
     let track: Track
     let open: (TrackID) -> Void
 
@@ -51,6 +52,9 @@ struct TrackRow: View {
             .accessibilityAddTraits(track.kind == .instrument ? .isButton : [])
             .accessibilityHint(track.kind == .instrument ? "Opens the editor." : "")
             .accessibilityLabel("\(track.name), \(track.typeName), \(Theme.Color.trackName(track.colorIndex))")
+            .accessibilityAction(named: "Rename Track") { router.sheet = .rename(.track(track.id)) }
+            .accessibilityAction(named: "Move Track Up") { move(by: -1) }
+            .accessibilityAction(named: "Move Track Down") { move(by: 1) }
             .accessibilityAction(named: "Delete Track") {
                 try? store.perform(.removeTrack(track.id))
             }
@@ -91,6 +95,11 @@ struct TrackRow: View {
         .frame(minHeight: Theme.Size.trackRowHeight)
         .background(Theme.Color.surface)
         .contextMenu {
+            Button("Rename…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
+            Button("Move Up", systemImage: "arrow.up") { move(by: -1) }
+                .disabled(index == 0)
+            Button("Move Down", systemImage: "arrow.down") { move(by: 1) }
+                .disabled(index.map { $0 >= store.project.tracks.count - 1 } ?? true)
             Menu("Color") {
                 ForEach(0..<Palette.trackColorCount, id: \.self) { index in
                     Button(Theme.Color.trackName(index)) {
@@ -102,6 +111,16 @@ struct TrackRow: View {
                 try? store.perform(.removeTrack(track.id))
             }
         }
+    }
+
+    private var index: Int? { store.project.trackIndex(track.id) }
+
+    /// One place up or down the list (and the arrangement, the mixer and the session with it).
+    private func move(by step: Int) {
+        guard let index else { return }
+        let target = index + step
+        guard store.project.tracks.indices.contains(target) else { return }
+        try? store.perform(.moveTrack(track.id, toIndex: target))
     }
 }
 

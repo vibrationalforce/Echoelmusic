@@ -9,6 +9,7 @@ import SwiftUI
 /// Reads no playhead, so nothing here rebuilds while the song plays.
 struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(StudioRouter.self) private var router
     /// Opens the note editor on this clip of this track.
     let open: (TrackID, ClipID) -> Void
     /// Asks for an audio file to place on a track at a tick — or, on a video track, a video.
@@ -49,6 +50,7 @@ struct ArrangeView: View {
                             .frame(height: Theme.Size.trackRowHeight)
                             .background(Theme.Color.surface)
                             .contextMenu {
+                                Button("Rename…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
                                 AutomateMenu(owner: .track(track.id))
                                 ModulateMenu(owner: .track(track.id))
                             }
@@ -244,6 +246,7 @@ private struct ArrangeLane: View {
 /// one move command when it lifts.
 private struct PlacementBlock: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(StudioRouter.self) private var router
     /// Only for the playhead at the moment Split is chosen — never read in `body`.
     @Environment(AudioEngine.self) private var engine
     let track: Track
@@ -306,7 +309,12 @@ private struct PlacementBlock: View {
         if Arranging.consolidated(placement, in: track) != nil {
             Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
         }
+        Button("Rename Clip…", systemImage: "pencil") { router.sheet = .rename(.clip(clip.id)) }
         Button("Delete", systemImage: "trash", role: .destructive) { remove() }
+        // The clip itself: every place it is in the arrangement and every session slot (undoable).
+        Button("Delete Clip Everywhere", systemImage: "trash.slash", role: .destructive) {
+            try? store.perform(.deleteClip(clip.id))
+        }
     }
 
     private func accessible(_ view: some View) -> some View {
@@ -321,6 +329,7 @@ private struct PlacementBlock: View {
             .accessibilityAction(named: "Duplicate") { duplicate() }
             .accessibilityAction(named: "Split at Playhead") { splitAtPlayhead() }
             .accessibilityAction(named: "Consolidate") { consolidate() }
+            .accessibilityAction(named: "Rename Clip") { router.sheet = .rename(.clip(clip.id)) }
             .accessibilityAction(named: "Delete") { remove() }
     }
 
@@ -425,6 +434,12 @@ private struct RegionBlock: View {
             Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
         }
         Button("Delete", systemImage: "trash", role: .destructive) { remove() }
+        // The file itself: every region and clip that plays it, and a sampler holding it (undoable).
+        Button("Remove File from Song", systemImage: "trash.slash", role: .destructive) { removeFile() }
+    }
+
+    private func removeFile() {
+        try? store.perform(.removeMedia(file.id))
     }
 
     private func accessible(_ view: some View) -> some View {
