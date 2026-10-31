@@ -67,7 +67,7 @@ final class PitchCorrectorTests: XCTestCase {
     }
 
     func testWithNoTargetNothingIsCorrected() throws {
-        let sung = 440 * Foundation.pow(2, -30 / 1_200)
+        let sung = 440 * Foundation.pow(2.0, -30.0 / 1_200)
         let corrector = PitchCorrector(sampleRate: rate, settings: .init(allowed: 0))
         let output = run(corrector, tone(sung))
         XCTAssertEqual(cents(try pitch(of: output.suffix(4_096)), sung), 0, accuracy: 1)
