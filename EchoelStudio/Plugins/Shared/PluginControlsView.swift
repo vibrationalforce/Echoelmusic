@@ -60,13 +60,13 @@ final class PluginControlsModel {
             sampleName = name
             sampleMessage = nil
         } catch SampleFile.ReadError.tooLong(let seconds) {
-            sampleMessage = "This file is longer than \(Int(seconds)) seconds."
+            sampleMessage = "This file is longer than \(NumberText.string(seconds, decimals: 0, unit: "s")). Choose a shorter file or trim it first."
         } catch SampleFile.ReadError.empty {
-            sampleMessage = "This file holds no audio."
+            sampleMessage = "This file holds no audio. Choose a file with sound in it."
         } catch is SampleBuffer.OutOfMemory {
-            sampleMessage = "There is not enough free memory to load this file right now."
+            sampleMessage = "There is not enough free memory to load this file. Close other apps or choose a shorter file."
         } catch {
-            sampleMessage = "This file is not an audio format Echoel can read."
+            sampleMessage = "Echoel cannot read this file. Choose a WAV, AIFF, CAF, MP3 or M4A file."
         }
     }
 
@@ -116,6 +116,39 @@ struct PluginControlsView: View {
         return isExponential(parameter) ? logf(v / lo) / logf(hi / lo) : (v - lo) / (hi - lo)
     }
 
+    /// A value as the Studio writes it (`NumberText`, the same file): "1.20 kHz", "250 ms",
+    /// "-6.0 dB", "C4" for the sampler's root key, a whole number where the range is whole.
+    static func text(_ value: AUValue, of parameter: AUParameter) -> String {
+        let v = Double(value)
+        switch parameter.unit {
+        case .hertz:
+            return v >= 1_000 ? NumberText.string(v / 1_000, decimals: 2, unit: "kHz") : NumberText.string(v, decimals: 0, unit: "Hz")
+        case .seconds:
+            return v >= 1 ? NumberText.string(v, decimals: 2, unit: "s") : NumberText.string(v * 1_000, decimals: 0, unit: "ms")
+        case .milliseconds:
+            return NumberText.string(v, decimals: 0, unit: "ms")
+        case .decibels:
+            return NumberText.string(v, decimals: 1, unit: "dB")
+        case .BPM:
+            return NumberText.string(v, decimals: 1, unit: "BPM")
+        case .octaves:
+            return NumberText.string(v, decimals: 1, unit: "oct")
+        case .ratio:
+            return NumberText.string(v, decimals: 1) + ":1"
+        case .percent:
+            // Percent takes no space (the Studio's rule, conductor 2026-10-31).
+            return NumberText.string(v, decimals: 0) + "%"
+        default:
+            if parameter.identifier == Self.rootKeyIdentifier { return NoteEditing.name(of: Int(v.rounded())) }
+            let whole = parameter.minValue.rounded() == parameter.minValue && parameter.maxValue.rounded() == parameter.maxValue
+                && parameter.maxValue - parameter.minValue >= 2
+            return whole ? NumberText.string(v.rounded(), decimals: 0) : NumberText.string(v, decimals: 2)
+        }
+    }
+
+    /// The sampler's root key in the tree (`InstrumentKernelParameter`: the key with "_" for ".").
+    private static let rootKeyIdentifier = SynthParameter.samplerRoot.key.rawValue.replacingOccurrences(of: ".", with: "_")
+
     static func value(at position: AUValue, in parameter: AUParameter) -> AUValue {
         let lo = parameter.minValue, hi = parameter.maxValue
         let p = Swift.min(Swift.max(position, 0), 1)
@@ -130,7 +163,7 @@ struct PluginControlsView: View {
                     .foregroundStyle(EchoelBrand.Color.text)
                     .accessibilityAddTraits(.isHeader)
                 if !model.isUnlocked {
-                    Text("Demo: two seconds of silence every 30 seconds. Echoel Plugins in the Echoel app unlocks \(model.title) and shows whether it is on sale; reload it here after buying.")
+                    Text("Demo: two seconds of silence every 30 seconds. Echoel Plugins in Echoel Studio unlocks \(model.title) and shows whether it is on sale; reload it here after buying.")
                         .font(EchoelBrand.Font.caption)
                         .foregroundStyle(EchoelBrand.Color.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -199,13 +232,9 @@ struct PluginControlsView: View {
                 .frame(minHeight: EchoelBrand.touch)
             }
         } else if parameter.unit == .boolean {
-            Toggle(isOn: Binding(get: { value >= 0.5 }, set: { model.set(parameter, $0 ? 1 : 0) })) {
-                Text(parameter.displayName)
-                    .font(EchoelBrand.Font.label)
-                    .foregroundStyle(EchoelBrand.Color.text)
-            }
-            .tint(EchoelBrand.Color.accent)
-            .frame(minHeight: EchoelBrand.touch)
+            // The Studio's switch (`EchoelToggle.swift`, shared), not the system's green pill.
+            Toggle(parameter.displayName, isOn: Binding(get: { value >= 0.5 }, set: { model.set(parameter, $0 ? 1 : 0) }))
+                .toggleStyle(EchoelToggleStyle())
         } else {
             PluginValueField(parameter: parameter, value: value) { model.set(parameter, $0) }
         }
@@ -230,7 +259,7 @@ private struct PluginValueField: View {
 
     var body: some View {
         let position = PluginControlsView.position(of: value, in: parameter)
-        let text = parameter.string(fromValue: [value])
+        let text = PluginControlsView.text(value, of: parameter)
         let engaged = drag != nil
         VStack(alignment: .leading, spacing: EchoelBrand.Space.xs) {
             Text(parameter.displayName)

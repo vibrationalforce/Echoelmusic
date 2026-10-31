@@ -102,7 +102,10 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             case .hertz: .hertz
             case .seconds: .seconds
             case .octaves: .octaves
+            case .decibel: .decibels
+            case .bpm: .BPM
             case .choice: .indexed
+            // Pan and plain amounts read as numbers; the units a host knows are named above.
             default: .generic
             }
             let node = AUParameterTree.createParameter(

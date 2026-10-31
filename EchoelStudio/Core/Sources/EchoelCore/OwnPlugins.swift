@@ -55,6 +55,22 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
     public static let all: [OwnPlugin] = instruments + free
 }
 
+/// The drum kit's note map as one line, for every place that explains it — the Drums page in
+/// the Studio and the Drums plugin in a host say the same thing. One note per piece, in note
+/// order; `DrumMapTests` (EchoelKernelsTests) plays each one through the kit and checks it sounds
+/// as the piece it names, so the line cannot drift from what the kit plays.
+public enum DrumNoteMap {
+    public static let pieces: [(name: String, note: Int)] = [
+        ("Kick", 36), ("Snare", 38), ("Clap", 39), ("Closed Hat", 42),
+        ("Low Tom", 45), ("Open Hat", 46), ("Crash", 49), ("High Tom", 50),
+    ]
+
+    /// "General MIDI drum map: Kick 36 · Snare 38 · … · High Tom 50."
+    public static var line: String {
+        "General MIDI drum map: " + pieces.map { "\($0.name) \($0.note)" }.joined(separator: " · ") + "."
+    }
+}
+
 /// The effects every Echoel user has, free: the channel tools of a desk. They are Audio Units
 /// registered inside the app, so they sit on the same insert chain as any other plugin and are
 /// saved, automated and learned the same way.

@@ -54,6 +54,10 @@ targets:
       # Echoel's colours, sizes and face, shared with the extension the same way, so the plugin
       # window and the Studio read ONE source (`Theme` reads its values from here).
       - path: Plugins/Shared/EchoelBrand.swift
+      # The one number formatter (Foundation only), so the plugin window reads values as the Studio.
+      - path: Plugins/Shared/NumberText.swift
+      # The one switch (EchoelToggleStyle, EchoelSwitch), drawn from EchoelBrand, also in the plugin.
+      - path: Plugins/Shared/EchoelToggle.swift
       - path: Support/App/PrivacyInfo.xcprivacy
         type: file
         buildPhase: resources

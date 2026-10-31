@@ -6,6 +6,10 @@ import SwiftUI
 /// fades from one end to the other, because motion here is opacity and colour only. Colour is
 /// never the only cue: the knob's end says on or off, and VoiceOver hears a switch with its value.
 ///
+/// It lives in `Plugins/Shared` and draws from `EchoelBrand`, so the app and the AUv3 extension
+/// compile the same switch (`project.yml`: the app lists it by path) — a toggle in a host's plugin
+/// window is the Studio's toggle.
+///
 /// Set once for a page with `.echoelList()` (or `.toggleStyle(EchoelToggleStyle())`). A toggle
 /// inside a `Menu` is drawn by the system as a checkmark row, and that is right.
 struct EchoelToggleStyle: ToggleStyle {
@@ -23,14 +27,14 @@ private struct EchoelToggleRow: View {
         Button {
             configuration.isOn.toggle()
         } label: {
-            HStack(spacing: Theme.Space.m) {
+            HStack(spacing: EchoelBrand.Space.m) {
                 configuration.label
-                    .font(Theme.Font.body)
-                    .foregroundStyle(Theme.Color.text)
+                    .font(EchoelBrand.Font.body)
+                    .foregroundStyle(EchoelBrand.Color.text)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 EchoelSwitch(isOn: configuration.isOn)
             }
-            .frame(minHeight: Theme.Size.touch)
+            .frame(minHeight: EchoelBrand.touch)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -50,10 +54,10 @@ struct EchoelSwitch: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: Theme.Radius.medium)
-                .fill(isOn ? Theme.Color.accent : Theme.Color.surfaceRaised)
-            RoundedRectangle(cornerRadius: Theme.Radius.medium)
-                .strokeBorder(Theme.Color.borderStrong, lineWidth: 1)
+            RoundedRectangle(cornerRadius: EchoelBrand.Radius.medium)
+                .fill(isOn ? EchoelBrand.Color.accent : EchoelBrand.Color.surfaceRaised)
+            RoundedRectangle(cornerRadius: EchoelBrand.Radius.medium)
+                .strokeBorder(EchoelBrand.Color.borderStrong, lineWidth: 1)
                 .opacity(isOn ? 0 : 1)
             HStack(spacing: 0) {
                 knob.opacity(isOn ? 0 : 1)
@@ -63,13 +67,13 @@ struct EchoelSwitch: View {
             .padding(Self.inset)
         }
         .frame(width: Self.width, height: Self.height)
-        .animation(Theme.Motion.quick, value: isOn)
+        .animation(EchoelBrand.Motion.quick, value: isOn)
         .accessibilityHidden(true)
     }
 
     private var knob: some View {
-        RoundedRectangle(cornerRadius: Theme.Radius.small)
-            .fill(isOn ? Theme.Color.onAccent : Theme.Color.textSecondary)
+        RoundedRectangle(cornerRadius: EchoelBrand.Radius.small)
+            .fill(isOn ? EchoelBrand.Color.onAccent : EchoelBrand.Color.textSecondary)
             .frame(width: Self.height - 2 * Self.inset, height: Self.height - 2 * Self.inset)
     }
 }
