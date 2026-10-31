@@ -193,12 +193,44 @@ struct TransportBar: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // A phone in portrait cannot show every control at once: then the strip scrolls
-            // sideways instead of squeezing or clipping its buttons.
+            // Every control in sight, nothing clipped and no sideways scroll on a phone: one row
+            // where it fits (iPad, landscape), else the song row over the transport, else three
+            // rows — song, transport and tempo, view switches (device video 10021).
             ViewThatFits(in: .horizontal) {
-                controls
-                ScrollView(.horizontal, showsIndicators: false) { controls }
+                HStack(spacing: Theme.Space.s) {
+                    transportGroup
+                    TempoField()
+                    switchesGroup
+                    songRow
+                }
+                VStack(spacing: Theme.Space.xs) {
+                    songRow
+                    HStack(spacing: Theme.Space.s) {
+                        transportGroup
+                        TempoField()
+                        switchesGroup
+                        Spacer(minLength: 0)
+                    }
+                }
+                VStack(spacing: Theme.Space.xs) {
+                    songRow
+                    HStack(spacing: Theme.Space.s) {
+                        transportGroup
+                        TempoField()
+                        Spacer(minLength: 0)
+                    }
+                    // At the largest text sizes even this row is wider than a phone; then, and
+                    // only then, it scrolls rather than clipping a switch.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: Theme.Space.s) { switchesGroup; Spacer(minLength: 0) }
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: Theme.Space.s) { switchesGroup }
+                        }
+                    }
+                }
             }
+            .padding(.horizontal, Theme.Space.m)
+            .padding(.vertical, Theme.Space.xs)
             .frame(minHeight: Theme.Size.transportHeight)
             // Under the controls, not over them: laid over the strip, a message of two or three
             // lines covered Play and Record and took their taps (review 2026-10-21).
@@ -211,7 +243,28 @@ struct TransportBar: View {
         .background(Theme.Color.surface)
     }
 
-    private var controls: some View {
+    /// The song and its menu, the pulse while a body source is on, Undo and Redo. The song's name
+    /// takes what room is left and truncates; nothing else gives way.
+    private var songRow: some View {
+        HStack(spacing: Theme.Space.s) {
+            SongMenu()
+                .layoutPriority(-1)
+            Spacer(minLength: 0)
+            PulseReading()
+            Button { store.undo() } label: { Image(systemName: "arrow.uturn.backward") }
+                .buttonStyle(ToolButtonStyle())
+                .disabled(!store.canUndo)
+                .accessibilityLabel(store.undoTitle.map { "Undo \($0)" } ?? "Undo")
+
+            Button { store.redo() } label: { Image(systemName: "arrow.uturn.forward") }
+                .buttonStyle(ToolButtonStyle())
+                .disabled(!store.canRedo)
+                .accessibilityLabel(store.redoTitle.map { "Redo \($0)" } ?? "Redo")
+        }
+    }
+
+    /// Play and Record, side by side in every layout.
+    private var transportGroup: some View {
         HStack(spacing: Theme.Space.s) {
             Button {
                 if engine.isStalled {
@@ -230,16 +283,17 @@ struct TransportBar: View {
             .disabled(!engine.isRunning && !engine.isStalled)
 
             RecordButton()
+        }
+    }
 
-            PulseReading()
-
+    /// The switches: loop, click, MIDI Learn, keys, Field window, automation writing.
+    private var switchesGroup: some View {
+        HStack(spacing: Theme.Space.s) {
             Button { engine.setLoopsSong(!engine.loopsSong) } label: { Image(systemName: "repeat") }
                 .buttonStyle(ToolButtonStyle(isActive: engine.loopsSong))
                 .accessibilityLabel("Loop")
                 .accessibilityValue(engine.loopsSong ? "On" : "Off")
                 .accessibilityHint("Plays the song from bar 1 again after its last bar.")
-
-            TempoField()
 
             Button {
                 clickOn.toggle()
@@ -266,31 +320,16 @@ struct TransportBar: View {
                 .accessibilityValue(showsFieldWindow ? "Shown" : "Hidden")
                 .accessibilityHint("Shows the Field as a small window over the other views.")
 
+            // Automation writing, said in a word: a lone "A" was not understood (device video 10021).
             Button { writer.setWriting(!writer.isWriting) } label: {
-                Text("A").font(Theme.Font.label)
+                Label("Write", systemImage: "pencil.line")
+                    .labelStyle(.titleAndIcon)
             }
             .buttonStyle(ToolButtonStyle(isActive: writer.isWriting, activeColor: Theme.Color.record))
             .accessibilityLabel("Write Automation")
             .accessibilityValue(writer.isWriting ? "On" : "Off")
             .accessibilityHint("While playing, moving a control writes it into the song.")
-
-            Spacer(minLength: Theme.Space.s)
-
-            SongMenu()
-
-            Spacer(minLength: Theme.Space.s)
-
-            Button { store.undo() } label: { Image(systemName: "arrow.uturn.backward") }
-                .buttonStyle(ToolButtonStyle())
-                .disabled(!store.canUndo)
-                .accessibilityLabel(store.undoTitle.map { "Undo \($0)" } ?? "Undo")
-
-            Button { store.redo() } label: { Image(systemName: "arrow.uturn.forward") }
-                .buttonStyle(ToolButtonStyle())
-                .disabled(!store.canRedo)
-                .accessibilityLabel(store.redoTitle.map { "Redo \($0)" } ?? "Redo")
         }
-        .padding(.horizontal, Theme.Space.m)
     }
 
     private var status: some View {
@@ -320,7 +359,7 @@ struct TransportBar: View {
             }
             // What the fingertip on the camera should do (wave W1); its own leaf, so this strip
             // never observes the camera.
-            CameraPulseCueLine()
+            TransportCueLine()
             messages
         }
     }
@@ -413,7 +452,7 @@ struct TransportBar: View {
 
     static func exportText(integrated: Double, truePeak: Double) -> String {
         func value(_ number: Double, _ unit: String) -> String {
-            number.isFinite ? String(format: "%.1f", number) + " " + unit : "silent"
+            number.isFinite ? NumberText.string(number, decimals: 1, unit: unit) : "silent"
         }
         let warning = truePeak > -1 ? " — peaks above −1 dBTP may distort when encoded" : ""
         return "Last export: " + value(integrated, "LUFS") + " · " + value(truePeak, "dBTP") + warning
@@ -438,6 +477,22 @@ struct RecordButton: View {
         .accessibilityLabel(recording.isRecording ? "Stop Recording" : "Record")
         .accessibilityHint(recording.armedTrack == nil ? "Records the track the keys play." : "")
         .disabled(!recording.canRecord)
+    }
+}
+
+/// The camera's cue under the transport, readable: the label size in the secondary text colour,
+/// shown only while the camera measures without a lock — the time a fingertip needs telling.
+/// Its own leaf, the one view here that observes the camera (Law 6).
+private struct TransportCueLine: View {
+    @Environment(CameraPulseSource.self) private var camera
+
+    var body: some View {
+        if let line = CameraPulseCueLine.line(for: camera.status, cue: camera.cue) {
+            Text(line)
+                .font(Theme.Font.label)
+                .foregroundStyle(Theme.Color.textSecondary)
+                .padding(.bottom, Theme.Space.xs)
+        }
     }
 }
 
@@ -564,139 +619,150 @@ struct SongMenu: View {
 
     var body: some View {
         Menu {
-            Menu("New Song", systemImage: "plus") {
-                ForEach(StarterProject.allCases, id: \.self) { starter in
-                    // A take running in this song lands in it first.
-                    Button(starter.title) {
-                        Task {
-                            await recording.finishTakes()
-                            documents.newSong(starter)
+            // In sections, so twenty entries read as five groups (device video 10021).
+            Section("Song") {
+                Menu("New Song", systemImage: "plus") {
+                    ForEach(StarterProject.allCases, id: \.self) { starter in
+                        // A take running in this song lands in it first.
+                        Button(starter.title) {
+                            Task {
+                                await recording.finishTakes()
+                                documents.newSong(starter)
+                            }
                         }
                     }
                 }
-            }
-            // The Song page: name, swing, tempo changes. Not while an import, an export, a take or
-            // the media load uses the package: a rename then moves it at once, and a finished
-            // export cannot take the slot from a typed name.
-            Button("Song Settings…", systemImage: "slider.horizontal.3") { router.sheet = .renameSong }
-                .disabled(documents.packageIsBusy)
-            keyAndScale
-            timeSignatureMenu
-            if agent.isOffered {
-                Button("Assistant…", systemImage: "text.bubble") { router.sheet = .agent }
-            }
-            Button("Echoel Plugins…", systemImage: "puzzlepiece.extension") { router.sheet = .store }
-            Button("About Echoel", systemImage: "info.circle") { router.sheet = .about }
-            Button("Live Stream…", systemImage: "dot.radiowaves.left.and.right") { router.sheet = .streaming }
-            Menu("Send MIDI Clock", systemImage: "metronome") {
-                ForEach(engine.clock.destinations) { destination in
-                    Button { engine.clock.toggle(destination) } label: {
-                        if engine.clock.isChosen(destination) {
-                            Label(destination.name, systemImage: "checkmark")
-                        } else {
-                            Text(destination.name)
+                // The Song page: name, swing, tempo changes. Not while an import, an export, a take or
+                // the media load uses the package: a rename then moves it at once, and a finished
+                // export cannot take the slot from a typed name.
+                Button("Song Settings…", systemImage: "slider.horizontal.3") { router.sheet = .renameSong }
+                    .disabled(documents.packageIsBusy)
+                Menu("Open", systemImage: "folder") {
+                    ForEach(documents.songs) { song in
+                        Button {
+                            Task {
+                                await recording.finishTakes()
+                                documents.open(song.url)
+                            }
+                        } label: {
+                            // By path: the list spells a package with a trailing slash, and a renamed or
+                            // new song's URL is built without one.
+                            if song.url.standardizedFileURL.path == documents.currentURL?.standardizedFileURL.path {
+                                Label(song.name, systemImage: "checkmark")
+                            } else {
+                                Text(song.name)
+                            }
                         }
                     }
                 }
+                .disabled(documents.songs.isEmpty)
+                // The song itself, with its audio, for another device running Echoel Studio.
+                Button("Share Song", systemImage: "square.and.arrow.up.on.square") {
+                    Task {
+                        if let url = await documents.shareSong(plugins: engine.plugins) { router.share(url) }
+                    }
+                }
+                .disabled(documents.isExporting)
+                // A Standard MIDI File as new instrument tracks; an empty song takes its tempo and meter.
+                Button("Import MIDI…", systemImage: "square.and.arrow.down") { router.sheet = .importMIDI }
+                keyAndScale
+                timeSignatureMenu
             }
-            .disabled(engine.clock.destinations.isEmpty)
-            Menu("Clock Offset", systemImage: "timer") {
-                ForEach(MIDIClockOutput.offsetChoices, id: \.self) { choice in
-                    Button { engine.clock.setOffset(milliseconds: choice) } label: {
-                        if engine.clock.offsetMilliseconds == choice {
-                            Label(Self.offsetTitle(choice), systemImage: "checkmark")
-                        } else {
-                            Text(Self.offsetTitle(choice))
+            Section("Export") {
+                Button("Export WAV", systemImage: "square.and.arrow.up") {
+                    Task {
+                        // A finished export is the newest news: its loudness line must not wait for a
+                        // Play behind an older notice. A notice raised while it ran (a plugin that
+                        // stopped mid-render, headphones pulled) is newer still, and stays.
+                        let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
+                        if let url = await documents.exportWAV(plugins: engine.plugins) {
+                            if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
+                            router.share(url)
                         }
                     }
                 }
-            }
-            .disabled(engine.clock.chosen.isEmpty)
-            mpeMenu
-            Menu("Follow MIDI Clock", systemImage: "clock.arrow.2.circlepath") {
-                Button { midi.follow(nil) } label: {
-                    if midi.followedSource == nil { Label("Off", systemImage: "checkmark") } else { Text("Off") }
-                }
-                ForEach(midi.sources) { source in
-                    Button { midi.follow(source.id) } label: {
-                        if midi.followedSource == source.id {
-                            Label(source.name, systemImage: "checkmark")
-                        } else {
-                            Text(source.name)
+                // Only the arrangement is rendered: without a note or an audio region in it the file
+                // would have no length.
+                .disabled(documents.isExporting || !store.project.arrangementHasSound)
+                // One file per track and return the mix hears, for another DAW.
+                Button("Export Stems", systemImage: "square.stack.3d.up") {
+                    Task {
+                        let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
+                        if let folder = await documents.exportStems(plugins: engine.plugins) {
+                            if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
+                            router.share(folder)
                         }
                     }
                 }
-            }
-            Toggle(isOn: Binding(get: { midi.networkEnabled }, set: { midi.setNetwork($0) })) {
-                Label("Network MIDI", systemImage: "network")
-            }
-            // OSC, ADM-OSC, Art-Net and sACN out (wave W4): every one off until switched on there.
-            Button("Connections…", systemImage: "antenna.radiowaves.left.and.right") { router.sheet = .connections }
-            // The body as a source (wave W1): off until chosen here — the chest strap or the rear
-            // camera, one at a time; only then does iOS ask for Bluetooth or the camera. The pulse
-            // shows beside Record while it is measured.
-            BodySourceMenu()
-            Button("Export WAV", systemImage: "square.and.arrow.up") {
-                Task {
-                    // A finished export is the newest news: its loudness line must not wait for a
-                    // Play behind an older notice. A notice raised while it ran (a plugin that
-                    // stopped mid-render, headphones pulled) is newer still, and stays.
-                    let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
-                    if let url = await documents.exportWAV(plugins: engine.plugins) {
-                        if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
-                        router.share(url)
-                    }
+                .disabled(documents.isExporting || !store.project.arrangementHasSound)
+                Button("Export MIDI", systemImage: "pianokeys") {
+                    if let url = documents.exportMIDI() { router.share(url) }
                 }
+                .disabled(!store.project.arrangementHasEvents)
+                // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
+                Button("Export Video…", systemImage: "film") { router.sheet = .exportVideo }
+                    .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)
             }
-            // Only the arrangement is rendered: without a note or an audio region in it the file
-            // would have no length.
-            .disabled(documents.isExporting || !store.project.arrangementHasSound)
-            // One file per track and return the mix hears, for another DAW.
-            Button("Export Stems", systemImage: "square.stack.3d.up") {
-                Task {
-                    let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
-                    if let folder = await documents.exportStems(plugins: engine.plugins) {
-                        if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
-                        router.share(folder)
-                    }
-                }
-            }
-            .disabled(documents.isExporting || !store.project.arrangementHasSound)
-            Button("Export MIDI", systemImage: "pianokeys") {
-                if let url = documents.exportMIDI() { router.share(url) }
-            }
-            .disabled(!store.project.arrangementHasEvents)
-            // A Standard MIDI File as new instrument tracks; an empty song takes its tempo and meter.
-            Button("Import MIDI…", systemImage: "square.and.arrow.down") { router.sheet = .importMIDI }
-            // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
-            Button("Export Video…", systemImage: "film") { router.sheet = .exportVideo }
-                .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)
-            // The song itself, with its audio, for another device running Echoel Studio.
-            Button("Share Song", systemImage: "square.and.arrow.up.on.square") {
-                Task {
-                    if let url = await documents.shareSong(plugins: engine.plugins) { router.share(url) }
-                }
-            }
-            .disabled(documents.isExporting)
-            Menu("Open", systemImage: "folder") {
-                ForEach(documents.songs) { song in
-                    Button {
-                        Task {
-                            await recording.finishTakes()
-                            documents.open(song.url)
-                        }
-                    } label: {
-                        // By path: the list spells a package with a trailing slash, and a renamed or
-                        // new song's URL is built without one.
-                        if song.url.standardizedFileURL.path == documents.currentURL?.standardizedFileURL.path {
-                            Label(song.name, systemImage: "checkmark")
-                        } else {
-                            Text(song.name)
+            Section("Play and Sync") {
+                Menu("Send MIDI Clock", systemImage: "metronome") {
+                    ForEach(engine.clock.destinations) { destination in
+                        Button { engine.clock.toggle(destination) } label: {
+                            if engine.clock.isChosen(destination) {
+                                Label(destination.name, systemImage: "checkmark")
+                            } else {
+                                Text(destination.name)
+                            }
                         }
                     }
                 }
+                .disabled(engine.clock.destinations.isEmpty)
+                Menu("Clock Offset", systemImage: "timer") {
+                    ForEach(MIDIClockOutput.offsetChoices, id: \.self) { choice in
+                        Button { engine.clock.setOffset(milliseconds: choice) } label: {
+                            if engine.clock.offsetMilliseconds == choice {
+                                Label(Self.offsetTitle(choice), systemImage: "checkmark")
+                            } else {
+                                Text(Self.offsetTitle(choice))
+                            }
+                        }
+                    }
+                }
+                .disabled(engine.clock.chosen.isEmpty)
+                mpeMenu
+                Menu("Follow MIDI Clock", systemImage: "clock.arrow.2.circlepath") {
+                    Button { midi.follow(nil) } label: {
+                        if midi.followedSource == nil { Label("Off", systemImage: "checkmark") } else { Text("Off") }
+                    }
+                    ForEach(midi.sources) { source in
+                        Button { midi.follow(source.id) } label: {
+                            if midi.followedSource == source.id {
+                                Label(source.name, systemImage: "checkmark")
+                            } else {
+                                Text(source.name)
+                            }
+                        }
+                    }
+                }
+                Toggle(isOn: Binding(get: { midi.networkEnabled }, set: { midi.setNetwork($0) })) {
+                    Label("Network MIDI", systemImage: "network")
+                }
             }
-            .disabled(documents.songs.isEmpty)
+            Section("Connect") {
+                // OSC, ADM-OSC, Art-Net and sACN out (wave W4): every one off until switched on there.
+                Button("Connections…", systemImage: "antenna.radiowaves.left.and.right") { router.sheet = .connections }
+                // The body as a source (wave W1): off until chosen here — the chest strap or the rear
+                // camera, one at a time; only then does iOS ask for Bluetooth or the camera. The pulse
+                // shows beside Record while it is measured.
+                BodySourceMenu()
+                Button("Live Stream…", systemImage: "dot.radiowaves.left.and.right") { router.sheet = .streaming }
+            }
+            Section("App") {
+                if agent.isOffered {
+                    Button("Assistant…", systemImage: "text.bubble") { router.sheet = .agent }
+                }
+                Button("Echoel Plugins…", systemImage: "puzzlepiece.extension") { router.sheet = .store }
+                Button("About Echoel", systemImage: "info.circle") { router.sheet = .about }
+            }
         } label: {
             HStack(spacing: Theme.Space.xs) {
                 Text(documents.songTitle)
@@ -739,7 +805,7 @@ struct SongMenu: View {
                 ForEach(TuningSystem.library) { Text($0.name).tag($0.id) }
             }
             .pickerStyle(.menu)
-            Menu("Concert Pitch \u{00B7} A = \(String(format: "%.2f", context.concertPitch)) Hz") {
+            Menu("Concert Pitch \u{00B7} A = \(NumberText.string(context.concertPitch, decimals: 2, unit: "Hz"))") {
                 ForEach(MusicalContext.concertPitchPresets, id: \.title) { preset in
                     Button {
                         pick(.concertPitch, preset.hertz)
@@ -852,7 +918,7 @@ struct SongMenu: View {
     }
 
     static func offsetTitle(_ milliseconds: Double) -> String {
-        milliseconds == 0 ? "None" : String(format: "%+.0f ms", milliseconds)
+        milliseconds == 0 ? "None" : NumberText.signed(milliseconds, decimals: 0, unit: "ms")
     }
 }
 
