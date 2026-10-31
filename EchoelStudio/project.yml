@@ -77,6 +77,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         PRODUCT_NAME: Echoel
+        # The libsrt xcframework HaishinKit's SRT links has no Intel simulator slice, so the app's
+        # simulator build is Apple silicon only (every CI runner and current Mac). Devices: arm64 as ever.
+        "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Echoel

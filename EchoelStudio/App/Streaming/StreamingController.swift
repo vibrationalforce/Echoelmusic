@@ -171,7 +171,7 @@ final class StreamingController {
 
     private func end(because reason: String?) async {
         guard isLive || isStarting || picture != nil else { return }
-        DiagnosticLog.app.note(reason == nil ? "stream: stop" : "stream: ended")
+        if reason == nil { DiagnosticLog.app.note("stream: stop") } else { DiagnosticLog.app.note("stream: ended") }
         isStarting = false
         isLive = false
         startedAt = nil
