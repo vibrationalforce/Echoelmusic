@@ -19,6 +19,33 @@ public struct PluginComponent: Codable, Equatable, Hashable, Sendable {
         self.manufacturerName = manufacturerName
     }
 
+    /// A unit is recognised by its component description — type, subtype, manufacturer — never by
+    /// its names. The names are what the system reported when the song saved them and are kept as
+    /// written (Law 3), but a unit renamed since (the Echoel units went from "Echoel Synth" to
+    /// "Synth", 2026-10-31) is the same unit: choosing it again keeps its saved state, and a loaded
+    /// unit is not reloaded because its name changed.
+    public static func == (lhs: PluginComponent, rhs: PluginComponent) -> Bool {
+        lhs.type == rhs.type && lhs.subtype == rhs.subtype && lhs.manufacturer == rhs.manufacturer
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(type)
+        hasher.combine(subtype)
+        hasher.combine(manufacturer)
+    }
+
+    /// The name to show under the manufacturer: the unit's own name without the maker in front
+    /// ("EQ" under "Echoel", where the song stores "Echoel EQ"). Derived for display, never stored.
+    public var displayName: String {
+        let maker = manufacturerName.trimmingCharacters(in: .whitespaces)
+        guard !maker.isEmpty else { return name }
+        for separator in [": ", " "] where name.hasPrefix(maker + separator) {
+            let rest = name.dropFirst(maker.count + separator.count).trimmingCharacters(in: .whitespaces)
+            if !rest.isEmpty { return rest }
+        }
+        return name
+    }
+
     /// What the unit does, from its component type.
     public enum Role: Sendable, Equatable {
         case instrument, effect, midiEffect

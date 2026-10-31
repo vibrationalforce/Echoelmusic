@@ -76,6 +76,46 @@ final class PluginTests: XCTestCase {
         try Command.setPluginState(track, Data([9, 8, 7])).apply(to: &p)
         XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(p)), p)
     }
+
+    /// A unit renamed since the song was saved is the same unit: "Echoel Synth" (stored) and
+    /// "Synth" (what the system reports since 2026-10-31) share type, subtype and maker, so
+    /// choosing it again keeps the saved state. Another subtype under the old name does not.
+    func testARenamedUnitChosenAgainKeepsItsState() throws {
+        var (p, track) = try project()
+        let stored = PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eSyn"),
+                                     manufacturer: PluginComponent.code("Echo"), name: "Echoel Synth",
+                                     manufacturerName: "Echoel")
+        try Command.setInstrumentPlugin(track, stored).apply(to: &p)
+        try Command.setPluginState(track, Data([4, 5, 6])).apply(to: &p)
+
+        var renamed = stored
+        renamed.name = "Synth"
+        XCTAssertEqual(renamed, stored)
+        XCTAssertEqual(Set([stored, renamed]).count, 1)
+        try Command.setInstrumentPlugin(track, renamed).apply(to: &p)
+        XCTAssertEqual(p.track(track)?.instrument.pluginState, Data([4, 5, 6]))
+
+        var another = stored
+        another.subtype = PluginComponent.code("eDrm")
+        XCTAssertNotEqual(another, stored)
+        try Command.setInstrumentPlugin(track, another).apply(to: &p)
+        XCTAssertNil(p.track(track)?.instrument.pluginState)
+    }
+
+    func testTheShownNameDropsTheMakerItRepeats() {
+        func named(_ name: String, by maker: String) -> PluginComponent {
+            PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code("eEQ5"),
+                            manufacturer: PluginComponent.code("Echo"), name: name, manufacturerName: maker)
+        }
+        XCTAssertEqual(named("Echoel EQ", by: "Echoel").displayName, "EQ")
+        XCTAssertEqual(named("Echoel: Synth", by: "Echoel").displayName, "Synth")
+        XCTAssertEqual(named("EQ", by: "Echoel").displayName, "EQ")
+        XCTAssertEqual(named("Echoel", by: "Echoel").displayName, "Echoel", "a name that is only the maker stays")
+        XCTAssertEqual(named("Echoelix Pad", by: "Echoel").displayName, "Echoelix Pad", "a word boundary, not a prefix")
+        XCTAssertEqual(named("Mini", by: "").displayName, "Mini")
+        // Shown only: the stored name is untouched.
+        XCTAssertEqual(named("Echoel EQ", by: "Echoel").name, "Echoel EQ")
+    }
 }
 
 final class OwnPluginTests: XCTestCase {

@@ -82,7 +82,7 @@ struct SoundPanel: View {
                 Text("No Audio Unit instruments installed")
             }
             ForEach(host.instruments, id: \.self) { component in
-                Button("\(component.name) — \(component.manufacturerName)") { choose(component) }
+                Button("\(component.displayName) — \(component.manufacturerName)") { choose(component) }
             }
         } label: {
             Label("Audio Unit Instrument…", systemImage: "puzzlepiece.extension")
@@ -99,7 +99,7 @@ struct SoundPanel: View {
 
     @ViewBuilder private var pluginStatus: some View {
         let host = engine.plugins
-        let name = track.instrument.plugin?.name ?? "A plugin"
+        let name = track.instrument.plugin?.displayName ?? "A plugin"
         Group {
             if let problem = host.problems[.instrument(track.id)] {
                 Text(problem)

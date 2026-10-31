@@ -52,9 +52,9 @@ struct AutomateMenu: View {
         _ = engine.plugins.revision
         var units: [(PluginParameter.Unit, PluginHost.Slot, String)] = []
         if track.kind == .instrument, track.instrument.device == .plugin, let plugin = track.instrument.plugin {
-            units.append((.instrument, .instrument(id), plugin.name))
+            units.append((.instrument, .instrument(id), plugin.displayName))
         }
-        for insert in track.inserts { units.append((.insert(insert.id), .insert(insert.id), insert.plugin.name)) }
+        for insert in track.inserts { units.append((.insert(insert.id), .insert(insert.id), insert.plugin.displayName)) }
         return units.compactMap { unit, slot, title in
             let open = engine.plugins.automatableParameters(slot).filter {
                 project.automation(for: .plugin(id, PluginParameter(unit, address: $0.address))) == nil
@@ -102,7 +102,7 @@ struct AutomationName: View {
         }
         guard let name = engine.plugins.automatableParameters(slot).first(where: { $0.address == parameter.address })?.name
         else { return nil }
-        return "\(plugin.name) \(name)"
+        return "\(plugin.displayName) \(name)"
     }
 }
 
