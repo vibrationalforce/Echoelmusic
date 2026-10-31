@@ -152,71 +152,101 @@ struct PanControl: View {
     }
 }
 
-/// A number you drag: label above, value below; drag up or down to change it (finer as the
-/// finger moves away sideways is a later refinement), double-tap for the default. The one
-/// numeric control for every parameter that is not a fader or a pan.
+/// A number you drag or type — the earlier instrument's value field. Label above, value below,
+/// a thin bar for where it sits in its range. Drag up or down: slowly for fine steps, quickly to
+/// cover the range (`DragPrecision`), with a tick under the finger at either end and at the
+/// default. Tap to type it on Echoel's number pad (when the page hosts one); double-tap for the
+/// default. The one numeric control for every parameter that is not a fader or a pan; a
+/// parameter with named values is a picker instead.
 struct ParameterField: View {
     @Environment(ProjectStore.self) private var store
     @Environment(ParameterWriter.self) private var writer
+    @Environment(NumberPadController.self) private var pad: NumberPadController?
     let address: ParameterAddress
-    @State private var start: Double?
+    /// The drag in progress: the control position it has reached and the translation last read.
+    @State private var drag: (position: Double, translation: CGFloat)?
     /// What an automation pass wrote under the finger (see `Fader.passed`).
     @State private var passed: Double?
 
-    /// Points of vertical travel for the full range.
+    /// Points of vertical travel for the full range at full speed.
     private static let travel: CGFloat = 240
 
     var body: some View {
         if let descriptor = store.project.descriptor(for: address), let stored = store.project.value(of: address) {
-            let value = passed ?? stored
-            let position = descriptor.normalized(value)
-            VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                Text(title(descriptor))
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.textSecondary)
-                    .lineLimit(1)
-                Text(ParameterFormat.text(value, descriptor: descriptor))
-                    .font(Theme.Font.value)
-                    .foregroundStyle(Theme.Color.text)
-                    .lineLimit(1)
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Rectangle().fill(Theme.Color.surfaceRaised)
-                        Rectangle().fill(Theme.Color.accent)
-                            .frame(width: geometry.size.width * CGFloat(position))
-                    }
-                }
-                .frame(height: 3)
-                .accessibilityHidden(true)
-            }
-            .padding(Theme.Space.s)
-            .frame(maxWidth: .infinity, minHeight: Theme.Size.touch, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: Theme.Radius.medium).fill(Theme.Color.surface))
-            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.border, lineWidth: 1))
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 2)
-                    .onChanged { drag in
-                        let origin = start ?? position
-                        start = origin
-                        passed = writer.set(address, normalized: origin - Double(drag.translation.height / Self.travel), gesture: true)
-                    }
-                    .onEnded { _ in
-                        start = nil
-                        passed = nil
-                        writer.endGesture()
-                    }
-            )
-            .onTapGesture(count: 2) { writer.reset(address) }
-            .accessibilityElement()
-            .accessibilityLabel(title(descriptor))
-            .accessibilityValue(ParameterFormat.text(value, descriptor: descriptor))
-            .accessibilityAdjustableAction { direction in
-                let step = Self.step(descriptor)
-                writer.set(address, normalized: position + (direction == .increment ? step : -step), gesture: false)
-            }
-            .midiLearnable(address)
+            field(descriptor, value: passed ?? stored)
         }
+    }
+
+    private var owner: String { "\(address)" }
+
+    private var isTyped: Bool { pad?.request?.owner == owner }
+
+    @ViewBuilder private func field(_ descriptor: ParameterDescriptor, value: Double) -> some View {
+        let position = descriptor.normalized(value)
+        let engaged = drag != nil || isTyped
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            Text(title(descriptor))
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+                .lineLimit(1)
+            Text(ParameterFormat.text(value, descriptor: descriptor))
+                .font(Theme.Font.value)
+                .foregroundStyle(engaged ? Theme.Color.accent : Theme.Color.text)
+                .lineLimit(1)
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(Theme.Color.surfaceRaised)
+                    Rectangle().fill(Theme.Color.accent)
+                        .frame(width: geometry.size.width * CGFloat(position))
+                }
+            }
+            .frame(height: 3)
+            .accessibilityHidden(true)
+        }
+        .padding(Theme.Space.s)
+        .frame(maxWidth: .infinity, minHeight: Theme.Size.touch, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: Theme.Radius.medium).fill(Theme.Color.surface))
+        // A control's boundary (3.6:1), the accent while it is held or typed into.
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium)
+            .strokeBorder(engaged ? Theme.Color.accent : Theme.Color.borderStrong, lineWidth: 1))
+        .animation(Theme.Motion.quick, value: engaged)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 2)
+                .onChanged { gesture in
+                    let reached = drag ?? (position: position, translation: 0)
+                    let moved = gesture.translation.height - reached.translation
+                    let scale = DragPrecision.scale(speed: Double(gesture.velocity.height))
+                    let next = Swift.min(Swift.max(reached.position - Double(moved / Self.travel) * scale, 0), 1)
+                    drag = (position: next, translation: gesture.translation.height)
+                    passed = writer.set(address, normalized: next, gesture: true)
+                }
+                .onEnded { _ in
+                    drag = nil
+                    passed = nil
+                    writer.endGesture()
+                }
+        )
+        .onTapGesture(count: 2) { writer.reset(address) }
+        .onTapGesture { openPad(descriptor, value: value) }
+        .sensoryFeedback(.selection, trigger: value) { old, new in
+            drag != nil && DragPrecision.reachesDetent(from: old, to: new, standard: descriptor.defaultValue,
+                                                       range: descriptor.range)
+        }
+        .accessibilityElement()
+        .accessibilityLabel(title(descriptor))
+        .accessibilityValue(ParameterFormat.text(value, descriptor: descriptor))
+        .accessibilityAdjustableAction { direction in
+            let step = Self.step(descriptor)
+            writer.set(address, normalized: position + (direction == .increment ? step : -step), gesture: false)
+        }
+        .accessibilityAction(named: "Type a value") { openPad(descriptor, value: value) }
+        .midiLearnable(address)
+    }
+
+    /// The pad for this field, typed in the unit a musician reads (ms, %, Hz).
+    private func openPad(_ descriptor: ParameterDescriptor, value: Double) {
+        pad?.type(address, descriptor: descriptor, value: value, title: title(descriptor), owner: owner, writer: writer)
     }
 
     /// One VoiceOver swipe: one whole step of a stepped value (a semitone of the root key), else
@@ -230,5 +260,19 @@ struct ParameterField: View {
     private func title(_ descriptor: ParameterDescriptor) -> String {
         if let target = address.key.sendTarget { return store.project.track(target).map { "→ \($0.name)" } ?? descriptor.title }
         return SynthParameter.builtIn(address.key)?.title ?? descriptor.title
+    }
+}
+
+extension NumberPadController {
+    /// Opens the pad for a song parameter; the typed value goes through the writer, like a drag,
+    /// as one undo step. A named choice is not typed (it is a picker), so nothing opens.
+    func type(_ address: ParameterAddress, descriptor: ParameterDescriptor, value: Double, title: String,
+              owner: String, writer: ParameterWriter) {
+        guard let format = NumberEntryFormat(descriptor) else { return }
+        open(NumberPadRequest(owner: owner, title: title, format: format, range: descriptor.range,
+                              value: value, standard: descriptor.defaultValue) { typed in
+            writer.set(address, to: typed, coalescingKey: nil)
+            writer.endGesture()
+        })
     }
 }
