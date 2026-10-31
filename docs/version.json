@@ -1,5 +1,5 @@
 {
-  "version": "10.25.0",
+  "version": "10.26.0",
   "build": "2026-10-31",
   "features": {
     "monochromeDesign": true,
@@ -31,6 +31,7 @@
     "arWorlds": false
   },
   "changelog": [
+    "v10.26.0 (2026-10-31): Echoel Studio first. The homepage hero and capability map lead with the workstation in TestFlight; the earlier instrument (10.79) follows as frozen history. Sky, Connections, live streaming, video tracks, MPE out, the effects, clip split, MIDI import and Bake Effects are named on the homepage and roadmap after their CLAIMS entry (2026-10-31). Base type 16 px; the nav word sits beside the mark on wide screens.",
     "v10.25.0 (2026-10-31): one identity with the app. shared.css and the homepage carry the tokens of EchoelStudio/App/Design/Theme.swift (surfaces, hairlines, secondary text at 65 %, radii 4/8/12, one bio-green accent for the current page), hover lifts, glows, blur and slide-in motion removed (opacity and colour only). Name rule: the brand is Echoel, the app is Echoel Studio, the project and repository are Echoelmusic. Header and footer are landmarks on every page. The homepage says first what TestFlight carries. shared.js polled against a stale version (10.11.0) and reloaded open pages about every minute; it now matches.",
     "HISTORY NOTE (2026-08-28 brand audit): entries below this line are a historical record of the website, not a list of what ships today. Several narrate features that were later deliberately removed (AUv3, drums/beat engine, RTMP plans, '12 unified tools') or that never existed as named. The one list of what is true today is ContentPipeline/CLAIMS.md in the repository.",
     "v10.22.0: Brand-audit truth pass (2026-08-28) — site copy aligned to the shipping app (ten generative looks — that number was itself wrong and is corrected to FOUR on 2026-09-05; the reachable chip set is Rings, Water, Aurora, Depth, and the other six shaders are compiled but retired from the UI — concert pitch freely settable 380-500 Hz, v1.0 free, honest Watch/rPPG/one-way-OSC wording), and the four version numbers (version.json, sw.js, ?v= cache keys, index inline guardian) unified at this release after drifting since 10.14/10.21.",
