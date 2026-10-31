@@ -56,6 +56,12 @@ public final class EffectKernel: @unchecked Sendable {
     private let stereoWidth: StereoWidth?
     private let ringModulator: RingModulator?
     private let frequencyShifter: FrequencyShifter?
+    private let pitchCorrector: PitchCorrector?
+    /// The correction's targets, worked out once here so a change of key on the render thread
+    /// only looks them up: each scale's pitch classes above C, and each tone system's cents for
+    /// every root (`tuning × 12 + root`).
+    private let scaleMasks: [UInt16]
+    private let toneSystemCents: [SIMD16<Float>]
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -82,6 +88,10 @@ public final class EffectKernel: @unchecked Sendable {
         stereoWidth = effect == .stereoWidth ? StereoWidth(sampleRate: self.sampleRate) : nil
         ringModulator = effect == .ringModulator ? RingModulator(sampleRate: self.sampleRate) : nil
         frequencyShifter = effect == .frequencyShifter ? FrequencyShifter(sampleRate: self.sampleRate) : nil
+        pitchCorrector = effect == .pitchCorrection ? PitchCorrector(sampleRate: self.sampleRate) : nil
+        scaleMasks = effect == .pitchCorrection
+            ? Scale.allCases.map { PitchCorrector.Settings.mask(root: 0, steps: $0.intervals) } : []
+        toneSystemCents = effect == .pitchCorrection ? Self.toneSystemCents() : []
         applySettings()
     }
 
@@ -130,6 +140,7 @@ public final class EffectKernel: @unchecked Sendable {
         stereoWidth?.reset()
         ringModulator?.reset()
         frequencyShifter?.reset()
+        pitchCorrector?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -160,6 +171,7 @@ public final class EffectKernel: @unchecked Sendable {
         case .stereoWidth: stereoWidth?.process(left: left, right: right, frames: frames)
         case .ringModulator: ringModulator?.process(left: left, right: right, frames: frames)
         case .frequencyShifter: frequencyShifter?.process(left: left, right: right, frames: frames)
+        case .pitchCorrection: pitchCorrector?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -244,7 +256,32 @@ public final class EffectKernel: @unchecked Sendable {
             guard let frequencyShifter else { return }
             let s = FrequencyShifter.Settings(shift: value(0), mix: value(1))
             if s != frequencyShifter.settings { frequencyShifter.settings = s }
+        case .pitchCorrection:
+            guard let pitchCorrector else { return }
+            let root = Swift.min(Swift.max(Int(value(0).rounded()), 0), 11)
+            let scale = Swift.min(Swift.max(Int(value(1).rounded()), 0), scaleMasks.count - 1)
+            let system = Swift.min(Swift.max(Int(value(2).rounded()), 0), toneSystemCents.count / 12 - 1)
+            guard scale >= 0, system >= 0 else { return }
+            let mask = scaleMasks[scale]
+            let rotated = root == 0 ? mask : ((mask << UInt16(root)) | (mask >> UInt16(12 - root))) & 0x0FFF
+            let s = PitchCorrector.Settings(allowed: rotated, cents: toneSystemCents[system * 12 + root],
+                                            reference: value(3), speed: value(4), amount: value(5))
+            if s != pitchCorrector.settings { pitchCorrector.settings = s }
         }
+    }
+
+    /// Every tone system's deviation from twelve equal steps with its 1/1 on each root.
+    private static func toneSystemCents() -> [SIMD16<Float>] {
+        var tables: [SIMD16<Float>] = []
+        for system in TuningSystem.library {
+            for root in MusicalContext.rootRange {
+                let cents = MusicalContext(root: root, tuning: system.id).centsTable()
+                var lanes = SIMD16<Float>.zero
+                for (index, value) in cents.prefix(12).enumerated() { lanes[index] = Float(value) }
+                tables.append(lanes)
+            }
+        }
+        return tables
     }
 
     public static func parameters(for effect: StandardEffect) -> [EffectParameter] {
@@ -334,6 +371,14 @@ public final class EffectKernel: @unchecked Sendable {
         case .frequencyShifter:
             add("shift", "Shift", -1_000...1_000, 100, .hertz)
             add("mix", "Mix", 0...1, 0.5, .amount)
+        case .pitchCorrection:
+            // By name; the effect panel can set the three from the song's own frame.
+            choose("key", "Key", MusicalContext.rootNames, 0)
+            choose("scale", "Scale", Scale.allCases.map(\.title), Scale.allCases.firstIndex(of: .major) ?? 0)
+            choose("tuning", "Tone System", TuningSystem.library.map(\.name), 0)
+            add("reference", "Concert A", 400...480, 440, .hertz)
+            add("speed", "Speed", 0...0.5, 0.04, .seconds)
+            add("amount", "Amount", 0...1, 1, .amount)
         }
         return list
     }
