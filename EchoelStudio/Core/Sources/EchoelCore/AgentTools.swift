@@ -303,7 +303,7 @@ public enum AgentTools {
     /// small enough for the on-device model's window however long the song grows.
     public static func describe(_ project: Project) -> String {
         let bar = MusicalTime.ticksPerBar(project.timeSignature)
-        var lines = ["Song \"\(project.name)\": \(format(project.tempo)) BPM, \(project.timeSignature.numerator)/\(project.timeSignature.denominator)."]
+        var lines = ["Song \"\(project.name)\": \(tempoText(project.tempo)) BPM, \(project.timeSignature.numerator)/\(project.timeSignature.denominator)."]
         if project.tracks.isEmpty { lines.append("No tracks yet.") }
         for (index, track) in project.tracks.enumerated() {
             var parts = ["\(index + 1). \(track.name)"]
@@ -523,5 +523,16 @@ public enum AgentTools {
 
     private static func format(_ value: Double) -> String {
         value == value.rounded() ? String(Int(value)) : String(format: "%.1f", value)
+    }
+
+    /// A tempo to the hundredth the transport types, with only the places it needs ("120",
+    /// "100.5", "100.25"): one place would tell the model 100.2 for a song at 100.25, and a "keep
+    /// the tempo" from it would move the song.
+    private static func tempoText(_ bpm: Double) -> String {
+        guard bpm.isFinite else { return String(bpm) }
+        let hundredths = (bpm * 100).rounded()
+        if hundredths.truncatingRemainder(dividingBy: 100) == 0 { return String(format: "%.0f", hundredths / 100) }
+        if hundredths.truncatingRemainder(dividingBy: 10) == 0 { return String(format: "%.1f", hundredths / 100) }
+        return String(format: "%.2f", hundredths / 100)
     }
 }

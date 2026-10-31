@@ -252,6 +252,14 @@ final class AgentToolsTests: XCTestCase {
         }
     }
 
+    func testTheDescriptionGivesTheTempoToTheHundredth() throws {
+        var project = Project(name: "Jam")
+        try Command.setTempo(bpm: 100.25).apply(to: &project)
+        XCTAssertTrue(AgentTools.describe(project).contains("100.25 BPM"), "not 100.2")
+        try Command.setTempo(bpm: 100.5).apply(to: &project)
+        XCTAssertTrue(AgentTools.describe(project).contains("100.5 BPM"))
+    }
+
     /// The description goes into the on-device model's small window on every request; a clip
     /// repeated over a long song must not list every bar, or the song alone outgrows the window
     /// (audit 2026-10-23).
