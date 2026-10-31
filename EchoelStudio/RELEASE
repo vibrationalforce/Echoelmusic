@@ -1,23 +1,19 @@
-11.0.0, eighteenth upload — the identity finished: two-row transport, one vocabulary, every audit finding closed
+11.0.0, nineteenth upload — Field over your video, Jam with nearby iPhones, tempo to the hundredth
 
-What is new since 10025. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10027. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- Transport in two rows on a phone; Click, MIDI Learn, Keys, Field Window and Write Automation
-  sit behind More (it lights while Learn or Write is on).
-- American English throughout (license, color, center, gray); one word per thing in menus and
-  undo titles (Rename Song, Move Region, Undo Assistant).
-- Piano roll: a tap selects a note, a double tap (or Delete Note) deletes it.
-- Trim grip and drum step cells are full 44 pt touch targets.
-- Every number, including the tempo and percentages, uses the one number format; the plug-in
-  shows its values the same way (kHz, ms, dB, BPM, 50%).
-- One drum map line in app and plug-in, checked against the kit.
-- Error messages in the store, opening a song, export, the camera and the plug-in say what to do.
-- The plug-in uses Echoel's switch; a song keeps a plug-in's state when it is chosen again
-  under its new name; effects show as "EQ — Echoel".
-- Go Live badge is a full touch target and reads "Live 0:12:03".
+- Field over Video: Export Video has Field Layer (Off, Screen, Add, Normal) and Field Opacity;
+  the Field is drawn over your video take in every frame shape, vertical too. The video window
+  previews the same picture. Two exports of the same song draw the same film; body values are
+  not part of an export.
+- Jam: Song menu, Connect, Jam…. Host a Jam or Join a Jam; nearby iPhones follow the host's
+  tempo, time signature and Play/Stop, directly and encrypted, without Wi-Fi or internet. Only
+  timing and device names travel, no sound and no body values. Off until you host or join.
+- Tempo to the hundredth: type 100,25; the transport shows only the places it needs
+  (120, 100,5, 100,25).
 
-Previous: 11.0.0 (10025), seventeenth upload — the Echoel identity end to end (round one).
-10023 and earlier: see git history of this file.
+Previous: 11.0.0 (10027), eighteenth upload — the identity finished. 10025 and earlier: see
+git history of this file.
 group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -26,9 +22,12 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Portrait iPhone, standard text size: exactly two transport rows, nothing cut off, and More
-   opens a menu with Click, MIDI Learn, Keys, Field Window and Write Automation.
-2. Piano roll: one tap selects a note (green outline), a double tap deletes it.
-3. With German as the phone language: tempo and dB both show a comma (76,5 BPM, -5,6 dB).
-4. Arrange: drag a region's trim edge with a fingertip; it catches on the first try.
-5. AUM: an Echoel effect's switch is the Echoel switch, and its values read like the app's.
+1. Type 100,25 as the tempo on the number pad: the transport shows 100,25 BPM and the click
+   follows it.
+2. A camera take, Field Layer Screen at 60 %: the video window shows the Field over you.
+3. Export Video, 9:16, about 30 s, with that layer: the Field sits upright over you and pulses
+   with the beat; does Screen look right to your eye, or too bright in the mid tones?
+4. Two iPhones, Wi-Fi off: one hosts at 100,25 BPM with the click on, the other joins; it comes
+   in on the next bar and both clicks sound together, still after five minutes.
+5. Put the host in airplane mode: the other shows "Jam host lost. Playing on at 100,25 BPM."
+   and keeps playing.
