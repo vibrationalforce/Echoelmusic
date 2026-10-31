@@ -1294,7 +1294,14 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
             longer exists — reword the site FIRST, then delete or invert this guard.
             """)
 
-        let markers = ["never built", "scoped and cut", "scaffold", "not linked", "never linked"]
+        // ⭐ SCOPED TO THE EARLIER APP since 2026-10-31. Echoel Studio streams for real (W14,
+        // `EchoelStudio/App/Streaming/`, HaishinKit linked in `EchoelStudio/project.yml`, not in
+        // this `Package.swift`), and `privacy.html` must disclose that stream. Every Studio
+        // sentence names its one door, "Go Live" (the stream is off until it is pressed), and
+        // the earlier app never had that door — so "go live" marks a Studio sentence and the
+        // guard stays as sharp as before for the earlier app, whose RTMP was never built.
+        let markers = ["never built", "scoped and cut", "scaffold", "not linked", "never linked",
+                       "go live"]
         let offenders = try mentionsWithoutMarker("RTMP", markers: markers,
                                                   back: 260, forward: 200)
         XCTAssertTrue(offenders.isEmpty, """
