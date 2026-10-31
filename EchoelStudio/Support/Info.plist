@@ -10,6 +10,8 @@
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_apple-midi._udp</string>
+		<string>_echoel-jam._tcp</string>
+		<string>_echoel-jam._udp</string>
 	</array>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
