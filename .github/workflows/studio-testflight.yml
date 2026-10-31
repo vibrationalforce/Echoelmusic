@@ -50,7 +50,10 @@ jobs:
   gate:
     name: "Echoel Studio green on this commit"
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    # 2026-10-31: with nine team branches queued on five macOS runners the Studio run on the
+    # release commit waited more than 45 minutes before it STARTED; the gate timed out on a run
+    # that was never red. The wait is now 170 minutes. Absence is still refusal.
+    timeout-minutes: 180
     steps:
       - name: "Wait for the Echoel Studio run"
         env:
@@ -60,7 +63,7 @@ jobs:
         run: |
           set -uo pipefail
           START=$(date +%s)
-          DEADLINE=$(( START + 45 * 60 ))
+          DEADLINE=$(( START + 170 * 60 ))
           GRACE=300
           verdict=""
           while :; do
