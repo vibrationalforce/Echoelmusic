@@ -572,10 +572,12 @@ struct TempoField: View {
             }
 
             VStack(spacing: 0) {
-                Text(shownTempo, format: .number.precision(.fractionLength(1)))
+                Text(NumberText.string(shownTempo, decimals: 1))
                     .font(Theme.Font.valueLarge)
                     .foregroundStyle(isTyped ? Theme.Color.accent : Theme.Color.text)
-                // EXT: an external MIDI clock sets the tempo.
+                // "EXT" stands where the unit stands, in the same three letters' room: while an
+                // external MIDI clock sets the tempo, the number is the clock's. A word would not
+                // fit under the number; VoiceOver says it in full below.
                 Text(midi.followedSource == nil ? "BPM" : "EXT")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
@@ -599,7 +601,8 @@ struct TempoField: View {
             .onTapGesture(perform: typeTempo)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Tempo")
-            .accessibilityValue("\(Int(shownTempo.rounded())) BPM")
+            .accessibilityValue(NumberText.string(shownTempo, decimals: 1, unit: "BPM")
+                                + (followsClock ? ", External Clock" : ""))
             .accessibilityAdjustableAction { direction in
                 nudge(direction == .increment ? 1 : -1)
             }
@@ -713,7 +716,7 @@ struct SongMenu: View {
                 }
                 .disabled(documents.songs.isEmpty)
                 // The song itself, with its audio, for another device running Echoel Studio.
-                Button("Share Song", systemImage: "square.and.arrow.up.on.square") {
+                Button("Share Song…", systemImage: "square.and.arrow.up.on.square") {
                     Task {
                         if let url = await documents.shareSong(plugins: engine.plugins) { router.share(url) }
                     }
@@ -725,7 +728,7 @@ struct SongMenu: View {
                 timeSignatureMenu
             }
             Section("Export") {
-                Button("Export WAV", systemImage: "square.and.arrow.up") {
+                Button("Export WAV…", systemImage: "square.and.arrow.up") {
                     Task {
                         // A finished export is the newest news: its loudness line must not wait for a
                         // Play behind an older notice. A notice raised while it ran (a plugin that
@@ -741,7 +744,7 @@ struct SongMenu: View {
                 // would have no length.
                 .disabled(documents.isExporting || !store.project.arrangementHasSound)
                 // One file per track and return the mix hears, for another DAW.
-                Button("Export Stems", systemImage: "square.stack.3d.up") {
+                Button("Export Stems…", systemImage: "square.stack.3d.up") {
                     Task {
                         let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
                         if let folder = await documents.exportStems(plugins: engine.plugins) {
@@ -751,7 +754,7 @@ struct SongMenu: View {
                     }
                 }
                 .disabled(documents.isExporting || !store.project.arrangementHasSound)
-                Button("Export MIDI", systemImage: "pianokeys") {
+                Button("Export MIDI…", systemImage: "pianokeys") {
                     if let url = documents.exportMIDI() { router.share(url) }
                 }
                 .disabled(!store.project.arrangementHasEvents)
