@@ -110,17 +110,33 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         var coherence: Float = 0.5
         var breath: Float = 0.5
         var toneHz: Float = Float(FieldFrame.middleC)
-        var density: Float = MetalFieldRenderer.ringDensity
+        var density: Float = Float(FieldMotion.ringDensity)
         var hasPulse: Float = 0
         var hasCoherence: Float = 0
+
+        init() {}
+
+        /// One frame of `FieldMotion`, at the drawable's `aspect`.
+        init(aspect: Float, shown: FieldMotion.Shown) {
+            self.aspect = aspect
+            beatPhase = Float(shown.beatPhase)
+            fieldPhase = Float(shown.fieldPhase)
+            pulsePhase = Float(shown.pulsePhase)
+            beatLight = Float(shown.beatLight)
+            centreLight = Float(shown.centreLight)
+            levelLight = Float(shown.levelLight)
+            coherence = Float(shown.coherence)
+            breath = Float(shown.breath)
+            toneHz = Float(shown.toneHz)
+            density = Float(shown.density)
+            hasPulse = shown.hasPulse ? 1 : 0
+            hasCoherence = shown.hasCoherence ? 1 : 0
+        }
     }
 
     weak var store: ProjectStore?
     weak var engine: AudioEngine?
     var reduceMotion = false
-
-    /// The rings' spacing at full detail and middle C.
-    nonisolated static let ringDensity: Float = 40
 
     private var commandQueue: MTLCommandQueue?
     private var pipeline: MTLRenderPipelineState?
@@ -132,21 +148,12 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     private var uniforms = Uniforms()
     private var lastEncoded = Uniforms()
     private var hasEncodedOnce = false
-    private var hasSeeded = false
     private var frame = FieldFrame()
     private var lastFrameTime = CFAbsoluteTimeGetCurrent()
 
-    // The clocks and the guards (EchoelCore: pure, tested).
-    private var pulse = FieldPulse()
-    private var fieldPhase = 0.0
-    private var previousBarPhase: Double?
-    private var beatLight = FlashLimit()
-    private var centreLight = FlashLimit()
-    private var levelLight = FlashLimit()
-    private var coherence = 0.5
-    private var breath = 0.5
-    private var toneHz = FieldFrame.middleC
-    private var density = Double(MetalFieldRenderer.ringDensity)
+    /// The clocks, the flash guards and the glides (EchoelCore `FieldMotion`: pure, tested) — the
+    /// same motion the video export steps through, frame by frame.
+    private var motion = FieldMotion()
 
     // Detail: sampled once a second from heat, power and the frame rate this loop achieves.
     private var detail = FieldDetail(level: .full)
@@ -252,42 +259,13 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         drawable.present()
     }
 
-    /// Advances the clocks by `seconds` and sets this frame's uniforms from `frame` — the one
-    /// computation the window and the live stream share.
+    /// Advances the motion by `seconds` and sets this frame's uniforms from `frame` — the one
+    /// computation the window and the live stream share (`FieldMotion`, which the video export
+    /// steps too). Under Reduce Motion or at the lowest detail the picture holds still.
     private func step(seconds: Double) {
-        let still = reduceMotion || detail.isStill
-        if !hasSeeded { seed() }
-
-        // The two clocks, each capped (FieldPulse): the heart's rate, the song's bar.
-        let beatsPerMinute = FieldPulse.beatsPerMinute(pulse: frame.pulse)
-        pulse.advance(towards: FieldPulse.rate(beatsPerMinute: beatsPerMinute, reduceMotion: still), after: seconds)
-        if !still {
-            fieldPhase = FieldPulse.songPhase(fieldPhase, barPhase: frame.barPhase,
-                                              previousBarPhase: previousBarPhase, after: seconds)
-        }
-        previousBarPhase = frame.barPhase
-
-        // Every brightness passes the flash guard; under Reduce Motion the beat ring rests.
-        let beatTarget = frame.isPlaying && !still ? 1 - frame.beatPhase : 0
-        uniforms.beatLight = Float(beatLight.next(towards: beatTarget, after: seconds))
-        uniforms.centreLight = Float(centreLight.next(towards: frame.pulse ?? frame.level, after: seconds))
-        uniforms.levelLight = Float(levelLight.next(towards: frame.level, after: seconds))
-
-        // Slow signals glide; a key change sweeps the colour along the spectrum, never a jump.
-        coherence = Self.ease(coherence, frame.coherence ?? 0.5, tau: 0.6, seconds: seconds)
-        breath = Self.ease(breath, frame.breath ?? 0.5, tau: 0.35, seconds: seconds)
-        toneHz = Self.ease(toneHz, frame.tonicHz, tau: 0.45, seconds: seconds)
-        density = Self.ease(density, Double(Self.ringDensity) * detail.patternScale, tau: 0.7, seconds: seconds)
-
-        uniforms.beatPhase = still ? 0 : Float(frame.beatPhase)
-        uniforms.fieldPhase = Float(fieldPhase)
-        uniforms.pulsePhase = Float(pulse.phase)
-        uniforms.coherence = Float(coherence)
-        uniforms.breath = Float(breath)
-        uniforms.toneHz = Float(toneHz)
-        uniforms.density = Float(density)
-        uniforms.hasPulse = frame.pulse == nil ? 0 : 1
-        uniforms.hasCoherence = frame.coherence == nil ? 0 : 1
+        let shown = motion.step(frame, after: seconds, still: reduceMotion || detail.isStill,
+                                patternScale: detail.patternScale)
+        uniforms = Uniforms(aspect: uniforms.aspect, shown: shown)
     }
 
     /// Draws the next frame into `texture` — the live stream's picture (wave W14): the same
@@ -330,19 +308,6 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         buffer.addCompletedHandler { @Sendable _ in completed() }
         buffer.commit()
         return true
-    }
-
-    /// The first frame shows the song and the body as they are, with no glide from defaults.
-    private func seed() {
-        hasSeeded = true
-        coherence = frame.coherence ?? 0.5
-        breath = frame.breath ?? 0.5
-        toneHz = frame.tonicHz
-        density = Double(Self.ringDensity) * detail.patternScale
-        beatLight = FlashLimit(value: 0)
-        centreLight = FlashLimit(value: frame.pulse ?? frame.level)
-        levelLight = FlashLimit(value: frame.level)
-        previousBarPhase = frame.barPhase
     }
 
     /// Once a second: the frame rate this loop achieved, the heat and the power → the detail
@@ -409,13 +374,6 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         }
         let size = view.drawableSize
         if size.height > 0 { uniforms.aspect = Float(size.width / size.height) }
-    }
-
-    /// Exponential smoothing by elapsed time: the same glide at any frame rate.
-    private static func ease(_ value: Double, _ target: Double, tau: Double, seconds: Double) -> Double {
-        guard target.isFinite else { return value }
-        guard tau > 0, seconds > 0 else { return target }
-        return value + (target - value) * (1 - Foundation.exp(-seconds / tau))
     }
 
     /// Byte equality of two plain-`Float` structs: NaN equals NaN, which is the question asked.
