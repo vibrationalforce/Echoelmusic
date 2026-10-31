@@ -69,6 +69,6 @@ final class SkyBodiesTests: XCTestCase {
         let horizon = SkyBodies.topocentricAltitude(0, distance: moonDistance)
         XCTAssertEqual(horizon, -0.95, accuracy: 0.02)
         XCTAssertEqual(SkyBodies.topocentricAltitude(90, distance: moonDistance), 90, accuracy: 1e-9)
-        XCTAssertEqual(SkyBodies.topocentricAltitude(30, distance: 5), 30, accuracy: 1e-4, "a planet does not move")
+        XCTAssertEqual(SkyBodies.topocentricAltitude(30, distance: 5), 30, accuracy: 0.001, "a planet moves by less than 2 arcseconds")
     }
 }
