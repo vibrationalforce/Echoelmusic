@@ -41,7 +41,7 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
-    font-size: 14px;
+    font-size: 16px;   /* close to the app's 17 pt body, and the browser default */
 }
 a, a:visited, a:active, a:link { color: inherit; text-decoration: none; }
 a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
@@ -135,7 +135,11 @@ code, kbd, samp { overflow-wrap: anywhere; }
 .nav-cta--soon:hover { opacity: 1; background: transparent; color: var(--dim); }
 /* Planned / roadmap badge */
 .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; padding: 1px 7px; border-radius: 6px; border: 1px solid var(--border); color: var(--dim); margin-left: 6px; vertical-align: 1px; text-transform: none; }
-@media (min-width: 900px) { .nav-links { display: flex; } .burger { display: none !important; } }
+@media (min-width: 900px) {
+    .nav-links { display: flex; } .burger { display: none !important; }
+    /* The word sits beside the mark here; centred, it ran into the links at 1024 px. */
+    .nav-logo span { position: static; transform: none; }
+}
 
 /* ===== BURGER ===== */
 .burger {
