@@ -57,6 +57,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let ringModulator: RingModulator?
     private let frequencyShifter: FrequencyShifter?
     private let pitchCorrector: PitchCorrector?
+    private let harmonizer: Harmonizer?
     /// The correction's targets, worked out once here so a change of key on the render thread
     /// only looks them up: each scale's pitch classes above C, and each tone system's cents for
     /// every root (`tuning × 12 + root`).
@@ -89,6 +90,7 @@ public final class EffectKernel: @unchecked Sendable {
         ringModulator = effect == .ringModulator ? RingModulator(sampleRate: self.sampleRate) : nil
         frequencyShifter = effect == .frequencyShifter ? FrequencyShifter(sampleRate: self.sampleRate) : nil
         pitchCorrector = effect == .pitchCorrection ? PitchCorrector(sampleRate: self.sampleRate) : nil
+        harmonizer = effect == .harmonizer ? Harmonizer(sampleRate: self.sampleRate) : nil
         scaleMasks = effect == .pitchCorrection
             ? Scale.allCases.map { PitchCorrector.Settings.mask(root: 0, steps: $0.intervals) } : []
         toneSystemCents = effect == .pitchCorrection ? Self.toneSystemCents() : []
@@ -141,6 +143,7 @@ public final class EffectKernel: @unchecked Sendable {
         ringModulator?.reset()
         frequencyShifter?.reset()
         pitchCorrector?.reset()
+        harmonizer?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -172,6 +175,7 @@ public final class EffectKernel: @unchecked Sendable {
         case .ringModulator: ringModulator?.process(left: left, right: right, frames: frames)
         case .frequencyShifter: frequencyShifter?.process(left: left, right: right, frames: frames)
         case .pitchCorrection: pitchCorrector?.process(left: left, right: right, frames: frames)
+        case .harmonizer: harmonizer?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -267,6 +271,14 @@ public final class EffectKernel: @unchecked Sendable {
             let s = PitchCorrector.Settings(allowed: rotated, cents: toneSystemCents[system * 12 + root],
                                             reference: value(3), speed: value(4), amount: value(5))
             if s != pitchCorrector.settings { pitchCorrector.settings = s }
+        case .harmonizer:
+            guard let harmonizer else { return }
+            func shift(_ address: Int) -> Double? {
+                HarmonyInterval(index: parameter(address)).semitones.map(Double.init)
+            }
+            let s = Harmonizer.Settings(first: shift(0), second: shift(1), third: shift(2), level: value(3),
+                                        spread: value(4))
+            if s != harmonizer.settings { harmonizer.settings = s }
         }
     }
 
@@ -379,6 +391,13 @@ public final class EffectKernel: @unchecked Sendable {
             add("reference", "Concert A", 400...480, 440, .hertz)
             add("speed", "Speed", 0...0.5, 0.04, .seconds)
             add("amount", "Amount", 0...1, 1, .amount)
+        case .harmonizer:
+            let intervals = HarmonyInterval.allCases.map(\.title)
+            choose("voice1", "Voice 1", intervals, HarmonyInterval.fifthUp.rawValue)
+            choose("voice2", "Voice 2", intervals, HarmonyInterval.off.rawValue)
+            choose("voice3", "Voice 3", intervals, HarmonyInterval.off.rawValue)
+            add("level", "Level", 0...1, 0.5, .amount)
+            add("spread", "Spread", 0...1, 0.5, .amount)
         }
         return list
     }

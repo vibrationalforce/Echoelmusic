@@ -57,7 +57,7 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
 public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
     // A new effect goes at the end: a saved insert names its component, never this order.
     case equalizer, compressor, delay, reverb, chorus, phaser, flanger, limiter, saturation, tremolo, bitcrusher, tape, stereoWidth, ringModulator, frequencyShifter,
-        pitchCorrection
+        pitchCorrection, harmonizer
 
     public var id: String { rawValue }
 
@@ -79,6 +79,7 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .ringModulator: "Ring Modulator"
         case .frequencyShifter: "Frequency Shifter"
         case .pitchCorrection: "Pitch Correction"
+        case .harmonizer: "Harmonizer"
         }
     }
 
@@ -100,6 +101,7 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .ringModulator: "eRng"
         case .frequencyShifter: "eFsh"
         case .pitchCorrection: "eTun"
+        case .harmonizer: "eHrm"
         }
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",
@@ -127,6 +129,7 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .ringModulator: "xRng"
         case .frequencyShifter: "xFsh"
         case .pitchCorrection: "xTun"
+        case .harmonizer: "xHrm"
         }
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",
