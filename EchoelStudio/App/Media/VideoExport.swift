@@ -10,6 +10,10 @@ import Foundation
 /// Every file it reads stays as it is — the export writes one new file and nothing else — and
 /// neither the picture nor the mix is cut to the other's length (`VideoExportPlan`).
 enum VideoExport {
+    /// What shows where no picture is: `Theme.Color.background` (black), as the CGColor a video
+    /// composition takes. Computed, so no non-Sendable colour is stored.
+    static var ground: CGColor { CGColor(red: 0, green: 0, blue: 0, alpha: 1) }
+
     struct Options: Hashable, Sendable {
         var shape: VideoExportPlan.Shape = .vertical
         var fit: VideoExportPlan.Fit = .fill
@@ -28,10 +32,10 @@ enum VideoExport {
 
         var errorDescription: String? {
             switch self {
-            case .noPicture: "There is no video in that stretch of the song."
-            case .unreadableMix: "The mix could not be read back for the video."
-            case .cannotEncode: "This device cannot encode the video in that format."
-            case .failed(let reason): "The video could not be written: \(reason)"
+            case .noPicture: "There is no video in that stretch of the song. Choose bars that hold a video region."
+            case .unreadableMix: "The mix could not be read back for the video. Export again."
+            case .cannotEncode: "This device cannot encode the video in that format. Choose H.264."
+            case .failed(let reason): "The video could not be written (\(reason)). Check the free space and export again."
             }
         }
     }
@@ -127,7 +131,7 @@ enum VideoExport {
             guard CMTimeCompare(end, cursor) > 0 else { return }
             let instruction = AVMutableVideoCompositionInstruction()
             instruction.timeRange = CMTimeRange(start: cursor, end: end)
-            instruction.backgroundColor = CGColor(red: 0, green: 0, blue: 0, alpha: 1)
+            instruction.backgroundColor = VideoExport.ground
             instructions.append(instruction)
             cursor = end
         }
@@ -154,7 +158,7 @@ enum VideoExport {
             layer.setTransform(placement(natural: natural, transform: transform, in: frame, fit: options.fit), at: at)
             let instruction = AVMutableVideoCompositionInstruction()
             instruction.timeRange = CMTimeRange(start: at, duration: length)
-            instruction.backgroundColor = CGColor(red: 0, green: 0, blue: 0, alpha: 1)
+            instruction.backgroundColor = VideoExport.ground
             instruction.layerInstructions = [layer]
             instructions.append(instruction)
             cursor = CMTimeAdd(at, length)
