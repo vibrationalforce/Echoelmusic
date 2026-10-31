@@ -223,7 +223,7 @@ struct SessionCell: View {
                 .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.small))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Empty slot, \(track.name), \(scene.name)")
+        .accessibilityLabel("Empty Slot, \(track.name), \(scene.name)")
         .accessibilityHint(track.kind == .audio ? "Picks an audio file to loop here." : "Makes a new clip here and opens it.")
     }
 
