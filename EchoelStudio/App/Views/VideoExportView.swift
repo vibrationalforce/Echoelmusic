@@ -105,15 +105,13 @@ struct VideoExportView: View {
                     SettingField(title: "Field Opacity", value: fieldOpacity, range: 0...100, unit: "%",
                                  standard: FieldLayer().opacityPercent, spokenUnit: "percent") { fieldOpacity = $0 }
                 }
-                NoteText("The Field follows the song's beat, key and mix. Body readings are live and not part of the song, so the export leaves them out: two exports of a song look the same.")
+                NoteText("The Field follows the song's beat, key and mix, and the video window shows it as the export will draw it. Body readings are live and not part of the song, so the export leaves them out: two exports of a song look the same.")
             }
         }
     }
 
-    /// The layer as chosen, held at Off on a device that cannot draw it.
-    private var fieldLayer: FieldLayer {
-        MetalField.isAvailable ? FieldLayer(blend: fieldBlend, opacity: Double(fieldOpacity) / 100) : FieldLayer()
-    }
+    /// The layer as chosen, as the video window shows it.
+    private var fieldLayer: FieldLayer { FieldLayer.stored(blend: fieldBlend, percent: fieldOpacity) }
 
     private var shortRange: ClosedRange<Tick>? {
         shortSeconds.flatMap { VideoExportPlan.shortRange(in: store.project, startBar: startBar, seconds: $0) }
