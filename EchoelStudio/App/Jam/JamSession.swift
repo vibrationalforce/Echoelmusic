@@ -59,7 +59,7 @@ final class JamSession {
     @ObservationIgnored private var startTask: Task<Void, Never>?
     @ObservationIgnored private var joinTimer: Task<Void, Never>?
     @ObservationIgnored private var pings: UInt32 = 0
-    @ObservationIgnored private var ticks = 0
+    @ObservationIgnored private var loopTurn = 0
 
     func attach(engine: AudioEngine, store: ProjectStore, midi: MIDIInput) {
         self.engine = engine
@@ -274,13 +274,13 @@ final class JamSession {
             let now = mach_absolute_time()
             // The first buffer after Play is not heard yet: the anchor waits for it.
             guard let heard = engine.heardPosition(atHostTime: now) else { return }
-            let tick = Swift.max(0, heard.tick)
-            state = JamState(tempo: map.bpm(at: MusicalTime.integer(tick.rounded(.down))), signature: project.timeSignature,
-                             isPlaying: true, anchorTick: tick, anchorTime: JamTime.seconds(now))
+            let position = Swift.max(0, heard.tick)
+            state = JamState(tempo: map.bpm(at: MusicalTime.integer(position.rounded(.down))), signature: project.timeSignature,
+                             isPlaying: true, anchorTick: position, anchorTime: JamTime.seconds(now))
         } else {
-            let tick = engine.playheadTick(in: project)
-            state = JamState(tempo: map.bpm(at: tick), signature: project.timeSignature, isPlaying: false,
-                             anchorTick: Double(tick), anchorTime: JamTime.now())
+            let position = engine.playheadTick(in: project)
+            state = JamState(tempo: map.bpm(at: position), signature: project.timeSignature, isPlaying: false,
+                             anchorTick: Double(position), anchorTime: JamTime.now())
         }
         if let due = beacon.due(state) {
             link.send(JamMessage(state: due), reliably: true)
@@ -369,8 +369,8 @@ final class JamSession {
             break
         case .nudge(let seconds):
             engine.nudge(seconds: seconds)
-        case .relock(let ticks):
-            engine.relock(byTicks: ticks, samplesPerTick: heard.samplesPerTick)
+        case .relock(let gap):
+            engine.relock(byTicks: gap, samplesPerTick: heard.samplesPerTick)
         }
     }
 
@@ -392,7 +392,7 @@ final class JamSession {
     /// Eight times a second while hosting or joined.
     private func startLoop() {
         loop?.cancel()
-        ticks = 0
+        loopTurn = 0
         loop = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 self?.tick()
@@ -402,17 +402,17 @@ final class JamSession {
     }
 
     private func tick() {
-        ticks &+= 1
+        loopTurn &+= 1
         switch role {
         case .hosting:
-            if ticks % 2 == 0 { speak() }
+            if loopTurn % 2 == 0 { speak() }
         case .joined:
             guard let engine else { return }
             // Eight pings a second for the first second, so the clocks are measured before the
             // host's next bar; then two.
-            if ticks <= 8 || ticks % 4 == 0 { ping() }
+            if loopTurn <= 8 || loopTurn % 4 == 0 { ping() }
             apply(follower.check(at: JamTime.now(), playing: engine.isPlaying))
-            if ticks % 2 == 0 { correctPhase() }
+            if loopTurn % 2 == 0 { correctPhase() }
             publishPhase()
         case .off, .looking, .joining:
             break
