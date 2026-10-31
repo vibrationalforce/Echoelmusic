@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.24.0',K='echoel-nuke';try{
+    (function(){var V='10.25.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -30,7 +30,7 @@
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="en_US">
-    <meta property="og:site_name" content="Echoelmusic">
+    <meta property="og:site_name" content="Echoel">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="What Echoel Does — Bio-Driven Sound for Your DAW">
@@ -41,7 +41,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
     <link rel="canonical" href="https://echoelmusic.com/tools.html">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://echoelmusic.com/tools.html"}]}</script>
-    <link rel="stylesheet" href="shared.css?v=10.24.0">
+    <link rel="stylesheet" href="shared.css?v=10.25.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
 
@@ -78,7 +78,7 @@
 
         .tool-divider {
             height: 1px; border: none; margin: 0;
-            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            background: var(--border);
         }
 
         .toolkit-intro {
@@ -99,24 +99,24 @@
 </head>
 <body>
     <a href="#main" class="skip-link">Skip to main content</a>
-    <div class="nav">
+    <header class="nav">
         <div class="nav-bar">
-            <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
+            <a href="/" class="nav-logo" aria-label="Echoel home">
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
-                <span>Echoelmusic</span>
+                <span>Echoel</span>
             </a>
-            <div class="nav-links">
+            <nav class="nav-links" aria-label="Main">
                 <a href="overview.html">Overview</a>
                 <a href="tools.html" aria-current="page">Tools</a>
                 <a href="faq.html">FAQ</a>
                 <a href="support.html">Support</a>
-                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoelmusic%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
-            </div>
+                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoel%20Studio%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
+            </nav>
             <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
                 <span></span><span></span><span></span>
             </button>
         </div>
-    </div>
+    </header>
     <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
         <nav>
             <a href="/">Home</a>
@@ -249,8 +249,8 @@
 
     <!-- Footer -->
     <footer>
-        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; Beta in TestFlight</span>
-        <div class="footer-links">
+        <span class="footer-copy">&copy; 2026 Echoel &middot; Echoel Studio in TestFlight</span>
+        <nav class="footer-links" aria-label="Site">
             <a href="overview.html">Overview</a>
             <a href="tools.html" aria-current="page">Tools</a>
             <a href="faq.html">FAQ</a>
@@ -267,11 +267,12 @@
             <a href="security.html">Security</a>
             <a href="accessibility.html">Accessibility</a>
             <a href="claims.html">What we don&rsquo;t claim</a>
+            <a href="one-clock.html">One Clock</a>
             <a href="impressum.html">Legal Notice</a>
-        </div>
+        </nav>
     </footer>
 
 
-    <script src="shared.js?v=10.24.0"></script>
+    <script src="shared.js?v=10.25.0"></script>
 </body>
 </html>
