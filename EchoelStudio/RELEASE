@@ -4,8 +4,9 @@ What is new since 10021. Each line is code that the Echoel Studio run builds and
 target reaches it, tests; nothing here is device-verified yet.
 - Three effects on any track and in the plug-in: Pitch Correction (to the song's key, scale and
   tone system with Use Song Key), Harmonizer (up to three voices, named intervals), Granular.
-- Bake Effects: hold an audio region, the track's effects are rendered into a new file and swapped
-  in as one Undo step; the original file stays in the song.
+- Bake Effects: hold an audio region; the track's effects are rendered into a new file on a new
+  "<Track> Baked" track below (same fader and pan, no effects), as one Undo step; the original
+  file stays in the song. Files are mono, so a wide effect bakes to the centre.
 - Song Settings: time signature, swing and tempo changes per bar.
 - Import MIDI (type 0 and 1): tracks and notes arrive as one Undo step; an empty song takes the
   file's tempo and meter.
@@ -27,7 +28,7 @@ Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer e
 1. Pitch Correction on a sung take (Use Song Key, C major): crooked notes snap in audibly and held
    notes do not chirp.
 2. Harmonizer, Voice 1 = Fifth Up, over a held note: a clean fifth sounds above it.
-3. Hold that audio region, Bake Effects, then switch the effect off: the region sounds the same
-   as before; one Undo brings the original region back.
+3. Hold that audio region, Bake Effects: the region on the new "Baked" track sounds the same as
+   before, and one Undo brings the original region back.
 4. Song Settings, Add at Playhead Bar at bar 5, tempo 90: the song is audibly slower from bar 5.
 5. Import MIDI from Files: the tracks appear with notes in Arrange, and one Undo removes them all.
