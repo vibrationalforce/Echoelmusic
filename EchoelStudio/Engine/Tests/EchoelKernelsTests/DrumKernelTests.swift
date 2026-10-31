@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import XCTest
 @testable import EchoelKernels
 
@@ -63,5 +64,23 @@ final class DrumKernelTests: XCTestCase {
         let expected: [Float] = render(reference, frames: 480).0
         XCTAssertGreaterThan(peak(expected), 0.05, "the reference kick sounds")
         XCTAssertEqual(render(raised, frames: 480).0, expected, "a level raised in a break plays the next hit at that level")
+    }
+}
+
+/// The line the Studio and the plugin show (`DrumNoteMap`) names what the kit really plays.
+final class DrumMapTests: XCTestCase {
+    func testEveryNoteInTheShownMapPlaysThePieceItNames() {
+        let expected: [String: DrumKit.Piece] = [
+            "Kick": .kick, "Snare": .snare, "Clap": .clap, "Closed Hat": .closedHat,
+            "Low Tom": .lowTom, "Open Hat": .openHat, "Crash": .crash, "High Tom": .highTom,
+        ]
+        XCTAssertEqual(DrumNoteMap.pieces.count, DrumKit.Piece.allCases.count, "every piece is named once")
+        for (name, note) in DrumNoteMap.pieces {
+            XCTAssertEqual(DrumKit.Piece.forPitch(UInt8(note)), expected[name], "\(name) \(note)")
+        }
+        let notes = DrumNoteMap.pieces.map(\.note)
+        XCTAssertEqual(notes, notes.sorted(), "in note order")
+        XCTAssertTrue(DrumNoteMap.line.hasPrefix("General MIDI drum map: Kick 36 · Snare 38"))
+        XCTAssertTrue(DrumNoteMap.line.hasSuffix("High Tom 50."))
     }
 }

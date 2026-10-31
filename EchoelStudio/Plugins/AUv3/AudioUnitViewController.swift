@@ -14,12 +14,12 @@ final class AudioUnitViewController: PluginViewController {
         case OwnPlugin.drums.component.subtype:
             return try InstrumentAudioUnit(
                 kernel: DrumKernel.self, title: OwnPlugin.drums.component.name,
-                help: "General MIDI drum map: kick 36 · snare 38 · clap 39 · toms 41–50 · closed hat 42 · open hat 46 · crash 49.",
+                help: DrumNoteMap.line,
                 componentDescription: componentDescription)
         case OwnPlugin.sampler.component.subtype:
             return try InstrumentAudioUnit(
                 kernel: SamplerKernel.self, title: OwnPlugin.sampler.component.name,
-                help: "Set Root key to the note the sample was recorded at; every other key transposes it.",
+                help: "Set Root Key to the note the sample was recorded at; every other key transposes it.",
                 componentDescription: componentDescription)
         default:
             // The four effects; anything else is refused by the unit itself.
