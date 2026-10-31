@@ -326,6 +326,6 @@ final class ClipEditingTests: XCTestCase {
         XCTAssertTrue(names.contains("arrangement.split"))
         XCTAssertTrue(names.contains("region.split"))
         XCTAssertTrue(names.contains("arrangement.consolidate"))
-        XCTAssertTrue(names.contains("audio.consolidate"))
+        XCTAssertTrue(names.contains("region.consolidate"))
     }
 }

@@ -469,9 +469,9 @@ public enum CommandCatalog {
                                             P("placements", .placementIDList, "The placements to join, at least two."),
                                             P("clip", .clipID, "Identifier for the joined clip.")])
         case .consolidateRegions:
-            return CommandSpec(name: "audio.consolidate", title: "Join Audio",
-                               summary: "Joins audio regions that are consecutive pieces of one file (as a split leaves them) into one. Overlapping or separate audio needs a bounce and is refused.",
-                               parameters: [P("track", .trackID, "The audio track."),
+            return CommandSpec(name: "region.consolidate", title: "Join Regions",
+                               summary: "Joins audio or video regions that are consecutive pieces of one file (as a split leaves them) into one. Overlapping or separate media needs a bounce and is refused.",
+                               parameters: [P("track", .trackID, "The audio or video track."),
                                             P("regions", .regionIDList, "The regions to join, at least two.")])
         case .addScene:
             return CommandSpec(name: "scene.add", title: "Add Scene",
