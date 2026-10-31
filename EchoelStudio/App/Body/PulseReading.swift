@@ -39,9 +39,9 @@ struct PulseReading: View {
         case .off: "Off"
         case .unavailable: "Bluetooth off"
         case .denied: "Bluetooth not allowed"
-        case .searching: "Searching…"
+        case .searching: "Searching"
         case .notFound: "No strap found"
-        case .connecting: "Connecting…"
+        case .connecting: "Connecting"
         case .connected: "No pulse"
         case .lost: "Strap lost"
         }
@@ -53,7 +53,7 @@ struct PulseReading: View {
         case .off: "Off"
         case .unavailable: "Camera unavailable"
         case .denied: "Camera not allowed"
-        case .starting: "Starting camera…"
+        case .starting: "Starting camera"
         case .measuring: cue.shortLabel
         case .interrupted: "Camera paused"
         }

@@ -38,7 +38,7 @@ struct MetalFieldView: UIViewRepresentable {
             context.coordinator.configure(device: device)
         }
         view.delegate = context.coordinator
-        view.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+        view.clearColor = MetalFieldRenderer.ground
         // The shader computes linear light; the sRGB drawable encodes it on write.
         view.colorPixelFormat = .bgra8Unorm_srgb
         // Nothing reads the texture back: the fast path, permanently.
@@ -92,6 +92,10 @@ enum FieldMemory {
 }
 
 final class MetalFieldRenderer: NSObject, MTKViewDelegate {
+    /// `Theme.Color.background` (black) as Metal's clear colour: the ground the Field draws on.
+    /// The other clear colour here, the no-shader grey, is computed from the centre light (data).
+    nonisolated static let ground = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+
     /// The numbers the shader reads. Mirrored by BYTE LAYOUT, not by name, in the MSL `Uniforms`
     /// struct in `shaderSource` — no compiler checks the two agree, so a field is only ever
     /// appended at the end, in both places, in one commit.
@@ -307,7 +311,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         pass.colorAttachments[0].loadAction = .clear
         pass.colorAttachments[0].storeAction = .store
         if let pipeline {
-            pass.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+            pass.colorAttachments[0].clearColor = MetalFieldRenderer.ground
             if let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
                 encoder.setRenderPipelineState(pipeline)
                 var sent = uniforms

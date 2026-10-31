@@ -73,7 +73,7 @@ final class VideoTakeRecorder {
                 self.log.warning("take camera could not open: \(String(describing: error), privacy: .public)")
                 camera.close()
                 self.camera = nil
-                self.state = .unavailable("The camera could not be opened — another app may be using it.")
+                self.state = .unavailable("The camera could not be opened. Another app may be using it: close it and try again.")
                 self.giveBack()
                 return
             }

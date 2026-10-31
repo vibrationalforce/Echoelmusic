@@ -17,10 +17,13 @@ struct ConnectionsView: View {
                 ForEach(ConnectionsController.Kind.allCases) { kind in
                     ConnectionSection(kind: kind)
                 }
-                Section {
-                    note("Every connection is off when Echoel starts, and its socket exists only while it is on. All four protocols are plain UDP, unencrypted by their standards: use them on a network you trust. Each packet goes to the one address you type.")
+                EchoelSection {
+                    NoteText("Every connection is off when Echoel starts, and its socket exists only while it is on. All four protocols are plain UDP, unencrypted by their standards: use them on a network you trust. Each packet goes to the one address you type.")
                 }
             }
+            .echoelList()
+            // Port, universe and first channel are typed on Echoel's number pad, docked here.
+            .numberPadHost()
             .navigationTitle("Connections")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
@@ -29,14 +32,12 @@ struct ConnectionsView: View {
     }
 
     private var bodySection: some View {
-        Section {
+        EchoelSection("Body") {
             Toggle(isOn: Binding(get: { connections.consent.sharesBody }, set: { connections.setSharesBody($0) })) {
-                Label("Share body data", systemImage: "heart.text.square")
+                Label("Share Body Data", systemImage: "heart.text.square")
+                    .foregroundStyle(Theme.Color.text)
             }
-            .tint(Theme.Color.accent)
-            note(bodyExplanation)
-        } header: {
-            Text("Body")
+            NoteText(bodyExplanation)
         }
     }
 
@@ -44,15 +45,8 @@ struct ConnectionsView: View {
         var lines = [
             "Off at every start. On, the strap's pulse, HRV and coherence go to the OSC receiver as /echoelmusic/bio/… and a measured coherence lifts the light. Nothing read from Apple Health ever leaves this device.",
         ]
-        lines.append(strap.isOn ? "The heart rate strap is on." : "The heart rate strap is off (Song menu), so there is nothing to share yet.")
+        lines.append(strap.isOn ? "The heart rate strap is on." : "The heart rate strap is off (Song menu, Body Source), so there is nothing to share yet.")
         return lines.joined(separator: " ")
-    }
-
-    private func note(_ text: String) -> some View {
-        Text(text)
-            .font(Theme.Font.caption)
-            .foregroundStyle(Theme.Color.textSecondary)
-            .padding(.vertical, Theme.Space.xs)
     }
 }
 
@@ -62,21 +56,16 @@ private struct ConnectionSection: View {
     @Environment(ConnectionsController.self) private var connections
 
     var body: some View {
-        Section {
+        EchoelSection {
             Toggle(isOn: Binding(get: { connections.isOn(kind) }, set: { connections.setOn($0, kind) })) {
                 Label(kind.title, systemImage: kind.isLight ? "lightbulb" : "antenna.radiowaves.left.and.right")
+                    .foregroundStyle(Theme.Color.text)
             }
-            .tint(Theme.Color.accent)
             ReceiverFields(kind: kind)
             if kind.isLight { lightFields }
-            Text(kind.sends)
-                .font(Theme.Font.caption)
-                .foregroundStyle(Theme.Color.textSecondary)
-                .padding(.vertical, Theme.Space.xs)
+            NoteText(kind.sends)
             if let refusal = connections.refusals[kind] {
-                Text(refusal)
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.record)
+                NoteText(refusal, tone: .problem)
             }
             if connections.isOn(kind) {
                 ConnectionActivityLine(kind: kind)
@@ -86,12 +75,12 @@ private struct ConnectionSection: View {
 
     @ViewBuilder
     private var lightFields: some View {
-        NumberField(title: kind == .sacn ? "Universe" : "Port address (Net·SubUni)",
-                    value: connections.universe(kind),
-                    range: kind == .sacn ? E131Packet.universeRange : ArtDMXPacket.universeRange) { connections.setUniverse($0, for: kind) }
-        NumberField(title: "First channel", value: connections.startChannel, range: connections.startChannelRange) {
-            connections.setStartChannel($0)
-        }
+        SettingField(title: kind == .sacn ? "Universe" : "Port Address (Net·SubUni)",
+                     value: connections.universe(kind),
+                     range: kind == .sacn ? E131Packet.universeRange : ArtDMXPacket.universeRange,
+                     standard: kind == .sacn ? 1 : 0) { connections.setUniverse($0, for: kind) }
+        SettingField(title: "First Channel", value: connections.startChannel, range: connections.startChannelRange,
+                     standard: 1) { connections.setStartChannel($0) }
         Picker("Resolution", selection: Binding(get: { connections.resolution }, set: { connections.setResolution($0) })) {
             Text("8-bit (4 channels)").tag(LightFixture.Resolution.eightBit)
             Text("16-bit (8 channels)").tag(LightFixture.Resolution.sixteenBit)
@@ -100,44 +89,35 @@ private struct ConnectionSection: View {
     }
 }
 
-/// Host and port, committed when the field is submitted or left, so a live connection does not
-/// reopen on every keystroke.
+/// The receiver's address, committed when the field is submitted or left, so a live connection
+/// does not reopen on every keystroke; and its port, typed on Echoel's number pad.
 private struct ReceiverFields: View {
     let kind: ConnectionsController.Kind
     @Environment(ConnectionsController.self) private var connections
     @State private var host = ""
-    @State private var port = ""
-    @FocusState private var focus: Field?
-
-    private enum Field: Hashable { case host, port }
+    @FocusState private var editingHost: Bool
 
     var body: some View {
-        LabeledContent("Receiver") {
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            Text("Receiver")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
             TextField("Address", text: $host)
+                .echoelInput()
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .keyboardType(.URL)
-                .multilineTextAlignment(.trailing)
-                .focused($focus, equals: .host)
+                .focused($editingHost)
                 .submitLabel(.done)
                 .onSubmit { commitHost() }
                 .accessibilityLabel("\(kind.title) receiver address")
         }
-        LabeledContent("Port") {
-            TextField("Port", text: $port)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .focused($focus, equals: .port)
-                .onSubmit { commitPort() }
-                .accessibilityLabel("\(kind.title) port")
-        }
-        .onAppear {
-            host = connections.target(kind).host
-            port = String(connections.target(kind).port)
-        }
-        .onChange(of: focus) { old, _ in
-            if old == .host { commitHost() }
-            if old == .port { commitPort() }
+        .onAppear { host = connections.target(kind).host }
+        .onChange(of: editingHost) { was, now in if was, !now { commitHost() } }
+        // A port change reopens a live connection, so it is typed or stepped, never dragged.
+        SettingField(title: "Port", value: Int(connections.target(kind).port), range: 1...Int(UInt16.max),
+                     standard: Int(kind.defaultPort), drags: false) { typed in
+            connections.setPort(UInt16(clamping: typed), for: kind)
         }
     }
 
@@ -146,44 +126,6 @@ private struct ReceiverFields: View {
         guard trimmed != connections.target(kind).host else { return }
         connections.setHost(trimmed, for: kind)
         host = connections.target(kind).host
-    }
-
-    private func commitPort() {
-        if let value = UInt16(port.trimmingCharacters(in: .whitespaces)), value > 0, value != connections.target(kind).port {
-            connections.setPort(value, for: kind)
-        }
-        port = String(connections.target(kind).port)
-    }
-}
-
-/// An integer setting with a range, committed on submit or when the field is left.
-private struct NumberField: View {
-    let title: String
-    let value: Int
-    let range: ClosedRange<Int>
-    let commit: (Int) -> Void
-    @State private var text = ""
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        LabeledContent(title) {
-            TextField(title, text: $text)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .focused($focused)
-                .onSubmit { apply() }
-                .accessibilityLabel(title)
-        }
-        .onAppear { text = String(value) }
-        .onChange(of: value) { _, now in text = String(now) }
-        .onChange(of: focused) { was, now in if was, !now { apply() } }
-    }
-
-    private func apply() {
-        if let typed = Int(text.trimmingCharacters(in: .whitespaces)) {
-            commit(Swift.min(range.upperBound, Swift.max(range.lowerBound, typed)))
-        }
-        text = String(value)
     }
 }
 
@@ -216,7 +158,7 @@ struct ConnectionActivityLine: View {
         let counters = activity.counters
         var parts: [String]
         switch activity.state {
-        case .preparing: parts = ["Connecting…"]
+        case .preparing: parts = ["Connecting"]
         case .ready: parts = ["Sending"]
         case .waiting(let reason): parts = ["Waiting: \(reason)"]
         case .failed(let reason): parts = ["Failed: \(reason)"]

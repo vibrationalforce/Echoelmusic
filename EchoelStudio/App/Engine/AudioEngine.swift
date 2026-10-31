@@ -538,7 +538,7 @@ final class AudioEngine {
             // Rebuilt and still silent: the song pauses (a take ends with what it has) and Play
             // becomes Restart audio, the one door that rebuilds a graph the engine calls running.
             step("engine: render still stalled after rebuilds", [("buffers", renderedBuffers)], level: .error)
-            pauseFromOutside("The audio stopped responding, so the song paused. Tap Restart audio.")
+            pauseFromOutside("The audio stopped responding, so the song paused. Tap Restart Audio.")
             isStalled = true
         }
     }
@@ -720,7 +720,7 @@ final class AudioEngine {
                 var resumeTick: Tick?
                 if let old = core {
                     if isPlaying {
-                        pauseFromOutside("The song stopped: the audio interface changed its sample rate.")
+                        pauseFromOutside("The song stopped: the audio interface changed its sample rate. Press Play to go on.")
                     }
                     if let fresh = beforeRateChange?() { project = fresh }
                     resumeTick = project.map {
@@ -828,7 +828,7 @@ final class AudioEngine {
             guard let wait = recovery.failed() else {
                 step("engine: automatic tries used up", level: .error)
                 isStalled = true
-                lastError = "Audio could not start. Tap Restart audio once the call or the other app using audio has ended."
+                lastError = "Audio could not start. Tap Restart Audio once the call or the other app using audio has ended."
                 return
             }
             let seconds = Double(wait.components.seconds) + Double(wait.components.attoseconds) / 1e18
@@ -889,7 +889,7 @@ final class AudioEngine {
             frames = try await current.writer.finish()
         } catch {
             failed("record: writing failed", error)
-            lastError = "The take could not be written."
+            lastError = "The take could not be written. Check the free space and record again."
             return nil
         }
         if await current.writer.reachedLimit {
@@ -1291,7 +1291,7 @@ final class AudioEngine {
 
         var errorDescription: String? {
             switch self {
-            case .noFormat: "No usable audio format for the output."
+            case .noFormat: "The output offers no audio format Echoel can use. Choose another output, then tap Restart Audio."
             case let .inputUnusable(input, output):
                 input > 0
                     ? "The input runs at \(Int(input)) Hz and the output at \(Int(output)) Hz; set both to the same rate, then arm the track or choose Always again (if the track still shows armed, turn it off and on)."

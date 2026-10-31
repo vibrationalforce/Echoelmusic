@@ -34,18 +34,18 @@ enum PulseCue: Equatable, Sendable {
     /// The sentence for a line that may wrap.
     var fullHint: String {
         switch self {
-        case .cameraDenied: "Camera access is off — enable it in Settings to read your pulse"
-        case .noLight: "No light from the flash right now — the phone may be hot; let it cool, or hold your finger against a bright lamp"
+        case .cameraDenied: "Camera access is off. Allow it in Settings to read your pulse."
+        case .noLight: "No light from the flash right now. The phone may be hot: let it cool, or hold your finger against a bright lamp."
         case .locked: "Locked"
-        case .coverLens: "Cover the rear camera and flash with a fingertip"
-        case .tooBright: "Press a little lighter"
-        case .holdStill: "Hold still — keep your finger steady"
-        case .pressGently: "Press gently and hold still"
-        case .finding: "Hold still — finding your pulse…"
+        case .coverLens: "Cover the rear camera and flash with a fingertip."
+        case .tooBright: "Press a little lighter."
+        case .holdStill: "Hold still and keep your finger steady."
+        case .pressGently: "Press gently and hold still."
+        case .finding: "Hold still while your pulse is found."
         case .stalled(let rhythmless):
             rhythmless
-                ? "The signal isn't steady enough to read — lift your finger and place it again"
-                : "Still nothing to read — try another finger, or warm your hand first"
+                ? "The signal is not steady enough to read. Lift your finger and place it again."
+                : "Still nothing to read. Try another finger, or warm your hand first."
         }
     }
 
@@ -59,7 +59,7 @@ enum PulseCue: Equatable, Sendable {
         case .tooBright: "Too bright"
         case .holdStill: "Hold still"
         case .pressGently: "Press gently"
-        case .finding: "Finding…"
+        case .finding: "Finding"
         case .stalled(let rhythmless): rhythmless ? "Unsteady" : "Nothing yet"
         }
     }

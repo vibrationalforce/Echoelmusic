@@ -15,7 +15,7 @@ struct FieldView: View {
         #if canImport(MetalKit) && canImport(UIKit)
         if MetalField.isAvailable {
             MetalFieldView(reduceMotion: reduceMotion)
-                .background(Color.black)
+                .background(Theme.Color.background)
                 .accessibilityHidden(true)
                 .overlay { FieldSpokenValue().allowsHitTesting(false) }
         } else {
@@ -96,6 +96,7 @@ struct FieldCanvasView: View {
     private static func draw(_ frame: FieldFrame, _ shown: Shown, in canvas: inout GraphicsContext, size: CGSize) {
         let middle = CGPoint(x: size.width / 2, y: size.height / 2)
         let reach = Double(Swift.min(size.width, size.height)) / 2
+        // The key's hue is the song's colour (data), so these are not Theme colours.
         let hue = frame.keyHue
         // The beat: a ring that grows through each beat; its brightness is guarded.
         let ring = reach * (0.35 + 0.55 * frame.beatPhase)
