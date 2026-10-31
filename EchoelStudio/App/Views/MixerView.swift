@@ -22,8 +22,8 @@ struct MixerView: View {
             .padding(Theme.Space.m)
         }
         .background(Theme.Color.background)
-        // A level readout tapped opens Echoel's number pad at the mixer's bottom edge.
-        .numberPadHost()
+        // No pad host of its own: the mixer is only ever a surface of the studio, whose host
+        // serves it, so a level and the tempo never open two pads at once.
     }
 }
 
