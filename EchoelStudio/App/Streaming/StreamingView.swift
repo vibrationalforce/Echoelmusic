@@ -19,7 +19,7 @@ struct StreamingView: View {
                 uploadSection
                 aboutSection
             }
-            .navigationTitle("Live Stream")
+            .navigationTitle("Go Live")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
             .navigationDestination(item: $editing) { target in
@@ -122,14 +122,14 @@ struct StreamingView: View {
             }
             .pickerStyle(.segmented)
             .disabled(streaming.isLive || streaming.isStarting)
-            LabeledContent("Upload needed", value: Self.megabits(streaming.plan.uploadKbps))
+            LabeledContent("Upload Needed", value: Self.megabits(streaming.plan.uploadKbps))
             if let refusal = streaming.plan.refusal, refusal != .noTarget {
                 Text(refusal.explanation)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.record)
             }
         } header: {
-            Text("Destinations at once")
+            Text("Destinations at Once")
         } footer: {
             Text("Each destination is its own upload from the phone. To reach many platforms, stream once to a relay — Restream, or your own MediaMTX server (open source) — and let it forward the stream.")
         }
@@ -159,11 +159,11 @@ struct StreamLiveReadout: View {
     var body: some View {
         if let started = streaming.startedAt {
             TimelineView(.periodic(from: started, by: 1)) { context in
-                LabeledContent("On air", value: Self.duration(context.date.timeIntervalSince(started)))
+                LabeledContent("On Air", value: Self.duration(context.date.timeIntervalSince(started)))
                     .monospacedDigit()
             }
         } else {
-            LabeledContent("On air", value: "Connecting…")
+            LabeledContent("On Air", value: "Connecting")
         }
         ForEach(streaming.plan.enabledTargets) { target in
             let report = streaming.reports[target.id]
@@ -175,7 +175,7 @@ struct StreamLiveReadout: View {
     private static func reading(_ report: StreamPublisher.Report?) -> String {
         guard let report else { return "Waiting" }
         switch report.state {
-        case .connecting: return "Connecting…"
+        case .connecting: return "Connecting"
         case .closed: return "Off"
         case .failed(let reason): return reason
         case .live:
@@ -235,7 +235,7 @@ struct StreamTargetEditor: View {
 
     private var keySection: some View {
         Section {
-            SecureField(hasKey ? "Stored — type to replace" : "Stream key", text: $key)
+            SecureField(hasKey ? "Stored, type to replace" : "Stream key", text: $key)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .onSubmit(storeKey)
@@ -247,10 +247,10 @@ struct StreamTargetEditor: View {
                 }
             }
             if keyRefused {
-                Text("The keychain did not keep the key.").foregroundStyle(Theme.Color.record)
+                Text("The keychain did not keep the key. Tap Keep Key to try again.").foregroundStyle(Theme.Color.record)
             }
         } header: {
-            Text("Stream key")
+            Text("Stream Key")
         } footer: {
             Text(target.platform.needsKey ? "Kept in this device's keychain only." : "Optional: the server address may carry everything.")
         }
@@ -273,13 +273,14 @@ struct StreamTargetEditor: View {
 
     private var rateSection: some View {
         Section {
-            StreamRateField(title: "Video", kbps: $target.quality.videoKbps, range: StreamQuality.videoRange,
-                            recommended: target.platform.recommendedVideoKbps)
+            SettingField(title: "Video", value: target.quality.videoKbps, range: StreamQuality.videoRange,
+                         unit: "kbit/s", step: 100, standard: target.platform.recommendedVideoKbps,
+                         spokenUnit: "kilobits a second") { target.quality.videoKbps = $0 }
             Picker("Audio", selection: $target.quality.audioKbps) {
                 ForEach(Self.audioRates, id: \.self) { Text("\($0) kbit/s").tag($0) }
             }
         } header: {
-            Text("Bit rate")
+            Text("Bit Rate")
         } footer: {
             Text("Recommended video for \(target.platform.title): \(target.platform.recommendedVideoKbps) kbit/s. If the network cannot carry it, the stream steps down by itself.")
         }
@@ -290,97 +291,6 @@ struct StreamTargetEditor: View {
         keyRefused = !StreamKeyStore.setKey(key, for: target.id)
         hasKey = StreamKeyStore.hasKey(for: target.id)
         key = ""
-    }
-}
-
-/// A bit rate in Echoel's value field (`ParameterField`): label above, value, a bar. Drag up or
-/// down — slowly for fine steps, quickly across the range (`DragPrecision`) — in steps of
-/// 100 kbit/s, with a tick at either end and at the platform's recommendation; double-tap for
-/// that recommendation, tap to type it on the number pad. A device setting, not a song
-/// parameter, so it writes the binding rather than a command.
-private struct StreamRateField: View {
-    @Environment(NumberPadController.self) private var pad: NumberPadController?
-    let title: String
-    @Binding var kbps: Int
-    let range: ClosedRange<Int>
-    let recommended: Int
-    /// The drag in progress: the unrounded rate it has reached and the translation last read.
-    @State private var drag: (rate: Double, translation: CGFloat)?
-
-    /// Points of vertical travel for the full range at full speed.
-    private static let travel: CGFloat = 240
-    private static let step = 100
-
-    var body: some View {
-        let span = Double(range.upperBound - range.lowerBound)
-        let position = span > 0 ? Double(kbps - range.lowerBound) / span : 0
-        let engaged = drag != nil || pad?.request?.owner == owner
-        VStack(alignment: .leading, spacing: Theme.Space.xs) {
-            Text(title)
-                .font(Theme.Font.caption)
-                .foregroundStyle(Theme.Color.textSecondary)
-            Text("\(kbps) kbit/s")
-                .font(Theme.Font.value)
-                .foregroundStyle(engaged ? Theme.Color.accent : Theme.Color.text)
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    Rectangle().fill(Theme.Color.surfaceRaised)
-                    Rectangle().fill(Theme.Color.accent).frame(width: geometry.size.width * CGFloat(position))
-                }
-            }
-            .frame(height: 3)
-            .accessibilityHidden(true)
-        }
-        .frame(maxWidth: .infinity, minHeight: Theme.Size.touch, alignment: .leading)
-        .animation(Theme.Motion.quick, value: engaged)
-        .contentShape(Rectangle())
-        .gesture(
-            DragGesture(minimumDistance: 2)
-                .onChanged { gesture in
-                    let reached = drag ?? (rate: Double(kbps), translation: 0)
-                    let moved = gesture.translation.height - reached.translation
-                    let scale = DragPrecision.scale(speed: Double(gesture.velocity.height))
-                    let rate = Swift.min(Swift.max(reached.rate - Double(moved / Self.travel) * span * scale,
-                                                   Double(range.lowerBound)), Double(range.upperBound))
-                    drag = (rate: rate, translation: gesture.translation.height)
-                    kbps = Self.snapped(Int(rate.rounded()), in: range)
-                }
-                .onEnded { _ in drag = nil }
-        )
-        .onTapGesture(count: 2) { kbps = Self.snapped(recommended, in: range) }
-        .onTapGesture(perform: typeRate)
-        .sensoryFeedback(.selection, trigger: kbps) { old, new in
-            drag != nil && DragPrecision.reachesDetent(from: Double(old), to: Double(new),
-                                                       standard: Double(Self.snapped(recommended, in: range)),
-                                                       range: Double(range.lowerBound)...Double(range.upperBound))
-        }
-        .accessibilityElement()
-        .accessibilityLabel(title)
-        .accessibilityValue("\(kbps) kilobits a second")
-        .accessibilityAdjustableAction { direction in
-            kbps = Self.snapped(kbps + (direction == .increment ? Self.step : -Self.step), in: range)
-        }
-        .accessibilityAction(named: "Type a bit rate", typeRate)
-    }
-
-    private var owner: String { "stream.rate.\(title)" }
-
-    /// The rate on Echoel's number pad, whole kbit/s; it lands on the 100 kbit/s grid.
-    private func typeRate() {
-        guard let pad else { return }
-        let binding = $kbps
-        let bounds = range
-        pad.open(NumberPadRequest(owner: owner, title: "\(title) bit rate",
-                                  format: NumberEntryFormat(scale: 1, decimals: 0, unit: "kbit/s"),
-                                  range: Double(bounds.lowerBound)...Double(bounds.upperBound),
-                                  value: Double(kbps), standard: Double(Self.snapped(recommended, in: bounds))) { typed in
-            binding.wrappedValue = Self.snapped(Int(typed.rounded()), in: bounds)
-        })
-    }
-
-    private static func snapped(_ value: Int, in range: ClosedRange<Int>) -> Int {
-        let rounded = (value + step / 2) / step * step
-        return Swift.min(range.upperBound, Swift.max(range.lowerBound, rounded))
     }
 }
 
