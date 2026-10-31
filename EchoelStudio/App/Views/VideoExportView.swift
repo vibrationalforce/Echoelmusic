@@ -2,10 +2,15 @@ import EchoelCore
 import SwiftUI
 
 /// The video export's choices (wave W7, C6), in the one sheet slot: the frame (9:16, 16:9, 1:1,
-/// 4:5), fill or fit, H.264 or HEVC, the whole song or a short stretch of whole bars from the bar
-/// the playhead stands in, and the mix brought to −14 LUFS. The song itself never changes; the
-/// export is one new MP4 for the share sheet.
+/// 4:5), fill or fit, the Field over the picture (W15), H.264 or HEVC, the whole song or a short
+/// stretch of whole bars from the bar the playhead stands in, and the mix brought to −14 LUFS. The
+/// song itself never changes; the export is one new MP4 for the share sheet.
 struct VideoExportView: View {
+    /// The Field Layer's blend and opacity: kept on this device, never in the song (no format
+    /// field), so the next export starts where this one was set.
+    nonisolated static let fieldBlendKey = "video.fieldLayer.blend"
+    nonisolated static let fieldOpacityKey = "video.fieldLayer.opacity"
+
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
     @Environment(DocumentController.self) private var documents
@@ -16,6 +21,9 @@ struct VideoExportView: View {
     /// Seconds a short export is about; nil exports the whole song.
     @State private var shortSeconds: Double?
     @State private var startBar = 1
+    @AppStorage(VideoExportView.fieldBlendKey) private var fieldBlend = FieldLayer.Blend.off
+    /// Percent, 0 … 100.
+    @AppStorage(VideoExportView.fieldOpacityKey) private var fieldOpacity = FieldLayer().opacityPercent
 
     var body: some View {
         NavigationStack {
@@ -32,6 +40,7 @@ struct VideoExportView: View {
                     .pickerStyle(.segmented)
                     NoteText("Fill crops the picture to the frame in the export only; Fit shows all of it on black.")
                 }
+                fieldSection
                 EchoelSection("Length") {
                     Picker("Length", selection: $shortSeconds) {
                         Text("Whole Song").tag(Double?.none)
@@ -58,6 +67,8 @@ struct VideoExportView: View {
                 }
             }
             .echoelList()
+            // Field Opacity is typed on Echoel's number pad, docked here.
+            .numberPadHost()
             .navigationTitle("Export Video")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -78,6 +89,32 @@ struct VideoExportView: View {
         }
     }
 
+    /// The Field over the picture (W15): Off, or Screen, Add or Normal at an opacity. Without Metal
+    /// the choice is held at Off and says why.
+    private var fieldSection: some View {
+        EchoelSection("Field") {
+            Picker("Field Layer", selection: $fieldBlend) {
+                ForEach(FieldLayer.Blend.allCases, id: \.self) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .disabled(!MetalField.isAvailable)
+            if !MetalField.isAvailable {
+                NoteText("The Field layer needs Metal graphics, which this device does not have.")
+            } else {
+                if fieldBlend != .off {
+                    SettingField(title: "Field Opacity", value: fieldOpacity, range: 0...100, unit: "%",
+                                 standard: FieldLayer().opacityPercent, spokenUnit: "percent") { fieldOpacity = $0 }
+                }
+                NoteText("The Field follows the song's beat, key and mix. Body readings are live and not part of the song, so the export leaves them out: two exports of a song look the same.")
+            }
+        }
+    }
+
+    /// The layer as chosen, held at Off on a device that cannot draw it.
+    private var fieldLayer: FieldLayer {
+        MetalField.isAvailable ? FieldLayer(blend: fieldBlend, opacity: Double(fieldOpacity) / 100) : FieldLayer()
+    }
+
     private var shortRange: ClosedRange<Tick>? {
         shortSeconds.flatMap { VideoExportPlan.shortRange(in: store.project, startBar: startBar, seconds: $0) }
     }
@@ -91,6 +128,7 @@ struct VideoExportView: View {
     private func export() {
         var chosen = options
         chosen.range = shortRange
+        chosen.fieldLayer = fieldLayer
         Task {
             if let url = await documents.exportVideo(plugins: engine.plugins, options: chosen) {
                 router.share(url)

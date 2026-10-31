@@ -1614,6 +1614,17 @@ final class DocumentController {
     /// its URL for the share sheet. Nothing in the song changes; the export writes one new file.
     func exportVideo(plugins: PluginHost, options: VideoExport.Options) async -> URL? {
         guard !isExporting else { return nil }
+        // The Field Layer's GPU pass (W15) first: a device that cannot draw it says so before the
+        // mix is rendered, never after.
+        var fieldPass: FieldLayerPass?
+        if options.fieldLayer.isVisible {
+            guard let pass = FieldLayerPass.make() else {
+                lastError = VideoExport.ExportError.noFieldLayer.errorDescription
+                return nil
+            }
+            fieldPass = pass
+        }
+        let layerPass = fieldPass
         let exportedSong = songsOpened
         let songName = openSongName
         let mix = await exportWAV(plugins: plugins)
@@ -1651,8 +1662,13 @@ final class DocumentController {
                 }
                 defer { if let prepared { try? FileManager.default.removeItem(at: prepared.url) } }
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                // The Field over the picture comes from the song and the mix alone (FieldExport).
+                let field = layerPass.map {
+                    VideoExport.FieldOverPicture(pass: $0, project: project, fromSeconds: span.from,
+                                                 peaks: prepared?.peaks ?? [])
+                }
                 try await VideoExport.write(segments: segments, files: sources, mix: prepared?.url,
-                                            duration: span.to - span.from, options: options, to: url)
+                                            duration: span.to - span.from, options: options, field: field, to: url)
                 return .success(prepared?.loudness)
             } catch {
                 return .failure(error)

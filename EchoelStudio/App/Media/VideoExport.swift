@@ -22,12 +22,27 @@ enum VideoExport {
         var normalizesLoudness = true
         /// A short export of these bars; nil exports the whole song.
         var range: ClosedRange<Tick>?
+        /// The Field over the picture (W15); Off writes the picture as it is.
+        var fieldLayer = FieldLayer()
+    }
+
+    /// What the Field Layer draws from (W15): the GPU pass, made on the main thread before the
+    /// export starts, and the song and mix the Field of every frame is computed from.
+    struct FieldOverPicture: Sendable {
+        let pass: FieldLayerPass
+        let project: Project
+        /// Where the export starts in the song.
+        let fromSeconds: Double
+        /// The loudest sample of the mix in each frame of the film (`FieldExport.Peaks`).
+        let peaks: [Float]
     }
 
     enum ExportError: LocalizedError {
         case noPicture
         case unreadableMix
         case cannotEncode
+        case noFieldLayer
+        case fieldLayerStopped
         case failed(String)
 
         var errorDescription: String? {
@@ -35,6 +50,8 @@ enum VideoExport {
             case .noPicture: "There is no video in that stretch of the song. Choose bars that hold a video region."
             case .unreadableMix: "The mix could not be read back for the video. Export again."
             case .cannotEncode: "This device cannot encode the video in that format. Choose H.264."
+            case .noFieldLayer: "This device cannot draw the Field layer. Export with Field Layer set to Off."
+            case .fieldLayerStopped: "The Field could not be drawn into the video. Keep Echoel open while it exports, and export again."
             case .failed(let reason): "The video could not be written (\(reason)). Check the free space and export again."
             }
         }
@@ -49,9 +66,11 @@ enum VideoExport {
     // MARK: - The mix
 
     /// The mix from `from` to `to` seconds as a new WAV in `folder`, brought to social loudness
-    /// under the peak ceiling when `normalize` is on. Nil when the stretch holds none of the mix.
+    /// under the peak ceiling when `normalize` is on, and the loudest sample of each frame of the
+    /// film, read in the same pass before the gain — the level the Field Layer shows, as the meter
+    /// read it while the song played. Nil when the stretch holds none of the mix.
     static func preparedMix(_ source: URL, from: Double, to: Double, normalize: Bool,
-                            into folder: URL) throws -> (url: URL, loudness: Loudness)? {
+                            into folder: URL) throws -> (url: URL, loudness: Loudness, peaks: [Float])? {
         let file: AVAudioFile
         do {
             file = try AVAudioFile(forReading: source)
@@ -68,8 +87,10 @@ enum VideoExport {
             throw ExportError.unreadableMix
         }
         var meter = LoudnessMeter(sampleRate: rate)
+        var framePeaks = FieldExport.Peaks(sampleRate: rate)
         try forEachBlock(of: file, from: first, to: last, buffer: buffer) { left, right, count in
             meter.process(left: left, right: right, count: count)
+            framePeaks.add(left: left, right: right, count: count)
         }
         let gainDB = normalize ? VideoExportPlan.loudnessGain(integrated: meter.integratedLoudness, truePeak: meter.truePeak) : 0
         let gain = Float(pow(10, gainDB / 20))
@@ -91,7 +112,8 @@ enum VideoExport {
             try? FileManager.default.removeItem(at: url)
             throw error
         }
-        return (url, Loudness(integrated: meter.integratedLoudness + gainDB, truePeak: meter.truePeak + gainDB))
+        return (url, Loudness(integrated: meter.integratedLoudness + gainDB, truePeak: meter.truePeak + gainDB),
+                framePeaks.finished)
     }
 
     private static func forEachBlock(of file: AVAudioFile, from first: AVAudioFramePosition, to last: AVAudioFramePosition,
@@ -113,11 +135,21 @@ enum VideoExport {
 
     // MARK: - The picture
 
+    /// One stretch of the picture track: a part of a file placed in the frame, or black.
+    private struct Shot {
+        let range: CMTimeRange
+        /// How the part is placed (its own orientation, then fill or fit) and the file's size;
+        /// nil for black.
+        let placing: (transform: CGAffineTransform, natural: CGSize)?
+    }
+
     /// Lays `segments` (seconds of the export) from `files` into one picture track, the `mix` under
     /// it, and writes an MP4 to `url`. Each part is scaled into the frame by `options.fit`; gaps
     /// and the time past the last part are black. `duration` is how long the export runs at least.
+    /// With `options.fieldLayer` showing, `field` draws the Field over every frame (W15) through
+    /// `FieldLayerCompositor`; Off, the built-in compositor writes the picture as it always did.
     static func write(segments: [VideoPlan.Segment], files: [MediaID: URL], mix: URL?, duration: Double,
-                      options: Options, to url: URL) async throws {
+                      options: Options, field: FieldOverPicture?, to url: URL) async throws {
         let timescale: CMTimeScale = 48_000
         func moment(_ seconds: Double) -> CMTime { CMTime(seconds: seconds, preferredTimescale: timescale) }
         let composition = AVMutableComposition()
@@ -125,14 +157,11 @@ enum VideoExport {
             throw ExportError.cannotEncode
         }
         let frame = CGSize(width: options.shape.width, height: options.shape.height)
-        var instructions: [AVMutableVideoCompositionInstruction] = []
+        var shots: [Shot] = []
         var cursor = CMTime.zero
         func black(until end: CMTime) {
             guard CMTimeCompare(end, cursor) > 0 else { return }
-            let instruction = AVMutableVideoCompositionInstruction()
-            instruction.timeRange = CMTimeRange(start: cursor, end: end)
-            instruction.backgroundColor = VideoExport.ground
-            instructions.append(instruction)
+            shots.append(Shot(range: CMTimeRange(start: cursor, end: end), placing: nil))
             cursor = end
         }
         for segment in segments {
@@ -154,16 +183,11 @@ enum VideoExport {
                 continue
             }
             black(until: at)
-            let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: picture)
-            layer.setTransform(placement(natural: natural, transform: transform, in: frame, fit: options.fit), at: at)
-            let instruction = AVMutableVideoCompositionInstruction()
-            instruction.timeRange = CMTimeRange(start: at, duration: length)
-            instruction.backgroundColor = VideoExport.ground
-            instruction.layerInstructions = [layer]
-            instructions.append(instruction)
+            shots.append(Shot(range: CMTimeRange(start: at, duration: length),
+                              placing: (placement(natural: natural, transform: transform, in: frame, fit: options.fit), natural)))
             cursor = CMTimeAdd(at, length)
         }
-        guard !instructions.isEmpty else { throw ExportError.noPicture }
+        guard !shots.isEmpty else { throw ExportError.noPicture }
 
         var total = CMTimeMaximum(cursor, moment(Swift.max(0, duration)))
         if let mix, let sound = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) {
@@ -185,8 +209,36 @@ enum VideoExport {
 
         let video = AVMutableVideoComposition()
         video.renderSize = frame
-        video.frameDuration = CMTime(value: 1, timescale: 30)
-        video.instructions = instructions
+        video.frameDuration = CMTime(value: 1, timescale: CMTimeScale(FieldExport.framesPerSecond))
+        let layered = options.fieldLayer.isVisible ? field : nil
+        if let layered {
+            // Every frame's Field, computed before the first is drawn, from the song and the mix only.
+            let frames = Int((CMTimeGetSeconds(total) * Double(FieldExport.framesPerSecond)).rounded(.up)) + 1
+            let motion = FieldExport.motion(FieldExport.frames(of: layered.project, fromSeconds: layered.fromSeconds,
+                                                               count: frames, levels: FieldExport.levels(peaks: layered.peaks)))
+            let film = FieldLayerFilm(pass: layered.pass, layer: options.fieldLayer, motion: motion)
+            video.customVideoCompositorClass = FieldLayerCompositor.self
+            video.instructions = shots.map { shot in
+                let placed = shot.placing.flatMap {
+                    FieldLayerPlacement(placing: $0.transform, sourceWidth: Double($0.natural.width),
+                                        sourceHeight: Double($0.natural.height))
+                }
+                return FieldLayerInstruction(timeRange: shot.range, track: placed == nil ? nil : picture.trackID,
+                                             placement: placed, film: film)
+            }
+        } else {
+            video.instructions = shots.map { shot in
+                let instruction = AVMutableVideoCompositionInstruction()
+                instruction.timeRange = shot.range
+                instruction.backgroundColor = VideoExport.ground
+                if let placing = shot.placing {
+                    let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: picture)
+                    layer.setTransform(placing.transform, at: shot.range.start)
+                    instruction.layerInstructions = [layer]
+                }
+                return instruction
+            }
+        }
 
         let preset = options.codec == .hevc ? AVAssetExportPresetHEVCHighestQuality : AVAssetExportPresetHighestQuality
         guard let session = AVAssetExportSession(asset: composition, presetName: preset) else { throw ExportError.cannotEncode }
@@ -197,6 +249,9 @@ enum VideoExport {
             try await session.export(to: url, as: .mp4)
         } catch {
             try? FileManager.default.removeItem(at: url)
+            // A frame the GPU could not draw stops the whole export: most often the app was left
+            // while it ran, and iOS allows no GPU work in the background.
+            if layered != nil, (error as? AVError)?.code == .videoCompositorFailed { throw ExportError.fieldLayerStopped }
             throw ExportError.failed(error.localizedDescription)
         }
     }
