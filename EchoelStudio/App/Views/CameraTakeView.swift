@@ -45,7 +45,7 @@ struct CameraTakeView: View {
             CameraPreview(session: session)
                 .aspectRatio(9 / 16, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.large))
-                .accessibilityLabel("Camera picture")
+                .accessibilityLabel("Camera Picture")
         } else {
             RoundedRectangle(cornerRadius: Theme.Radius.large)
                 .fill(Theme.Color.background)

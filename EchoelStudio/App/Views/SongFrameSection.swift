@@ -61,7 +61,7 @@ struct SongFrameSection: View {
                 Image(systemName: "trash")
             }
             .buttonStyle(ToolButtonStyle())
-            .accessibilityLabel("Remove the tempo change at \(place)")
+            .accessibilityLabel("Remove Tempo Change at \(place)")
         }
     }
 

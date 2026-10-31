@@ -156,7 +156,7 @@ private struct DrumPads: View {
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Drum pads")
+        .accessibilityLabel("Drum Pads")
         .accessibilityAddTraits(.allowsDirectInteraction)
     }
 }
