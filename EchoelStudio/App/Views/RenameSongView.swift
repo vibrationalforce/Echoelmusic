@@ -1,10 +1,12 @@
 import EchoelCore
 import SwiftUI
 
-/// Renames the open song. The name goes through `DocumentController.renameSong`, which moves the
-/// song's package to match; the button only holds back a name the door would refuse, or the
-/// name the song already has. The sheet belongs to the song it opened for: another song opening
-/// meanwhile (one sent from Files or AirDrop) closes it rather than giving that song this name.
+/// The Song page: the open song's name, its groove and its tempo changes. The name goes through
+/// `DocumentController.renameSong`, which moves the song's package to match; Done renames only
+/// with a name the door would take and that differs from the one the song has. Swing and tempo
+/// changes apply as they are set, each one undo step (`SongFrameSection`). The sheet belongs to
+/// the song it opened for: another song opening meanwhile (one sent from Files or AirDrop)
+/// closes it rather than giving that song this name.
 struct RenameSongView: View {
     @Environment(DocumentController.self) private var documents
     @Environment(ProjectStore.self) private var store
@@ -16,13 +18,12 @@ struct RenameSongView: View {
     var body: some View {
         NavigationStack {
             form
-                .navigationTitle("Rename Song")
+                .navigationTitle("Song")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { toolbar }
                 .onAppear {
                     name = store.project.name
                     song = documents.songsOpened
-                    focused = true
                 }
                 .onChange(of: documents.songsOpened) { dismiss() }
                 // The red line under the field is not seen with VoiceOver: say it as it appears,
@@ -38,22 +39,27 @@ struct RenameSongView: View {
         .preferredColorScheme(.dark)
     }
 
+    /// The name, then the song's frame; the page hosts the number pad its fields type on.
     private var form: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s) {
-            Text("Name")
-                .font(Theme.Font.label)
-                .foregroundStyle(Theme.Color.textSecondary)
-            field
-            Text(caption)
-                .font(Theme.Font.caption)
-                .foregroundStyle(isTooLong ? Theme.Color.record : Theme.Color.textSecondary)
-                // The field's hint and the announcement say it; read here too, it came twice.
-                .accessibilityHidden(true)
-            Spacer(minLength: 0)
+        ScrollView {
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                Text("Name")
+                    .font(Theme.Font.label)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                field
+                Text(caption)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(isTooLong ? Theme.Color.record : Theme.Color.textSecondary)
+                    // The field's hint and the announcement say it; read here too, it came twice.
+                    .accessibilityHidden(true)
+                SongFrameSection()
+                    .padding(.top, Theme.Space.l)
+            }
+            .padding(Theme.Space.l)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .padding(Theme.Space.l)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.Color.background)
+        .numberPadHost()
     }
 
     /// The name field, with a clear button: a song is often renamed from scratch.
@@ -85,12 +91,12 @@ struct RenameSongView: View {
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.border, lineWidth: 1))
     }
 
+    /// Done keeps a new name; the groove and tempo changes are already in the song.
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
         ToolbarItem(placement: .confirmationAction) {
-            Button("Rename", action: rename)
-                .disabled(!canRename)
+            Button("Done", action: done)
+                .disabled(!canLeave)
                 .accessibilityHint(isTooLong ? caption : "")
         }
     }
@@ -107,9 +113,18 @@ struct RenameSongView: View {
         !trimmed.isEmpty && !isTooLong && trimmed != store.project.name
     }
 
+    /// An unchanged name leaves as it came; an empty or too long one holds Done back.
+    private var canLeave: Bool {
+        canRename || trimmed == store.project.name
+    }
+
     private func rename() {
         guard canRename, song == documents.songsOpened else { return }
         documents.renameSong(to: trimmed)
         dismiss()
+    }
+
+    private func done() {
+        if canRename { rename() } else { dismiss() }
     }
 }
