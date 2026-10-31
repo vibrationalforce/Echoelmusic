@@ -185,6 +185,11 @@ final class FieldTests: XCTestCase {
         XCTAssertEqual(level(.serious, fps: 30), .minimal)
         XCTAssertEqual(level(.critical, fps: 30), .minimal, "and never below the floor")
         XCTAssertEqual(level(fps: .nan), .full)
+        XCTAssertEqual(FieldDetail.level(thermal: .nominal, lowPower: false, batteryLevel: -1, charging: false,
+                                         measuredFrameRate: 0, memoryWarned: true), .low,
+                       "a memory warning sheds detail, as Low Power Mode does")
+        XCTAssertEqual(FieldDetail.level(thermal: .critical, lowPower: false, batteryLevel: -1, charging: false,
+                                         measuredFrameRate: 0, memoryWarned: true), .minimal, "and never lifts a lower ceiling")
 
         XCTAssertEqual(FieldDetail.frameRate, 60)
         XCTAssertEqual(FieldDetail(level: .full).resolutionScale, 1)

@@ -258,17 +258,22 @@ public struct FieldDetail: Equatable, Sendable {
     /// Whether the picture holds still, as it does under Reduce Motion.
     public var isStill: Bool { level == .minimal }
 
+    /// How long after a memory warning the Field stays at `.low` at most: a smaller drawable is
+    /// memory the system gets back, and the warning says nothing about when the pressure ends.
+    public static let memoryWarningSeconds = 60.0
+
     /// The level for the device's state. `batteryLevel` is 0 … 1, or negative when unknown
-    /// (a Mac, a simulator); `measuredFrameRate` ≤ 0 means no reading yet.
+    /// (a Mac, a simulator); `measuredFrameRate` ≤ 0 means no reading yet; `memoryWarned` while
+    /// the last memory warning is younger than `memoryWarningSeconds`.
     public static func level(thermal: Thermal, lowPower: Bool, batteryLevel: Double, charging: Bool,
-                             measuredFrameRate: Double) -> Level {
+                             measuredFrameRate: Double, memoryWarned: Bool = false) -> Level {
         var ceiling = Level.full
         switch thermal {
         case .nominal, .fair: break
         case .serious: ceiling = .low
         case .critical: ceiling = .minimal
         }
-        if lowPower { ceiling = Swift.min(ceiling, .low) }
+        if lowPower || memoryWarned { ceiling = Swift.min(ceiling, .low) }
         if batteryLevel.isFinite, batteryLevel >= 0, !charging {
             if batteryLevel < 0.10 {
                 ceiling = .minimal
