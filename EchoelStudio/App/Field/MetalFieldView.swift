@@ -169,25 +169,31 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
 
     func configure(device: MTLDevice) {
         commandQueue = device.makeCommandQueue()
-        if let cached = Self.sharedPipeline, Self.sharedPipelineDevice === device {
-            pipeline = cached
+        pipeline = Self.pipeline(for: device)
+    }
+
+    /// The Field's pipeline on `device`, compiled once per process and per device and shared by
+    /// every window, the live stream and the video layer (W15). Nil when the shader does not build;
+    /// the reason is in the log. Call it on the main thread, where the cache is kept.
+    static func pipeline(for device: MTLDevice) -> MTLRenderPipelineState? {
+        if let cached = sharedPipeline, sharedPipelineDevice === device {
             DiagnosticLog.app.note("field: shader reused")
-            return
+            return cached
         }
         // A syntax error in the MSL below is data to every build gate: only this line and the
         // picture say that the shader failed, so both speak before the step that can die.
         DiagnosticLog.app.note("field: shader compiling")
         let library: MTLLibrary
         do {
-            library = try device.makeLibrary(source: Self.shaderSource, options: nil)
+            library = try device.makeLibrary(source: shaderSource, options: nil)
         } catch {
             DiagnosticLog.app.note("field: shader compile failed, flat picture", error: error)
-            return
+            return nil
         }
         guard let vertex = library.makeFunction(name: "field_vertex"),
               let fragment = library.makeFunction(name: "field_fragment") else {
             DiagnosticLog.app.note("field: shader entry point missing, flat picture")
-            return
+            return nil
         }
         let descriptor = MTLRenderPipelineDescriptor()
         descriptor.vertexFunction = vertex
@@ -195,13 +201,35 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm_srgb
         do {
             let built = try device.makeRenderPipelineState(descriptor: descriptor)
-            pipeline = built
-            Self.sharedPipeline = built
-            Self.sharedPipelineDevice = device
+            sharedPipeline = built
+            sharedPipelineDevice = device
             DiagnosticLog.app.note("field: shader ready")
+            return built
         } catch {
             DiagnosticLog.app.note("field: pipeline failed, flat picture", error: error)
+            return nil
         }
+    }
+
+    /// Draws one Field frame from `shown` into `texture` on `buffer`, cleared to the ground: the
+    /// video layer's Field (W15) — the export's from its computed motion, the preview's from its
+    /// own — with the window's pipeline and shader, at the texture's size and `aspect`. False when
+    /// the pass could not be encoded. Any thread: it touches only what it is handed.
+    nonisolated static func encode(_ shown: FieldMotion.Shown, aspect: Float, pipeline: MTLRenderPipelineState,
+                                   into texture: MTLTexture, on buffer: MTLCommandBuffer) -> Bool {
+        let pass = MTLRenderPassDescriptor()
+        pass.colorAttachments[0].texture = texture
+        pass.colorAttachments[0].loadAction = .clear
+        pass.colorAttachments[0].storeAction = .store
+        pass.colorAttachments[0].clearColor = ground
+        guard let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) else { return false }
+        encoder.setRenderPipelineState(pipeline)
+        var sent = Uniforms(aspect: aspect, shown: shown)
+        encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
+        encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
+        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        encoder.endEncoding()
+        return true
     }
 
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
