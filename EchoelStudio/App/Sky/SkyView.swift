@@ -305,7 +305,27 @@ extension SkyCanvas {
         line += String(format: "  ·  mag %.1f", centred.magnitude)
         if let index = centred.colorIndex { line += String(format: "  ·  B−V %.2f", index) }
         canvas.draw(Text(line).font(Theme.Font.value).foregroundStyle(ink(frame.isNight, 0.9)),
-                    at: CGPoint(x: middle.x, y: size.height - 28))
+                    at: CGPoint(x: middle.x, y: size.height - 46))
+        // The two values the star would give a sound (S3), 0 … 1, live and not stored: brightness
+        // from the magnitude, colour from B−V (0 blue … 1 red).
+        let reading = SkyStarReading(centred)
+        var values = "brightness " + String(format: "%.2f", reading.brightness)
+        if let color = reading.color { values += "  ·  colour " + String(format: "%.2f", color) }
+        canvas.draw(Text(values).font(Theme.Font.caption).foregroundStyle(ink(frame.isNight, 0.6)),
+                    at: CGPoint(x: middle.x, y: size.height - 22))
+    }
+}
+
+/// What the star in the middle offers as a sound source (S3): plain numbers, 0 … 1, from the
+/// catalogue alone. Shown live; NOT yet a modulation source — a new source would be a new stored
+/// name in the song format (Law 3), which waits for the founder's word.
+struct SkyStarReading: Equatable {
+    let brightness: Double
+    let color: Double?
+
+    init(_ object: SkyScene.Object) {
+        brightness = StarCatalog.brightness(magnitude: object.magnitude) ?? 0
+        color = object.colorIndex.flatMap { StarCatalog.colorPosition(colorIndex: $0) }
     }
 }
 
