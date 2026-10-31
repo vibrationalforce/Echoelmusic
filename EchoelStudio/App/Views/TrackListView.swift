@@ -117,8 +117,8 @@ struct TrackRow: View {
 
     /// One place up or down the list (and the arrangement, the mixer and the session with it).
     private func move(by step: Int) {
-        guard let index else { return }
-        let target = index + step
+        guard let position = index else { return }
+        let target = position + step
         guard store.project.tracks.indices.contains(target) else { return }
         try? store.perform(.moveTrack(track.id, toIndex: target))
     }
