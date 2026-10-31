@@ -12,20 +12,33 @@ import SwiftUI
 /// Sonification and arithmetic, never effect: what the centre shows is a position, a magnitude
 /// and a colour index, nothing about what a star does to a person.
 struct SkySurface: View {
+    @Environment(CameraPulseSource.self) private var pulse
     @State private var pointing = SkyPointing()
+    @State private var camera = SkyCamera()
 
     var body: some View {
         ZStack(alignment: .top) {
             if let latitude = pointing.latitude, let longitude = pointing.longitude {
-                SkyCanvas(pointing: pointing, latitude: latitude, longitude: longitude)
+                SkyCanvas(pointing: pointing, frames: camera.frames, latitude: latitude, longitude: longitude)
             } else {
                 SkyPlaceNeeded(pointing: pointing)
             }
             SkyControls(pointing: pointing)
         }
         .background(Color.black)
-        .onAppear { pointing.start() }
-        .onDisappear { pointing.stop() }
+        .onAppear {
+            pointing.start()
+            camera.start(pointing: pointing.shared, pulseHasCamera: pulse.isOn)
+        }
+        .onDisappear {
+            camera.stop()
+            pointing.stop()
+        }
+        // The pulse has priority over the camera layer: it yields the moment the pulse starts,
+        // and comes back when the pulse is off again.
+        .onChange(of: pulse.isOn) { _, pulseOn in
+            camera.start(pointing: pointing.shared, pulseHasCamera: pulseOn)
+        }
     }
 }
 
@@ -65,26 +78,29 @@ final class SkySceneCache {
 /// and draws. Nothing above it reads the pointing or the scene.
 struct SkyCanvas: View {
     let pointing: SkyPointing
+    let frames: SkyCameraFrames
     let latitude: Double
     let longitude: Double
     @State private var cache = SkySceneCache()
     @State private var dragStart: Sky.Horizontal?
 
-    /// Degrees across the shorter side of the screen.
+    /// Degrees across the shorter side of the screen while no camera picture is shown.
     static let fieldOfView = 70.0
     /// Degrees the view turns per point of drag.
     static let degreesPerPoint = 0.2
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60)) { context in
-            let frame = SkyFrame.make(pointing: pointing, cache: cache, latitude: latitude, longitude: longitude,
-                                      at: context.date)
-            Canvas { canvas, size in
-                SkyCanvas.draw(frame, in: &canvas, size: size)
+        GeometryReader { geometry in
+            TimelineView(.animation(minimumInterval: 1.0 / 60)) { context in
+                let frame = SkyFrame.make(pointing: pointing, cache: cache, camera: frames.read(), size: geometry.size,
+                                          latitude: latitude, longitude: longitude, at: context.date)
+                Canvas { canvas, size in
+                    SkyCanvas.draw(frame, in: &canvas, size: size)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Sky")
+                .accessibilityValue(frame.spoken)
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Sky")
-            .accessibilityValue(frame.spoken)
         }
         .gesture(drag)
     }
@@ -120,15 +136,36 @@ struct SkyFrame {
     let scene: SkyScene?
     let centred: SkyScene.Object?
     let isNight: Bool
+    /// The camera layer, when it carries signal and the phone steers (a finger-turned sky and a
+    /// picture of where the phone points would disagree).
+    let camera: CGImage?
+    let cameraOpacity: Double
 
     @MainActor
-    static func make(pointing: SkyPointing, cache: SkySceneCache, latitude: Double, longitude: Double,
-                     at date: Date) -> SkyFrame {
+    static func make(pointing: SkyPointing, cache: SkySceneCache, camera: SkyCameraFrames.Latest, size: CGSize,
+                     latitude: Double, longitude: Double, at date: Date) -> SkyFrame {
         pointing.sample()
         let scene = cache.current(latitude: latitude, longitude: longitude, at: date)
-        let projection = SkyProjection(forward: pointing.forward, up: pointing.up, fieldOfView: SkyCanvas.fieldOfView)
+        var picture: CGImage?
+        var fieldOfView = SkyCanvas.fieldOfView
+        if pointing.steering == .sensors, camera.opacity > 0, let image = camera.image,
+           let matched = SkyFrame.matchedFieldOfView(image: image, longSideDegrees: camera.longSideDegrees, size: size) {
+            picture = image
+            fieldOfView = matched
+        }
+        let projection = SkyProjection(forward: pointing.forward, up: pointing.up, fieldOfView: fieldOfView)
         let centred = scene?.centred(on: pointing.forward.horizontal)
-        return SkyFrame(projection: projection, scene: scene, centred: centred, isNight: cache.isNight)
+        return SkyFrame(projection: projection, scene: scene, centred: centred, isNight: cache.isNight,
+                        camera: picture, cameraOpacity: picture == nil ? 0 : camera.opacity)
+    }
+
+    /// The drawn sky's field across the screen's shorter side that lines it up with the picture.
+    static func matchedFieldOfView(image: CGImage, longSideDegrees: Double, size: CGSize) -> Double? {
+        let imageLong = Double(Swift.max(image.width, image.height)), imageShort = Double(Swift.min(image.width, image.height))
+        let screenLong = Double(Swift.max(size.width, size.height)), screenShort = Double(Swift.min(size.width, size.height))
+        guard imageShort > 0, screenShort > 0 else { return nil }
+        return SkyNightCamera.matchingFieldOfView(cameraLongSideDegrees: longSideDegrees, imageAspect: imageLong / imageShort,
+                                                  screenAspect: screenLong / screenShort)
     }
 
     var spoken: String {
@@ -159,6 +196,9 @@ extension SkyCanvas {
             guard x > -40, y > -40, x < Double(size.width) + 40, y < Double(size.height) + 40 else { return nil }
             return CGPoint(x: x, y: y)
         }
+        if let picture = frame.camera {
+            drawCamera(picture, opacity: frame.cameraOpacity, night: frame.isNight, size: size, in: &canvas)
+        }
         drawGround(projection: projection, middle: middle, half: half, size: size, night: frame.isNight, in: &canvas)
         for object in scene.objects {
             guard let at = point(object.vector) else { continue }
@@ -172,7 +212,26 @@ extension SkyCanvas {
         night ? nightRed.opacity(opacity * 0.8) : Color.white.opacity(opacity)
     }
 
-    /// The horizon as a line, and the ground below it darker than the sky.
+    /// The camera picture, aspect-filled and centred, behind everything drawn; at night only its
+    /// brightness shows, in the red palette.
+    private static func drawCamera(_ picture: CGImage, opacity: Double, night: Bool, size: CGSize,
+                                   in canvas: inout GraphicsContext) {
+        let width = Double(picture.width), height = Double(picture.height)
+        guard width > 0, height > 0 else { return }
+        let scale = Swift.max(Double(size.width) / width, Double(size.height) / height)
+        let drawn = CGSize(width: width * scale, height: height * scale)
+        let rect = CGRect(x: (Double(size.width) - drawn.width) / 2, y: (Double(size.height) - drawn.height) / 2,
+                          width: drawn.width, height: drawn.height)
+        var layer = canvas
+        layer.opacity = opacity
+        if night {
+            layer.addFilter(.grayscale(1))
+            layer.addFilter(.colorMultiply(nightRed))
+        }
+        layer.draw(Image(decorative: picture, scale: 1), in: rect)
+    }
+
+    /// The horizon as a line.
     private static func drawGround(projection: SkyProjection, middle: CGPoint, half: Double, size: CGSize,
                                    night: Bool, in canvas: inout GraphicsContext) {
         var horizon = Path()
