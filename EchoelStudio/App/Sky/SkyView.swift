@@ -25,7 +25,7 @@ struct SkySurface: View {
             }
             SkyControls(pointing: pointing)
         }
-        .background(Color.black)
+        .background(Theme.Color.background)
         .onAppear {
             pointing.start()
             // The camera layer asks the app's one camera arbitration (take > pulse > sky).
@@ -185,7 +185,9 @@ struct SkyFrame {
 }
 
 extension SkyCanvas {
-    /// Night palette: red only, dim — the colour dark-adapted eyes lose least to.
+    /// Night palette: red only, dim — the colour dark-adapted eyes lose least to. Not a Theme
+    /// colour on purpose: it is a property of the eye after dusk, not of the brand, and the
+    /// controls over the sky stay Echoel.
     private static let nightRed = Color(red: 0.85, green: 0.12, blue: 0.08)
 
     static func draw(_ frame: SkyFrame, in canvas: inout GraphicsContext, size: CGSize) {
@@ -211,7 +213,7 @@ extension SkyCanvas {
     }
 
     private static func ink(_ night: Bool, _ opacity: Double) -> Color {
-        night ? nightRed.opacity(opacity * 0.8) : Color.white.opacity(opacity)
+        night ? nightRed.opacity(opacity * 0.8) : Theme.Color.text.opacity(opacity)
     }
 
     /// The camera picture, aspect-filled and centred, behind everything drawn; at night only its
@@ -258,6 +260,7 @@ extension SkyCanvas {
             // Brighter is bigger: about 3.5 pt for Sirius down to 0.6 pt at the table's limit.
             let radius = Swift.max(0.6, 2.4 - 0.36 * object.magnitude)
             let alpha = Swift.min(1, Swift.max(0.35, 1 - object.magnitude * 0.11)) * (below ? 0.3 : 1)
+            // The star's own colour from its B−V index: data, not decoration, so not a Theme colour.
             let tone = StarCatalog.color(colorIndex: object.colorIndex)
             let color = night ? nightRed.opacity(alpha * 0.85)
                 : Color(red: tone.red, green: tone.green, blue: tone.blue).opacity(alpha)
@@ -272,6 +275,7 @@ extension SkyCanvas {
             case .moon: 8
             default: Swift.max(2, 3.2 - 0.3 * object.magnitude)
             }
+            // The bodies' real tints (data, like the stars' B−V colours), not Theme colours.
             let tone: Color = switch body {
             case .sun: Color(red: 1, green: 0.85, blue: 0.4)
             case .moon: Color(white: 0.85)
@@ -292,7 +296,7 @@ extension SkyCanvas {
     private static func drawCardinals(point: (SkyVector) -> CGPoint?, night: Bool, in canvas: inout GraphicsContext) {
         for (azimuth, letter) in [(0.0, "N"), (90.0, "E"), (180.0, "S"), (270.0, "W")] {
             guard let at = point(SkyVector(Sky.Horizontal(altitude: 0, azimuth: azimuth))) else { continue }
-            canvas.draw(Text(letter).font(Theme.Font.label).foregroundStyle(night ? nightRed : Theme.Color.accent),
+            canvas.draw(Text(letter).font(Theme.Font.label).foregroundStyle(night ? nightRed : Theme.Color.text),
                         at: CGPoint(x: at.x, y: at.y + 12))
         }
     }
@@ -312,7 +316,7 @@ extension SkyCanvas {
         // from the magnitude, colour from B−V (0 blue … 1 red).
         let reading = SkyStarReading(centred)
         var values = "brightness " + String(format: "%.2f", reading.brightness)
-        if let color = reading.color { values += "  ·  colour " + String(format: "%.2f", color) }
+        if let color = reading.color { values += "  ·  color " + String(format: "%.2f", color) }
         canvas.draw(Text(values).font(Theme.Font.caption).foregroundStyle(ink(frame.isNight, 0.6)),
                     at: CGPoint(x: middle.x, y: size.height - 22))
     }
@@ -345,7 +349,9 @@ private struct SkyControls: View {
             } label: {
                 Label(placeLine, systemImage: "location")
                     .font(Theme.Font.caption)
+                    .frame(minHeight: Theme.Size.touch)
             }
+            .accessibilityLabel("Place, \(placeLine)")
             .accessibilityHint("Chooses the place whose sky is drawn.")
             Spacer(minLength: 0)
             if pointing.steering == .finger, pointing.canFollowPhone {
@@ -363,9 +369,9 @@ private struct SkyControls: View {
     private var placeLine: String {
         switch pointing.placeSource {
         case .located: "Here"
-        case .remembered: "Last known place"
+        case .remembered: "Last Known Place"
         case .chosen(let name): name
-        case .none: pointing.locationDenied ? "Location off — choose a place" : "Finding the place…"
+        case .none: pointing.locationDenied ? "Location Off, Choose a Place" : "Finding the Place"
         }
     }
 }
@@ -379,7 +385,7 @@ private struct SkyPlaceNeeded: View {
             Spacer()
             Text(pointing.locationDenied
                  ? "The sky depends on where you are. Choose a place above, or allow location in Settings."
-                 : "Finding where you are to draw the sky above you…")
+                 : "Finding where you are, to draw the sky above you.")
                 .font(Theme.Font.body)
                 .foregroundStyle(Theme.Color.textSecondary)
                 .multilineTextAlignment(.center)
