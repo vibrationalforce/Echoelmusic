@@ -1443,6 +1443,25 @@ final class DocumentController {
         }
     }
 
+    /// Reads a Standard MIDI File (a copy the picker handed over) and adds its tracks to the song
+    /// as instrument tracks — one undo step. A file the reader refuses says why on the status line.
+    func importMIDI(_ source: URL) {
+        let name = source.deletingPathExtension().lastPathComponent
+        do {
+            let size = (try? source.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            guard size <= MIDIFileImport.maximumBytes else { throw MIDIFileImport.ReadError.tooLarge }
+            let content = try MIDIFileImport.read(try Data(contentsOf: source))
+            let commands = try MIDIFileImport.commands(for: content, fileName: name, in: store.project)
+            try store.perform(commands, title: "Import \(name)")
+            lastError = nil
+        } catch let refusal as MIDIFileImport.ReadError {
+            lastError = refusal.explanation
+        } catch {
+            log.error("MIDI import failed — \(String(describing: error), privacy: .public)")
+            lastError = "Could not import the MIDI file."
+        }
+    }
+
     /// Copies an audio file into the song and makes it `track`'s sample, switching the track
     /// to the sampler — one undo step.
     func importAudio(_ source: URL, onto track: TrackID) async {

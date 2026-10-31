@@ -110,6 +110,12 @@ struct StudioView: View {
                 .ignoresSafeArea()
             case .cameraTake(let track): CameraTakeView(track: track)
             case .exportVideo: VideoExportView()
+            case .importMIDI:
+                AudioFilePicker(pick: { url in
+                    router.sheet = nil
+                    documents.importMIDI(url)
+                }, cancel: { router.sheet = nil }, types: [.midi])
+                .ignoresSafeArea()
             case let .importClip(track, scene):
                 AudioFilePicker(pick: { url in
                     router.sheet = nil
@@ -660,6 +666,8 @@ struct SongMenu: View {
                 if let url = documents.exportMIDI() { router.share(url) }
             }
             .disabled(!store.project.arrangementHasEvents)
+            // A Standard MIDI File as new instrument tracks; an empty song takes its tempo and meter.
+            Button("Import MIDI…", systemImage: "square.and.arrow.down") { router.sheet = .importMIDI }
             // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
             Button("Export Video", systemImage: "film") { router.sheet = .exportVideo }
                 .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)

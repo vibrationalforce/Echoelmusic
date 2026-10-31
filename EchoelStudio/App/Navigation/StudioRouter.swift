@@ -13,6 +13,8 @@ enum StudioSheet: Identifiable, Hashable {
     case share(URL)
     /// Pick an audio file to place on an audio track at a tick.
     case importAudio(TrackID, Tick)
+    /// Pick a Standard MIDI File to add to the song as instrument tracks.
+    case importMIDI
     /// Pick an audio file to become a clip in an audio track's session slot.
     case importClip(TrackID, SceneID)
     /// A track's insert effects.
