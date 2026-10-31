@@ -572,7 +572,8 @@ struct TempoField: View {
             }
 
             VStack(spacing: 0) {
-                Text(NumberText.string(shownTempo, decimals: 1))
+                // To the hundredth, as typed (100,25), with only the places it needs (120, 100,5).
+                Text(NumberText.string(shownTempo, decimalsUpTo: 2))
                     .font(Theme.Font.valueLarge)
                     .foregroundStyle(isTyped ? Theme.Color.accent : Theme.Color.text)
                 // "EXT" stands where the unit stands, in the same three letters' room: while an
@@ -601,7 +602,7 @@ struct TempoField: View {
             .onTapGesture(perform: typeTempo)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Tempo")
-            .accessibilityValue(NumberText.string(shownTempo, decimals: 1, unit: "BPM")
+            .accessibilityValue(NumberText.string(shownTempo, decimalsUpTo: 2, unit: "BPM")
                                 + (followsClock ? ", External Clock" : ""))
             .accessibilityAdjustableAction { direction in
                 nudge(direction == .increment ? 1 : -1)
@@ -628,13 +629,13 @@ struct TempoField: View {
 
     private var isTyped: Bool { pad?.request?.owner == Self.padOwner }
 
-    /// The tempo on Echoel's number pad, in BPM to a tenth; one undo step. Not while an external
-    /// clock sets the pace.
+    /// The tempo on Echoel's number pad, in BPM to a hundredth (100,25, as Ableton types it); one
+    /// undo step. Not while an external clock sets the pace.
     private func typeTempo() {
         guard !followsClock, let pad else { return }
         let standard = store.project.descriptor(for: .tempo)?.defaultValue
         pad.open(NumberPadRequest(owner: Self.padOwner, title: "Tempo",
-                                  format: NumberEntryFormat(scale: 1, decimals: 1, unit: "BPM"),
+                                  format: NumberEntryFormat(scale: 1, decimals: 2, unit: "BPM"),
                                   range: Tempo.range, value: store.project.tempo, standard: standard) { bpm in
             set(bpm)
             store.endGesture()

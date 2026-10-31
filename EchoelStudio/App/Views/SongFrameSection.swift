@@ -69,7 +69,7 @@ struct SongFrameSection: View {
     private func type(_ change: TempoChange, place: String) {
         let tick = change.tick
         pad?.open(NumberPadRequest(owner: Self.owner(change), title: "Tempo at \(place)",
-                                   format: NumberEntryFormat(scale: 1, decimals: 1, unit: "BPM"),
+                                   format: NumberEntryFormat(scale: 1, decimals: 2, unit: "BPM"),
                                    range: Tempo.range, value: change.bpm, standard: nil) { typed in
             try? store.perform(.setTempoChange(at: tick, bpm: typed))
         })
@@ -100,8 +100,9 @@ struct SongFrameSection: View {
         return barText + ", beat " + NumberText.string(beats, decimalsUpTo: 2)
     }
 
+    /// To the hundredth the transport types, with only the places it needs: "120 BPM", "100,25 BPM".
     private func bpmText(_ bpm: Double) -> String {
-        NumberText.string(bpm, decimals: 1, unit: "BPM")
+        NumberText.string(bpm, decimalsUpTo: 2, unit: "BPM")
     }
 
     private func heading(_ text: String) -> some View {

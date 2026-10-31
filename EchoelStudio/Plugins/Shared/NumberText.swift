@@ -31,6 +31,12 @@ enum NumberText {
         string(value, decimals: decimals) + " " + unit
     }
 
+    /// `value` with as few places as it needs, at most `decimalsUpTo`, and its unit: a tempo reads
+    /// "120 BPM", "100,5 BPM" or "100,25 BPM" — never "120,00 BPM".
+    static func string(_ value: Double, decimalsUpTo: Int, unit: String) -> String {
+        string(value, decimalsUpTo: decimalsUpTo) + " " + unit
+    }
+
     /// A percentage, US style without a space before the sign: "50%", "+25%" when `signed`.
     static func percent(_ value: Double, decimals: Int = 0, signed: Bool = false) -> String {
         guard value.isFinite else { return "–%" }
