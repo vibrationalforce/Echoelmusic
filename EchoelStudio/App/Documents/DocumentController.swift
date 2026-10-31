@@ -513,7 +513,7 @@ final class DocumentController {
             // As a song chosen from the library says it (`open(_:)`).
             lastError = Self.isNewer(error)
                 ? "\(name) was saved by a newer Echoel. Update the app to open it."
-                : "Could not open \(name)."
+                : "Could not open \(name). It may be damaged or still downloading; try again, or choose it from the Files app."
         }
     }
 
@@ -564,7 +564,7 @@ final class DocumentController {
         } catch {
             lastError = Self.isNewer(error)
                 ? "\(url.deletingPathExtension().lastPathComponent) was saved by a newer Echoel. Update the app to open it."
-                : "Could not open \(url.deletingPathExtension().lastPathComponent)."
+                : "Could not open \(url.deletingPathExtension().lastPathComponent). It may be damaged or still downloading; try again, or choose it from the Files app."
             return false
         }
     }
@@ -1093,7 +1093,7 @@ final class DocumentController {
             lastError = error is PluginRenderFailed
                 ? "A plugin stopped rendering during the export, so the file would have had gaps. Nothing was saved."
                 : error as? WAVWriter.WriteError == .tooLong
-                ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz)."
+                ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz). Shorten the arrangement and export again."
                 : "Could not export the song. Try again; if it fails again, share the diagnostics from About Echoel."
             return nil
         }
@@ -1196,7 +1196,7 @@ final class DocumentController {
                 lastError = error is PluginRenderFailed
                     ? "A plugin stopped rendering during the export, so the stems would have had gaps. Nothing was saved."
                     : error as? WAVWriter.WriteError == .tooLong
-                    ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz)."
+                    ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz). Shorten the arrangement and export again."
                     : "Could not export the stems. Try again; if it fails again, share the diagnostics from About Echoel."
             }
             return nil
@@ -1959,7 +1959,7 @@ final class DocumentController {
             sampleRate = rate
         case .failure(let error):
             log.error("take unreadable — \(error.localizedDescription, privacy: .private)")
-            lastError = (error as? LocalizedError)?.errorDescription ?? "The take could not be read."
+            lastError = (error as? LocalizedError)?.errorDescription ?? "The take could not be read. Record it again."
             return
         }
         let time = TimeConversion(tempoMap: tempoMap, sampleRate: take.sampleRate)

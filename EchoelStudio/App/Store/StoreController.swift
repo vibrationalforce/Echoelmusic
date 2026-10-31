@@ -52,7 +52,7 @@ final class StoreController {
         } catch {
             if Task.isCancelled { return }
             log.error("products failed — \(error.localizedDescription, privacy: .public)")
-            message = "The store is not available right now."
+            message = "The App Store is not available right now. Check the connection and open this page again."
         }
         guard !Task.isCancelled else { return }
         await refreshOwned()
@@ -69,7 +69,7 @@ final class StoreController {
                 await transaction.finish()
                 unlocked = true
             case .success(.unverified):
-                message = "The purchase could not be verified."
+                message = "The purchase could not be verified. Tap Restore Purchases; if that finds nothing, try buying again."
             case .pending:
                 message = "The purchase is waiting for approval."
             case .userCancelled:
@@ -79,7 +79,7 @@ final class StoreController {
             }
         } catch {
             log.error("purchase failed — \(error.localizedDescription, privacy: .public)")
-            message = "The purchase did not go through."
+            message = "The purchase did not go through. Nothing was charged; try again."
         }
         await refreshOwned()
         if unlocked {

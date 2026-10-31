@@ -303,9 +303,9 @@ final class CameraPulseSource {
     }
 
     static func words(for error: Error) -> String {
-        guard let start = error as? CameraCapture.StartError else { return "The camera could not be opened." }
+        guard let start = error as? CameraCapture.StartError else { return "The camera could not be opened. Close other apps that use it and choose the camera again." }
         switch start {
-        case .noCamera: return "This device has no rear camera to read a pulse from."
+        case .noCamera: return "This device has no rear camera to read a pulse from. Use a heart rate strap instead."
         case .configurationFailed: return "The camera could not be opened. Another app may be using it: close it and try again."
         }
     }
