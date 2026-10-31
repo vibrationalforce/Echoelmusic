@@ -173,13 +173,35 @@ struct SkyFrame {
     var spoken: String {
         guard let centred else { return "Nothing bright in the middle" }
         let name = centred.name ?? SkyFrame.designation(centred)
-        return "\(name), magnitude \(String(format: "%.1f", centred.magnitude))"
+        var line = "\(name), magnitude \(SkyFrame.number(centred.magnitude))"
+        if let tint = centred.colorIndex.map(SkyFrame.tint(colorIndex:)) { line += ", \(tint)" }
+        return line
     }
 
     static func designation(_ object: SkyScene.Object) -> String {
         switch object.kind {
-        case .star(let number): "HR \(number)"
+        // The catalogue number of an unnamed star, written so it cannot be read as a heart rate
+        // ("HR" is the Bright Star Catalogue's prefix, and this is a body app).
+        case .star(let number): "Bright Star \(number)"
         case .body(let body): body.name
+        }
+    }
+
+    /// One decimal, in the reader's own number format (a comma where the locale writes one).
+    static func number(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(1)))
+    }
+
+    /// The star's colour in words, from its B−V index (the Morgan–Keenan bands, coarse): the
+    /// picture shows the colour, the words say it for those who cannot see it.
+    static func tint(colorIndex: Double) -> String {
+        switch colorIndex {
+        case ..<0: "blue-white"
+        case ..<0.3: "white"
+        case ..<0.6: "yellow-white"
+        case ..<1.0: "yellow"
+        case ..<1.4: "orange"
+        default: "red"
         }
     }
 }
@@ -289,7 +311,7 @@ extension SkyCanvas {
     }
 
     private static func label(_ text: String, at: CGPoint, offset: Double, night: Bool, in canvas: inout GraphicsContext) {
-        canvas.draw(Text(text).font(Theme.Font.caption).foregroundStyle(ink(night, 0.7)),
+        canvas.draw(Text(text).font(Theme.Font.label).foregroundStyle(ink(night, 0.8)),
                     at: CGPoint(x: at.x + offset, y: at.y), anchor: .leading)
     }
 
@@ -307,23 +329,19 @@ extension SkyCanvas {
         canvas.stroke(Path(ellipseIn: CGRect(x: middle.x - ring, y: middle.y - ring, width: ring * 2, height: ring * 2)),
                       with: .color(ink(frame.isNight, 0.5)), lineWidth: 1)
         guard let centred = frame.centred else { return }
+        // What sits in the ring: its name, how bright it is, its colour in words. Plain words —
+        // no catalogue shorthand ("mag", "B−V") on the screen of a music app.
         var line = centred.name ?? SkyFrame.designation(centred)
-        line += String(format: "  ·  mag %.1f", centred.magnitude)
-        if let index = centred.colorIndex { line += String(format: "  ·  B−V %.2f", index) }
+        line += "  ·  Magnitude " + SkyFrame.number(centred.magnitude)
+        if let index = centred.colorIndex { line += "  ·  " + SkyFrame.tint(colorIndex: index).capitalized }
         canvas.draw(Text(line).font(Theme.Font.value).foregroundStyle(ink(frame.isNight, 0.9)),
-                    at: CGPoint(x: middle.x, y: size.height - 46))
-        // The two values the star would give a sound (S3), 0 … 1, live and not stored: brightness
-        // from the magnitude, colour from B−V (0 blue … 1 red).
-        let reading = SkyStarReading(centred)
-        var values = "brightness " + String(format: "%.2f", reading.brightness)
-        if let color = reading.color { values += "  ·  color " + String(format: "%.2f", color) }
-        canvas.draw(Text(values).font(Theme.Font.caption).foregroundStyle(ink(frame.isNight, 0.6)),
-                    at: CGPoint(x: middle.x, y: size.height - 22))
+                    at: CGPoint(x: middle.x, y: size.height - 34))
     }
 }
 
 /// What the star in the middle offers as a sound source (S3): plain numbers, 0 … 1, from the
-/// catalogue alone. Shown live; NOT yet a modulation source — a new source would be a new stored
+/// catalogue alone. Not shown: they are NOT yet a modulation source, and two bare numbers on the
+/// screen read as debug output (founder, device video 2026-10-31). NOT yet a modulation source — a new source would be a new stored
 /// name in the song format (Law 3), which waits for the founder's word.
 struct SkyStarReading: Equatable {
     let brightness: Double
