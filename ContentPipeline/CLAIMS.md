@@ -71,6 +71,18 @@ Der Merge nach `main` ist erfolgt (gemessen 2026-10-26). Die Studio-Hinweise in 
 Studio-Mikrofonzugriff beim Scharfschalten einer Audiospur oder beim Abhören ihres Eingangs ausdrücklich.
 F22 ist erledigt (`docs/dev/FOUNDER_INBOX.md`, seit 2026-10-23 als gegenstandslos markiert).
 Einstieg: `docs/dev/ECHOEL_VISION_2026-10-19.md`.
+(6) **2026-10-31, Nachtrag CI-OUT (Dirigent, Founder hat delegiert):** neun Studio-Fähigkeiten, je mit Tür im Code auf
+`main` (Stand dieses Tages) gemessen, **in TestFlight, auf keinem Gerät geprüft** — jede Kopie sagt das. Sagbar, englisch, nicht erweitern:
+- **Sky:** „A Sky view draws the night sky above you from a star catalogue, your approximate location and the phone's orientation.“ (`App/Sky/SkyView.swift`, Tür „Sky“ in `App/Views/StudioView.swift`; Ort einmal, gerundet auf ~10 km, bleibt auf dem Gerät — `docs/privacy.html#studio`)
+- **Connections:** „OSC, ADM-OSC, Art-Net and sACN out to your local network, each off until you switch it on. Body values are sent only while you allow body sharing on that page.“ (`App/Connections/ConnectionsController.swift`: aus bei jedem Start, `BioEgressPolicy.allowsEgress(…consent:)` je Nachricht)
+- **Live-Streaming:** „Stream the Field's picture and the master mix over RTMP, RTMPS or SRT to a service you choose; nothing goes out until you press Go Live.“ (`App/Streaming/StreamPublisher.swift`, HaishinKit in `EchoelStudio/project.yml`, Tür „Go Live“ in `App/Streaming/StreamingView.swift`). ⚠️ Die RTMP-Verneinungen dieser Datei gelten der ALT-App; Studio-Sätze nennen immer „Go Live“ (der Website-Wächter `testNothingClaimsRTMPWasEverBuilt` erkennt Studio-Sätze daran).
+- **Videospuren:** „Video tracks: import a video from the photo library onto the timeline.“ (`App/Views/ArrangeView.swift`, „Import Video at End“). Weiter NIE Video-Aufnahme oder Video-Export behaupten.
+- **MPE-Ausgang:** „MPE out: the live track's notes go to the MIDI outputs you pick, one channel per note.“ (`App/Engine/MIDIMPEOutput.swift`, aus bis ein Ausgang gewählt ist). Nur mit Richtungswort; MPE IN gibt es nicht.
+- **Effekte:** „Eighteen built-in effects, among them EQ, compressor, delay, reverb, chorus, phaser, flanger, limiter, saturation, tape, pitch correction, a harmonizer and a granular effect.“ (`Core/Sources/EchoelCore/OwnPlugins.swift` `StandardEffect`, alle über `App/Views/EffectsView.swift` erreichbar). ⚠️ §11 bleibt: nie „Autotune“, nie Voice Cloning/AI-Voice; „pitch correction“ ist ein Effekt auf einer Spur, kein Stimm-Versprechen.
+- **Clip-Schnitt:** „Split a clip at the playhead, consolidate and duplicate in Arrange.“ (`App/Views/ArrangeView.swift`, „Split at Playhead“). Die Zeile „split … gibt es nicht“ unter „Nicht sagen“ ist damit für Studio überholt.
+- **MIDI-Import:** „Import a Standard MIDI file into the song.“ (`App/Views/StudioView.swift`, „Import MIDI…“).
+- **Bake Effects:** „Bake Effects renders an audio region through its track's effects onto a new track below it, as one undo step.“ (`App/Documents/DocumentController.swift` `bakeEffects`).
+Weiter NICHT: Apple Health im Studio, Kamera-Puls als Werbesatz (nur Datenschutz-Offenlegung), „works in AUM/Logic“.
 
 Stand: 2026-10-13 (Produktgesetz vom 2026-09-24 nachgezogen — `docs/dev/FOUNDER_PRODUCT_LAW.md`:
 Echoelmusic IST die Workstation. ✅ neu: Mixer-Bühne, Sampler je Spur, Grain-Insert, Stück-Export,
