@@ -240,7 +240,7 @@ struct ParameterField: View {
             let step = Self.step(descriptor)
             writer.set(address, normalized: position + (direction == .increment ? step : -step), gesture: false)
         }
-        .accessibilityAction(named: "Type a value") { openPad(descriptor, value: value) }
+        .accessibilityAction(named: "Type a Value") { openPad(descriptor, value: value) }
         .midiLearnable(address)
     }
 

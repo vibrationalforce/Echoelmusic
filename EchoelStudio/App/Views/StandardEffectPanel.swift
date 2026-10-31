@@ -257,7 +257,7 @@ private struct EffectParameterField: View {
             let moved = Swift.min(Swift.max(place + (direction == .increment ? step : -step), 0), 1)
             writer.set(address, normalized: self.position(of: self.value(atCurve: moved)), gesture: false)
         }
-        .accessibilityAction(named: "Type a value") { openPad(shown) }
+        .accessibilityAction(named: "Type a Value") { openPad(shown) }
         .midiLearnable(address)
     }
 

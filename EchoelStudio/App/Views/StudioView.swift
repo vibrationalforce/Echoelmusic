@@ -494,7 +494,7 @@ struct TempoField: View {
             .accessibilityAdjustableAction { direction in
                 nudge(direction == .increment ? 1 : -1)
             }
-            .accessibilityAction(named: "Type a tempo", typeTempo)
+            .accessibilityAction(named: "Type a Tempo", typeTempo)
 
             Button { nudge(1) } label: { Image(systemName: "plus") }
                 .buttonStyle(ToolButtonStyle())
