@@ -4,7 +4,8 @@ import SwiftUI
 /// The song on a bar timeline: one lane per track, its clips and audio laid out where they
 /// play. Tap empty space to place the track's clip at that bar — or, on an audio track, to
 /// import a file there; tap a clip to edit its notes, drag a clip or audio region to move it
-/// by whole bars, hold for Duplicate and Delete. One drag is one undo step.
+/// by whole bars, hold for Duplicate, Split at Playhead, Consolidate and Delete. One drag is one
+/// undo step, and so is each of those.
 /// Reads no playhead, so nothing here rebuilds while the song plays.
 struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
@@ -243,6 +244,8 @@ private struct ArrangeLane: View {
 /// one move command when it lifts.
 private struct PlacementBlock: View {
     @Environment(ProjectStore.self) private var store
+    /// Only for the playhead at the moment Split is chosen — never read in `body`.
+    @Environment(AudioEngine.self) private var engine
     let track: Track
     let placement: Placement
     let clip: Clip
@@ -259,9 +262,14 @@ private struct PlacementBlock: View {
     private var lengthBars: Int { Int((clip.length + ticksPerBar - 1) / Swift.max(1, ticksPerBar)) }
 
     var body: some View {
+        accessible(block.contextMenu { menu })
+    }
+
+    /// The block itself: shape, name, size, position and the move drag.
+    private var block: some View {
         let color = Theme.Color.track(track.colorIndex)
         let width = Swift.max(8, CGFloat(Double(clip.length) / ticksPerPoint))
-        RoundedRectangle(cornerRadius: Theme.Radius.small)
+        return RoundedRectangle(cornerRadius: Theme.Radius.small)
             .fill(color.opacity(0.35))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.small).stroke(color, lineWidth: 1)
@@ -288,11 +296,21 @@ private struct PlacementBlock: View {
                         }
                     }
             )
-            .contextMenu {
-                Button("Edit Notes", systemImage: "pianokeys") { open(track.id, clip.id) }
-                Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
-                Button("Delete", systemImage: "trash", role: .destructive) { remove() }
-            }
+    }
+
+    /// The hold menu, apart from the block so each expression stays small enough to type-check.
+    @ViewBuilder private var menu: some View {
+        Button("Edit Notes", systemImage: "pianokeys") { open(track.id, clip.id) }
+        Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
+        Button("Split at Playhead", systemImage: "scissors") { splitAtPlayhead() }
+        if Arranging.consolidated(placement, in: track) != nil {
+            Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
+        }
+        Button("Delete", systemImage: "trash", role: .destructive) { remove() }
+    }
+
+    private func accessible(_ view: some View) -> some View {
+        view
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(clip.name), bar \(startBar), \(lengthBars) bars")
             .accessibilityAddTraits(.isButton)
@@ -301,6 +319,8 @@ private struct PlacementBlock: View {
             .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
             .accessibilityAction(named: "Duplicate") { duplicate() }
+            .accessibilityAction(named: "Split at Playhead") { splitAtPlayhead() }
+            .accessibilityAction(named: "Consolidate") { consolidate() }
             .accessibilityAction(named: "Delete") { remove() }
     }
 
@@ -314,13 +334,25 @@ private struct PlacementBlock: View {
         if let command = Arranging.duplicated(placement, in: track) { try? store.perform(command) }
     }
 
+    /// Cuts where the playhead stands now; nothing happens when it is outside the clip.
+    private func splitAtPlayhead() {
+        let tick = engine.playheadTick(in: store.project)
+        if let command = Arranging.split(placement, in: track, at: tick) { try? store.perform(command) }
+    }
+
+    /// Joins the clip with the placements touching or overlapping it into one clip.
+    private func consolidate() {
+        if let command = Arranging.consolidated(placement, in: track) { try? store.perform(command) }
+    }
+
     private func remove() {
         try? store.perform(.removePlacement(track: track.id, placement.id))
     }
 }
 
 /// A placed audio region: the file's name over its length. Drag moves it by whole bars, one
-/// undo step on release; drag an edge to trim it to the beat; hold for Delete.
+/// undo step on release; drag an edge to trim it to the beat; hold for Duplicate, Split at
+/// Playhead Bar, Consolidate (pieces of one file only) and Delete.
 private struct RegionBlock: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -341,11 +373,21 @@ private struct RegionBlock: View {
     private var ticksPerPoint: Double { Double(ticksPerBar) / Double(pointsPerBar) }
     private var startBar: Int { Int(region.start / Swift.max(1, ticksPerBar)) + 1 }
     private var seconds: Double { file.sampleRate > 0 ? Double(region.length) / file.sampleRate : 0 }
+    private var spokenLabel: String {
+        let kind = file.kind == .video ? "video" : "audio"
+        let time = seconds.formatted(.number.precision(.fractionLength(1)))
+        return "\(file.name), \(kind), bar \(startBar), \(time) seconds"
+    }
 
     var body: some View {
+        accessible(block.contextMenu { menu })
+    }
+
+    /// The block itself: shape, name, size, position and the move drag.
+    private var block: some View {
         let color = Theme.Color.track(track.colorIndex)
         let width = Swift.max(8, CGFloat(Double(length) / ticksPerPoint) - trimLeft + trimRight)
-        RoundedRectangle(cornerRadius: Theme.Radius.small)
+        return RoundedRectangle(cornerRadius: Theme.Radius.small)
             .fill(color.opacity(0.25))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.small).stroke(color, lineWidth: 1)
@@ -373,16 +415,28 @@ private struct RegionBlock: View {
                         }
                     }
             )
-            .contextMenu {
-                Button("Split at Playhead Bar", systemImage: "scissors") { split() }
-                Button("Delete", systemImage: "trash", role: .destructive) { remove() }
-            }
+    }
+
+    /// The hold menu, apart from the block so each expression stays small enough to type-check.
+    @ViewBuilder private var menu: some View {
+        Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
+        Button("Split at Playhead Bar", systemImage: "scissors") { split() }
+        if Arranging.consolidated(region, in: track, project: store.project) != nil {
+            Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
+        }
+        Button("Delete", systemImage: "trash", role: .destructive) { remove() }
+    }
+
+    private func accessible(_ view: some View) -> some View {
+        view
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(file.name), \(file.kind == .video ? "video" : "audio"), bar \(startBar), \(seconds.formatted(.number.precision(.fractionLength(1)))) seconds")
+            .accessibilityLabel(spokenLabel)
             .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
-            .accessibilityAction(named: "Delete") { remove() }
+            .accessibilityAction(named: "Duplicate") { duplicate() }
             .accessibilityAction(named: "Split at Playhead Bar") { split() }
+            .accessibilityAction(named: "Consolidate") { consolidate() }
+            .accessibilityAction(named: "Delete") { remove() }
             .accessibilityAction(named: "Trim Start One Beat Later") { trim(.start, beats: 1) }
             .accessibilityAction(named: "Trim End One Beat Earlier") { trim(.end, beats: -1) }
             .accessibilityAction(named: "Extend End One Beat") { trim(.end, beats: 1) }
@@ -435,5 +489,15 @@ private struct RegionBlock: View {
         let project = store.project
         let at = Arranging.nearestBar(engine.playheadTick(in: project), signature: project.timeSignature)
         try? store.perform(.splitRegion(track: track.id, region.id, at: at, newID: RegionID()))
+    }
+
+    private func duplicate() {
+        guard let commands = Arranging.duplicated(region, in: track, project: store.project) else { return }
+        try? store.perform(commands, title: "Duplicate Region")
+    }
+
+    /// Joins the region with the pieces of the same file it continues — only when no bounce is needed.
+    private func consolidate() {
+        if let command = Arranging.consolidated(region, in: track, project: store.project) { try? store.perform(command) }
     }
 }

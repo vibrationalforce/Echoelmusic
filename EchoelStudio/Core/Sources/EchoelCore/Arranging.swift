@@ -146,6 +146,64 @@ public enum Arranging {
         guard let stop = Self.end(of: placement, in: track), stop <= MusicalTime.maximumTick else { return nil }
         return .placeClip(track: track.id, id: PlacementID(), clip: placement.clip, start: stop)
     }
+
+    /// A copy of an audio or video region straight after it: the same stretch of the same file, no
+    /// media copied. One undo step of two commands, as placing shows the whole file before the trim.
+    public static func duplicated(_ region: AudioRegion, in track: Track, project: Project) -> [Command]? {
+        guard let stop = Self.end(of: region, in: project), stop <= MusicalTime.maximumTick else { return nil }
+        let copy = RegionID()
+        let place: Command
+        switch track.kind {
+        case .audio: place = .placeAudio(track: track.id, id: copy, media: region.media, start: stop)
+        case .video: place = .placeVideo(track: track.id, id: copy, media: region.media, start: stop)
+        default: return nil
+        }
+        return [place, .trimRegion(track: track.id, copy, offset: region.offset, length: region.length)]
+    }
+
+    /// The command that cuts the placement at `tick` — the playhead, read when the musician asks.
+    /// Nil when the tick is not strictly inside it.
+    public static func split(_ placement: Placement, in track: Track, at tick: Tick) -> Command? {
+        guard let stop = Self.end(of: placement, in: track), tick > placement.start, tick < stop else { return nil }
+        return .splitPlacement(track: track.id, placement.id, at: tick, head: ClipID(), tail: ClipID(), placement: PlacementID())
+    }
+
+    /// The command that joins the placement with every placement touching or overlapping it, and
+    /// theirs in turn — the run it sits in. Nil when it stands alone.
+    public static func consolidated(_ placement: Placement, in track: Track) -> Command? {
+        let spans: [(PlacementID, Tick, Tick)] = track.placements.compactMap { p in Self.end(of: p, in: track).map { (p.id, p.start, $0) } }
+        let run = Self.run(containing: placement.id, spans: spans, slack: 0)
+        guard run.count >= 2 else { return nil }
+        return .consolidatePlacements(track: track.id, run, clip: ClipID())
+    }
+
+    /// The command that joins the audio region with the pieces it continues or that continue it —
+    /// only when that needs no render (`Project.joinedWithoutRendering`). Nil otherwise.
+    public static func consolidated(_ region: AudioRegion, in track: Track, project: Project) -> Command? {
+        let spans: [(RegionID, Tick, Tick)] = track.regions.compactMap { r in Self.end(of: r, in: project).map { (r.id, r.start, $0) } }
+        // A split's end can round a tick short of where the next piece starts.
+        let run = Self.run(containing: region.id, spans: spans, slack: 1)
+        let pieces = track.regions.filter { run.contains($0.id) }
+        guard run.count >= 2, project.joinedWithoutRendering(pieces) != nil else { return nil }
+        return .consolidateRegions(track: track.id, run)
+    }
+
+    /// The ids of the spans connected to `id` by touching or overlapping (within `slack` ticks), in
+    /// order of start.
+    static func run<ID: Equatable>(containing id: ID, spans: [(ID, Tick, Tick)], slack: Tick) -> [ID] {
+        var group: [ID] = []
+        var reach: Tick = .min
+        for (spanID, start, stop) in spans.sorted(by: { $0.1 < $1.1 }) {
+            if group.isEmpty || start > reach + slack {
+                if group.contains(id) { return group }
+                group = []
+                reach = stop
+            }
+            group.append(spanID)
+            reach = Swift.max(reach, stop)
+        }
+        return group.contains(id) ? group : []
+    }
 }
 
 extension Project {
