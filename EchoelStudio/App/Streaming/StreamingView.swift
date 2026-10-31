@@ -177,6 +177,8 @@ struct StreamLiveReadout: View {
         }
     }
 
+    /// Hours, minutes, seconds on air ("1:02:03"). A clock reading, not a quantity: its digits and
+    /// colons read the same in every locale, so it is not a NumberText value.
     static func duration(_ seconds: TimeInterval) -> String {
         let total = Int(Swift.max(0, seconds))
         return String(format: "%d:%02d:%02d", total / 3_600, total / 60 % 60, total % 60)
@@ -204,13 +206,13 @@ struct StreamTargetEditor: View {
             EchoelSection(target.platform.title, footer: target.platform.whereToFind) {
                 TextField("Name", text: $target.name)
                     .echoelInput()
-                    .accessibilityLabel("Destination name")
+                    .accessibilityLabel("Destination Name")
                 TextField(target.platform.defaultServer ?? "rtmp://server/app", text: $target.server)
                     .echoelInput()
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.URL)
-                    .accessibilityLabel("Server address")
+                    .accessibilityLabel("Server Address")
             }
             keySection
             shapeSection
@@ -232,7 +234,9 @@ struct StreamTargetEditor: View {
                       footer: target.platform.needsKey ? "Kept in this device's keychain only." : "Optional: the server address may carry everything.") {
             SecureField(hasKey ? "Stored, type to replace" : "Stream key", text: $key)
                 .echoelInput()
-                .accessibilityLabel(hasKey ? "Stream key, stored. Type to replace it" : "Stream key")
+                .accessibilityLabel("Stream Key")
+                .accessibilityValue(hasKey ? "Stored" : "None")
+                .accessibilityHint(hasKey ? "Type a new key to replace the stored one." : "Type the key the platform gave you.")
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .onSubmit(storeKey)
@@ -294,10 +298,13 @@ struct StreamLiveBadge: View {
     var body: some View {
         Button(action: open) {
             HStack(spacing: Theme.Space.xs) {
+                // A status dot, not a control: 8 pt, like the Connections status line (no size
+                // token yet; the badge's touch target is the whole button).
                 Circle().fill(Theme.Color.record).frame(width: 8, height: 8)
+                    .accessibilityHidden(true)
                 if let started = streaming.startedAt {
                     TimelineView(.periodic(from: started, by: 1)) { context in
-                        Text("LIVE " + StreamLiveReadout.duration(context.date.timeIntervalSince(started)))
+                        Text("Live " + StreamLiveReadout.duration(context.date.timeIntervalSince(started)))
                     }
                 } else {
                     Text("Connecting")
@@ -307,10 +314,12 @@ struct StreamLiveBadge: View {
             .foregroundStyle(Theme.Color.text)
             .padding(.horizontal, Theme.Space.s)
             .padding(.vertical, Theme.Space.xs)
+            .frame(minHeight: Theme.Size.touch)
             .background(RoundedRectangle(cornerRadius: Theme.Radius.medium).fill(Theme.Color.surfaceRaised))
             .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.border, lineWidth: 1))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Live stream on air. Open the streaming page.")
+        .accessibilityLabel("Live Stream On Air")
+        .accessibilityHint("Opens the Go Live page.")
     }
 }
