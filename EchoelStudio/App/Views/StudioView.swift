@@ -35,18 +35,6 @@ struct StudioView: View {
             VStack(spacing: 0) {
                 TransportBar()
                 Divider().overlay(Theme.Color.border)
-                Picker("View", selection: $surface) {
-                    Text("Tracks").tag(Surface.tracks)
-                    Text("Arrange").tag(Surface.arrange)
-                    Text("Session").tag(Surface.session)
-                    Text("Mixer").tag(Surface.mixer)
-                    Text("Field").tag(Surface.field)
-                    Text("Sky").tag(Surface.sky)
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, Theme.Space.m)
-                .padding(.vertical, Theme.Space.s)
-                .background(Theme.Color.surface)
                 ZStack(alignment: .bottomTrailing) {
                     surfaceView
                     if showsVideoWindow, hasVideo, !fieldFullscreen {
@@ -73,7 +61,12 @@ struct StudioView: View {
                     Divider().overlay(Theme.Color.border)
                     PlayKeysView()
                 }
+                // The earlier instrument's chip bar at the bottom: one chip per view, in thumb reach.
+                SurfaceBar(selection: $surface)
             }
+            // A typed value (the tempo, a mixer strip) opens Echoel's number pad at the bottom
+            // edge — a layer, not a presentation, so the sheet slot stays one (Law 7).
+            .numberPadHost()
             if fieldFullscreen {
                 FieldFullscreen(close: { closeFieldFullscreen() })
                     .transition(.opacity)
@@ -446,6 +439,7 @@ struct RecordButton: View {
 struct TempoField: View {
     @Environment(ProjectStore.self) private var store
     @Environment(MIDIInput.self) private var midi
+    @Environment(NumberPadController.self) private var pad: NumberPadController?
     @State private var dragStart: Double?
     @State private var taps = TapTempo()
     @ScaledMetric(relativeTo: .title2) private var valueWidth: CGFloat = 72
@@ -464,7 +458,7 @@ struct TempoField: View {
             VStack(spacing: 0) {
                 Text(shownTempo, format: .number.precision(.fractionLength(1)))
                     .font(Theme.Font.valueLarge)
-                    .foregroundStyle(Theme.Color.text)
+                    .foregroundStyle(isTyped ? Theme.Color.accent : Theme.Color.text)
                 // EXT: an external MIDI clock sets the tempo.
                 Text(midi.followedSource == nil ? "BPM" : "EXT")
                     .font(Theme.Font.caption)
@@ -486,12 +480,14 @@ struct TempoField: View {
                         store.endGesture()
                     }
             )
+            .onTapGesture(perform: typeTempo)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Tempo")
             .accessibilityValue("\(Int(shownTempo.rounded())) BPM")
             .accessibilityAdjustableAction { direction in
                 nudge(direction == .increment ? 1 : -1)
             }
+            .accessibilityAction(named: "Type a tempo", typeTempo)
 
             Button { nudge(1) } label: { Image(systemName: "plus") }
                 .buttonStyle(ToolButtonStyle())
@@ -506,6 +502,23 @@ struct TempoField: View {
     }
 
     private var followsClock: Bool { midi.followedSource != nil }
+
+    private static let padOwner = "project.tempo"
+
+    private var isTyped: Bool { pad?.request?.owner == Self.padOwner }
+
+    /// The tempo on Echoel's number pad, in BPM to a tenth; one undo step. Not while an external
+    /// clock sets the pace.
+    private func typeTempo() {
+        guard !followsClock, let pad else { return }
+        let standard = store.project.descriptor(for: .tempo)?.defaultValue
+        pad.open(NumberPadRequest(owner: Self.padOwner, title: "Tempo",
+                                  format: NumberEntryFormat(scale: 1, decimals: 1, unit: "BPM"),
+                                  range: Tempo.range, value: store.project.tempo, standard: standard) { bpm in
+            set(bpm)
+            store.endGesture()
+        })
+    }
 
     /// While a clock is followed it sets the pace; the song's own tempo waits underneath, unchanged.
     private var shownTempo: Double {
@@ -783,5 +796,44 @@ struct SongMenu: View {
 
     static func offsetTitle(_ milliseconds: Double) -> String {
         milliseconds == 0 ? "None" : String(format: "%+.0f ms", milliseconds)
+    }
+}
+
+/// The views of the studio as a row of chips — the earlier instrument's bottom bar: the chosen
+/// one filled with the accent, the others raised with a hairline. It scrolls sideways when the
+/// text is large rather than squeezing six names into a segmented control.
+private struct SurfaceBar: View {
+    @Binding var selection: StudioView.Surface
+
+    private static var items: [(surface: StudioView.Surface, title: String)] {
+        [(.tracks, "Tracks"), (.arrange, "Arrange"), (.session, "Session"),
+         (.mixer, "Mixer"), (.field, "Field"), (.sky, "Sky")]
+    }
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Theme.Space.s) {
+                ForEach(Self.items, id: \.surface) { item in
+                    chip(item.surface, item.title)
+                }
+            }
+            .padding(.horizontal, Theme.Space.m)
+            .padding(.vertical, Theme.Space.s)
+        }
+        .background(Theme.Color.surface)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Theme.Color.border).frame(height: 1)
+        }
+        .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("View")
+    }
+
+    private func chip(_ surface: StudioView.Surface, _ title: String) -> some View {
+        let chosen = selection == surface
+        return Button(title) { selection = surface }
+            .buttonStyle(ToolButtonStyle(isActive: chosen))
+            .animation(Theme.Motion.quick, value: chosen)
+            .accessibilityAddTraits(chosen ? .isSelected : [])
     }
 }
