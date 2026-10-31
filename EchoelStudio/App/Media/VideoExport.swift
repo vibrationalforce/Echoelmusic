@@ -256,9 +256,10 @@ enum VideoExport {
         }
     }
 
-    /// The transform that turns a source picture upright and places it in `frame`.
-    private static func placement(natural: CGSize, transform: CGAffineTransform, in frame: CGSize,
-                                  fit: VideoExportPlan.Fit) -> CGAffineTransform {
+    /// The transform that turns a source picture upright and places it in `frame` — the export's,
+    /// and the video window's when it draws the Field layer itself (W15), so both place alike.
+    static func placement(natural: CGSize, transform: CGAffineTransform, in frame: CGSize,
+                          fit: VideoExportPlan.Fit) -> CGAffineTransform {
         let upright = CGRect(origin: .zero, size: natural).applying(transform)
         guard let place = VideoExportPlan.placement(sourceWidth: abs(upright.width), sourceHeight: abs(upright.height),
                                                     targetWidth: frame.width, targetHeight: frame.height, fit: fit) else {

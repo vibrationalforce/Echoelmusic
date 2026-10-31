@@ -19,6 +19,21 @@ final class VideoMonitor {
     private var loaded: (media: MediaID, url: URL)?
     private var seeking = false
 
+    /// Hands the loaded file's frames to a picture the app draws itself — the Field layer's preview
+    /// (W15) — while true. Off, nothing is decoded beyond what the player's own layer shows.
+    var deliversFrames = false {
+        didSet {
+            guard deliversFrames != oldValue else { return }
+            detachOutput()
+            if let item = player.currentItem { attachOutput(to: item) }
+        }
+    }
+    /// The frames of the loaded file while `deliversFrames` is on.
+    private(set) var output: AVPlayerItemVideoOutput?
+    /// How the loaded file stands — its own orientation, which a frame of it does not carry — so a
+    /// picture drawn from its frames turns them upright as the player's layer does.
+    private(set) var orientation: CGAffineTransform = .identity
+
     init() {
         player.isMuted = true
         player.automaticallyWaitsToMinimizeStalling = false
@@ -41,6 +56,7 @@ final class VideoMonitor {
         loop?.cancel()
         loop = nil
         player.pause()
+        detachOutput()
         player.replaceCurrentItem(with: nil)
         loaded = nil
         seeking = false
@@ -61,7 +77,11 @@ final class VideoMonitor {
         }
         if loaded?.media != shot.media || loaded?.url != url {
             loaded = (shot.media, url)
-            player.replaceCurrentItem(with: AVPlayerItem(url: url))
+            detachOutput()
+            let item = AVPlayerItem(url: url)
+            attachOutput(to: item)
+            player.replaceCurrentItem(with: item)
+            loadOrientation(of: url)
             seek(to: shot.fileSeconds, playing: playing)
             return
         }
@@ -99,7 +119,44 @@ final class VideoMonitor {
         loaded = nil
         seeking = false
         player.pause()
+        detachOutput()
         player.replaceCurrentItem(with: nil)
+    }
+
+    // MARK: - Frames for the Field layer's preview (W15)
+
+    private static var frameAttributes: [String: any Sendable] {
+        [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+         kCVPixelBufferMetalCompatibilityKey as String: true]
+    }
+
+    private func attachOutput(to item: AVPlayerItem) {
+        guard deliversFrames else { return }
+        let made = AVPlayerItemVideoOutput(pixelBufferAttributes: Self.frameAttributes)
+        item.add(made)
+        output = made
+    }
+
+    private func detachOutput() {
+        if let output, let item = player.currentItem, item.outputs.contains(output) { item.remove(output) }
+        output = nil
+    }
+
+    /// Reads the file's orientation off the main thread; a file loaded meanwhile keeps its own.
+    private func loadOrientation(of url: URL) {
+        orientation = .identity
+        Task { @MainActor [weak self] in
+            let transform = await VideoMonitor.preferredTransform(of: url)
+            guard let self, self.loaded?.url == url else { return }
+            self.orientation = transform
+        }
+    }
+
+    nonisolated private static func preferredTransform(of url: URL) async -> CGAffineTransform {
+        let asset = AVURLAsset(url: url)
+        guard let track = try? await asset.loadTracks(withMediaType: .video).first,
+              let transform = try? await track.load(.preferredTransform) else { return .identity }
+        return transform
     }
 }
 
@@ -128,6 +185,8 @@ struct PlayerPicture: UIViewRepresentable {
 
 /// The song's video as a small window over the views, while the song has a video track. Its own
 /// leaf: the monitor's loop runs only while it is on screen, and nothing above reads the clock.
+/// With the export's Field Layer on (W15), the window draws the Field over the picture the way the
+/// export will (`FieldLayerPicture`); the setting is read cold, the moving parts in the draw loop.
 struct VideoWindow: View {
     /// Whether the window shows; kept on this device, never in the song.
     nonisolated static let shownKey = "video.window.shown"
@@ -137,14 +196,18 @@ struct VideoWindow: View {
     @Environment(AudioEngine.self) private var engine
     @Environment(DocumentController.self) private var documents
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var monitor = VideoMonitor()
+    @AppStorage(VideoExportView.fieldBlendKey) private var fieldBlend = FieldLayer.Blend.off
+    @AppStorage(VideoExportView.fieldOpacityKey) private var fieldOpacity = FieldLayer().opacityPercent
 
     var body: some View {
         VStack(spacing: 0) {
-            PlayerPicture(player: monitor.player)
+            picture
                 .frame(width: width, height: width * 9 / 16)
                 .allowsHitTesting(false)
-                .accessibilityLabel("Video")
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(layer.isVisible ? "Video with the Field" : "Video")
             Divider().overlay(Theme.Color.border)
             HStack(spacing: 0) {
                 Image(systemName: "film")
@@ -164,9 +227,28 @@ struct VideoWindow: View {
         .frame(width: width)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.large))
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.large).stroke(Theme.Color.border, lineWidth: 1))
-        .onAppear { monitor.start(store: store, engine: engine, documents: documents) }
+        .onAppear {
+            monitor.deliversFrames = layer.isVisible
+            monitor.start(store: store, engine: engine, documents: documents)
+        }
         .onDisappear { monitor.stop() }
+        .onChange(of: layer.isVisible) { _, visible in monitor.deliversFrames = visible }
     }
+
+    /// The player's own picture, and over it — while the layer shows — the picture with the Field,
+    /// drawn by the export's pass. Should that pass not build, it stands aside and the plain
+    /// picture shows.
+    private var picture: some View {
+        ZStack {
+            PlayerPicture(player: monitor.player)
+            if layer.isVisible {
+                FieldLayerPicture(monitor: monitor, layer: layer, reduceMotion: reduceMotion)
+            }
+        }
+    }
+
+    /// The export's layer, as the export takes it.
+    private var layer: FieldLayer { FieldLayer.stored(blend: fieldBlend, percent: fieldOpacity) }
 
     private var width: CGFloat { horizontalSizeClass == .regular ? 240 : 160 }
 }
