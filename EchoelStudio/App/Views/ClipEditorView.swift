@@ -7,6 +7,7 @@ struct ClipEditorView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
     @Environment(RecordController.self) private var recording
+    @Environment(JamSession.self) private var jam: JamSession?
     @Environment(\.dismiss) private var dismiss
     let trackID: TrackID
     /// The clip to edit; nil edits the track's first clip.
@@ -21,6 +22,22 @@ struct ClipEditorView: View {
     private func editedClip(_ track: Track) -> Clip? {
         if let clipID, let index = track.clipIndex(clipID) { return track.clips[index] }
         return track.clips.first
+    }
+
+    /// The jam's host pressed Play and waits for the next bar line: Stop calls the start off.
+    private var countsIn: Bool { jam?.startIsPending == true }
+
+    /// Play and Stop as at the transport: with phones in a jam this phone hosts, Play waits for
+    /// the jam's next bar line, so everyone starts together.
+    private func playOrStop() {
+        if countsIn {
+            jam?.cancelPendingStart()
+        } else if engine.isPlaying {
+            // A running take ends with the song, as at the transport's Stop.
+            Task { await recording.stopTransport() }
+        } else if jam?.playOnTheNextBar() != true {
+            engine.play()
+        }
     }
 
     var body: some View {
@@ -47,16 +64,12 @@ struct ClipEditorView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        if engine.isPlaying {
-                            // A running take ends with the song, as at the transport's Stop.
-                            Task { await recording.stopTransport() }
-                        } else {
-                            engine.play()
-                        }
+                        playOrStop()
                     } label: {
-                        Image(systemName: engine.isPlaying ? "stop.fill" : "play.fill")
+                        Image(systemName: engine.isPlaying || countsIn ? "stop.fill" : "play.fill")
                     }
-                    .accessibilityLabel(engine.isPlaying ? "Stop" : "Play")
+                    .accessibilityLabel(engine.isPlaying || countsIn ? "Stop" : "Play")
+                    .accessibilityValue(countsIn ? "Starts on the next bar" : "")
                     .disabled(!engine.isRunning)
                 }
                 ToolbarItem(placement: .principal) {
