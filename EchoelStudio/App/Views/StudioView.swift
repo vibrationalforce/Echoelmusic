@@ -8,8 +8,12 @@ struct StudioView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
     @Environment(DocumentController.self) private var documents
+    @Environment(HeartRateStrap.self) private var strap
 
     @State private var router = StudioRouter()
+    /// The Connections module (wave W4), owned here so a connection keeps sending while its
+    /// panel is closed; every connection is off until switched on in the panel.
+    @State private var connections = ConnectionsController()
     @State private var surface: Surface = .tracks
     /// The keys and pads under the surface; on by default so the phone alone makes sound.
     @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
@@ -88,6 +92,7 @@ struct StudioView: View {
             case .about: AboutView()
             case .renameSong: RenameSongView()
             case .streaming: StreamingView()
+            case .connections: ConnectionsView()
             case let .importAudio(track, start):
                 AudioFilePicker(pick: { url in
                     router.sheet = nil
@@ -121,10 +126,12 @@ struct StudioView: View {
         }
         .environment(router)
         .environment(streaming)
+        .environment(connections)
         .background(Theme.Color.background)
         .onAppear {
             engine.setSamples(documents.samples)
             engine.update(store.project)
+            connections.attach(engine: engine, store: store, strap: strap)
         }
         .onChange(of: store.project) { _, project in engine.update(project) }
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
@@ -601,6 +608,8 @@ struct SongMenu: View {
             Toggle(isOn: Binding(get: { midi.networkEnabled }, set: { midi.setNetwork($0) })) {
                 Label("Network MIDI", systemImage: "network")
             }
+            // OSC, ADM-OSC, Art-Net and sACN out (wave W4): every one off until switched on there.
+            Button("Connections…", systemImage: "antenna.radiowaves.left.and.right") { router.sheet = .connections }
             // The body as a source (wave W1): off until chosen here — the chest strap or the rear
             // camera, one at a time; only then does iOS ask for Bluetooth or the camera. The pulse
             // shows beside Record while it is measured.

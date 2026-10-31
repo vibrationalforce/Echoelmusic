@@ -102,7 +102,7 @@ targets:
         # it comes from the small Info.plist below and the two are merged. So do the song type
         # (com.echoelmusic.song, a package: Files shows a song as one file) and the document type
         # that opens a tapped song in the app (E4).
-        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Echoel sends and receives MIDI over your local network when you turn on Network MIDI."
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Echoel sends and receives MIDI over your local network when you turn on Network MIDI, and sends OSC, ADM-OSC, Art-Net or sACN to the devices you enter when you switch a connection on."
         INFOPLIST_FILE: Support/Info.plist
         INFOPLIST_KEY_UIFileSharingEnabled: YES
         INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES

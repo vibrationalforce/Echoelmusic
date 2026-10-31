@@ -37,6 +37,8 @@ enum StudioSheet: Identifiable, Hashable {
     case exportVideo
     /// The live stream: destinations, Go Live and Stop (wave W14).
     case streaming
+    /// OSC, ADM-OSC, Art-Net and sACN out, each off until switched on here (wave W4).
+    case connections
 
     var id: Self { self }
 }
