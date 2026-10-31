@@ -125,4 +125,21 @@ final class OwnPluginTests: XCTestCase {
         }
         XCTAssertTrue(OwnPlugin.all.contains(OwnPlugin.effects))
     }
+
+    /// A host lists a unit as "manufacturer: name", so the name never repeats the maker
+    /// ("Echoel: Synth", never "Echoel: Echoel Synth"), and an effect is named by its title.
+    func testAHostShowsTheMakerOnceAndTheUnitByItsOwnName() {
+        let registered = OwnPlugin.all.map(\.component) + [OwnPlugin.legacyBodyVibe.component]
+            + StandardEffect.allCases.map(\.extensionComponent)
+        for component in registered {
+            XCTAssertEqual(component.manufacturerName, "Echoel")
+            XCTAssertFalse(component.name.hasPrefix("Echoel"), "\(component.name) repeats the maker")
+            XCTAssertFalse(component.name.isEmpty)
+        }
+        XCTAssertEqual(OwnPlugin.synth.component.name, "Synth")
+        XCTAssertEqual(OwnPlugin.legacyBodyVibe.component.name, OwnPlugin.synth.component.name)
+        for effect in StandardEffect.allCases {
+            XCTAssertEqual(effect.extensionComponent.name, effect.title)
+        }
+    }
 }
