@@ -14,6 +14,29 @@ git ls-files 'docs/*.html' 'docs/**/*.html' …    → 24 pages, 395,873 B
 
 ---
 
+## 0. One identity with the app (2026-10-31, CI-OUT)
+
+**Names.** The brand is **Echoel**; the app TestFlight carries is **Echoel Studio**; the project,
+the repository and the domain are **Echoelmusic**. Page chrome follows that: the nav mark reads
+"Echoel", every `<title>` ends "— Echoel", the footer says "© 2026 Echoel · Echoel Studio in
+TestFlight". `Echoelmusic` stays where it IS the thing: the domain, the repo, OSC addresses
+(`/echoelmusic/…`), the sACN/MIDI source names of the earlier app, and sentences about the earlier
+app (10.79), whose App Store record is still named Echoelmusic. Measure, do not recite:
+`grep -o 'Echoelmusic' docs/*.html | wc -l`.
+
+**Look.** `shared.css` `:root` (and its inline twin in `index.html`, §6) is
+`EchoelStudio/App/Design/Theme.swift` written as CSS: `--surface`, `--surface-raised`,
+`--border` (10 %), `--border-strong` (45 %), `--dim` = `textSecondary` (65 %), one `--accent`
+(bio-green) used only for the current page in the nav, radii `--radius-s/m/l` = 4/8/12, motion
+120/180 ms as opacity and colour. No hover lifts, glows, blur or slide-in motion. A new rule takes
+a token, not a literal.
+
+**Cache.** `shared.js` carries its own `var V=`, and it must equal `version.json` like every
+inline guardian does: when it read 10.11.0 against 10.24.0, `checkVersion()` cleared the caches
+and reloaded every open sub-page about once a minute. Move all of them together (§4).
+
+---
+
 ## 1. Two halves in one directory
 
 **The artist page is one file and has no media.** `artist.html` — 204 lines, 15,730 B — is
