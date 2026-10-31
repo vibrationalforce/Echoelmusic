@@ -110,7 +110,7 @@ private struct ReceiverFields: View {
                 .focused($editingHost)
                 .submitLabel(.done)
                 .onSubmit { commitHost() }
-                .accessibilityLabel("\(kind.title) receiver address")
+                .accessibilityLabel("\(kind.title) Receiver Address")
         }
         .onAppear { host = connections.target(kind).host }
         .onChange(of: editingHost) { was, now in if was, !now { commitHost() } }
@@ -140,6 +140,8 @@ struct ConnectionActivityLine: View {
         HStack(spacing: Theme.Space.xs) {
             Circle()
                 .fill(Self.colour(for: activity?.state))
+                // A status dot beside its words (the words carry the state, the colour repeats it);
+                // 8 pt like the live badge's, no size token yet.
                 .frame(width: 8, height: 8)
                 .accessibilityHidden(true)
             Text(Self.text(for: activity))
@@ -149,7 +151,7 @@ struct ConnectionActivityLine: View {
                 .lineLimit(2)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(kind.title) status")
+        .accessibilityLabel("\(kind.title) Status")
         .accessibilityValue(Self.text(for: activity))
     }
 
