@@ -5730,3 +5730,10 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Rules that hold:** generiert wird nur auf Anfrage (NEUPLANUNG §0); nach außen nie „Superintelligenz“; keine Gesundheitsbehauptung; Gesicht nur als Modulationsquelle, nichts verlässt das Gerät.
 - **Review:** 2026-11-24.
 
+
+### 2026-10-31 — Öffentliche Oberfläche bereinigt (Founder-Delegation „Du entscheidest und prüfst alles")
+
+- **Anlass:** Groks Übergabe `reports/entscheidungen-infrastruktur-2026-10-30` (E1–E26), von Claude gegen das Repo geprüft. Zwei Angaben darin waren falsch: `docs/tools.html` Z. 168 und `docs/brainstorming.html` Z. 135 tragen kein „meditative“; der Branch `u5jjpd` setzt LR2 nicht um (er ändert `LICENSE` nicht).
+- **Entschieden (Claude, delegiert):** E12 LICENSE reiner MIT-Text · E19 Outreach-Entwürfe nach `scratchpads/` mit Banner „nicht versenden“ · E20 Pages veröffentlicht nur die Website (`docs/FORMAT.md` bleibt öffentlich) · E21 Datenschutzseite nennt Gurt und Kamera-Puls, jede weitere Berechtigung im selben Merge wie ihre Funktion · E10 Tauchfliege in `memory/vision.md` als gestoppt markiert · Orchester-Merges grüner Team-Branches durch Claude.
+- **Offen beim Founder:** Marke/Name (Eeole/Eeolee, Recherche Mo 02.11.), Domains, Rechtsform, Repo privat (GM36), Förderung (Stopp 24.10. gilt; die privaten Kalender-/Mail-Entwürfe vom 29.10. sind pausiert, nicht gelöscht).
+- **Review:** 2026-11-30.

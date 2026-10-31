@@ -39,10 +39,25 @@ jobs:
       - name: "Setup Pages"
         uses: actions/configure-pages@v4
 
+      # Only the website is published (founder delegation 2026-10-31, E20). Working files
+      # that live under docs/ — plans, drafts, session rules, ADRs, research notes — stay in the
+      # repository but never reach echoelmusic.com. docs/FORMAT.md stays public on purpose: the
+      # song format is documented for everyone (EchoelStudio/CLAUDE.md).
+      - name: "Stage the website only"
+        run: |
+          rsync -a ./docs/ ./_site/ \
+            --exclude 'dev/' --exclude 'adr/' --exclude 'research/' \
+            --exclude 'CLAUDE.md' --exclude 'ECHOEL_SESSION_PROTOCOL.md' \
+            --exclude 'SPATIAL_EXPANSION_AUDIT.md'
+          for p in dev adr research CLAUDE.md ECHOEL_SESSION_PROTOCOL.md SPATIAL_EXPANSION_AUDIT.md; do
+            if [ -e "./_site/$p" ]; then echo "ERROR: $p would be published"; exit 1; fi
+          done
+          test -f ./_site/index.html && test -f ./_site/privacy.html
+
       - name: "Upload Artifact"
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './docs'
+          path: './_site'
 
   # ===========================================================================
   # DEPLOY

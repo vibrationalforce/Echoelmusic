@@ -1,3 +1,7 @@
+> ⛔ **ENTWÜRFE — NICHT VERSENDEN, NICHT VERÖFFENTLICHEN** (Entscheid 2026-10-31, Founder-Delegation „Du entscheidest und prüfst alles"; Bericht `reports/entscheidungen-infrastruktur-2026-10-30`, E19).
+> Lag bis 31.10. als `docs/dev/EXTERNAL_OUTREACH_AND_DECISIONS_2026-10-31.md` öffentlich auf echoelmusic.com.
+> Bekannte Fehler, vor jeder Verwendung zu beheben: (1) die Apple-/MFi-Pitches nennen HealthKit, OSC, Art-Net, sACN und „MPE" ohne Richtungswort — für Echoel Studio nicht belegt (`ContentPipeline/CLAIMS.md` Z. 13–16, Z. 370–375); neu nur aus dem Studio-Abschnitt schreiben. (2) Die DPMA- und BfN-Entwürfe führen „Eeole" als Dachmarke über Echoelmusic und nennen Mobilität — widerspricht der Markentrennung und den Stopps vom 22./24.10.; nicht senden, bevor Markenrecherche und Name entschieden sind.
+
 # External Outreach & Decisions — 2026-10-31
 
 **Purpose:** Structured materials for Claude to review and finalize decisions on Apple pitches, institutional emails, and rebranding.

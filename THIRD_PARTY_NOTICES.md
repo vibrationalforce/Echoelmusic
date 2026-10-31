@@ -57,7 +57,7 @@ _Last reviewed: 2026-09-12._
 ### External Swift packages — NONE currently ship
 - `Package.swift` `dependencies: []`; the Xcode app target `dependencies: []`
   (`project.yml`). No third-party libraries are linked into the shipping binary today.
-- **If RTMP/SRT streaming is enabled later via HaishinKit (MIT):** add HaishinKit's MIT
+- **If RTMP/SRT streaming is enabled later via HaishinKit (BSD-3-Clause):** add HaishinKit's BSD-3-Clause
   license + copyright here and to the in-app acknowledgments before shipping that build.
 
 ---
@@ -88,5 +88,5 @@ The Echoel source is MIT-licensed — see `LICENSE` (© 2024–2025 Echoelmusic)
       the same attention as one that understates it.
 - [ ] Add an in-app **Acknowledgments** screen surfacing this file (font OFL notice).
       Nice-to-have for OFL; standard for App Store apps.
-- [ ] Re-add HaishinKit's MIT notice here **if/when** streaming is enabled.
+- [ ] Re-add HaishinKit's BSD-3-Clause notice here **if/when** streaming is enabled.
 - [ ] Counsel review before release.
