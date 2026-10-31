@@ -59,7 +59,7 @@ extension StandardEffectPanel {
                     .strokeBorder(Theme.Color.borderStrong, lineWidth: 1))
         }
         .buttonStyle(.plain)
-        .accessibilityHint("Sets key, scale, tone system and concert A from the song")
+        .accessibilityHint("Sets key, scale, tone system and concert A from the song.")
     }
 
     private func useSongKey(_ context: MusicalContext) {
@@ -84,6 +84,7 @@ extension StandardEffectPanel {
 private struct ReductionMeter: View {
     @Environment(AudioEngine.self) private var engine
     let slot: PluginHost.Slot
+    @ScaledMetric(relativeTo: .caption) private var readoutWidth: CGFloat = 64
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1.0 / 15)) { _ in
@@ -103,10 +104,12 @@ private struct ReductionMeter: View {
                 Text(NumberText.string(Double(reduction), decimals: 1, unit: "dB"))
                     .font(Theme.Font.caption.monospacedDigit())
                     .foregroundStyle(Theme.Color.text)
-                    .frame(width: 64, alignment: .trailing)
+                    // Wide enough for "-24,0 dB" at any text size: a scaled minimum, not a fixed width.
+                    .frame(minWidth: readoutWidth, alignment: .trailing)
+                    .fixedSize()
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Gain reduction")
+            .accessibilityLabel("Gain Reduction")
             .accessibilityValue(NumberText.string(Double(reduction), decimals: 1, unit: "decibels"))
         }
     }

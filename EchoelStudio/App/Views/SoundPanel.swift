@@ -27,7 +27,8 @@ struct SoundPanel: View {
                 devicePicker
                 switch track.instrument.device {
                 case .drums:
-                    Text("General MIDI drum kit: Kick 36, Snare 38, Clap 39, Low Tom 45, Closed Hat 42, High Tom 50, Open Hat 46, Crash 49.")
+                    // The one wording of the kit map; the AUv3 drum page says the same (CI pass 2026-10-31).
+                    Text("General MIDI drum notes: Kick 36 · Snare 38 · Clap 39 · Closed Hat 42 · Open Hat 46 · Low Tom 45 · High Tom 50 · Crash 49.")
                         .font(Theme.Font.caption)
                         .foregroundStyle(Theme.Color.textSecondary)
                     deviceFields(.drums)
@@ -85,10 +86,10 @@ struct SoundPanel: View {
                 Button("\(component.displayName) — \(component.manufacturerName)") { choose(component) }
             }
         } label: {
-            Label("Audio Unit Instrument…", systemImage: "puzzlepiece.extension")
+            Label("Audio Unit Instrument", systemImage: "puzzlepiece.extension")
                 .font(Theme.Font.body)
         }
-        .accessibilityHint("Plays this track through an installed Audio Unit instrument")
+        .accessibilityHint("Plays this track through an installed Audio Unit instrument.")
     }
 
     /// The chosen plugin and the switch to it, as one undo step.
@@ -118,12 +119,12 @@ struct SoundPanel: View {
     @ViewBuilder private var samplerControls: some View {
         let loaded = track.instrument.sample.flatMap { store.project.mediaFile($0) }
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
-            Text(loaded?.name ?? "No sample loaded")
+            Text(loaded?.name ?? "No Sample")
                 .font(Theme.Font.body)
                 .foregroundStyle(loaded == nil ? Theme.Color.textSecondary : Theme.Color.text)
                 .lineLimit(2)
             if let loaded {
-                Text("\(loaded.duration, format: .number.precision(.fractionLength(2))) s · \(Int(loaded.sampleRate)) Hz")
+                Text(NumberText.string(loaded.duration, decimals: 2, unit: "s") + " · " + NumberText.string(loaded.sampleRate, decimals: 0, unit: "Hz"))
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
@@ -134,7 +135,7 @@ struct SoundPanel: View {
             Button {
                 isPickingFile = true
             } label: {
-                Label(documents.isImporting ? "Importing…" : "Import Audio File", systemImage: "square.and.arrow.down")
+                Label(documents.isImporting ? "Importing…" : "Import Audio File…", systemImage: "square.and.arrow.down")
                     .font(Theme.Font.label)
                     .frame(minHeight: Theme.Size.touch)
             }

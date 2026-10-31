@@ -100,12 +100,12 @@ struct EffectsView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityHint(selected == insert.id ? "Hides its interface" : "Shows its interface")
+            .accessibilityHint(selected == insert.id ? "Hides its interface." : "Shows its interface.")
             Button(insert.isBypassed ? "Off" : "On") {
                 perform(bypass: insert.id, !insert.isBypassed)
             }
             .buttonStyle(ToolButtonStyle(isActive: !insert.isBypassed, activeColor: Theme.Color.play))
-            .accessibilityLabel("\(insert.plugin.displayName) active")
+            .accessibilityLabel("\(insert.plugin.displayName) Active")
             .accessibilityValue(insert.isBypassed ? "Bypassed" : "On")
             Menu {
                 Button("Move Up", systemImage: "arrow.up") { perform(move: insert.id, to: index - 1) }
@@ -149,7 +149,7 @@ struct EffectsView: View {
                 }
             }
         } label: {
-            Label("Add Effect…", systemImage: "plus")
+            Label("Add Effect", systemImage: "plus")
                 .font(Theme.Font.body)
         }
         .disabled(count >= Insert.maximumPerTrack)
