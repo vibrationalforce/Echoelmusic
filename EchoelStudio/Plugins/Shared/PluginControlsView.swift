@@ -124,14 +124,16 @@ struct PluginControlsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: EchoelBrand.Space.m) {
                 Text(model.title)
-                    .font(.headline)
-                    .foregroundStyle(.white)
+                    .font(EchoelBrand.Font.title)
+                    .foregroundStyle(EchoelBrand.Color.text)
+                    .accessibilityAddTraits(.isHeader)
                 if !model.isUnlocked {
-                    Text("Demo: two seconds of silence every thirty, until \(model.title) is unlocked in the Echoel app. The unlock is not on sale yet.")
-                        .font(.caption)
-                        .foregroundStyle(Color(white: 0.6))
+                    Text("Demo: two seconds of silence every 30 seconds. Echoel Plugins in the Echoel app unlocks \(model.title) and shows whether it is on sale; reload it here after buying.")
+                        .font(EchoelBrand.Font.caption)
+                        .foregroundStyle(EchoelBrand.Color.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 if model.acceptsSamples { sampleRow }
                 ForEach(model.parameters, id: \.address) { parameter in
@@ -139,27 +141,39 @@ struct PluginControlsView: View {
                 }
                 if let help = model.help {
                     Text(help)
-                        .font(.caption)
-                        .foregroundStyle(Color(white: 0.6))
+                        .font(EchoelBrand.Font.caption)
+                        .foregroundStyle(EchoelBrand.Color.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(16)
+            .padding(EchoelBrand.Space.l)
         }
+        .background(EchoelBrand.Color.background)
+        .tint(EchoelBrand.Color.accent)
         .preferredColorScheme(.dark)
     }
 
     private var sampleRow: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(model.sampleName ?? "No sample").font(.subheadline).foregroundStyle(.white).lineLimit(1)
-                Spacer()
+        VStack(alignment: .leading, spacing: EchoelBrand.Space.xs) {
+            HStack(spacing: EchoelBrand.Space.s) {
+                Text(model.sampleName ?? "No Sample")
+                    .font(EchoelBrand.Font.label)
+                    .foregroundStyle(model.sampleName == nil ? EchoelBrand.Color.textSecondary : EchoelBrand.Color.text)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
                 if model.sampleName != nil {
                     Button("Clear") { model.clearSample() }
+                        .buttonStyle(PluginButtonStyle())
+                        .accessibilityLabel("Clear Sample")
                 }
-                Button("Load Sample") { importing = true }
+                Button("Load Sample…") { importing = true }
+                    .buttonStyle(PluginButtonStyle())
             }
             if let message = model.sampleMessage {
-                Text(message).font(.caption).foregroundStyle(Color(white: 0.6))
+                Text(message)
+                    .font(EchoelBrand.Font.caption)
+                    .foregroundStyle(EchoelBrand.Color.warning)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.audio]) { result in
@@ -170,15 +184,11 @@ struct PluginControlsView: View {
 
     @ViewBuilder private func row(_ parameter: AUParameter) -> some View {
         let value = model.values[parameter.address] ?? parameter.value
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(parameter.displayName).font(.subheadline).foregroundStyle(.white)
-                Spacer()
-                Text(parameter.string(fromValue: [value]))
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(Color(white: 0.6))
-            }
-            if let names = parameter.valueStrings {
+        if let names = parameter.valueStrings {
+            VStack(alignment: .leading, spacing: EchoelBrand.Space.xs) {
+                Text(parameter.displayName)
+                    .font(EchoelBrand.Font.caption)
+                    .foregroundStyle(EchoelBrand.Color.textSecondary)
                 Picker(parameter.displayName, selection: Binding(
                     get: { Int(value.rounded()) },
                     set: { model.set(parameter, AUValue($0)) }
@@ -186,17 +196,103 @@ struct PluginControlsView: View {
                     ForEach(names.indices, id: \.self) { Text(names[$0]).tag($0) }
                 }
                 .pickerStyle(.segmented)
-            } else if parameter.unit == .boolean {
-                Toggle(parameter.displayName, isOn: Binding(get: { value >= 0.5 },
-                                                            set: { model.set(parameter, $0 ? 1 : 0) }))
-                    .labelsHidden()
-            } else {
-                Slider(value: Binding(get: { Self.position(of: value, in: parameter) },
-                                      set: { model.set(parameter, Self.value(at: $0, in: parameter)) }),
-                       in: 0...1)
-                    .accessibilityLabel(parameter.displayName)
-                    .accessibilityValue(parameter.string(fromValue: [value]))
+                .frame(minHeight: EchoelBrand.touch)
             }
+        } else if parameter.unit == .boolean {
+            Toggle(isOn: Binding(get: { value >= 0.5 }, set: { model.set(parameter, $0 ? 1 : 0) })) {
+                Text(parameter.displayName)
+                    .font(EchoelBrand.Font.label)
+                    .foregroundStyle(EchoelBrand.Color.text)
+            }
+            .tint(EchoelBrand.Color.accent)
+            .frame(minHeight: EchoelBrand.touch)
+        } else {
+            PluginValueField(parameter: parameter, value: value) { model.set(parameter, $0) }
         }
+    }
+}
+
+/// Echoel's value field in the plugin window, drawn as the Studio's `ParameterField`: the name
+/// above, the number below, a thin bar for where it sits in its range, a strong boundary that turns
+/// green while a finger holds it. Drag up or down — slowly for fine steps, quickly to cover the
+/// range (`DragPrecision`, the Studio's own rule). It writes the parameter tree, never a song.
+/// Typing a value stays in the Studio: its number pad writes through the song's store, which a
+/// plugin in a foreign host does not have.
+private struct PluginValueField: View {
+    let parameter: AUParameter
+    let value: AUValue
+    let set: (AUValue) -> Void
+    /// The drag in progress: the control position it has reached and the translation last read.
+    @State private var drag: (position: AUValue, translation: CGFloat)?
+
+    /// Points of vertical travel for the full range at full speed (as in the Studio).
+    private static let travel: CGFloat = 240
+
+    var body: some View {
+        let position = PluginControlsView.position(of: value, in: parameter)
+        let text = parameter.string(fromValue: [value])
+        let engaged = drag != nil
+        VStack(alignment: .leading, spacing: EchoelBrand.Space.xs) {
+            Text(parameter.displayName)
+                .font(EchoelBrand.Font.caption)
+                .foregroundStyle(EchoelBrand.Color.textSecondary)
+                .lineLimit(1)
+            Text(text)
+                .font(EchoelBrand.Font.value)
+                .foregroundStyle(engaged ? EchoelBrand.Color.accent : EchoelBrand.Color.text)
+                .lineLimit(1)
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(EchoelBrand.Color.surfaceRaised)
+                    Rectangle().fill(EchoelBrand.Color.accent)
+                        .frame(width: geometry.size.width * CGFloat(position))
+                }
+            }
+            .frame(height: 3)
+            .accessibilityHidden(true)
+        }
+        .padding(EchoelBrand.Space.s)
+        .frame(maxWidth: .infinity, minHeight: EchoelBrand.touch, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: EchoelBrand.Radius.medium).fill(EchoelBrand.Color.surface))
+        .overlay(RoundedRectangle(cornerRadius: EchoelBrand.Radius.medium)
+            .strokeBorder(engaged ? EchoelBrand.Color.accent : EchoelBrand.Color.borderStrong, lineWidth: 1))
+        .animation(EchoelBrand.Motion.quick, value: engaged)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 2)
+                .onChanged { gesture in
+                    let reached = drag ?? (position: position, translation: 0)
+                    let moved = gesture.translation.height - reached.translation
+                    let scale = AUValue(DragPrecision.scale(speed: Double(gesture.velocity.height)))
+                    let next = Swift.min(Swift.max(reached.position - AUValue(moved / Self.travel) * scale, 0), 1)
+                    drag = (position: next, translation: gesture.translation.height)
+                    set(PluginControlsView.value(at: next, in: parameter))
+                }
+                .onEnded { _ in drag = nil }
+        )
+        .accessibilityElement()
+        .accessibilityLabel(parameter.displayName)
+        .accessibilityValue(text)
+        .accessibilityAdjustableAction { direction in
+            let step: AUValue = direction == .increment ? 0.02 : -0.02
+            set(PluginControlsView.value(at: position + step, in: parameter))
+        }
+    }
+}
+
+/// The Studio's tool button, for the plugin window: a solid fill, an 8 pt radius, a hairline
+/// boundary, the brand face, and opacity on press — never scale.
+private struct PluginButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(EchoelBrand.Font.label)
+            .foregroundStyle(EchoelBrand.Color.text)
+            .padding(.horizontal, EchoelBrand.Space.m)
+            .frame(minHeight: EchoelBrand.touch)
+            .background(RoundedRectangle(cornerRadius: EchoelBrand.Radius.medium).fill(EchoelBrand.Color.surfaceRaised))
+            .overlay(RoundedRectangle(cornerRadius: EchoelBrand.Radius.medium)
+                .strokeBorder(EchoelBrand.Color.border, lineWidth: 1))
+            .opacity(configuration.isPressed ? EchoelBrand.Motion.pressedOpacity : 1)
+            .animation(EchoelBrand.Motion.quick, value: configuration.isPressed)
     }
 }
