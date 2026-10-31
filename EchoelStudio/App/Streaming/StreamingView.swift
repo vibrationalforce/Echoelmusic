@@ -19,6 +19,7 @@ struct StreamingView: View {
                 uploadSection
                 aboutSection
             }
+            .echoelList()
             .navigationTitle("Go Live")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
@@ -32,7 +33,7 @@ struct StreamingView: View {
     // MARK: - Regions
 
     @ViewBuilder private var liveSection: some View {
-        Section {
+        EchoelSection(footer: "Picture: the Field. Sound: the master mix. Nothing else leaves the phone, and nothing at all until Go Live.") {
             if streaming.isLive || streaming.isStarting {
                 StreamLiveReadout()
                 Button(role: .destructive) {
@@ -40,26 +41,24 @@ struct StreamingView: View {
                 } label: {
                     Label("Stop Stream", systemImage: "stop.fill")
                 }
+                .buttonStyle(EchoelRowButtonStyle())
             } else {
                 Button {
                     Task { await streaming.goLive(store: store, engine: engine) }
                 } label: {
                     Label("Go Live", systemImage: "dot.radiowaves.left.and.right")
                 }
+                .buttonStyle(EchoelRowButtonStyle())
                 .disabled(streaming.plan.refusal != nil)
             }
             if let notice = streaming.notice {
-                Text(notice)
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.record)
+                NoteText(notice, tone: .problem)
             }
-        } footer: {
-            Text("Picture: the Field. Sound: the master mix. Nothing else leaves the phone, and nothing at all until Go Live.")
         }
     }
 
     private var destinationsSection: some View {
-        Section("Destinations") {
+        EchoelSection("Destinations") {
             ForEach(streaming.plan.targets) { target in
                 destinationRow(target)
             }
@@ -76,6 +75,9 @@ struct StreamingView: View {
                 }
             } label: {
                 Label("Add Destination", systemImage: "plus")
+                    .font(Theme.Font.body)
+                    .foregroundStyle(Theme.Color.text)
+                    .frame(minHeight: Theme.Size.touch)
             }
             .disabled(streaming.isLive || streaming.isStarting)
         }
@@ -115,34 +117,25 @@ struct StreamingView: View {
     }
 
     private var uploadSection: some View {
-        Section {
-            Picker("At once", selection: Binding(get: { streaming.plan.simultaneousLimit },
+        EchoelSection("Destinations at Once",
+                      footer: "Each destination is its own upload from the phone. To reach many platforms, stream once to a relay (Restream, or your own MediaMTX server, open source) and let it forward the stream.") {
+            Picker("At Once", selection: Binding(get: { streaming.plan.simultaneousLimit },
                                                  set: { streaming.setSimultaneousLimit($0) })) {
                 ForEach(Array(StreamPlan.limitRange), id: \.self) { Text("\($0)").tag($0) }
             }
             .pickerStyle(.segmented)
             .disabled(streaming.isLive || streaming.isStarting)
-            LabeledContent("Upload Needed", value: Self.megabits(streaming.plan.uploadKbps))
+            ValueRow("Upload Needed", value: Self.megabits(streaming.plan.uploadKbps))
             if let refusal = streaming.plan.refusal, refusal != .noTarget {
-                Text(refusal.explanation)
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.record)
+                NoteText(refusal.explanation, tone: .problem)
             }
-        } header: {
-            Text("Destinations at Once")
-        } footer: {
-            Text("Each destination is its own upload from the phone. To reach many platforms, stream once to a relay — Restream, or your own MediaMTX server (open source) — and let it forward the stream.")
         }
     }
 
     private var aboutSection: some View {
-        Section {
-            Text("Stream keys stay in this device's keychain: never in a song, a backup of the app's settings or the diagnostic log.")
-                .font(Theme.Font.caption)
-                .foregroundStyle(Theme.Color.textSecondary)
-            Text("Streaming stops when Echoel leaves the screen or a call takes the audio; iOS does not encode video in the background.")
-                .font(Theme.Font.caption)
-                .foregroundStyle(Theme.Color.textSecondary)
+        EchoelSection {
+            NoteText("Stream keys stay in this device's keychain: never in a song, a backup of the app's settings or the diagnostic log.")
+            NoteText("Streaming stops when Echoel leaves the screen or a call takes the audio; iOS does not encode video in the background.")
         }
     }
 
@@ -159,15 +152,15 @@ struct StreamLiveReadout: View {
     var body: some View {
         if let started = streaming.startedAt {
             TimelineView(.periodic(from: started, by: 1)) { context in
-                LabeledContent("On Air", value: Self.duration(context.date.timeIntervalSince(started)))
-                    .monospacedDigit()
+                ValueRow("On Air", value: Self.duration(context.date.timeIntervalSince(started)))
             }
         } else {
-            LabeledContent("On Air", value: "Connecting")
+            ValueRow("On Air", value: "Connecting")
         }
         ForEach(streaming.plan.enabledTargets) { target in
             let report = streaming.reports[target.id]
-            LabeledContent(target.name, value: Self.reading(report))
+            // The words say "Network too slow"; the red only repeats it.
+            ValueRow(target.name, value: Self.reading(report))
                 .foregroundStyle(report?.isCongested == true ? Theme.Color.record : Theme.Color.text)
         }
     }
@@ -207,25 +200,26 @@ struct StreamTargetEditor: View {
     }
 
     var body: some View {
-        Form {
-            Section {
+        List {
+            EchoelSection(target.platform.title, footer: target.platform.whereToFind) {
                 TextField("Name", text: $target.name)
+                    .echoelInput()
+                    .accessibilityLabel("Destination name")
                 TextField(target.platform.defaultServer ?? "rtmp://server/app", text: $target.server)
+                    .echoelInput()
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.URL)
-            } header: {
-                Text(target.platform.title)
-            } footer: {
-                Text(target.platform.whereToFind)
+                    .accessibilityLabel("Server address")
             }
             keySection
             shapeSection
             rateSection
             if let problem = streaming.addressProblem(of: target) {
-                Section { Text(problem).foregroundStyle(Theme.Color.record) }
+                EchoelSection { NoteText(problem, tone: .problem) }
             }
         }
+        .echoelList()
         // The video rate is typed on Echoel's number pad, docked at the page's bottom edge.
         .numberPadHost()
         .navigationTitle(target.name)
@@ -234,55 +228,52 @@ struct StreamTargetEditor: View {
     }
 
     private var keySection: some View {
-        Section {
+        EchoelSection("Stream Key",
+                      footer: target.platform.needsKey ? "Kept in this device's keychain only." : "Optional: the server address may carry everything.") {
             SecureField(hasKey ? "Stored, type to replace" : "Stream key", text: $key)
+                .echoelInput()
+                .accessibilityLabel(hasKey ? "Stream key, stored. Type to replace it" : "Stream key")
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .onSubmit(storeKey)
-            Button("Keep Key", action: storeKey).disabled(key.isEmpty)
+            Button("Keep Key", action: storeKey)
+                .buttonStyle(EchoelRowButtonStyle())
+                .disabled(key.isEmpty)
             if hasKey {
                 Button("Remove Key", role: .destructive) {
                     StreamKeyStore.removeKey(for: target.id)
                     hasKey = false
                 }
+                .buttonStyle(EchoelRowButtonStyle())
             }
             if keyRefused {
-                Text("The keychain did not keep the key. Tap Keep Key to try again.").foregroundStyle(Theme.Color.record)
+                NoteText("The keychain did not keep the key. Tap Keep Key to try again.", tone: .problem)
             }
-        } header: {
-            Text("Stream Key")
-        } footer: {
-            Text(target.platform.needsKey ? "Kept in this device's keychain only." : "Optional: the server address may carry everything.")
         }
     }
 
     private var shapeSection: some View {
-        Section {
+        EchoelSection("Picture",
+                      footer: "\(target.format.pixelWidth) × \(target.format.pixelHeight), 30 frames a second. Recommended for \(target.platform.title): \(target.platform.recommendedFormats.map(\.title).joined(separator: ", ")).") {
             Picker("Shape", selection: $target.format) {
                 ForEach(StreamFormat.allCases, id: \.self) { format in
                     Text(format.title).tag(format)
                 }
             }
             .pickerStyle(.segmented)
-        } header: {
-            Text("Picture")
-        } footer: {
-            Text("\(target.format.pixelWidth) × \(target.format.pixelHeight), 30 frames a second. Recommended for \(target.platform.title): \(target.platform.recommendedFormats.map(\.title).joined(separator: ", ")).")
         }
     }
 
     private var rateSection: some View {
-        Section {
+        EchoelSection("Bit Rate",
+                      footer: "Recommended video for \(target.platform.title): \(target.platform.recommendedVideoKbps) kbit/s. If the network cannot carry it, the stream steps down by itself.") {
             SettingField(title: "Video", value: target.quality.videoKbps, range: StreamQuality.videoRange,
                          unit: "kbit/s", step: 100, standard: target.platform.recommendedVideoKbps,
                          spokenUnit: "kilobits a second") { target.quality.videoKbps = $0 }
             Picker("Audio", selection: $target.quality.audioKbps) {
                 ForEach(Self.audioRates, id: \.self) { Text("\($0) kbit/s").tag($0) }
             }
-        } header: {
-            Text("Bit Rate")
-        } footer: {
-            Text("Recommended video for \(target.platform.title): \(target.platform.recommendedVideoKbps) kbit/s. If the network cannot carry it, the stream steps down by itself.")
+            .pickerStyle(.menu)
         }
     }
 
