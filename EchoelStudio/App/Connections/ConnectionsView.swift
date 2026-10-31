@@ -44,7 +44,7 @@ struct ConnectionsView: View {
         var lines = [
             "Off at every start. On, the strap's pulse, HRV and coherence go to the OSC receiver as /echoelmusic/bio/… and a measured coherence lifts the light. Nothing read from Apple Health ever leaves this device.",
         ]
-        lines.append(strap.isOn ? "The heart rate strap is on." : "The heart rate strap is off (Song menu), so there is nothing to share yet.")
+        lines.append(strap.isOn ? "The heart rate strap is on." : "The heart rate strap is off (Song menu, Body Source), so there is nothing to share yet.")
         return lines.joined(separator: " ")
     }
 }
@@ -156,7 +156,7 @@ struct ConnectionActivityLine: View {
         let counters = activity.counters
         var parts: [String]
         switch activity.state {
-        case .preparing: parts = ["Connecting…"]
+        case .preparing: parts = ["Connecting"]
         case .ready: parts = ["Sending"]
         case .waiting(let reason): parts = ["Waiting: \(reason)"]
         case .failed(let reason): parts = ["Failed: \(reason)"]

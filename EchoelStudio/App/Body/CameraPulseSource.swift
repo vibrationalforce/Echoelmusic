@@ -306,7 +306,7 @@ final class CameraPulseSource {
         guard let start = error as? CameraCapture.StartError else { return "The camera could not be opened." }
         switch start {
         case .noCamera: return "This device has no rear camera to read a pulse from."
-        case .configurationFailed: return "The camera could not be opened — another app may be using it."
+        case .configurationFailed: return "The camera could not be opened. Another app may be using it: close it and try again."
         }
     }
 
