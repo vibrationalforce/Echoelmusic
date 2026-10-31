@@ -23,6 +23,8 @@ struct EchoelStudioApp: App {
     init() {
         // First, so a launch that dies anywhere below still names its build (NEUPLANUNG §6).
         DiagnosticLog.beginApp()
+        // The system's reports on how earlier runs ended go into that log, never off the device.
+        CrashReports.shared.start()
         // The standard effects load like any Audio Unit once they are registered in this process.
         StandardEffectUnit.register()
         let store = ProjectStore(project: .starter())
