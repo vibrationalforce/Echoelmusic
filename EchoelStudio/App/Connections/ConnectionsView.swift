@@ -17,10 +17,11 @@ struct ConnectionsView: View {
                 ForEach(ConnectionsController.Kind.allCases) { kind in
                     ConnectionSection(kind: kind)
                 }
-                Section {
-                    note("Every connection is off when Echoel starts, and its socket exists only while it is on. All four protocols are plain UDP, unencrypted by their standards: use them on a network you trust. Each packet goes to the one address you type.")
+                EchoelSection {
+                    NoteText("Every connection is off when Echoel starts, and its socket exists only while it is on. All four protocols are plain UDP, unencrypted by their standards: use them on a network you trust. Each packet goes to the one address you type.")
                 }
             }
+            .echoelList()
             // Port, universe and first channel are typed on Echoel's number pad, docked here.
             .numberPadHost()
             .navigationTitle("Connections")
@@ -31,14 +32,11 @@ struct ConnectionsView: View {
     }
 
     private var bodySection: some View {
-        Section {
+        EchoelSection("Body") {
             Toggle(isOn: Binding(get: { connections.consent.sharesBody }, set: { connections.setSharesBody($0) })) {
                 Label("Share Body Data", systemImage: "heart.text.square")
             }
-            .tint(Theme.Color.accent)
-            note(bodyExplanation)
-        } header: {
-            Text("Body")
+            NoteText(bodyExplanation)
         }
     }
 
@@ -49,13 +47,6 @@ struct ConnectionsView: View {
         lines.append(strap.isOn ? "The heart rate strap is on." : "The heart rate strap is off (Song menu), so there is nothing to share yet.")
         return lines.joined(separator: " ")
     }
-
-    private func note(_ text: String) -> some View {
-        Text(text)
-            .font(Theme.Font.caption)
-            .foregroundStyle(Theme.Color.textSecondary)
-            .padding(.vertical, Theme.Space.xs)
-    }
 }
 
 /// One protocol: its switch, its receiver, what it sends and, while on, how it is doing.
@@ -64,21 +55,15 @@ private struct ConnectionSection: View {
     @Environment(ConnectionsController.self) private var connections
 
     var body: some View {
-        Section {
+        EchoelSection {
             Toggle(isOn: Binding(get: { connections.isOn(kind) }, set: { connections.setOn($0, kind) })) {
                 Label(kind.title, systemImage: kind.isLight ? "lightbulb" : "antenna.radiowaves.left.and.right")
             }
-            .tint(Theme.Color.accent)
             ReceiverFields(kind: kind)
             if kind.isLight { lightFields }
-            Text(kind.sends)
-                .font(Theme.Font.caption)
-                .foregroundStyle(Theme.Color.textSecondary)
-                .padding(.vertical, Theme.Space.xs)
+            NoteText(kind.sends)
             if let refusal = connections.refusals[kind] {
-                Text(refusal)
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.record)
+                NoteText(refusal, tone: .problem)
             }
             if connections.isOn(kind) {
                 ConnectionActivityLine(kind: kind)
@@ -116,15 +101,13 @@ private struct ReceiverFields: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
             TextField("Address", text: $host)
-                .font(Theme.Font.body)
-                .foregroundStyle(Theme.Color.text)
+                .echoelInput()
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .keyboardType(.URL)
                 .focused($editingHost)
                 .submitLabel(.done)
                 .onSubmit { commitHost() }
-                .frame(minHeight: Theme.Size.touch)
                 .accessibilityLabel("\(kind.title) receiver address")
         }
         .onAppear { host = connections.target(kind).host }
