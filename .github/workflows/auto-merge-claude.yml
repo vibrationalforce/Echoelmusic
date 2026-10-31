@@ -69,13 +69,23 @@ permissions:
   contents: write
   actions: write
 
-# Serialises merges to `main`. It was not needed while the job took seconds; it
-# is needed now that the job can WAIT up to 45 minutes for a gate, because two
-# pushes five minutes apart would otherwise hold two merge jobs open against the
-# same branch. `cancel-in-progress: false` on purpose — cancelling the older one
-# would drop a commit that had already passed its gates.
+# ONE GROUP PER BRANCH (2026-10-31, conductor round 2 — the founder delegated). The group was
+# `auto-merge-main`, one for every branch. GitHub keeps at most ONE pending run per group, so
+# with several branches green at once each new push CANCELLED the pending merge job of another
+# branch (`cancel-in-progress: false` protects only the RUNNING one): on 2026-10-31 four team
+# branches lost their jobs within minutes, green gates and all, and none of them could re-run
+# it ("Resource not accessible by integration"). A green branch did not land.
+#
+# Per branch, a pending job is displaced only by a NEWER PUSH OF THE SAME BRANCH, whose commit
+# contains it — exactly the `superseded` case the gate step already handles. Different branches
+# no longer wait for or cancel each other; they meet only at `git push origin main`, and the
+# merge step below re-reads main, merges again and retries when that push is rejected as
+# non-fast-forward. That is the whole serialisation two parallel merges need: the push to main
+# is atomic, a lost race is retried against the new main, and a real conflict still fails loudly.
+# `cancel-in-progress: false` stays: cancelling the running job would drop a commit that had
+# already passed its gates.
 concurrency:
-  group: auto-merge-main
+  group: auto-merge-${{ github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -196,7 +206,7 @@ jobs:
           # Where the branch points now; empty when the remote cannot be read.
           tip() { git ls-remote origin "refs/heads/$BRANCH" 2>/dev/null | cut -f1; }
           # A newer push owns the merge ONLY if it started a merge job of its own: that job
-          # runs after this one (concurrency group below) and brings this commit with it,
+          # runs after this one (same branch, same concurrency group) and brings this commit with it,
           # so this one stops WITHOUT merging. A push that touches only docs/, memory/ or
           # scratchpads/ starts no merge job (ultra-audit 2026-10-20, CI-04a): standing
           # down then would leave this commit unmerged with every run reporting success.
@@ -385,8 +395,11 @@ jobs:
           # a stale checkout was not a realistic failure; now it is the ordinary
           # case. Each attempt re-reads `main`, so the merge is always computed
           # against what is actually there.
+          # Eight attempts, a few seconds apart and growing (2026-10-31): with one concurrency
+          # group per branch, several branches can finish their gates in the same minute, and
+          # each lost race to `main` costs one attempt. A merge attempt takes seconds.
           merged=""
-          for attempt in 1 2 3; do
+          for attempt in 1 2 3 4 5 6 7 8; do
             echo ""
             echo "--- attempt $attempt ---"
             git fetch origin main
@@ -407,7 +420,7 @@ jobs:
               break
             fi
             echo "[WARN] Push rejected — main moved. Re-reading and retrying."
-            sleep 5
+            sleep $(( attempt * 5 + RANDOM % 7 ))
           done
 
           if [ -n "$merged" ]; then
@@ -415,7 +428,7 @@ jobs:
             echo "[OK] Pushed to main successfully!"
           else
             echo "merge_status=push_failed" >> $GITHUB_OUTPUT
-            echo "[ERROR] Push to main failed three times"
+            echo "[ERROR] Push to main failed eight times"
             exit 1
           fi
 
