@@ -1,28 +1,27 @@
-11.0.0, twelfth upload — six synth engines, the tone system and concert pitch in the Key menu, the body moves a send
+11.0.0, seventeenth upload — the Echoel identity end to end: one look, one voice, one number format
 
-What is new since 10014. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10023. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- Two more Engine choices on the Sound page: Morph (sine, triangle, saw and square blended by
-  Character, no wavetables) and Mallet (a struck object of six decaying modes; Character is the
-  material, wood to metal). Six engines in all; a saved song or host session keeps its index.
-- The Key menu chooses the Tone System (sixteen, now with Archytas and Ptolemy) and the Concert
-  Pitch (A between 400 and 480 Hz, with named historical values). Until now only the assistant
-  could set them. A song stores both.
-- Modulate lists each send a track has: a route on a send moves the send's level along the
-  fader's travel and leaves the track's own fader alone; absent, it is exactly the stored level.
-- The Modulate menu's first line names which body sources are measured right now (Heart Rate,
-  HRV, Coherence), or says that nothing is measured yet or the strap is off; each source in the
-  route list carries " · measuring" while it has a value.
-- Sky arithmetic in Core (sidereal time, altitude and azimuth of a catalogue position for a place
-  and moment, tested against Meeus 12.a). No catalogue, no sensors and no door yet: nothing to
-  see on the device, named here so the build's contents are complete.
+- The transport fits a phone: nothing is cut off at the edges; the "A" button is now "Write"
+  (Write Automation).
+- The song menu has five sections: Song, Export, Play and Sync, Connect, App; Live Stream is now
+  Go Live.
+- Connections and Go Live look like the Studio: Echoel switches and lists, no system blue;
+  port, universe and channel are typed on Echoel's number pad.
+- Sky names a star in words ("Bright Star 7194", "Magnitude 2.6 · White") instead of catalogue
+  shorthand; the debug line is gone.
+- One number format that follows your language (76,5 BPM and -5,6 dB alike).
+- Session grid anchored top left with readable names; mixer faders take the height; piano roll
+  keys read as white and black keys; an empty song says what to do.
+- Field fullscreen opens and closes without the studio showing through.
+- Error messages say what happened and what to do.
+- The plug-in in AUM, Logic and GarageBand wears Echoel's look and font, and hosts list it as
+  "Echoel: Synth", "Echoel: EQ" and so on. Plug-ins are recognised by their identity, not their
+  name.
+- The app's system accent is bio-green; the launch screen is black.
 
-Previous: 11.0.0 (10014), eleventh upload — HRV and coherence as sources, the body moves the
-instrument, four synth engines, a ladder filter, the Field. 10013 — your pulse moves the mix, a
-flanger, songs that store modulation. 10012 — heart rate strap, chorus and phaser, two keyboards
-on one key. 10011 — loop, overdub, record without arming. 10010 — play it with the phone alone.
-10009 — the app survives what a device does to it. 10008 — the plugin purchase in the App
-Group. Before that: 10007, 10006, 10005, 10004 (the first Echoel Studio build).
+Previous: 11.0.0 (10023), sixteenth upload — voice effects, Bake Effects, song settings, MIDI
+import, rename and reorder. 10021 and earlier: see git history of this file.
 group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -31,14 +30,11 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Sound page, Engine = Morph: hold a chord and turn Character from 0 to 1. The sound travels
-   sine → triangle → saw → square without a step or a click.
-2. Engine = Mallet: short notes at Character 0 (wood) and 1 (metal). Wood dies away fast and
-   dull, metal rings longer and brighter; no note sticks, none clicks.
-3. Key menu: switch Tone System to Archytas or Ptolemy and Concert Pitch to 432 Hz while a Keys
-   track plays. The pitch changes audibly, every voice follows, and the choice survives closing
-   and reopening the song.
-4. Strap on, a track with a send to a return: long-press the track, Modulate, the send, Heart
-   Rate. The return gets louder as your pulse rises while the track's own fader does not move.
-5. Open Modulate with the strap off, then on: the first line says the strap is off, then after
-   a few beats names Heart Rate as measured; HRV follows after about 8 beats, Coherence after 16.
+1. Portrait iPhone, standard text size: every transport control is fully visible, nothing is cut
+   off at either edge.
+2. Song menu: five labelled sections; Go Live… opens a page with no blue, and its fine print is
+   readable.
+3. Connections: tap Port; Echoel's number pad opens and the typed value is kept.
+4. Field fullscreen, open and close it a few times: no white vertical bar appears.
+5. AUM (or GarageBand): the plug-in list shows "Echoel: Synth" and the plug-in window is black
+   with Echoel's font.
