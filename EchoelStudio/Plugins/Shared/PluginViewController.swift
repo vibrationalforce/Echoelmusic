@@ -63,7 +63,8 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor(white: 0.07, alpha: 1)
+        // The Studio's ground (`EchoelBrand`), so the host frames the same black the controls sit on.
+        view.backgroundColor = UIColor(EchoelBrand.Color.background)
         preferredContentSize = CGSize(width: 420, height: 480)
         if let audioUnit { show(audioUnit) }
     }
