@@ -39,7 +39,7 @@
 			<array>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Synth</string>
+					<string>Echoel: Synth</string>
 					<key>description</key>
 					<string>Subtractive synthesizer from Echoel</string>
 					<key>manufacturer</key>
@@ -59,7 +59,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Drums</string>
+					<string>Echoel: Drums</string>
 					<key>description</key>
 					<string>Synthesized drum kit from Echoel</string>
 					<key>manufacturer</key>
@@ -79,7 +79,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Sampler</string>
+					<string>Echoel: Sampler</string>
 					<key>description</key>
 					<string>Sampler from Echoel</string>
 					<key>manufacturer</key>
@@ -99,7 +99,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel EQ</string>
+					<string>Echoel: EQ</string>
 					<key>description</key>
 					<string>Five-band parametric EQ from Echoel</string>
 					<key>manufacturer</key>
@@ -119,7 +119,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Compressor</string>
+					<string>Echoel: Compressor</string>
 					<key>description</key>
 					<string>Compressor from Echoel</string>
 					<key>manufacturer</key>
@@ -139,7 +139,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Delay</string>
+					<string>Echoel: Delay</string>
 					<key>description</key>
 					<string>Stereo delay from Echoel</string>
 					<key>manufacturer</key>
@@ -159,7 +159,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Reverb</string>
+					<string>Echoel: Reverb</string>
 					<key>description</key>
 					<string>Reverb from Echoel</string>
 					<key>manufacturer</key>
@@ -179,7 +179,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Chorus</string>
+					<string>Echoel: Chorus</string>
 					<key>description</key>
 					<string>Chorus from Echoel</string>
 					<key>manufacturer</key>
@@ -199,7 +199,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Phaser</string>
+					<string>Echoel: Phaser</string>
 					<key>description</key>
 					<string>Phaser from Echoel</string>
 					<key>manufacturer</key>
@@ -219,7 +219,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Flanger</string>
+					<string>Echoel: Flanger</string>
 					<key>description</key>
 					<string>Flanger from Echoel</string>
 					<key>manufacturer</key>
@@ -239,7 +239,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Limiter</string>
+					<string>Echoel: Limiter</string>
 					<key>description</key>
 					<string>Limiter from Echoel</string>
 					<key>manufacturer</key>
@@ -259,7 +259,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Saturation</string>
+					<string>Echoel: Saturation</string>
 					<key>description</key>
 					<string>Saturation from Echoel</string>
 					<key>manufacturer</key>
@@ -279,7 +279,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Tremolo</string>
+					<string>Echoel: Tremolo</string>
 					<key>description</key>
 					<string>Tremolo from Echoel</string>
 					<key>manufacturer</key>
@@ -299,7 +299,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Bitcrusher</string>
+					<string>Echoel: Bitcrusher</string>
 					<key>description</key>
 					<string>Bitcrusher from Echoel</string>
 					<key>manufacturer</key>
@@ -319,7 +319,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Tape</string>
+					<string>Echoel: Tape</string>
 					<key>description</key>
 					<string>Tape from Echoel</string>
 					<key>manufacturer</key>
@@ -339,7 +339,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Stereo Width</string>
+					<string>Echoel: Stereo Width</string>
 					<key>description</key>
 					<string>Stereo Width from Echoel</string>
 					<key>manufacturer</key>
@@ -359,7 +359,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Ring Modulator</string>
+					<string>Echoel: Ring Modulator</string>
 					<key>description</key>
 					<string>Ring Modulator from Echoel</string>
 					<key>manufacturer</key>
@@ -379,7 +379,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Frequency Shifter</string>
+					<string>Echoel: Frequency Shifter</string>
 					<key>description</key>
 					<string>Frequency Shifter from Echoel</string>
 					<key>manufacturer</key>
@@ -399,7 +399,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Pitch Correction</string>
+					<string>Echoel: Pitch Correction</string>
 					<key>description</key>
 					<string>Pitch Correction from Echoel</string>
 					<key>manufacturer</key>
@@ -419,7 +419,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Harmonizer</string>
+					<string>Echoel: Harmonizer</string>
 					<key>description</key>
 					<string>Harmonizer from Echoel</string>
 					<key>manufacturer</key>
@@ -439,7 +439,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Granular</string>
+					<string>Echoel: Granular</string>
 					<key>description</key>
 					<string>Granular from Echoel</string>
 					<key>manufacturer</key>
@@ -459,7 +459,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: Echoel Synth (earlier sessions)</string>
+					<string>Echoel: Synth (earlier sessions)</string>
 					<key>description</key>
 					<string>Opens sessions saved with the earlier Echoelmusic instrument; plays Echoel Synth from Echoel</string>
 					<key>manufacturer</key>

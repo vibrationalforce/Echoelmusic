@@ -3,6 +3,10 @@
 /// one purchase the plugin layer names (`PluginUnlock`, `Plugins/Shared/PluginUnlock.swift`), the
 /// effects need nothing. The open packages describe the plugins; they do not know that anything
 /// is sold — the product id lives with the store and the licence check that read it.
+///
+/// A component's `name` is the unit's own name; the host shows it after the manufacturer
+/// ("Echoel: Synth", conductor 2026-10-31), so it never repeats "Echoel". Type, subtype and
+/// manufacturer are what a host session saves, and they never change.
 public struct OwnPlugin: Sendable, Equatable, Identifiable {
     public let component: PluginComponent
     public let summary: String
@@ -11,19 +15,19 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
 
     public static let synth = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eSyn"),
-                                   manufacturer: PluginComponent.code("Echo"), name: "Echoel Synth",
+                                   manufacturer: PluginComponent.code("Echo"), name: "Synth",
                                    manufacturerName: "Echoel"),
         summary: "The studio's synth.")
 
     public static let drums = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eDrm"),
-                                   manufacturer: PluginComponent.code("Echo"), name: "Echoel Drums",
+                                   manufacturer: PluginComponent.code("Echo"), name: "Drums",
                                    manufacturerName: "Echoel"),
         summary: "The studio's synthesized drum kit on the General MIDI drum map.")
 
     public static let sampler = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eSmp"),
-                                   manufacturer: PluginComponent.code("Echo"), name: "Echoel Sampler",
+                                   manufacturer: PluginComponent.code("Echo"), name: "Sampler",
                                    manufacturerName: "Echoel"),
         summary: "Load a sample and play it across the keys. The sample is saved with the host's session.")
 
@@ -31,7 +35,7 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
     /// itself they stay free under their own ids.
     public static let effects = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code("xEQ5"),
-                                   manufacturer: PluginComponent.code("Echo"), name: "Echoel Effects",
+                                   manufacturer: PluginComponent.code("Echo"), name: "Effects",
                                    manufacturerName: "Echoel"),
         summary: "EQ, Compressor, Delay and Reverb.")
 
@@ -40,7 +44,7 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
     /// Not listed in the store: it is a door for old sessions, not a product.
     public static let legacyBodyVibe = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("echl"),
-                                   manufacturer: PluginComponent.code("Echo"), name: "Echoel Synth",
+                                   manufacturer: PluginComponent.code("Echo"), name: "Synth",
                                    manufacturerName: "Echoel"),
         summary: "Opens host sessions saved with the earlier Echoelmusic instrument.")
 
@@ -134,8 +138,10 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .harmonizer: "xHrm"
         case .granular: "xGrn"
         }
+        // The host shows "Echoel: EQ" — manufacturer, then this name, as `Plugins/AUv3/Info.plist`
+        // registers it. The app's own copy (`component`) keeps its stored name: a song saves it.
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
-                               manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",
+                               manufacturer: PluginComponent.code("Echo"), name: title,
                                manufacturerName: "Echoel")
     }
 

@@ -30,7 +30,9 @@
 //  4. the escape hatch stays NARROW. It exists because a push touching only some other workflow
 //     starts neither gate — but a widened path list would quietly restore the old behaviour for
 //     everything it covers.
-//  5. it still pushes straight to `main`, and those pushes are now serialised.
+//  5. it still pushes straight to `main`; jobs are serialised PER BRANCH (one concurrency group
+//     per branch since 2026-10-31 — the single group cancelled other branches' waiting jobs),
+//     and parallel branches meet at the push to main, which the merge step retries.
 //  6. the counterweight (#343): an ungated merge still could not have shipped, because the
 //     TestFlight dispatch is `if: false`. Delete claim 6 and the severity of the whole story
 //     changes — which is exactly why it is pinned next to the others.
@@ -179,10 +181,23 @@ final class TheAutoMergeWaitsForTheGatesTests: XCTestCase {
         XCTAssertNil(yml.range(of: #"(?m)^\s*-\s*uses:.*create-pull-request"#,
                                options: .regularExpression),
                      "A PR action appeared — see the message above.")
-        XCTAssertTrue(yml.contains("group: auto-merge-main"), """
-            The concurrency group is gone. It was not needed while this job took seconds; the \
-            gate can now hold it for 45 minutes, so two pushes minutes apart would keep two \
-            merge jobs open against the same branch and race each other onto `main`.
+        XCTAssertTrue(yml.contains("group: auto-merge-${{ github.ref_name }}"), """
+            The per-branch concurrency group is gone. The gate can hold a merge job for 45 \
+            minutes, so two pushes of ONE branch minutes apart would keep two jobs open against \
+            it. The group is per BRANCH on purpose (2026-10-31): the earlier single group \
+            `auto-merge-main` let GitHub cancel the pending job of one branch whenever another \
+            branch pushed, and green branches did not land.
+            """)
+        XCTAssertFalse(yml.contains("group: auto-merge-main"), """
+            The single group for every branch is back. GitHub keeps one pending run per group, \
+            so each push of another branch cancels a waiting merge job — green branches stop \
+            landing (four on 2026-10-31). Keep the group per branch; parallel branches meet only \
+            at the push to main, which the merge step retries.
+            """)
+        XCTAssertTrue(yml.contains("for attempt in 1 2 3 4 5 6 7 8; do") && yml.contains("git reset --hard origin/main"), """
+            The merge no longer re-reads main and retries. With one group per branch, two \
+            branches can reach `git push origin main` in the same minute; the loser must merge \
+            again against the new main instead of failing a green commit.
             """)
     }
 
