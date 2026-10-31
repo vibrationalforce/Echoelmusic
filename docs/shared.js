@@ -2,7 +2,7 @@
 (function(){
 /* MUST equal docs/version.json — a mismatch makes checkVersion() below clear the caches and
    RELOAD the open page about every minute (it stood at 10.11.0 while version.json said 10.24.0). */
-var V='10.25.0';
+var V='10.26.0';
 
 /* === Burger Menu === */
 var burger=document.getElementById('burger');
