@@ -76,9 +76,10 @@ final class UDPSender: @unchecked Sendable {
             return true
         }
         guard admitted else { return false }
-        let tallies = counters
-        connection.send(content: data, completion: .contentProcessed { @Sendable error in
-            tallies.withLock { (tally: inout Counters) in
+        // `Mutex` is non-copyable, so the completion reaches it through the sender (a class,
+        // `Sendable`) rather than a local copy; the stack releases the closure after one call.
+        connection.send(content: data, completion: .contentProcessed { @Sendable [self] error in
+            self.counters.withLock { (tally: inout Counters) in
                 tally.inFlight -= 1
                 if error == nil { tally.handedOver += 1 } else { tally.failed += 1 }
             }
