@@ -43,6 +43,24 @@ final class PluginHost {
         reloads.clear()
         notice = nil
     }
+    /// A safe start (two launch deaths in a row, `LaunchRecord.startsSafe`): plugins of other
+    /// makers are not loaded until the musician says so (`loadHeldPlugins`); Echoel's own effects
+    /// load as always. A held slot stays silent and its page says why, and its saved settings stay
+    /// in the song, since a capture of a slot with no unit changes nothing.
+    private(set) var holdsPlugins = false
+
+    func holdPlugins() {
+        holdsPlugins = true
+    }
+
+    /// The musician chose to load the held plugins: the next sync loads them.
+    func loadHeldPlugins() {
+        guard holdsPlugins else { return }
+        holdsPlugins = false
+        problems = problems.filter { failed[$0.key] != nil }
+        onUnitsChanged?()
+    }
+
     /// Changes whenever the loaded units do; observe this, not the units.
     private(set) var revision = 0
 
@@ -293,6 +311,10 @@ final class PluginHost {
         reloads.keep { slot, component in wanted[slot]?.component == component }
         problems = problems.filter { failed[$0.key] != nil }
         for (slot, want) in wanted where loaded[slot] == nil && requests[slot] == nil && failed[slot] != want.component {
+            if holdsPlugins, want.component.manufacturer != Self.ownManufacturer {
+                problems[slot] = "Not loaded: Echoel did not finish starting twice, so plugins from other makers wait. Load them from the status line."
+                continue
+            }
             load(want.component, for: slot, state: want.state, sampleRate: sampleRate)
         }
         rebuild(project)

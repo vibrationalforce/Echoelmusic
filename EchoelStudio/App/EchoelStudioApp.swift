@@ -86,6 +86,8 @@ struct EchoelStudioApp: App {
                 .preferredColorScheme(.dark)
                 .task {
                     documents.restore()
+                    // Before the engine starts, so no sync loads a plugin of another maker first.
+                    if documents.startsSafe { engine.plugins.holdPlugins() }
                     engine.start()
                     midi.start()
                     launchpad.start()

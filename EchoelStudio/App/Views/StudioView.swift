@@ -334,6 +334,14 @@ struct TransportBar: View {
                     .foregroundStyle(Theme.Color.record)
                     .padding(.bottom, 2)
             }
+            // A safe start holds plugins of other makers; this is the one door that loads them.
+            if engine.plugins.holdsPlugins {
+                Button("Load plugins from other makers") { engine.plugins.loadHeldPlugins() }
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.accent)
+                    .buttonStyle(.plain)
+                    .padding(.bottom, 2)
+            }
             if let warning = documents.earlierSongsWarning {
                 earlierSongsWarning(warning)
             }
