@@ -3,12 +3,8 @@ import Foundation
 import Observation
 import Synchronization
 import os
-#if canImport(CoreLocation)
 import CoreLocation
-#endif
-#if canImport(CoreMotion)
 import CoreMotion
-#endif
 
 /// Where the phone points and where it stands, for the sky view (sky source S2, founder
 /// 2026-10-31). No setting for the musician: the view opens, the place is found once, and the
@@ -76,13 +72,9 @@ final class SkyPointing {
 
     @ObservationIgnored private var running = false
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "sky")
-    #if canImport(CoreMotion)
     @ObservationIgnored private let motion = CMMotionManager()
-    #endif
-    #if canImport(CoreLocation)
     @ObservationIgnored private let location = CLLocationManager()
     @ObservationIgnored private var reader: LocationReader?
-    #endif
 
     init() {
         let defaults = UserDefaults.standard
@@ -110,16 +102,11 @@ final class SkyPointing {
     func stop() {
         guard running else { return }
         running = false
-        #if canImport(CoreMotion)
         if motion.isDeviceMotionActive { motion.stopDeviceMotionUpdates() }
-        #endif
-        #if canImport(CoreLocation)
         location.stopUpdatingLocation()
-        #endif
     }
 
     private func startMotion() {
-        #if canImport(CoreMotion)
         guard motion.isDeviceMotionAvailable else {
             steering = .finger
             return
@@ -136,9 +123,6 @@ final class SkyPointing {
         motion.deviceMotionUpdateInterval = 1.0 / 60
         motion.startDeviceMotionUpdates(using: frame)
         steering = .sensors
-        #else
-        steering = .finger
-        #endif
     }
 
     /// The musician dragged: the finger steers until `followPhone()`.
@@ -149,17 +133,11 @@ final class SkyPointing {
 
     /// Back to the phone's attitude, when the sensors are there.
     func followPhone() {
-        #if canImport(CoreMotion)
         if motion.isDeviceMotionActive { steering = .sensors }
-        #endif
     }
 
     var canFollowPhone: Bool {
-        #if canImport(CoreMotion)
         motion.isDeviceMotionAvailable
-        #else
-        false
-        #endif
     }
 
     // MARK: - Every frame
@@ -183,7 +161,6 @@ final class SkyPointing {
     /// CoreMotion's frame is x north, y west, z up; its rotation matrix maps that frame into the
     /// device's, so a device axis in the frame is the matrix's row for that axis read as a column.
     private func measuredVectors() -> (forward: SkyVector, up: SkyVector)? {
-        #if canImport(CoreMotion)
         guard let attitude = motion.deviceMotion?.attitude else { return nil }
         let m = attitude.rotationMatrix
         // Device −z (out of the back camera) and device +y (top of the screen in portrait).
@@ -193,9 +170,6 @@ final class SkyPointing {
         let screenUp = SkyVector(x: -top.west, y: top.north, z: top.up)
         guard let f = look.normalized, let u = screenUp.normalized else { return nil }
         return (f, u)
-        #else
-        return nil
-        #endif
     }
 
     // MARK: - Place
@@ -209,7 +183,6 @@ final class SkyPointing {
     }
 
     private func askForPlace() {
-        #if canImport(CoreLocation)
         guard Bundle.main.object(forInfoDictionaryKey: "NSLocationWhenInUseUsageDescription") != nil else {
             log.error("sky: NSLocationWhenInUseUsageDescription missing — no location asked")
             return
@@ -235,15 +208,12 @@ final class SkyPointing {
         default:
             locationDenied = true
         }
-        #endif
     }
 
     private func authorizationChanged(allowed: Bool, decided: Bool) {
-        #if canImport(CoreLocation)
         guard decided else { return }
         locationDenied = !allowed
         if allowed, running { location.requestLocation() }
-        #endif
     }
 
     private func located(latitude lat: Double, longitude lon: Double) {
@@ -272,7 +242,6 @@ final class SharedPointing: Sendable {
     }
 }
 
-#if canImport(CoreLocation)
 /// CoreLocation's delegate: hands the one fix and the permission decision over, nothing else.
 private final class LocationReader: NSObject, CLLocationManagerDelegate, @unchecked Sendable {
     let onPlace: @Sendable (Double, Double) -> Void
@@ -300,4 +269,3 @@ private final class LocationReader: NSObject, CLLocationManagerDelegate, @unchec
         onAuthorization(allowed, status != .notDetermined)
     }
 }
-#endif
