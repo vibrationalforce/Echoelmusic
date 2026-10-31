@@ -31,12 +31,12 @@ struct AboutView: View {
                     .buttonStyle(EchoelRowButtonStyle())
                 }
                 EchoelSection("Open Source") {
-                    ParagraphText("The source code is public under the MIT licence. These links open in your browser.")
+                    ParagraphText("The source code is public under the MIT license. These links open in your browser.")
                     if let url = Self.sourceURL { Link("Source Code on GitHub", destination: url) }
                     if let url = Self.siteURL { Link("echoelmusic.com", destination: url) }
                 }
                 EchoelSection("Acknowledgments") {
-                    ParagraphText("Echoel Studio contains the work of others. Each licence, in full:")
+                    ParagraphText("Echoel Studio contains the work of others. Each license, in full:")
                     ForEach(Acknowledgment.all) { acknowledgment in
                         NavigationLink {
                             AcknowledgmentView(acknowledgment: acknowledgment)
@@ -45,7 +45,7 @@ struct AboutView: View {
                                 Text(acknowledgment.name)
                                     .font(Theme.Font.body)
                                     .foregroundStyle(Theme.Color.text)
-                                Text(acknowledgment.licence)
+                                Text(acknowledgment.license)
                                     .font(Theme.Font.caption)
                                     .foregroundStyle(Theme.Color.textSecondary)
                             }

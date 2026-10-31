@@ -7,15 +7,15 @@ import SwiftUI
 /// 1.1). Keep this list in step with `THIRD_PARTY_NOTICES.md` and with what `project.yml` links.
 struct Acknowledgment: Identifiable, Hashable {
     let name: String
-    let licence: String
+    let license: String
     let text: String
     var id: String { name }
 
     static let all: [Acknowledgment] = [
-        Acknowledgment(name: "HaishinKit", licence: "BSD 3-Clause", text: haishinKit),
-        Acknowledgment(name: "Logboard", licence: "BSD 3-Clause", text: logboard),
-        Acknowledgment(name: "libsrt (SRT)", licence: "Mozilla Public License 2.0", text: libsrt),
-        Acknowledgment(name: "Atkinson Hyperlegible", licence: "SIL Open Font License 1.1", text: atkinsonHyperlegible),
+        Acknowledgment(name: "HaishinKit", license: "BSD 3-Clause", text: haishinKit),
+        Acknowledgment(name: "Logboard", license: "BSD 3-Clause", text: logboard),
+        Acknowledgment(name: "libsrt (SRT)", license: "Mozilla Public License 2.0", text: libsrt),
+        Acknowledgment(name: "Atkinson Hyperlegible", license: "SIL Open Font License 1.1", text: atkinsonHyperlegible),
     ]
 
     private static let haishinKit = #"""
@@ -90,7 +90,7 @@ struct Acknowledgment: Identifiable, Hashable {
         stream over SRT when the musician chooses an SRT destination.
 
         libsrt is subject to the terms of the Mozilla Public License, v. 2.0. A copy
-        of the licence is at https://mozilla.org/MPL/2.0/.
+        of the license is at https://mozilla.org/MPL/2.0/.
 
         The source code of libsrt, in the form it is used here, is available at
         https://github.com/Haivision/srt (tag v1.5.4).

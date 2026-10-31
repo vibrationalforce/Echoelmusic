@@ -61,7 +61,7 @@ enum Theme {
         /// always also named, and the colour has a word for VoiceOver and colour-blind players.
         static let trackNames = [
             "Red", "Orange", "Yellow", "Lime", "Green", "Teal",
-            "Blue", "Indigo", "Violet", "Magenta", "Pink", "Grey",
+            "Blue", "Indigo", "Violet", "Magenta", "Pink", "Gray",
         ]
 
         static func track(_ index: Int) -> SwiftUI.Color {
