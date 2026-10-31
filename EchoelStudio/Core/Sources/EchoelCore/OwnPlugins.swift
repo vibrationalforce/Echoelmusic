@@ -56,7 +56,8 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
 /// saved, automated and learned the same way.
 public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
     // A new effect goes at the end: a saved insert names its component, never this order.
-    case equalizer, compressor, delay, reverb, chorus, phaser, flanger, limiter, saturation, tremolo, bitcrusher, tape, stereoWidth, ringModulator, frequencyShifter
+    case equalizer, compressor, delay, reverb, chorus, phaser, flanger, limiter, saturation, tremolo, bitcrusher, tape, stereoWidth, ringModulator, frequencyShifter,
+        pitchCorrection, harmonizer, granular
 
     public var id: String { rawValue }
 
@@ -77,6 +78,9 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .stereoWidth: "Stereo Width"
         case .ringModulator: "Ring Modulator"
         case .frequencyShifter: "Frequency Shifter"
+        case .pitchCorrection: "Pitch Correction"
+        case .harmonizer: "Harmonizer"
+        case .granular: "Granular"
         }
     }
 
@@ -97,6 +101,9 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .stereoWidth: "eWid"
         case .ringModulator: "eRng"
         case .frequencyShifter: "eFsh"
+        case .pitchCorrection: "eTun"
+        case .harmonizer: "eHrm"
+        case .granular: "eGrn"
         }
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",
@@ -123,6 +130,9 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .stereoWidth: "xWid"
         case .ringModulator: "xRng"
         case .frequencyShifter: "xFsh"
+        case .pitchCorrection: "xTun"
+        case .harmonizer: "xHrm"
+        case .granular: "xGrn"
         }
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",

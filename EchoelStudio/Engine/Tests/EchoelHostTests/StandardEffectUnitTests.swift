@@ -40,6 +40,21 @@ final class StandardEffectUnitTests: XCTestCase {
                              "only a standard effect's id makes one")
     }
 
+    /// A named choice reaches a host as an indexed parameter with its names.
+    func testANamedChoiceIsAnIndexedParameterWithItsNames() throws {
+        let u = try unit(.harmonizer)
+        let voice = try XCTUnwrap(u.parameterTree?.parameter(withAddress: 0))
+        XCTAssertEqual(voice.unit, .indexed)
+        XCTAssertEqual(voice.valueStrings, HarmonyInterval.allCases.map(\.title))
+        XCTAssertNil(u.parameterTree?.parameter(withAddress: 3)?.valueStrings, "a number has no names")
+    }
+
+    func testOnlyThePitchCorrectionReportsALatency() throws {
+        XCTAssertEqual(try unit(.pitchCorrection).latency, 0.019, accuracy: 0.0005)
+        XCTAssertEqual(try unit(.harmonizer).latency, 0)
+        XCTAssertEqual(try unit(.equalizer).latency, 0)
+    }
+
     func testTheExtensionCopyIsTheSameEffectAndPlaysAsADemoUntilUnlocked() throws {
         let paid = try StandardEffectUnit(componentDescription: StandardEffectUnit.audioComponent(StandardEffect.equalizer.extensionComponent))
         try paid.allocateRenderResources()

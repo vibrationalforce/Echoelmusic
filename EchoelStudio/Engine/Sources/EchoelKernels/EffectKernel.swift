@@ -5,7 +5,9 @@ import Synchronization
 
 /// One parameter of a standard effect, as its Audio Unit publishes it.
 public struct EffectParameter: Sendable, Equatable {
-    public enum Unit: Sendable { case seconds, hertz, decibels, ratio, amount, boolean }
+    /// `choice`: the value is the index of one of `choices`, which have names (a harmony interval,
+    /// a scale) — a menu, never a number.
+    public enum Unit: Sendable { case seconds, hertz, decibels, ratio, amount, boolean, choice }
 
     public let address: Int
     public let identifier: String
@@ -13,6 +15,15 @@ public struct EffectParameter: Sendable, Equatable {
     public let range: ClosedRange<Float>
     public let defaultValue: Float
     public let unit: Unit
+    /// The names of a `choice` parameter's values, index 0 first; empty for every other unit.
+    public let choices: [String]
+
+    /// The name of the choice at `value`, for a `choice` parameter.
+    public func choice(at value: Float) -> String? {
+        guard unit == .choice, value.isFinite else { return nil }
+        let index = Int(Swift.min(Swift.max(value.rounded(), 0), Float(Swift.max(choices.count - 1, 0))))
+        return choices.indices.contains(index) ? choices[index] : nil
+    }
 }
 
 /// A standard effect's processor with its parameters held in atomics: any thread may set a
@@ -45,6 +56,14 @@ public final class EffectKernel: @unchecked Sendable {
     private let stereoWidth: StereoWidth?
     private let ringModulator: RingModulator?
     private let frequencyShifter: FrequencyShifter?
+    private let pitchCorrector: PitchCorrector?
+    private let harmonizer: Harmonizer?
+    private let granulator: Granulator?
+    /// The correction's targets, worked out once here so a change of key on the render thread
+    /// only looks them up: each scale's pitch classes above C, and each tone system's cents for
+    /// every root (`tuning × 12 + root`).
+    private let scaleMasks: [UInt16]
+    private let toneSystemCents: [SIMD16<Float>]
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -71,6 +90,12 @@ public final class EffectKernel: @unchecked Sendable {
         stereoWidth = effect == .stereoWidth ? StereoWidth(sampleRate: self.sampleRate) : nil
         ringModulator = effect == .ringModulator ? RingModulator(sampleRate: self.sampleRate) : nil
         frequencyShifter = effect == .frequencyShifter ? FrequencyShifter(sampleRate: self.sampleRate) : nil
+        pitchCorrector = effect == .pitchCorrection ? PitchCorrector(sampleRate: self.sampleRate) : nil
+        harmonizer = effect == .harmonizer ? Harmonizer(sampleRate: self.sampleRate) : nil
+        granulator = effect == .granular ? Granulator(sampleRate: self.sampleRate) : nil
+        scaleMasks = effect == .pitchCorrection
+            ? Scale.allCases.map { PitchCorrector.Settings.mask(root: 0, steps: $0.intervals) } : []
+        toneSystemCents = effect == .pitchCorrection ? Self.toneSystemCents() : []
         applySettings()
     }
 
@@ -96,6 +121,10 @@ public final class EffectKernel: @unchecked Sendable {
         return Float(bitPattern: values[address].load(ordering: .relaxed))
     }
 
+    /// How far the output sits behind the input, in seconds: the pitch correction's delay, 0 for
+    /// every other effect (the harmonizer's voices lag, its dry sound does not).
+    public var latencySeconds: Double { effect == .pitchCorrection ? PitchCorrector.latencySeconds : 0 }
+
     /// Every value, in address order, to carry into a new kernel.
     public var allValues: [Float] { parameters.indices.map(parameter) }
 
@@ -119,6 +148,9 @@ public final class EffectKernel: @unchecked Sendable {
         stereoWidth?.reset()
         ringModulator?.reset()
         frequencyShifter?.reset()
+        pitchCorrector?.reset()
+        harmonizer?.reset()
+        granulator?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -149,6 +181,9 @@ public final class EffectKernel: @unchecked Sendable {
         case .stereoWidth: stereoWidth?.process(left: left, right: right, frames: frames)
         case .ringModulator: ringModulator?.process(left: left, right: right, frames: frames)
         case .frequencyShifter: frequencyShifter?.process(left: left, right: right, frames: frames)
+        case .pitchCorrection: pitchCorrector?.process(left: left, right: right, frames: frames)
+        case .harmonizer: harmonizer?.process(left: left, right: right, frames: frames)
+        case .granular: granulator?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -233,14 +268,58 @@ public final class EffectKernel: @unchecked Sendable {
             guard let frequencyShifter else { return }
             let s = FrequencyShifter.Settings(shift: value(0), mix: value(1))
             if s != frequencyShifter.settings { frequencyShifter.settings = s }
+        case .pitchCorrection:
+            guard let pitchCorrector else { return }
+            let root = Swift.min(Swift.max(Int(value(0).rounded()), 0), 11)
+            let scale = Swift.min(Swift.max(Int(value(1).rounded()), 0), scaleMasks.count - 1)
+            let system = Swift.min(Swift.max(Int(value(2).rounded()), 0), toneSystemCents.count / 12 - 1)
+            guard scale >= 0, system >= 0 else { return }
+            let mask = scaleMasks[scale]
+            let rotated = root == 0 ? mask : ((mask << UInt16(root)) | (mask >> UInt16(12 - root))) & 0x0FFF
+            let s = PitchCorrector.Settings(allowed: rotated, cents: toneSystemCents[system * 12 + root],
+                                            reference: value(3), speed: value(4), amount: value(5))
+            if s != pitchCorrector.settings { pitchCorrector.settings = s }
+        case .harmonizer:
+            guard let harmonizer else { return }
+            func shift(_ address: Int) -> Double? {
+                HarmonyInterval(index: parameter(address)).semitones.map { Double($0) }
+            }
+            let s = Harmonizer.Settings(first: shift(0), second: shift(1), third: shift(2), level: value(3),
+                                        spread: value(4))
+            if s != harmonizer.settings { harmonizer.settings = s }
+        case .granular:
+            guard let granulator else { return }
+            let s = Granulator.Settings(size: value(0), density: value(1), pitch: value(2), position: value(3),
+                                        spray: value(4), spread: value(5), mix: value(6))
+            if s != granulator.settings { granulator.settings = s }
         }
+    }
+
+    /// Every tone system's deviation from twelve equal steps with its 1/1 on each root.
+    private static func toneSystemCents() -> [SIMD16<Float>] {
+        var tables: [SIMD16<Float>] = []
+        for system in TuningSystem.library {
+            for root in MusicalContext.rootRange {
+                let cents = MusicalContext(root: root, tuning: system.id).centsTable()
+                var lanes = SIMD16<Float>.zero
+                for (index, value) in cents.prefix(12).enumerated() { lanes[index] = Float(value) }
+                tables.append(lanes)
+            }
+        }
+        return tables
     }
 
     public static func parameters(for effect: StandardEffect) -> [EffectParameter] {
         var list: [EffectParameter] = []
         func add(_ id: String, _ title: String, _ range: ClosedRange<Float>, _ value: Float, _ unit: EffectParameter.Unit) {
             list.append(EffectParameter(address: list.count, identifier: id, title: title, range: range,
-                                        defaultValue: value, unit: unit))
+                                        defaultValue: value, unit: unit, choices: []))
+        }
+        // A named choice: its value is the index, so the order of `names` is stored (Law 3).
+        func choose(_ id: String, _ title: String, _ names: [String], _ index: Int) {
+            list.append(EffectParameter(address: list.count, identifier: id, title: title,
+                                        range: 0...Float(Swift.max(names.count - 1, 0)), defaultValue: Float(index),
+                                        unit: .choice, choices: names))
         }
         switch effect {
         case .equalizer:
@@ -316,6 +395,29 @@ public final class EffectKernel: @unchecked Sendable {
             add("mix", "Mix", 0...1, 0.5, .amount)
         case .frequencyShifter:
             add("shift", "Shift", -1_000...1_000, 100, .hertz)
+            add("mix", "Mix", 0...1, 0.5, .amount)
+        case .pitchCorrection:
+            // By name; the effect panel can set the three from the song's own frame.
+            choose("key", "Key", MusicalContext.rootNames, 0)
+            choose("scale", "Scale", Scale.allCases.map(\.title), Scale.allCases.firstIndex(of: .major) ?? 0)
+            choose("tuning", "Tone System", TuningSystem.library.map(\.name), 0)
+            add("reference", "Concert A", 400...480, 440, .hertz)
+            add("speed", "Speed", 0...0.5, 0.04, .seconds)
+            add("amount", "Amount", 0...1, 1, .amount)
+        case .harmonizer:
+            let intervals = HarmonyInterval.allCases.map(\.title)
+            choose("voice1", "Voice 1", intervals, HarmonyInterval.fifthUp.rawValue)
+            choose("voice2", "Voice 2", intervals, HarmonyInterval.off.rawValue)
+            choose("voice3", "Voice 3", intervals, HarmonyInterval.off.rawValue)
+            add("level", "Level", 0...1, 0.5, .amount)
+            add("spread", "Spread", 0...1, 0.5, .amount)
+        case .granular:
+            add("size", "Grain Size", 0.01...0.5, 0.08, .seconds)
+            add("density", "Density", 0...1, 0.5, .amount)
+            add("pitch", "Pitch", -24...24, 0, .amount)
+            add("position", "Position", 0...2, 0.25, .seconds)
+            add("spray", "Spray", 0...0.5, 0.05, .seconds)
+            add("spread", "Spread", 0...1, 0.5, .amount)
             add("mix", "Mix", 0...1, 0.5, .amount)
         }
         return list

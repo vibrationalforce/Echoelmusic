@@ -90,13 +90,16 @@ public final class StandardEffectUnit: AUAudioUnit {
             case .ratio: .ratio
             case .amount: .generic
             case .boolean: .boolean
+            case .choice: .indexed
             }
             let node = AUParameterTree.createParameter(
                 withIdentifier: parameter.identifier, name: parameter.title,
                 address: AUParameterAddress(parameter.address),
                 min: parameter.range.lowerBound, max: parameter.range.upperBound, unit: unit, unitName: nil,
                 // No `.flag_CanRamp`: a ramp event is taken as its end value, so the host ramps (A9).
-                flags: [.flag_IsReadable, .flag_IsWritable], valueStrings: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                // A named choice reaches a host as its names: GarageBand and AUM show a menu.
+                valueStrings: parameter.choices.isEmpty ? nil : parameter.choices,
                 dependentParameters: nil)
             node.value = parameter.defaultValue
             return node
@@ -118,6 +121,12 @@ public final class StandardEffectUnit: AUAudioUnit {
     }
 
     public override var canProcessInPlace: Bool { true }
+
+    /// The pitch correction plays its output a little behind its input (`PitchCorrector`); a host
+    /// that compensates delay (Logic, AUM) lines the track up with this. The other effects have none.
+    public override var latency: TimeInterval {
+        render.kernel.latencySeconds
+    }
 
     /// Unlocked, the unit always plays. Locked, it plays as a demo: two seconds of silence every
     /// thirty. Every unit starts unlocked, and no shell locks an effect: the effects are free in

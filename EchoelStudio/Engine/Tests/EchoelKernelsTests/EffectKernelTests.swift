@@ -52,4 +52,50 @@ final class EffectKernelTests: XCTestCase {
         _ = process(compressor, tone)
         XCTAssertLessThan(compressor.gainReduction, -10, "the meter reads the reduction")
     }
+
+    private func voiceTone(_ hertz: Double) -> [Float] {
+        (0..<48_000).map { (index: Int) -> Float in
+            let phase = 2 * Double.pi * hertz * Double(index) / 48_000
+            return Float(0.5 * sin(phase) + 0.2 * sin(2 * phase))
+        }
+    }
+
+    private func cents(_ found: Double?, _ expected: Double) -> Double {
+        guard let found else { return .infinity }
+        return 1_200 * log2(found / expected)
+    }
+
+    /// The key and scale are names whose index the kernel turns into targets: an F sung 30 cents
+    /// sharp stays F in C major and becomes F sharp in D major.
+    func testTheCorrectionFollowsTheChosenKeyAndScale() throws {
+        let kernel = EffectKernel(effect: .pitchCorrection, sampleRate: rate)
+        let names = kernel.parameters.map(\.identifier)
+        let key = try XCTUnwrap(names.firstIndex(of: "key"))
+        let scale = try XCTUnwrap(names.firstIndex(of: "scale"))
+        XCTAssertEqual(kernel.parameters[key].choice(at: kernel.parameter(key)), "C")
+        XCTAssertEqual(kernel.parameters[scale].choice(at: kernel.parameter(scale)), "Major")
+        let sung = voiceTone(349.23 * pow(2, 30.0 / 1_200))
+        let inC = process(kernel, sung)
+        XCTAssertEqual(cents(PitchTracker.frequency(of: Array(inC.suffix(4_096)), sampleRate: rate), 349.23), 0, accuracy: 3)
+        let inD = EffectKernel(effect: .pitchCorrection, sampleRate: rate)
+        inD.setParameter(key, 2)
+        let output = process(inD, sung)
+        XCTAssertEqual(cents(PitchTracker.frequency(of: Array(output.suffix(4_096)), sampleRate: rate), 369.99), 0, accuracy: 3)
+    }
+
+    func testAHarmonizerVoiceIsChosenByItsIntervalsName() throws {
+        let kernel = EffectKernel(effect: .harmonizer, sampleRate: rate)
+        let voice = kernel.parameters[0]
+        XCTAssertEqual(voice.unit, .choice)
+        XCTAssertEqual(voice.choices, HarmonyInterval.allCases.map(\.title))
+        XCTAssertEqual(voice.choice(at: kernel.parameter(0)), "Fifth up")
+        kernel.setParameter(0, Float(HarmonyInterval.octaveUp.rawValue))
+        kernel.setParameter(3, 1)
+        let input = voiceTone(220)
+        let added = zip(process(kernel, input), input).map { (pair: (Float, Float)) -> Float in pair.0 - pair.1 }
+        XCTAssertEqual(cents(PitchTracker.frequency(of: Array(added.suffix(6_000)), sampleRate: rate), 440), 0, accuracy: 3)
+        kernel.setParameter(0, Float(HarmonyInterval.off.rawValue))
+        let silent = process(kernel, input)
+        XCTAssertEqual(Array(silent.suffix(1_000)), Array(input.suffix(1_000)), "every voice off passes the sound")
+    }
 }
