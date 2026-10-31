@@ -74,7 +74,7 @@ struct FieldFullscreen: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            Color.black.ignoresSafeArea()
+            Theme.Color.background.ignoresSafeArea()
             FieldView().ignoresSafeArea()
             Button(action: close) { Image(systemName: "arrow.down.right.and.arrow.up.left") }
                 .buttonStyle(ToolButtonStyle())
