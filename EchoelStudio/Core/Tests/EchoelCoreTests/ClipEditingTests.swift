@@ -263,6 +263,64 @@ final class ClipEditingTests: XCTestCase {
         XCTAssertEqual(p, before)
     }
 
+    // MARK: - What a tap in the arrangement becomes
+
+    func testTheArrangementSplitsOnlyInsideAndJoinsTheRunATouchingPlacementSitsIn() throws {
+        var (p, track, placement, clip) = try keys(notes: [Note(pitch: 60, start: 0, length: 10)])
+        let touching = PlacementID(), apart = PlacementID()
+        try Command.placeClip(track: track, id: touching, clip: clip, start: 3 * bar).apply(to: &p)
+        try Command.placeClip(track: track, id: apart, clip: clip, start: 8 * bar).apply(to: &p)
+        var t = try XCTUnwrap(p.track(track))
+        let first = try XCTUnwrap(t.placements.first { $0.id == placement })
+        let lone = try XCTUnwrap(t.placements.first { $0.id == apart })
+
+        XCTAssertNil(Arranging.split(first, in: t, at: bar), "on its first tick")
+        XCTAssertNil(Arranging.split(first, in: t, at: 3 * bar), "where it ends")
+        XCTAssertNil(Arranging.consolidated(lone, in: t))
+        let join = try XCTUnwrap(Arranging.consolidated(first, in: t))
+        guard case let .consolidatePlacements(_, ids, _) = join else { return XCTFail("\(join)") }
+        XCTAssertEqual(ids, [placement, touching])
+
+        let cut = try XCTUnwrap(Arranging.split(first, in: t, at: 2 * bar))
+        try cut.apply(to: &p)
+        t = try XCTUnwrap(p.track(track))
+        XCTAssertEqual(t.placements.map(\.start), [bar, 2 * bar, 3 * bar, 8 * bar])
+    }
+
+    func testTheArrangementJoinsAudioOnlyWhereNoBounceIsNeeded() throws {
+        var (p, track, region, file) = try audio()
+        try Command.splitRegion(track: track, region, at: bar + 960, newID: RegionID()).apply(to: &p)
+        var t = try XCTUnwrap(p.track(track))
+        let head = try XCTUnwrap(t.regions.first { $0.id == region })
+        let join = try XCTUnwrap(Arranging.consolidated(head, in: t, project: p))
+        guard case let .consolidateRegions(_, ids) = join else { return XCTFail("\(join)") }
+        XCTAssertEqual(ids.count, 2)
+
+        // The same file again on top: both would sound, so only a bounce could join them.
+        try Command.placeAudio(track: track, id: RegionID(), media: file.id, start: bar + 480).apply(to: &p)
+        t = try XCTUnwrap(p.track(track))
+        XCTAssertNil(Arranging.consolidated(head, in: t, project: p))
+    }
+
+    func testADuplicatedRegionPlaysTheSameStretchRightAfterIt() async throws {
+        let (start, track, region, _) = try audio()
+        let original = try XCTUnwrap(start.track(track)?.regions.first { $0.id == region })
+        let stop = try XCTUnwrap(Arranging.end(of: original, in: start))
+        let commands = try XCTUnwrap(Arranging.duplicated(original, in: try XCTUnwrap(start.track(track)), project: start))
+        let first = original.start
+        try await MainActor.run {
+            let store = ProjectStore(project: start)
+            try store.perform(commands, title: "Duplicate Audio")
+            let regions = store.project.track(track)?.regions ?? []
+            XCTAssertEqual(regions.map(\.start), [first, stop])
+            XCTAssertEqual(regions.map(\.offset), [12_000, 12_000])
+            XCTAssertEqual(regions.map(\.length), [120_000, 120_000])
+            XCTAssertEqual(store.project.media.count, 1)
+            store.undo()
+            XCTAssertEqual(store.project, start)
+        }
+    }
+
     func testTheSplitAndJoinCommandsAreInTheCatalog() {
         let names = Set(CommandCatalog.all.map(\.name))
         XCTAssertTrue(names.contains("arrangement.split"))
