@@ -25,6 +25,11 @@ public enum Sky {
     public struct Horizontal: Equatable, Sendable {
         public let altitude: Double
         public let azimuth: Double
+
+        public init(altitude: Double, azimuth: Double) {
+            self.altitude = altitude
+            self.azimuth = azimuth
+        }
     }
 
     /// Where a body at `rightAscension`/`declination` (degrees, equator of date) stands for an

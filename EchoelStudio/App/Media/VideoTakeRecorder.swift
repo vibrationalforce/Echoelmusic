@@ -27,7 +27,6 @@ final class VideoTakeRecorder {
     private(set) var state: State = .closed
 
     @ObservationIgnored private var camera: TakeCamera?
-    @ObservationIgnored private var arbitration = CameraArbitration()
     @ObservationIgnored private var pulse: CameraPulseSource?
     @ObservationIgnored private var take: (generation: UInt64, target: DocumentController.TakeTarget, track: TrackID?)?
     @ObservationIgnored private var startTick: Tick?
@@ -52,14 +51,12 @@ final class VideoTakeRecorder {
         self.engine = engine
         self.store = store
         self.documents = documents
-        if pulse.isOn { _ = arbitration.choosePulse() }
-        guard let steps = arbitration.beginTake() else { return }
-        carry(steps)
+        // The one arbitration lives with the camera's owner (take > pulse > sky).
+        guard let generation = pulse.beginTake() else { return }
         state = .opening
-        let generation = arbitration.generation
         Task { @MainActor [weak self] in
             let granted = await CameraCapture.requestAccess()
-            guard let self, self.arbitration.isCurrent(generation) else { return }
+            guard let self, self.pulse?.isCameraCurrent(generation) == true else { return }
             guard granted else {
                 self.state = .denied
                 self.giveBack()
@@ -72,7 +69,7 @@ final class VideoTakeRecorder {
             do {
                 try await camera.open()
             } catch {
-                guard self.arbitration.isCurrent(generation) else { return }
+                guard self.pulse?.isCameraCurrent(generation) == true else { return }
                 self.log.warning("take camera could not open: \(String(describing: error), privacy: .public)")
                 camera.close()
                 self.camera = nil
@@ -80,7 +77,7 @@ final class VideoTakeRecorder {
                 self.giveBack()
                 return
             }
-            guard self.arbitration.isCurrent(generation) else {
+            guard self.pulse?.isCameraCurrent(generation) == true else {
                 camera.close()
                 return
             }
@@ -91,13 +88,13 @@ final class VideoTakeRecorder {
     /// Starts the song from where it stands and the take with it, onto `track` — or a new video
     /// track when the song has none to name.
     func record(onto track: TrackID?) {
-        guard state == .ready, let camera, let documents, let engine else { return }
+        guard state == .ready, let camera, let documents, let engine, let pulse else { return }
         guard let target = documents.newTakeTarget(fileExtension: "mov") else { return }
-        take = (arbitration.generation, target, track)
+        take = (pulse.cameraGeneration, target, track)
         startTick = nil
         state = .recording
         if !engine.isPlaying { engine.play() }
-        camera.record(to: target.url, generation: arbitration.generation)
+        camera.record(to: target.url, generation: pulse.cameraGeneration)
     }
 
     /// Ends the take and the song with it; the take lands once its file is closed.
@@ -166,31 +163,8 @@ final class VideoTakeRecorder {
         if closesAfterTake { release() } else { state = .ready }
     }
 
-    /// Carries out what the arbitration answered.
-    private func carry(_ steps: [CameraArbitration.Step]) {
-        for step in steps {
-            switch step {
-            case .suspendPulse:
-                pulse?.takeHoldsCamera = true
-                pulse?.suspend()
-            case .openTake:
-                pulse?.takeHoldsCamera = true
-            case .resumePulse:
-                pulse?.takeHoldsCamera = false
-                pulse?.resume()
-            case .closeTake:
-                pulse?.takeHoldsCamera = false
-            case .openPulse, .closePulse:
-                break   // the pulse's own menu opens and closes it
-            }
-        }
-    }
-
-    /// The take is over: the camera goes back to a pulse that is on.
+    /// The take is over: the camera goes back to a pulse that is on, else to a waiting sky view.
     private func giveBack() {
-        guard let pulse else { return }
-        // The musician may have turned the pulse on or off meanwhile.
-        if pulse.isOn { _ = arbitration.choosePulse() } else { _ = arbitration.dropPulse() }
-        carry(arbitration.endTake())
+        pulse?.endTake()
     }
 }

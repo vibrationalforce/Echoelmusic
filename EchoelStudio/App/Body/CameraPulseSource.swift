@@ -101,9 +101,19 @@ final class CameraPulseSource {
     @ObservationIgnored private var findingSince: Int64 = 0
     @ObservationIgnored private var stallWasRhythmless: Bool?
     @ObservationIgnored private var suspended = false
-    /// A video take holds the camera (`CameraArbitration`, W7): a pulse chosen now waits suspended,
-    /// and `resume()` opens it when the take gives the camera back. Set by `VideoTakeRecorder` only.
-    @ObservationIgnored var takeHoldsCamera = false
+    /// THE arbitration of the rear camera for the whole app (`CameraArbitration`): take > pulse >
+    /// sky. This class owns it because it is the camera's long-lived owner; a take
+    /// (`VideoTakeRecorder`) and the sky view (`SkyCamera`) ask here and open the camera only when
+    /// it answers so — never two capture sessions on the one lens.
+    @ObservationIgnored private var arbitration = CameraArbitration()
+    /// The sky view's camera layer may hold the camera now. Observed: it changes only at a hand-over.
+    private(set) var skyHoldsCamera = false
+    /// A video take holds the camera: a pulse chosen now waits suspended, and `resume()` opens it
+    /// when the take gives the camera back.
+    var takeHoldsCamera: Bool { arbitration.holder == .take }
+    /// The current holder's generation; a callback stamped with an older one is stale.
+    var cameraGeneration: UInt64 { arbitration.generation }
+    func isCameraCurrent(_ generation: UInt64) -> Bool { arbitration.isCurrent(generation) }
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "body")
 
     var isOn: Bool { status != .off }
@@ -123,6 +133,7 @@ final class CameraPulseSource {
         }
         generation &+= 1
         let run = generation
+        carry(arbitration.choosePulse())
         if takeHoldsCamera {
             // Production wins: the pulse is on, and waits for the camera.
             suspended = true
@@ -143,6 +154,8 @@ final class CameraPulseSource {
         guard isOn else { return }
         generation &+= 1
         closeCamera()
+        // After the camera is closed: a waiting sky layer may take it now.
+        carry(arbitration.dropPulse())
         apply(.stop)
         status = .off
         cue = .coverLens
@@ -150,8 +163,47 @@ final class CameraPulseSource {
         forgetTake()
     }
 
+    // MARK: - The other claimants (take, sky)
+
+    /// A take wants the camera: it gets it — the pulse pausing, the sky layer closing — and the
+    /// answer is the take's generation. Nil while a take already holds it.
+    func beginTake() -> UInt64? {
+        guard let steps = arbitration.beginTake() else { return nil }
+        carry(steps)
+        return arbitration.generation
+    }
+
+    /// The take ended: the camera goes back to a chosen pulse, else to a waiting sky view.
+    func endTake() {
+        carry(arbitration.endTake())
+    }
+
+    /// The sky view opened and would show its camera layer; `skyHoldsCamera` says when it may.
+    func wantSky() {
+        carry(arbitration.wantSky())
+    }
+
+    /// The sky view closed.
+    func dropSky() {
+        carry(arbitration.dropSky())
+    }
+
+    /// Carries out what the arbitration answered. Opening and closing the pulse's own camera is
+    /// `start()`/`stop()`'s work; the steps here are what the OTHER claimants' moves mean for it.
+    private func carry(_ steps: [CameraArbitration.Step]) {
+        for step in steps {
+            switch step {
+            case .suspendPulse: suspend()
+            case .resumePulse: resume()
+            case .openSky: if !skyHoldsCamera { skyHoldsCamera = true }
+            case .closeSky: if skyHoldsCamera { skyHoldsCamera = false }
+            case .openPulse, .closePulse, .openTake, .closeTake: break
+            }
+        }
+    }
+
     /// A production camera takes the lens (camera-arbitration: production wins): the pulse pauses
-    /// without turning off, and `resume()` reopens it. `VideoTakeRecorder` calls these (W7).
+    /// without turning off, and `resume()` reopens it. Called through `beginTake()`/`endTake()`.
     func suspend() {
         guard isOn, !suspended else { return }
         suspended = true
