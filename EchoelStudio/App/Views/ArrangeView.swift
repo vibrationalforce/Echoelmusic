@@ -50,7 +50,7 @@ struct ArrangeView: View {
                             .frame(height: Theme.Size.trackRowHeight)
                             .background(Theme.Color.surface)
                             .contextMenu {
-                                Button("Rename…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
+                                Button("Rename Track…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
                                 AutomateMenu(owner: .track(track.id))
                                 ModulateMenu(owner: .track(track.id))
                             }
@@ -284,8 +284,8 @@ private struct PlacementBlock: View {
                     .lineLimit(1)
                     .padding(Theme.Space.xs)
             }
-            .frame(width: width, height: Theme.Size.trackRowHeight - 8)
-            .offset(x: CGFloat(Double(placement.start) / ticksPerPoint) + dragX, y: 4)
+            .frame(width: width, height: Theme.Size.trackRowHeight - Theme.Space.s)
+            .offset(x: CGFloat(Double(placement.start) / ticksPerPoint) + dragX, y: Theme.Space.xs)
             .opacity(dragX == 0 ? 1 : 0.8)
             .onTapGesture { open(track.id, clip.id) }
             .gesture(
@@ -385,7 +385,7 @@ private struct RegionBlock: View {
     private var seconds: Double { file.sampleRate > 0 ? Double(region.length) / file.sampleRate : 0 }
     private var spokenLabel: String {
         let kind = file.kind == .video ? "video" : "audio"
-        let time = seconds.formatted(.number.precision(.fractionLength(1)))
+        let time = NumberText.string(seconds, decimals: 1)
         return "\(file.name), \(kind), bar \(startBar), \(time) seconds"
     }
 
@@ -411,8 +411,8 @@ private struct RegionBlock: View {
             }
             .overlay(alignment: .leading) { edgeHandle(.start) }
             .overlay(alignment: .trailing) { edgeHandle(.end) }
-            .frame(width: width, height: Theme.Size.trackRowHeight - 8)
-            .offset(x: CGFloat(Double(region.start) / ticksPerPoint) + dragX + trimLeft, y: 4)
+            .frame(width: width, height: Theme.Size.trackRowHeight - Theme.Space.s)
+            .offset(x: CGFloat(Double(region.start) / ticksPerPoint) + dragX + trimLeft, y: Theme.Space.xs)
             .opacity(dragX == 0 && trimLeft == 0 && trimRight == 0 ? 1 : 0.8)
             .gesture(
                 DragGesture(minimumDistance: 6, coordinateSpace: .named(ArrangeLane.space))
@@ -475,13 +475,15 @@ private struct RegionBlock: View {
             .accessibilityAction(named: "Extend End One Beat") { trim(.end, beats: 1) }
     }
 
-    /// A grip along one edge, wide enough for a finger; it wins over the move drag.
+    /// A grip along one edge; it wins over the move drag. It looks narrow (a 4-pt stripe with
+    /// 8 pt either side), and it TAKES a full touch target: the hit area reaches 12 pt further on
+    /// each side, 44 pt in all, half of it beyond the region's edge.
     private func edgeHandle(_ edge: Arranging.Edge) -> some View {
         Rectangle()
             .fill(Theme.Color.track(track.colorIndex).opacity(0.6))
-            .frame(width: 4)
+            .frame(width: Theme.Space.xs)
             .padding(.horizontal, Theme.Space.s)
-            .contentShape(Rectangle())
+            .contentShape(Rectangle().inset(by: -Theme.Space.m))
             .highPriorityGesture(
                 DragGesture(minimumDistance: 2, coordinateSpace: .named(ArrangeLane.space))
                     .onChanged { value in

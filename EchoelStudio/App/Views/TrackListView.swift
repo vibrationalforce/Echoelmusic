@@ -105,7 +105,7 @@ struct TrackRow: View {
         .frame(minHeight: Theme.Size.trackRowHeight)
         .background(Theme.Color.surface)
         .contextMenu {
-            Button("Rename…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
+            Button("Rename Track…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
             Button("Move Up", systemImage: "arrow.up") { move(by: -1) }
                 .disabled(index == 0)
             Button("Move Down", systemImage: "arrow.down") { move(by: 1) }
@@ -158,12 +158,20 @@ struct AddTrackMenu: View {
 
     var body: some View {
         Menu {
+            // A full kind stays in the list, off, with the limit as the item's second line —
+            // the name stays the name.
             ForEach(TrackKind.allCases, id: \.self) { kind in
-                Button(title(kind)) { add(kind) }
-                    .disabled(!store.project.canAddTrack(kind))
+                Button { add(kind) } label: {
+                    Text(kind.displayName)
+                    if !store.project.canAddTrack(kind) { Text("The song holds \(Track.limit(for: kind)), the most it can.") }
+                }
+                .disabled(!store.project.canAddTrack(kind))
             }
-            Button(store.project.canAddTrack(.instrument) ? "Drums" : "Drums (\(Track.limit(for: .instrument)) instruments is the limit)") {
-                addDrums()
+            Button { addDrums() } label: {
+                Text("Drums")
+                if !store.project.canAddTrack(.instrument) {
+                    Text("The song holds \(Track.limit(for: .instrument)) instrument tracks, the most it can.")
+                }
             }
             .disabled(!store.project.canAddTrack(.instrument))
         } label: {
@@ -189,12 +197,6 @@ struct AddTrackMenu: View {
             .createClip(track: track, id: clip, name: "Beat", length: MusicalTime.ticksPerBar(store.project.timeSignature)),
             .placeClip(track: track, id: PlacementID(), clip: clip, start: 0),
         ], title: "Add Drums")
-    }
-
-    /// The menu says why an entry is off: the song is full for that kind.
-    private func title(_ kind: TrackKind) -> String {
-        store.project.canAddTrack(kind) ? kind.displayName
-            : "\(kind.displayName) (\(Track.limit(for: kind)) is the limit)"
     }
 
     private func add(_ kind: TrackKind) {
