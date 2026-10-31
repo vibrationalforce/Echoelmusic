@@ -95,6 +95,7 @@ struct SessionTrackHeader: View {
 struct SceneButton: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
+    @Environment(StudioRouter.self) private var router
     let scene: EchoelCore.Scene
 
     var body: some View {
@@ -112,11 +113,13 @@ struct SceneButton: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
+            Button("Rename…", systemImage: "pencil") { router.sheet = .rename(.scene(scene.id)) }
             Button("Delete Scene", systemImage: "trash", role: .destructive) {
                 try? store.perform(.removeScene(scene.id))
             }
         }
         .accessibilityLabel("Launch \(scene.name)")
+        .accessibilityAction(named: "Rename Scene") { router.sheet = .rename(.scene(scene.id)) }
     }
 }
 
@@ -124,6 +127,7 @@ struct SceneButton: View {
 struct SessionCell: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
+    @Environment(StudioRouter.self) private var router
     let track: Track
     let scene: EchoelCore.Scene
     let open: (TrackID, ClipID) -> Void
@@ -168,8 +172,13 @@ struct SessionCell: View {
             } else {
                 loopMenu(clip)
             }
+            Button("Rename…", systemImage: "pencil") { router.sheet = .rename(.clip(clip.id)) }
             Button("Remove from Slot", systemImage: "minus.circle") {
                 try? store.perform(.setSlot(track: track.id, scene: scene.id, clip: nil))
+            }
+            // The clip itself: out of every slot and every place in the arrangement (undoable).
+            Button("Delete Clip", systemImage: "trash", role: .destructive) {
+                try? store.perform(.deleteClip(clip.id))
             }
         }
         .accessibilityLabel("\(clip.name) on \(track.name)")
@@ -177,6 +186,8 @@ struct SessionCell: View {
         .accessibilityHint("Launches the clip.")
         .accessibilityActions {
             if clip.audio == nil { Button("Edit") { open(track.id, clip.id) } }
+            Button("Rename Clip") { router.sheet = .rename(.clip(clip.id)) }
+            Button("Delete Clip") { try? store.perform(.deleteClip(clip.id)) }
         }
     }
 

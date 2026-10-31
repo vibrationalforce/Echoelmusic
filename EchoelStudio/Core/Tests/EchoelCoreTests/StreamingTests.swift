@@ -46,6 +46,29 @@ final class StreamingTests: XCTestCase {
                        "a custom SRT address may carry everything itself")
     }
 
+    /// libsrt would encrypt with its own code; the app declares no non-exempt encryption, so an
+    /// SRT address that asks for it is refused before anything connects — in any spelling.
+    func testAnSRTAddressThatAsksForEncryptionIsRefused() {
+        func refusal(_ server: String, key: String = "stage") -> StreamTarget.AddressError? {
+            do {
+                _ = try StreamTarget(platform: .customSRT, server: server).publishURL(key: key)
+                return nil
+            } catch let failure as StreamTarget.AddressError {
+                return failure
+            } catch {
+                return nil
+            }
+        }
+        XCTAssertEqual(refusal("srt://relay.local:8890?passphrase=0123456789abc"), .srtEncryption)
+        XCTAssertEqual(refusal("srt://relay.local:8890?latency=200000&pbkeylen=16"), .srtEncryption)
+        XCTAssertEqual(refusal("srt://relay.local:8890?PassPhrase=0123456789abc"), .srtEncryption, "a name in any case")
+        XCTAssertEqual(refusal("srt://relay.local:8890?pass%70hrase=0123456789abc"), .srtEncryption, "a name percent-encoded")
+        XCTAssertEqual(refusal("srt://relay.local:8890?passphrase"), .srtEncryption, "a name without a value")
+        XCTAssertEqual(refusal("srt://relay.local:8890?passphrase=x", key: ""), .srtEncryption, "with or without a key")
+        XCTAssertNil(refusal("srt://relay.local:8890?latency=200000"), "other options stay allowed")
+        XCTAssertNil(refusal("srt://relay.local:8890", key: "passphrase"), "a key that merely says the word is a stream id")
+    }
+
     func testABadAddressSaysWhatToChange() {
         func refusal(_ target: StreamTarget, key: String) -> StreamTarget.AddressError? {
             do {
@@ -73,7 +96,7 @@ final class StreamingTests: XCTestCase {
         XCTAssertEqual(refusal(StreamTarget(platform: .customRTMP, server: "rtmp://h/live"), key: ""), .noStreamName,
                        "an app without a stream name is refused before connecting")
         for each in [StreamTarget.AddressError.noServer, .notAnAddress, .wrongScheme(""), .noHost, .noKey, .badKey,
-                     .noStreamName] {
+                     .noStreamName, .srtEncryption] {
             XCTAssertFalse(each.explanation.isEmpty)
         }
     }

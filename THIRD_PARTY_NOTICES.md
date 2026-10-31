@@ -93,8 +93,12 @@ The Echoel source is MIT-licensed — see `LICENSE` (© 2024–2025 Echoelmusic)
       `.app`; a device/archive check would settle it beyond the project file. The box stood
       unticked while the work was already done — a checklist that overstates the backlog costs
       the same attention as one that understates it.
-- [ ] Add an in-app **Acknowledgments** screen surfacing this file (font OFL notice).
-      Nice-to-have for OFL; standard for App Store apps.
-- [ ] Show the HaishinKit, Logboard (BSD-3-Clause) and libsrt (MPL-2.0) licence texts in the app's acknowledgments before the App Store release.
-- [ ] Export compliance: libsrt can encrypt with its own code when an SRT passphrase is used; decide before the store release whether to forbid a passphrase in SRT addresses or to file the encryption self-classification (`ITSAppUsesNonExemptEncryption` is NO today).
+- [x] **Echoel Studio, 2026-10-31 (team DOORS):** About → Acknowledgments shows the full texts
+      offline (`EchoelStudio/App/Views/Acknowledgments.swift`): HaishinKit 2.2.5 and Logboard
+      2.6.0 (BSD-3-Clause, their LICENSE.md at those tags), libsrt 1.5.4 (MPL-2.0 notice,
+      copyright line, source URL) and Atkinson Hyperlegible (OFL 1.1). Device check pending.
+      The earlier app (`Sources/`) still has no such screen.
+- [x] Export compliance, decided 2026-10-31: an SRT address with `passphrase` or `pbkeylen` is
+      refused (`StreamTarget.AddressError.srtEncryption`, tested in `StreamingTests`), so libsrt's
+      own encryption is never switched on and `ITSAppUsesNonExemptEncryption` NO stays true.
 - [ ] Counsel review before release.

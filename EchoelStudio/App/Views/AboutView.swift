@@ -34,6 +34,24 @@ struct AboutView: View {
                     if let url = Self.sourceURL { Link("Source code on GitHub", destination: url) }
                     if let url = Self.siteURL { Link("echoelmusic.com", destination: url) }
                 }
+                Section("Acknowledgments") {
+                    paragraph("Echoel Studio contains the work of others. Each licence, in full:")
+                    ForEach(Acknowledgment.all) { acknowledgment in
+                        NavigationLink {
+                            AcknowledgmentView(acknowledgment: acknowledgment)
+                        } label: {
+                            VStack(alignment: .leading, spacing: Theme.Space.xs / 2) {
+                                Text(acknowledgment.name)
+                                    .font(Theme.Font.body)
+                                    .foregroundStyle(Theme.Color.text)
+                                Text(acknowledgment.licence)
+                                    .font(Theme.Font.caption)
+                                    .foregroundStyle(Theme.Color.textSecondary)
+                            }
+                            .accessibilityElement(children: .combine)
+                        }
+                    }
+                }
                 Section("This build") {
                     paragraph(Self.versionLine)
                 }

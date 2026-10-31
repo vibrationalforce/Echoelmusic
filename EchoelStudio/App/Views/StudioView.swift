@@ -84,6 +84,7 @@ struct StudioView: View {
             case .agent: AgentView()
             case .about: AboutView()
             case .renameSong: RenameSongView()
+            case .rename(let target): RenameView(target: target)
             case .streaming: StreamingView()
             case .connections: ConnectionsView()
             case let .importAudio(track, start):
@@ -109,6 +110,12 @@ struct StudioView: View {
                 .ignoresSafeArea()
             case .cameraTake(let track): CameraTakeView(track: track)
             case .exportVideo: VideoExportView()
+            case .importMIDI:
+                AudioFilePicker(pick: { url in
+                    router.sheet = nil
+                    documents.importMIDI(url)
+                }, cancel: { router.sheet = nil }, types: [.midi])
+                .ignoresSafeArea()
             case let .importClip(track, scene):
                 AudioFilePicker(pick: { url in
                     router.sheet = nil
@@ -568,11 +575,13 @@ struct SongMenu: View {
                     }
                 }
             }
-            // Not while an import, an export, a take or the media load uses the package: the rename
-            // then moves it at once, and a finished export cannot take the slot from a typed name.
-            Button("Rename Song…", systemImage: "pencil") { router.sheet = .renameSong }
+            // The Song page: name, swing, tempo changes. Not while an import, an export, a take or
+            // the media load uses the package: a rename then moves it at once, and a finished
+            // export cannot take the slot from a typed name.
+            Button("Song Settings…", systemImage: "slider.horizontal.3") { router.sheet = .renameSong }
                 .disabled(documents.packageIsBusy)
             keyAndScale
+            timeSignatureMenu
             if agent.isOffered {
                 Button("Assistant", systemImage: "text.bubble") { router.sheet = .agent }
             }
@@ -657,6 +666,8 @@ struct SongMenu: View {
                 if let url = documents.exportMIDI() { router.share(url) }
             }
             .disabled(!store.project.arrangementHasEvents)
+            // A Standard MIDI File as new instrument tracks; an empty song takes its tempo and meter.
+            Button("Import MIDI…", systemImage: "square.and.arrow.down") { router.sheet = .importMIDI }
             // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
             Button("Export Video", systemImage: "film") { router.sheet = .exportVideo }
                 .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)
@@ -749,6 +760,52 @@ struct SongMenu: View {
         } label: {
             Label("Key \u{00B7} \(context.title)", systemImage: "music.note")
         }
+    }
+
+    /// The song's time signature: the common ones by name, any other by its two numbers. A
+    /// change keeps every note on its tick; the bar lines move around them (one undo step).
+    private var timeSignatureMenu: some View {
+        let current = store.project.timeSignature
+        return Menu {
+            ForEach(Self.commonSignatures, id: \.self) { signature in
+                Button { setSignature(signature) } label: {
+                    if signature == current {
+                        Label(Self.title(signature), systemImage: "checkmark")
+                    } else {
+                        Text(Self.title(signature))
+                    }
+                }
+            }
+            Divider()
+            Picker("Beats per Bar", selection: Binding(get: { current.numerator }, set: {
+                setSignature(TimeSignature($0, current.denominator))
+            })) {
+                ForEach(1...32, id: \.self) { Text("\($0)").tag($0) }
+            }
+            .pickerStyle(.menu)
+            Picker("Beat Unit", selection: Binding(get: { current.denominator }, set: {
+                setSignature(TimeSignature(current.numerator, $0))
+            })) {
+                ForEach(TimeSignature.allowedDenominators.sorted(), id: \.self) { Text("1/\($0)").tag($0) }
+            }
+            .pickerStyle(.menu)
+        } label: {
+            Label("Time Signature \u{00B7} \(Self.title(current))", systemImage: "music.quarternote.3")
+        }
+    }
+
+    static let commonSignatures: [TimeSignature] = [
+        TimeSignature(4, 4), TimeSignature(3, 4), TimeSignature(2, 4), TimeSignature(5, 4),
+        TimeSignature(6, 8), TimeSignature(7, 8), TimeSignature(9, 8), TimeSignature(12, 8),
+    ]
+
+    static func title(_ signature: TimeSignature) -> String {
+        "\(signature.numerator)/\(signature.denominator)"
+    }
+
+    private func setSignature(_ signature: TimeSignature) {
+        guard signature != store.project.timeSignature else { return }
+        try? store.perform(.setTimeSignature(signature))
     }
 
     private func pick(_ address: ParameterAddress, _ value: Double) {
