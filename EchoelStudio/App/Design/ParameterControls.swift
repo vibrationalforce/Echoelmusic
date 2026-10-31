@@ -14,7 +14,7 @@ enum ParameterFormat {
             let percent = Int((abs(value) * 100).rounded())
             return percent == 0 ? "C" : (value < 0 ? "L\(percent)" : "R\(percent)")
         case .bpm:
-            return NumberText.string(value, decimals: 1, unit: "BPM")
+            return NumberText.string(value, decimalsUpTo: 2, unit: "BPM")
         case .hertz:
             return value >= 1_000 ? NumberText.string(value / 1_000, decimals: 2, unit: "kHz") : NumberText.string(value, decimals: 0, unit: "Hz")
         case .seconds:

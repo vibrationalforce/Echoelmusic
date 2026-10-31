@@ -90,6 +90,23 @@ final class NumberEntryTests: XCTestCase {
         XCTAssertNil(NumberEntryFormat(choice), "a named choice is a picker, never typed")
     }
 
+    func testATempoIsTypedToTheHundredthAndTheSongKeepsIt() throws {
+        var project = Project(name: "Jam")
+        let descriptor = try XCTUnwrap(project.descriptor(for: .tempo))
+        let format = try XCTUnwrap(NumberEntryFormat(descriptor))
+        XCTAssertEqual(format.decimals, 2, "0.01 BPM, as Ableton types a tempo")
+        var entry = format.entry(for: descriptor.range)
+        for digit in [1, 0, 0] { entry.type(digit) }
+        entry.typeDecimal()
+        for digit in [2, 5, 9] { entry.type(digit) }
+        XCTAssertEqual(entry.text, "100.25", "a third place is not taken")
+        let typed = format.parameter(fromDisplay: entry.value(else: 0))
+        XCTAssertEqual(typed, 100.25)
+        try Command.setTempo(bpm: typed).apply(to: &project)
+        // The format stores the tempo as a JSON number: the hundredth survives the file, no bump.
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)).tempo, 100.25)
+    }
+
     func testASlowDragIsFineAndAFastOneCoversTheRange() {
         XCTAssertEqual(DragPrecision.scale(speed: 20), DragPrecision.fineScale)
         XCTAssertEqual(DragPrecision.scale(speed: -1_000), 1)

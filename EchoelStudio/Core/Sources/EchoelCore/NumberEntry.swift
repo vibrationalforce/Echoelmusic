@@ -121,7 +121,8 @@ public struct NumberEntryFormat: Sendable, Equatable {
         case .pan:
             self.init(scale: 100, decimals: 0, unit: "%")
         case .bpm:
-            self.init(scale: 1, decimals: 1, unit: "BPM")
+            // To the hundredth, as Ableton types a tempo (100.25).
+            self.init(scale: 1, decimals: 2, unit: "BPM")
         case .hertz:
             self.init(scale: 1, decimals: descriptor.range.upperBound <= 1_000 ? 1 : 0, unit: "Hz")
         case .seconds:
