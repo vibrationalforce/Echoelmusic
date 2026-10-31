@@ -206,18 +206,20 @@ struct TransportBar: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Every control in sight, nothing clipped and no sideways scroll on a phone: one row
-            // where it fits (iPad, landscape), else the song row over the transport, else three
-            // rows — song, transport and tempo, view switches (device video 10021).
+            // Every control in sight, nothing clipped, no sideways scroll (device video 10021) —
+            // and on a phone in portrait at most two rows (founder round 2): one row where it
+            // fits (iPad, landscape); else the song row over the transport with every switch;
+            // else the phone's two rows — song, pulse, Undo/Redo and More; Play, Record, Loop
+            // and the tempo — with the rare switches in More. Only large text wraps further.
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: Theme.Space.s) {
                     transportGroup
                     TempoField()
                     switchesGroup
-                    songRow
+                    songRow(more: false)
                 }
                 VStack(spacing: Theme.Space.xs) {
-                    songRow
+                    songRow(more: false)
                     HStack(spacing: Theme.Space.s) {
                         transportGroup
                         TempoField()
@@ -226,19 +228,22 @@ struct TransportBar: View {
                     }
                 }
                 VStack(spacing: Theme.Space.xs) {
-                    songRow
+                    songRow(more: true)
                     HStack(spacing: Theme.Space.s) {
                         transportGroup
-                        TempoField()
+                        TempoField(showsSteps: false)
                         Spacer(minLength: 0)
                     }
-                    // At the largest text sizes even this row is wider than a phone; then, and
-                    // only then, it scrolls rather than clipping a switch.
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: Theme.Space.s) { switchesGroup; Spacer(minLength: 0) }
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: Theme.Space.s) { switchesGroup }
-                        }
+                }
+                VStack(spacing: Theme.Space.xs) {
+                    songRow(more: true)
+                    HStack(spacing: Theme.Space.s) {
+                        transportGroup
+                        Spacer(minLength: 0)
+                    }
+                    HStack(spacing: Theme.Space.s) {
+                        TempoField(showsSteps: false)
+                        Spacer(minLength: 0)
                     }
                 }
             }
@@ -258,7 +263,7 @@ struct TransportBar: View {
 
     /// The song and its menu, the pulse while a body source is on, Undo and Redo. The song's name
     /// takes what room is left and truncates; nothing else gives way.
-    private var songRow: some View {
+    private func songRow(more: Bool) -> some View {
         HStack(spacing: Theme.Space.s) {
             SongMenu()
                 .layoutPriority(-1)
@@ -273,10 +278,41 @@ struct TransportBar: View {
                 .buttonStyle(ToolButtonStyle())
                 .disabled(!store.canRedo)
                 .accessibilityLabel(store.redoTitle.map { "Redo \($0)" } ?? "Redo")
+            if more { moreMenu }
         }
     }
 
-    /// Play and Record, side by side in every layout.
+    /// The switches a phone has no room for: click, MIDI Learn, keys, Field window, automation
+    /// writing. The button lights while learning or writing is on, red while writing, so a
+    /// state that changes what a touch does is never hidden behind the menu.
+    private var moreMenu: some View {
+        Menu {
+            Toggle(isOn: Binding(get: { clickOn }, set: { clickOn = $0; engine.setClickEnabled($0) })) {
+                Label("Click", systemImage: "metronome")
+            }
+            Toggle(isOn: Binding(get: { midi.isLearning }, set: { midi.setLearning($0) })) {
+                Label("MIDI Learn", systemImage: "slider.horizontal.2.square")
+            }
+            Toggle(isOn: $showsKeys) {
+                Label("Keys", systemImage: "pianokeys")
+            }
+            Toggle(isOn: $showsFieldWindow) {
+                Label("Field Window", systemImage: "rectangle.inset.bottomright.filled")
+            }
+            Toggle(isOn: Binding(get: { writer.isWriting }, set: { writer.setWriting($0) })) {
+                Label("Write Automation", systemImage: "pencil.line")
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+        }
+        .menuStyle(.button)
+        .buttonStyle(ToolButtonStyle(isActive: writer.isWriting || midi.isLearning,
+                                     activeColor: writer.isWriting ? Theme.Color.record : Theme.Color.accent))
+        .accessibilityLabel("More")
+        .accessibilityValue(writer.isWriting ? "Writing automation" : midi.isLearning ? "MIDI Learn on" : "")
+    }
+
+    /// Play, Record and Loop, side by side in every layout.
     private var transportGroup: some View {
         HStack(spacing: Theme.Space.s) {
             Button {
@@ -296,18 +332,18 @@ struct TransportBar: View {
             .disabled(!engine.isRunning && !engine.isStalled)
 
             RecordButton()
-        }
-    }
 
-    /// The switches: loop, click, MIDI Learn, keys, Field window, automation writing.
-    private var switchesGroup: some View {
-        HStack(spacing: Theme.Space.s) {
             Button { engine.setLoopsSong(!engine.loopsSong) } label: { Image(systemName: "repeat") }
                 .buttonStyle(ToolButtonStyle(isActive: engine.loopsSong))
                 .accessibilityLabel("Loop")
                 .accessibilityValue(engine.loopsSong ? "On" : "Off")
                 .accessibilityHint("Plays the song from bar 1 again after its last bar.")
+        }
+    }
 
+    /// The switches: click, MIDI Learn, keys, Field window, automation writing.
+    private var switchesGroup: some View {
+        HStack(spacing: Theme.Space.s) {
             Button {
                 clickOn.toggle()
                 engine.setClickEnabled(clickOn)
@@ -518,6 +554,9 @@ struct TempoField: View {
     @State private var dragStart: Double?
     @State private var taps = TapTempo()
     @ScaledMetric(relativeTo: .title2) private var valueWidth: CGFloat = 72
+    /// The − and + buttons. A phone in portrait leaves them out: the number itself is dragged,
+    /// typed on the pad, or adjusted by VoiceOver, and Tap stays.
+    var showsSteps = true
 
     private static let gestureKey = "project.tempo"
     /// Taps get their own key, so a drag or step after a run of taps is its own undo step.
@@ -525,10 +564,12 @@ struct TempoField: View {
 
     var body: some View {
         HStack(spacing: Theme.Space.xs) {
-            Button { nudge(-1) } label: { Image(systemName: "minus") }
-                .buttonStyle(ToolButtonStyle())
-                .accessibilityLabel("Slower")
-                .disabled(followsClock)
+            if showsSteps {
+                Button { nudge(-1) } label: { Image(systemName: "minus") }
+                    .buttonStyle(ToolButtonStyle())
+                    .accessibilityLabel("Slower")
+                    .disabled(followsClock)
+            }
 
             VStack(spacing: 0) {
                 Text(shownTempo, format: .number.precision(.fractionLength(1)))
@@ -564,10 +605,12 @@ struct TempoField: View {
             }
             .accessibilityAction(named: "Type a Tempo", typeTempo)
 
-            Button { nudge(1) } label: { Image(systemName: "plus") }
-                .buttonStyle(ToolButtonStyle())
-                .accessibilityLabel("Faster")
-                .disabled(followsClock)
+            if showsSteps {
+                Button { nudge(1) } label: { Image(systemName: "plus") }
+                    .buttonStyle(ToolButtonStyle())
+                    .accessibilityLabel("Faster")
+                    .disabled(followsClock)
+            }
 
             Button("Tap", action: tap)
                 .buttonStyle(ToolButtonStyle())
