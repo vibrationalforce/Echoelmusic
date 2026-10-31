@@ -88,7 +88,7 @@ struct SettingField: View {
         .accessibilityAdjustableAction { direction in
             commit(snapped(value + (direction == .increment ? step : -step)))
         }
-        .accessibilityAction(named: "Type a value", typeValue)
+        .accessibilityAction(named: "Type a Value", typeValue)
     }
 
     private var shown: String { unit.isEmpty ? String(value) : "\(value) \(unit)" }
