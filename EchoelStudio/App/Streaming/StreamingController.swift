@@ -116,7 +116,7 @@ final class StreamingController {
             }
         }
         guard let picture = FieldStreamSource(store: store, engine: engine) else {
-            notice = "This device cannot draw the Field for a stream (no Metal)."
+            notice = "This device cannot draw the Field for a stream, because it has no Metal graphics."
             return
         }
         isStarting = true
@@ -156,7 +156,7 @@ final class StreamingController {
         }
         isStarting = false
         guard opened > 0 else {
-            await end(because: notice ?? "No destination accepted the stream.")
+            await end(because: notice ?? "No destination accepted the stream. Check each destination's server address and key.")
             return
         }
         isLive = true

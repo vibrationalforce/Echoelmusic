@@ -160,7 +160,7 @@ actor StreamPublisher {
         case SessionBuilderFactory.Error.notFound, SessionBuilderFactory.Error.illegalArgument:
             "The address is not an RTMP, RTMPS or SRT address."
         default:
-            "Could not connect: \(error.localizedDescription)"
+            "Could not connect (\(error.localizedDescription)). Check the network and the server address."
         }
     }
 }
