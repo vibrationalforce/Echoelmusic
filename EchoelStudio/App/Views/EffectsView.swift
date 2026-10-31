@@ -89,7 +89,7 @@ struct EffectsView: View {
                 selected = selected == insert.id ? nil : insert.id
             } label: {
                 VStack(alignment: .leading, spacing: Theme.Space.xxs) {
-                    Text(insert.plugin.name)
+                    Text(insert.plugin.displayName)
                         .font(Theme.Font.body)
                         .foregroundStyle(insert.isBypassed ? Theme.Color.textSecondary : Theme.Color.text)
                     Text(status(of: insert))
@@ -105,7 +105,7 @@ struct EffectsView: View {
                 perform(bypass: insert.id, !insert.isBypassed)
             }
             .buttonStyle(ToolButtonStyle(isActive: !insert.isBypassed, activeColor: Theme.Color.play))
-            .accessibilityLabel("\(insert.plugin.name) active")
+            .accessibilityLabel("\(insert.plugin.displayName) active")
             .accessibilityValue(insert.isBypassed ? "Bypassed" : "On")
             Menu {
                 Button("Move Up", systemImage: "arrow.up") { perform(move: insert.id, to: index - 1) }
@@ -120,7 +120,7 @@ struct EffectsView: View {
                 Image(systemName: "ellipsis")
                     .frame(width: Theme.Size.touch, height: Theme.Size.touch)
             }
-            .accessibilityLabel("More for \(insert.plugin.name)")
+            .accessibilityLabel("More for \(insert.plugin.displayName)")
         }
         .padding(.horizontal, Theme.Space.m)
         .background(selected == insert.id ? Theme.Color.surfaceRaised : Theme.Color.surface)
@@ -145,7 +145,7 @@ struct EffectsView: View {
             Section("Audio Units") {
                 if installed.isEmpty { Text("No Audio Unit effects installed") }
                 ForEach(installed, id: \.self) { component in
-                    Button("\(component.name) — \(component.manufacturerName)") { add(component) }
+                    Button("\(component.displayName) — \(component.manufacturerName)") { add(component) }
                 }
             }
         } label: {
