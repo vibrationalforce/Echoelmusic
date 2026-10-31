@@ -121,6 +121,10 @@ public final class EffectKernel: @unchecked Sendable {
         return Float(bitPattern: values[address].load(ordering: .relaxed))
     }
 
+    /// How far the output sits behind the input, in seconds: the pitch correction's delay, 0 for
+    /// every other effect (the harmonizer's voices lag, its dry sound does not).
+    public var latencySeconds: Double { effect == .pitchCorrection ? PitchCorrector.latencySeconds : 0 }
+
     /// Every value, in address order, to carry into a new kernel.
     public var allValues: [Float] { parameters.indices.map(parameter) }
 

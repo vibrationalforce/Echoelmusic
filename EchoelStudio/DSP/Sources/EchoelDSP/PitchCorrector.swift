@@ -67,6 +67,9 @@ public final class PitchCorrector: @unchecked Sendable {
     public static let hysteresis = 0.2
     /// How long without a pitch before the correction lets go, in seconds.
     public static let release = 0.03
+    /// How far the output sits behind the input, in seconds: the middle of the head's window, where
+    /// it rests on an in-tune note. A host that compensates delay reads it from the Audio Unit.
+    public static var latencySeconds: Double { SpliceHead.delaySeconds }
 
     public var settings: Settings {
         didSet { settings = settings.clamped }
