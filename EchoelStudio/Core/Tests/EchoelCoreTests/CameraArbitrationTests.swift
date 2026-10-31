@@ -55,4 +55,55 @@ final class CameraArbitrationTests: XCTestCase {
         _ = camera.beginTake()
         XCTAssertFalse(camera.isCurrent(take), "and a new take has its own generation")
     }
+
+    /// Sky S2: the sky layer is the lowest claimant — it gets an idle camera, gives way to the
+    /// pulse and to a take, and gets the camera back when they let go.
+    func testTheSkyLayerGetsAnIdleCameraAndGivesWayToThePulse() {
+        var camera = CameraArbitration()
+        let step1 = camera.wantSky()
+        XCTAssertEqual(step1, [.openSky])
+        XCTAssertEqual(camera.holder, .sky)
+        let step2 = camera.wantSky()
+        XCTAssertEqual(step2, [], "already wanted")
+        let step3 = camera.choosePulse()
+        XCTAssertEqual(step3, [.closeSky, .openPulse], "the sky closes before the pulse opens")
+        XCTAssertEqual(camera.holder, .pulse)
+        let step4 = camera.dropPulse()
+        XCTAssertEqual(step4, [.closePulse, .openSky], "the sky takes the camera back")
+        let step5 = camera.dropSky()
+        XCTAssertEqual(step5, [.closeSky])
+        XCTAssertEqual(camera.holder, .none)
+    }
+
+    func testATakeClosesTheSkyAndReturnsTheCameraToThePulseBeforeTheSky() {
+        var camera = CameraArbitration()
+        _ = camera.wantSky()
+        let step6 = camera.beginTake()
+        XCTAssertEqual(step6, [.closeSky, .openTake])
+        let step7 = camera.choosePulse()
+        XCTAssertEqual(step7, [], "the take keeps the camera")
+        let step8 = camera.endTake()
+        XCTAssertEqual(step8, [.closeTake, .resumePulse], "the pulse comes before the sky")
+        let step9 = camera.dropPulse()
+        XCTAssertEqual(step9, [.closePulse, .openSky])
+        _ = camera.beginTake()
+        let step10 = camera.endTake()
+        XCTAssertEqual(step10, [.closeTake, .openSky])
+        XCTAssertEqual(camera.holder, .sky)
+    }
+
+    func testASkyWaitingBehindThePulseLeavesQuietly() {
+        var camera = CameraArbitration()
+        _ = camera.choosePulse()
+        let step11 = camera.wantSky()
+        XCTAssertEqual(step11, [], "the pulse keeps the camera")
+        let step12 = camera.dropSky()
+        XCTAssertEqual(step12, [], "nothing to close")
+        let step13 = camera.dropPulse()
+        XCTAssertEqual(step13, [.closePulse])
+        XCTAssertEqual(camera.holder, .none)
+        let before = camera.generation
+        _ = camera.wantSky()
+        XCTAssertNotEqual(camera.generation, before, "a new holder is a new generation")
+    }
 }

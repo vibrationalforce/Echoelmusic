@@ -182,6 +182,8 @@ final class VideoTakeRecorder {
                 pulse?.takeHoldsCamera = false
             case .openPulse, .closePulse:
                 break   // the pulse's own menu opens and closes it
+            case .openSky, .closeSky:
+                break   // until the arbitration is shared, the sky layer is not this recorder's to steer
             }
         }
     }
