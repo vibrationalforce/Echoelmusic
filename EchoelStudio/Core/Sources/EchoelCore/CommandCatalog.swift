@@ -140,8 +140,8 @@ public enum CommandCatalog {
         typealias P = ParameterSpec
         switch kind {
         case .renameProject:
-            return CommandSpec(name: "project.rename", title: "Rename Project",
-                               summary: "Gives the project a new name.",
+            return CommandSpec(name: "project.rename", title: "Rename Song",
+                               summary: "Gives the song a new name.",
                                parameters: [P("name", .string, "The new name.")])
         case .setTempo:
             return CommandSpec(name: "project.tempo", title: "Change Tempo",
@@ -420,14 +420,14 @@ public enum CommandCatalog {
                                summary: "Removes a placed clip from the timeline; the clip itself stays.",
                                parameters: [P("track", .trackID, "The track."), P("placement", .placementID, "The placement.")])
         case .placeAudio:
-            return CommandSpec(name: "audio.place", title: "Place Audio",
+            return CommandSpec(name: "audio.place", title: "Place Region",
                                summary: "Puts a whole audio file from the song's media on an audio track's timeline.",
                                parameters: [P("track", .trackID, "An audio track."),
                                             P("id", .regionID, "Identifier for the region."),
                                             P("media", .mediaID, "A file in the song's media."),
                                             P("start", .ticks, "Position on the timeline in ticks.")])
         case .placeVideo:
-            return CommandSpec(name: "video.place", title: "Place Video",
+            return CommandSpec(name: "video.place", title: "Place Video Region",
                                summary: "Puts a whole video file from the song's media on a video track's timeline; the song's mix is its sound.",
                                parameters: [P("track", .trackID, "A video track."),
                                             P("id", .regionID, "Identifier for the region."),
@@ -440,18 +440,18 @@ public enum CommandCatalog {
                                             P("at", .ticks, "Where the cut falls, inside the region, in ticks."),
                                             P("newID", .regionID, "Identifier for the second part.")])
         case .moveRegion:
-            return CommandSpec(name: "audio.move", title: "Move Audio",
+            return CommandSpec(name: "audio.move", title: "Move Region",
                                summary: "Moves an audio or video region to a new position on the timeline.",
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
                                             P("start", .ticks, "New position in ticks.")])
         case .trimRegion:
-            return CommandSpec(name: "audio.trim", title: "Trim Audio",
+            return CommandSpec(name: "audio.trim", title: "Trim Region",
                                summary: "Chooses which part of the file an audio or video region plays, in frames of the file (a video's in 48 000 units per second).",
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
                                             P("offset", .integer, "First frame that plays."),
                                             P("length", .integer, "Frames that play, at least 1, ending at or before the file's end.")])
         case .removeRegion:
-            return CommandSpec(name: "audio.remove", title: "Delete Audio",
+            return CommandSpec(name: "audio.remove", title: "Delete Region",
                                summary: "Removes an audio or video region from the timeline; the file stays in the song.",
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region.")])
         case .splitPlacement:
