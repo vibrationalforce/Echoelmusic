@@ -1,6 +1,6 @@
 {
-  "name": "Echoelmusic",
-  "short_name": "Echoelmusic",
+  "name": "Echoel",
+  "short_name": "Echoel",
   "description": "Create from Within. Echoel is the bio-reactive instrument: heartbeat and breath play sound, light and space in real time — over MIDI, OSC, ADM-OSC, Art-Net and sACN.",
   "start_url": "/",
   "display": "standalone",
@@ -44,7 +44,7 @@
       "sizes": "1024x1024",
       "type": "image/svg+xml",
       "form_factor": "wide",
-      "label": "Echoelmusic Bio-Reactive Interface"
+      "label": "Echoel bio-reactive interface"
     }
   ],
   "shortcuts": [
