@@ -9,6 +9,8 @@ import SwiftUI
 /// writing and MIDI learn reach them.
 struct StandardEffectPanel: View {
     @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
+    @Environment(ParameterWriter.self) private var writer
     /// The track the insert sits on, or the master.
     let owner: ParameterAddress.Owner
     let insert: InsertID
@@ -17,6 +19,7 @@ struct StandardEffectPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             if effect == .compressor || effect == .limiter { ReductionMeter(slot: .insert(insert)) }
+            if effect == .pitchCorrection { songKeyButton }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: Theme.Space.s)],
                       alignment: .leading, spacing: Theme.Space.s) {
                 ForEach(EffectKernel.parameters(for: effect), id: \.address) { parameter in
@@ -34,6 +37,45 @@ struct StandardEffectPanel: View {
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
+        }
+    }
+}
+
+extension StandardEffectPanel {
+    /// Sets the correction's key, scale, tone system and concert A to the song's own frame, through
+    /// the writer like a hand on each control. The effect keeps its values afterwards: a song whose
+    /// key changes later asks for another tap, so a correction never moves under a take by itself.
+    var songKeyButton: some View {
+        let context = store.project.context
+        return Button {
+            useSongKey(context)
+        } label: {
+            Text("Use Song Key · \(context.title)")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.text)
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
+                .background(RoundedRectangle(cornerRadius: Theme.Radius.medium).fill(Theme.Color.surface))
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium)
+                    .strokeBorder(Theme.Color.borderStrong, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Sets key, scale, tone system and concert A from the song")
+    }
+
+    private func useSongKey(_ context: MusicalContext) {
+        let wanted: [String: Float] = [
+            "key": Float(context.root),
+            "scale": Float(Scale.allCases.firstIndex(of: context.scale) ?? 0),
+            "tuning": Float(TuningSystem.library.firstIndex { $0.id == context.tuning } ?? 0),
+            "reference": Float(context.concertPitch),
+        ]
+        for parameter in EffectKernel.parameters(for: .pitchCorrection) {
+            guard let value = wanted[parameter.identifier] else { continue }
+            let low = parameter.range.lowerBound, high = parameter.range.upperBound
+            let position = high > low ? Swift.min(Swift.max((value - low) / (high - low), 0), 1) : 0
+            let address = ParameterAddress(owner, .plugin(PluginParameter(.insert(insert),
+                                                                          address: UInt64(parameter.address))))
+            writer.set(address, normalized: Double(position), gesture: false)
         }
     }
 }
