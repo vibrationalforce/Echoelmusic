@@ -220,6 +220,11 @@ public struct StreamTarget: Codable, Hashable, Identifiable, Sendable {
         case badKey
         /// An RTMP address needs an application and a stream name: rtmp://host/app/name.
         case noStreamName
+        /// An SRT address asks for SRT's own encryption (`passphrase` or `pbkeylen` in its query).
+        /// libsrt would encrypt with its own code, which this build does not ship to do: the app
+        /// declares no non-exempt encryption (`ITSAppUsesNonExemptEncryption` is NO). An encrypted
+        /// stream goes over RTMPS, which iOS encrypts.
+        case srtEncryption
 
         public var explanation: String {
             switch self {
@@ -230,6 +235,7 @@ public struct StreamTarget: Codable, Hashable, Identifiable, Sendable {
             case .noKey: "Add the stream key."
             case .badKey: "The stream key has a space or a character it cannot carry."
             case .noStreamName: "An RTMP address needs an app and a stream name: rtmp://host/app/name."
+            case .srtEncryption: "SRT encryption (a passphrase or pbkeylen in the address) is not offered. Remove it, or stream encrypted over RTMPS."
             }
         }
     }
@@ -251,6 +257,7 @@ public struct StreamTarget: Codable, Hashable, Identifiable, Sendable {
         guard let transport = StreamTransport(rawValue: scheme),
               (platform == .customSRT) == (transport == .srt) else { throw .wrongScheme(scheme) }
         guard let host = parts.host, !host.isEmpty else { throw .noHost }
+        if transport == .srt, Self.asksForEncryption(parts) { throw .srtEncryption }
         let key = Self.trimmed(key)
         if key.isEmpty, platform.needsKey { throw .noKey }
         let forbidden: Set<Character> = transport.isRTMP ? ["#"] : ["&"]
@@ -282,6 +289,17 @@ public struct StreamTarget: Codable, Hashable, Identifiable, Sendable {
     public var redactedServer: String {
         guard let parts = URLComponents(string: Self.trimmed(server)), let host = parts.host else { return "—" }
         return (parts.scheme.map { $0 + "://" } ?? "") + host
+    }
+
+    /// Whether an SRT address's query turns on SRT's own encryption: a `passphrase` (any value —
+    /// libsrt refuses a short one rather than streaming in the clear) or a `pbkeylen`, by name in
+    /// any case, also where the query is written percent-encoded.
+    private static func asksForEncryption(_ parts: URLComponents) -> Bool {
+        let names = (parts.queryItems ?? []).map { $0.name.lowercased() }
+        let raw = (parts.percentEncodedQuery ?? "").lowercased()
+        let decoded = raw.removingPercentEncoding ?? raw
+        let pairs = decoded.split(separator: "&").map { $0.split(separator: "=", maxSplits: 1).first.map(String.init) ?? "" }
+        return (names + pairs).contains { ["passphrase", "pbkeylen"].contains($0.trimmingCharacters(in: .whitespaces)) }
     }
 
     private static func trimmed(_ text: String) -> String {
