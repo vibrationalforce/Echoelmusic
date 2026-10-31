@@ -77,4 +77,28 @@ final class ClockFollowerTests: XCTestCase {
         XCTAssertEqual(follower.position(at: time + 1.01) ?? -1, Double(2 * MusicalTime.ticksPerQuarter), accuracy: 1e-9,
                        "a song position is where the next pulse stands")
     }
+
+    /// While a clock is followed, what the engine plays is the clock's tempo and none of the
+    /// song's tempo changes — the map every placement and automation point is computed from.
+    func testThePlayedSongCarriesTheClocksTempoAndNoneOfItsOwnChanges() throws {
+        var song = Project(tempo: 100)
+        try Command.setTempoChange(at: 3_840, bpm: 140).apply(to: &song)
+        XCTAssertEqual(song.tempoMap.segments.count, 2)
+
+        let played = ClockFollower.played(song, tempo: 123.45)
+        XCTAssertEqual(played.tempo, 123.45)
+        XCTAssertEqual(played.tempoChanges, [])
+        XCTAssertEqual(played.tempoMap.segments.count, 1, "the clock is the one tempo")
+        XCTAssertEqual(played.tempoMap.bpm(at: 7_680), 123.45, "also past the song's own change")
+        XCTAssertEqual(song.tempo, 100, "the song itself is not written")
+        XCTAssertEqual(song.tempoChanges.count, 1)
+
+        let unknown = ClockFollower.played(song, tempo: nil)
+        XCTAssertEqual(unknown.tempo, 100, "until the clock's tempo is known, the song's own tempo")
+        XCTAssertEqual(unknown.tempoChanges, [], "but never its changes, which would run it off the clock")
+        XCTAssertEqual(ClockFollower.played(song, tempo: .nan).tempo, 100)
+        XCTAssertEqual(ClockFollower.played(song, tempo: .infinity).tempo, 100)
+        XCTAssertEqual(ClockFollower.played(song, tempo: 1).tempo, Tempo.range.lowerBound)
+        XCTAssertEqual(ClockFollower.played(song, tempo: 5_000).tempo, Tempo.range.upperBound)
+    }
 }

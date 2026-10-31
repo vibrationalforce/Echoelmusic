@@ -1,4 +1,5 @@
 import AVFoundation
+import EchoelCore
 import EchoelEngine
 import Foundation
 import Synchronization
@@ -6,7 +7,8 @@ import Synchronization
 /// The render-thread half of recording: a sink node hands every input block to `receive`,
 /// which copies the track's input channel into a ring while a take is armed and notes the
 /// playhead at the take's first frame. No locks, no allocation, no I/O — the file is written
-/// by a `TakeWriter` that drains the ring.
+/// by a `TakeWriter` that drains the ring. One recorder per built graph: a take keeps the one it
+/// began on until its file is written, and a rebuilt graph gets a new one (`TakeLifecycle`).
 final class InputRecorder: @unchecked Sendable {
     let ring: AudioRing
     private let core: EngineCore
@@ -35,13 +37,10 @@ final class InputRecorder: @unchecked Sendable {
         armed.store(true, ordering: .releasing)
     }
 
-    /// Main thread: input after this is no longer recorded.
+    /// Main thread: input after this is no longer recorded. Idempotent.
     func disarm() {
         armed.store(false, ordering: .releasing)
     }
-
-    /// Whether this recorder stamps its takes against `core` — a rebuilt graph may reuse it then.
-    func records(for core: EngineCore) -> Bool { self.core === core }
 
     /// The output sample the playhead stood at when the take's first frame arrived; −1 before.
     var startSample: Int64 { start.load(ordering: .acquiring) }
@@ -192,4 +191,9 @@ struct RecordedTake: Sendable {
     let startSample: Int64
     /// Output plus input latency in samples, as the session reported it when the take began.
     let latency: Int64
+    /// The tempo map the engine played when the take began — a followed clock's, not the song's,
+    /// while following one. `startSample` was stamped against it, so the take is placed with it:
+    /// the map at the stop may be a drifted clock's, under which the same sample is a later tick
+    /// (`RecordingPlacement`, review 2026-10-28, 2.2).
+    let tempoMap: TempoMap
 }

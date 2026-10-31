@@ -236,11 +236,13 @@ extension PlaybackPlan.NoteEvent.Kind {
 /// Converting between musical time and samples, through the project's tempo map.
 public struct TimeConversion: Equatable, Sendable {
     public let tempoMap: TempoMap
+    /// Samples per second; a rate that is not a positive number reads as 48 kHz, so no conversion
+    /// below divides by zero or multiplies into a trap (review 2026-10-28, 2.3).
     public let sampleRate: Double
 
     public init(tempoMap: TempoMap, sampleRate: Double) {
         self.tempoMap = tempoMap
-        self.sampleRate = sampleRate
+        self.sampleRate = sampleRate.isFinite && sampleRate > 0 ? sampleRate : 48_000
     }
 
     /// A constant tempo.
@@ -257,9 +259,10 @@ public struct TimeConversion: Equatable, Sendable {
         tempoMap.seconds(at: tick)
     }
 
-    /// The sample on which `tick` falls, rounded down, counted from tick 0.
+    /// The sample on which `tick` falls, rounded down, counted from tick 0. A tick past what any
+    /// song holds saturates instead of overflowing (`MusicalTime.integer`).
     public func sample(at tick: Tick) -> Int64 {
-        Int64((tempoMap.seconds(at: tick) * sampleRate).rounded(.down))
+        MusicalTime.integer((tempoMap.seconds(at: tick) * sampleRate).rounded(.down))
     }
 
     /// Where `sample` falls in musical time, in fractional ticks.
@@ -271,7 +274,7 @@ public struct TimeConversion: Equatable, Sendable {
     public func sample(atPosition position: Double) -> Int64 {
         let seconds = tempoMap.seconds(atPosition: position)
         guard seconds.isFinite else { return 0 }
-        return Int64((seconds * sampleRate).rounded())
+        return MusicalTime.integer((seconds * sampleRate).rounded())
     }
 
     /// The tick that is sounding at `sample`, rounded down.

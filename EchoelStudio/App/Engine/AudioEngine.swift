@@ -50,17 +50,17 @@ final class AudioEngine {
     @ObservationIgnored private var engine = AVAudioEngine()
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
     @ObservationIgnored private var sinkNode: AVAudioSinkNode?
+    /// The graph's recorder: a new one every time the graph is built, never a take's (`configure`).
     @ObservationIgnored private var recorder: InputRecorder?
-    /// The take owns its recorder and rate: a route change rebuilds the graph under it.
+    /// The take owns its recorder, its rate and the tempo map its first frame was stamped against:
+    /// a rebuild of the graph under it ends it with what it captured (`endTakeBeforeRebuild`), and
+    /// its file drains from its own ring.
     @ObservationIgnored private var take: (url: URL, writer: TakeWriter, recorder: InputRecorder,
-                                           sampleRate: Double, latency: Int64)?
+                                           sampleRate: Double, latency: Int64, tempoMap: TempoMap)?
     @ObservationIgnored private var drainTask: Task<Void, Never>?
-    /// `endTake` is still writing the last take out: its recorder, ring and drain are in use, so
-    /// a new take cannot start on them yet.
-    @ObservationIgnored private var takeEnding = false
-    /// A pause from outside ended the running take (`onPausedFromOutside`), and `endTake` has not
-    /// run yet: an input that fails to reopen in that gap does not end it a second time.
-    @ObservationIgnored private var takeEndsFromOutside = false
+    /// Where the take stands between Record, an end from outside, the stop and the closed file.
+    /// What a pause, a jump or a rebuild does to it is decided there and tested in the package.
+    @ObservationIgnored private var takeLife = TakeLifecycle()
     /// Which reading of the engine's meters shows each track, as of the last snapshot.
     @ObservationIgnored private var meterIndices: [TrackID: Int] = [:]
     @ObservationIgnored private var core: EngineCore?
@@ -297,10 +297,12 @@ final class AudioEngine {
     /// guidance is to drop them and build new ones, not to start them again. The nodes are
     /// forgotten without a detach (they belong to the dead engine, and detaching them from the new
     /// one would raise). The core and the song stay: they hold no audio object. The recorder goes:
-    /// a running take ends at the reset (its end runs after this, and keeps its own recorder),
-    /// and a reused recorder would join the input after the reset onto it, early by the gap.
-    /// The next `configure` builds the graph on the new engine, now or on the foreground return.
+    /// a running take ends at the reset (`endTakeBeforeRebuild`; its file is written out after this
+    /// from its own recorder's ring), and a reused recorder would join the input after the reset
+    /// onto it, early by the gap. The next `configure` builds the graph on the new engine, now or
+    /// on the foreground return.
     private func replaceEngine() {
+        endTakeBeforeRebuild()
         step("engine: replace after media services reset")
         engine.stop()
         sourceNode = nil
@@ -326,28 +328,49 @@ final class AudioEngine {
     /// interface, the foreground return, a retry or Restart audio: what waited for the audio can
     /// go on now (a song that monitors always opens its input).
     @ObservationIgnored var onAudioBack: (() -> Void)?
-    /// The input could not be opened again while a take recorded; playback goes on without it.
-    /// The recording controller ends the take there, with what it captured.
-    @ObservationIgnored var onInputLost: (() -> Void)?
     /// Called when Play starts a fresh status line; the document controller drops the last
     /// export's loudness from beside the messages there.
     @ObservationIgnored var onPlay: (() -> Void)?
     /// Counts `pauseFromOutside`, so `canPlay` can tell that its own repair stopped the song.
     @ObservationIgnored private var pausesFromOutside = 0
 
-    /// The song paused by a call, Siri, a media reset, lost headphones or a followed clock's
-    /// Stop. `message` goes to the status line until the next Play.
+    /// The song paused by a call, Siri, a media reset, lost headphones, a rebuilt graph or a
+    /// followed clock's Stop. `message` goes to the status line until the next Play. A running
+    /// take stops capturing before the song pauses (`endTakeFromOutside`).
     func pauseFromOutside(_ message: String?) {
         pausesFromOutside &+= 1
+        endTakeFromOutside()
         pause()
         if let message { notice = message }
-        if take != nil { takeEndsFromOutside = true }
         onPausedFromOutside?()
         // Playing kept the engine up in the background; paused, it must not stay up silent. After
         // the caller is done: inside configure (a rate change) the graph is still being rebuilt.
         if isInBackground {
             Task { [weak self] in self?.suspendIfIdleInBackground() }
         }
+    }
+
+    /// The running take stops capturing input NOW — before the song pauses, the playhead jumps or
+    /// the graph is rebuilt — and counts as ended; the record controller writes it out (`endTake`)
+    /// when `onPausedFromOutside` reaches it. Input after this moment would join the take at a
+    /// playhead that stands still or has jumped, bars from where it was played.
+    private func endTakeFromOutside() {
+        guard let take else { return }
+        take.recorder.disarm()
+        takeLife.endedFromOutside()
+    }
+
+    /// A graph rebuilt under a running take — a route change, a new sample rate, a media services
+    /// reset, Restart audio — ends it first, with what it captured, and pauses the song once: the
+    /// take's recorder is never fed again, the new graph gets a recorder of its own, and the file
+    /// drains from the take's own ring (review 2026-10-28, 2.1). A take already ending from
+    /// outside is disarmed again and announced no second time.
+    private func endTakeBeforeRebuild() {
+        guard let take else { return }
+        take.recorder.disarm()
+        guard takeLife.phase == .recording else { return }
+        step("record: take ends before rebuild")
+        pauseFromOutside("Paused: the audio setup changed, so the take ended. It keeps what it recorded.")
     }
 
     /// Rebuilds the graph after an interruption or a reset. Also when the last start failed: such
@@ -564,7 +587,9 @@ final class AudioEngine {
             pause()
         } else {
             // Opening the input stops the song: a running take ends here, once it is certain the
-            // input opens, instead of recording on over a stopped, rewound transport.
+            // input opens — its input capture at once, its file through the controller — instead of
+            // recording on over a stopped, rewound transport and a rebuilt graph.
+            endTakeFromOutside()
             onPausedFromOutside?()
             stop()
         }
@@ -584,10 +609,12 @@ final class AudioEngine {
         if let project { publish(project) }
     }
 
-    /// Builds the graph from scratch for playback, or playback plus input.
+    /// Builds the graph from scratch for playback, or playback plus input. A take recording until
+    /// here ends first, with what it captured (`endTakeBeforeRebuild`).
     private func configure(input: Bool) {
         retryTask?.cancel()
         retryTask = nil
+        endTakeBeforeRebuild()
         step("engine: stop for configure", [("input", input ? 1 : 0)])
         engine.stop()
         isRunning = false
@@ -597,12 +624,11 @@ final class AudioEngine {
             engine.detach(sinkNode)
             self.sinkNode = nil
         }
-        // A running take keeps its recorder: when the input reopens on the same core, the same
-        // recorder (and ring) carries on, so the take survives a route change. Never the take's
-        // own after a rebuild that failed with the input: the song played on without it, and that
-        // recorder would join later input straight onto the earlier, early by the gap — the take
-        // ends at the failure instead (`onInputLost`, review 2026-10-21).
-        let previous = recorder
+        // Never a recorder from before this build, and never a take's: the graph records through
+        // a new recorder every time it is built. A take that ran until here ended above and keeps
+        // its own — its file drains from that ring. A recorder that outlived a rebuild would join
+        // the input after the gap straight onto the input before it, early by the gap and at the
+        // latency of a route the take was not stamped for (review 2026-10-28, 2.1).
         recorder = nil
         if let sourceNode {
             step("graph: detach source node")
@@ -656,12 +682,12 @@ final class AudioEngine {
                 current = existing
             } else {
                 // A rate change mid-session (an interface plugged in, another app): the song
-                // stops, a take ends with what it has, the playhead stays where it was, and the
-                // plugins' settings since the last save reach the song before they are loaded
-                // again at the new rate (ultra-audit R6).
+                // stops, the playhead stays where it was, and the plugins' settings since the last
+                // save reach the song before they are loaded again at the new rate (ultra-audit
+                // R6). A take ended at the top of this rebuild, and the song paused with it.
                 var resumeTick: Tick?
                 if let old = core {
-                    if isPlaying || take != nil {
+                    if isPlaying {
                         pauseFromOutside("The song stopped: the audio interface changed its sample rate.")
                     }
                     if let fresh = beforeRateChange?() { project = fresh }
@@ -711,8 +737,7 @@ final class AudioEngine {
                 guard inputFormat.channelCount > 0, inputFormat.sampleRate == sampleRate else {
                     throw EngineError.inputUnusable(inputFormat.sampleRate, sampleRate)
                 }
-                let recorder = previous.flatMap { $0.records(for: current) ? $0 : nil }
-                    ?? InputRecorder(core: current, sampleRate: sampleRate)
+                let recorder = InputRecorder(core: current, sampleRate: sampleRate)
                 let sink = InputRecorder.makeSinkNode(recorder)
                 step("graph: attach sink node", [("ch", Double(inputFormat.channelCount))])
                 engine.attach(sink)
@@ -755,15 +780,13 @@ final class AudioEngine {
             if input {
                 // Our own reasons say what to change (a rate mismatch, no input); the system's do not.
                 let reason = (error as? EngineError)?.errorDescription.map { " " + $0 } ?? ""
+                // A take that ran into this rebuild ended at its top, and the song paused with it:
+                // the line says so, since an error hides the pause notice.
                 let wasRecording = take != nil
                 configure(input: false)
-                if isRunning { lastError = "The audio input could not be opened." + reason + " Playback goes on without it." }
-                if wasRecording {
-                    // Ended by the input, or already ending by the pause that came first (a reset, a
-                    // new rate): either way the line says so, since an error hides the pause notice.
-                    if let said = lastError { lastError = said + " The take ended and keeps what it recorded." }
-                    if !takeEndsFromOutside { onInputLost?() }
-                }
+                guard isRunning else { return }
+                lastError = "The audio input could not be opened." + reason
+                    + (wasRecording ? " The take ended and keeps what it recorded." : " Playback goes on without it.")
                 return
             }
             // Never a log-only catch: a short settle, then again, a few times (R1).
@@ -790,11 +813,16 @@ final class AudioEngine {
     func beginTake(url: URL, channel: Int) throws {
         // Not while the last take is still being written out: a second writer would drain the same
         // ring, arming would reset the start that take still reads, and its drain task would be lost.
-        guard take == nil, !takeEnding, let recorder, let core else { throw EngineError.inputClosed }
+        guard takeLife.canBegin, let recorder, let core else { throw EngineError.inputClosed }
         let writer = try TakeWriter(url: url, sampleRate: core.sampleRate, ring: recorder.ring)
         let session = AVAudioSession.sharedInstance()
-        let latency = Int64(((session.inputLatency + session.outputLatency) * core.sampleRate).rounded())
-        take = (url, writer, recorder, core.sampleRate, Swift.max(0, latency))
+        let latency = MusicalTime.integer(((session.inputLatency + session.outputLatency) * core.sampleRate).rounded())
+        // The map the take's first frame is stamped against: the one the engine plays now — a
+        // followed clock's, not the song's. The take is placed with it, never with the map at the
+        // stop, which a drifting clock has moved on by then (`RecordedTake.tempoMap`).
+        let tempoMap = project.map { playing($0).tempoMap } ?? TempoMap(bpm: Tempo.defaultBPM)
+        take = (url, writer, recorder, core.sampleRate, Swift.max(0, latency), tempoMap)
+        takeLife.begin()
         recorder.arm(channel: channel)
         applyLoop()
         drainTask = Task.detached(priority: .userInitiated) {
@@ -808,13 +836,11 @@ final class AudioEngine {
 
     /// Stops the take and closes its file. Nil when nothing was captured; the empty file is gone.
     func endTake() async -> RecordedTake? {
-        // Never the engine's recorder: after a route change that is a different one, or none.
-        guard let current = take else { return nil }
+        // Never the engine's recorder: after a rebuild that is a different one, or none.
+        guard let current = take, takeLife.stop() else { return nil }
         take = nil
         applyLoop()
-        takeEndsFromOutside = false
-        takeEnding = true
-        defer { takeEnding = false }
+        defer { takeLife.finished() }
         let recorder = current.recorder
         recorder.disarm()
         // The ring holds what was captured, so the drain below needs no running engine.
@@ -841,7 +867,7 @@ final class AudioEngine {
             return nil
         }
         return RecordedTake(url: current.url, sampleRate: current.sampleRate, startSample: firstSample,
-                            latency: current.latency)
+                            latency: current.latency, tempoMap: current.tempoMap)
     }
 
     /// Hands the current project to the render thread. Call on every project change; it is
@@ -892,14 +918,12 @@ final class AudioEngine {
         }
     }
 
+    /// The song as the engine plays it: itself, or the clock's tempo in place of its own while a
+    /// clock is followed (`ClockFollower.played`). Every snapshot, seek, placement and automation
+    /// point goes through this one function (review 2026-10-28, 2.2).
     private func playing(_ project: Project) -> Project {
         guard followsExternalClock else { return project }
-        var played = project
-        played.tempoChanges = []
-        if let externalTempo, externalTempo.isFinite {
-            played.tempo = Swift.min(Swift.max(externalTempo, Tempo.range.lowerBound), Tempo.range.upperBound)
-        }
-        return played
+        return ClockFollower.played(project, tempo: externalTempo)
     }
 
     /// The decoded audio files sampler tracks play. Republishes the current project with them.
@@ -985,10 +1009,7 @@ final class AudioEngine {
     /// after it bars late or early: it ends here, before the jump, with what it captured (audit
     /// 2026-10-23). A MIDI take ends with it, as at a pause from outside.
     func clockWillMovePlayhead() {
-        if let take {
-            take.recorder.disarm()
-            takeEndsFromOutside = true
-        }
+        endTakeFromOutside()
         onPausedFromOutside?()
     }
 

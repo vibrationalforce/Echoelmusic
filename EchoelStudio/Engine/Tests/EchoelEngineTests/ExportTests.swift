@@ -93,6 +93,36 @@ final class ExportTests: XCTestCase {
         XCTAssertEqual(result.peak, 0)
     }
 
+    /// The fixed length — the song and its tail, before any ring-out — is known without rendering,
+    /// so an export can refuse a song no WAV file holds before the first block (review 2026-10-28,
+    /// 2.3) instead of after hours of rendering.
+    func testTheFixedLengthIsKnownBeforeTheFirstBlock() throws {
+        let song = try oneNoteSong(start: 960, length: 960)
+        XCTAssertEqual(OfflineRender.fixedFrameCount(song, sampleRate: 48_000, tailSeconds: 1), 96_000)
+        XCTAssertEqual(Int(OfflineRender.fixedFrameCount(song, tailSeconds: 1)),
+                       OfflineRender.render(song, tailSeconds: 1, ringOutSeconds: 0).frameCount)
+        XCTAssertEqual(OfflineRender.fixedFrameCount(Project()), 0)
+        XCTAssertEqual(OfflineRender.fixedFrameCount(song, sampleRate: .nan, tailSeconds: .infinity),
+                       OfflineRender.fixedFrameCount(song, sampleRate: 48_000, tailSeconds: 0),
+                       "a rate that is no number reads as 48 kHz, a tail that is none as no tail")
+        XCTAssertEqual(OfflineRender.fixedFrameCount(song, tailSeconds: 1e9),
+                       OfflineRender.fixedFrameCount(song, tailSeconds: OfflineRender.longestTailSeconds),
+                       "a tail of a thousand years is the longest tail")
+
+        // The longest song at the slowest tempo lies thirty-three hours in: more than one WAV file
+        // can hold, and more than 2³² samples — a number, not an overflow.
+        var long = Project(tempo: 20)
+        let track = TrackID(), clip = ClipID()
+        try Command.addTrack(id: track, name: "K", kind: .instrument, index: nil).apply(to: &long)
+        try Command.createClip(track: track, id: clip, name: "C", length: bar).apply(to: &long)
+        try Command.addNotes(clip, [Note(pitch: 60, start: 0, length: bar)]).apply(to: &long)
+        try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: MusicalTime.maximumTick - bar).apply(to: &long)
+        let frames = OfflineRender.fixedFrameCount(long)
+        XCTAssertGreaterThan(frames, Int64(WAVFile.maximumFrames(.twentyFour)))
+        XCTAssertGreaterThan(frames, Int64(UInt32.max))
+        XCTAssertLessThan(frames, Int64(40 * 3_600 * 48_000))
+    }
+
     func testTheExportIsDeterministic() throws {
         let song = try oneNoteSong()
         XCTAssertEqual(OfflineRender.render(song).left, OfflineRender.render(song).left)
