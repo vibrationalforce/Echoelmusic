@@ -16,8 +16,7 @@ target reaches it, tests; nothing here is device-verified yet.
 - Field fullscreen opens and closes without the studio showing through.
 - Error messages say what happened and what to do.
 - The plug-in in AUM, Logic and GarageBand wears Echoel's look and font, and hosts list it as
-  "Echoel: Synth", "Echoel: EQ" and so on. Plug-ins are recognised by their identity, not their
-  name.
+  "Echoel: Synth", "Echoel: EQ" and so on.
 - The app's system accent is bio-green; the launch screen is black.
 
 Previous: 11.0.0 (10023), sixteenth upload — voice effects, Bake Effects, song settings, MIDI
