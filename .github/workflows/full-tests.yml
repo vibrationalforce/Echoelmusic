@@ -13,7 +13,10 @@ name: Echoel Full Test Suite (non-blocking)
 
 on:
   push:
-    branches: [ develop, main, 'feature/**', 'claude/**' ]
+    # Not on claude/** or feature/** (2026-10-31): this suite is non-blocking and proves
+    # nothing for a merge (#208), but each run held a macOS runner for up to an hour while
+    # the Echoel Studio gates queued behind it. It still runs on main and develop.
+    branches: [ develop, main ]
     paths:
       - 'Sources/**'
       - 'Tests/**'
