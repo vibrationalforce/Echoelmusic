@@ -28,16 +28,18 @@ struct SkySurface: View {
         .background(Color.black)
         .onAppear {
             pointing.start()
-            camera.start(pointing: pointing.shared, pulseHasCamera: pulse.isOn)
+            // The camera layer asks the app's one camera arbitration (take > pulse > sky).
+            pulse.wantSky()
+            camera.follow(holdsCamera: pulse.skyHoldsCamera, pointing: pointing.shared)
         }
         .onDisappear {
             camera.stop()
+            pulse.dropSky()
             pointing.stop()
         }
-        // The pulse has priority over the camera layer: it yields the moment the pulse starts,
-        // and comes back when the pulse is off again.
-        .onChange(of: pulse.isOn) { _, pulseOn in
-            camera.start(pointing: pointing.shared, pulseHasCamera: pulseOn)
+        // A take or the pulse takes the camera: the layer closes; it comes back when they let go.
+        .onChange(of: pulse.skyHoldsCamera) { _, holds in
+            camera.follow(holdsCamera: holds, pointing: pointing.shared)
         }
     }
 }

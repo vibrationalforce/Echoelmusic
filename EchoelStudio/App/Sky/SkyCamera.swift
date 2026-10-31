@@ -54,9 +54,9 @@ final class SkyCameraFrames: @unchecked Sendable {
 /// the frames — aligned by the phone's own turn between them — takes the noise down a little,
 /// and fades in only as far as the result carries signal. Very dark: the layer stays away.
 ///
-/// Camera arbitration (one producer): the pulse has priority. While the musician has the camera
-/// chosen as a body source this layer does not start, and it stops the moment the pulse starts.
-/// It never asks for the camera permission itself — it runs only where access was already given,
+/// Camera arbitration (one producer): this layer opens the camera only while the app's one
+/// `CameraArbitration` (held by `CameraPulseSource`) hands it the camera — a video take and the
+/// pulse both come first, and it closes the moment either asks. It never asks for the camera permission itself — it runs only where access was already given,
 /// so the sky view never raises a prompt whose text speaks of the pulse.
 ///
 /// Nothing is saved and nothing leaves the device: each frame becomes one small picture in memory,
@@ -68,8 +68,8 @@ final class SkyCamera {
         case off
         /// Camera access was never given, or is off; the drawn sky is all.
         case noAccess
-        /// The pulse has the camera.
-        case yieldedToPulse
+        /// A take or the pulse holds the camera.
+        case waiting
         case running
         case unavailable
     }
@@ -80,11 +80,12 @@ final class SkyCamera {
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "sky")
     @ObservationIgnored private var capture: SkyCapture?
 
-    /// Start when allowed: access given, the pulse not using the camera.
-    func start(pointing: SharedPointing, pulseHasCamera: Bool) {
-        guard !pulseHasCamera else {
+    /// Follows the arbitration: open while the sky holds the camera (and access was given),
+    /// closed otherwise.
+    func follow(holdsCamera: Bool, pointing: SharedPointing) {
+        guard holdsCamera else {
             stop()
-            status = .yieldedToPulse
+            status = .waiting
             return
         }
         guard status != .running else { return }
