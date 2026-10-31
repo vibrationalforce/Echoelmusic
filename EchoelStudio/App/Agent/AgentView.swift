@@ -114,7 +114,7 @@ struct AgentView: View {
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             Button("Undo") { store.undo() }
-                .disabled(store.undoTitle != "Agent" || agent.isWorking)
+                .disabled(store.undoTitle != AgentExecutor.undoTitle || agent.isWorking)
                 .accessibilityLabel("Undo the assistant's last request")
         }
         ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }

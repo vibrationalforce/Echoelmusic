@@ -15,9 +15,13 @@ struct AgentLine: Identifiable, Equatable {
 }
 
 /// Carries out the assistant's actions on the song: each one through the store, all actions of
-/// one request coalesced into ONE undo step, so "Undo Agent" takes the whole request back.
+/// one request coalesced into ONE undo step, so "Undo Assistant" takes the whole request back.
 @MainActor
 final class AgentExecutor {
+    /// The undo step a turn makes, as the musician reads it ("Undo Assistant"): the page and the
+    /// menu call it the Assistant, so the undo says the same word.
+    nonisolated static let undoTitle = "Assistant"
+
     private let store: ProjectStore
     private var turnKey = "agent.0"
     /// The song the request was asked about; a different song opened since is never written.
@@ -49,7 +53,7 @@ final class AgentExecutor {
         }
         do {
             let commands = try AgentTools.commands(for: action, in: store.project)
-            try store.perform(commands, title: "Agent", coalescingKey: turnKey)
+            try store.perform(commands, title: AgentExecutor.undoTitle, coalescingKey: turnKey)
             changedSong = true
             onAction?(summary)
             return "Done: \(summary)."
