@@ -66,8 +66,8 @@ struct RenameView: View {
                 .onSubmit(rename)
                 .padding(.horizontal, Theme.Space.s)
                 .frame(minHeight: Theme.Size.touch)
-                .background(Theme.Color.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.medium))
-                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.border, lineWidth: 1))
+                .background(Theme.Color.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.medium))
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.borderStrong, lineWidth: 1))
                 .accessibilityHint(isTooLong ? caption : "")
             if isTooLong {
                 Text(caption)

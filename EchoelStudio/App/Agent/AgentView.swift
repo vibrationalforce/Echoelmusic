@@ -89,13 +89,17 @@ struct AgentView: View {
     private var inputRow: some View {
         HStack(spacing: Theme.Space.s) {
             TextField("Ask the assistant", text: $draft, axis: .vertical)
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.Color.text)
                 .lineLimit(1...4)
                 .focused($focused)
                 .submitLabel(.send)
                 .onSubmit(send)
                 .padding(Theme.Space.s)
-                .background(Theme.Color.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.medium))
-                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.border, lineWidth: 1))
+                .frame(minHeight: Theme.Size.touch)
+                .background(Theme.Color.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.medium))
+                // A control's boundary (3.6:1), like every other field.
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.borderStrong, lineWidth: 1))
             Button(action: send) { Image(systemName: "arrow.up") }
                 .buttonStyle(ToolButtonStyle(isActive: true))
                 .accessibilityLabel("Send")
