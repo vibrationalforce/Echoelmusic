@@ -349,6 +349,53 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(engine.clockOut.pop(), "no clock while stopped")
     }
 
+    /// MPE out's source (W5b): only the chosen slot's notes are timed into `noteOut`, at their
+    /// sample, live keys included; a stop sends its all-notes-off; nothing while none is chosen.
+    func testNoteOutCarriesOnlyTheChosenSlotsNotesAndItsRelease() throws {
+        let s = try song([[Note(pitch: 60, start: 960, length: 960)], [Note(pitch: 72, start: 0, length: 960)]])
+        var assigner = SlotAssigner(capacity: EngineCore(sampleRate: rate).slotCapacity)
+        assigner.update(for: s.project)
+        let chosen = try XCTUnwrap(assigner.slots[s.tracks[0]])
+        let other = try XCTUnwrap(assigner.slots[s.tracks[1]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 48_000)
+        XCTAssertNil(engine.noteOut.pop(), "nothing is timed while no slot is chosen")
+
+        engine.stop()
+        engine.seek(toSample: 0)
+        _ = render(engine, frames: 256)
+        engine.setNoteOut(slot: chosen)
+        while engine.noteOut.pop() != nil {}
+        engine.play()
+        _ = render(engine, frames: 48_000, block: 48_000)
+        var heard: [TimedMIDIMessage] = []
+        while let message = engine.noteOut.pop() { heard.append(message) }
+        let notes = heard.filter { $0.status == 0x90 || $0.status == 0x80 }
+        // 120 BPM, 960 ticks a quarter: tick 960 is sample 24 000, its end at 48 000 is not yet.
+        XCTAssertEqual(notes.map(\.status), [0x90])
+        XCTAssertEqual(notes.first?.data1, 60)
+        XCTAssertEqual(notes.first?.frame, 24_000)
+        XCTAssertFalse(heard.contains { $0.data1 == 72 }, "the other slot's note stays out")
+
+        engine.playLive(slot: chosen, status: 0x90, 64, 90)
+        engine.playLive(slot: other, status: 0x90, 65, 90)
+        engine.stop()
+        _ = render(engine, frames: 256)
+        heard.removeAll()
+        while let message = engine.noteOut.pop() { heard.append(message) }
+        XCTAssertTrue(heard.contains { $0.status == 0x90 && $0.data1 == 64 }, "a live key of the slot")
+        XCTAssertFalse(heard.contains { $0.data1 == 65 })
+        XCTAssertTrue(heard.contains { $0.bytes == [0xB0, 123, 0] }, "the stop releases the zone")
+
+        engine.setNoteOut(slot: nil)
+        engine.playLive(slot: chosen, status: 0x90, 67, 90)
+        _ = render(engine, frames: 256)
+        XCTAssertNil(engine.noteOut.pop())
+        XCTAssertEqual(TimedMIDIMessage(hostTime: 0, frame: 0, status: 0xD1, data1: 5, data2: 0).bytes, [0xD1, 5])
+    }
+
     func testALaunchedClipLoopsFromTheNextBarAndStopsOnABar() throws {
         var s = try song([[]])
         let loop = ClipID()

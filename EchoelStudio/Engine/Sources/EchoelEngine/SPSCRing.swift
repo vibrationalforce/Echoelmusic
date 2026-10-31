@@ -1,7 +1,7 @@
 import Synchronization
 
-/// A system real-time or song-position message the engine timed for a MIDI output: clock,
-/// start, continue, stop, song position pointer.
+/// A message the engine timed for a MIDI output: clock, start, continue, stop and song position
+/// pointer (`clockOut`), or a channel message of the slot `noteOut` carries.
 public struct TimedMIDIMessage: Sendable, Equatable {
     /// Host time of the first frame of the render call that produced it (0 when the caller
     /// gave none, as offline).
@@ -12,8 +12,16 @@ public struct TimedMIDIMessage: Sendable, Equatable {
     public let data1: UInt8
     public let data2: UInt8
 
-    /// Bytes on the wire: song position carries two data bytes, the others none.
-    public var bytes: [UInt8] { status == 0xF2 ? [status, data1, data2] : [status] }
+    /// Bytes on the wire: song position carries two data bytes, real-time none; a channel message
+    /// two, program change and channel pressure one.
+    public var bytes: [UInt8] {
+        switch status {
+        case 0xF2: [status, data1, data2]
+        case 0xF0...0xFF: [status]
+        case 0xC0...0xDF: [status, data1]
+        default: [status, data1, data2]
+        }
+    }
 }
 
 /// The engine's clock to a MIDI sender.

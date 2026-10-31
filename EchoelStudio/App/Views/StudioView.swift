@@ -524,6 +524,7 @@ struct SongMenu: View {
                 }
             }
             .disabled(engine.clock.chosen.isEmpty)
+            mpeMenu
             Menu("Follow MIDI Clock", systemImage: "clock.arrow.2.circlepath") {
                 Button { midi.follow(nil) } label: {
                     if midi.followedSource == nil { Label("Off", systemImage: "checkmark") } else { Text("Off") }
@@ -669,6 +670,44 @@ struct SongMenu: View {
     private func pick(_ address: ParameterAddress, _ value: Double) {
         writer.set(address, to: value, coalescingKey: nil)
         writer.endGesture()
+    }
+
+    /// MPE out (W5b): off until an output is chosen; the live track's notes then go out as a
+    /// lower zone, pressure and slide following the body.
+    private var mpeMenu: some View {
+        Menu("Send MPE", systemImage: "pianokeys") {
+            ForEach(engine.mpe.destinations) { destination in
+                Button { engine.mpe.toggle(destination) } label: {
+                    if engine.mpe.isChosen(destination) {
+                        Label(destination.name, systemImage: "checkmark")
+                    } else {
+                        Text(destination.name)
+                    }
+                }
+            }
+            Divider()
+            sourceMenu("Pressure", current: engine.mpe.pressureSource) { engine.mpe.setPressure($0) }
+            sourceMenu("Slide", current: engine.mpe.slideSource) { engine.mpe.setSlide($0) }
+        }
+        .disabled(engine.mpe.destinations.isEmpty)
+    }
+
+    private func sourceMenu(_ title: String, current: ModulationSource?,
+                            choose: @escaping (ModulationSource?) -> Void) -> some View {
+        Menu("\(title): \(MIDIMPEOutput.title(current))") {
+            Button { choose(nil) } label: {
+                if current == nil { Label("Off", systemImage: "checkmark") } else { Text("Off") }
+            }
+            ForEach(MIDIMPEOutput.bodySources, id: \.self) { source in
+                Button { choose(source) } label: {
+                    if current == source {
+                        Label(MIDIMPEOutput.title(source), systemImage: "checkmark")
+                    } else {
+                        Text(MIDIMPEOutput.title(source))
+                    }
+                }
+            }
+        }
     }
 
     static func offsetTitle(_ milliseconds: Double) -> String {
