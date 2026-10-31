@@ -52,6 +52,9 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(InstrumentDevice.drums.parameters.map(\.key.rawValue), drumsKeys, "a new row goes at the end")
         XCTAssertEqual(InstrumentDevice.sampler.parameters.map(\.key.rawValue), samplerKeys, "a new row goes at the end")
         XCTAssertEqual(SynthParameter.samplerMode.choices, ["Gate", "One-shot"], "the song stores the mode's index")
+        // A harmonizer voice is an indexed parameter of its insert: the song stores the index.
+        XCTAssertEqual(HarmonyInterval.allCases.map(\.semitones),
+                       [nil, -12, -9, -8, -7, -5, -4, -3, 0, 3, 4, 5, 7, 8, 9, 12], "a new interval goes at the end")
     }
 
     /// A track stores the name of the preset it was loaded from, and the Sound page shows it. Only
