@@ -88,11 +88,24 @@ public final class Harmonizer: @unchecked Sendable {
     }
 
     public var settings: Settings {
-        didSet {
-            settings = settings.clamped
-            if settings.voicing != oldValue.voicing { retarget() }
-        }
+        didSet { settings = settings.clamped }
     }
+
+    /// Seconds a free voice takes to fade in when it is switched on and out when it is switched
+    /// off — and, around a change of voicing, the harmonies take to fade out before the new voicing
+    /// takes over and to fade in after it. The dry sound goes on throughout. Before, a voice entered
+    /// mid-waveform and a style chosen while the voice sounded stepped — Free to Organum by the
+    /// whole level (click hunt, 2026-11-01).
+    public static let changeFade = 0.005
+    /// The voicing the voices sing now; `settings.voicing` takes over once the harmonies are out.
+    private var heardVoicing: Voicing
+    /// How open the harmonies are around a change of voicing, and each free voice around being
+    /// switched on or off (0 … 1); each moves by `gateStep` per sample.
+    private var voicingGate: Float = 1
+    private var freeGates: (Float, Float, Float)
+    /// The interval each free voice sang last, so a voice switched off fades out on its own note.
+    private var freeIntervals: (Double, Double, Double)
+    private let gateStep: Float
 
     /// How long a style's voice takes to move to a new interval, in seconds: quick enough to follow
     /// the melody, slow enough that the step is not a click.
@@ -138,7 +151,12 @@ public final class Harmonizer: @unchecked Sendable {
         intervalPole = Foundation.exp(-1 / (Self.intervalGlide * self.sampleRate))
         isonPole = Foundation.exp(-1 / (Self.isonGlide * self.sampleRate))
         gatePole = Float(Foundation.exp(-1 / (0.005 * self.sampleRate)))
-        self.settings = settings.clamped
+        gateStep = Float(1 / (Self.changeFade * self.sampleRate))
+        let clamped = settings.clamped
+        self.settings = clamped
+        heardVoicing = clamped.voicing
+        freeGates = Self.gates(clamped)
+        freeIntervals = (clamped.first ?? 0, clamped.second ?? 0, clamped.third ?? 0)
         levelNow = Float(self.settings.level)
         retarget()
     }
@@ -153,13 +171,17 @@ public final class Harmonizer: @unchecked Sendable {
         levelNow = Float(settings.level)
         heldNote = nil
         silentAnalyses = 0
+        heardVoicing = settings.voicing
+        voicingGate = 1
         retarget()
     }
 
     /// A new voicing starts on its own intervals, not gliding from another style's: the side
-    /// voices take the held note's (or C's, before one is heard), the ison chooses its octave again.
+    /// voices take the held note's (or C's, before one is heard), the ison chooses its octave again,
+    /// the free voices that are on stand open (the voicing's own fade brings them in).
     private func retarget() {
-        if case let .following(left, right, _) = settings.voicing {
+        freeGates = Self.gates(settings)
+        if case let .following(left, right, _) = heardVoicing {
             let lane = heldNote.map { (($0 % 12) + 12) % 12 } ?? 0
             leftTarget = Double(left[lane])
             rightTarget = Double(right[lane])
@@ -172,9 +194,31 @@ public final class Harmonizer: @unchecked Sendable {
         isonGate = 0
     }
 
-    /// Processes `frames` samples in place.
+    /// Processes `frames` samples in place. Around a change of voicing the block is played in two
+    /// parts: the old voicing fading out, then — the harmonies silent — the new one fading in.
     public func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
+        var done = 0
+        while done < frames {
+            if settings.voicing != heardVoicing, voicingGate <= 0 {
+                heardVoicing = settings.voicing
+                retarget()
+            }
+            let fading = settings.voicing != heardVoicing
+            var count = frames - done
+            if fading {
+                count = Swift.min(count, Swift.max(1, Int((voicingGate / gateStep).rounded(.up))))
+            }
+            sing(left: left + done, right: right + done, frames: count, fadingOut: fading)
+            done += count
+        }
+    }
+
+    /// The voices of `heardVoicing` over `frames` samples, the harmonies moving toward silence
+    /// while `fadingOut`, else toward full.
+    private func sing(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int,
+                      fadingOut: Bool) {
         let s = settings
+        let voicingTarget: Float = fadingOut ? 0 : 1
         let side = Float(s.spread)
         // Linear balance: the middle voice is at unity on both sides.
         let secondGains = (Swift.min(1, 1 + side), Swift.min(1, 1 - side))
@@ -182,37 +226,47 @@ public final class Harmonizer: @unchecked Sendable {
         let levelTarget = Float(s.level)
         var level = levelNow
         let patience = Int(Self.isonPause * sampleRate) / tracker.hop + 1
-        switch s.voicing {
+        switch heardVoicing {
         case .free:
-            let ratios = (Self.ratio(s.first), Self.ratio(s.second), Self.ratio(s.third))
+            if let interval = s.first { freeIntervals.0 = interval }
+            if let interval = s.second { freeIntervals.1 = interval }
+            if let interval = s.third { freeIntervals.2 = interval }
+            let ratios = (Foundation.pow(2, freeIntervals.0 / 12), Foundation.pow(2, freeIntervals.1 / 12),
+                          Foundation.pow(2, freeIntervals.2 / 12))
+            let targets = Self.gates(s)
             for i in 0..<frames {
                 let inLeft = left[i].isFinite ? left[i] : 0
                 let inRight = right[i].isFinite ? right[i] : 0
                 tracker.push(0.5 * (inLeft + inRight))
                 history.push(inLeft, inRight)
                 level = Compressor.glided(level, toward: levelTarget, by: levelGlide)
+                voicingGate = Self.moved(voicingGate, toward: voicingTarget, by: gateStep)
+                freeGates.0 = Self.moved(freeGates.0, toward: targets.0, by: gateStep)
+                freeGates.1 = Self.moved(freeGates.1, toward: targets.1, by: gateStep)
+                freeGates.2 = Self.moved(freeGates.2, toward: targets.2, by: gateStep)
                 let period = tracker.period
                 var wetLeft: Float = 0
                 var wetRight: Float = 0
-                if let ratio = ratios.0 {
-                    heads.0.advance(ratio: ratio, period: period)
+                if freeGates.0 > 0 {
+                    heads.0.advance(ratio: ratios.0, period: period)
                     let voice = heads.0.read(history)
-                    wetLeft += voice.0
-                    wetRight += voice.1
+                    wetLeft += voice.0 * freeGates.0
+                    wetRight += voice.1 * freeGates.0
                 }
-                if let ratio = ratios.1 {
-                    heads.1.advance(ratio: ratio, period: period)
+                if freeGates.1 > 0 {
+                    heads.1.advance(ratio: ratios.1, period: period)
                     let voice = heads.1.read(history)
-                    wetLeft += voice.0 * secondGains.0
-                    wetRight += voice.1 * secondGains.1
+                    wetLeft += voice.0 * secondGains.0 * freeGates.1
+                    wetRight += voice.1 * secondGains.1 * freeGates.1
                 }
-                if let ratio = ratios.2 {
-                    heads.2.advance(ratio: ratio, period: period)
+                if freeGates.2 > 0 {
+                    heads.2.advance(ratio: ratios.2, period: period)
                     let voice = heads.2.read(history)
-                    wetLeft += voice.0 * thirdGains.0
-                    wetRight += voice.1 * thirdGains.1
+                    wetLeft += voice.0 * thirdGains.0 * freeGates.2
+                    wetRight += voice.1 * thirdGains.1 * freeGates.2
                 }
-                guard write(left, right, i, inLeft + wetLeft * level, inRight + wetRight * level) else {
+                let gain = level * voicingGate
+                guard write(left, right, i, inLeft + wetLeft * gain, inRight + wetRight * gain) else {
                     level = levelNow
                     continue
                 }
@@ -227,6 +281,7 @@ public final class Harmonizer: @unchecked Sendable {
                 }
                 history.push(inLeft, inRight)
                 level = Compressor.glided(level, toward: levelTarget, by: levelGlide)
+                voicingGate = Self.moved(voicingGate, toward: voicingTarget, by: gateStep)
                 leftNow = leftTarget + (leftNow - leftTarget) * intervalPole
                 rightNow = rightTarget + (rightNow - rightTarget) * intervalPole
                 let period = tracker.period
@@ -235,7 +290,8 @@ public final class Harmonizer: @unchecked Sendable {
                 let one = heads.1.read(history), two = heads.2.read(history)
                 let wetLeft = one.0 * secondGains.0 + two.0 * thirdGains.0
                 let wetRight = one.1 * secondGains.1 + two.1 * thirdGains.1
-                guard write(left, right, i, inLeft + wetLeft * level, inRight + wetRight * level) else {
+                let gain = level * voicingGate
+                guard write(left, right, i, inLeft + wetLeft * gain, inRight + wetRight * gain) else {
                     level = levelNow
                     continue
                 }
@@ -247,11 +303,12 @@ public final class Harmonizer: @unchecked Sendable {
                 if tracker.push(0.5 * (inLeft + inRight)) { holdIson(root: root, reference: reference, patience: patience) }
                 history.push(inLeft, inRight)
                 level = Compressor.glided(level, toward: levelTarget, by: levelGlide)
+                voicingGate = Self.moved(voicingGate, toward: voicingTarget, by: gateStep)
                 isonNow = isonTarget + (isonNow - isonTarget) * isonPole
                 isonGate = (isonNote == nil ? 0 : 1) + (isonGate - (isonNote == nil ? 0 : 1)) * gatePole
                 heads.0.advance(ratio: Foundation.pow(2, isonNow / 12), period: tracker.period)
                 let voice = heads.0.read(history)
-                let gain = level * isonGate
+                let gain = level * isonGate * voicingGate
                 guard write(left, right, i, inLeft + voice.0 * gain, inRight + voice.1 * gain) else {
                     level = levelNow
                     continue
@@ -319,8 +376,14 @@ public final class Harmonizer: @unchecked Sendable {
         return note.isFinite ? note : nil
     }
 
-    private static func ratio(_ semitones: Double?) -> Double? {
-        guard let semitones else { return nil }
-        return Foundation.pow(2, semitones / 12)
+    /// Which free voices are on: 1 for a voice with an interval, 0 for one without.
+    private static func gates(_ settings: Settings) -> (Float, Float, Float) {
+        (settings.first == nil ? 0 : 1, settings.second == nil ? 0 : 1, settings.third == nil ? 0 : 1)
+    }
+
+    /// A gate one `step` closer to its `target`, never past it.
+    @inline(__always)
+    private static func moved(_ gate: Float, toward target: Float, by step: Float) -> Float {
+        gate < target ? Swift.min(target, gate + step) : Swift.max(target, gate - step)
     }
 }
