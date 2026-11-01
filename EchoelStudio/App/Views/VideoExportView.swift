@@ -21,6 +21,8 @@ struct VideoExportView: View {
     /// Seconds a short export is about; nil exports the whole song.
     @State private var shortSeconds: Double?
     @State private var startBar = 1
+    /// Why the last Export did not finish, until the next one starts.
+    @State private var failure: String?
     @AppStorage(VideoExportView.fieldBlendKey) private var fieldBlend = FieldLayer.Blend.off
     /// Percent, 0 … 100.
     @AppStorage(VideoExportView.fieldOpacityKey) private var fieldOpacity = FieldLayer().opacityPercent
@@ -28,6 +30,7 @@ struct VideoExportView: View {
     var body: some View {
         NavigationStack {
             Form {
+                exportStatus
                 EchoelSection("Frame") {
                     Picker("Frame", selection: $options.shape) {
                         ForEach(VideoExportPlan.Shape.allCases, id: \.self) { Text($0.title).tag($0) }
@@ -62,9 +65,6 @@ struct VideoExportView: View {
                     Toggle("Mix at −14 LUFS", isOn: $options.normalizesLoudness)
                     NoteText("Brings the mix to the loudness social platforms play at, under a −1 dBTP peak.")
                 }
-                if let progress = documents.exportProgress {
-                    EchoelSection { NoteText(progress) }
-                }
             }
             .echoelList()
             // Field Opacity is typed on Echoel's number pad, docked here.
@@ -86,6 +86,17 @@ struct VideoExportView: View {
             // The bar the playhead stands in: read once, never observed.
             let bar = MusicalTime.ticksPerBar(store.project.timeSignature)
             if bar > 0 { startBar = Int(engine.playheadTick(in: store.project) / bar) + 1 }
+        }
+    }
+
+    /// What the export is doing, or why it did not finish — first in the sheet, under the Export
+    /// button that started it. The failure stood only on the strip under the sheet, where nobody
+    /// saw it (W18, M7); VoiceOver hears it from the strip, so it is shown here, not said twice.
+    @ViewBuilder private var exportStatus: some View {
+        if documents.isExporting {
+            EchoelSection { NoteText(documents.exportProgress ?? "Exporting the song…") }
+        } else if let failure {
+            EchoelSection { NoteText(failure, tone: .problem) }
         }
     }
 
@@ -127,10 +138,14 @@ struct VideoExportView: View {
         var chosen = options
         chosen.range = shortRange
         chosen.fieldLayer = fieldLayer
+        failure = nil
         Task {
             if let url = await documents.exportVideo(plugins: engine.plugins, options: chosen) {
                 router.share(url)
                 dismiss()
+            } else {
+                // What this export left on its way out: a failure writes its message there.
+                failure = documents.lastError
             }
         }
     }

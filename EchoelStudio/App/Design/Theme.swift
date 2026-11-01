@@ -1,3 +1,4 @@
+import EchoelCore
 import SwiftUI
 
 /// The design system. Every colour, size and radius on screen comes from here, so the app
@@ -143,6 +144,19 @@ enum Theme {
         /// The largest text size a dense control strip grows to. Beyond it the strip would no
         /// longer fit a phone; lists and editors keep scaling all the way.
         static let denseStripLimit = DynamicTypeSize.accessibility2
+
+        /// Says `announcement` to VoiceOver wherever its focus is — the app's one way to speak
+        /// unasked; what is said and when is `Announcement`'s (EchoelCore). Urgent goes at high
+        /// priority, which nothing cuts short; queued at low, after what VoiceOver is saying.
+        @MainActor static func announce(_ announcement: Announcement) {
+            var spoken = AttributedString(announcement.text)
+            switch announcement.priority {
+            case .urgent: spoken.accessibilitySpeechAnnouncementPriority = .high
+            case .normal: break
+            case .queued: spoken.accessibilitySpeechAnnouncementPriority = .low
+            }
+            AccessibilityNotification.Announcement(spoken).post()
+        }
     }
 }
 
