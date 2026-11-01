@@ -6,10 +6,12 @@ import EchoelHost
 import Foundation
 
 /// Bringing an audio file into a song: copy it into the song package, then decode the copy to
-/// the mono buffer the sampler plays. Plain functions on no actor — callers run them off the
-/// main thread, because a long file takes a while to read.
+/// the buffer its regions, clips and the sampler play — a mono file as one channel, a stereo one
+/// with both sides, a file of more channels folded to two (W17; before, every file was mixed to
+/// one). Plain functions on no actor — callers run them off the main thread, because a long file
+/// takes a while to read.
 enum AudioFileImport {
-    /// The longest file a sampler takes: ten minutes, about 115 MB of mono floats at 48 kHz.
+    /// The longest file a song takes: ten minutes, about 230 MB of stereo floats at 48 kHz.
     static let maximumSeconds: Double = 600
     /// The most frames a file or a take holds: ten minutes at 48 kHz. A higher rate makes the
     /// limit shorter instead of the file larger — ten minutes at 768 kHz are 1.8 GB of floats,
@@ -63,6 +65,10 @@ enum AudioFileImport {
     struct Imported: Sendable {
         let file: MediaFile
         let buffer: SampleBuffer
+        /// The channels the decode kept, 1 or 2, as the file's header has them: what a song's
+        /// memory plan counts for the file (`Project.mediaLoadPlan(budget:channels:)`) — the
+        /// decode's peak, though a buffer whose two sides came out the same holds one.
+        let channels: Int
     }
 
     /// Copies `source` into the `Media` folder of the song package at `package` under the fresh
@@ -78,31 +84,42 @@ enum AudioFileImport {
         try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         try fm.copyItem(at: source, to: destination)
         do {
-            let buffer = try decode(destination)
-            let file = MediaFile(id: id, name: name, path: path, frameCount: buffer.frameCount,
-                                 sampleRate: buffer.sampleRate)
-            return Imported(file: file, buffer: buffer)
+            let decoded = try decodeKeepingChannels(destination)
+            let file = MediaFile(id: id, name: name, path: path, frameCount: decoded.buffer.frameCount,
+                                 sampleRate: decoded.buffer.sampleRate)
+            return Imported(file: file, buffer: decoded.buffer, channels: decoded.channels)
         } catch {
             try? fm.removeItem(at: destination)
             throw error
         }
     }
 
-    /// Reads a whole file and mixes its channels down to one, refusing one past the limits
-    /// before reading it. The defaults are the import's; a song opening its own files passes the
-    /// room its memory plan has left instead, so a file kept from an earlier build is not
-    /// refused for its length alone.
+    /// Reads a whole file with its two sides kept — a mono file stays one channel, a file of
+    /// more than two folds to two — refusing one past the limits before reading it. The defaults
+    /// are the import's; a song opening its own files passes the room its memory plan has left
+    /// instead, as `maximumValues` (a stereo frame takes two), so a file kept from an earlier build
+    /// is not refused for its length alone.
     /// The file is decoded straight into the buffer, so it is held in memory once: decoded into
     /// an array and copied, every file briefly cost twice what the memory plan counts — on a song
     /// opening near its budget, that is the out-of-memory end R9 is there to prevent (second night
     /// review, 2026-10-23).
     static func decode(_ url: URL, maximumSeconds: Double = AudioFileImport.maximumSeconds,
-                       maximumFrames: Int = AudioFileImport.maximumFrames) throws -> SampleBuffer {
+                       maximumFrames: Int = AudioFileImport.maximumFrames, maximumValues: Int = .max) throws -> SampleBuffer {
+        try decodeKeepingChannels(url, maximumSeconds: maximumSeconds, maximumFrames: maximumFrames,
+                                  maximumValues: maximumValues).buffer
+    }
+
+    /// `decode`, and the channels the decode kept as the file's header has them (see `Imported`).
+    private static func decodeKeepingChannels(_ url: URL, maximumSeconds: Double = AudioFileImport.maximumSeconds,
+                                              maximumFrames: Int = AudioFileImport.maximumFrames,
+                                              maximumValues: Int = .max) throws -> (buffer: SampleBuffer, channels: Int) {
         do {
-            let reader = try SampleFile.Reader(url, maximumSeconds: maximumSeconds, maximumFrames: maximumFrames)
-            guard let buffer = try SampleBuffer(capacity: reader.frameCount, sampleRate: reader.sampleRate,
-                                                fill: { try reader.read(into: $0) }) else { throw ImportError.empty }
-            return buffer
+            let reader = try SampleFile.Reader(url, maximumSeconds: maximumSeconds, maximumFrames: maximumFrames,
+                                               maximumValues: maximumValues)
+            guard let buffer = try SampleBuffer(capacity: reader.frameCount, channels: reader.keptChannels,
+                                                sampleRate: reader.sampleRate,
+                                                fill: { try reader.read(sidesInto: $0) }) else { throw ImportError.empty }
+            return (buffer, reader.keptChannels)
         } catch is SampleBuffer.OutOfMemory {
             throw ImportError.noMemory
         } catch let error as SampleFile.ReadError {
@@ -114,13 +131,14 @@ enum AudioFileImport {
         }
     }
 
-    /// The length and rate a file's header states, read without decoding it: a take the free
-    /// memory cannot load now still joins its song, at the length it was recorded (seventh night
-    /// review, 2026-10-23).
-    static func header(of url: URL) throws -> (frameCount: Int, sampleRate: Double) {
+    /// The length and rate a file's header states, and the channels a decode keeps (1 or 2),
+    /// read without decoding it: a take the free memory cannot load now still joins its song, at
+    /// the length it was recorded (seventh night review, 2026-10-23), and a song's memory plan
+    /// counts a stereo file as two channels before it decodes one (W17).
+    static func header(of url: URL) throws -> (frameCount: Int, sampleRate: Double, channels: Int) {
         do {
             let reader = try SampleFile.Reader(url, maximumSeconds: .infinity)
-            return (reader.frameCount, reader.sampleRate)
+            return (reader.frameCount, reader.sampleRate, reader.keptChannels)
         } catch let error as SampleFile.ReadError {
             switch error {
             case .empty: throw ImportError.empty

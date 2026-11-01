@@ -81,6 +81,10 @@ final class DocumentController {
     /// The open song's audio files that were not loaded, and why: an export names them for what
     /// they are, not as missing.
     @ObservationIgnored private var unfitMedia: [MediaID: NotLoaded] = [:]
+    /// The channels a decode keeps for each audio file of the open song, 1 or 2, as the files'
+    /// headers have them: what the memory plan counts (W17 — a stereo file keeps both sides). The
+    /// song does not store them; the open reads them, and an import, a take and a bake add theirs.
+    @ObservationIgnored private var mediaChannels: [MediaID: Int] = [:]
 
     /// Why an audio file of the open song was not loaded. A file the free memory could not take
     /// at the open is not a song too large for the device: said as the song being too large, it
@@ -1228,6 +1232,15 @@ final class DocumentController {
         try writer.finish()
     }
 
+    /// What a song's open decoded: the buffers, the files past the budget or the free memory, and
+    /// the channels each file's header says a decode keeps.
+    private struct LoadedMedia: Sendable {
+        let decoded: [MediaID: SampleBuffer]
+        let unfit: [MediaFile]
+        let short: [MediaFile]
+        let channels: [MediaID: Int]
+    }
+
     /// A finished take, decoded — or, when the free memory could not take it, its length and rate
     /// from the file's header, so it joins the song unloaded.
     private enum TakeAudio: Sendable {
@@ -1752,12 +1765,16 @@ final class DocumentController {
             let commands = placing(imported.file)
             var grown = store.project
             for command in commands { try? command.apply(to: &grown) }
-            if !grown.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: store.project).isEmpty {
+            var channels = mediaChannels
+            channels[imported.file.id] = imported.channels
+            if !grown.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: store.project,
+                                         channels: channels).isEmpty {
                 try? FileManager.default.removeItem(at: copy)
                 lastError = "This file does not fit: the song already holds as much audio as Echoel can keep in memory on this device."
                 return nil
             }
             samples[imported.file.id] = imported.buffer
+            mediaChannels[imported.file.id] = imported.channels
             mediaRevision += 1
             return (file: imported.file, commands: commands)
         case .failure(let error):
@@ -1843,6 +1860,7 @@ final class DocumentController {
             return
         }
         defer { takeLanded(target.id) }
+        mediaChannels[target.id] = baked.channels
         if let buffer = baked.buffer {
             samples[target.id] = buffer
             mediaRevision += 1
@@ -1992,6 +2010,8 @@ final class DocumentController {
             return
         }
         if let buffer { samples[target.id] = buffer }
+        // A take is one input channel (`TakeWriter`), so a decode keeps one.
+        mediaChannels[target.id] = buffer?.channelCount ?? 1
         mediaRevision += 1
         let number = store.project.media.filter { $0.name.hasPrefix("Take ") }.count + 1
         let file = MediaFile(id: target.id, name: "Take \(number)", path: target.path,
@@ -2016,7 +2036,8 @@ final class DocumentController {
             let line = "The take could not be moved into the song and stays in the folder \(strandedIn) in the Files app; it is missing the next time the song opens."
             lastError = lastError.map { "\($0) \(line)" } ?? line
         }
-        let silenced = store.project.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: before)
+        let silenced = store.project.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: before,
+                                                        channels: mediaChannels)
         if buffer == nil, committed {
             // Silent now is always said; the retry only where the next open makes one. A take past
             // the budget is skipped by the next open's plan and named so in an export; a stranded
@@ -2064,11 +2085,11 @@ final class DocumentController {
         isLoadingMedia = false
         samples = [:]
         unfitMedia = [:]
+        mediaChannels = [:]
         mediaRevision += 1
         guard let package = currentURL, !project.media.isEmpty else { return }
         let files = project.media
         let budget = AudioFileImport.songBudgetBytes
-        let plan = project.mediaLoadPlan(budget: budget)
         let song = songsOpened
         // Only what the song plays is named as silent; a leftover nothing plays is not loaded and
         // not said, as the export says it (second night review, 2026-10-23).
@@ -2077,7 +2098,17 @@ final class DocumentController {
         mediaLoad = Task { [weak self] in
             // Another song opening cancels this, and the decode stops after the file it is on: a
             // song switch must not wait for the last song's audio (review 2026-10-22).
-            let work = Task.detached(priority: .userInitiated) { () -> (decoded: [MediaID: SampleBuffer], unfit: [MediaFile], short: [MediaFile]) in
+            let work = Task.detached(priority: .userInitiated) { () -> LoadedMedia in
+                // The song stores no channel count: each file's header says what a decode keeps, and
+                // the plan counts a stereo file as two channels (W17) — read before the plan is made,
+                // so no memory is spent on a plan that does not hold.
+                var channels: [MediaID: Int] = [:]
+                for file in files where file.kind == .audio {
+                    if Task.isCancelled { break }
+                    guard let url = file.url(in: package), let header = try? AudioFileImport.header(of: url) else { continue }
+                    channels[file.id] = header.channels
+                }
+                let plan = project.mediaLoadPlan(budget: budget, channels: channels)
                 var decoded: [MediaID: SampleBuffer] = [:]
                 var unfit = plan.skipped
                 var short: [MediaFile] = []
@@ -2093,10 +2124,12 @@ final class DocumentController {
                     // refused here near the budget though the plan, which counts what it plays, let
                     // it in — and is then named as not loaded, never silent without a word (sixth
                     // night review, 2026-10-23: known, rare, and safer than allocating past the budget).
+                    // The room is in values: a stereo frame takes two.
                     let room = Swift.max(0, budget - used) / Project.decodedBytesPerFrame
                     let buffer: SampleBuffer
                     do {
-                        buffer = try AudioFileImport.decode(url, maximumSeconds: .infinity, maximumFrames: room)
+                        buffer = try AudioFileImport.decode(url, maximumSeconds: .infinity, maximumFrames: .max,
+                                                            maximumValues: room)
                     } catch AudioFileImport.ImportError.tooLong {
                         // Past the room: named as not loaded, the song too large.
                         unfit.append(file)
@@ -2109,11 +2142,11 @@ final class DocumentController {
                         continue
                     }
                     // What the buffer holds — what it plays, unless its block could not shrink
-                    // (fourth and fifth night reviews, 2026-10-23).
-                    used += buffer.heldFrames * Project.decodedBytesPerFrame
+                    // (fourth and fifth night reviews, 2026-10-23), both sides of a stereo one.
+                    used += buffer.heldBytes
                     decoded[file.id] = buffer
                 }
-                return (decoded: decoded, unfit: unfit, short: short)
+                return LoadedMedia(decoded: decoded, unfit: unfit, short: short, channels: channels)
             }
             let loaded = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
             // Not cancelled, this is still the song's load: another song's load cancels it first.
@@ -2143,6 +2176,8 @@ final class DocumentController {
             // night review, 2026-10-23), as `samples` keeps its buffer below.
             self.unfitMedia.merge(notLoaded) { _, loaded in loaded }
             self.samples.merge(loaded.decoded) { current, _ in current }
+            // An import or a take during the load already said its own.
+            self.mediaChannels.merge(loaded.channels) { current, _ in current }
             self.mediaRevision += 1
             self.followRenamedSong()
         }
