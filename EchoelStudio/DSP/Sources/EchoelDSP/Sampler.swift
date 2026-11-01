@@ -1,106 +1,172 @@
 import Foundation
 
-/// One audio sample in memory, ready to play: mono frames at the rate it was recorded, and
-/// the key it sounds at unshifted. Built off the render thread; the frames are written once in
-/// `init` and never again, so the render thread reads them without a lock.
+/// One audio sample in memory, ready to play: one channel or two (left and right) at the rate it
+/// was recorded, and the key it sounds at unshifted. Built off the render thread; the frames are
+/// written once in `init` and never again, so the render thread reads them without a lock.
 ///
 /// The frames live in manual memory (`malloc`, so a short fill can hand its unwritten room back),
-/// not a Swift array, so reading them never retains or copies anything. The owner must keep the
-/// buffer alive while any `Sampler` plays it, and must release it off the render thread (the
-/// engine does both, as it does for snapshots).
+/// not a Swift array, so reading them never retains or copies anything. Two channels sit in the one
+/// block interleaved — left, right, left, right — so a stereo fill gives its unwritten room back
+/// exactly as a mono one does. Two sides that are the same in every frame are kept as one channel:
+/// they play the same and hold half the memory (a stereo file of a mono sound — every Bake Effects
+/// before W17 wrote one). The owner must keep the buffer alive while any `Sampler` plays it, and
+/// must release it off the render thread (the engine does both, as it does for snapshots).
 public final class SampleBuffer: @unchecked Sendable {
     public let frameCount: Int
-    /// The frames the buffer holds in memory: what the allocator keeps for its block — `frameCount`
-    /// up to the allocator's next size after a shrink, or the whole room a short fill was given
-    /// when it was kept (see `init(capacity:…)`). A memory plan counts this.
-    public let heldFrames: Int
-    /// The frames that are initialized, which `deinit` releases: `frameCount` after a shrink, the
+    /// 1, or 2 for left and right.
+    public let channelCount: Int
+    /// The values (one per frame and channel) the allocator keeps for the block — `frameCount` ×
+    /// `channelCount` up to the allocator's next size after a shrink, or the whole room a short fill
+    /// was given when it was kept (see `init(capacity:…)`).
+    private let heldValues: Int
+    /// The values that are initialized, which `deinit` releases: what plays after a shrink, the
     /// whole room otherwise.
-    private let initializedFrames: Int
+    private let initializedValues: Int
     public let sampleRate: Double
     /// The MIDI note that plays the sample at its original speed.
     public let rootPitch: UInt8
+    /// The block: `frameCount` frames of `channelCount` values each, interleaved.
     let frames: UnsafeMutablePointer<Float>
 
-    /// Copies `samples`; non-finite values become silence. Nil for an empty sample or a
-    /// sample rate that is not a positive number.
+    /// The frames of `channelCount` values the block holds in memory.
+    public var heldFrames: Int { heldValues / channelCount }
+    /// What the block holds in memory, in bytes. A memory plan counts this.
+    public var heldBytes: Int { heldValues * MemoryLayout<Float>.stride }
+
+    /// Copies `samples` as one channel; non-finite values become silence. Nil for an empty sample
+    /// or a sample rate that is not a positive number.
     public init?(samples: [Float], sampleRate: Double, rootPitch: UInt8 = 60) {
         guard !samples.isEmpty, sampleRate.isFinite, sampleRate > 0,
               let storage = Self.allocate(samples.count) else { return nil }
         frameCount = samples.count
-        heldFrames = samples.count
-        initializedFrames = samples.count
+        channelCount = 1
+        heldValues = samples.count
+        initializedValues = samples.count
         self.sampleRate = sampleRate
         self.rootPitch = Swift.min(rootPitch, 127)
         frames = storage
         for (i, s) in samples.enumerated() { (frames + i).initialize(to: s.isFinite ? s : 0) }
     }
 
-    /// Allocates `capacity` frames and lets `fill` write them where they stay, keeping the count it
-    /// returns (at most `capacity`); non-finite values become silence. A file decoded straight into
-    /// the buffer is held in memory once — decoded into an array and copied, it briefly cost twice
-    /// its size (second night review, 2026-10-23). When `fill` writes fewer frames than `capacity`
-    /// (a file whose header promised more than it holds) and at most half of them, `realloc` gives
-    /// the room back where it is, so the peak stays near the size the header asked for, the size a
-    /// song's memory plan checks before the decode — a copy into a block of its own size put up to
-    /// half that room above the budget (eighth night review, as 9d8b08152 had said once before).
-    /// Only a shrink into a smaller size class makes the allocator copy, and then at most that
-    /// class's largest block (ninth night review). `heldFrames` is then read from the block itself on
-    /// Darwin, whose `realloc` rounds both sizes and keeps a block that would shrink by less than
-    /// half of its rounded size — a fill just under half stays whole there, and counted as shrunk it
-    /// was a count that lies (seventh night review). Above half the block stays whole and is counted
-    /// whole. Nil when `fill` writes no frame or the rate is not a positive number; throws
+    /// Copies `left` and `right` as two channels, as long as the shorter side; non-finite values
+    /// become silence. Two sides that are the same in every frame are kept as one channel. Nil for
+    /// an empty side or a sample rate that is not a positive number.
+    public init?(left: [Float], right: [Float], sampleRate: Double, rootPitch: UInt8 = 60) {
+        let count = Swift.min(left.count, right.count)
+        guard count > 0, sampleRate.isFinite, sampleRate > 0 else { return nil }
+        var same = true
+        for i in 0..<count where Self.playable(left[i]) != Self.playable(right[i]) {
+            same = false
+            break
+        }
+        let channels = same ? 1 : 2
+        let (values, overflow) = count.multipliedReportingOverflow(by: channels)
+        guard !overflow, let storage = Self.allocate(values) else { return nil }
+        for i in 0..<count {
+            if same {
+                (storage + i).initialize(to: Self.playable(left[i]))
+            } else {
+                (storage + 2 * i).initialize(to: Self.playable(left[i]))
+                (storage + 2 * i + 1).initialize(to: Self.playable(right[i]))
+            }
+        }
+        frameCount = count
+        channelCount = channels
+        heldValues = values
+        initializedValues = values
+        self.sampleRate = sampleRate
+        self.rootPitch = Swift.min(rootPitch, 127)
+        frames = storage
+    }
+
+    /// Allocates `capacity` frames of `channels` values (1, or 2 interleaved left and right) and
+    /// lets `fill` write them where they stay, keeping the frame count it returns (at most
+    /// `capacity`); non-finite values become silence, and two sides that came out the same in
+    /// every frame are moved together into one channel where they are. A file decoded straight
+    /// into the buffer is held in memory once — decoded into an array and copied, it briefly cost
+    /// twice its size (second night review, 2026-10-23). When `fill` writes values for fewer frames
+    /// than the room and at most half of it is used — a file whose header promised more than it
+    /// holds, or a stereo file kept as one channel — `realloc` gives the room back where it is, so
+    /// the peak stays near the size the header asked for, the size a song's memory plan checks
+    /// before the decode — a copy into a block of its own size put up to half that room above the
+    /// budget (eighth night review, as 9d8b08152 had said once before). Only a shrink into a smaller
+    /// size class makes the allocator copy, and then at most that class's largest block (ninth night
+    /// review). What is held is then read from the block itself on Darwin, whose `realloc` rounds
+    /// both sizes and keeps a block that would shrink by less than half of its rounded size — a fill
+    /// just under half stays whole there, and counted as shrunk it was a count that lies (seventh
+    /// night review). Above half the block stays whole and is counted whole. Nil when `fill` writes
+    /// no frame, `channels` is neither 1 nor 2, or the rate is not a positive number; throws
     /// `OutOfMemory` when the memory is not there, and an error from `fill` on.
-    public init?(capacity: Int, sampleRate: Double, rootPitch: UInt8 = 60,
+    public init?(capacity: Int, channels: Int = 1, sampleRate: Double, rootPitch: UInt8 = 60,
                  fill: (UnsafeMutableBufferPointer<Float>) throws -> Int) throws {
-        guard capacity > 0, sampleRate.isFinite, sampleRate > 0 else { return nil }
-        guard let storage = Self.allocate(capacity) else { throw OutOfMemory() }
-        storage.initialize(repeating: 0, count: capacity)
+        guard capacity > 0, channels == 1 || channels == 2, sampleRate.isFinite, sampleRate > 0 else { return nil }
+        let (room, overflow) = capacity.multipliedReportingOverflow(by: channels)
+        guard !overflow, let storage = Self.allocate(room) else { throw OutOfMemory() }
+        storage.initialize(repeating: 0, count: room)
         let written: Int
         do {
-            written = Swift.min(capacity, Swift.max(0, try fill(UnsafeMutableBufferPointer(start: storage, count: capacity))))
+            written = Swift.min(capacity, Swift.max(0, try fill(UnsafeMutableBufferPointer(start: storage, count: room))))
         } catch {
-            storage.deinitialize(count: capacity)
+            storage.deinitialize(count: room)
             free(storage)
             throw error
         }
         guard written > 0 else {
-            storage.deinitialize(count: capacity)
+            storage.deinitialize(count: room)
             free(storage)
             return nil
         }
-        for i in 0..<written where !storage[i].isFinite { storage[i] = 0 }
+        for i in 0..<(written * channels) where !storage[i].isFinite { storage[i] = 0 }
+        var sides = channels
+        if channels == 2, Self.sidesMatch(storage, frames: written) {
+            // One channel in the room of two: each frame's left value moves to the front, in order,
+            // so no value is overwritten before it is read.
+            for i in stride(from: 1, to: written, by: 1) { storage[i] = storage[2 * i] }
+            sides = 1
+        }
+        let used = written * sides
         var kept = storage
-        var held = capacity
-        var initialized = capacity
-        if written <= capacity / 2 {
-            (storage + written).deinitialize(count: capacity - written)
-            if let shrunk = realloc(storage, written * MemoryLayout<Float>.stride) {
-                kept = shrunk.bindMemory(to: Float.self, capacity: written)
-                initialized = written
-                held = Self.framesHeld(by: kept, asked: written, whole: capacity)
+        var held = room
+        var initialized = room
+        if used <= room / 2 {
+            (storage + used).deinitialize(count: room - used)
+            if let shrunk = realloc(storage, used * MemoryLayout<Float>.stride) {
+                kept = shrunk.bindMemory(to: Float.self, capacity: used)
+                initialized = used
+                held = Self.valuesHeld(by: kept, asked: used, whole: room)
             } else {
                 // Refused: the block stays as it was, and is counted.
-                (storage + written).initialize(repeating: 0, count: capacity - written)
+                (storage + used).initialize(repeating: 0, count: room - used)
             }
         }
         frameCount = written
-        heldFrames = held
-        initializedFrames = initialized
+        channelCount = sides
+        heldValues = held
+        initializedValues = initialized
         self.sampleRate = sampleRate
         self.rootPitch = Swift.min(rootPitch, 127)
         frames = kept
     }
 
-    /// A copy of the frames, for saving the sample. Allocates: never on the render thread.
+    /// A copy of the values, for saving the sample: a mono buffer's frames, a stereo one's left
+    /// and right interleaved — `frameCount × channelCount` of them. Allocates: never on the render
+    /// thread.
     public func copyFrames() -> [Float] {
-        Array(UnsafeBufferPointer(start: frames, count: frameCount))
+        Array(UnsafeBufferPointer(start: frames, count: frameCount * channelCount))
     }
 
-    /// The frames read where they are, valid only inside `body` — for saving the sample as bytes
-    /// without an array on the way, where memory is tight (the plugin extension).
+    /// The values read where they are, as `copyFrames` has them, valid only inside `body` — for
+    /// saving the sample as bytes without an array on the way, where memory is tight (the plugin
+    /// extension, whose samples are mono).
     public func withFrames<Value>(_ body: (UnsafeBufferPointer<Float>) throws -> Value) rethrows -> Value {
-        try body(UnsafeBufferPointer(start: frames, count: frameCount))
+        try body(UnsafeBufferPointer(start: frames, count: frameCount * channelCount))
+    }
+
+    /// Frame `index` as one channel: a stereo buffer's two sides averaged — the mono file the
+    /// import made of a stereo one before W17. `index` must be below `frameCount`.
+    @inline(__always)
+    func mono(_ index: Int) -> Float {
+        channelCount == 1 ? frames[index] : (frames[2 * index] + frames[2 * index + 1]) * 0.5
     }
 
     /// The memory a sample asked for was not there, or its size does not fit in an `Int`: a file
@@ -109,10 +175,21 @@ public final class SampleBuffer: @unchecked Sendable {
         public init() {}
     }
 
-    /// The frames the allocator holds for `block`, shrunk by `realloc` to `asked` from `whole`: on
+    /// A value the render thread can play: a non-finite one is silence.
+    private static func playable(_ value: Float) -> Float {
+        value.isFinite ? value : 0
+    }
+
+    /// Whether the two sides of `frames` interleaved frames are the same in every frame.
+    private static func sidesMatch(_ values: UnsafeMutablePointer<Float>, frames: Int) -> Bool {
+        for i in 0..<frames where values[2 * i] != values[2 * i + 1] { return false }
+        return true
+    }
+
+    /// The values the allocator holds for `block`, shrunk by `realloc` to `asked` from `whole`: on
     /// Darwin the block's own size, which can be the whole block (see `init(capacity:…)`);
     /// elsewhere the shrink is taken at its word.
-    private static func framesHeld(by block: UnsafeMutablePointer<Float>, asked: Int, whole: Int) -> Int {
+    private static func valuesHeld(by block: UnsafeMutablePointer<Float>, asked: Int, whole: Int) -> Int {
         #if canImport(Darwin)
         return Swift.min(whole, Swift.max(asked, malloc_size(block) / MemoryLayout<Float>.stride))
         #else
@@ -120,7 +197,7 @@ public final class SampleBuffer: @unchecked Sendable {
         #endif
     }
 
-    /// `count` frames from `malloc`, which `realloc` can shrink and `deinit` frees; nil when the
+    /// `count` values from `malloc`, which `realloc` can shrink and `deinit` frees; nil when the
     /// size overflows or the memory is not there.
     private static func allocate(_ count: Int) -> UnsafeMutablePointer<Float>? {
         let (bytes, overflow) = count.multipliedReportingOverflow(by: MemoryLayout<Float>.stride)
@@ -129,19 +206,20 @@ public final class SampleBuffer: @unchecked Sendable {
     }
 
     deinit {
-        frames.deinitialize(count: initializedFrames)
+        frames.deinitialize(count: initializedValues)
         free(frames)
     }
 }
 
 extension SampleBuffer {
-    /// Adds a stretch of the sample — `length` frames from frame `offset` — into `buffer`, as
-    /// heard `elapsed` output frames after the stretch began, advancing `step` sample frames per
-    /// output frame with linear interpolation. Output frames before the stretch or after its end
-    /// (or the sample's) add nothing. Each read position is computed from its output index, never
-    /// accumulated, so the result does not depend on how the output is split into blocks.
-    /// Within `fade` sample frames of either edge the level ramps from silence, so a stretch
-    /// that starts or stops mid-waveform never clicks. Render-thread safe.
+    /// Adds a stretch of the sample — `length` frames from frame `offset` — into `buffer` as one
+    /// channel (a stereo sample's sides averaged), as heard `elapsed` output frames after the
+    /// stretch began, advancing `step` sample frames per output frame with linear interpolation.
+    /// Output frames before the stretch or after its end (or the sample's) add nothing. Each read
+    /// position is computed from its output index, never accumulated, so the result does not depend
+    /// on how the output is split into blocks. Within `fade` sample frames of either edge the level
+    /// ramps from silence, so a stretch that starts or stops mid-waveform never clicks.
+    /// Render-thread safe.
     public func add(into buffer: UnsafeMutableBufferPointer<Float>, elapsed: Int64, step: Double,
                     offset: Double, length: Double, fade: Double) {
         guard step.isFinite, step > 0, offset.isFinite, offset >= 0, length.isFinite, length > 0 else { return }
@@ -152,14 +230,49 @@ extension SampleBuffer {
             let read = offset + Double(frame) * step
             guard read < stop else { return }
             let index = Int(read)
-            let a = frames[index]
-            let b = index + 1 < frameCount ? frames[index + 1] : a
+            let a = mono(index)
+            let b = index + 1 < frameCount ? mono(index + 1) : a
             var value = a + (b - a) * Float(read - Double(index))
             if fade > 0 {
                 let edge = Swift.min(read - offset, stop - read)
                 if edge < fade { value *= Float(edge / fade) }
             }
             buffer[i] += value
+        }
+    }
+
+    /// The same stretch, read exactly as `add(into:…)` reads it, added into `left` and `right`,
+    /// `count` frames each: a mono sample into both sides alike, a stereo one side by side — its
+    /// left never reaches the right. Render-thread safe.
+    public func add(intoLeft left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, count: Int,
+                    elapsed: Int64, step: Double, offset: Double, length: Double, fade: Double) {
+        guard count > 0, step.isFinite, step > 0, offset.isFinite, offset >= 0, length.isFinite, length > 0 else { return }
+        let stop = Swift.min(offset + length, Double(frameCount))
+        let stereo = channelCount == 2
+        for i in 0..<count {
+            let frame = elapsed + Int64(i)
+            guard frame >= 0 else { continue }
+            let read = offset + Double(frame) * step
+            guard read < stop else { return }
+            let index = Int(read)
+            let next = index + 1 < frameCount ? index + 1 : index
+            let t = Float(read - Double(index))
+            var gain: Float = 1
+            if fade > 0 {
+                let edge = Swift.min(read - offset, stop - read)
+                if edge < fade { gain = Float(edge / fade) }
+            }
+            if stereo {
+                let a = frames[2 * index], b = frames[2 * next]
+                let c = frames[2 * index + 1], d = frames[2 * next + 1]
+                left[i] += (a + (b - a) * t) * gain
+                right[i] += (c + (d - c) * t) * gain
+            } else {
+                let a = frames[index], b = frames[next]
+                let value = (a + (b - a) * t) * gain
+                left[i] += value
+                right[i] += value
+            }
         }
     }
 }
@@ -190,6 +303,11 @@ public struct SamplerPatch: Equatable, Sendable {
 /// A polyphonic sample player: each note plays the sample transposed by its distance from
 /// the root note, with linear interpolation and an amplitude envelope. Fixed voices, all
 /// allocated in `init`; nothing allocates while rendering.
+///
+/// The voices are mono, and a stereo sample plays its two sides averaged. An instrument transposes
+/// one sound across the keys, and its kernel spreads the voices over the track's bus — the track's
+/// pan and inserts place it; the average is exactly the mono file the import made of a stereo one
+/// before W17, so a sampler track sounds as it did, and a voice costs what it did.
 public struct Sampler: Sendable {
     public static let defaultVoiceCount = 16
 
@@ -392,8 +510,8 @@ struct SamplerVoice: Sendable {
                     fadeLeft = 0
                     break
                 }
-                let a = sample.frames[index]
-                let b = index < last ? sample.frames[index + 1] : a
+                let a = sample.mono(index)
+                let b = index < last ? sample.mono(index + 1) : a
                 let t = Float(fadePosition - Double(index))
                 let ramp = Float(fadeLeft) / Float(Self.stealFadeFrames)
                     * Float(Swift.min(1, (Double(last) - fadePosition) * fadeEndScale))
@@ -414,8 +532,8 @@ struct SamplerVoice: Sendable {
                 silence()
                 return
             }
-            let a = sample.frames[index]
-            let b = index < last ? sample.frames[index + 1] : a
+            let a = sample.mono(index)
+            let b = index < last ? sample.mono(index + 1) : a
             let t = Float(position - Double(index))
             let toEnd = Float(Swift.min(1, (Double(last) - position) * endScale))
             buffer[i] += (a + (b - a) * t) * envelope.next() * gain * toEnd * (level + step * Float(i - buffer.startIndex))
