@@ -159,6 +159,18 @@ public final class EngineCore: @unchecked Sendable {
     private let clickLeft: UnsafeMutablePointer<Float>
     private let clickRight: UnsafeMutablePointer<Float>
     private var metronome: Metronome
+    /// The live output's guard (AUD, 2026-11-01): a brick-wall limiter on every output pair, the
+    /// last thing before the device, so no sample reaches the converter above `outputCeilingDB`.
+    /// A dense song on the starter's own presets peaked at +2.6 dBFS — 95 samples in eight seconds
+    /// the converter cut flat, heard as crackle. The earlier app always ended in a brick-wall
+    /// limiter and a −1 dB trim; this is its limiter (`Limiter`, zero latency) at that ceiling.
+    /// Below the ceiling it passes every sample unchanged. Off until the app's live engine asks
+    /// (`setOutputGuard`): an export or a bake plays the mix as it is, measured and warned about,
+    /// never limited behind the musician's back. The meters read before it, so an over still shows.
+    private let guardFlag = Atomic<Bool>(false)
+    private let guards: [Limiter]
+    /// The guard's ceiling: the earlier app's −1 dB trim after its limiter.
+    public static let outputCeilingDB = -1.0
     private var playhead: Int64 = 0
     /// Render thread: where the next chunk starts when the last one ended on the loop's end; −1
     /// for none.
@@ -307,6 +319,8 @@ public final class EngineCore: @unchecked Sendable {
         outputs = .allocate(capacity: Track.outputChannelLimit)
         outputs.initialize(repeating: monoRight, count: Track.outputChannelLimit)
         metronome = Metronome(sampleRate: Float(rate))
+        let ceiling = Limiter.Settings(gain: 0, ceiling: Self.outputCeilingDB, release: 0.06)
+        guards = (0..<Swift.max(1, Track.outputChannelLimit / 2)).map { _ in Limiter(sampleRate: rate, settings: ceiling) }
     }
 
     deinit {
@@ -453,6 +467,13 @@ public final class EngineCore: @unchecked Sendable {
 
     public func setClickEnabled(_ enabled: Bool) { clickFlag.store(enabled, ordering: .relaxed) }
 
+    /// Main thread: whether the output's guard limits what leaves the engine (see `guards`). The
+    /// app's live engine turns it on; an export's or a bake's leaves it off.
+    public func setOutputGuard(_ on: Bool) { guardFlag.store(on, ordering: .relaxed) }
+
+    /// Whether the output's guard is on.
+    public var guardsOutput: Bool { guardFlag.load(ordering: .relaxed) }
+
     /// Session: launch a clip on the track in `slot`, stop it, or give the track back to the
     /// arrangement. Launches and stops wait for the launch boundary while playing; stopped, they
     /// take effect at once. Main thread only.
@@ -515,6 +536,7 @@ public final class EngineCore: @unchecked Sendable {
             processMaster(frames: rendered)
             meterMaster(frames: rendered)
             addClick(frames: rendered)
+            guardOutput(frames: rendered)
             done += rendered
         }
         publishAnchor(frames: frameCount)
@@ -540,6 +562,7 @@ public final class EngineCore: @unchecked Sendable {
             processMaster(frames: rendered)
             meterMaster(frames: rendered)
             addClick(frames: rendered)
+            guardOutput(frames: rendered)
             if used == 1 {
                 let mono = outputs[0]
                 for i in 0..<rendered { mono[i] = (mono[i] + monoRight[i]) * 0.5 }
@@ -547,6 +570,15 @@ public final class EngineCore: @unchecked Sendable {
             done += rendered
         }
         publishAnchor(frames: frameCount)
+    }
+
+    /// Render thread: every output pair of the chunk through its guard, when the guard is on.
+    private func guardOutput(frames: Int) {
+        guard guardFlag.load(ordering: .relaxed) else { return }
+        let pairs = Swift.min(outputCount / 2, guards.count)
+        for pair in 0..<pairs {
+            guards[pair].process(left: outputs[2 * pair], right: outputs[2 * pair + 1], frames: frames)
+        }
     }
 
     /// The chunk's click into the master pair, once the master is done.

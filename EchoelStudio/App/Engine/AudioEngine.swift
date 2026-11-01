@@ -756,6 +756,8 @@ final class AudioEngine {
                 defer { if let resumeTick { seek(toTick: resumeTick) } }
                 current = EngineCore(sampleRate: sampleRate)
                 current.setClickEnabled(clickEnabled)
+                // Nothing over −1 dBFS reaches the device (`EngineCore.guards`); exports stay as mixed.
+                current.setOutputGuard(true)
                 current.setLaunchQuantum(self.session.quantum)
                 self.session.reset()
                 core = current
