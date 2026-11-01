@@ -2,8 +2,9 @@ import Foundation
 
 /// The decisions of a video export as pure functions (wave W7, C6): the frame shapes social
 /// platforms take, how a picture fills or fits one without losing its file, which stretch of the
-/// song a short export covers, how long the export runs, and the gain that brings the mix to the
-/// loudness social platforms play at. The app renders and writes; nothing here touches a file.
+/// song a short export covers and how long the export runs. The loudness the mix is brought to is
+/// every export's choice (`ExportLoudness`, CUT). The app renders and writes; nothing here touches a
+/// file.
 ///
 /// Material is never cut to fit: a long-form export runs as long as the longer of the mix and the
 /// picture, and a short one covers exactly the stretch the musician chose. No length is capped.
@@ -113,22 +114,5 @@ public enum VideoExportPlan {
                                      fileSeconds: segment.fileSeconds + (start - segment.songSeconds),
                                      songSeconds: start - from, duration: stop - start)
         }
-    }
-
-    // MARK: - Loudness
-
-    /// The integrated loudness social platforms play at, LUFS (BS.1770).
-    public static let socialLoudness: Double = -14
-    /// The true-peak ceiling the gain respects, dBTP, so the lossy encoding does not clip.
-    public static let truePeakCeiling: Double = -1
-
-    /// The gain in decibels that brings a mix measured at `integrated` LUFS with `truePeak` dBTP to
-    /// `socialLoudness`, lowered when the peak would pass the ceiling. 0 for a silent or unmeasured
-    /// mix: nothing is raised that was not measured.
-    public static func loudnessGain(integrated: Double, truePeak: Double) -> Double {
-        guard integrated.isFinite, integrated > -70 else { return 0 }
-        var gain = socialLoudness - integrated
-        if truePeak.isFinite { gain = Swift.min(gain, truePeakCeiling - truePeak) }
-        return gain.isFinite ? gain : 0
     }
 }

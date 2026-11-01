@@ -153,13 +153,4 @@ final class VideoPlanTests: XCTestCase {
         XCTAssertEqual(fit.y, (1_920 - 1_080 * 0.5625) / 2, accuracy: 1e-9)
         XCTAssertNil(VideoExportPlan.placement(sourceWidth: 0, sourceHeight: 1, targetWidth: 1, targetHeight: 1, fit: .fit))
     }
-
-    func testTheMixIsBroughtToSocialLoudnessUnderThePeakCeiling() {
-        XCTAssertEqual(VideoExportPlan.socialLoudness, -14)
-        XCTAssertEqual(VideoExportPlan.loudnessGain(integrated: -20, truePeak: -10), 6, accuracy: 1e-9)
-        XCTAssertEqual(VideoExportPlan.loudnessGain(integrated: -20, truePeak: -6), 5, accuracy: 1e-9, "the peak would pass −1 dBTP")
-        XCTAssertEqual(VideoExportPlan.loudnessGain(integrated: -10, truePeak: -3), -4, accuracy: 1e-9, "a loud mix is lowered")
-        XCTAssertEqual(VideoExportPlan.loudnessGain(integrated: -.infinity, truePeak: -.infinity), 0, "silence is not raised")
-        XCTAssertEqual(VideoExportPlan.loudnessGain(integrated: .nan, truePeak: 0), 0)
-    }
 }
