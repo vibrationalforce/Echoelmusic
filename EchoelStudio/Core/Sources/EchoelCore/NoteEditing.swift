@@ -64,6 +64,61 @@ public enum NoteEditing {
         return resized
     }
 
+    /// "Add Note" without a finger on the grid, VoiceOver's way to write (accessibility audit
+    /// 2026-11-01, B1): one grid step long, on the first grid line at or after the end of the note
+    /// that ends last, at that note's pitch — so done again and again it writes a line of notes —
+    /// and C4 at the clip's start in an empty clip. It is a tap there (`tap`), so it lands where a
+    /// finger would put it. Nil when the clip has no room left after its last note.
+    public static func addAfterLast(in clip: Clip, grid: Tick, velocity: Int = 100) -> Command? {
+        var pitch = 60
+        var tick: Tick = 0
+        if let last = noteEndingLast(in: clip) {
+            pitch = last.pitch
+            let end = last.start + last.length
+            tick = grid > 0 ? (end + grid - 1) / grid * grid : end
+        }
+        // Nothing sounds at or after the last end, so the tap can only add.
+        guard let command = tap(in: clip, pitch: pitch, tick: tick, grid: grid, velocity: velocity),
+              case .addNotes = command else { return nil }
+        return command
+    }
+
+    /// The note that ends last; of several, the one that starts last, then the one written last.
+    private static func noteEndingLast(in clip: Clip) -> Note? {
+        var last: Note?
+        for note in clip.notes {
+            guard let found = last else { last = note; continue }
+            let end = note.start + note.length, foundEnd = found.start + found.length
+            if end > foundEnd || (end == foundEnd && note.start >= found.start) { last = note }
+        }
+        return last
+    }
+
+    /// A note moved by one of the editor's actions — a semitone, an octave, a grid step, a bar —
+    /// exactly that far, or nil when that would leave the clip or the keyboard, so the action says
+    /// so instead of putting the note somewhere it was not sent. A drag snaps and clamps
+    /// (`moved`); a step of a named size must not: changing the pitch of a recorded note keeps
+    /// its timing.
+    public static func nudged(_ note: Note, byTicks delta: Tick = 0, semitones: Int = 0, in clip: Clip) -> Note? {
+        let start = note.start + delta
+        let pitch = note.pitch + semitones
+        guard start >= 0, start < clip.length, Note.pitchRange.contains(pitch) else { return nil }
+        var nudged = note
+        nudged.start = start
+        nudged.pitch = pitch
+        return nudged
+    }
+
+    /// A note made longer (`steps` > 0) or shorter by whole grid steps at its end, snapped as a
+    /// drag of its edge is (`resized`); nil when it cannot change that way — the clip ends there,
+    /// or it is already one step short.
+    public static func resized(_ note: Note, bySteps steps: Int, grid: Tick, in clip: Clip) -> Note? {
+        let edited = resized(note, toEnd: note.start + note.length + Tick(steps) * grid, grid: grid, in: clip)
+        if steps > 0, edited.length > note.length { return edited }
+        if steps < 0, edited.length < note.length { return edited }
+        return nil
+    }
+
     /// Whether a drag that starts `startX` points into the clip takes the note's right edge
     /// (resize) rather than its body (move). Asked of the note as it was when the drag began,
     /// so a note that grows under the finger does not move its edge away and flip the drag into
@@ -85,5 +140,87 @@ public enum NoteEditing {
 
     public static func isBlackKey(_ pitch: Int) -> Bool {
         [1, 3, 6, 8, 10].contains(((pitch % 12) + 12) % 12)
+    }
+
+    // MARK: Said aloud (VoiceOver)
+
+    /// A note as VoiceOver says it after its name: where it starts, how long it is and how hard
+    /// it is struck — "bar 1, beat 3, one sixteenth long, velocity 100" — never in ticks
+    /// (accessibility audit 2026-11-01, M4).
+    public static func spokenDetails(of note: Note, signature: TimeSignature, grid: Tick) -> String {
+        "\(spokenPosition(note.start, signature: signature, grid: grid)), "
+            + "\(spokenLength(note.length, grid: grid)) long, velocity \(note.velocity)"
+    }
+
+    /// Where `tick` lies in a clip, counted as the piano roll draws it, in bars from the clip's
+    /// start: "bar 2, beat 3", and past a beat by how much — "bar 2, beat 3, plus one sixteenth".
+    /// A position off the grid (a recorded note) is said as the nearest grid line: "about bar 2,
+    /// beat 3".
+    public static func spokenPosition(_ tick: Tick, signature: TimeSignature, grid: Tick) -> String {
+        let bar = MusicalTime.ticksPerBar(signature)
+        let beat = MusicalTime.ticksPerBeat(signature)
+        let position = Swift.max(0, tick)
+        guard bar > 0, beat > 0 else { return "tick \(position)" }
+        let onGrid = grid <= 0 || position % grid == 0
+        let said = onGrid ? position : (position + grid / 2) / grid * grid
+        let inBar = said % bar
+        var spoken = "bar \(said / bar + 1), beat \(inBar / beat + 1)"
+        let past = inBar % beat
+        if past > 0 { spoken += ", plus " + (amount(past, grid: grid) ?? "\(past) ticks") }
+        return onGrid ? spoken : "about " + spoken
+    }
+
+    /// How long `ticks` is in the editor's grid steps: "one sixteenth", "3 sixteenths"; off the
+    /// grid, the nearest number of steps — "about 2 sixteenths", "less than one sixteenth".
+    public static func spokenLength(_ ticks: Tick, grid: Tick) -> String {
+        guard grid > 0, let value = noteValues.first(where: { $0.ticks == grid }) else { return "\(ticks) ticks" }
+        if ticks > 0, ticks % grid == 0 { return count(ticks / grid, value) }
+        let steps = (ticks + grid / 2) / grid
+        return steps < 1 ? "less than one \(value.one)" : "about " + count(steps, value)
+    }
+
+    /// A step of the drum grid as VoiceOver says it after its lane's name: its number and the beat
+    /// it falls in — "step 5, beat 2" — and the bar when the clip has more than one (accessibility
+    /// audit 2026-11-01, M1).
+    public static func spokenStep(_ index: Int, step: Tick, signature: TimeSignature, clipLength: Tick) -> String {
+        let bar = MusicalTime.ticksPerBar(signature)
+        let beat = MusicalTime.ticksPerBeat(signature)
+        let start = Tick(Swift.max(0, index)) * Swift.max(0, step)
+        guard bar > 0, beat > 0 else { return "step \(index + 1)" }
+        let place = clipLength > bar ? "bar \(start / bar + 1), " : ""
+        return "step \(index + 1), \(place)beat \(start % bar / beat + 1)"
+    }
+
+    private typealias NoteValue = (ticks: Tick, one: String, many: String)
+
+    /// The note values a grid step or a distance is said in, longest first.
+    private static let noteValues: [NoteValue] = {
+        let quarter = MusicalTime.ticksPerQuarter
+        return [
+            (quarter, "quarter", "quarters"),
+            (quarter * 2 / 3, "quarter triplet", "quarter triplets"),
+            (quarter / 2, "eighth", "eighths"),
+            (quarter / 3, "eighth triplet", "eighth triplets"),
+            (quarter / 4, "sixteenth", "sixteenths"),
+            (quarter / 6, "sixteenth triplet", "sixteenth triplets"),
+            (quarter / 8, "thirty-second", "thirty-seconds"),
+            (quarter / 12, "thirty-second triplet", "thirty-second triplets"),
+            (quarter / 16, "sixty-fourth", "sixty-fourths"),
+        ]
+    }()
+
+    /// `ticks` as a whole number of one note value: grid steps when the grid divides it, else the
+    /// longest value that does (a triplet grid in 6/8 puts a line a sixteenth triplet past a beat);
+    /// nil when none does.
+    private static func amount(_ ticks: Tick, grid: Tick) -> String? {
+        if grid > 0, ticks % grid == 0, let value = noteValues.first(where: { $0.ticks == grid }) {
+            return count(ticks / grid, value)
+        }
+        guard let value = noteValues.first(where: { ticks % $0.ticks == 0 }) else { return nil }
+        return count(ticks / value.ticks, value)
+    }
+
+    private static func count(_ number: Tick, _ value: NoteValue) -> String {
+        number == 1 ? "one \(value.one)" : "\(number) \(value.many)"
     }
 }

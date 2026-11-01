@@ -124,7 +124,9 @@ struct ClipEditorView: View {
 
 /// Keys on the left, the note grid on the right. Tap empty space to add a note, tap a note to
 /// choose it, double-tap it (or Delete Note) to remove it, drag a note to move it, drag its right edge to change its length. Drags on
-/// empty space scroll. One drag is one undo step.
+/// empty space scroll. One drag is one undo step. With VoiceOver the grid's Add Note writes the
+/// note after the last one, each note is said in bars and beats and is edited from its actions,
+/// and every action says what it did (accessibility audit 2026-11-01, B1/M4/m1).
 struct PianoRoll: View {
     @Environment(ProjectStore.self) private var store
     let clip: Clip
@@ -200,32 +202,54 @@ struct PianoRoll: View {
     }
 
     private var noteGrid: some View {
-        ZStack(alignment: .topLeading) {
-            Canvas { context, size in drawGrid(in: &context, size: size) }
-                .frame(width: gridWidth, height: gridHeight)
-                .contentShape(Rectangle())
-                .onTapGesture { location in
-                    selected = nil
-                    tap(at: location)
-                }
-                .accessibilityLabel("Note Grid")
-                .accessibilityHint("Each note below can be moved, resized or deleted from its actions.")
-
+        let signature = store.project.timeSignature
+        return ZStack(alignment: .topLeading) {
+            gridCanvas
             ForEach(clip.notes) { note in
-                NoteBlock(note: note, clip: clip, color: color, grid: grid,
+                NoteBlock(note: note, clip: clip, color: color, grid: grid, signature: signature,
                           pointsPerTick: pointsPerTick, rowHeight: rowHeight,
                           isSelected: selected == note.id, select: { selected = note.id })
+                    // VoiceOver reads the notes in time, a chord from its lowest note, after the grid.
+                    .accessibilitySortPriority(-(Double(note.start) * 128 + Double(note.pitch)))
             }
         }
         .frame(width: gridWidth, height: gridHeight, alignment: .topLeading)
         .coordinateSpace(.named(NoteBlock.gridSpace))
+        .accessibilityElement(children: .contain)
+    }
+
+    /// The grid a finger taps to add a note. VoiceOver's double tap there is Add Note — never a
+    /// tap in the middle of the grid, which would add or remove a note no one chose (B1).
+    private var gridCanvas: some View {
+        Canvas { context, size in drawGrid(in: &context, size: size) }
+            .frame(width: gridWidth, height: gridHeight)
+            .contentShape(Rectangle())
+            .onTapGesture { location in
+                selected = nil
+                tap(at: location)
+            }
+            .accessibilityLabel("Note Grid")
+            .accessibilityValue(noteCount)
+            .accessibilityHint("Adds a note one step after the last one.")
+            .accessibilityAction { addNote() }
+            .accessibilityAction(named: "Add Note") { addNote() }
+            .accessibilitySortPriority(1)
+    }
+
+    private var noteCount: String {
+        clip.notes.count == 1 ? "1 note" : "\(clip.notes.count) notes"
     }
 
     /// While a note is chosen: the one button that deletes it, in reach of the thumb.
     @ViewBuilder private var selectionBar: some View {
-        if let id = selected, clip.notes.contains(where: { $0.id == id }) {
+        if let id = selected, let note = clip.notes.first(where: { $0.id == id }) {
             Button("Delete Note", systemImage: "trash", role: .destructive) {
-                try? store.perform(.removeNotes(clip.id, [id]))
+                do {
+                    try store.perform(.removeNotes(clip.id, [id]))
+                    announce("\(NoteEditing.name(of: note.pitch)) deleted.")
+                } catch {
+                    announce("The note could not be deleted.")
+                }
                 selected = nil
             }
             .buttonStyle(ToolButtonStyle())
@@ -238,6 +262,28 @@ struct PianoRoll: View {
         let tick = Tick(location.x / pointsPerTick)
         guard let command = NoteEditing.tap(in: clip, pitch: pitch, tick: tick, grid: grid) else { return }
         try? store.perform(command)
+    }
+
+    /// Add Note: a note one grid step after the last one at its pitch (C4 at the start of an empty
+    /// clip), said with its place; at the clip's end, said instead of silence.
+    private func addNote() {
+        guard let command = NoteEditing.addAfterLast(in: clip, grid: grid),
+              case let .addNotes(_, notes) = command, let note = notes.first else {
+            announce("No room after the last note.")
+            return
+        }
+        do {
+            try store.perform(command)
+            let place = NoteEditing.spokenPosition(note.start, signature: store.project.timeSignature, grid: grid)
+            announce("Added \(NoteEditing.name(of: note.pitch)), \(place).")
+        } catch {
+            announce("The note could not be added.")
+        }
+    }
+
+    /// What an action did, for VoiceOver: its focus stays on the grid, so nothing else says it.
+    private func announce(_ text: String) {
+        AccessibilityNotification.Announcement(AttributedString(text)).post()
     }
 
     private func drawGrid(in context: inout GraphicsContext, size: CGSize) {
@@ -264,13 +310,16 @@ struct PianoRoll: View {
 
 /// One note: a block in the track color, brighter with velocity. A tap chooses it (outlined in
 /// the accent), a double tap removes it, dragging moves it, dragging the right edge resizes it.
-/// Its VoiceOver actions do the same.
+/// Its VoiceOver actions edit it in steps of a named size and say the result; VoiceOver's own
+/// double tap chooses it, as a tap does, and never removes it.
 struct NoteBlock: View {
     @Environment(ProjectStore.self) private var store
     let note: Note
     let clip: Clip
     let color: Color
     let grid: Tick
+    /// The song's meter, for saying where the note is in bars and beats.
+    let signature: TimeSignature
     let pointsPerTick: CGFloat
     let rowHeight: CGFloat
     var isSelected = false
@@ -283,8 +332,12 @@ struct NoteBlock: View {
     static let gridSpace = "pianoRoll.grid"
 
     var body: some View {
+        spoken(block)
+    }
+
+    private var block: some View {
         let width = Swift.max(CGFloat(note.length) * pointsPerTick, Self.minimumWidth)
-        RoundedRectangle(cornerRadius: Theme.Radius.small)
+        return RoundedRectangle(cornerRadius: Theme.Radius.small)
             .fill(color.opacity(0.45 + 0.55 * Double(note.velocity) / 127))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.small)
@@ -307,16 +360,34 @@ struct NoteBlock: View {
             .highPriorityGesture(drag)
             .offset(x: CGFloat(note.start) * pointsPerTick,
                     y: CGFloat(Note.pitchRange.upperBound - note.pitch) * rowHeight)
+    }
+
+    /// The note for VoiceOver: its name, its place in bars and beats (never ticks, M4), and its
+    /// actions. The explicit default action is what keeps VoiceOver's double tap from reaching
+    /// the double-tap-to-delete gesture (the double-tap trap).
+    private func spoken(_ content: some View) -> some View {
+        content
             .accessibilityElement()
             .accessibilityLabel("\(NoteEditing.name(of: note.pitch)) Note")
             .accessibilityAddTraits(isSelected ? .isSelected : [])
-            .accessibilityValue("starts at tick \(note.start), \(note.length) ticks long, velocity \(note.velocity)")
-            .accessibilityAction(named: "Delete") { perform(.removeNotes(clip.id, [note.id])) }
+            .accessibilityValue(NoteEditing.spokenDetails(of: note, signature: signature, grid: grid))
+            .accessibilityAction { choose() }
             .accessibilityAction(named: "Up a Semitone") { nudge(semitones: 1) }
             .accessibilityAction(named: "Down a Semitone") { nudge(semitones: -1) }
+            .accessibilityAction(named: "Up an Octave") { nudge(semitones: 12) }
+            .accessibilityAction(named: "Down an Octave") { nudge(semitones: -12) }
             .accessibilityAction(named: "Later by One Step") { nudge(ticks: grid) }
             .accessibilityAction(named: "Earlier by One Step") { nudge(ticks: -grid) }
+            .accessibilityAction(named: "Later by One Bar") { nudge(ticks: bar) }
+            .accessibilityAction(named: "Earlier by One Bar") { nudge(ticks: -bar) }
+            .accessibilityAction(named: "Longer by One Step") { resize(steps: 1) }
+            .accessibilityAction(named: "Shorter by One Step") { resize(steps: -1) }
+            .accessibilityAction(named: "Delete") { delete() }
     }
+
+    private var name: String { NoteEditing.name(of: note.pitch) }
+
+    private var bar: Tick { MusicalTime.ticksPerBar(signature) }
 
     private var key: String { "note.drag.\(note.id.description)" }
 
@@ -351,12 +422,55 @@ struct NoteBlock: View {
         store.endGesture()
     }
 
-    private func nudge(semitones: Int = 0, ticks: Tick = 0) {
-        let moved = NoteEditing.moved(note, byTicks: ticks, semitones: semitones, grid: grid, in: clip)
-        if moved != note { perform(.updateNotes(clip.id, [moved])) }
+    /// VoiceOver's double tap: chosen, as by a tap, so Delete Note appears.
+    private func choose() {
+        select()
+        announce("\(name) selected.")
     }
 
-    private func perform(_ command: Command, coalescing: Bool = false) {
-        try? store.perform(command, coalescingKey: coalescing ? key : nil)
+    /// Exactly a semitone, an octave, a step or a bar — or, where that would leave the keyboard or
+    /// the clip, nothing, and the reason said (`NoteEditing.nudged`).
+    private func nudge(semitones: Int = 0, ticks: Tick = 0) {
+        guard let moved = NoteEditing.nudged(note, byTicks: ticks, semitones: semitones, in: clip) else {
+            if semitones != 0 {
+                announce(semitones > 0 ? "Top of the keyboard." : "Bottom of the keyboard.")
+            } else {
+                announce(ticks > 0 ? "End of the clip." : "Start of the clip.")
+            }
+            return
+        }
+        guard perform(.updateNotes(clip.id, [moved])) else { return announce("The note could not be moved.") }
+        announce(semitones != 0 ? NoteEditing.name(of: moved.pitch)
+                                : NoteEditing.spokenPosition(moved.start, signature: signature, grid: grid))
+    }
+
+    private func resize(steps: Int) {
+        guard let resized = NoteEditing.resized(note, bySteps: steps, grid: grid, in: clip) else {
+            announce(steps > 0 ? "End of the clip." : "Shortest length.")
+            return
+        }
+        guard perform(.updateNotes(clip.id, [resized])) else { return announce("The note could not be resized.") }
+        announce("\(NoteEditing.spokenLength(resized.length, grid: grid)) long")
+    }
+
+    private func delete() {
+        guard perform(.removeNotes(clip.id, [note.id])) else { return announce("The note could not be deleted.") }
+        announce("\(name) deleted.")
+    }
+
+    /// Whether the store took the edit.
+    @discardableResult
+    private func perform(_ command: Command, coalescing: Bool = false) -> Bool {
+        do {
+            try store.perform(command, coalescingKey: coalescing ? key : nil)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// What an action did, for VoiceOver, which stays on the note and would say nothing.
+    private func announce(_ text: String) {
+        AccessibilityNotification.Announcement(AttributedString(text)).post()
     }
 }
