@@ -5737,3 +5737,9 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Entschieden (Claude, delegiert):** E12 LICENSE reiner MIT-Text · E19 Outreach-Entwürfe nach `scratchpads/` mit Banner „nicht versenden“ · E20 Pages veröffentlicht nur die Website (`docs/FORMAT.md` bleibt öffentlich) · E21 Datenschutzseite nennt Gurt und Kamera-Puls, jede weitere Berechtigung im selben Merge wie ihre Funktion · E10 Tauchfliege in `memory/vision.md` als gestoppt markiert · Orchester-Merges grüner Team-Branches durch Claude.
 - **Offen beim Founder:** Marke/Name (Eeole/Eeolee, Recherche Mo 02.11.), Domains, Rechtsform, Repo privat (GM36), Förderung (Stopp 24.10. gilt; die privaten Kalender-/Mail-Entwürfe vom 29.10. sind pausiert, nicht gelöscht).
 - **Review:** 2026-11-30.
+
+### 2026-11-01 — Das root-`CLAUDE.md` ist eine Karte (W-MAP)
+- **Decision:** Das root-`CLAUDE.md` ist die Karte des Repos — Identität (Echoel = Marke, Echoel Studio = App, Echoelmusic = Projekt), wo was liegt, die universellen Gesetze, Zeiger; Decke 25.000 B, gepinnt von `TheLawFileStaysUnderItsCeilingTests`. Das Gesetz der früheren App steht WÖRTLICH in `Sources/CLAUDE.md` (Decke 150.000 B, lädt nur beim Arbeiten dort), die Swift-Fehlermuster in `.claude/rules/swift-audio.md`, zwei ersetzte Zeilen in `memory/LEDGER_COUNTS.md` §AQ. Zwölf Wächter lesen jetzt `Sources/CLAUDE.md`.
+- **Why:** Founder 2026-11-01: „Echoelmusic Repo soll in allen Belangen besser sein“ (Inspiration „Claude Agentic OS“: CLAUDE.md als Karte). Gemessen: jede Sitzung zahlte 149.149 B Gesetz, überwiegend für die eingefrorene Alt-App.
+- **Folge:** immer geladene Fläche 169.013 B → rund 47 KB (`python3 scripts/doctor.py --section D`). Ein Commit, der nur `Sources/CLAUDE.md` ändert, startet Merge und beide Alt-App-Gates (`Sources/**`); einer, der nur die Karte ändert, weiterhin nicht (Passagier-Regel). App-Gesetz wächst künftig in seinem Verzeichnis.
+- **Review:** 2026-12-01.
