@@ -234,24 +234,26 @@ extension OfflineRender {
     }
 }
 
-/// A PCM WAV file (RIFF, little-endian, interleaved), stereo unless a writer asks for one channel.
-/// 24-bit by default, the studio standard; samples beyond full scale are clipped, never wrapped.
+/// A WAV file (RIFF, little-endian, interleaved), stereo unless a writer asks for one channel.
+/// 24-bit integer PCM by default, the studio standard for exports and stems, where samples beyond
+/// full scale are clipped, never wrapped. 32-bit float keeps them: Bake Effects writes it, so an
+/// effect that peaks above 0 dBFS opens again with the same peaks (W17b).
 public enum WAVFile {
-    public enum BitDepth: Int, Sendable { case sixteen = 16, twentyFour = 24 }
+    public enum BitDepth: Int, Sendable { case sixteen = 16, twentyFour = 24, float32 = 32 }
 
     public static func data(left: [Float], right: [Float], sampleRate: Double, bitDepth: BitDepth = .twentyFour) -> Data {
         let frames = Swift.min(left.count, right.count, maximumFrames(bitDepth))
         let bytesPerSample = bitDepth.rawValue / 8
         let dataSize = frames * 2 * bytesPerSample
         var out = header(frames: frames, sampleRate: sampleRate, bitDepth: bitDepth)
-        out.reserveCapacity(44 + dataSize)
+        out.reserveCapacity(headerLength(bitDepth) + dataSize)
 
         var bytes = [UInt8](repeating: 0, count: dataSize)
         var i = 0
         func put(_ sample: Float) {
-            let value = integer(sample, bits: bitDepth.rawValue)
+            let value = word(sample, as: bitDepth)
             for b in 0..<bytesPerSample {
-                bytes[i] = UInt8(truncatingIfNeeded: value >> (8 * b))
+                bytes[i] = UInt8(truncatingIfNeeded: value >> UInt32(8 * b))
                 i += 1
             }
         }
@@ -264,9 +266,10 @@ public enum WAVFile {
     }
 
     /// The most frames of `channels` (1 or 2) one file can hold: RIFF counts its size in 32 bits —
-    /// in stereo about four hours at 48 kHz in 24-bit (715,827,876 frames), six at 16-bit.
+    /// in stereo about four hours at 48 kHz in 24-bit (715,827,876 frames), six at 16-bit, three
+    /// in 32-bit float.
     public static func maximumFrames(_ bitDepth: BitDepth, channels: Int = 2) -> Int {
-        (Int(UInt32.max) - 36) / (writtenChannels(channels) * bitDepth.rawValue / 8)
+        (Int(UInt32.max) - (headerLength(bitDepth) - 8)) / (writtenChannels(channels) * bitDepth.rawValue / 8)
     }
 
     /// 1 or 2: a file holds one channel or two.
@@ -274,25 +277,40 @@ public enum WAVFile {
         channels == 1 ? 1 : 2
     }
 
-    /// The 44-byte header for `frames` frames of `channels` (1 or 2).
+    /// The bytes before the samples: 44 for integer PCM, 58 for float — a format that is not
+    /// integer PCM states the size of its format extension (none, 0) and counts its frames in a
+    /// `fact` chunk, as the WAVE format asks.
+    static func headerLength(_ bitDepth: BitDepth) -> Int {
+        bitDepth == .float32 ? 58 : 44
+    }
+
+    /// The header for `frames` frames of `channels` (1 or 2).
     static func header(frames: Int, sampleRate: Double, bitDepth: BitDepth, channels requested: Int = 2) -> Data {
         let bytesPerSample = bitDepth.rawValue / 8
         let channels = writtenChannels(requested)
-        let dataSize = Swift.min(frames, maximumFrames(bitDepth, channels: channels)) * channels * bytesPerSample
+        let held = Swift.min(Swift.max(0, frames), maximumFrames(bitDepth, channels: channels))
+        let dataSize = held * channels * bytesPerSample
         let rate = UInt32(sampleRate > 0 && sampleRate.isFinite ? Swift.min(sampleRate.rounded(), 768_000) : 48_000)
+        let float = bitDepth == .float32
 
-        var out = Data(capacity: 44)
+        var out = Data(capacity: headerLength(bitDepth))
         out.append(contentsOf: Array("RIFF".utf8))
-        append(UInt32(36 + dataSize), to: &out)
+        append(UInt32(headerLength(bitDepth) - 8 + dataSize), to: &out)
         out.append(contentsOf: Array("WAVE".utf8))
         out.append(contentsOf: Array("fmt ".utf8))
-        append(UInt32(16), to: &out)                                   // fmt chunk size
-        append(UInt16(1), to: &out)                                    // PCM
+        append(UInt32(float ? 18 : 16), to: &out)                      // fmt chunk size
+        append(UInt16(float ? 3 : 1), to: &out)                        // IEEE float, or PCM
         append(UInt16(channels), to: &out)
         append(rate, to: &out)
         append(rate * UInt32(channels * bytesPerSample), to: &out)     // byte rate
         append(UInt16(channels * bytesPerSample), to: &out)            // block align
         append(UInt16(bitDepth.rawValue), to: &out)
+        if float {
+            append(UInt16(0), to: &out)                                // no format extension
+            out.append(contentsOf: Array("fact".utf8))
+            append(UInt32(4), to: &out)
+            append(UInt32(held), to: &out)                             // frames
+        }
         out.append(contentsOf: Array("data".utf8))
         append(UInt32(dataSize), to: &out)
         return out
@@ -306,15 +324,25 @@ public enum WAVFile {
         return Int32((clipped * maximum).rounded())
     }
 
+    /// `sample` as `bitDepth` writes it, in the low bytes of a word: integer PCM clipped at full
+    /// scale, float as it is; a non-finite sample is silence either way.
+    static func word(_ sample: Float, as bitDepth: BitDepth) -> UInt32 {
+        switch bitDepth {
+        case .float32: return (sample.isFinite ? sample : 0).bitPattern
+        case .sixteen, .twentyFour: return UInt32(bitPattern: integer(sample, bits: bitDepth.rawValue))
+        }
+    }
+
     static func append<T: FixedWidthInteger>(_ value: T, to data: inout Data) {
         withUnsafeBytes(of: value.littleEndian) { data.append(contentsOf: $0) }
     }
 }
 
 /// Writes a WAV file block by block, so an export never holds the song in memory. The header is
-/// written first with the sizes left open and completed by `finish`. Stereo by default; a writer of
-/// one channel writes the two sides it is given averaged — a bake whose sides came out the same
-/// writes a mono file, which a song then holds as one channel (W17).
+/// written first with the sizes left open and completed by `finish`. Stereo 24-bit by default; a
+/// writer of one channel writes the two sides it is given averaged — a bake whose sides came out
+/// the same writes a mono file, which a song then holds as one channel (W17) — and a bake is
+/// written in 32-bit float (`RegionBake.write`, W17b).
 public final class WAVWriter {
     public enum WriteError: Error, Equatable {
         /// The song is longer than one WAV file can hold (`WAVFile.maximumFrames`).
@@ -348,14 +376,14 @@ public final class WAVWriter {
         let bytesPerSample = bitDepth.rawValue / 8
         let size = count * channels * bytesPerSample
         if bytes.count != size { bytes = [UInt8](repeating: 0, count: size) }
-        let bits = bitDepth.rawValue
+        let depth = bitDepth
         let stereo = channels == 2
         bytes.withUnsafeMutableBufferPointer { out in
             var i = 0
             func put(_ sample: Float) {
-                let value = WAVFile.integer(sample, bits: bits)
+                let value = WAVFile.word(sample, as: depth)
                 for b in 0..<bytesPerSample {
-                    out[i] = UInt8(truncatingIfNeeded: value >> (8 * b))
+                    out[i] = UInt8(truncatingIfNeeded: value >> UInt32(8 * b))
                     i += 1
                 }
             }
