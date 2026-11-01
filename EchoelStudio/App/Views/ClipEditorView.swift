@@ -14,14 +14,30 @@ struct ClipEditorView: View {
     var clipID: ClipID?
     @State private var grid: NoteEditing.Grid = .sixteenth
     @State private var page: Page = .notes
+    /// The piano roll's zoom, kept on this device, never in the song: at the base a note is
+    /// 17 pt high, under a fingertip (accessibility audit 2026-11-01, M5).
+    @AppStorage(PianoRoll.zoomKey) private var zoom = PianoRoll.zoomLevels[0]
 
     enum Page: Hashable { case notes, sound }
 
     private static let newClipBars: Tick = 4
 
+    /// The stored zoom as one of the levels, so a value no level has (written by another version,
+    /// or not a number) still lands on one.
+    private var zoomIndex: Int {
+        let levels = PianoRoll.zoomLevels
+        return levels.indices.min { abs(levels[$0] - zoom) < abs(levels[$1] - zoom) } ?? 0
+    }
+
     private func editedClip(_ track: Track) -> Clip? {
         if let clipID, let index = track.clipIndex(clipID) { return track.clips[index] }
         return track.clips.first
+    }
+
+    /// Whether the page shows the piano roll, the one view the zoom is for.
+    private func showsPianoRoll(_ track: Track?) -> Bool {
+        guard page == .notes, let track, track.instrument.device != .drums else { return false }
+        return editedClip(track) != nil
     }
 
     /// The jam's host pressed Play and waits for the next bar line: Stop calls the start off.
@@ -42,6 +58,7 @@ struct ClipEditorView: View {
 
     var body: some View {
         let track = store.project.track(trackID)
+        let showsRoll = showsPianoRoll(track)
         NavigationStack {
             Group {
                 if let track, page == .sound {
@@ -49,7 +66,8 @@ struct ClipEditorView: View {
                 } else if let track, let clip = editedClip(track), track.instrument.device == .drums {
                     StepGridView(clip: clip, color: Theme.Color.track(track.colorIndex), step: grid.rawValue)
                 } else if let track, let clip = editedClip(track) {
-                    PianoRoll(clip: clip, color: Theme.Color.track(track.colorIndex), grid: grid.rawValue)
+                    PianoRoll(clip: clip, color: Theme.Color.track(track.colorIndex), grid: grid.rawValue,
+                              zoom: PianoRoll.zoomLevels[zoomIndex])
                 } else if let track {
                     emptyState(track)
                 } else {
@@ -92,9 +110,36 @@ struct ClipEditorView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                 }
+                ToolbarItemGroup(placement: .bottomBar) {
+                    zoomButtons
+                    Spacer()
+                }
             }
+            .toolbar(showsRoll ? .visible : .hidden, for: .bottomBar)
         }
         .preferredColorScheme(.dark)
+    }
+
+    /// Zoom Out and Zoom In for the piano roll; the top bar has no room left on a phone.
+    @ViewBuilder private var zoomButtons: some View {
+        let levels = PianoRoll.zoomLevels
+        let spoken = "\(Int((levels[zoomIndex] * 100).rounded())) percent"
+        Button {
+            zoom = levels[Swift.max(zoomIndex - 1, 0)]
+        } label: {
+            Image(systemName: "minus.magnifyingglass")
+        }
+        .disabled(zoomIndex == 0)
+        .accessibilityLabel("Zoom Out")
+        .accessibilityValue(spoken)
+        Button {
+            zoom = levels[Swift.min(zoomIndex + 1, levels.count - 1)]
+        } label: {
+            Image(systemName: "plus.magnifyingglass")
+        }
+        .disabled(zoomIndex == levels.count - 1)
+        .accessibilityLabel("Zoom In")
+        .accessibilityValue(spoken)
     }
 
     private func emptyState(_ track: Track) -> some View {
@@ -132,16 +177,26 @@ struct PianoRoll: View {
     let clip: Clip
     let color: Color
     let grid: Tick
+    /// One of `zoomLevels`: rows grow by it, columns half as fast, so bigger notes do not cost the
+    /// whole bar (accessibility audit 2026-11-01, M5).
+    var zoom: Double = 1
 
-    @ScaledMetric(relativeTo: .caption) private var rowHeight: CGFloat = 18
+    /// Where the zoom is kept: on this device, never in the song.
+    nonisolated static let zoomKey = "pianoRoll.zoom"
+    /// From the drawn base (18 pt rows) to rows of a full touch target (45 pt).
+    nonisolated static let zoomLevels: [Double] = [1, 1.5, 2, 2.5]
+
+    @ScaledMetric(relativeTo: .caption) private var baseRowHeight: CGFloat = 18
     @ScaledMetric(relativeTo: .caption) private var keyWidth: CGFloat = 52
-    /// Points per sixteenth note; the horizontal zoom.
-    private let pointsPerSixteenth: CGFloat = 28
-    /// The note a single tap chose. Rows are 18 pt, under a fingertip, so a single tap never
-    /// deletes (a slip took a note away, CI audit 2026-10-31): a tap chooses, a double tap or
-    /// Delete Note removes.
+    /// Points per sixteenth note at the base zoom.
+    private static let basePointsPerSixteenth: CGFloat = 28
+    /// The note a single tap chose. Rows are 18 pt at the base zoom, under a fingertip, so a
+    /// single tap never deletes (a slip took a note away, CI audit 2026-10-31): a tap chooses, a
+    /// double tap or Delete Note removes.
     @State private var selected: NoteID?
 
+    private var rowHeight: CGFloat { baseRowHeight * CGFloat(zoom) }
+    private var pointsPerSixteenth: CGFloat { Self.basePointsPerSixteenth * CGFloat(1 + zoom) / 2 }
     private var pointsPerTick: CGFloat { pointsPerSixteenth / 240 }
     private var gridWidth: CGFloat { CGFloat(clip.length) * pointsPerTick }
     private var gridHeight: CGFloat { CGFloat(Note.pitchRange.count) * rowHeight }
@@ -157,8 +212,17 @@ struct PianoRoll: View {
                 }
             }
             .onAppear { proxy.scrollTo(72, anchor: .top) }   // C5 near the top: the middle octaves in view
+            // A zoom keeps the notes in view instead of leaving the same points on screen.
+            .onChange(of: zoom) { proxy.scrollTo(anchorPitch, anchor: .center) }
         }
         .overlay(alignment: .bottomTrailing) { selectionBar }
+    }
+
+    /// The row a zoom keeps in view: the chosen note's, else the clip's middle pitch, else C5.
+    private var anchorPitch: Int {
+        if let id = selected, let note = clip.notes.first(where: { $0.id == id }) { return note.pitch }
+        let pitches = clip.notes.map(\.pitch).sorted()
+        return pitches.isEmpty ? 72 : pitches[pitches.count / 2]
     }
 
     /// A keyboard on its side: white keys in the light text colour, black keys as shorter black
