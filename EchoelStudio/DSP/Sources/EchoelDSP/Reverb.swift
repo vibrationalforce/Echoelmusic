@@ -61,6 +61,11 @@ public final class Reverb: @unchecked Sendable {
     private let length: UnsafeMutablePointer<Double>
     private let target: UnsafeMutablePointer<Double>
     private let gain: UnsafeMutablePointer<Float>
+    /// Each line's gain as it plays now, gliding toward `gain` like the lengths toward `target`.
+    /// The gain sits on the line's tap, so a new decay set at once stepped the whole tail — 12 %
+    /// of the level for 0.2 s thrown to 20 s (click hunt, 2026-11-01).
+    private let gainNow: UnsafeMutablePointer<Float>
+    private let gainGlide: Float
     private let damp: UnsafeMutablePointer<Float>
     private let outputs: UnsafeMutablePointer<Float>
     private var dampCoefficient: Float = 1
@@ -94,11 +99,14 @@ public final class Reverb: @unchecked Sendable {
         target.initialize(repeating: 1, count: Self.lines)
         gain = .allocate(capacity: Self.lines)
         gain.initialize(repeating: 0, count: Self.lines)
+        gainNow = .allocate(capacity: Self.lines)
+        gainNow.initialize(repeating: 0, count: Self.lines)
         damp = .allocate(capacity: Self.lines)
         damp.initialize(repeating: 0, count: Self.lines)
         outputs = .allocate(capacity: Self.lines)
         outputs.initialize(repeating: 0, count: Self.lines)
         glide = 1 - Foundation.exp(-1 / (0.1 * rate))
+        gainGlide = Float(glide)
         mixGlide = Float(1 - Foundation.exp(-1 / (Compressor.gainGlideSeconds * rate)))
         preCapacity = Int(Self.maximumPredelay * rate) + 2
         pre = .allocate(capacity: preCapacity)
@@ -113,7 +121,10 @@ public final class Reverb: @unchecked Sendable {
         diffuserWrite.initialize(repeating: 0, count: 4)
         self.settings = settings.clamped
         update()
-        for i in 0..<Self.lines { length[i] = target[i] }
+        for i in 0..<Self.lines {
+            length[i] = target[i]
+            gainNow[i] = gain[i]
+        }
     }
 
     deinit {
@@ -121,6 +132,7 @@ public final class Reverb: @unchecked Sendable {
         length.deallocate()
         target.deallocate()
         gain.deallocate()
+        gainNow.deallocate()
         damp.deallocate()
         outputs.deallocate()
         pre.deallocate()
@@ -135,7 +147,10 @@ public final class Reverb: @unchecked Sendable {
         pre.update(repeating: 0, count: preCapacity)
         diffuser.update(repeating: 0, count: 4 * diffuserCapacity)
         damp.update(repeating: 0, count: Self.lines)
-        for i in 0..<Self.lines { length[i] = target[i] }
+        for i in 0..<Self.lines {
+            length[i] = target[i]
+            gainNow[i] = gain[i]
+        }
         hasRun = false
         wetNow = Float(settings.mix)
     }
@@ -151,7 +166,10 @@ public final class Reverb: @unchecked Sendable {
         dampCoefficient = Float(1 - Foundation.exp(-2 * Double.pi * settings.damping / sampleRate))
         preLength = Swift.min(Int(settings.predelay * sampleRate), preCapacity - 1)
         if !hasRun {
-            for i in 0..<Self.lines { length[i] = target[i] }
+            for i in 0..<Self.lines {
+                length[i] = target[i]
+                gainNow[i] = gain[i]
+            }
             wetNow = Float(settings.mix)
         }
     }
@@ -196,7 +214,8 @@ public final class Reverb: @unchecked Sendable {
                 let base = line + l * lineCapacity
                 let value = base[index] + (base[next] - base[index]) * fraction
                 damp[l] += (value - damp[l]) * dampCoefficient
-                outputs[l] = damp[l] * gain[l]
+                gainNow[l] += (gain[l] - gainNow[l]) * gainGlide
+                outputs[l] = damp[l] * gainNow[l]
                 sum += outputs[l]
             }
             // Householder feedback: each line gets the input minus 2/N of the sum, plus itself.

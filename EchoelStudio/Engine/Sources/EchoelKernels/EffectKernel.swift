@@ -29,6 +29,13 @@ public struct EffectParameter: Sendable, Equatable {
 /// A standard effect's processor with its parameters held in atomics: any thread may set a
 /// parameter, the render thread picks the whole set up at the start of the next block. Nothing
 /// on the render path locks or allocates.
+///
+/// A number the sound already plays glides to a new value over about 10 ms, set again every 32
+/// frames, instead of stepping in one sample: a turned value field, a MIDI knob, an automation
+/// step or a route threw the EQ's high shelf from −18 to +18 dB in one sample — a step of nearly
+/// twice the level — and the chorus' depth, the tape's wow and the limiter's ceiling as hard
+/// (click hunt, 2026-11-01). Named choices and switches still change at once, and so does every
+/// value set before the first block, so an effect loads as its song stores it.
 public final class EffectKernel: @unchecked Sendable {
     public let effect: StandardEffect
     public let sampleRate: Double
@@ -44,6 +51,18 @@ public final class EffectKernel: @unchecked Sendable {
     /// thread writes it (`follow(key:)`); the render thread picks it up with the parameters. Until
     /// a host tells it — another app has no song key — it is C, with no scale: major on C.
     private let keyBits = Atomic<UInt64>(SongKey().packed)
+    /// Render thread: the values the sound plays now, gliding toward the ones set.
+    private let playing: UnsafeMutablePointer<Float>
+    /// Per parameter: whether it glides (a number) or changes at once (a choice, a switch), and how
+    /// close to its value it counts as there.
+    private let glides: UnsafeMutablePointer<Bool>
+    private let arrived: UnsafeMutablePointer<Float>
+    private var isGliding = false
+    private var hasProcessed = false
+    /// Frames between two settings while a value glides: 0.67 ms at 48 kHz.
+    static let glideFrames = 32
+    /// The glide's time constant.
+    static let glideSeconds: Float = 0.01
 
     private var equalizer: ParametricEQ
     private var compressor: Compressor
@@ -75,9 +94,15 @@ public final class EffectKernel: @unchecked Sendable {
         self.sampleRate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         parameters = Self.parameters(for: effect)
         values = .allocate(capacity: parameters.count)
+        playing = .allocate(capacity: parameters.count)
+        glides = .allocate(capacity: parameters.count)
+        arrived = .allocate(capacity: parameters.count)
         for (index, parameter) in parameters.enumerated() {
             let value = index < from.count && from[index].isFinite ? from[index] : parameter.defaultValue
             (values + index).initialize(to: Atomic(Self.clamp(value, parameter).bitPattern))
+            (playing + index).initialize(to: Self.clamp(value, parameter))
+            (glides + index).initialize(to: Self.glidesHere(effect, parameter))
+            (arrived + index).initialize(to: (parameter.range.upperBound - parameter.range.lowerBound) * 1e-5)
         }
         equalizer = ParametricEQ(sampleRate: self.sampleRate)
         compressor = Compressor(sampleRate: self.sampleRate)
@@ -106,6 +131,17 @@ public final class EffectKernel: @unchecked Sendable {
     deinit {
         values.deinitialize(count: parameters.count)
         values.deallocate()
+        playing.deallocate()
+        glides.deallocate()
+        arrived.deallocate()
+    }
+
+    /// Whether the kernel glides `parameter`: every number, but not a named choice or a switch,
+    /// and not the delay's time — the delay glides its read position itself, sample by sample, as
+    /// a tape's would (`StereoDelay`), and a second glide on top bent that sweep into a step.
+    private static func glidesHere(_ effect: StandardEffect, _ parameter: EffectParameter) -> Bool {
+        guard parameter.unit != .choice, parameter.unit != .boolean else { return false }
+        return !(effect == .delay && parameter.identifier == "time")
     }
 
     private static func clamp(_ value: Float, _ parameter: EffectParameter) -> Float {
@@ -174,8 +210,53 @@ public final class EffectKernel: @unchecked Sendable {
         let current = revision.load(ordering: .acquiring)
         if current != applied {
             applied = current
-            applySettings()
+            for index in 0..<parameters.count {
+                let target = Float(bitPattern: values[index].load(ordering: .relaxed))
+                if !hasProcessed || !glides[index] {
+                    playing[index] = target
+                } else if playing[index] != target {
+                    isGliding = true
+                }
+            }
+            if !isGliding { applySettings() }
         }
+        hasProcessed = true
+        guard isGliding else {
+            render(left: left, right: right, frames: frames)
+            return
+        }
+        var done = 0
+        while done < frames {
+            let piece = Swift.min(Self.glideFrames, frames - done)
+            isGliding = glide(frames: piece)
+            applySettings()
+            render(left: left + done, right: right + done, frames: piece)
+            done += piece
+        }
+    }
+
+    /// Render thread: every gliding value `frames` further toward its set value. Whether one is
+    /// still on its way.
+    private func glide(frames: Int) -> Bool {
+        let pole = expf(-Float(frames) / (Self.glideSeconds * Float(sampleRate)))
+        var moving = false
+        for index in 0..<parameters.count where glides[index] {
+            let target = Float(bitPattern: values[index].load(ordering: .relaxed))
+            var now = playing[index]
+            guard now != target else { continue }
+            now = target + (now - target) * pole
+            if Swift.abs(now - target) <= arrived[index] || !now.isFinite {
+                now = target
+            } else {
+                moving = true
+            }
+            playing[index] = now
+        }
+        return moving
+    }
+
+    /// Render thread: the effect itself on `frames` samples, at the values it plays now.
+    private func render(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
         switch effect {
         case .equalizer: equalizer.process(left: left, right: right, frames: frames)
         case .compressor:
@@ -203,7 +284,10 @@ public final class EffectKernel: @unchecked Sendable {
         }
     }
 
-    private func value(_ address: Int) -> Double { Double(parameter(address)) }
+    /// What the sound plays now: the set value, or where a glide toward it has got to.
+    private func value(_ address: Int) -> Double {
+        address >= 0 && address < parameters.count ? Double(playing[address]) : 0
+    }
 
     private func applySettings() {
         switch effect {

@@ -128,6 +128,12 @@ public struct ParametricEQ: Sendable {
     private var left: (Biquad, Biquad, Biquad, Biquad, Biquad)
     private var right: (Biquad, Biquad, Biquad, Biquad, Biquad)
     private var active: (Bool, Bool, Bool, Bool, Bool) = (false, false, false, false, false)
+    /// How much of the low cut plays, 0 … 1, gliding in about 3 ms. A bell or a shelf at 0 dB is
+    /// the signal itself, so it can drop out of the chain in one sample; the low cut at its 20 Hz
+    /// "off" still turns the phase of every low note, and dropping it out stepped the sound — 15 %
+    /// of the level for a cut turned down to off (click hunt, 2026-11-01). It fades instead.
+    private var highpassMix: Float = 0
+    private let highpassGlide: Float
 
     public init(sampleRate: Double, settings: Settings = Settings()) {
         self.sampleRate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
@@ -135,7 +141,9 @@ public struct ParametricEQ: Sendable {
         let flat = Biquad()
         left = (flat, flat, flat, flat, flat)
         right = left
+        highpassGlide = Float(1 - Foundation.exp(-1 / (0.003 * self.sampleRate)))
         update()
+        highpassMix = active.0 ? 1 : 0
     }
 
     /// The bands as they are set, for a response curve.
@@ -164,7 +172,7 @@ public struct ParametricEQ: Sendable {
         active = (s.highpass > 20, s.lowGain != 0, s.lowMidGain != 0, s.highMidGain != 0, s.highGain != 0)
         // A band switched back in starts from rest. Skipped, it kept the state of its last
         // setting, perhaps seconds ago, and played back that state was a step (ultra-audit A9).
-        if active.0 && !was.0 { left.0.reset(); right.0.reset() }
+        if active.0 && !was.0 && highpassMix == 0 { left.0.reset(); right.0.reset() }
         if active.1 && !was.1 { left.1.reset(); right.1.reset() }
         if active.2 && !was.2 { left.2.reset(); right.2.reset() }
         if active.3 && !was.3 { left.3.reset(); right.3.reset() }
@@ -179,14 +187,24 @@ public struct ParametricEQ: Sendable {
     public mutating func reset() {
         left.0.reset(); left.1.reset(); left.2.reset(); left.3.reset(); left.4.reset()
         right.0.reset(); right.1.reset(); right.2.reset(); right.3.reset(); right.4.reset()
+        highpassMix = active.0 ? 1 : 0
     }
 
     /// Processes `frames` samples in place.
     public mutating func process(left l: UnsafeMutablePointer<Float>, right r: UnsafeMutablePointer<Float>, frames: Int) {
         let on = active
+        let cutTarget: Float = on.0 ? 1 : 0
         for i in 0..<frames {
             var x = l[i], y = r[i]
-            if on.0 { x = left.0.process(x); y = right.0.process(y) }
+            if on.0 || highpassMix > 0 {
+                if highpassMix != cutTarget {
+                    highpassMix += (cutTarget - highpassMix) * highpassGlide
+                    if Swift.abs(cutTarget - highpassMix) < 1e-4 { highpassMix = cutTarget }
+                }
+                let cutX = left.0.process(x), cutY = right.0.process(y)
+                x += (cutX - x) * highpassMix
+                y += (cutY - y) * highpassMix
+            }
             if on.1 { x = left.1.process(x); y = right.1.process(y) }
             if on.2 { x = left.2.process(x); y = right.2.process(y) }
             if on.3 { x = left.3.process(x); y = right.3.process(y) }
