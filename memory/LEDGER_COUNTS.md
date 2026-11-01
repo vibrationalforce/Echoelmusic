@@ -7683,3 +7683,21 @@ Verschoben, um Platz für den Studio-Gate-Absatz zu machen (die Datei lag 645 B 
 Ersetzt, weil sie jeder Sitzung den Weg zum Upload der ALTEN App nannte, seit Echoel Studio auf demselben Eintrag ausliefert (Ultra-Audit 2026-10-20, TF-1). Wörtlich:
 
 - **✅ TESTFLIGHT PIPELINE: GREEN (verified 2026-05-30).** Prior "deploy blocker" note is resolved — `testflight.yml` runs #1404–#1407 on `main` all succeeded across every platform (iOS upload + Summary), preflight confirms App Store Connect secrets are present and valid. Dispatch + poll from the sandbox via `bash scripts/check-testflight.sh dispatch` (token in gitignored `.claude/settings.local.json`). Push the feature branch's newer work (bio synth / OSC / Polar) to TestFlight with a full `build_only=false` run once a branch verification run is green.
+
+## AQ — Die Karte: was beim Umbau des root-`CLAUDE.md` ersetzt wurde (W-MAP, 2026-11-01)
+
+Am 2026-11-01 wurde das root-`CLAUDE.md` zur Karte des Repos. Vorher: 149.149 B und 1.051 Zeilen
+(`wc -c CLAUDE.md`, `wc -l CLAUDE.md` auf `424c2a532`), mit den drei Regeldateien 169.013 B immer
+geladen (`python3 scripts/doctor.py --section D`). Das Gesetz der früheren App zog wörtlich nach
+`Sources/CLAUDE.md`, die Swift-Fehlermuster nach `.claude/rules/swift-audio.md`. Eine Zeile der
+universellen Abschnitte steht nicht mehr in der Karte, weil sie seit 2026-10-18/19 falsch war —
+TestFlight trägt Echoel Studio (`studio-testflight.yml`), `testflight.yml` lädt seit 2026-10-20 nur
+mit `legacy_upload=LEGACY` hoch. Die Karte führt sie korrigiert. Wörtlich, wie sie in der Tabelle
+„Active Workflows“ stand:
+
+| `testflight.yml` | **PRIMARY** — TestFlight builds (ID: 225043686) |
+
+Und der Provenienz-Absatz, der unter „DER MERGE NACH `main` WARTET …“ stand (was ein Rückbau
+des Gates kostet), wörtlich — Platz für die Karte, ohne Gesetz zu verlieren:
+
+⚠️ **Das VERHÄLTNIS des alten Befunds bleibt lesenswert, weil es sagt, was ein Rückbau kostet:** der TestFlight-Dispatch im selben Workflow steht auf `if: false`, ein ungetesteter Merge erreichte also `main`, aber nie einen Nutzer. ⛔ Dieser Dämpfer war trotzdem zu großzügig (#1337): ein nicht bauendes Test-Bündel auf `main` heißt, dass für jeden, der in dem Fenster zieht, KEIN Wächter des Repos läuft — die Schwere hing nie allein an `if: false`.

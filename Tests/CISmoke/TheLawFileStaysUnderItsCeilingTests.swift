@@ -67,6 +67,25 @@
 // repeated defect in its smallest possible form — a measured number quoted one edit later.
 // Re-derive: `for f in CLAUDE.md .claude/rules/*.md; do wc -c "$f"; done`.
 //
+// ⭐ W-MAP (2026-11-01) — EPOCH 8, AND THE LAW FILE IS NOW TWO FILES. The root `CLAUDE.md` became
+// the MAP of the repo (identity, where things live, universal law, pointers); the earlier app's law
+// moved VERBATIM to the directory-scoped `Sources/CLAUDE.md`, which loads only while a session works
+// there. So this guard pins TWO ceilings, each the same number `scripts/doctor.py --section D` WARNs
+// at: 150,000 B on `Sources/CLAUDE.md` (the old number, on the text it was written for) and 25,000 B
+// on the map, the target the move was made for. Claim 5's "not back in the law file" reads BOTH files
+// — a block re-accreting in either is the defect. Claims 6 and 7 follow their lines to
+// `Sources/CLAUDE.md`.
+// GRADING against the parent `424c2a532`: claim 2b (the map ceiling) is a REGRESSION CATCH — red
+// there, the root file was 149,149 B, which is exactly the state this commit repairs. Claims 1, 2,
+// 5, 6 and 7 read `Sources/CLAUDE.md`, which does not exist on the parent: `rawFile` throws, so they
+// have NO verdict there — one ANCHOR ABSENCE reported five times (#486), not five findings. Claim 3's
+// new §AQ assertion and claim 5's two §AQ witnesses are FORWARD (the section is created here); the
+// rest of claim 3 and claim 4 are COUNTERWEIGHTS. Transcribed in Python over both trees (§0).
+// ⚠️ #1176 HALF-REPAIRED BY THE MOVE, not by a workflow edit: `Sources/CLAUDE.md` sits under
+// `Sources/**`, so a commit that edits the earlier app's law now starts `ci.yml` and this guard runs
+// on it. A commit that edits ONLY the map still starts nothing — the paragraph above stays true for
+// the root file.
+//
 // ⭐ GRADING FOR #953/#953b (parent `ca4902a`) — EPOCH 7. Statement count unchanged at 21
 // (`XCTAssert*`/`XCTFail` lines, counted in Python over both trees); claim 5's witness table
 // went 7 rows → 8, so that claim RUNS 16 checks instead of 14. Claims 1-4 and the seven older
@@ -142,18 +161,30 @@ import XCTest
 
 final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
 
-    /// The same number `scripts/doctor.py --section D` prints its WARN against.
+    /// The same numbers `scripts/doctor.py --section D` prints its WARNs against — one per law
+    /// file since W-MAP (2026-11-01). `ceilingBytes` kept its name and its number: it is the old
+    /// ceiling, on the text it was written for, which now lives in `Sources/CLAUDE.md`.
     private static let ceilingBytes = 150_000
+    private static let mapCeilingBytes = 25_000
+    private static let mapFile = "CLAUDE.md"
+    private static let lawFile = "Sources/CLAUDE.md"
 
     // MARK: - 1: the anchor
 
-    /// Without this, claim 2 passes trivially on a missing or truncated file (#454).
+    /// Without this, claim 2 passes trivially on a missing or truncated file (#454) — and since
+    /// W-MAP, claim 2b on a missing map.
     func testTheLawFileIsPresentAndSubstantial() throws {
-        let bytes = try byteCount("CLAUDE.md")
+        let bytes = try byteCount(Self.lawFile)
         XCTAssertGreaterThan(bytes, 50_000, """
-            CLAUDE.md is \(bytes) B — far smaller than any state this repo has been in. \
-            Either the file was truncated or this scan is reading the wrong path; a ceiling \
-            test over a missing file is vacuous, so re-anchor rather than celebrating.
+            `Sources/CLAUDE.md` is \(bytes) B — far smaller than the earlier app's law has ever \
+            been. Either the file was truncated or this scan is reading the wrong path; a \
+            ceiling test over a missing file is vacuous, so re-anchor rather than celebrating.
+            """)
+        let mapBytes = try byteCount(Self.mapFile)
+        XCTAssertGreaterThan(mapBytes, 5_000, """
+            The root `CLAUDE.md` is \(mapBytes) B — too small to be the map every session needs \
+            (identity, where things live, the universal law, the pointers). Truncated, or read \
+            from the wrong path; re-anchor rather than celebrating.
             """)
     }
 
@@ -161,17 +192,35 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
 
     /// ⭐ Read the message, not just the number.
     func testTheLawFileStaysUnderTheDoctorsCeiling() throws {
-        let bytes = try byteCount("CLAUDE.md")
+        let bytes = try byteCount(Self.lawFile)
         XCTAssertLessThan(bytes, Self.ceilingBytes, """
-            CLAUDE.md is \(bytes) B, past the \(Self.ceilingBytes) B ceiling that \
+            `Sources/CLAUDE.md` is \(bytes) B, past the \(Self.ceilingBytes) B ceiling that \
             `scripts/doctor.py --section D` WARNs at. THIS IS NOT "delete what you just \
             wrote" — #701 added a genuine register entry with 628 B of headroom and was \
             right to. The repair is the one #538 and #702 both took: move PROVENANCE (how a \
             number reached its value, which claim was retracted, which cycle paid for it) \
             into `memory/LEDGER_COUNTS.md`, and keep LAW (what a session must DO) here. The \
             ledger deletes nothing, so the move costs no knowledge. Largest paragraphs, to \
-            start from: `python3 -c "for i,l in enumerate(open('CLAUDE.md',encoding='utf-8')): \
+            start from: `python3 -c "for i,l in enumerate(open('Sources/CLAUDE.md',encoding='utf-8')): \
             print(len(l.encode()),i+1)" | sort -rn | head`.
+            """)
+    }
+
+    // MARK: - 2b: THE MAP STAYS A MAP (W-MAP, 2026-11-01)
+
+    /// ⭐ The root `CLAUDE.md` is loaded in EVERY session, including every Echoel Studio session,
+    /// so it carries only what holds everywhere. The ceiling is the target the move was made for.
+    /// A red here is not "delete your line" either: app law goes to its directory's `CLAUDE.md`
+    /// (`Sources/CLAUDE.md`, `EchoelStudio/CLAUDE.md`), provenance to `memory/LEDGER_COUNTS.md`.
+    func testTheMapStaysAMap() throws {
+        let bytes = try byteCount(Self.mapFile)
+        XCTAssertLessThan(bytes, Self.mapCeilingBytes, """
+            The root `CLAUDE.md` is \(bytes) B, past the \(Self.mapCeilingBytes) B the map was \
+            cut to on 2026-11-01. It loads before the first line of work in every session — \
+            Studio sessions included — so it holds identity, where things live, the universal law \
+            and pointers, nothing else. Move app law into its directory's `CLAUDE.md` \
+            (`Sources/CLAUDE.md`, `EchoelStudio/CLAUDE.md`) and provenance into \
+            `memory/LEDGER_COUNTS.md`, and leave a pointer. Delete nothing.
             """)
     }
 
@@ -225,6 +274,13 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
             CLAUDE.md's Absent-register bullet POINTS here and keeps only the law: unreachable is
             NOT the same as ineffective, this line deliberately gets no text-scan guard (#491),
             and the two lessons about reachability and persisted flags.
+            """)
+        // W-MAP (2026-11-01) — FORWARD: the section is created by the same commit. It holds the
+        // two lines of the universal sections that the map replaced rather than kept.
+        XCTAssertTrue(ledger.contains("## AQ — Die Karte"), """
+            §AQ (the lines the map replaced, W-MAP 2026-11-01) is gone. The map's table "Wohin \
+            die alten Abschnitte gezogen sind" POINTS there — a dangling pointer in the one file \
+            every session reads.
             """)
         XCTAssertTrue(ledger.contains("## F — `AdaptiveCardGrid` / reflowende Panels"), """
             §F (the four versions of the reflowing-panel count, moved by #746) is gone. The \
@@ -313,7 +369,9 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
     /// a hard-coded path would have created a FOURTH copy of the very decision it was moved
     /// to de-duplicate. A guard that forces the wrong destination is worse than no guard.
     func testTheMovedProvenanceIsInItsLedgerAndNotInTheLawFile() throws {
-        let law: String = try rawFile("CLAUDE.md")
+        // W-MAP: the law is two files — the map and the earlier app's law. A block back in
+        // EITHER is re-accretion.
+        let law: String = try rawFile(Self.mapFile) + "\n" + rawFile(Self.lawFile)
         let witnesses: [(needle: String, home: String, section: String, what: String)] = [
             ("MIDIFileExporterDrumTests", "memory/LEDGER_COUNTS.md", "§C",
              "the #474 retraction — a cited test file that NEVER existed"),
@@ -401,7 +459,15 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
             ("WorkspaceView.swift:345", "memory/LEDGER_COUNTS.md", "§AI",
              "the deleted TransportBar's archaeology, quoted down to a line number that had "
              + "long pointed at unrelated code — which is itself the lesson the law file kept: "
-             + "a quoted phrase survives an insertion, a line number does not")
+             + "a quoted phrase survives an insertion, a line number does not"),
+            // W-MAP (2026-11-01) — the two lines of the universal sections the map replaced.
+            ("**PRIMARY** — TestFlight builds (ID: 225043686)", "memory/LEDGER_COUNTS.md", "§AQ",
+             "the Active Workflows row that called the earlier app's `testflight.yml` the PRIMARY "
+             + "TestFlight path, false since Echoel Studio took the record on 2026-10-18/19; the map "
+             + "carries the corrected row"),
+            ("die Schwere hing nie allein an `if: false`", "memory/LEDGER_COUNTS.md", "§AQ",
+             "the gate-revert provenance (what a merge without gates cost) — moved to give the map "
+             + "its room; the gate law itself stayed in the map")
         ]
         for w in witnesses {
             let home: String = try rawFile(w.home)
@@ -411,9 +477,9 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
                 line. If this needle is in NEITHER file, the lesson was deleted, not moved.
                 """)
             XCTAssertFalse(law.contains(w.needle), """
-                \(w.what) is back in CLAUDE.md. That is the re-accretion this guard exists \
-                to stop. Point at `\(w.home)` \(w.section) instead of re-quoting the \
-                provenance in the always-loaded file.
+                \(w.what) is back in a law file (the root `CLAUDE.md` or `Sources/CLAUDE.md`). \
+                That is the re-accretion this guard exists to stop. Point at `\(w.home)` \
+                \(w.section) instead of re-quoting the provenance in a law file.
                 """)
         }
     }
@@ -425,10 +491,10 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
     /// pins that the routing is there. A negative scan for "no digits on this line" would hit
     /// the retraction's own byte figure and is exactly the #491 self-hit.
     func testTheFileCountLineRoutesInsteadOfAssertingANumber() throws {
-        let law: String = try rawFile("CLAUDE.md")
+        let law: String = try rawFile(Self.lawFile)
         let candidates = law.components(separatedBy: "\n").filter { $0.hasPrefix("- **Files:**") }
         XCTAssertEqual(candidates.count, 1, """
-            Expected exactly one `- **Files:**` line in CLAUDE.md, found \(candidates.count).
+            Expected exactly one `- **Files:**` line in `Sources/CLAUDE.md`, found \(candidates.count).
             This scan anchors on that prefix; re-anchor it rather than letting it match nothing.
             """)
         let line = candidates.first ?? ""
@@ -489,7 +555,7 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
     /// on the heading it asserts only that no "N files" count came back — a bounded scan of
     /// ONE line, not of the whole file.
     func testTheTestCountLineRoutesInsteadOfAssertingANumber() throws {
-        let law: String = try rawFile("CLAUDE.md")
+        let law: String = try rawFile(Self.lawFile)
         let command = "git ls-files 'Tests/EchoelmusicTests/*.swift' | wc -l"
         XCTAssertTrue(law.contains(command), """
             The law file no longer carries the counting command for the non-blocking suite. \

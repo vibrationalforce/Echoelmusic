@@ -151,17 +151,29 @@ final class BioApplyRateIsTheDedupedRateTests: XCTestCase {
     /// The architecture line itself. It is the sentence sessions plan time constants from,
     /// so it must keep both numbers AND their relationship — a line that says only "1 Hz"
     /// would invite someone to treat 1 Hz as a guarantee and size a buffer for it.
+    ///
+    /// ⭐ W-MAP (2026-11-01): the line moved VERBATIM from the root `CLAUDE.md` (now the map of
+    /// the repo) to `Sources/CLAUDE.md`, the earlier app's law. The positive pin follows it
+    /// there; the negative reads BOTH files, so the retracted phrasing cannot come back
+    /// through either door. (Written out, not looped: `scripts/foreign-needles.py` resolves a
+    /// `let` binding of a path and cannot see a needle asserted on a loop variable.)
     func testTheArchitectureLineStillCarriesBothRates() throws {
-        let claude = try source("CLAUDE.md")
-        XCTAssertFalse(claude.contains("snapshot (10 Hz poll)"), """
-            CLAUDE.md's architecture line claims a "10 Hz poll" as the bio rate again. That \
-            exact phrasing produced #315, #332 and #336. The poll is 10 Hz; the APPLY rate \
-            is ~1 Hz, and time constants must be derived from the latter.
+        let law = try source("Sources/CLAUDE.md")
+        let map = try source("CLAUDE.md")
+        XCTAssertFalse(law.contains("snapshot (10 Hz poll)"), """
+            `Sources/CLAUDE.md`'s architecture line claims a "10 Hz poll" as the bio rate \
+            again. That exact phrasing produced #315, #332 and #336. The poll is 10 Hz; the \
+            APPLY rate is ~1 Hz, and time constants must be derived from the latter.
             """)
-        XCTAssertTrue(claude.contains("BioApplyRateIsTheDedupedRateTests"), """
-            CLAUDE.md no longer references this guard. That is allowed — but then this file \
-            protects a claim nobody is making, and the pair should go together. (The reverse \
-            case is what created this file: the reference shipped without the file.)
+        XCTAssertFalse(map.contains("snapshot (10 Hz poll)"), """
+            The root `CLAUDE.md` (the map) claims a "10 Hz poll" as the bio rate. The \
+            architecture line lives in `Sources/CLAUDE.md` since W-MAP; do not re-accrete it \
+            in the always-loaded map, and never with the retracted phrasing.
+            """)
+        XCTAssertTrue(law.contains("BioApplyRateIsTheDedupedRateTests"), """
+            `Sources/CLAUDE.md` no longer references this guard. That is allowed — but then \
+            this file protects a claim nobody is making, and the pair should go together. (The \
+            reverse case is what created this file: the reference shipped without the file.)
             """)
     }
 

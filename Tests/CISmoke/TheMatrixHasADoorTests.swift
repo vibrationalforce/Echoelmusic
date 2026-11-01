@@ -19,6 +19,12 @@
 // both — the counterweight. Stripper: TRAGEND, measured — claim 5 flips raw vs. stripped on
 // this tree (the section's doc comment names `lastOutputs` to forbid it; 1 of 6 verdicts),
 // PROPHYLAKTISCH for the rest.
+//
+// ⭐ W-MAP (2026-11-01): the root `CLAUDE.md` became the map of the repo, and the earlier app's
+// law moved VERBATIM to `Sources/CLAUDE.md`; claim 6's two needles read it there. Graded against the
+// parent `424c2a532`: that file does not exist there, so those claims have no verdict on it (one
+// ANCHOR ABSENCE, #486); on this tree they are the counterweights they were, transcribed in Python
+// against the moved text. A `CLAUDE.md` in the history above means that text, wherever it lives now.
 
 import Foundation
 import XCTest
@@ -81,9 +87,9 @@ final class TheMatrixHasADoorTests: XCTestCase {
 
     /// Claim 6 — the two prose homes moved with the surface.
     func testTheProseHomesMoved() throws {
-        let law = try text("CLAUDE.md")
+        let law = try text("Sources/CLAUDE.md")
         XCTAssertTrue(law.contains("seit #1250 (Founder 2026-09-11) hat die Matrix ihre Fläche"),
-                      "CLAUDE.md's CURRENT STATE modulation line no longer says the matrix has a surface (#1250)")
+                      "Sources/CLAUDE.md's CURRENT STATE modulation line no longer says the matrix has a surface (#1250)")
         XCTAssertTrue(law.contains("ERLEDIGT mit #1250:** `PatchbayView.modulationSection` konstruiert `ModRoute(`"),
                       "the doorless register's modulation entry no longer records #1250 (#1250)")
     }

@@ -81,6 +81,12 @@
 // named `MicrotonalTuning` anywhere in `Sources/` = 0 · each of the seven
 // `…setTuningCents(` receivers = 1 · `-> DetectedTuning?` = 1 ·
 // `public var confidence: Double` = 1 · the `SessionContext` keyRoot `didSet` = 1.
+//
+// ⭐ W-MAP (2026-11-01): the root `CLAUDE.md` became the map of the repo, and the earlier app's
+// law moved VERBATIM to `Sources/CLAUDE.md`; `lawFile` and the claim that cites both names read it there. Graded against the
+// parent `424c2a532`: that file does not exist there, so those claims have no verdict on it (one
+// ANCHOR ABSENCE, #486); on this tree they are the counterweights they were, transcribed in Python
+// against the moved text. A `CLAUDE.md` in the history above means that text, wherever it lives now.
 
 import Foundation
 import XCTest
@@ -92,7 +98,7 @@ final class TheToneSystemIsNamedByItsTypeTests: XCTestCase {
     private static let detectorFile = "Sources/Echoelmusic/Core/TuningDetector.swift"
     private static let fanOutFile = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let keyOwnerFile = "Sources/Echoelmusic/Core/SessionContext.swift"
-    private static let lawFile = "CLAUDE.md"
+    private static let lawFile = "Sources/CLAUDE.md"
 
     /// The seven receivers the law file now names. Each is asserted individually rather
     /// than counted, so an EIGHTH retuned voice is a legal addition (#364).
@@ -229,7 +235,7 @@ final class TheToneSystemIsNamedByItsTypeTests: XCTestCase {
             `TuningDetector`'s production callers are \
             \(callers.isEmpty ? "NONE" : callers.joined(separator: ", ")) — expected exactly \
             `Echoelmusic/Sequencer/AudioKeyAnalysis.swift`. If the list is EMPTY the producer was lost and \
-            the detector is an orphan again: CLAUDE.md's register entry and this file's header \
+            the detector is an orphan again: Sources/CLAUDE.md's register entry and this file's header \
             must go back to saying so. If there is a SECOND caller, say what it is and why it \
             is not a duplicate estimator — #C1 recorded that the value and the estimator \
             already existed, and minting a parallel one is the mistake both were written to \
@@ -290,16 +296,16 @@ final class TheToneSystemIsNamedByItsTypeTests: XCTestCase {
     func testTheLawFileCitesBothTheFileAndTheType() throws {
         let law = try text(Self.lawFile)
         XCTAssertTrue(law.contains("MicrotonalTuning.swift"), """
-            CLAUDE.md no longer names the FILE `MicrotonalTuning.swift`. Both names are load- \
+            Sources/CLAUDE.md no longer names the FILE `MicrotonalTuning.swift`. Both names are load- \
             bearing: the type is what a grep resolves, the file is where it lives.
             """)
         XCTAssertTrue(law.contains("`TuningSystem`"), """
-            CLAUDE.md no longer names the TYPE `TuningSystem`. Citing the file alone is the \
+            Sources/CLAUDE.md no longer names the TYPE `TuningSystem`. Citing the file alone is the \
             #1376 trap this slice repaired — a session greps the file name, finds no type, and \
             can read a live tone system as dead.
             """)
         XCTAssertTrue(law.contains("`Core/TuningDetector`"), """
-            The orphan-register entry for `Core/TuningDetector` is gone from CLAUDE.md. It is \
+            The orphan-register entry for `Core/TuningDetector` is gone from Sources/CLAUDE.md. It is \
             the entry that stops a future key-detection slice minting a second `DetectedTuning`.
             """)
     }

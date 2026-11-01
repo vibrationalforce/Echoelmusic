@@ -128,3 +128,44 @@ one is now a BUILD failure in the extension, not merely a hygiene lapse. The rul
 change; it went back to having teeth, which is how it started. "Not portability" still holds. Do **not** write "Linux-testable": `EchoelWSOLA.swift`
 imports Accelerate unguarded where the other 6 use `#if canImport`. Guard, with the long
 version of all of this: `TheDSPLayerStaysFoundationOnlyTests`.
+
+## CRITICAL BUILD ERROR PATTERNS
+
+Moved here from the root `CLAUDE.md` on 2026-11-01 (W-MAP): Swift lessons that each cost a red CI
+round, and they hold for both apps. The type names in the examples belong to the earlier app
+(`Sources/`); Echoel Studio's own build lessons are in `EchoelStudio/CLAUDE.md`.
+
+### Swift Compiler Errors
+
+| Pattern | Fix |
+|---------|-----|
+| UIKit refs on non-iOS | `#if canImport(UIKit)` |
+| @MainActor in Sendable closure | `Task { @MainActor in }` |
+| deinit calls @MainActor method | Nonisolated cleanup directly |
+| `public let foo: InternalType` | Hard error — match access levels |
+| `Color.magenta` | Doesn't exist. Use `Color(red:1,green:0,blue:1)` |
+| WeatherKit | `@available(iOS 16.0, *)` AND `#if canImport(WeatherKit)` |
+| vDSP overlapping accesses | Copy inputs to temp vars before `vDSP_DFT_Execute` |
+| `self` before `super.init()` | Move setup AFTER `super.init()` |
+| `inout` + escaping closure | Copy to local var first |
+| `@MainActor` property read from a `nonisolated` audio-render block ("main actor-isolated property X can not be referenced from a nonisolated context") | Keep the public `@MainActor` prop for the UI, add an `@ObservationIgnored nonisolated(unsafe)` mirror written in its `didSet`; the render reads the mirror (see SubBassVoice.audioSubGain / PolySynthVoice params) |
+| `@Observable` class: a manual stored prop named `_foo` ("invalid redeclaration of '_foo'" / "ambiguous use of '_foo'") | The macro generates `_foo` as `foo`'s backing — never name your own field `_<name>`; use a non-underscore name (e.g. `audioFoo`) |
+| `static let` on a `@MainActor` class read from `Task.detached` — "main actor-isolated static property X cannot be accessed from outside of the actor" | Xcode's toolchain isolates it even when immutable (SwiftPM CI may accept the same code — toolchains disagree on SE-0434 inference). Mark it `nonisolated static let` explicitly |
+| `static let` holding key paths or closures — "static property X is not concurrency-safe because non-'Sendable' type … may have shared mutable state" | A `KeyPath` is NOT `Sendable` in Swift 6 even when Root and Value are, so a STORED global of them is a hard error (#1402, `MoodProfile.variationSpread`). Make it a COMPUTED `static var` — no storage, nothing to share. Do not paper over it with `nonisolated(unsafe)` |
+| `Self.` in a STORED property initializer — "covariant 'Self' type cannot be referenced from a stored property initializer" | Illegal even on a `final class` (#1444, `LightingStore.lookIntensity = Self.defaultLookIntensity`). Write the TYPE NAME. ⚠️ `Self.` in a METHOD body or a computed property is fine, so the legal and the illegal spelling sit a few lines apart in the same file and only one of them is a build error — a §0 transcription cannot see this, only a gate can |
+
+### Language-level notes
+
+Language-level notes that ARE still true and worth keeping:
+
+- `Swift.max`/`Swift.min` must be qualified when a struct in scope has a static
+  `.max` property.
+- **Argument order in `max`/`min` decides NaN behaviour.** `max(x, y)` is
+  `y >= x ? y : x`, so `max(0, NaN)` returns `0` (NaN-safe) while `max(NaN, 0)`
+  returns `NaN`. `min(max(v, lo), hi)` therefore passes NaN straight through — use
+  the NaN-safe `clamped(to:)` (`Core/FloatingPointClamp.swift`) for anything that
+  reaches the audio thread. This has caused shipped permanent-silence bugs.
+- `@escaping` required for `TaskGroup.addTask` closures.
+- Result builder: `buildBlock(_ components: [T]...)` when using `buildExpression`.
+
+(`Core/FloatingPointClamp.swift` above is the earlier app's file, `Sources/Echoelmusic/Core/FloatingPointClamp.swift`.)

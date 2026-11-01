@@ -69,6 +69,13 @@
 // contains the claim the prose attributes to it. A guard gutted to `XCTAssertTrue(true)`
 // under an unchanged name passes here. That deeper question has no cheap mechanical
 // form, and pretending otherwise would be the decoration this file argues against.
+//
+// ⭐ W-MAP (2026-11-01): the root `CLAUDE.md` became the map of the repo and the earlier app's law
+// moved VERBATIM into the directory-scoped `Sources/CLAUDE.md`. Its citations did not stop being
+// citations because they moved, so that ONE directory-scoped file joins the corpus as `movedLaw`;
+// the principle above still keeps the others out. Graded against the parent `424c2a532`: there the
+// file does not exist, so the readable-count assertion is red by ANCHOR ABSENCE (one finding); on
+// this tree every citation of both files resolves, transcribed in Python.
 import XCTest
 
 final class TheLawFileCitesGuardsThatExistTests: XCTestCase {
@@ -83,8 +90,10 @@ final class TheLawFileCitesGuardsThatExistTests: XCTestCase {
     /// ⚠️ It is DOCUMENTATION, never an assertion: adding or removing a citation is
     /// ordinary work and must not turn this red (#364) — that is what `citationFloor`
     /// is for. It exists so the failure message can say what "normal" looked like
-    /// without a second sentence repeating the number (#416).
-    private static let citationsWhenWritten = 35
+    /// without a second sentence repeating the number (#416). Re-measured at W-MAP (2026-11-01)
+    /// over the five files below — the same count the four always-loaded files carried on the
+    /// parent tree, i.e. the move lost no citation.
+    private static let citationsWhenWritten = 63
 
     /// The files every session is charged for before its first line of work: the law file
     /// plus the three always-loaded rule files. Directory-scoped `CLAUDE.md`s are NOT in
@@ -96,6 +105,12 @@ final class TheLawFileCitesGuardsThatExistTests: XCTestCase {
         ".claude/rules/engineering.md",
         ".claude/rules/swift-audio.md",
     ]
+
+    /// The law that LEFT the always-loaded set on 2026-11-01 (W-MAP): the earlier app's law, moved
+    /// verbatim from `CLAUDE.md`. It loads only inside `Sources/`, but every citation in it is one
+    /// this guard read in the always-loaded file the day before — dropping it would shrink the
+    /// corpus by most of its citations, which is exactly what the floor below exists to catch.
+    private static let movedLaw = ["Sources/CLAUDE.md"]
 
     /// Unit-test TARGET names, read from `project.yml` rather than listed here.
     static func unitTestTargets(in project: String) -> Set<String> {
@@ -114,20 +129,22 @@ final class TheLawFileCitesGuardsThatExistTests: XCTestCase {
         var pathForm: [String] = []
         var tickForm: [String] = []
         var readFiles: [String] = []
-        for rel in Self.alwaysLoaded {
+        let corpus = Self.alwaysLoaded + Self.movedLaw
+        for rel in corpus {
             let url = root.appendingPathComponent(rel)
             guard let text = try? String(contentsOf: url, encoding: .utf8) else { continue }
             readFiles.append(rel)
             scan(text, pattern: "Tests/CISmoke/", suffix: ".swift", into: &pathForm)
             scanBackticked(text, into: &tickForm)
         }
-        XCTAssertEqual(readFiles.count, Self.alwaysLoaded.count, """
-            Only \(readFiles.count) of \(Self.alwaysLoaded.count) always-loaded files were \
-            readable: \(readFiles.joined(separator: ", ")).
+        XCTAssertEqual(readFiles.count, corpus.count, """
+            Only \(readFiles.count) of \(corpus.count) law files were readable: \
+            \(readFiles.joined(separator: ", ")).
 
-            The set this guards is exactly the one every session pays for before its first \
-            line of work (#454). If a rules file moved or was renamed, re-point this list in \
-            the same commit — a shrinking corpus makes the assertions below pass on less.
+            The set this guards is the one every session pays for before its first line of \
+            work, plus the earlier app's law that moved out of it (#454, W-MAP). If a file \
+            moved or was renamed, re-point these lists in the same commit — a shrinking corpus \
+            makes the assertions below pass on less.
             """)
 
         // Bundle names are read, never assumed: `EchoelmusicTests` is a TARGET in
@@ -143,7 +160,7 @@ final class TheLawFileCitesGuardsThatExistTests: XCTestCase {
 
         let all = Set(pathForm).union(tickForm)
         XCTAssertGreaterThanOrEqual(all.count, Self.citationFloor, """
-            The always-loaded files cite only \(all.count) guard file(s) — the scan \
+            The law files cite only \(all.count) guard file(s) — the scan \
             expected at least \(Self.citationFloor) and found \(Self.citationsWhenWritten) \
             when it was written.
 
@@ -164,7 +181,8 @@ final class TheLawFileCitesGuardsThatExistTests: XCTestCase {
         }
 
         XCTAssertTrue(missing.isEmpty, """
-            CLAUDE.md points at guard file(s) that do not exist: \
+            A law file (`CLAUDE.md`, `Sources/CLAUDE.md` or a rules file) points at guard \
+            file(s) that do not exist: \
             \(missing.joined(separator: ", ")).
 
             This is NOT a ban on renaming or deleting a guard — both are ordinary work. \

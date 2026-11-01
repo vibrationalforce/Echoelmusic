@@ -38,6 +38,12 @@
 // (`127.0.0.1`, or `::ffff:127.0.0.1` from a dual-stack socket) is admitted on both. The IPv6
 // rows rest on Network's own `isLoopback`/`isIPv4Mapped`/`asIPv4`, which a transcription cannot
 // run — they are proven when a Run Tests window shows this file's names (#445/#807).
+//
+// ⭐ W-MAP (2026-11-01): the root `CLAUDE.md` became the map of the repo, and the earlier app's
+// law moved VERBATIM to `Sources/CLAUDE.md`; the two law-file needles of the prose-homes claim read it there. Graded against the
+// parent `424c2a532`: that file does not exist there, so those claims have no verdict on it (one
+// ANCHOR ABSENCE, #486); on this tree they are the counterweights they were, transcribed in Python
+// against the moved text. A `CLAUDE.md` in the history above means that text, wherever it lives now.
 
 import Foundation
 import XCTest
@@ -226,9 +232,9 @@ final class TheOSCControlInputIsAWhitelistTests: XCTestCase {
                        "the FAQ still lists all of OSC-in as roadmap (#1255)")
         let claims = try text("ContentPipeline/CLAIMS.md")
         XCTAssertTrue(claims.contains("OSC-Eingang: Steuer-Whitelist"), "CLAIMS.md does not list the input — copy will invent or deny it (#1255)")
-        let law = try text("CLAUDE.md")
-        XCTAssertTrue(law.contains("FÜNF seit #1255"), "CLAUDE.md's T1 still counts four tempo sources (#1255)")
-        XCTAssertTrue(law.contains("/echoelmusic/ctrl/{bpm,key,scale,genre,visualStyle,blackout}"), "the OSC address set in CLAUDE.md lacks the inbound line (#1255)")
+        let law = try text("Sources/CLAUDE.md")
+        XCTAssertTrue(law.contains("FÜNF seit #1255"), "Sources/CLAUDE.md's T1 still counts four tempo sources (#1255)")
+        XCTAssertTrue(law.contains("/echoelmusic/ctrl/{bpm,key,scale,genre,visualStyle,blackout}"), "the OSC address set in Sources/CLAUDE.md lacks the inbound line (#1255)")
         let privacy = try text("docs/privacy.html")
         XCTAssertTrue(privacy.contains("OSC input (off by default)"), "the privacy page must name the inbound port (#1255)")
     }
