@@ -36,10 +36,15 @@ den Founder.
 **Reihenfolge:** G1–G4 und G6 erfüllt → Claude sagt „bereit für den kleinen Kreis" → der Founder
 reicht ein (§1, Schritte 1–6, eine Woche G5) → Claude sagt „TestFlight Go" → Schritt 7.
 
-Stand 2026-11-01 (letzter VALIDER Build 10029): G1 und G2 warten
-auf das Gerät; G3 wartet auf das Gerät und auf W12; G4 vorbereitet (§2–§4); G5 braucht die
-Tester (`FOUNDER_INBOX.md` GM37); G6 offen beim VoiceOver-Durchgang. Dieser Absatz ist ein
-Datum, kein Zustand — vor jeder Aussage neu messen.
+Stand 2026-11-01, 06:00 (letzter VALIDER Build 10031): G1 und G2 warten auf das Gerät — fünf
+Builds mit ungeprüften Fähigkeiten (10027–10031), deshalb bis zur Geräte-Session keine neue
+Feature-Welle, nur Reparaturen (`decisions.csv`, 2026-11-01). G3 wartet auf das Gerät (die
+Instrument-Seite W12 ist seit 10030 drin, der Atem W12b seit 10031). G4 vorbereitet (§2–§4).
+G5 braucht die Tester (`FOUNDER_INBOX.md` GM37). G6: der Code-Teil ist gebaut — das
+Zugangs-Audit vom 2026-11-01 fand 1 BLOCKER, 10 MAJOR und 22 MINOR, W18a/W18b haben alle im Code
+bearbeitet (10031; eine bewusste Ausnahme: der gedimmte Eintrag „Export Video…“ nennt keinen
+eigenen Grund, sein Name erklärt ihn); offen ist der Geräte-Durchgang mit VoiceOver und größter Schrift (Check 4
+von 10031). Dieser Absatz ist ein Datum, kein Zustand — vor jeder Aussage neu messen.
 
 ## 1. Einrichten (ca. 15 Minuten, einmal)
 
