@@ -209,6 +209,27 @@ is a legal question and the founder's decision (`docs/dev/FOUNDER_INBOX.md` GM38
 
 ---
 
+## 4c. Not while steering (decided 2026-11-01, founder-delegated)
+
+The founder proposed (2026-11-01) a browser with a separate Eeolee page that helps navigation and
+safety-relevant maritime and traffic infrastructure, shared breathing and toning in rhythm, and an
+instrument-only mode that does not distract people "trotz Autopilot oder ähnlichem". Decided with
+the authority he gave ("Du hast die Entscheidungsgewalt"):
+
+- **Nobody plays Echoelmusic while steering.** Whoever drives a car, steers a boat or runs a
+  machine stays responsible even with driver assistance or an autopilot, and slow breathing and
+  calm sound lower alertness. Echoelmusic offers no mode, feature or copy for that use; its body
+  and breath surfaces and One Clock say so once.
+- **Echoelmusic is not navigation or safety infrastructure** (maritime, traffic, resilience).
+  Such systems need certification and a qualified partner; they are not built here as a side
+  project.
+- **No own browser.** Echoelmusic's web path is the open window in existing browsers
+  (`docs/dev/WEB_SPIKE_2026-11-01.md`), not a browser engine or a branded shell.
+- **Relaxation through breathing is not Echoelmusic's product** (CLAIMS §2). The Eeolee idea stays
+  a separate brand, and Eeolee never appears in Echoelmusic texts.
+
+---
+
 ## 5. Recovery principle
 
 > **NEVER restore a historical subsystem by copying it wholesale merely because it once
