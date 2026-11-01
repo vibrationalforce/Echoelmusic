@@ -149,8 +149,8 @@ public struct SynthParameter: Sendable, Equatable {
             case .release: SynthParameter("synth.release", "Release", .seconds, 0.001...10, 0.25, .exponential)
             case .level: SynthParameter("synth.level", "Level", .amount, 0...1, 0.25, .linear)
             // The engine stores the index of its choice: a new engine goes at the end.
-            case .engine: SynthParameter("synth.engine", "Engine", .choice, 0...6, 0, .stepped,
-                                         choices: ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP"])
+            case .engine: SynthParameter("synth.engine", "Engine", .choice, 0...7, 0, .stepped,
+                                         choices: ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP", "Choir"])
             case .character: SynthParameter("synth.character", "Character", .amount, 0...1, 0.5, .linear)
             case .filter: SynthParameter("synth.filter", "Filter", .choice, 0...1, 0, .stepped, choices: ["Clean", "Ladder"])
             // The vibrato with the modulation wheel at rest (W12): what a route moves with the pulse.
@@ -280,6 +280,18 @@ public struct InstrumentPreset: Sendable, Equatable {
                                          .attack: 0.005, .decay: 0.3, .sustain: 0.7, .release: 0.25, .level: 0.22]),
         InstrumentPreset("Soft Keys", [.waveform: 3, .cutoff: 2_500, .resonance: 0.2, .filterAmount: 1, .filterDecay: 0.6,
                                        .attack: 0.004, .decay: 0.8, .sustain: 0.3, .release: 0.5, .level: 0.3]),
+        // The choir's (VOX): each names its engine and its vowel (character: 0 oo, 0.25 oh, 0.5 ah),
+        // so it sounds as its name says on any page. Slow to swell and to fade, as a choir breathes;
+        // the filter stays open above the formants, which shape the sound.
+        InstrumentPreset("Choir Ah", [.engine: 7, .character: 0.5, .cutoff: 6_000, .resonance: 0.1, .filterAmount: 0,
+                                      .filterDecay: 0.3, .attack: 0.25, .decay: 0.6, .sustain: 0.9, .release: 0.8,
+                                      .level: 0.35]),
+        InstrumentPreset("Choir Oo", [.engine: 7, .character: 0, .cutoff: 4_000, .resonance: 0.1, .filterAmount: 0,
+                                      .filterDecay: 0.3, .attack: 0.35, .decay: 0.6, .sustain: 0.9, .release: 1,
+                                      .level: 0.38]),
+        InstrumentPreset("Low Chant", [.engine: 7, .character: 0.25, .cutoff: 2_200, .resonance: 0.1, .filterAmount: 0,
+                                       .filterDecay: 0.3, .attack: 0.5, .decay: 0.8, .sustain: 0.95, .release: 1.4,
+                                       .level: 0.4]),
     ]
 
     public static func named(_ name: String) -> InstrumentPreset? {

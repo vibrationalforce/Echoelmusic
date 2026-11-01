@@ -42,11 +42,15 @@ public struct InstrumentMood: Sendable, Equatable, Identifiable {
 
 /// The sound a track plays (W12, the Instrument page's Sound): one of the synth's presets on one of
 /// its engines. Choosing a preset keeps the engine and the mood the track is in, so the two picks
-/// stay apart; choosing an engine keeps everything else.
+/// stay apart; choosing an engine keeps everything else. A preset made for one engine — the
+/// choir's, which name their vowel in `character` (VOX) — brings that engine and its own colour
+/// instead: kept, the mood would rewrite the vowel the preset is named for.
 public enum InstrumentSound {
-    /// Loads `preset` on `track` and keeps its engine and its mood.
+    /// Loads `preset` on `track` and keeps its engine and its mood, unless the preset names its own
+    /// engine.
     public static func choosing(preset: String, on track: Track) -> [Command] {
         var steps: [Command] = [.loadInstrumentPreset(track.id, name: preset)]
+        if InstrumentPreset.named(preset)?.values[SynthParameter.engine.key.rawValue] != nil { return steps }
         let engine = track.instrument.value(.engine)
         steps.append(.setInstrumentParameter(track.id, key: SynthParameter.engine.key.rawValue, value: engine))
         if let mood = InstrumentMood.current(of: track.instrument) {

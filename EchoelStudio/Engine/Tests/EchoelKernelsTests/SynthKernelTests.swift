@@ -65,6 +65,22 @@ final class SynthKernelTests: XCTestCase {
         XCTAssertNil(PatchField(ParameterKey(rawValue: "synth.unknown")))
     }
 
+    /// A stored engine index plays the engine at that place in the DSP's list — the choir at 7
+    /// (VOX) — and an index a later build stores plays the classic oscillator.
+    func testEveryStoredEngineIndexPlaysItsEngine() {
+        for index in SynthParameter.engine.choices.indices {
+            var patch = SynthPatch()
+            PatchField.engine.apply(Double(index), to: &patch)
+            XCTAssertEqual(patch.engine, SynthEngine.allCases[index], SynthParameter.engine.choices[index])
+        }
+        var choir = SynthPatch()
+        PatchField.engine.apply(7, to: &choir)
+        XCTAssertEqual(choir.engine, .choir)
+        var later = SynthPatch()
+        PatchField.engine.apply(99, to: &later)
+        XCTAssertEqual(later.engine, .classic)
+    }
+
     func testTheKernelSoundsExactlyLikeASongTrackWithTheSameValues() {
         // Every parameter away from its default, so a field one path forgot would show.
         var settings = InstrumentSettings()

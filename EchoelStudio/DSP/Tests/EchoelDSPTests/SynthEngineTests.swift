@@ -97,6 +97,41 @@ final class SynthEngineTests: XCTestCase {
                              "metal's second mode sits at 2.756 times the note")
     }
 
+    /// The choir sings oo at character 0 and ee at 1: oo's second formant rings near the third
+    /// harmonic of A3, ee's near the ninth.
+    func testTheChoirSingsOoAtOneEndAndEeAtTheOther() {
+        let oo = tone(.choir, character: 0, frames: 24_000), ee = tone(.choir, character: 1, frames: 24_000)
+        let ooTail = Array(oo.suffix(19_200)), eeTail = Array(ee.suffix(19_200))
+        XCTAssertGreaterThan(magnitude(ooTail, hertz: 660), magnitude(eeTail, hertz: 660) * 2, "oo's second formant")
+        XCTAssertGreaterThan(magnitude(eeTail, hertz: 1_980), magnitude(ooTail, hertz: 1_980) * 2, "ee's second formant")
+    }
+
+    /// Sixteen voices of each engine, one 128-frame block after another for a second of sound: the
+    /// seconds it takes, for a chord held through the whole second.
+    private func chordSeconds(_ engine: SynthEngine) -> Double {
+        var patch = SynthPatch(cutoff: 18_000, ampEnvelope: .init(attack: 0.001, decay: 0.01, sustain: 1, release: 0.2))
+        patch.engine = engine
+        var synth = PolySynth(patch: patch, sampleRate: rate)
+        for pitch in 0..<16 { synth.noteOn(pitch: UInt8(48 + pitch * 2), velocity: 100) }
+        var block = [Float](repeating: 0, count: 128)
+        let start = ProcessInfo.processInfo.systemUptime
+        for _ in 0..<375 {
+            for i in block.indices { block[i] = 0 }
+            block.withUnsafeMutableBufferPointer { synth.render(into: $0) }
+        }
+        XCTAssertTrue(block.allSatisfy(\.isFinite))
+        return ProcessInfo.processInfo.systemUptime - start
+    }
+
+    /// The choir's budget per 128-frame block: a full chord of sixteen voices renders faster than it
+    /// plays even in a debug build, and costs at most four times the classic oscillator's (measured
+    /// 2026-11-01: 0.28 s against 0.13 s for the second, debug, on Linux).
+    func testAFullChoirChordStaysWithinTheBudget() {
+        let choir = chordSeconds(.choir), classic = chordSeconds(.classic)
+        XCTAssertLessThan(choir, 1, "375 blocks of 128 frames: one second of sound in under a second")
+        XCTAssertLessThan(choir, classic * 4, "choir \(choir) s, classic \(classic) s")
+    }
+
     func testTheSubAddsTheOctaveBelow() {
         XCTAssertEqual(tone(.sub, character: 0), tone(.classic, character: 0), "no sub, the oscillator alone")
         XCTAssertGreaterThan(magnitude(tone(.sub, character: 1), hertz: 110),

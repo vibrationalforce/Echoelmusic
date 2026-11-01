@@ -3,15 +3,16 @@ import Foundation
 /// What makes a synth voice's raw tone before its filter and envelopes (EchoelTools A1, A4, A8):
 /// the classic oscillator, a seven-saw supersaw, two-operator FM, the oscillator with a sine
 /// an octave below, a morph through four shapes (A7), a struck object — six decaying modes
-/// (A5) — or the harmonic-plus-noise model of the earlier app's `EchoelDDSP` (W5,
-/// `DDSPSource`). `character` (0 … 1) is each engine's one control — the supersaw's detune, the
-/// FM index, the sub's level, the morph's position, the mallet's material from wood to metal,
-/// the DDSP's brightness, harmonicity and noise together (dark and breathy to bright and pure);
-/// the classic oscillator ignores it. Ported from the earlier app's `EchoelPolySynth` engines
+/// (A5) — the harmonic-plus-noise model of the earlier app's `EchoelDDSP` (W5,
+/// `DDSPSource`), or a small choir singing a vowel (VOX, `ChoirSource`). `character` (0 … 1) is
+/// each engine's one control — the supersaw's detune, the FM index, the sub's level, the morph's
+/// position, the mallet's material from wood to metal, the DDSP's brightness, harmonicity and
+/// noise together (dark and breathy to bright and pure), the choir's vowel from oo to ee; the
+/// classic oscillator ignores it. Ported from the earlier app's `EchoelPolySynth` engines
 /// as one value type a voice owns; nothing here allocates.
 public enum SynthEngine: String, CaseIterable, Codable, Sendable {
     // A song stores the index of the choice: a new engine goes at the end.
-    case classic, supersaw, fm, sub, morph, mallet, ddsp
+    case classic, supersaw, fm, sub, morph, mallet, ddsp, choir
 }
 
 /// One mode of a struck object: a sine whose amplitude falls by `damping` each sample.
@@ -52,7 +53,8 @@ struct MalletMode: Sendable {
 }
 
 /// The oscillators behind one voice's engine. All of them are stored inline — six extra saws,
-/// a modulator phase, a sub phase, the DDSP's partial bank — so switching engines needs nothing new.
+/// a modulator phase, a sub phase, the DDSP's partial bank, the choir's singers and vocal tract —
+/// so switching engines needs nothing new.
 struct EngineSource: Sendable {
     /// Detune of the six outer saws in units of the full spread (the centre saw is the voice's own).
     static let spreadPositions: (Float, Float, Float, Float, Float, Float) = (-1, -0.62, -0.28, 0.28, 0.62, 1)
@@ -82,6 +84,8 @@ struct EngineSource: Sendable {
     private var k3 = MalletMode(), k4 = MalletMode(), k5 = MalletMode()
     /// The DDSP's sixty-four partials and its noise bank.
     private var ddsp = DDSPSource()
+    /// The choir's three singers and its vocal tract.
+    private var choir = ChoirSource()
 
     mutating func reset() {
         s0.reset(phase: 0.11); s1.reset(phase: 0.37); s2.reset(phase: 0.59)
@@ -93,12 +97,13 @@ struct EngineSource: Sendable {
         k0 = MalletMode(); k1 = MalletMode(); k2 = MalletMode()
         k3 = MalletMode(); k4 = MalletMode(); k5 = MalletMode()
         ddsp.reset()
+        choir.reset()
     }
 
-    /// A key struck this voice: the mallet's modes sound again, and the DDSP's noise starts a
-    /// sequence of its own for this note (`order` is the synth's note counter). The other
-    /// engines have nothing to strike.
-    mutating func strike(character: Float, order: UInt64) {
+    /// A key struck this voice: the mallet's modes sound again, the DDSP's noise starts a
+    /// sequence of its own for this note (`order` is the synth's note counter), and the choir takes
+    /// the note's register and the rate it sings at. The other engines have nothing to strike.
+    mutating func strike(character: Float, order: UInt64, pitch: UInt8, sampleRate: Float) {
         let c = character.isFinite ? Swift.min(Swift.max(character, 0), 1) : 0.5
         let w = MalletMode.woodRatios, m = MalletMode.metalRatios
         k0.strike(index: 0, wood: w.0, metal: m.0, material: c)
@@ -108,6 +113,7 @@ struct EngineSource: Sendable {
         k4.strike(index: 4, wood: w.4, metal: m.4, material: c)
         k5.strike(index: 5, wood: w.5, metal: m.5, material: c)
         ddsp.reseed(order)
+        choir.strike(pitch: pitch, sampleRate: sampleRate, order: order)
     }
 
     /// One sample. `main` is the voice's own oscillator; `dt` its increment this sample.
@@ -161,6 +167,8 @@ struct EngineSource: Sendable {
             return sum * 0.5
         case .ddsp:
             return ddsp.next(character: c, dt: dt)
+        case .choir:
+            return choir.next(character: c, dt: dt)
         }
     }
 }

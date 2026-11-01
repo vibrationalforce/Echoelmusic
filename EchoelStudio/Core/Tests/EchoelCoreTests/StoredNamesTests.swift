@@ -44,7 +44,7 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(SynthParameter.all.map(\.key.rawValue), synthKeys, "a new synth parameter goes at the end")
         XCTAssertEqual(SynthParameter.waveform.choices, ["Sine", "Saw", "Square", "Triangle"],
                        "a lane stores the waveform's index")
-        XCTAssertEqual(SynthParameter.engine.choices, ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP"],
+        XCTAssertEqual(SynthParameter.engine.choices, ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP", "Choir"],
                        "a lane stores the engine's index; a new engine goes at the end")
         XCTAssertEqual(SynthParameter.filter.choices, ["Clean", "Ladder"], "a lane stores the filter's index")
         // The drums' and the sampler's values are stored too (P1 A5); the order is also their
@@ -68,7 +68,7 @@ final class StoredNamesTests: XCTestCase {
     /// it is. A renamed preset would leave every earlier song showing a sound the menu no longer
     /// offers, so a name stays.
     func testEveryStoredPresetNameStillNamesAPreset() {
-        let names = ["Init", "Pluck", "Warm Pad", "Sub Bass", "Square Lead", "Soft Keys"]
+        let names = ["Init", "Pluck", "Warm Pad", "Sub Bass", "Square Lead", "Soft Keys", "Choir Ah", "Choir Oo", "Low Chant"]
         XCTAssertEqual(Set(InstrumentPreset.all.map(\.name)), Set(names), "never rename a preset; add a new one here")
         XCTAssertEqual(InstrumentSettings().preset, InstrumentPreset.initial.name)
     }
