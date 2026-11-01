@@ -154,6 +154,10 @@ public final class StandardEffectUnit: AUAudioUnit {
     /// The compressor's gain reduction in dB, for a meter.
     public var gainReduction: Float { render.kernel.gainReduction }
 
+    /// The song's key the effect plays in: what the app's engine last handed it, or C until then —
+    /// another host has no song key to give.
+    public var key: SongKey { render.kernel.key }
+
     public override func allocateRenderResources() throws {
         try super.allocateRenderResources()
         guard let format = outputBus?.format, format.channelCount == 2,
@@ -162,6 +166,7 @@ public final class StandardEffectUnit: AUAudioUnit {
         }
         let old = render.kernel
         render.kernel = EffectKernel(effect: effect, sampleRate: format.sampleRate, values: old.allValues)
+        render.kernel.follow(key: old.key)
         render.maximumFrames = Int(maximumFramesToRender)
         render.demoFrame = 0
     }
@@ -209,5 +214,13 @@ public final class StandardEffectUnit: AUAudioUnit {
             }
             return noErr
         }
+    }
+}
+
+extension StandardEffectUnit: SongKeyFollowing {
+    /// The song's key from the app's engine (VOX), from any thread: the kernel takes only a change,
+    /// at the start of its next block, like a parameter.
+    public func follow(key: SongKey) {
+        render.kernel.follow(key: key)
     }
 }
