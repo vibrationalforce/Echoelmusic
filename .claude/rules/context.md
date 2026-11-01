@@ -18,12 +18,15 @@ then "2.7 %" of it, six lines apart. **Refreshing the numbers would have rebuilt
 a table of bytes in an always-loaded file is a date, not a fact, and nothing re-derives it.
 
 **The live figure is `python3 scripts/doctor.py --section D`** — it prints the surface total,
-the per-file split, and WARNs when **`CLAUDE.md` alone** passes 150,000 B. ⚠️ The threshold is
+the per-file split, and WARNs when **`CLAUDE.md` alone** passes its ceiling. ⚠️ The threshold is
 on that ONE file, not on the total, and the earlier wording here attached it to the total —
 so on 2026-08-21 the section printed "Under the ceiling" at a surface of 155,062 B
 (`CLAUDE.md` 142,688). A stated threshold that does not test the quantity it names is the
 same defect class as a needle that cannot match. The ceiling is on the one file on purpose:
 #538's repair — moving provenance to `memory/LEDGER_COUNTS.md` — only shrinks `CLAUDE.md`.
+⭐ **W-MAP (2026-11-01): the law file is two files.** `CLAUDE.md` is the map of the repo (ceiling
+25,000 B); the earlier app's law moved verbatim to `Sources/CLAUDE.md` (the old 150,000 B, and it
+loads only while a session works in `Sources/`). App law goes to its directory's `CLAUDE.md`.
 
 That ledger holds the count-provenance chains verbatim, one section each; it is NOT in the
 hook's `cat` list and must never be added to it. ⛔ THE NUMBER THAT STOOD HERE IS DELETED, NOT
@@ -37,15 +40,15 @@ A count of sections is a date, not a fact. Re-derive:
 waren mit #1376 vergeben, und die einstellige Form hätte `## AA — ` still übersehen..
 
 ⚠️ **The ceiling now has teeth, and a red is not an order to delete your paragraph.**
-`Tests/CISmoke/TheLawFileStaysUnderItsCeilingTests.swift` (#702) asserts the same 150,000 B on
-the same one file, in the BLOCKING bundle, because a doctor WARN is advisory and nothing reads
+`Tests/CISmoke/TheLawFileStaysUnderItsCeilingTests.swift` (#702) asserts the same ceilings on the
+same files, in the BLOCKING bundle, because a doctor WARN is advisory and nothing reads
 it on a push. Its claim-2 message carries the repair: move PROVENANCE to the ledger, keep LAW
 here. #701 added a genuine register entry with 628 B of headroom and was right to — the guard
 exists to make the trade conscious, not to make the law file stop growing.
 
 `.claude/settings.json` sets `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "50"`, so compaction fires at
-half budget, and the executable law (audio-thread bans, force-unwrap ban, `EchoelValueField`,
-the 3 Hz flash ceiling, the OSC address set) is the small share that gets summarised away
+half budget, and the executable law (audio-thread bans, force-unwrap ban, the founder-gated
+files, the 3 Hz flash ceiling) is the small share that gets summarised away
 first. **Do not grow the always-loaded set.** Adding a line to an accreting ledger is cheap
 for you and charged to every future session.
 
