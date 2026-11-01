@@ -3,8 +3,9 @@ import SwiftUI
 
 /// The video export's choices (wave W7, C6), in the one sheet slot: the frame (9:16, 16:9, 1:1,
 /// 4:5), fill or fit, the Field over the picture (W15), H.264 or HEVC, the whole song or a short
-/// stretch of whole bars from the bar the playhead stands in, and the mix brought to −14 LUFS. The
-/// song itself never changes; the export is one new MP4 for the share sheet.
+/// stretch of whole bars from the bar the playhead stands in, and the loudness the mix is brought to
+/// (CUT; −14 LUFS unless chosen otherwise). The song itself never changes; the export is one new
+/// MP4 for the share sheet.
 struct VideoExportView: View {
     /// The Field Layer's blend and opacity: kept on this device, never in the song (no format
     /// field), so the next export starts where this one was set.
@@ -62,8 +63,10 @@ struct VideoExportView: View {
                         Text("HEVC").tag(VideoExportPlan.Codec.hevc)
                     }
                     .pickerStyle(.segmented)
-                    Toggle("Mix at −14 LUFS", isOn: $options.normalizesLoudness)
-                    NoteText("Brings the mix to the loudness social platforms play at, under a −1 dBTP peak.")
+                    Picker("Loudness", selection: $options.loudness) {
+                        ForEach(ExportLoudness.allCases, id: \.self) { Text($0.title).tag($0) }
+                    }
+                    NoteText("Brings the mix to the chosen loudness with its peaks at or under −1 dBTP: −14 LUFS for social and streaming platforms, −16 LUFS for podcasts, −23 LUFS for broadcast. Off keeps the mix as it plays.")
                 }
             }
             .echoelList()

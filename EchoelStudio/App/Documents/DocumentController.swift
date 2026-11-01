@@ -1639,7 +1639,7 @@ final class DocumentController {
     }
 
     /// Renders the song (or `options.range` of it) as an MP4 in a temporary folder: the mix,
-    /// brought to social loudness, under what the video tracks show in the chosen frame. Returns
+    /// brought to `options.loudness`, under what the video tracks show in the chosen frame. Returns
     /// its URL for the share sheet. Nothing in the song changes; the export writes one new file.
     func exportVideo(plugins: PluginHost, options: VideoExport.Options) async -> URL? {
         guard !isExporting else { return nil }
@@ -1683,10 +1683,10 @@ final class DocumentController {
         let sources = files
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(ProjectLibrary.safeFileName(for: songName)).appendingPathExtension("mp4")
-        let result: Result<VideoExport.Loudness?, Error> = await Task.detached(priority: .userInitiated) { () async -> Result<VideoExport.Loudness?, Error> in
+        let result: Result<MixLoudness.Report?, Error> = await Task.detached(priority: .userInitiated) { () async -> Result<MixLoudness.Report?, Error> in
             do {
                 let prepared = try mix.flatMap {
-                    try VideoExport.preparedMix($0, from: span.from, to: span.to, normalize: options.normalizesLoudness,
+                    try VideoExport.preparedMix($0, from: span.from, to: span.to, loudness: options.loudness,
                                                 into: folder.appendingPathComponent("Mix", isDirectory: true))
                 }
                 defer { if let prepared { try? FileManager.default.removeItem(at: prepared.url) } }
@@ -1710,8 +1710,7 @@ final class DocumentController {
         switch result {
         case .success(let loudness):
             if let loudness {
-                lastExportLoudness = MixLoudness.Report(LoudnessNormalizer.Measurement(integrated: loudness.integrated,
-                                                                                       truePeak: loudness.truePeak))
+                lastExportLoudness = loudness
                 lastExportIsNews = true
             }
             lastError = nil

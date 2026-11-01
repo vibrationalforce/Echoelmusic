@@ -18,8 +18,9 @@ enum VideoExport {
         var shape: VideoExportPlan.Shape = .vertical
         var fit: VideoExportPlan.Fit = .fill
         var codec: VideoExportPlan.Codec = .h264
-        /// Brings the mix to social loudness (−14 LUFS) on the way.
-        var normalizesLoudness = true
+        /// What the mix is brought to on the way (CUT): −14 LUFS, where social platforms play, as the
+        /// video export always did; Off writes the mix as it plays.
+        var loudness = ExportLoudness.minus14
         /// A short export of these bars; nil exports the whole song.
         var range: ClosedRange<Tick>?
         /// The Field over the picture (W15); Off writes the picture as it is.
@@ -57,20 +58,14 @@ enum VideoExport {
         }
     }
 
-    /// What the mix sounds like after the gain, for the status line.
-    struct Loudness: Sendable {
-        let integrated: Double
-        let truePeak: Double
-    }
-
     // MARK: - The mix
 
-    /// The mix from `from` to `to` seconds as a new WAV in `folder`, brought to social loudness
-    /// under the peak ceiling when `normalize` is on, and the loudest sample of each frame of the
-    /// film, read in the same pass before the gain — the level the Field Layer shows, as the meter
-    /// read it while the song played. Nil when the stretch holds none of the mix.
-    static func preparedMix(_ source: URL, from: Double, to: Double, normalize: Bool,
-                            into folder: URL) throws -> (url: URL, loudness: Loudness, peaks: [Float])? {
+    /// The mix from `from` to `to` seconds as a new WAV in `folder`, brought to `loudness` (CUT) —
+    /// at Off copied as it is — and the loudest sample of each frame of the film, read in the
+    /// measuring pass before any gain: the level the Field Layer shows, as the meter read it while
+    /// the song played. Nil when the stretch holds none of the mix.
+    static func preparedMix(_ source: URL, from: Double, to: Double, loudness: ExportLoudness,
+                            into folder: URL) throws -> (url: URL, loudness: MixLoudness.Report, peaks: [Float])? {
         let file: AVAudioFile
         do {
             file = try AVAudioFile(forReading: source)
@@ -82,55 +77,29 @@ enum VideoExport {
         let first = AVAudioFramePosition(Swift.max(0, (from * rate).rounded()))
         let last = Swift.min(file.length, AVAudioFramePosition(Swift.max(0, (to * rate).rounded())))
         guard last > first else { return nil }
-        let block = 32_768
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(block)) else {
-            throw ExportError.unreadableMix
-        }
         var meter = LoudnessMeter(sampleRate: rate)
         var framePeaks = FieldExport.Peaks(sampleRate: rate)
-        try forEachBlock(of: file, from: first, to: last, buffer: buffer) { left, right, count in
-            meter.process(left: left, right: right, count: count)
-            framePeaks.add(left: left, right: right, count: count)
+        do {
+            try MixLoudness.forEachBlock(of: file, from: first, to: last) { left, right, count in
+                meter.process(left: left, right: right, count: count)
+                framePeaks.add(left: left, right: right, count: count)
+            }
+        } catch {
+            throw ExportError.unreadableMix
         }
-        let gainDB = normalize ? VideoExportPlan.loudnessGain(integrated: meter.integratedLoudness, truePeak: meter.truePeak) : 0
-        let gain = Float(pow(10, gainDB / 20))
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let url = folder.appendingPathComponent(UUID().uuidString).appendingPathExtension("wav")
         let writer = try WAVWriter(url: url, sampleRate: rate)
-        var left = [Float](repeating: 0, count: block)
-        var right = [Float](repeating: 0, count: block)
+        let report: MixLoudness.Report
         do {
-            try forEachBlock(of: file, from: first, to: last, buffer: buffer) { sourceLeft, sourceRight, count in
-                for index in 0..<count {
-                    left[index] = sourceLeft[index] * gain
-                    right[index] = sourceRight[index] * gain
-                }
-                try writer.append(left: left, right: right, count: count)
-            }
+            report = try MixLoudness.write(file, from: first, to: last, measured: LoudnessNormalizer.Measurement(meter),
+                                           loudness: loudness, into: writer)
             try writer.finish()
         } catch {
             try? FileManager.default.removeItem(at: url)
             throw error
         }
-        return (url, Loudness(integrated: meter.integratedLoudness + gainDB, truePeak: meter.truePeak + gainDB),
-                framePeaks.finished)
-    }
-
-    private static func forEachBlock(of file: AVAudioFile, from first: AVAudioFramePosition, to last: AVAudioFramePosition,
-                                     buffer: AVAudioPCMBuffer,
-                                     _ body: (UnsafePointer<Float>, UnsafePointer<Float>, Int) throws -> Void) throws {
-        file.framePosition = first
-        var position = first
-        while position < last {
-            let want = AVAudioFrameCount(Swift.min(Int64(buffer.frameCapacity), last - position))
-            try file.read(into: buffer, frameCount: want)
-            let count = Int(buffer.frameLength)
-            guard count > 0, let channels = buffer.floatChannelData else { break }
-            let left = channels[0]
-            let right = buffer.format.channelCount > 1 ? channels[1] : channels[0]
-            try body(left, right, count)
-            position += AVAudioFramePosition(count)
-        }
+        return (url, report, framePeaks.finished)
     }
 
     // MARK: - The picture
