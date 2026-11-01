@@ -209,6 +209,55 @@ final class ExportTests: XCTestCase {
                        "one channel fits twice the frames")
     }
 
+    /// A 32-bit float file keeps what goes past full scale (W17b): Bake Effects writes it, so an
+    /// effect that peaks above 0 dBFS opens again with the same peaks. Its header says IEEE float
+    /// and counts its frames in a `fact` chunk; an export stays 24-bit integer.
+    func testAFloatFileKeepsWhatGoesPastFullScale() throws {
+        let left: [Float] = [2.5, -3, 0.25, .nan]
+        let right: [Float] = [0, 1.75, -1, .infinity]
+        let data = WAVFile.data(left: left, right: right, sampleRate: 44_100, bitDepth: .float32)
+        XCTAssertEqual(data.count, 58 + 4 * 2 * 4)
+        func u32(_ at: Int) -> UInt32 { data[at..<at + 4].enumerated().reduce(0) { $0 | UInt32($1.element) << (8 * $1.offset) } }
+        func u16(_ at: Int) -> UInt16 { UInt16(data[at]) | UInt16(data[at + 1]) << 8 }
+        func sample(_ index: Int) -> Float { Float(bitPattern: u32(58 + 4 * index)) }
+        XCTAssertEqual(u32(4), UInt32(data.count - 8))
+        XCTAssertEqual(u32(16), 18, "fmt carries its extension size")
+        XCTAssertEqual(u16(20), 3, "IEEE float")
+        XCTAssertEqual(u16(22), 2)
+        XCTAssertEqual(u32(24), 44_100)
+        XCTAssertEqual(u32(28), 44_100 * 8)
+        XCTAssertEqual(u16(32), 8)
+        XCTAssertEqual(u16(34), 32)
+        XCTAssertEqual(u16(36), 0, "no extension")
+        XCTAssertEqual(String(decoding: data[38..<42], as: UTF8.self), "fact")
+        XCTAssertEqual(u32(42), 4)
+        XCTAssertEqual(u32(46), 4, "four frames")
+        XCTAssertEqual(String(decoding: data[50..<54], as: UTF8.self), "data")
+        XCTAssertEqual(u32(54), 32)
+        XCTAssertEqual((0..<8).map(sample), [2.5, 0, -3, 1.75, 0.25, -1, 0, 0],
+                       "past full scale as it is, non-finite as silence")
+        XCTAssertEqual(WAVFile.maximumFrames(.float32), (Int(UInt32.max) - 50) / 8)
+
+        // The writer writes what `data` encodes, and its header is completed the same way.
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("float-\(UUID()).wav")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let writer = try WAVWriter(url: url, sampleRate: 44_100, bitDepth: .float32)
+        try left.withUnsafeBufferPointer { l in
+            try right.withUnsafeBufferPointer { r in
+                guard let lp = l.baseAddress, let rp = r.baseAddress else { return XCTFail("no storage") }
+                try writer.append(left: lp, right: rp, count: 1)
+                try writer.append(left: lp + 1, right: rp + 1, count: 3)
+            }
+        }
+        try writer.finish()
+        XCTAssertEqual(try Data(contentsOf: url), data)
+
+        // An export is integer PCM and clips at full scale, as before.
+        let export = WAVFile.data(left: [2.5], right: [-3], sampleRate: 44_100)
+        XCTAssertEqual(export.count, 44 + 6)
+        XCTAssertEqual(Array(export[44..<50]), [0xFF, 0xFF, 0x7F, 0x01, 0x00, 0x80])
+    }
+
     func testTheHeaderNeverCountsPastWhatRIFFCanHold() {
         let header = WAVFile.header(frames: .max, sampleRate: 48_000, bitDepth: .twentyFour)
         func u32(_ at: Int) -> UInt32 { header[at..<at + 4].enumerated().reduce(0) { $0 | UInt32($1.element) << (8 * $1.offset) } }

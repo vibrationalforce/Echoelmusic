@@ -1832,19 +1832,12 @@ final class DocumentController {
                     throw CancellationError()
                 }
                 guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
-                // Stereo when the inserts or the file made the two sides differ, else one channel (W17).
-                let right = baked.right ?? baked.left
-                let writer = try WAVWriter(url: url, sampleRate: rate, channels: baked.channelCount)
-                try baked.left.withUnsafeBufferPointer { left in
-                    try right.withUnsafeBufferPointer { other in
-                        guard let l = left.baseAddress, let r = other.baseAddress else { return }
-                        try writer.append(left: l, right: r, count: Swift.min(left.count, other.count))
-                    }
-                }
-                try writer.finish()
+                // Stereo when the inserts or the file made the two sides differ, else one channel (W17),
+                // in 32-bit float, so a peak past full scale opens again as it is (W17b).
+                try RegionBake.write(baked, to: url, sampleRate: rate)
                 let buffer = baked.right == nil
                     ? SampleBuffer(samples: baked.left, sampleRate: rate)
-                    : SampleBuffer(left: baked.left, right: right, sampleRate: rate)
+                    : SampleBuffer(left: baked.left, right: baked.right ?? baked.left, sampleRate: rate)
                 return (baked.frameCount, baked.channelCount, buffer)
             }
         }.value
