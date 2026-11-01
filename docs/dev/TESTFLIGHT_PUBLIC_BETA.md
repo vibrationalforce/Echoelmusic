@@ -24,8 +24,8 @@ es erst, wenn alle sechs Punkte erfüllt sind — gemessen, nicht geschätzt.
 |---|---|---|---|
 | G1 | **Stabil** | Drei Builds hintereinander auf dem Founder-iPhone ohne Absturz, ohne schwarzen Bildschirm, ohne eingefrorenes Menü; TestFlight zeigt für diese Builds 0 Abstürze | Gerät, TestFlight-Zahlen |
 | G2 | **Gerätechecks** | Die fünf Checks des aktuellen Builds (`EchoelStudio/RELEASE`) alle „Ja"; offene Checks älterer Builds beantwortet oder bewusst gestrichen | Founder |
-| G3 | **Erster Eindruck ohne Erklärung** | Drei Menschen, die Echoel nie gesehen haben, schaffen ohne Hilfe: in der ersten Minute Musik hören, eine Spur anlegen und spielen, das Stück als WAV exportieren. Sobald die Instrument-Seite (W12) ausgeliefert ist, zusätzlich: der Körper spielt hörbar mit | Founder schaut zu, hilft nicht |
-| G4 | **Ehrlich nach außen** | Beta-Beschreibung, „What to Test", Website und Datenschutzseite sagen nur, was `ContentPipeline/CLAIMS.md` für Studio sagt; die App-Datenschutzangaben in App Store Connect passen zu `docs/privacy.html#studio` | Claude, vor jedem Go |
+| G3 | **Erster Eindruck ohne Erklärung** | Drei Menschen, die Echoel nie gesehen haben, schaffen ohne Hilfe: in der ersten Minute selbst Klang machen (Bildschirmtasten), einen Takt im Drum-Raster setzen und abspielen, das Stück als WAV exportieren. ⚠️ Der erste Song einer neuen Installation („Four Tracks") enthält absichtlich keine Note (`Core/…/StarterProject.swift`, NEUPLANUNG §0): Play allein bleibt still, Klang kommt aus den Händen. Sobald die Instrument-Seite (W12) ausgeliefert ist, zusätzlich: der Körper spielt hörbar mit | Founder schaut zu, hilft nicht |
+| G4 | **Ehrlich nach außen** | Beta-Beschreibung, „What to Test", Website und Datenschutzseite sagen nur, was `ContentPipeline/CLAIMS.md` für Studio sagt | Claude, vor jedem Go |
 | G5 | **Echte Stimmen im kleinen Kreis** | 10–20 Menschen aus dem Umfeld des Founders testen eine Woche (externe Gruppe „Erste Tester", Einladung per E-Mail). Ihr Feedback kommt über TestFlight (Screenshot und Text) beim Founder an. Kein offener Blocker; die Mehrheit beantwortet die Frage in §3 Schritt 5 mit Ja | die Tester; der Founder liest |
 | G6 | **Im Kern wir** | Die produktprüfbaren der neun Grundsätze (`docs/dev/FOUNDER_INBOX.md` GM34): **Privatsphäre** (kein Konto; nichts verlässt das Gerät ohne Schalter des Musikers) · **Zugang** (Hauptwege mit VoiceOver und großer Schrift bedienbar) · **kein Abo, keine Werbung, kein Tracking** · **keine Gesundheitsversprechen** (kein Wellness, keine Therapie, keine Heilwirkung) · **offene Standards** (offenes Song-Format, MIDI, OSC) | Claude prüft, Founder bestätigt |
 
@@ -36,7 +36,7 @@ den Founder.
 **Reihenfolge:** G1–G4 und G6 erfüllt → Claude sagt „bereit für den kleinen Kreis" → der Founder
 reicht ein (§1, Schritte 1–6, eine Woche G5) → Claude sagt „TestFlight Go" → Schritt 7.
 
-Stand 2026-11-01 (letzter VALIDER Build 10028, der zwanzigste Upload läuft): G1 und G2 warten
+Stand 2026-11-01 (letzter VALIDER Build 10029): G1 und G2 warten
 auf das Gerät; G3 wartet auf das Gerät und auf W12; G4 vorbereitet (§2–§4); G5 braucht die
 Tester (`FOUNDER_INBOX.md` GM37); G6 offen beim VoiceOver-Durchgang. Dieser Absatz ist ein
 Datum, kein Zustand — vor jeder Aussage neu messen.
@@ -82,11 +82,11 @@ sofort alle Tester. Ein Build läuft nach **90 Tagen** ab.
 ## 3. „What to Test" (Englisch)
 
 > Thanks for testing Echoel!
-> 1. Open the app and press Play. What do you hear in the first minute?
-> 2. Add Track: an instrument track. Play it on the on-screen keys, then write a few notes in
->    the piano roll.
-> 3. Put a clip on the timeline, add an effect (Add Effect), and export the song with
->    Export WAV….
+> 1. Open the app and play the on-screen keys. A new song starts empty on purpose: the sound
+>    comes from your hands. What do you hear?
+> 2. Tap a few steps in the Drums track's grid and press Play. Then write a few notes for Keys
+>    in the piano roll.
+> 3. Add an effect (Add Effect) and export the song with Export WAV….
 > 4. Anything that confused you, or did not work? Take a screenshot in the app and choose
 >    Share Beta Feedback, or write to echoel@tropicaldrones.com.
 > 5. One question: would you recommend Echoel to a friend who makes music? Why, or why not?
@@ -94,8 +94,9 @@ sofort alle Tester. Ein Build läuft nach **90 Tagen** ab.
 ⚠️ Ein Schritt zur Instrument-Seite (Körper spielt mit) kommt erst hinein, wenn W12 ausgeliefert
 ist UND `ContentPipeline/CLAIMS.md` dafür einen Nachtrag hat — bis dahin ist der Kamera-Puls nur
 Datenschutz-Offenlegung, kein Satz für Tester oder Werbung (CLAIMS, Nachtrag 6, letzte Zeile).
-Die Wörter „Add Track", „Add Effect" und „Export WAV…" sind die Beschriftungen in der App
-(`App/Views/TrackListView.swift`, `App/Views/EffectsView.swift`, `App/Views/StudioView.swift`);
+Die Wörter „Add Effect" und „Export WAV…" sind die Beschriftungen in der App
+(`App/Views/EffectsView.swift`, `App/Views/StudioView.swift`), „Drums" und „Keys" die Spurnamen
+von „Four Tracks" (`Core/Sources/EchoelCore/StarterProject.swift`);
 ändert sich eine, zieht dieser Text mit.
 
 ## 4. Was im Promo-Text stehen darf — und was nicht
