@@ -30,7 +30,7 @@ final class BodyVoiceTests: XCTestCase {
         XCTAssertEqual(routes.count, BodyVoice.routes.count)
         for route in BodyVoice.routes {
             XCTAssertTrue(routes.contains { $0.source == route.source && $0.target.key == route.parameter.key
-                                                && $0.depth == route.depth && $0.enabled })
+                                                && $0.depth == route.depth && $0.polarity == route.polarity && $0.enabled })
         }
         XCTAssertNil(BodyVoice.switching(true, in: project), "on is where it stands")
         XCTAssertEqual(project.tracks.filter { $0.name == BodyVoice.trackName }.count, 1)
@@ -50,10 +50,10 @@ final class BodyVoiceTests: XCTestCase {
         XCTAssertEqual(project.modRoutes, routes)
     }
 
-    /// Only what a body source measures moves the voice — the pulse, HRV and coherence the strap and
-    /// the camera carry — and every route passes the song's own checks.
+    /// Only what a body source measures moves the voice — the pulse, HRV, coherence and the breath
+    /// the strap and the camera carry — and every route passes the song's own checks.
     func testEveryRouteFollowsAMeasuredSourceAndPassesTheSongsChecks() throws {
-        let measured: Set<ModulationSource> = [.heartRate, .hrv, .coherence]
+        let measured: Set<ModulationSource> = [.heartRate, .hrv, .coherence, .breath]
         XCTAssertTrue(BodyVoice.routes.allSatisfy { measured.contains($0.source) })
         var project = try StarterProject.empty.project()
         try switched(true, &project)
@@ -70,6 +70,41 @@ final class BodyVoiceTests: XCTestCase {
         let unmeasured = try Modulation.value(of: vibrato, base: 0, routes: project.modRoutes,
                                               sources: [:], targets: targets)
         XCTAssertEqual(unmeasured, 0, "nothing measured, nothing moves")
+    }
+
+    /// The breath swells the voice's level both ways around where its sound sets it: up with a
+    /// breath in, down with a breath out, never to silence, and exactly where it was while no
+    /// breath is measured.
+    func testTheBreathSwellsTheLevelAroundWhereTheSoundSetsIt() throws {
+        var project = try StarterProject.empty.project()
+        try switched(true, &project)
+        let voice = try XCTUnwrap(BodyVoice.track(in: project))
+        let level = ParameterAddress(.track(voice.id), SynthParameter.level.key)
+        let descriptor = try XCTUnwrap(project.descriptor(for: level))
+        let base = descriptor.normalized(voice.instrument.value(.level))
+        let targets = Set(project.parameters.map(\.address))
+        func moved(_ sources: [ModulationSource: Double]) throws -> Double {
+            try Modulation.value(of: level, base: base, routes: project.modRoutes, sources: sources, targets: targets)
+        }
+        XCTAssertGreaterThan(try moved([.breath: 1]), base, "the top of a breath in, louder")
+        XCTAssertLessThan(try moved([.breath: 0]), base, "the bottom of a breath out, softer")
+        XCTAssertGreaterThan(try moved([.breath: 0]), 0, "a swell, not a gate")
+        XCTAssertEqual(try moved([.breath: 0.5]), base, accuracy: 1e-12, "half way, where the sound sets it")
+        XCTAssertEqual(try moved([:]), base, "no breath measured, the level as it is")
+    }
+
+    /// A song whose Body voice was made before the breath had a route keeps the routes it has:
+    /// switching the voice off and on adds none.
+    func testAVoiceMadeBeforeTheBreathKeepsItsRoutes() throws {
+        var project = try StarterProject.empty.project()
+        try switched(true, &project)
+        let breath = try XCTUnwrap(project.modRoutes.first { $0.source == .breath })
+        try Command.removeModRoute(breath.id).apply(to: &project)
+        let earlier = project.modRoutes
+        try switched(false, &project)
+        try switched(true, &project)
+        XCTAssertEqual(project.modRoutes, earlier)
+        XCTAssertFalse(project.modRoutes.contains { $0.source == .breath })
     }
 
     func testAFullSongHasNoRoomForTheVoice() throws {
