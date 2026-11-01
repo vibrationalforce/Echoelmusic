@@ -88,6 +88,20 @@ final class MixModulationTests: XCTestCase {
                      "an offline render keeps the stored level")
     }
 
+    /// The tempo is no route's to move (the root law's T2): a body route on it compiles to nothing
+    /// the clock reads, so the breath at its fullest leaves the song's tempo where it is.
+    func testABodyRouteOnTheTempoLeavesTheClockAlone() throws {
+        let (project, _) = try song { _ in [ModulationRoute(source: .breath, target: .tempo, depth: 1)] }
+        let inputs = ModulationInputs()
+        inputs.set(.breath, 1)
+        let breathing = snapshot(project, inputs: inputs)
+        let song = TimeConversion(tempoMap: project.tempoMap, sampleRate: rate)
+        XCTAssertEqual(breathing.time.samplesPerTick(at: 0), song.samplesPerTick(at: 0))
+        XCTAssertEqual(breathing.time.samplesPerTick(at: 96_000), song.samplesPerTick(at: 96_000))
+        XCTAssertNil(breathing.lanes.first?.mix, "and no fader moves in its place")
+        XCTAssertTrue(breathing.lanes.first?.patchRoutes.isEmpty ?? true)
+    }
+
     /// An offline render never reads a live sensor: without inputs nothing moves.
     func testWithoutInputsNoRouteMovesAnything() throws {
         let (project, _) = try song { [ModulationRoute(source: .heartRate, target: .volume($0), depth: -1)] }

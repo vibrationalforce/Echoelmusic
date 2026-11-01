@@ -13,7 +13,9 @@ import os
 ///
 /// The pulse goes through a `BodyChannel`, so it is a value only while it is real: from the strap
 /// of the current run, in order, with contact, between 40 and 200 bpm and no older than three
-/// seconds. Nothing here invents a pulse; with no strap the value is nil.
+/// seconds. Nothing here invents a pulse; with no strap the value is nil. The breath is read from
+/// the strap's beat-to-beat intervals (`BreathEstimator`, W12b), and only while it is clearly a
+/// breath; a strap that sends no intervals gives none.
 @MainActor
 @Observable
 final class HeartRateStrap: NSObject {
@@ -63,8 +65,11 @@ final class HeartRateStrap: NSObject {
     @ObservationIgnored private var gliding: [ModulationSource: Double] = [:]
     /// HRV and coherence from the newest intervals, nil while they cannot be stated.
     @ObservationIgnored private var derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
-    /// The sources the strap feeds.
-    static let feeds: [ModulationSource] = [.heartRate, .hrv, .coherence]
+    /// The breath from the same intervals, each packet placed back from its arrival on this
+    /// class's clock (`nowMilliseconds`).
+    @ObservationIgnored private var breathing = BreathEstimator()
+    /// The sources the strap feeds. The breath joined with its producer (W12b).
+    static let feeds: [ModulationSource] = [.heartRate, .hrv, .coherence, .breath]
     static let glideSeconds = 0.6
     static let glideStepSeconds = 1.0 / 30
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "body")
@@ -78,6 +83,7 @@ final class HeartRateStrap: NSObject {
         status = .searching
         rrIntervalsMilliseconds = []
         derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
+        breathing.reset()
         if let central {
             centralChanged(central)
         } else {
@@ -98,22 +104,32 @@ final class HeartRateStrap: NSObject {
     }
 
     /// One step of the glide: each source towards its measurement, or absent at once without
-    /// one. HRV and coherence exist only while the pulse does — they come from its beats.
+    /// one. HRV, coherence and the breath exist only while the pulse does — they come from its beats.
     private func glideTowardsPulse() {
         let factor = 1 - Foundation.exp(-Self.glideStepSeconds / Self.glideSeconds)
         let pulseValue = pulse.value
+        // The breath is turned to now, and ages while no interval comes.
+        breathing.age(to: Double(nowMilliseconds) / 1_000)
         for source in Self.feeds {
             let target: Double? = switch source {
             case .heartRate: pulseValue
             case .hrv: pulseValue == nil ? nil : derived.hrv
             case .coherence: pulseValue == nil ? nil : derived.coherence
+            case .breath: pulseValue == nil ? nil : breathing.breath
             default: nil
             }
             guard let target else {
                 if gliding.removeValue(forKey: source) != nil { output?.set(source, nil) }
                 continue
             }
-            let next = gliding[source].map { $0 + (target - $0) * factor } ?? target
+            // The breath is already a curve in time, turned to now at every step; a glide would
+            // put it behind the breath again.
+            let next: Double
+            if source == .breath {
+                next = target
+            } else {
+                next = gliding[source].map { $0 + (target - $0) * factor } ?? target
+            }
             gliding[source] = next
             output?.set(source, next)
         }
@@ -130,6 +146,7 @@ final class HeartRateStrap: NSObject {
         gliding = [:]
         measuring = []
         derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
+        breathing.reset()
         for source in Self.feeds { output?.set(source, nil) }
         if let central {
             if central.isScanning { central.stopScan() }
@@ -231,6 +248,7 @@ final class HeartRateStrap: NSObject {
                 rrIntervalsMilliseconds.removeFirst(rrIntervalsMilliseconds.count - Self.intervalCapacity)
             }
             derived = BeatDerivedSources.readings(rrMs: rrIntervalsMilliseconds)
+            breathing.add(packet: packet.rrIntervalsMilliseconds, arrivedAt: Double(now) / 1_000)
         }
     }
 }
@@ -274,6 +292,7 @@ extension HeartRateStrap: @preconcurrency CBCentralManagerDelegate, @preconcurre
         // intervals do not continue the old run's — a gap is not a beat.
         rrIntervalsMilliseconds = []
         derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
+        breathing.reset()
         apply(.suspend)
         apply(.resume)
         scan(central)

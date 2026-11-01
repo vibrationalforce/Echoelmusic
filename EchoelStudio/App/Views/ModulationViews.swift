@@ -2,8 +2,9 @@ import EchoelCore
 import SwiftUI
 
 /// "Modulate" for one owner (wave W2): the body moves the owner's volume, pan or instrument values. Only sources
-/// with a producer are offered — the pulse, HRV and coherence of the chest strap or the camera
-/// (W1); a source nothing measures would be a control that does nothing. Every change goes through
+/// with a producer are offered — the pulse, HRV, coherence and breath of the chest strap or the
+/// camera (W1; the breath, read from the timing of the heartbeat, since W12b); a source nothing
+/// measures would be a control that does nothing. Every change goes through
 /// `ProjectStore.perform` (`modulation.set` / `modulation.remove`), one undo step each.
 struct ModulateMenu: View {
     @Environment(ProjectStore.self) private var store
@@ -13,9 +14,9 @@ struct ModulateMenu: View {
 
     /// The sources a route can be made from today, with the words the menu uses: a body source's
     /// pulse and what its beat-to-beat intervals carry. HRV needs 8 beats and coherence 16
-    /// before they add anything.
+    /// before they add anything, the breath a few slow, even breaths.
     static let sources: [(ModulationSource, String)] = [(.heartRate, "Heart Rate"), (.hrv, "HRV"),
-                                                        (.coherence, "Coherence")]
+                                                        (.coherence, "Coherence"), (.breath, "Breath")]
     /// The depths offered, as a share of the control's travel.
     static let depths: [Double] = [0.1, 0.25, 0.5, 1]
 
@@ -62,8 +63,8 @@ struct ModulateMenu: View {
         .disabled(routable.isEmpty)
     }
 
-    /// The menu's first line: which sources a route would follow right now. HRV and coherence
-    /// arrive after enough clean beats; with nothing measured a route adds nothing.
+    /// The menu's first line: which sources a route would follow right now. HRV, coherence and
+    /// the breath arrive after enough clean beats; with nothing measured a route adds nothing.
     static func measuringLine(_ measuring: Set<ModulationSource>, sourceOn: Bool) -> String {
         let names = sources.filter { measuring.contains($0.0) }.map(\.1)
         if !names.isEmpty { return "Measuring: " + names.joined(separator: ", ") }

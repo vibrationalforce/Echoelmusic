@@ -12,7 +12,8 @@ import os
 ///
 /// It publishes what the strap publishes: the pulse through a `BodyChannel` (a value only while it
 /// is real — trusted, from this run, fresh), HRV and coherence from the beat-to-beat intervals once
-/// enough clean beats exist, and the three as modulation sources that glide into `output`.
+/// enough clean beats exist, the breath read from the timing of those beats (`BreathEstimator`,
+/// W12b) once it is clearly a breath, and the four as modulation sources into `output`.
 ///
 /// What the frames become: three averaged numbers per frame, on the capture queue, pushed into a
 /// queue the 10 Hz loop here drains in one batch — never a task per frame (10.76.48). No frame,
@@ -66,8 +67,8 @@ final class CameraPulseSource {
     nonisolated static let publishEveryTicks = 10
     /// The newest accepted beat intervals kept for HRV and coherence.
     nonisolated static let intervalCapacity = 64
-    /// The sources the camera feeds.
-    nonisolated static let feeds: [ModulationSource] = [.heartRate, .hrv, .coherence]
+    /// The sources the camera feeds. The breath joined with its producer (W12b).
+    nonisolated static let feeds: [ModulationSource] = [.heartRate, .hrv, .coherence, .breath]
     nonisolated static let glideSeconds = 0.6
     nonisolated static let glideStepSeconds = 1.0 / 30
     /// Frames per second below which the pulse band cannot be measured (the camera throttled to a trickle).
@@ -92,6 +93,8 @@ final class CameraPulseSource {
     /// The capture time of the newest beat taken from the analyzer's overlapping windows.
     @ObservationIgnored private var lastBeatTime: Double = 0
     @ObservationIgnored private var derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
+    /// The breath from the same beats, one beat at a time, on the capture clock (system uptime).
+    @ObservationIgnored private var breathing = BreathEstimator()
     @ObservationIgnored private var gliding: [ModulationSource: Double] = [:]
     /// Frames per second the loop actually drains, smoothed; seeded at the nominal rate so a
     /// fresh start never reads as a stall.
@@ -296,6 +299,7 @@ final class CameraPulseSource {
         rrIntervalsMilliseconds = []
         lastBeatTime = 0
         derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
+        breathing.reset()
         findingSince = 0
         stallWasRhythmless = nil
         inboundRate = 15
@@ -411,17 +415,21 @@ final class CameraPulseSource {
     }
 
     /// Each beat exactly once: the analyzer's windows overlap by ~90 %, so only intervals whose
-    /// closing beat is newer than the last one taken are new. One cursor feeds HRV and coherence.
+    /// closing beat is newer than the last one taken are new. One cursor feeds HRV, coherence and
+    /// the breath. The breath is told the frame period too: a beat is timed to a frame, and a
+    /// swing no larger than that grid is not a breath.
     private func takeNewBeats() {
         let intervals = analyzer.rrIntervalsMs
         let times = analyzer.beatTimes
         guard intervals.count == times.count else { return }
+        let frameMilliseconds = 1_000 / (analyzer.actualRate > 0 ? analyzer.actualRate : PulseAnalyzer.nominalSampleRate)
         var added = false
         for (index, time) in times.enumerated() where time > lastBeatTime {
             lastBeatTime = time
             let interval = intervals[index]
             guard interval > 250, interval < 2_000 else { continue }
             rrIntervalsMilliseconds.append(interval)
+            breathing.add(intervalMilliseconds: interval, endingAt: time, resolutionMilliseconds: frameMilliseconds)
             added = true
         }
         guard added else { return }
@@ -496,22 +504,32 @@ final class CameraPulseSource {
     }
 
     /// One step of the glide: each source towards its measurement, or absent at once without one.
-    /// HRV and coherence exist only while the pulse does — they come from its beats.
+    /// HRV, coherence and the breath exist only while the pulse does — they come from its beats.
     private func glideTowardsPulse() {
         let factor = 1 - Foundation.exp(-Self.glideStepSeconds / Self.glideSeconds)
         let pulseValue = pulse.value
+        // The beats' own clock: the breath is turned to now, and ages while no beat comes.
+        breathing.age(to: ProcessInfo.processInfo.systemUptime)
         for source in Self.feeds {
             let target: Double? = switch source {
             case .heartRate: pulseValue
             case .hrv: pulseValue == nil ? nil : derived.hrv
             case .coherence: pulseValue == nil ? nil : derived.coherence
+            case .breath: pulseValue == nil ? nil : breathing.breath
             default: nil
             }
             guard let target else {
                 if gliding.removeValue(forKey: source) != nil { output?.set(source, nil) }
                 continue
             }
-            let next = gliding[source].map { $0 + (target - $0) * factor } ?? target
+            // The breath is already a curve in time, turned to now at every step; a glide would
+            // put it behind the breath again.
+            let next: Double
+            if source == .breath {
+                next = target
+            } else {
+                next = gliding[source].map { $0 + (target - $0) * factor } ?? target
+            }
             gliding[source] = next
             output?.set(source, next)
         }
