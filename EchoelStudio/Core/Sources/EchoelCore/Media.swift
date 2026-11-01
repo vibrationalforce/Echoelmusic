@@ -118,8 +118,9 @@ extension Project {
 }
 
 /// Which of a song's audio files to decode when only so many bytes of decoded audio fit in
-/// memory. A file is decoded whole, one mono `Float` per frame, so its cost is known from the
-/// song before the file is read.
+/// memory. A file is decoded whole, one `Float` per frame and channel — one channel for a mono
+/// file, two for any other (W17) — so its cost is known before the file is decoded: the song
+/// stores its frames, the file's header says its channels.
 public struct MediaLoadPlan: Equatable, Sendable {
     /// What to decode, in this order.
     public var load: [MediaFile]
@@ -137,12 +138,14 @@ public struct MediaLoadPlan: Equatable, Sendable {
 }
 
 extension Project {
-    /// What one decoded frame of a song file takes in memory: a mono `Float`.
+    /// What one decoded frame of one channel of a song file takes in memory: a `Float`.
     public static let decodedBytesPerFrame = MemoryLayout<Float>.size
 
-    /// What decoding `file` costs in memory, from the frame count the song stores.
-    public static func decodedBytes(_ file: MediaFile) -> Int {
-        Swift.min(Swift.max(0, file.frameCount), MediaFile.maximumFrameCount) * decodedBytesPerFrame
+    /// What decoding `file` costs in memory, from the frame count the song stores and the channels
+    /// the decode keeps — 1, or 2 for any file of more (`channels` comes from the file's header:
+    /// the song does not store it, W17).
+    public static func decodedBytes(_ file: MediaFile, channels: Int = 1) -> Int {
+        Swift.min(Swift.max(0, file.frameCount), MediaFile.maximumFrameCount) * (channels > 1 ? 2 : 1) * decodedBytesPerFrame
     }
 
     /// The files to decode within `budget` bytes. What the song plays comes first — the audio
@@ -150,8 +153,9 @@ extension Project {
     /// sampler plays (`audibleMedia`) —
     /// then the rest in the song's order (a sample kept for a track that plays another device, a
     /// file no region uses any more). A file that no longer fits is skipped, and a smaller one
-    /// after it can still fit.
-    public func mediaLoadPlan(budget: Int) -> MediaLoadPlan {
+    /// after it can still fit. `channels` holds what the files' headers say; a file it does not
+    /// name counts as one channel.
+    public func mediaLoadPlan(budget: Int, channels: [MediaID: Int] = [:]) -> MediaLoadPlan {
         let audible = audibleMedia
         let heard = Set(audible)
         var order: [MediaID] = []
@@ -165,7 +169,7 @@ extension Project {
         var left = Swift.max(0, budget)
         for id in order {
             guard let file = files[id] else { continue }
-            let cost = Self.decodedBytes(file)
+            let cost = Self.decodedBytes(file, channels: channels[id] ?? 1)
             if cost <= left {
                 left -= cost
                 plan.load.append(file)
@@ -203,9 +207,10 @@ extension Project {
     /// What this song would leave silent within `budget` that `before` did not: a file it plays
     /// that no longer fits, or one it newly plays that does not fit. A change that places a new
     /// file is judged with the file placed — appended alone, nothing points at it yet and it would
-    /// rank behind every file nothing plays (second night review, 2026-10-23).
-    public func newlySilencedMedia(budget: Int, comparedTo before: Project) -> [MediaFile] {
-        let was = Set(before.mediaLoadPlan(budget: budget).silenced.map(\.id))
-        return mediaLoadPlan(budget: budget).silenced.filter { !was.contains($0.id) }
+    /// rank behind every file nothing plays (second night review, 2026-10-23). `channels` as for
+    /// `mediaLoadPlan`.
+    public func newlySilencedMedia(budget: Int, comparedTo before: Project, channels: [MediaID: Int] = [:]) -> [MediaFile] {
+        let was = Set(before.mediaLoadPlan(budget: budget, channels: channels).silenced.map(\.id))
+        return mediaLoadPlan(budget: budget, channels: channels).silenced.filter { !was.contains($0.id) }
     }
 }

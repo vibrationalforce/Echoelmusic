@@ -78,7 +78,7 @@ final class MediaTests: XCTestCase {
         try Command.setInstrumentSample(keys, sample.id).apply(to: &p)
         try Command.setInstrumentDevice(keys, .sampler).apply(to: &p)
         let bytes = Project.decodedBytesPerFrame
-        XCTAssertEqual(bytes, 4, "one mono Float per frame")
+        XCTAssertEqual(bytes, 4, "one Float per frame and channel")
 
         let roomy = p.mediaLoadPlan(budget: .max)
         XCTAssertEqual(roomy.load.map(\.id), [take.id, sample.id, unused.id, small.id])
@@ -99,6 +99,42 @@ final class MediaTests: XCTestCase {
 
         XCTAssertEqual(p.mediaLoadPlan(budget: 0).load, [])
         XCTAssertEqual(p.mediaLoadPlan(budget: -1).skipped.count, 4)
+    }
+
+    /// A stereo file keeps both sides in memory, so it costs two values a frame (W17). The song
+    /// does not store the channels; the plan takes them from the files' headers, and counts a
+    /// file it is told nothing about as one channel.
+    func testAStereoFileCostsTwoValuesAFrame() throws {
+        var p = Project()
+        let audio = TrackID()
+        try Command.addTrack(id: audio, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+        let wide = file(path: "Media/wide.wav", frames: 600)
+        let narrow = file(path: "Media/narrow.wav", frames: 300)
+        for media in [wide, narrow] {
+            try Command.addMedia(media).apply(to: &p)
+            try Command.placeAudio(track: audio, id: RegionID(), media: media.id, start: 0).apply(to: &p)
+        }
+        let bytes = Project.decodedBytesPerFrame
+        XCTAssertEqual(Project.decodedBytes(wide), 600 * bytes)
+        XCTAssertEqual(Project.decodedBytes(wide, channels: 2), 1_200 * bytes)
+        XCTAssertEqual(Project.decodedBytes(wide, channels: 6), 1_200 * bytes, "more channels fold to two")
+        XCTAssertEqual(Project.decodedBytes(wide, channels: 0), 600 * bytes)
+
+        let budget = 1_000 * bytes
+        XCTAssertEqual(p.mediaLoadPlan(budget: budget).skipped, [], "as one channel each, both fit")
+        let stereo = [wide.id: 2, narrow.id: 1]
+        XCTAssertEqual(p.mediaLoadPlan(budget: budget, channels: stereo).load.map(\.id), [narrow.id],
+                       "in stereo the wide file does not, and the narrow one still does")
+        XCTAssertEqual(p.mediaLoadPlan(budget: budget, channels: stereo).silenced.map(\.id), [wide.id])
+
+        // Placed after the two, so it ranks last.
+        var after = p
+        let more = file(path: "Media/more.wav", frames: 100)
+        try Command.addMedia(more).apply(to: &after)
+        try Command.placeAudio(track: audio, id: RegionID(), media: more.id, start: 1_000).apply(to: &after)
+        XCTAssertEqual(after.newlySilencedMedia(budget: budget, comparedTo: p), [], "100 more mono frames fit")
+        XCTAssertEqual(after.newlySilencedMedia(budget: budget, comparedTo: p, channels: [more.id: 2, wide.id: 1]).map(\.id),
+                       [more.id], "100 stereo frames do not")
     }
 
     /// A file is judged where it will be: placed, it plays and ranks before the files nothing
