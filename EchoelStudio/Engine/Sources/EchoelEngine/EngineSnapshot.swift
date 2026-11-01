@@ -434,7 +434,10 @@ public struct EngineSnapshot: Sendable {
                       length: Double(length), step: step)
     }
 
-    /// Track fader × master fader; constant-power track pan, master pan as a balance.
+    /// Track fader × master fader; constant-power track pan, master pan as a balance. Every source
+    /// reaches its strip as a stereo pair — an instrument's bus, a stereo region's two sides, a mono
+    /// region in both alike — and the pair is scaled side by side, so on a stereo source the track's
+    /// pan is a balance too: it never moves the left into the right (W17).
     static func gains(track: MixerStrip, master: MixerStrip) -> (Float, Float) {
         let level = linear(track.volumeDB) * linear(master.volumeDB)
         let pan = Float(track.pan.isFinite ? Swift.min(Swift.max(track.pan, -1), 1) : 0)

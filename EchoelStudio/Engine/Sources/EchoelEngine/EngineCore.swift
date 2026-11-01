@@ -129,8 +129,10 @@ public final class EngineCore: @unchecked Sendable {
     private let heard: UnsafeMutablePointer<Float>
     /// The right half of the mix when the device has one channel.
     private let monoRight: UnsafeMutablePointer<Float>
-    /// One audio lane's mono signal for part of a chunk, before it is faded into the lane.
-    private let segment: UnsafeMutablePointer<Float>
+    /// One audio lane's signal for part of a chunk, before it is faded into the lane: a stereo
+    /// region's left and right side by side, a mono one in both alike.
+    private let segmentLeft: UnsafeMutablePointer<Float>
+    private let segmentRight: UnsafeMutablePointer<Float>
     /// The click of the chunk being rendered. It joins the master pair after the master inserts
     /// and the master meter: it is for the musician, not the mix, so a master compressor does
     /// not duck on every beat and the meter reads what an export would (audit 2026-10-23).
@@ -269,8 +271,10 @@ public final class EngineCore: @unchecked Sendable {
         monoRight = .allocate(capacity: Self.maximumFrames)
         heard = .allocate(capacity: InputMonitor.channelLimit * Self.maximumFrames)
         heard.initialize(repeating: 0, count: InputMonitor.channelLimit * Self.maximumFrames)
-        segment = .allocate(capacity: Self.maximumFrames)
-        segment.initialize(repeating: 0, count: Self.maximumFrames)
+        segmentLeft = .allocate(capacity: Self.maximumFrames)
+        segmentLeft.initialize(repeating: 0, count: Self.maximumFrames)
+        segmentRight = .allocate(capacity: Self.maximumFrames)
+        segmentRight.initialize(repeating: 0, count: Self.maximumFrames)
         clickLeft = .allocate(capacity: Self.maximumFrames)
         clickLeft.initialize(repeating: 0, count: Self.maximumFrames)
         clickRight = .allocate(capacity: Self.maximumFrames)
@@ -311,7 +315,8 @@ public final class EngineCore: @unchecked Sendable {
         returnLeft.deallocate()
         returnRight.deallocate()
         monoRight.deallocate()
-        segment.deallocate()
+        segmentLeft.deallocate()
+        segmentRight.deallocate()
         clickLeft.deallocate()
         clickRight.deallocate()
         outputs.deallocate()
@@ -1646,11 +1651,15 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     /// Frames `from..<to` of one audio lane, as `state` has it, added into `audioLeft` and
-    /// `audioRight` — rising over `fadeIn`, falling over `fadeOut`.
+    /// `audioRight` — rising over `fadeIn`, falling over `fadeOut`. A stereo file's left stays on
+    /// the left and its right on the right; a mono one plays in both alike. The track's pan then
+    /// scales the two sides (`EngineSnapshot.gains`): for a stereo region it is a balance, which
+    /// never moves the left into the right (W17).
     private func addAudio(_ lane: EngineSnapshot.AudioLane, state: SessionSlot, from: Int, to: Int,
                           _ snapshot: EngineSnapshot, fadeIn: Range<Int>, fadeOut: Range<Int>?) {
         guard to > from else { return }
-        segment.update(repeating: 0, count: Self.maximumFrames)
+        segmentLeft.update(repeating: 0, count: Self.maximumFrames)
+        segmentRight.update(repeating: 0, count: Self.maximumFrames)
         let start = playhead + Int64(from), end = playhead + Int64(to)
         if state.overrides {
             if let clip = state.clip, let loop = lane.loops.first(where: { $0.clip == clip }) {
@@ -1663,7 +1672,7 @@ public final class EngineCore: @unchecked Sendable {
                 let first = Int(Swift.max(region.startSample, start) - playhead)
                 let count = Int(Swift.min(region.endSample, end) - playhead) - first
                 guard count > 0 else { continue }
-                region.buffer.add(into: UnsafeMutableBufferPointer(start: segment + first, count: count),
+                region.buffer.add(intoLeft: segmentLeft + first, right: segmentRight + first, count: count,
                                   elapsed: playhead + Int64(first) - region.startSample, step: region.step,
                                   offset: region.offset, length: region.length,
                                   fade: Self.regionFadeFrames * region.step)
@@ -1673,13 +1682,12 @@ public final class EngineCore: @unchecked Sendable {
             var gain: Float = 1
             if fadeIn.contains(i) { gain = Float(i - fadeIn.lowerBound + 1) / Float(fadeIn.count + 1) }
             if let fadeOut { gain = 1 - Float(i - fadeOut.lowerBound + 1) / Float(fadeOut.count + 1) }
-            let value = segment[i] * gain
-            audioLeft[i] += value
-            audioRight[i] += value
+            audioLeft[i] += segmentLeft[i] * gain
+            audioRight[i] += segmentRight[i] * gain
         }
     }
 
-    /// A clip from its launch into `segment`, restarting every `loopLength` ticks; each pass is
+    /// A clip from its launch into the segment, restarting every `loopLength` ticks; each pass is
     /// cut at the loop and faded at both ends, so the seam never clicks.
     private func renderLoop(_ loop: EngineSnapshot.AudioLoop, launchTick: Tick, from start: Int64, to end: Int64,
                             _ snapshot: EngineSnapshot) {
@@ -1694,7 +1702,7 @@ public final class EngineCore: @unchecked Sendable {
             let stop = Swift.min(end, passEnd)
             let first = Int(position - playhead), count = Int(stop - position)
             let played = Swift.min(loop.length, Double(passEnd - passStart) * loop.step)
-            loop.buffer.add(into: UnsafeMutableBufferPointer(start: segment + first, count: count),
+            loop.buffer.add(intoLeft: segmentLeft + first, right: segmentRight + first, count: count,
                             elapsed: position - passStart, step: loop.step, offset: loop.offset, length: played,
                             fade: Self.regionFadeFrames * loop.step)
             position = stop

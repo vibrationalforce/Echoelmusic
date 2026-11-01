@@ -265,4 +265,101 @@ final class AudioRegionPlaybackTests: XCTestCase {
         XCTAssertEqual(result.frameCount, beat + 4_800)
         XCTAssertGreaterThan(result.peak, 0.3)
     }
+
+    // MARK: - Stereo (W17)
+
+    /// Both sides of the engine's output, `frames` long.
+    private func renderSides(_ engine: EngineCore, frames: Int, block: Int = 256) -> (left: [Float], right: [Float]) {
+        var left = [Float](repeating: 0, count: frames)
+        var right = [Float](repeating: 0, count: frames)
+        var start = 0
+        while start < frames {
+            let n = Swift.min(block, frames - start)
+            left.withUnsafeMutableBufferPointer { l in
+                right.withUnsafeMutableBufferPointer { r in
+                    guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                    engine.render(frameCount: n, left: lp + start, right: rp + start)
+                }
+            }
+            start += n
+        }
+        return (left, right)
+    }
+
+    /// A stereo file's left stays on the left and its right on the right, at the centre pan's
+    /// gain on each side — the same gain a mono file plays at.
+    func testAStereoRegionKeepsItsLeftOnTheLeftAndItsRightOnTheRight() throws {
+        let s = try song(frames: 4_800, fileRate: rate)
+        let buffer = try XCTUnwrap(SampleBuffer(left: Array(repeating: 0.5, count: 4_800),
+                                                right: Array(repeating: -0.3, count: 4_800), sampleRate: rate))
+        XCTAssertEqual(buffer.channelCount, 2)
+        let out = renderSides(playing(s.project, samples: [s.media.id: buffer]), frames: 2 * beat)
+        XCTAssertEqual(out.left[beat + 2_400], 0.5 * centre, accuracy: 1e-5)
+        XCTAssertEqual(out.right[beat + 2_400], -0.3 * centre, accuracy: 1e-5)
+        XCTAssertTrue(out.left[..<beat].allSatisfy { $0 == 0 } && out.right[..<beat].allSatisfy { $0 == 0 })
+
+        let leftOnly = try XCTUnwrap(SampleBuffer(left: Array(repeating: 0.5, count: 4_800),
+                                                  right: Array(repeating: 0, count: 4_800), sampleRate: rate))
+        let hard = renderSides(playing(s.project, samples: [s.media.id: leftOnly]), frames: 2 * beat)
+        XCTAssertGreaterThan(hard.left.map { abs($0) }.max() ?? 0, 0.3, "the left plays")
+        XCTAssertTrue(hard.right.allSatisfy { $0 == 0 }, "and nothing of it reaches the right")
+    }
+
+    /// On a stereo region the pan is a balance: it turns one side down and never moves one side
+    /// into the other.
+    func testPanOnAStereoRegionIsABalance() throws {
+        var s = try song(frames: 4_800, fileRate: rate)
+        let buffer = try XCTUnwrap(SampleBuffer(left: Array(repeating: 0.5, count: 4_800),
+                                                right: Array(repeating: 0, count: 4_800), sampleRate: rate))
+        guard let index = s.project.tracks.firstIndex(where: { $0.id == s.track }) else { return XCTFail("no track") }
+        s.project.tracks[index].mixer.pan = 0.5
+        let right = renderSides(playing(s.project, samples: [s.media.id: buffer]), frames: 2 * beat)
+        let angle = Float(1.5) * Float.pi / 4
+        XCTAssertEqual(right.left[beat + 2_400], 0.5 * cosf(angle), accuracy: 1e-5, "the left turned down")
+        XCTAssertTrue(right.right.allSatisfy { $0 == 0 }, "the left never moves to the right")
+
+        s.project.tracks[index].mixer.pan = -1
+        let left = renderSides(playing(s.project, samples: [s.media.id: buffer]), frames: 2 * beat)
+        XCTAssertEqual(left.left[beat + 2_400], 0.5, accuracy: 1e-5, "hard left: the left side whole")
+        XCTAssertTrue(left.right.allSatisfy { $0 == 0 })
+    }
+
+    /// A mono file plays in both sides alike, sample for sample, at any pan.
+    func testAMonoRegionPlaysInBothSidesAlike() throws {
+        let s = try song(frames: 7_000, fileRate: 44_100)
+        let sine = (0..<7_000).map { (index: Int) -> Float in Float(0.5 * sin(2 * Double.pi * 440 * Double(index) / 44_100)) }
+        let buffer = try XCTUnwrap(SampleBuffer(samples: sine, sampleRate: 44_100))
+        let out = renderSides(playing(s.project, samples: [s.media.id: buffer]), frames: 2 * beat)
+        // The centre pan's two gains are cos and sin of π/4, which may differ in their last bit.
+        let apart = zip(out.left, out.right).map { (pair: (Float, Float)) -> Float in abs(pair.0 - pair.1) }.max() ?? 1
+        XCTAssertLessThan(apart, 1e-6, "the same in both sides")
+        XCTAssertGreaterThan(out.left.map { abs($0) }.max() ?? 0, 0.3)
+    }
+
+    /// A launched stereo clip keeps its sides too.
+    func testALaunchedStereoClipKeepsItsSides() throws {
+        var s = try song(frames: beat, fileRate: rate)
+        let loopFile = MediaFile(name: "Hit", path: "Media/hit.wav", frameCount: beat / 2, sampleRate: rate)
+        try Command.addMedia(loopFile).apply(to: &s.project)
+        let clip = ClipID()
+        try Command.createAudioClip(track: s.track, id: clip, name: "Hit", length: MusicalTime.ticksPerQuarter,
+                                    audio: ClipAudio(media: loopFile.id, length: beat / 2)).apply(to: &s.project)
+        let hit = try XCTUnwrap(SampleBuffer(left: Array(repeating: 0, count: beat / 2),
+                                             right: Array(repeating: 0.5, count: beat / 2), sampleRate: rate))
+        let samples = [s.media.id: try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.25, count: beat), sampleRate: rate)),
+                       loopFile.id: hit]
+        let engine = EngineCore(sampleRate: rate)
+        engine.setClickEnabled(false)
+        engine.setLaunchQuantum(0)
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: s.project)
+        let slot = try XCTUnwrap(slots.slots[s.track])
+        engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                      sampleRate: rate, generation: 1, samples: samples))
+        engine.launch(slot: slot, .launch(clip))
+        engine.play()
+        let out = renderSides(engine, frames: beat)
+        XCTAssertEqual(out.right[beat / 4], 0.5 * centre, accuracy: 1e-4, "the clip's right")
+        XCTAssertTrue(out.left.allSatisfy { $0 == 0 }, "and its silent left")
+    }
 }
