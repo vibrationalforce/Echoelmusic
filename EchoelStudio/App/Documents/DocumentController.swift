@@ -25,8 +25,9 @@ final class DocumentController {
     private(set) var isExporting = false
     /// Which step of a running export is under way, for the status line; nil when it has only one.
     private(set) var exportProgress: String?
-    /// How loud the open song's last WAV export came out, for the status line; nil before one.
-    private(set) var lastExportLoudness: (integrated: Double, truePeak: Double)?
+    /// How loud the open song's last WAV export came out — and, brought to a loudness, how loud the
+    /// mix was before — for the status line; nil before one.
+    private(set) var lastExportLoudness: MixLoudness.Report?
     /// The export just finished and nothing has played since. Then its loudness shows under a
     /// standing error or notice; an older one only when nothing else stands, so a message never
     /// hides the result of the export the user just made (review 2026-10-21).
@@ -1021,7 +1022,10 @@ final class DocumentController {
     /// and returns its URL for the share sheet. Plugins play from fresh copies loaded with the
     /// settings they have right now; one that cannot load is named in `lastError` and left out.
     /// When another song opens before the file is handed out, the export stops and says so.
-    func exportWAV(plugins: PluginHost) async -> URL? {
+    /// At `loudness` Off the file is written as the render hands it over, as it always was. With a
+    /// target the render goes to a 32-bit float file beside it first — a mix past full scale is
+    /// then lowered, not clipped — and is brought to the target from there (`MixLoudness`).
+    func exportWAV(plugins: PluginHost, loudness: ExportLoudness = .off) async -> URL? {
         guard !isExporting else { return nil }
         isExporting = true
         defer {
@@ -1045,16 +1049,19 @@ final class DocumentController {
         let name = ProjectLibrary.safeFileName(for: songName)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
+        // With a target, the render's own file sits beside the export until it is brought there.
+        let renderFile = loudness.target == nil ? url : folder.appendingPathComponent(UUID().uuidString).appendingPathExtension("wav")
+        let depth: WAVFile.BitDepth = loudness.target == nil ? .twentyFour : .float32
         // Block by block into the file: a long song never sits in memory whole.
         // Measured on the way, as the file receives it (BS.1770 / EBU R 128).
-        let result: Result<(meter: LoudnessMeter, frames: Int), Error> = await Task.detached(priority: .userInitiated) {
+        let result: Result<(report: MixLoudness.Report, frames: Int), Error> = await Task.detached(priority: .userInitiated) {
             Result {
                 // A song longer than one WAV file holds is refused before the first block, not
                 // after hours of rendering: RIFF counts its size in 32 bits (review 2026-10-28, 2.3).
                 guard OfflineRender.fixedFrameCount(project, sampleRate: rate, samples: buffers)
-                        <= Int64(WAVFile.maximumFrames(.twentyFour)) else { throw WAVWriter.WriteError.tooLong }
+                        <= Int64(WAVFile.maximumFrames(depth)) else { throw WAVWriter.WriteError.tooLong }
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-                let writer = try WAVWriter(url: url, sampleRate: rate)
+                let writer = try WAVWriter(url: renderFile, sampleRate: rate, bitDepth: depth)
                 var meter = LoudnessMeter(sampleRate: rate)
                 let frames: Int
                 do {
@@ -1067,10 +1074,15 @@ final class DocumentController {
                     guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
                     try writer.finish()
                 } catch {
-                    try? FileManager.default.removeItem(at: url)
+                    try? FileManager.default.removeItem(at: renderFile)
                     throw error
                 }
-                return (meter, frames)
+                let measured = LoudnessNormalizer.Measurement(meter)
+                guard loudness.target != nil else { return (MixLoudness.Report(measured), frames) }
+                defer { try? FileManager.default.removeItem(at: renderFile) }
+                guard frames > 0 else { return (MixLoudness.Report(measured), 0) }
+                let report = try MixLoudness.write(renderFile, measured: measured, loudness: loudness, to: url)
+                return (report, frames)
             }
         }.value
         // The file is the earlier song's; shared from the next one's screen it would pass for that
@@ -1086,7 +1098,7 @@ final class DocumentController {
             lastError = Self.nothingToExport(audio: unread)
             return nil
         case .success(let rendered):
-            lastExportLoudness = (rendered.meter.integratedLoudness, rendered.meter.truePeak)
+            lastExportLoudness = rendered.report
             lastExportIsNews = true
             lastError = Self.exportedWithout(plugins: offline.missing, audio: unread)
             return url
@@ -1094,10 +1106,14 @@ final class DocumentController {
             log.error("export failed — \(error.localizedDescription, privacy: .private)")
             // The loudness of an earlier export must not stand under this failure as its result.
             lastExportIsNews = false
+            // The float file a target renders to holds three hours where the 24-bit file holds four.
+            let tooLong = loudness.target == nil
+                ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz). Shorten the arrangement and export again."
+                : "The song is too long to bring to a loudness (about three hours at 48 kHz). Set WAV Loudness to Off, or shorten the arrangement, and export again."
             lastError = error is PluginRenderFailed
                 ? "A plugin stopped rendering during the export, so the file would have had gaps. Nothing was saved."
                 : error as? WAVWriter.WriteError == .tooLong
-                ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz). Shorten the arrangement and export again."
+                ? tooLong
                 : "Could not export the song. Try again; if it fails again, share the diagnostics from About Echoel."
             return nil
         }
@@ -1694,7 +1710,8 @@ final class DocumentController {
         switch result {
         case .success(let loudness):
             if let loudness {
-                lastExportLoudness = (loudness.integrated, loudness.truePeak)
+                lastExportLoudness = MixLoudness.Report(LoudnessNormalizer.Measurement(integrated: loudness.integrated,
+                                                                                       truePeak: loudness.truePeak))
                 lastExportIsNews = true
             }
             lastError = nil

@@ -497,7 +497,7 @@ struct TransportBar: View {
     /// middle dot, which VoiceOver would name.
     private var spokenExportResult: String? {
         guard documents.lastExportIsNews, let loudness = documents.lastExportLoudness else { return nil }
-        return Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak, separator: ", ")
+        return Self.exportText(loudness, separator: ", ", arrow: " to ")
     }
 
     /// The audio and the document each say their own message, so one never hides the other
@@ -552,9 +552,10 @@ struct TransportBar: View {
                 || (quiet && notice == nil && documents.saveError == nil && documents.launchNote == nil
                     && documents.earlierSongsWarning == nil && documents.earlierSongsNote == nil) {
                 // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
-                Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
+                Text(Self.exportText(loudness))
                     .font(Theme.Font.caption.monospacedDigit())
-                    .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.warning : Theme.Color.textSecondary)
+                    .foregroundStyle(loudness.truePeak > -1 || !loudness.reachedTarget
+                                     ? Theme.Color.warning : Theme.Color.textSecondary)
                     .padding(.bottom, Theme.Space.xxs)
             }
         }
@@ -586,12 +587,27 @@ struct TransportBar: View {
         return standing.isEmpty ? nil : standing.joined(separator: " ")
     }
 
-    static func exportText(integrated: Double, truePeak: Double, separator: String = " · ") -> String {
+    /// The export's loudness line. At Off the file's reading, as it always was; brought to a
+    /// loudness, the mix before and the file after (CUT), how far the limiter took the peaks down,
+    /// and — when a mix's peaks held it down, so more gain made it no louder — that it fell short.
+    static func exportText(_ report: MixLoudness.Report, separator: String = " · ", arrow: String = " → ") -> String {
         func value(_ number: Double, _ unit: String) -> String {
             number.isFinite ? NumberText.string(number, decimals: 1, unit: unit) : "silent"
         }
-        let warning = truePeak > -1 ? " — peaks above −1 dBTP may distort when encoded" : ""
-        return "Last export: " + value(integrated, "LUFS") + separator + value(truePeak, "dBTP") + warning
+        func change(_ before: Double?, _ after: Double, _ unit: String) -> String {
+            guard let before, before.isFinite, after.isFinite else { return value(after, unit) }
+            return NumberText.string(before, decimals: 1) + arrow + value(after, unit)
+        }
+        var text = "Last export: " + change(report.before?.integrated, report.integrated, "LUFS")
+            + separator + change(report.before?.truePeak, report.truePeak, "dBTP")
+        if report.limited >= 0.05 {
+            text += separator + "limited by " + NumberText.string(report.limited, decimals: 1, unit: "dB")
+        }
+        if !report.reachedTarget, report.integrated.isFinite {
+            text += " — it could not reach " + report.loudness.title
+        }
+        if report.truePeak > -1 { text += " — peaks above −1 dBTP may distort when encoded" }
+        return text
     }
 }
 
@@ -836,6 +852,10 @@ struct SongMenu: View {
     @Environment(AgentSession.self) private var agent
     @Environment(ParameterWriter.self) private var writer
     @Environment(JamSession.self) private var jam: JamSession?
+    /// What Export WAV brings the mix to (CUT): kept on this device, never in the song; Off at first.
+    @AppStorage(SongMenu.wavLoudnessKey) private var wavLoudness = ExportLoudness.off
+
+    nonisolated static let wavLoudnessKey = "export.wav.loudness"
 
     var body: some View {
         Menu {
@@ -898,7 +918,7 @@ struct SongMenu: View {
                         // Play behind an older notice. A notice raised while it ran (a plugin that
                         // stopped mid-render, headphones pulled) is newer still, and stays.
                         let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
-                        if let url = await documents.exportWAV(plugins: engine.plugins) {
+                        if let url = await documents.exportWAV(plugins: engine.plugins, loudness: wavLoudness) {
                             if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
                             router.share(url)
                         }
@@ -907,6 +927,7 @@ struct SongMenu: View {
                 // Only the arrangement is rendered: without a note or an audio region in it the file
                 // would have no length.
                 .disabled(documents.isExporting || !store.project.arrangementHasSound)
+                wavLoudnessMenu
                 // One file per track and return the mix hears, for another DAW.
                 Button("Export Stems…", systemImage: "square.stack.3d.up") {
                     Task {
@@ -1007,6 +1028,22 @@ struct SongMenu: View {
         // What the menu holds, by its sections, not only its first two entries (W18, m16).
         .accessibilityHint("Songs, export, sync, connections and About. Songs save automatically.")
         .onAppear { documents.refresh() }
+    }
+
+    /// The loudness Export WAV brings the mix to: Off, the mix as it plays, or a target with the
+    /// true peak at or under −1 dBTP. The status line then says the mix before and the file after.
+    private var wavLoudnessMenu: some View {
+        Menu("WAV Loudness: \(wavLoudness.title)", systemImage: "speaker.wave.2") {
+            ForEach(ExportLoudness.allCases, id: \.self) { choice in
+                Button { wavLoudness = choice } label: {
+                    if choice == wavLoudness {
+                        Label(choice.title, systemImage: "checkmark")
+                    } else {
+                        Text(choice.title)
+                    }
+                }
+            }
+        }
     }
 
     /// What the dimmed export entries wait for, or nil while the main ones can run. A song without
