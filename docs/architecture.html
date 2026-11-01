@@ -20,11 +20,11 @@
     Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
     </script>
 
-    <title>Architecture — Echoel | Developer Reference</title>
-    <meta name="description" content="How Echoelmusic is built: the EngineBus signal chain, its lock-free data plane, the protected bio-DSP triad, synthesis, visuals and the OSC address set.">
+    <title>Architecture of the Earlier App (10.79) — Echoel</title>
+    <meta name="description" content="How the earlier Echoel app (10.79, frozen) is built: EngineBus signal chain, lock-free data plane, bio-DSP triad, synthesis, visuals, OSC.">
     <meta name="theme-color" content="#000000">
-    <meta property="og:title" content="Echoel — Architecture (Developer Reference)">
-    <meta property="og:description" content="The bio-reactive signal chain from sensor to sound: EngineBus, SPSC data plane, MIDI control, the DSP triad, synthesis, visuals, OSC, concurrency and performance.">
+    <meta property="og:title" content="Architecture of the Earlier App (10.79) — Echoel">
+    <meta property="og:description" content="The earlier app (10.79, frozen): its bio-reactive signal chain from sensor to sound — EngineBus, SPSC data plane, MIDI, the DSP triad, synthesis, visuals, OSC.">
     <meta property="og:url" content="https://echoelmusic.com/architecture.html">
     <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
     <meta property="og:image:width" content="1200">
@@ -33,8 +33,8 @@
     <meta property="og:site_name" content="Echoel">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Echoel — Architecture">
-    <meta name="twitter:description" content="The bio-reactive signal chain from sensor to sound. A precise developer reference.">
+    <meta name="twitter:title" content="Architecture of the Earlier App (10.79) — Echoel">
+    <meta name="twitter:description" content="The earlier app (10.79, frozen): its bio-reactive signal chain from sensor to sound. A precise developer reference.">
     <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
@@ -122,12 +122,12 @@
         <div class="subpage subpage--wider">
             <div class="subpage-hero">
                 <h1>Architecture</h1>
-                <p class="subtitle">How Echoelmusic is built — one bio-reactive signal chain, from sensor to sound, on a lock-free real-time core. A precise reference for developers, audited against the source.</p>
-                <p class="subtitle" style="margin-top:8px;"><strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a new music workstation for iPhone and iPad. It does not read the body or send OSC, Art-Net or sACN yet. This page describes the earlier app (10.79.515), which is frozen; when the body and the outputs return is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>.</p>
-                <span class="status-badge">Developer reference &middot; v10 &middot; App coming soon</span>
+                <p class="subtitle">How the earlier app (10.79) is built — one bio-reactive signal chain, from sensor to sound, on a lock-free real-time core. A precise reference for developers, audited against its source.</p>
+                <p class="subtitle" style="margin-top:8px;"><strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a new music workstation for iPhone and iPad, still being tested on devices; what it holds is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>. Its own architecture is not documented on this site yet. This page describes the earlier app (10.79.515), which is frozen and no longer in TestFlight.</p>
+                <span class="status-badge">Developer reference &middot; earlier app 10.79 &middot; frozen</span>
             </div>
 
-            <p class="lead">Echoelmusic is a native Apple app (<strong>Swift 6</strong>, strict concurrency). Modules never call each other directly — they produce and consume on a central bus, the <strong>EngineBus</strong>. Biology flows in as data; art flows out as audio, visuals and control. Built on <strong>AVFoundation, Accelerate/vDSP, Metal, CoreMIDI, Network, CoreBluetooth and HealthKit</strong>, with no analytics, advertising or tracking SDKs. Every claim below is marked <span class="tag">LIVE</span> (shipping) or <span class="tag">ROADMAP</span> (designed, not yet built).</p>
+            <p class="lead">The earlier app is a native Apple app (<strong>Swift 6</strong>, strict concurrency). Modules never call each other directly — they produce and consume on a central bus, the <strong>EngineBus</strong>. Biology flows in as data; art flows out as audio, visuals and control. Built on <strong>AVFoundation, Accelerate/vDSP, Metal, CoreMIDI, Network, CoreBluetooth and HealthKit</strong>, with no analytics, advertising or tracking SDKs. Every claim below is marked <span class="tag">LIVE</span> (in the 10.79 build) or <span class="tag">ROADMAP</span> (designed for it, not built).</p>
 
             <nav class="ov-toc" aria-label="On this page">
                 <a href="#chain">Signal chain</a>
@@ -218,7 +218,7 @@
                 <div class="data-row"><div class="k">EchoelDDSP</div><div class="v">Harmonic-plus-noise — 64 partials (<code>vvsinf</code>/<code>vDSP_dotpr</code>) + 65-band FIR noise. 5 noise colors (white/pink/brown/blue/violet), 8 spectral shapes (natural, bright, dark, formant, metallic, hollow, bell, flat), ADSR (linear/exp/log), timbre transfer (violin, flute, trumpet, cello, clarinet, oboe). Its built-in convolution reverb is compiled but disabled — the reverb you hear is <code>EchoelReverb</code> in the FX chain.</div></div>
                 <div class="data-row"><div class="k">Voice timbre <span class="tag">REMOVED</span></div><div class="v">Removed on 2026-09-12 together with the whole audio-input path, at the founder&rsquo;s request. <code>VoiceAnalyzer</code>, <code>VoiceCaptureEngine</code> and <code>MicrophoneManager</code> no longer exist, and the app asks for no microphone. The <em>patch</em> half is deliberately still in the code &mdash; a patch saved by an earlier build carries its spectral envelope (<code>voiceProfileTaps</code>) under a mandatory label and still applies &mdash; but nothing can measure a new one.</div></div>
                 <div class="data-row"><div class="k">EchoelCellular <span class="tag">Plug-in only</span></div><div class="v">It sounds in the <strong>EchoelBodyVibe AUv3 plug-in</strong>, whose texture voice instantiates it — and nowhere else: no voice in the iPhone app instantiates it, so the app on its own stays silent on this module. Cellular-automata synthesis — 8 rules (30, 90, 110, 150, 184, 60, 105, 73), 4 modes (wavetable, additive, FM, spectral-2D / Game of Life), 5 seed patterns.</div></div>
-                <div class="data-row"><div class="k">EchoelModalBank <span class="tag">Not wired</span></div><div class="v">Its only caller was the drum voice, which was removed in July&nbsp;2026 — so it makes no sound in the shipping app today. Physical modal resonator — 8 materials (bell, plate, bar, string, glass, drum, gong, custom); stiffness (inharmonicity), damping, size, brightness, strike position/velocity; impulse or continuous (bowed/breath) excitation.</div></div>
+                <div class="data-row"><div class="k">EchoelModalBank <span class="tag">Not wired</span></div><div class="v">Its only caller was the drum voice, which was removed in July&nbsp;2026 — so it makes no sound in the 10.79 build. Physical modal resonator — 8 materials (bell, plate, bar, string, glass, drum, gong, custom); stiffness (inharmonicity), damping, size, brightness, strike position/velocity; impulse or continuous (bowed/breath) excitation.</div></div>
                 <div class="data-row"><div class="k">Toolkit</div><div class="v"><code>EchoelVDSPKit</code> (DFT, real FFT with 5 windows, FIR convolution, biquad cascade / parametric EQ, decimator, spectral analyzer), <code>EchoelSVFilter</code> (Chamberlin LP/HP/BP/notch), <code>EchoelLFO</code> (5 waveforms, 0.01–20&nbsp;Hz).</div></div>
                 <div class="data-row"><div class="k">Bio-mappings</div><div class="v">Coherence → brightness (the largest single term), filter cutoff, harmonicity, level and noise; heart rate → brightness + vibrato; HRV → brightness, and overtone spread on the harmonic-series profile. Breath phase → amplitude swell. Most are clamped deviations <em>around</em> the chosen patch so its character survives; the level and the harmonic-series overtone spread are absolute writes with no patch anchor. Applied via <code>synth.applyBioReactive(…)</code>. Coherence <em>trend</em> drives the rising/falling spectral morph: a signed rate of change derived from the coherence history on the control thread, deadbanded so a still body changes nothing. Breath <em>depth</em> and LF/HF are parameters of that same call that nothing measures yet &mdash; every caller passes a fixed value, so those two have no audible mapping today. HRV also drives the reverb mix, which reaches only the disabled convolution stage above.</div></div>
             </section>
@@ -243,9 +243,9 @@
             <!-- GENERATIVE COMPOSITION -->
             <section id="seq">
                 <h2>Generative Composition <span class="tag">LIVE</span></h2>
-                <p>Your biometrics compose harmonic and melodic material in any key and BPM — pads, chords, leads and a sub-bass voice — which you render to .wav — or export as a Standard MIDI File (.mid) — for your DAW. There is no drum engine and no sampler: percussion was built, then removed in July&nbsp;2026 (founder decision) so the instrument stays one thing.</p>
+                <p>Your biometrics compose harmonic and melodic material in any key and BPM — pads, chords, leads and a sub-bass voice — which you render to .wav — or export as a Standard MIDI File (.mid) — for your DAW. That app has no drum engine: percussion was built, then removed in July&nbsp;2026 (founder decision) so the instrument stayed one thing.</p>
                 <div class="data-row"><div class="k">BioComposer</div><div class="v">Bio-driven harmonic/melodic loop generation, 30–300&nbsp;BPM, 16th-note clock (step = (60/BPM)/4&nbsp;s) for key/tempo locking. Per-note velocity is <span class="tag">LIVE</span> and reaches the .mid export: a metric hierarchy accents the downbeat over the offbeats, coherence scales pad and bass level (the composer&rsquo;s breath-depth input is fed from coherence; the true breath-depth producer has no caller), and a small per-note jitter keeps repeated chops from reading as mechanical. Automation lanes and richer voice-leading are <span class="tag">ROADMAP</span>.</div></div>
-                <div class="data-row"><div class="k">Voice triggering</div><div class="v">Notes are fired lock-free via an atomic trigger counter (no allocation on the audio thread) into the bio-reactive synth voices. A drum/sampler track and a step sequencer are <strong>not planned</strong> — they existed and were removed.</div></div>
+                <div class="data-row"><div class="k">Voice triggering</div><div class="v">Notes are fired lock-free via an atomic trigger counter (no allocation on the audio thread) into the bio-reactive synth voices. A drum/sampler track and a step sequencer were <strong>not planned</strong> for that app — they existed and were removed. Echoel Studio has a drum kit with a step grid and a sampler.</div></div>
             </section>
 
             <!-- STANDALONE -->
@@ -258,10 +258,10 @@
             <!-- VISUALS & VIDEO -->
             <section id="visuals">
                 <h2>Visuals &amp; Video <span class="tag">LIVE</span> / <span class="tag">ROADMAP</span></h2>
-                <p>A Metal bio-visual ships today: <code>MetalBioView</code> renders a full-screen pulse where heart rate drives the pulse (capped &le;3&nbsp;Hz for WCAG flash safety), the sounding tone drives the hue, breath the spread and coherence the sharpness of the pattern, honouring Reduce Motion. The wider vision &mdash; a 120&nbsp;fps renderer with richer modes &mdash; is in active development, not in the app today. <strong>Recording the visual is not part of Echoelmusic</strong>: it was built and removed in September&nbsp;2026.</p>
+                <p>A Metal bio-visual shipped in 10.79: <code>MetalBioView</code> renders a full-screen pulse where heart rate drives the pulse (capped &le;3&nbsp;Hz for WCAG flash safety), the sounding tone drives the hue, breath the spread and coherence the sharpness of the pattern, honouring Reduce Motion. The wider vision &mdash; a 120&nbsp;fps renderer with richer modes &mdash; was never built into it. <strong>Recording the visual is not part of that app</strong>: it was built and removed in September&nbsp;2026.</p>
                 <div class="data-row"><div class="k">Visual modes (planned)</div><div class="v"><strong>Cymatics</strong> (Chladni standing waves), <strong>Mandala</strong> (radial symmetry), <strong>Particles</strong> (procedural), <strong>Waveform</strong>, <strong>Spectral</strong> bars. <span class="tag">ROADMAP</span></div></div>
                 <div class="data-row"><div class="k">Chroma key (planned)</div><div class="v">A 6-pass GPU pipeline: HSV key extraction → Sobel edge → despill → feather → light-wrap → premultiplied composite, with preview overlays. <span class="tag">ROADMAP</span></div></div>
-                <div class="data-row"><div class="k">Further roadmap</div><div class="v">Hilbert-map display, flow field, kaleidoscope, nebula, generative &amp; AR worlds. <span class="tag">ROADMAP</span> &mdash; video recording, NLE editing, ProRes, multi-cam, color grading and RTMP streaming are <strong>not planned</strong> (the video editor was built and removed in July&nbsp;2026, video recording in September&nbsp;2026; RTMP was never built).</div></div>
+                <div class="data-row"><div class="k">Further roadmap</div><div class="v">Hilbert-map display, flow field, kaleidoscope, nebula, generative &amp; AR worlds. <span class="tag">ROADMAP</span> &mdash; video recording, NLE editing, ProRes, multi-cam, color grading and RTMP streaming were <strong>not planned</strong> for that app (the video editor was built and removed in July&nbsp;2026, video recording in September&nbsp;2026; RTMP was never built).</div></div>
             </section>
 
             <!-- STUDIO UI -->
@@ -292,9 +292,9 @@
                 <div class="data-row"><div class="k">Audio <span class="tag">LIVE</span></div><div class="v">48&nbsp;kHz / 32-bit float internal; buffers 128 / 256 / 512. Export is WAV at the chosen loudness target; 30&nbsp;s CAF pre-roll. AAC/M4A (the encoder exists, the export path forces WAV), FLAC / ALAC and stem export <span class="tag">ROADMAP</span>.</div></div>
                 <div class="data-row"><div class="k">Spatial audio</div><div class="v">Stereo with per-genre algorithmic reverb <span class="tag">LIVE</span>; 3D object panning, an open ADM&nbsp;BWF immersive master (ITU-R&nbsp;BS.2076 / BS.2088), head-tracked spatial audio (AirPods), 5.1 / 7.1.4 &amp; ambisonics <span class="tag">ROADMAP</span>.</div></div>
                 <div class="data-row"><div class="k">MIDI</div><div class="v">MIDI&nbsp;2.0-ready input (notes, pitch bend, CC&nbsp;74 slide, press, air-CC) <span class="tag">LIVE</span>; virtual MIDI&nbsp;1.0 source once a MIDI route is enabled <span class="tag">LIVE</span>. Standard MIDI File (.mid) <strong>export</strong> <span class="tag">LIVE</span> &mdash; melody, tempo, 4/4 and key signature, bar-aligned so the clip drops straight onto a DAW grid. <strong>MPE out</strong> <span class="tag">LIVE</span> &mdash; the zone is announced, notes are spread over member channels 2&ndash;16, and each carries all three per-note dimensions: Glide (14-bit pitch bend), Slide (CC&nbsp;74) and Press (channel pressure). Two switches in the routing panel, both off by default. MPE <strong>input</strong> zone handling, MIDI&nbsp;2.0 out and .mid <strong>import</strong> <span class="tag">ROADMAP</span>.</div></div>
-                <div class="data-row"><div class="k">Video</div><div class="v"><strong>Not part of Echoelmusic.</strong> MP4 recording of the immersive visual shipped until September&nbsp;2026 and was removed; ProRes, multi-cam, LUT grading and any editor were never planned. The take is exported as audio (WAV) or as a MIDI file.</div></div>
+                <div class="data-row"><div class="k">Video</div><div class="v"><strong>Not part of the earlier app.</strong> MP4 recording of the immersive visual shipped until September&nbsp;2026 and was removed; ProRes, multi-cam, LUT grading and any editor were never planned. The take is exported as audio (WAV) or as a MIDI file.</div></div>
                 <div class="data-row"><div class="k">Visuals &amp; mapping</div><div class="v">Metal bio-visual <span class="tag">LIVE</span>; external display over USB-C/HDMI or AirPlay <span class="tag">LIVE</span>; 120&nbsp;fps richer modes + 6-pass chroma key, projection mapping (warp/edge-blend), multi-screen, NDI/Syphon <span class="tag">ROADMAP</span>.</div></div>
-                <div class="data-row"><div class="k">Lighting / streaming</div><div class="v">Art-Net (UDP 6454) + sACN / E1.31 (unicast, UDP 5568) <span class="tag">LIVE</span>; DMX-512 and HomeKit <span class="tag">ROADMAP</span>. RTMP/RTMPS broadcast is <strong>not planned</strong> — <code>BroadcastPublisher</code> is a compile-guarded scaffold and HaishinKit is not linked.</div></div>
+                <div class="data-row"><div class="k">Lighting / streaming</div><div class="v">Art-Net (UDP 6454) + sACN / E1.31 (unicast, UDP 5568) <span class="tag">LIVE</span>; DMX-512 and HomeKit <span class="tag">ROADMAP</span>. RTMP/RTMPS broadcast was <strong>not planned</strong> for that app — <code>BroadcastPublisher</code> is a compile-guarded scaffold and HaishinKit is not linked there. Echoel Studio streams with Go Live (in TestFlight, not yet checked on a device).</div></div>
             </section>
 
             <!-- CONCURRENCY -->
@@ -344,10 +344,10 @@
                 <div class="data-row"><div class="k">EchoelMix <span class="tag">LIVE</span></div><div class="v">AudioEngine · AutoMixChain · SingleExport · RetroCapture. Per-track level, pan, mute and solo live in the Workstation&rsquo;s track inspector; the multi-track <em>audio</em> recorder was deleted with the audio input in September&nbsp;2026.</div></div>
                 <div class="data-row"><div class="k">EchoelMIDI <span class="tag">LIVE</span></div><div class="v">MIDIInput · MIDIBusPublisher → EngineBus.controllerEvents (notes, pitch bend, CC&nbsp;74 slide, press, air-CC). MPE <strong>zone</strong> handling on the way in <span class="tag">ROADMAP</span>.</div></div>
                 <div class="data-row"><div class="k">EchoelBio <span class="tag">LIVE</span></div><div class="v">EchoelBioEngine · BioEventGraph · HealthKitBioPublisher (Watch / Oura via Health) · PolarH10BioPublisher (any BLE Heart Rate device) · CameraRPPGBioPublisher (finger-on-lens rPPG, live) · BioSimulator. ADM-OSC object output via <code>ADMOSCSender</code>. BioSignalDeconvolver and HilbertSensorMapper are built but not wired.</div></div>
-                <div class="data-row"><div class="k">EchoelVis <span class="tag">LIVE</span></div><div class="v">MetalBioView — Metal bio-visual live today (HR&rarr;pulse &le;3&nbsp;Hz, tone&rarr;hue, breath&rarr;spread, coherence&rarr;sharpness). plus richer modes and chroma key <span class="tag">ROADMAP</span>.</div></div>
+                <div class="data-row"><div class="k">EchoelVis <span class="tag">LIVE</span></div><div class="v">MetalBioView — Metal bio-visual, live in 10.79 (HR&rarr;pulse &le;3&nbsp;Hz, tone&rarr;hue, breath&rarr;spread, coherence&rarr;sharpness). plus richer modes and chroma key <span class="tag">ROADMAP</span>.</div></div>
                 <div class="data-row"><div class="k">EchoelVid <span class="tag">CUT</span></div><div class="v">Video editing was built and removed in July&nbsp;2026 and video recording in September&nbsp;2026; RTMP was never built. Nothing of it remains — the visual is rendered live, never captured.</div></div>
                 <div class="data-row"><div class="k">EchoelNet <span class="tag">LIVE</span></div><div class="v">OSCSender (EchoelSync) — Ableton Link roadmap</div></div>
-                <div class="data-row"><div class="k">EchoelLux <span class="tag">LIVE</span></div><div class="v">ArtNetSender · SACNSender — native Art-Net (UDP 6454) and sACN / E1.31 (unicast) lighting live today, flash-safe. DMX-512 · HomeKit · fixture profiles · cue lists <span class="tag">ROADMAP</span>.</div></div>
+                <div class="data-row"><div class="k">EchoelLux <span class="tag">LIVE</span></div><div class="v">ArtNetSender · SACNSender — native Art-Net (UDP 6454) and sACN / E1.31 (unicast) lighting, live in 10.79 and flash-safe. DMX-512 · HomeKit · fixture profiles · cue lists <span class="tag">ROADMAP</span>.</div></div>
                 <div class="data-row"><div class="k">EchoelStage <span class="tag">LIVE</span></div><div class="v">External displays: a connected screen (USB-C / HDMI cable or AirPlay) becomes the visual&rsquo;s own stage while the phone stays the playing surface (<code>ExternalDisplayScene</code>, a second scene, not mirroring). Projection mapping (warp, edge-blend) <span class="tag">ROADMAP</span>.</div></div>
                 <div class="data-row"><div class="k">EchoelAI <span class="tag">ROADMAP</span></div><div class="v">On-device CoreML &amp; stems — designed, not yet implemented.</div></div>
                 <div class="data-row"><div class="k">Bridge <span class="tag">LIVE</span></div><div class="v">EngineBus · SPSCQueue · BioReactiveSynthVoice (the bio→sound bridge)</div></div>
@@ -356,10 +356,10 @@
             <!-- STATUS -->
             <section id="status">
                 <h2>Implementation Status</h2>
-                <p>Honest current state — the app is in active development and <strong>not yet released</strong>.</p>
+                <p>Honest state of the earlier app when it was frozen at 10.79.515 &mdash; it was <strong>never released</strong> to the App Store. Echoel Studio&rsquo;s state is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>.</p>
                 <div class="twocol">
                     <div>
-                        <h3>Live today</h3>
+                        <h3>Live in 10.79</h3>
                         <ul>
                             <li>EngineBus + 2 SPSC topics</li>
                             <li>MIDI 2.0-ready input (pitch/slide/air)</li>
@@ -387,7 +387,7 @@
                             <li>Richer Metal visuals + chroma key</li>
                             <li>Standard MIDI File (.mid) IMPORT — built, not doored</li>
                             <li>EchoelLux — DMX-512 / HomeKit (Art-Net + sACN live)</li>
-                            <li>EchoelStage — projection mapping (warp / edge-blend); external displays ship today</li>
+                            <li>EchoelStage — projection mapping (warp / edge-blend); external displays shipped</li>
                             <li>EchoelAI — on-device CoreML / stems</li>
                             <li>Ableton Link — planned, not linked today</li>
                             <li>iPad · Mac · Watch · TV · Vision</li>

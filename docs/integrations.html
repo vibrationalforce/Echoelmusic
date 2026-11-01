@@ -21,10 +21,10 @@
     </script>
 
     <title>Integrations: OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoel</title>
-    <meta name="description" content="Every address, port and DMX channel Echoel sends. OSC bio feed on UDP 8000, ADM-OSC objects on 4001, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
+    <meta name="description" content="Every address, port and DMX channel the earlier Echoel app (10.79) sent: OSC on UDP 8000, ADM-OSC on 4001, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
     <meta name="theme-color" content="#000000">
     <meta property="og:title" content="Integrations: OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoel">
-    <meta property="og:description" content="Every address, port and DMX channel Echoel sends. OSC bio feed on UDP 8000, ADM-OSC objects on 4001, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
+    <meta property="og:description" content="Every address, port and DMX channel the earlier Echoel app (10.79) sent: OSC on UDP 8000, ADM-OSC on 4001, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
     <meta property="og:url" content="https://echoelmusic.com/integrations.html">
     <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
     <meta property="og:image:width" content="1200">
@@ -34,7 +34,7 @@
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Integrations: OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoel">
-    <meta name="twitter:description" content="Every address, port and DMX channel Echoel sends. OSC bio feed on UDP 8000, ADM-OSC objects on 4001, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
+    <meta name="twitter:description" content="Every address, port and DMX channel the earlier Echoel app (10.79) sent: OSC on UDP 8000, ADM-OSC on 4001, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
     <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
@@ -43,8 +43,8 @@
     <link rel="alternate" hreflang="en" href="https://echoelmusic.com/integrations.html">
     
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Integrations","item":"https://echoelmusic.com/integrations.html"}]}</script>
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Echoel integrations — OSC, ADM-OSC, MIDI, Art-Net and sACN address book","description":"Every address, port and channel Echoel sends: OSC bio feed on UDP 8000, ADM-OSC objects on 4001, a virtual MIDI source, Art-Net on 6454 and sACN on 5568.","author":{"@type":"Organization","name":"Echoelmusic"},"publisher":{"@type":"Organization","name":"Echoelmusic"},"mainEntityOfPage":"https://echoelmusic.com/integrations.html"}</script>
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why does an OSC address not appear in my receiver?","acceptedAnswer":{"@type":"Answer","text":"Echoel sends a bio address only while that channel is measured. Silence means not measured, never measured as zero. Coherence needs sixteen accepted beats and is the last address to appear on a take."}},{"@type":"Question","name":"Which ports does Echoel use?","acceptedAnswer":{"@type":"Answer","text":"OSC on UDP 8000 by default, ADM-OSC on UDP 4001 by default (both configurable in Routing), Art-Net on UDP 6454 and sACN on UDP 5568, all unicast to the IP you enter."}},{"@type":"Question","name":"Does Echoel receive OSC?","acceptedAnswer":{"@type":"Answer","text":"Only control cues and track positions, and only when you switch OSC input on in Routing (off by default): a whitelist of /echoelmusic/ctrl/ addresses — bpm while the BPM is locked, key, scale, genre, visualStyle, blackout — plus ADM-OSC /adm/obj/n/ positions from a spatial controller, which move track n in Echoel's scene and its outgoing ADM-OSC stream, on UDP 8001, from this device only until you list sender IPs, and never over cellular. No bio value, no play/stop and no bidirectional session: the body still goes out one way."}}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Earlier Echoel app (10.79) integrations — OSC, ADM-OSC, MIDI, Art-Net and sACN address book","description":"Every address, port and channel the earlier Echoel app (10.79) sends: OSC bio feed on UDP 8000, ADM-OSC objects on 4001, a virtual MIDI source, Art-Net on 6454 and sACN on 5568.","author":{"@type":"Organization","name":"Echoelmusic"},"publisher":{"@type":"Organization","name":"Echoelmusic"},"mainEntityOfPage":"https://echoelmusic.com/integrations.html"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why does an OSC address not appear in my receiver?","acceptedAnswer":{"@type":"Answer","text":"The earlier app sends a bio address only while that channel is measured. Silence means not measured, never measured as zero. Coherence needs sixteen accepted beats and is the last address to appear on a take."}},{"@type":"Question","name":"Which ports did the earlier Echoel app use?","acceptedAnswer":{"@type":"Answer","text":"OSC on UDP 8000 by default, ADM-OSC on UDP 4001 by default (both configurable in Routing), Art-Net on UDP 6454 and sACN on UDP 5568, all unicast to the IP you enter."}},{"@type":"Question","name":"Did the earlier Echoel app receive OSC?","acceptedAnswer":{"@type":"Answer","text":"Only control cues and track positions, and only when you switch OSC input on in Routing (off by default): a whitelist of /echoelmusic/ctrl/ addresses — bpm while the BPM is locked, key, scale, genre, visualStyle, blackout — plus ADM-OSC /adm/obj/n/ positions from a spatial controller, which move track n in its scene and its outgoing ADM-OSC stream, on UDP 8001, from this device only until you list sender IPs, and never over cellular. No bio value, no play/stop and no bidirectional session: the body still goes out one way."}}]}</script>
     <link rel="stylesheet" href="shared.css?v=10.26.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
@@ -79,9 +79,9 @@
     </div>
 
         <main id="main">
-        <h1>Integrations — what Echoel sends, and how to receive it</h1>
-        <p><strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a new music workstation for iPhone and iPad. It does not read the body or send OSC, Art-Net or sACN yet, and over MIDI it sends other apps the clock, not notes. This page describes the earlier app (10.79.515), which is frozen; when the outputs return is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>.</p>
-        <p class="lead">Echoel is the body-driven source at the front of your pipeline. Your pulse, breath and the music they compose leave the phone over open standards only — OSC, ADM-OSC, MIDI, Art-Net and sACN — so Reaper, TouchDesigner, Resolume, a lighting desk or a spatial renderer can follow a performer without any SDK on either side. This page is the address book. Three step-by-step spokes: <a href="reaper-osc.html">Reaper</a>, <a href="touchdesigner-osc.html">TouchDesigner</a> and <a href="resolume-osc.html">Resolume</a>; the light half has its own page on <a href="artnet-sacn-from-a-phone.html">Art-Net and sACN</a>.</p>
+        <h1>Integrations — what the earlier app (10.79) sends, and how to receive it</h1>
+        <p><strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a new music workstation for iPhone and iPad, still being tested on devices; what it holds is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>. Its Connections page sends OSC, ADM-OSC, Art-Net and sACN to your local network, each off until you switch it on, and MPE out sends the live track&rsquo;s notes to the MIDI outputs you pick &mdash; in TestFlight, not yet checked on a device. This address book was written for the earlier app (10.79.515), which is frozen; it has not been checked against Echoel Studio.</p>
+        <p class="lead">The earlier app was the body-driven source at the front of your pipeline: your pulse, breath and the music they composed left the phone over open standards only — OSC, ADM-OSC, MIDI, Art-Net and sACN — so Reaper, TouchDesigner, Resolume, a lighting desk or a spatial renderer could follow a performer without any SDK on either side. This page is its address book. Three step-by-step spokes: <a href="reaper-osc.html">Reaper</a>, <a href="touchdesigner-osc.html">TouchDesigner</a> and <a href="resolume-osc.html">Resolume</a>; the light half has its own page on <a href="artnet-sacn-from-a-phone.html">Art-Net and sACN</a>.</p>
 
         <h2>One rule before any mapping: silence means "not measured"</h2>
         <p>Every bio address is sent only while its own channel is actually measured. A finger that slips off the camera does not send a zero — it sends nothing, and your receiver holds its last value. That is deliberate: a structural 0 would collapse a bound scale or pull a grand master to black with no way to tell it from a performer who really stopped. Two consequences: a receiver that creates channels on first arrival (TouchDesigner's OSC In CHOP) will not show an address that has never been sent, and <code>/echoelmusic/bio/coherence</code> is the last to appear on every take because it needs sixteen accepted beats.</p>
@@ -178,7 +178,7 @@
              things this page denies); the heading is moved to it rather than the copy being
              rewritten. -->
         <h2>What is not here</h2>
-        <p>Motion and EEG addresses exist in the sender and are never sent. Live streaming was never built. Everything above is in the shipping app; nothing on this page is a roadmap item.</p>
+        <p>Motion and EEG addresses exist in the earlier app&rsquo;s sender and are never sent. That app never had live streaming; Echoel Studio streams with Go Live (in TestFlight, not yet checked on a device). Everything above was in the earlier app as it last shipped to TestFlight; nothing on this page is a roadmap item.</p>
 
         <div class="contact-box">
             <h3>Integrating Echoel into a rig?</h3>
