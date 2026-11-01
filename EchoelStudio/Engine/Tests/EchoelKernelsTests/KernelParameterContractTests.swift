@@ -26,7 +26,9 @@ final class KernelParameterContractTests: XCTestCase {
             entry("synth_release", "Release", .seconds, 0.001...10, 0.25),
             entry("synth_level", "Level", .amount, 0...1, 0.25),
             // Appended 2026-10-28: new values join at the end, so every earlier address holds.
-            entry("synth_engine", "Engine", .choice, 0...6, 0, ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP"]),
+            // Choir appended 2026-11-01 (VOX): a wider range keeps every stored index.
+            entry("synth_engine", "Engine", .choice, 0...7, 0,
+                  ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP", "Choir"]),
             entry("synth_character", "Character", .amount, 0...1, 0.5),
             entry("synth_filter", "Filter", .choice, 0...1, 0, ["Clean", "Ladder"]),
             // Appended 2026-11-01 (W12): the vibrato a route moves with the pulse.
