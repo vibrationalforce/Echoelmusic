@@ -47,7 +47,8 @@ struct StepGridView: View {
         .background(Theme.Color.background)
         .accessibilityRotor("Lanes") {
             ForEach(lanes) { lane in
-                AccessibilityRotorEntry(lane.name, id: lane.id, in: lanesRotor)
+                // A string label takes the id unlabeled when a namespace follows.
+                AccessibilityRotorEntry(lane.name, lane.id, in: lanesRotor)
             }
         }
     }
