@@ -15,12 +15,15 @@ struct StandardEffectPanel: View {
     let owner: ParameterAddress.Owner
     let insert: InsertID
     let effect: StandardEffect
+    /// The narrowest column, as on the Sound page: it grows with the text, so the fields go to one
+    /// column at large sizes instead of cutting their words (W18, M10).
+    @ScaledMetric(relativeTo: .body) private var columnWidth: CGFloat = 150
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             if effect == .compressor || effect == .limiter { ReductionMeter(slot: .insert(insert)) }
             if effect == .pitchCorrection { songKeyButton }
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: Theme.Space.s)],
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: columnWidth), spacing: Theme.Space.s)],
                       alignment: .leading, spacing: Theme.Space.s) {
                 ForEach(EffectKernel.parameters(for: effect), id: \.address) { parameter in
                     let address = ParameterAddress(owner, .plugin(PluginParameter(.insert(insert),
@@ -119,14 +122,26 @@ private struct ReductionMeter: View {
 /// a number. The menu stays still; only its label reads the unit, in its own leaf, so automation
 /// moving the value cannot close the menu while it is open (Law 6).
 private struct EffectChoiceField: View {
+    @Environment(AudioEngine.self) private var engine
     @Environment(ParameterWriter.self) private var writer
     let address: ParameterAddress
     let parameter: EffectParameter
+    /// Counts this field's picks, so the menu is built again with the choice just made checked.
+    @State private var picks = 0
 
     var body: some View {
+        // The choice is read from the unit when the menu is built, never watched (Law 6): it carries
+        // the check mark every other menu of the studio shows (W18, m12).
+        let chosen = currentChoice(after: picks)
         Menu {
             ForEach(parameter.choices.indices, id: \.self) { index in
-                Button(parameter.choices[index]) { pick(index) }
+                Button { pick(index) } label: {
+                    if parameter.choices[index] == chosen {
+                        Label(parameter.choices[index], systemImage: "checkmark")
+                    } else {
+                        Text(parameter.choices[index])
+                    }
+                }
             }
         } label: {
             EffectChoiceLabel(address: address, parameter: parameter)
@@ -135,9 +150,17 @@ private struct EffectChoiceField: View {
         .midiLearnable(address, title: parameter.title)
     }
 
+    /// The unit's choice now, or nil before it loads. `picks` only ties the read to the last pick.
+    private func currentChoice(after picks: Int) -> String? {
+        guard picks >= 0, let position = engine.plugins.position(of: address) else { return nil }
+        let low = parameter.range.lowerBound, high = parameter.range.upperBound
+        return parameter.choice(at: low + Float(position) * (high - low))
+    }
+
     private func pick(_ index: Int) {
         let last = Swift.max(parameter.choices.count - 1, 1)
         writer.set(address, normalized: Double(index) / Double(last), gesture: false)
+        picks &+= 1
     }
 }
 
@@ -240,14 +263,8 @@ private struct EffectParameterField: View {
                     writer.endGesture()
                 }
         )
-        .onTapGesture(count: 2) {
-            writer.set(address, normalized: self.position(of: parameter.defaultValue), gesture: false)
-            writer.endGesture()
-        }
-        .onTapGesture {
-            guard parameter.unit == .boolean else { openPad(shown); return }
-            writer.set(address, normalized: shown >= 0.5 ? 0 : 1, gesture: false)
-        }
+        .onTapGesture(count: 2) { reset() }
+        .onTapGesture { tapped(shown) }
         .sensoryFeedback(.selection, trigger: shown) { old, new in
             drag != nil && DragPrecision.reachesDetent(from: old, to: new, standard: Double(parameter.defaultValue),
                                                        range: low...high)
@@ -255,16 +272,40 @@ private struct EffectParameterField: View {
         .accessibilityElement()
         .accessibilityLabel(parameter.title)
         .accessibilityValue(text(shown))
+        .accessibilityAddTraits(isSwitch ? .isToggle : [])
         .accessibilityAdjustableAction { direction in
-            let step = parameter.unit == .boolean ? 1 : 0.02
+            let step = isSwitch ? 1 : 0.02
             let moved = Swift.min(Swift.max(place + (direction == .increment ? step : -step), 0), 1)
             writer.set(address, normalized: self.position(of: self.value(atCurve: moved)), gesture: false)
         }
-        .accessibilityAction(named: "Type a Value") { openPad(shown) }
+        // VoiceOver's double-tap is the tap's own action — type the value, flip a switch — never the
+        // touch double-tap that resets it (W18, the double-tap trap). A switch has nothing to type:
+        // it is a toggle, without the "Type a Value" that did nothing (m11).
+        .accessibilityAction { tapped(shown) }
+        .accessibilityActions {
+            if !isSwitch {
+                Button("Type a Value") { openPad(shown) }
+                Button("Reset") { reset() }
+            }
+        }
         .midiLearnable(address, title: parameter.title)
     }
 
     private var owner: String { "\(address)" }
+
+    private var isSwitch: Bool { parameter.unit == .boolean }
+
+    /// A tap: a switch flips, any other value opens the number pad.
+    private func tapped(_ shown: Double) {
+        guard isSwitch else { openPad(shown); return }
+        writer.set(address, normalized: shown >= 0.5 ? 0 : 1, gesture: false)
+    }
+
+    /// Back to the effect's default, one undo step.
+    private func reset() {
+        writer.set(address, normalized: position(of: parameter.defaultValue), gesture: false)
+        writer.endGesture()
+    }
 
     /// How the number pad reads this parameter: a time in ms, a frequency in Hz; a switch is not
     /// typed.
