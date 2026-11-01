@@ -87,6 +87,13 @@ struct InstrumentSurface: View {
             if let problem {
                 NoteText(problem, tone: .problem)
             }
+            // On, but the keys play another track (chosen in Tracks, or the app started again):
+            // one tap gives the voice its keys back, never a silent switch behind the musician.
+            if let voice, !voice.mixer.isMuted, engine.liveTrackID(in: project) != voice.id {
+                Button("Play on the Keys") { engine.setLiveTrack(voice.id) }
+                    .buttonStyle(ToolButtonStyle())
+                    .accessibilityHint("The keys under the page play the Body Voice.")
+            }
             if let voice {
                 // The routes the voice started with, seen and changed like any other (W2).
                 ModulateMenu(owner: .track(voice.id))
