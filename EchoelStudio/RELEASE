@@ -1,17 +1,25 @@
-11.0.0, twentieth upload — the Jam starts together on the next bar
+11.0.0, twenty-first upload — the Instrument page, and audio in stereo
 
-What is new since 10028. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10029. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- Jam count-in: while phones are in your jam, Play waits for the next bar line of the jam's
-  grid, so every phone comes in together on bar 1. While it waits, the transport shows Stop and
-  the line under it reads "Starting on the next bar."; a second press calls the start off. The
-  note editor's Play does the same. Without phones in the jam, Play starts at once as before.
+- Instrument: the first chip in the bar. The Field on top, your pulse, Body Source, Body Voice,
+  the tempo lock Fixed | Flow, Sound and Mood; the keys stay under the page.
+- Body Voice: a Body track on a pad sound, silent until you switch it on. The keys play it;
+  coherence opens and brightens its sound and your pulse sets its vibrato — three ordinary routes
+  you can see and change under Modulate. Pulse, HRV and coherence are for self-observation.
+- Flow: the tempo follows your pulse only through four stages — a steady reading for 5 s, folded
+  into 60–160 BPM near the tempo that plays, at most 2 BPM per bar, gliding over 2 s — and only
+  while the song plays. Never while a Jam host or a MIDI clock sets the tempo. Flow writes nothing
+  into the song; switching back to Fixed keeps the tempo it reached, as one undo step.
+- Vibrato is a new synth parameter, also in the plug-in (at the end of its list).
+- Stereo: imported audio, regions, clips and Bake Effects keep left and right. Mono stays mono;
+  more than two channels fold to stereo. Pan on a stereo region works as balance. A wide file can
+  sound up to 3 dB louder than its former mono mix. Recording stays mono.
 
-Previous: 11.0.0 (10028), nineteenth upload — Field over your video, Jam with nearby iPhones,
-tempo to the hundredth. 10027 and earlier: see git history of this file.
+Previous: 11.0.0 (10029), twentieth upload — the Jam starts together on the next bar. 10028 and
+earlier: see git history of this file.
 group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
-of earlier songs has not been seen on a device yet. (Until 10028 this line said "still not
-requested" — stale since that commit.)
+of earlier songs has not been seen on a device yet.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -19,13 +27,15 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Type 100,25 as the tempo on the number pad: the transport shows 100,25 BPM and the click
-   follows it.
-2. A camera take, Field Layer Screen at 60 %: the video window shows the Field over you.
-3. Export Video, 9:16, about 30 s, with that layer: the Field sits upright over you and pulses
-   with the beat; does Screen look right to your eye, or too bright in the mid tones?
-4. Two iPhones, Wi-Fi off, click on: one hosts at 100,25 BPM, the other joins. The host presses
-   Play in the middle of a bar: the line reads "Starting on the next bar.", both phones begin
-   together on that bar, and the clicks still sound together after five minutes.
-5. Put the host in airplane mode: the other shows "Jam host lost. Playing on at 100,25 BPM."
-   and keeps playing.
+1. A fingertip on the rear camera, open Instrument, Body Source: the camera, switch Body Voice on
+   and play the keys. Breathe slowly and calmly for a minute: does the sound open and brighten,
+   and does the vibrato follow your pulse?
+2. Press Play on a song and set the tempo lock to Flow: the tempo field reads FLOW and the tempo
+   moves slowly toward your pulse, bar by bar. Switch to Fixed: it stays where it got to, and
+   Undo takes that back.
+3. Import a stereo file with a sound only on the left, and play it: left stays left. Bake a
+   region through Chorus: the baked track stays wide.
+4. Two iPhones, Wi-Fi off, click on: one hosts, the other joins. The host presses Play in the
+   middle of a bar: "Starting on the next bar.", both begin together on that bar, and the clicks
+   still sound together after five minutes.
+5. After trying Instrument: should Echoel open on Instrument instead of Tracks?
