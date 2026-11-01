@@ -20,6 +20,10 @@ public struct SynthPatch: Equatable, Codable, Sendable {
     /// Which filter shapes the tone: the clean state-variable one in `filterMode`, or the
     /// four-pole ladder, always lowpass (EchoelTools A2).
     public var filterModel: FilterModel = .stateVariable
+    /// The vibrato's depth with the modulation wheel at rest, 0…1 of `PolySynth.vibratoRange` (W12):
+    /// a value a modulation route can move — the Body voice's pulse — where the wheel is a player's
+    /// hand. The deeper of the two sets the swing.
+    public var vibrato: Float = 0
 
     public enum FilterModel: String, CaseIterable, Codable, Sendable {
         case stateVariable, ladder
@@ -233,6 +237,8 @@ public struct PolySynth: Sendable {
     private var bendTarget: Float = 1
     private var isSustaining = false
     /// Vibrato depth 0…1 now and where the modulation wheel wants it, and the vibrato's phase 0..<1.
+    /// The depth goes where the wheel or the patch's own vibrato wants it, whichever is deeper
+    /// (`vibratoGoal`).
     private var vibrato: Float = 0
     private var vibratoTarget: Float = 0
     private var vibratoPhase: Float = 0
@@ -287,7 +293,7 @@ public struct PolySynth: Sendable {
             // rendering is the end of the host's buffer, so a phase carried through the rest made
             // playback and export differ (review 2026-10-23).
             bend = bendTarget
-            vibrato = vibratoTarget
+            vibrato = vibratoGoal
             vibratoPhase = 0
         }
         voices[index].start(pitch: pitch, velocity: velocity, order: nextOrder, sampleRate: sampleRate, patch: patch)
@@ -369,7 +375,7 @@ public struct PolySynth: Sendable {
     public mutating func render(into buffer: UnsafeMutableBufferPointer<Float>) {
         guard !buffer.isEmpty else { return }
         let patch = self.patch
-        guard bend != bendTarget || vibrato > 0 || vibratoTarget > 0 else {
+        guard bend != bendTarget || vibrato > 0 || vibratoGoal > 0 else {
             // The wheels rest: one ratio for the whole buffer.
             let ratio = bend
             voices.withUnsafeMutableBufferPointer { all in
@@ -406,11 +412,12 @@ public struct PolySynth: Sendable {
         // A Float glide stops moving about 120 ulps short of its target, far outside 1e-7; where
         // it stops it takes the target, so a wheel let go rests exactly in tune (review 2026-10-23).
         bend = (next == bend || Swift.abs(next - bendTarget) < 1e-7) ? bendTarget : next
-        guard vibrato > 0 || vibratoTarget > 0 else { return bend }
-        vibrato = vibratoTarget + (vibrato - vibratoTarget) * vibratoPole
+        let goal = vibratoGoal
+        guard vibrato > 0 || goal > 0 else { return bend }
+        vibrato = goal + (vibrato - goal) * vibratoPole
         vibratoPhase += Self.vibratoRate / sampleRate
         if vibratoPhase >= 1 { vibratoPhase -= 1 }
-        if vibratoTarget == 0, vibrato < 1e-4 {
+        if goal == 0, vibrato < 1e-4 {
             vibrato = 0
             vibratoPhase = 0
             return bend
@@ -421,6 +428,14 @@ public struct PolySynth: Sendable {
     /// The vibrato's frequency ratio at its current depth and phase.
     private func vibratoRatio() -> Float {
         exp2f(vibrato * Self.vibratoRange * sinf(2 * Float.pi * vibratoPhase) / 12)
+    }
+
+    /// Where the vibrato depth goes: the modulation wheel's, or the patch's own (`SynthPatch.vibrato`,
+    /// W12) where that is deeper. A value that is not a number counts as none. Arithmetic only:
+    /// render-safe.
+    private var vibratoGoal: Float {
+        let own = patch.vibrato.isFinite ? Swift.min(Swift.max(patch.vibrato, 0), 1) : 0
+        return Swift.max(vibratoTarget, own)
     }
 
     private func voiceIndex(for pitch: UInt8) -> Int {
