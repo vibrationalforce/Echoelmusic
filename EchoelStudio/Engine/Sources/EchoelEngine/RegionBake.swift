@@ -114,4 +114,21 @@ public enum RegionBake {
         }
         return Baked(left: side(result.left), right: side(result.right))
     }
+
+    /// Writes `baked` to a WAV file at `url` with as many channels as it has, in 32-bit float: an
+    /// effect that went past full scale opens again with the same peaks — a 24-bit file clipped
+    /// them at 1.0 (W17b). The song stores no sample format; the file's header says it, and a bake
+    /// written before stays 24-bit and reads as it was. Exports stay 24-bit.
+    public static func write(_ baked: Baked, to url: URL, sampleRate: Double) throws {
+        let writer = try WAVWriter(url: url, sampleRate: sampleRate, bitDepth: .float32, channels: baked.channelCount)
+        // A mono bake's two sides are the same: the writer averages them to the very values.
+        let right = baked.right ?? baked.left
+        try baked.left.withUnsafeBufferPointer { left in
+            try right.withUnsafeBufferPointer { other in
+                guard let l = left.baseAddress, let r = other.baseAddress else { return }
+                try writer.append(left: l, right: r, count: Swift.min(left.count, other.count))
+            }
+        }
+        try writer.finish()
+    }
 }
