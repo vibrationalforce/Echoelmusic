@@ -29,6 +29,8 @@ final class KernelParameterContractTests: XCTestCase {
             entry("synth_engine", "Engine", .choice, 0...6, 0, ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP"]),
             entry("synth_character", "Character", .amount, 0...1, 0.5),
             entry("synth_filter", "Filter", .choice, 0...1, 0, ["Clean", "Ladder"]),
+            // Appended 2026-11-01 (W12): the vibrato a route moves with the pulse.
+            entry("synth_vibrato", "Vibrato", .amount, 0...1, 0),
         ])
     }
 
