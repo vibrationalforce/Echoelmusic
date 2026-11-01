@@ -1,6 +1,7 @@
 import EchoelCore
 import Observation
 import SwiftUI
+import UIKit
 
 /// One value to type: what the field shows, in the parameter's own units, and where the typed
 /// number goes. The pad converts to the units a musician types (ms, %, Hz) and back.
@@ -22,10 +23,24 @@ struct NumberPadRequest: Identifiable {
 @Observable
 final class NumberPadController {
     private(set) var request: NumberPadRequest?
+    /// What VoiceOver was on when the pad opened — the field that asked for it — so closing the
+    /// pad gives that field its focus back instead of dropping it somewhere on the page
+    /// (accessibility audit 2026-11-01, M6). Every field that types opens the pad here, so none
+    /// of them needs to know.
+    @ObservationIgnored private var focusBeforeOpening: Any?
 
-    func open(_ request: NumberPadRequest) { self.request = request }
+    func open(_ request: NumberPadRequest) {
+        focusBeforeOpening = UIAccessibility.isVoiceOverRunning
+            ? UIAccessibility.focusedElement(using: .notificationVoiceOver) : nil
+        self.request = request
+    }
 
-    func close() { request = nil }
+    func close() {
+        request = nil
+        guard let field = focusBeforeOpening else { return }
+        focusBeforeOpening = nil
+        UIAccessibility.post(notification: .layoutChanged, argument: field)
+    }
 }
 
 extension View {
@@ -55,11 +70,14 @@ private struct NumberPadHost: ViewModifier {
 /// Echoel's own number pad, from the earlier instrument: the typed number large, its unit and
 /// range below the title, a Default key, and the keys — 7 8 9 · 4 5 6 · 1 2 3 · − 0 ⌫ · + , OK.
 /// − makes the value negative and + positive (the system decimal pad has no sign key); − is off
-/// where the range cannot go below zero, the separator where the value is whole.
+/// where the range cannot go below zero, the separator where the value is whole. With VoiceOver,
+/// focus moves to the number when the pad opens, every key says the number it made, and closing
+/// returns focus to the field (accessibility audit 2026-11-01, M6, m18).
 struct NumberPad: View {
     let request: NumberPadRequest
     let close: () -> Void
     @State private var entry: NumberEntry
+    @AccessibilityFocusState private var numberFocused: Bool
 
     init(request: NumberPadRequest, close: @escaping () -> Void) {
         self.request = request
@@ -83,6 +101,16 @@ struct NumberPad: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Number pad, \(request.title)")
         .accessibilityAction(.escape, close)
+        // The pad docks like a keyboard, out of VoiceOver's path: take its focus to the number,
+        // once the pad has faded in and the number is there to take it.
+        .task {
+            do { try await Task.sleep(for: .milliseconds(200)) } catch { return }
+            numberFocused = true
+        }
+        // A key changes the number, not the key VoiceOver is on: say the number it made.
+        .onChange(of: entry.text) {
+            AccessibilityNotification.Announcement(AttributedString(typedNumber)).post()
+        }
     }
 
     // MARK: Header
@@ -90,10 +118,11 @@ struct NumberPad: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
             HStack(spacing: Theme.Space.s) {
+                // Wraps instead of cutting a long name off at large text sizes (m18).
                 Text(request.title)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
-                    .lineLimit(1)
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 Button("Cancel", action: close)
                     .font(Theme.Font.label)
@@ -106,8 +135,9 @@ struct NumberPad: View {
                     .foregroundStyle(entry.isEmpty ? Theme.Color.textSecondary : Theme.Color.text)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                    .accessibilityLabel(entry.isEmpty ? "Current value \(shownNumber) \(request.format.unit)"
-                                                      : "Typed \(shownNumber) \(request.format.unit)")
+                    .accessibilityLabel(entry.isEmpty ? "Current value \(withUnit(shownNumber))"
+                                                      : "Typed \(withUnit(shownNumber))")
+                    .accessibilityFocused($numberFocused)
                 if !request.format.unit.isEmpty {
                     Text(request.format.unit)
                         .font(Theme.Font.label)
@@ -126,6 +156,16 @@ struct NumberPad: View {
     private var shownNumber: String {
         if entry.isEmpty { return number(request.format.display(request.value)) }
         return entry.text.replacingOccurrences(of: ".", with: Self.separator)
+    }
+
+    /// What a key's press says: the number typed so far, or — all of it deleted — the value OK
+    /// would keep.
+    private var typedNumber: String {
+        entry.isEmpty ? "Current value \(withUnit(shownNumber))" : withUnit(shownNumber)
+    }
+
+    private func withUnit(_ number: String) -> String {
+        request.format.unit.isEmpty ? number : "\(number) \(request.format.unit)"
     }
 
     private var rangeText: String {
