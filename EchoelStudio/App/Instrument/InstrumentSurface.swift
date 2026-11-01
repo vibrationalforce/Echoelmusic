@@ -83,7 +83,8 @@ struct InstrumentSurface: View {
                 .toggleStyle(EchoelToggleStyle())
                 .disabled(!BodyVoice.hasRoom(in: project))
                 .accessibilityHint("A pad the keys play; your body shapes its sound.")
-            NoteText("The keys play it. Coherence opens and brightens its sound, and your pulse sets its vibrato. Silent until switched on.")
+            NoteText("The keys play it. Your breath swells its level, coherence opens and brightens its sound, and your pulse sets its vibrato. Silent until switched on.")
+            NoteText("Breath is read from the timing of your heartbeats. Breathe slowly and evenly, and it joins after a few breaths.")
             if let problem {
                 NoteText(problem, tone: .problem)
             }
@@ -269,7 +270,7 @@ private struct InstrumentPulse: View {
             .accessibilityValue(rate.map { "\($0) beats per minute" } ?? "Not measured")
             NoteText(sourceLine(measured: rate != nil))
             NoteText(ModulateMenu.measuringLine(strap.measuring.union(camera.measuring), sourceOn: strap.isOn || camera.isOn))
-            NoteText("Pulse, HRV and coherence are for self-observation, not a medical diagnosis.")
+            NoteText("Pulse, HRV, coherence and breath are for self-observation, not a medical diagnosis.")
         }
     }
 
@@ -303,7 +304,7 @@ private struct FlowStatusLine: View {
                 return "Flow waits for a steady pulse. Then it moves the tempo one step per bar while the song plays."
             }
             return "Flow follows your pulse of " + NumberText.string(Double(pulse), decimals: 0, unit: "BPM")
-                + " towards " + NumberText.string(Double(target), decimals: 0, unit: "BPM")
+                + " toward " + NumberText.string(Double(target), decimals: 0, unit: "BPM")
                 + ", one step per bar while the song plays."
         }
     }
