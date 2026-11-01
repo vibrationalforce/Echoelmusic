@@ -109,7 +109,8 @@ struct NumberPad: View {
         }
         // A key changes the number, not the key VoiceOver is on: say the number it made.
         .onChange(of: entry.text) {
-            AccessibilityNotification.Announcement(AttributedString(typedNumber)).post()
+            // Normal priority: the next key cuts it short, so fast typing never queues old numbers.
+            Theme.Accessibility.announce(Announcement(typedNumber, priority: .normal))
         }
     }
 

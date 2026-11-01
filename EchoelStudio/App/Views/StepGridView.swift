@@ -131,7 +131,7 @@ struct StepGridView: View {
         }
         guard announced else { return }
         let said = wasAccented ? "Accent removed." : "Accented."
-        AccessibilityNotification.Announcement(AttributedString(said)).post()
+        Theme.Accessibility.announce(Announcement(said, priority: .normal))
     }
 
     private func clear(_ lane: DrumLane) {
