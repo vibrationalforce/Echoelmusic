@@ -7,6 +7,9 @@ import SwiftUI
 private struct MIDILearnable: ViewModifier {
     @Environment(MIDIInput.self) private var midi
     let address: ParameterAddress
+    /// The control's own name: while learning, VoiceOver says which control it chooses and what it
+    /// is mapped to, not a bare "Not mapped" (W18, m21).
+    let title: String
 
     func body(content: Content) -> some View {
         let mapped = midi.mapping(for: address)
@@ -19,22 +22,26 @@ private struct MIDILearnable: ViewModifier {
                                 style: StrokeStyle(lineWidth: isTarget ? 2 : 1, dash: mapped == nil ? [4, 3] : []))
                         .contentShape(Rectangle())
                         .onTapGesture { midi.choose(address) }
-                        .accessibilityLabel(mapped.map { "Mapped to \($0.description)" } ?? "Not mapped")
-                        .accessibilityHint("Move a control on your MIDI device to map it here.")
-                        .accessibilityAddTraits(.isButton)
+                        .accessibilityLabel(title)
+                        .accessibilityValue(mapped.map { "Mapped to \(Spoken.control($0))" } ?? "Not mapped")
+                        .accessibilityHint(isTarget ? "Waits for a knob or fader on your MIDI device."
+                                                    : "Chooses this control for the next knob or fader you move.")
+                        .accessibilityAddTraits(isTarget ? [.isButton, .isSelected] : .isButton)
                 }
             }
             .contextMenu {
                 if let mapped {
                     Button("Forget \(mapped.description)", systemImage: "xmark") { midi.forget(address) }
+                        .accessibilityLabel("Forget \(Spoken.control(mapped))")
                 }
             }
     }
 }
 
 extension View {
-    func midiLearnable(_ address: ParameterAddress) -> some View {
-        modifier(MIDILearnable(address: address))
+    /// `title` is the control's name as VoiceOver says it ("Bass Volume", "Send to Return 1").
+    func midiLearnable(_ address: ParameterAddress, title: String) -> some View {
+        modifier(MIDILearnable(address: address, title: title))
     }
 }
 

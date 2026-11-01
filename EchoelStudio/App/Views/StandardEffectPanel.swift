@@ -132,7 +132,7 @@ private struct EffectChoiceField: View {
             EffectChoiceLabel(address: address, parameter: parameter)
         }
         .accessibilityLabel(parameter.title)
-        .midiLearnable(address)
+        .midiLearnable(address, title: parameter.title)
     }
 
     private func pick(_ index: Int) {
@@ -261,7 +261,7 @@ private struct EffectParameterField: View {
             writer.set(address, normalized: self.position(of: self.value(atCurve: moved)), gesture: false)
         }
         .accessibilityAction(named: "Type a Value") { openPad(shown) }
-        .midiLearnable(address)
+        .midiLearnable(address, title: parameter.title)
     }
 
     private var owner: String { "\(address)" }
