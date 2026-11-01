@@ -56,6 +56,7 @@ extension SynthParameter.Name {
             case 4: patch.engine = .morph
             case 5: patch.engine = .mallet
             case 6: patch.engine = .ddsp
+            case 7: patch.engine = .choir
             default: patch.engine = .classic
             }
         case .character: patch.character = v
