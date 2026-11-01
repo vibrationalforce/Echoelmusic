@@ -6,6 +6,12 @@ import SwiftUI
 /// parameter controls and commands.
 struct MixerView: View {
     @Environment(ProjectStore.self) private var store
+    /// The height of a strip's rows other than the fader — colour bar, name, effects, pan, level,
+    /// mute/solo and output, with their gaps — and of each send, at the standard text size and
+    /// growing with it: the fader takes what is left of the view, so with large text it shortens
+    /// rather than push the rest of the strip off the screen.
+    @ScaledMetric(relativeTo: .subheadline) private var stripRows: CGFloat = 360
+    @ScaledMetric(relativeTo: .subheadline) private var sendRow: CGFloat = 76
 
     var body: some View {
         // The faders take the height the view has (device video 10021: small faders under a lot
@@ -38,7 +44,7 @@ struct MixerView: View {
     /// still covers.
     private func faderHeight(in available: CGFloat) -> CGFloat {
         let returns = store.project.tracks.filter { $0.kind == .returnTrack }.count
-        let rows = ChannelStrip.fixedHeight + CGFloat(returns) * ChannelStrip.sendHeight + 2 * Theme.Space.m
+        let rows = stripRows + CGFloat(returns) * sendRow + 2 * Theme.Space.m
         return Swift.min(Swift.max(available - rows, ChannelStrip.minimumFader), ChannelStrip.maximumFader)
     }
 }
@@ -56,10 +62,10 @@ struct ChannelStrip: View {
     let track: Track?
     var faderHeight: CGFloat = 180
 
-    static let width: CGFloat = 120
-    /// Colour bar, name, effects, pan, level, mute/solo and output, with their gaps.
-    static let fixedHeight: CGFloat = 360
-    static let sendHeight: CGFloat = 76
+    /// Wide enough for a name, "Effects 2/3" and a send at the standard text size, and wider as
+    /// the text grows: a fixed 120 pt cut the strip's words from the second accessibility size on
+    /// (W18, M9).
+    @ScaledMetric(relativeTo: .subheadline) private var width: CGFloat = 120
     static let minimumFader: CGFloat = 160
     static let maximumFader: CGFloat = 420
     /// The level an automation pass is writing under the fader, for the readout below it.
@@ -68,10 +74,13 @@ struct ChannelStrip: View {
     var body: some View {
         VStack(spacing: Theme.Space.s) {
             Rectangle().fill(color).frame(height: 3).accessibilityHidden(true)
+            // The strip's heading: VoiceOver's Headings rotor goes strip by strip (W18, m7).
             Text(title)
                 .font(Theme.Font.label)
                 .foregroundStyle(Theme.Color.text)
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .accessibilityAddTraits(.isHeader)
             if let track {
                 let active = track.inserts.filter { !$0.isBypassed }.count
                 Button(track.inserts.isEmpty ? "Effects" : "Effects \(active)/\(track.inserts.count)") {
@@ -98,7 +107,7 @@ struct ChannelStrip: View {
             PanControl(address: pan)
             HStack(alignment: .bottom, spacing: Theme.Space.xs) {
                 Fader(address: volume, passed: $passedVolume, height: faderHeight)
-                PeakMeter(track: track?.id, height: faderHeight)
+                PeakMeter(title: title, track: track?.id, height: faderHeight)
             }
             levelReadout
             if let track {
@@ -116,7 +125,7 @@ struct ChannelStrip: View {
                 OutputMenu(track: track)
             }
         }
-        .frame(width: Self.width)
+        .frame(width: width)
         .padding(.vertical, Theme.Space.s)
         .background(Theme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
@@ -151,6 +160,8 @@ struct ChannelStrip: View {
 /// at the top once the signal passed full scale. Polled in its own leaf, never in a strip body.
 struct PeakMeter: View {
     @Environment(AudioEngine.self) private var engine
+    /// The strip's name, so VoiceOver says whose meter it is ("Bass Meter"), not only "Level".
+    let title: String
     /// Nil for the master.
     let track: TrackID?
     let height: CGFloat
@@ -172,7 +183,7 @@ struct PeakMeter: View {
                     .offset(y: -height * CGFloat(Self.position(1)))
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Level")
+            .accessibilityLabel("\(title) Meter")
             .accessibilityValue(Self.spoken(Swift.max(level.left, level.right)))
         }
     }

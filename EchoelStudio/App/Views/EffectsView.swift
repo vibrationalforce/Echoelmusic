@@ -84,9 +84,11 @@ struct EffectsView: View {
     }
 
     private func row(_ insert: Insert, index: Int, count: Int) -> some View {
-        HStack(spacing: Theme.Space.s) {
+        let isSelected = selected == insert.id
+        let word = insert.isBypassed ? "Off" : "On"
+        return HStack(spacing: Theme.Space.s) {
             Button {
-                selected = selected == insert.id ? nil : insert.id
+                selected = isSelected ? nil : insert.id
             } label: {
                 VStack(alignment: .leading, spacing: Theme.Space.xxs) {
                     Text(insert.plugin.displayName)
@@ -96,17 +98,22 @@ struct EffectsView: View {
                         .font(Theme.Font.caption)
                         .foregroundStyle(Theme.Color.textSecondary)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                // A full touch target: the two lines alone were about 39 pt high (W18, m10).
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.touch, alignment: .leading)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityHint(selected == insert.id ? "Hides its interface." : "Shows its interface.")
-            Button(insert.isBypassed ? "Off" : "On") {
+            .accessibilityHint(isSelected ? "Hides its interface." : "Shows its interface.")
+            // The effect whose interface stands below is said to be the selected one (W18, m8).
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+            Button(word) {
                 perform(bypass: insert.id, !insert.isBypassed)
             }
             .buttonStyle(ToolButtonStyle(isActive: !insert.isBypassed, activeColor: Theme.Color.play))
             .accessibilityLabel("\(insert.plugin.displayName) Active")
             .accessibilityValue(insert.isBypassed ? "Bypassed" : "On")
+            // Voice Control answers to the word on the button, not only to its spoken name (W18, m9).
+            .accessibilityInputLabels([Text(verbatim: word), Text(verbatim: "\(insert.plugin.displayName) Active")])
             Menu {
                 Button("Move Up", systemImage: "arrow.up") { perform(move: insert.id, to: index - 1) }
                     .disabled(index == 0)
@@ -123,7 +130,7 @@ struct EffectsView: View {
             .accessibilityLabel("More for \(insert.plugin.displayName)")
         }
         .padding(.horizontal, Theme.Space.m)
-        .background(selected == insert.id ? Theme.Color.surfaceRaised : Theme.Color.surface)
+        .background(isSelected ? Theme.Color.surfaceRaised : Theme.Color.surface)
     }
 
     private func status(of insert: Insert) -> String {
@@ -151,6 +158,9 @@ struct EffectsView: View {
         } label: {
             Label("Add Effect", systemImage: "plus")
                 .font(Theme.Font.body)
+                // One touch target high, like every other control of the page (W18, m10).
+                .frame(minHeight: Theme.Size.touch)
+                .contentShape(Rectangle())
         }
         .disabled(count >= Insert.maximumPerTrack)
     }

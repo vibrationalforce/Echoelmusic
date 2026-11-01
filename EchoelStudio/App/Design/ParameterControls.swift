@@ -41,9 +41,14 @@ enum ParameterFormat {
 
 /// A vertical fader. Drag anywhere on it to set the level (the console law puts 0 dB at
 /// about 80 % of the travel); double-tap returns to 0 dB.
+///
+/// With VoiceOver every value control here acts alike: swipe up or down to adjust, double-tap to
+/// type the value on Echoel's number pad, Reset among the actions. The double-tap is the control's
+/// own action, so it can never fall through to the touch double-tap that resets the value (W18).
 struct Fader: View {
     @Environment(ProjectStore.self) private var store
     @Environment(ParameterWriter.self) private var writer
+    @Environment(NumberPadController.self) private var pad: NumberPadController?
     let address: ParameterAddress
     /// What an automation pass wrote under the finger, which the song's own value does not
     /// follow; the strip's level readout shows it too.
@@ -92,15 +97,25 @@ struct Fader: View {
                 let step = direction == .increment ? 0.02 : -0.02
                 writer.set(address, normalized: position + step, gesture: false)
             }
-            .midiLearnable(address)
+            .accessibilityAction { typeValue(descriptor, value: stored) }
+            .accessibilityAction(named: "Type a Value") { typeValue(descriptor, value: stored) }
+            .accessibilityAction(named: "Reset") { writer.reset(address) }
+            .midiLearnable(address, title: descriptor.title)
         }
+    }
+
+    /// The level on Echoel's number pad, as the strip's readout opens it: one undo step.
+    private func typeValue(_ descriptor: ParameterDescriptor, value: Double) {
+        pad?.type(address, descriptor: descriptor, value: value, title: descriptor.title, owner: "\(address)", writer: writer)
     }
 }
 
-/// A horizontal pan control: drag left or right from where it is; double-tap centres it.
+/// A horizontal pan control: drag left or right from where it is; double-tap centres it. VoiceOver
+/// as on the fader; the position is said in words ("20 percent left"), the screen keeps "L20".
 struct PanControl: View {
     @Environment(ProjectStore.self) private var store
     @Environment(ParameterWriter.self) private var writer
+    @Environment(NumberPadController.self) private var pad: NumberPadController?
     let address: ParameterAddress
     @State private var start: Double?
     /// What an automation pass wrote under the finger (see `Fader.passed`).
@@ -113,14 +128,18 @@ struct PanControl: View {
             let value = passed ?? stored
             let position = descriptor.normalized(value)
             ZStack(alignment: .leading) {
+                // A control's boundary and a centre mark in the secondary text colour: centred, the
+                // pan drew no accent bar and nearly vanished on its ground (W18, m5).
                 RoundedRectangle(cornerRadius: Theme.Radius.small)
                     .fill(Theme.Color.surfaceRaised)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.Radius.small)
+                        .strokeBorder(Theme.Color.borderStrong, lineWidth: 1))
                 Rectangle()
                     .fill(Theme.Color.accent)
                     .frame(width: abs(CGFloat(position) - 0.5) * Self.width, height: 4)
                     .offset(x: CGFloat(Swift.min(position, 0.5)) * Self.width)
                 Rectangle()
-                    .fill(Theme.Color.border)
+                    .fill(Theme.Color.textSecondary)
                     .frame(width: 1, height: 12)
                     .offset(x: Self.width / 2)
             }
@@ -143,12 +162,20 @@ struct PanControl: View {
             .onTapGesture(count: 2) { writer.reset(address) }
             .accessibilityElement()
             .accessibilityLabel(descriptor.title)
-            .accessibilityValue(ParameterFormat.text(value, unit: descriptor.unit))
+            .accessibilityValue(Spoken.pan(value))
             .accessibilityAdjustableAction { direction in
                 writer.set(address, normalized: position + (direction == .increment ? 0.05 : -0.05), gesture: false)
             }
-            .midiLearnable(address)
+            .accessibilityAction { typeValue(descriptor, value: stored) }
+            .accessibilityAction(named: "Type a Value") { typeValue(descriptor, value: stored) }
+            .accessibilityAction(named: "Reset") { writer.reset(address) }
+            .midiLearnable(address, title: descriptor.title)
         }
+    }
+
+    /// The position on Echoel's number pad, in percent (minus is left): one undo step.
+    private func typeValue(_ descriptor: ParameterDescriptor, value: Double) {
+        pad?.type(address, descriptor: descriptor, value: value, title: descriptor.title, owner: "\(address)", writer: writer)
     }
 }
 
@@ -234,19 +261,30 @@ struct ParameterField: View {
                                                        range: descriptor.range)
         }
         .accessibilityElement()
-        .accessibilityLabel(title(descriptor))
+        .accessibilityLabel(spokenTitle(descriptor))
         .accessibilityValue(ParameterFormat.text(value, descriptor: descriptor))
         .accessibilityAdjustableAction { direction in
             let step = Self.step(descriptor)
             writer.set(address, normalized: position + (direction == .increment ? step : -step), gesture: false)
         }
+        // A tap and a double-tap hang side by side here: VoiceOver's double-tap is the tap's action,
+        // typing, and never the touch double-tap that resets (W18, the double-tap trap).
+        .accessibilityAction { openPad(descriptor, value: value) }
         .accessibilityAction(named: "Type a Value") { openPad(descriptor, value: value) }
-        .midiLearnable(address)
+        .accessibilityAction(named: "Reset") { writer.reset(address) }
+        .midiLearnable(address, title: spokenTitle(descriptor))
     }
 
     /// The pad for this field, typed in the unit a musician reads (ms, %, Hz).
     private func openPad(_ descriptor: ParameterDescriptor, value: Double) {
-        pad?.type(address, descriptor: descriptor, value: value, title: title(descriptor), owner: owner, writer: writer)
+        pad?.type(address, descriptor: descriptor, value: value, title: spokenTitle(descriptor), owner: owner, writer: writer)
+    }
+
+    /// The name as VoiceOver says it and the pad's title shows it: a send in words, "Send to
+    /// Return 1" — the field's own "→ Return 1" was read with its arrow (W18, m6).
+    private func spokenTitle(_ descriptor: ParameterDescriptor) -> String {
+        if let target = address.key.sendTarget, let track = store.project.track(target) { return "Send to \(track.name)" }
+        return title(descriptor)
     }
 
     /// One VoiceOver swipe: one whole step of a stepped value (a semitone of the root key), else

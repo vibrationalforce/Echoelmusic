@@ -23,6 +23,27 @@ struct JamView: View {
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
         }
         .preferredColorScheme(.dark)
+        // The page's sections change under VoiceOver's focus when the jam does: say what happened
+        // (W18, m22). Hosting, following and a lost host are said by the line under the transport,
+        // which hears them with this page closed too; here only what the page alone shows.
+        .onChange(of: jam.role) { old, new in
+            if let said = Self.spoken(from: old, to: new, problem: jam.problem) { Theme.Accessibility.announce(said) }
+        }
+        .onChange(of: jam.problem) { _, problem in
+            if let problem { Theme.Accessibility.announce(Announcement(problem, priority: .urgent)) }
+        }
+    }
+
+    /// A change of role in a sentence, or nil where the transport's line or a problem says it.
+    static func spoken(from old: JamSession.Role, to new: JamSession.Role, problem: String?) -> Announcement? {
+        guard problem == nil else { return nil }
+        switch (old, new) {
+        case (.off, .looking): return Announcement("Looking for a jam nearby.", priority: .normal)
+        case (_, .joining(let host)): return Announcement("Joining \(host.name).", priority: .normal)
+        case (.hosting, .off): return Announcement("Jam ended.", priority: .normal)
+        case (.joined, .off): return Announcement("You left the jam.", priority: .normal)
+        default: return nil
+        }
     }
 
     @ViewBuilder private var content: some View {

@@ -34,7 +34,22 @@ struct StudioView: View {
     /// The tempo lock, Fixed or Flow (W12); owned here so Flow goes on while another view is open.
     @State private var flow = FlowController()
 
-    enum Surface: Hashable { case instrument, tracks, arrange, session, mixer, field, sky }
+    enum Surface: Hashable {
+        case instrument, tracks, arrange, session, mixer, field, sky
+
+        /// Its name on the bar of views, and the name of its area for VoiceOver.
+        var title: String {
+            switch self {
+            case .instrument: "Instrument"
+            case .tracks: "Tracks"
+            case .arrange: "Arrange"
+            case .session: "Session"
+            case .mixer: "Mixer"
+            case .field: "Field"
+            case .sky: "Sky"
+            }
+        }
+    }
 
     var body: some View {
         @Bindable var router = router
@@ -70,12 +85,18 @@ struct StudioView: View {
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
     }
 
+    /// Four named areas, so VoiceOver's Containers rotor reaches each in one swipe and says where
+    /// it is (W18, m17): the transport, the chosen view, the keys, the bar of views.
     private var studio: some View {
         VStack(spacing: 0) {
             TransportBar()
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Transport")
             Divider().overlay(Theme.Color.border)
             ZStack(alignment: .bottomTrailing) {
                 surfaceView
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel(surface.title)
                 if showsVideoWindow, hasVideo, !fieldFullscreen {
                     VideoWindow(close: { showsVideoWindow = false })
                         .padding(Theme.Space.m)
@@ -100,6 +121,8 @@ struct StudioView: View {
             if showsKeys || surface == .instrument {
                 Divider().overlay(Theme.Color.border)
                 PlayKeysView()
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Keys")
             }
             // The earlier instrument's chip bar at the bottom: one chip per view, in thumb reach.
             SurfaceBar(selection: $surface)
@@ -417,7 +440,7 @@ struct TransportBar: View {
             // The menu closed and the export may first wait for the song's audio to decode: without
             // this line nothing on screen said anything was under way (review 2026-10-22).
             if documents.isExporting {
-                Text(documents.exportProgress ?? "Exporting the song…")
+                Text(documents.exportProgress ?? Self.exporting)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
                     .padding(.bottom, Theme.Space.xxs)
@@ -425,7 +448,7 @@ struct TransportBar: View {
             // The learn banner leads the strip and hides nothing under it: a message raised while
             // learning is as true as one raised before (round 4, C4).
             if midi.isLearning {
-                Text(midi.learnTarget == nil ? "MIDI Learn: tap a control, or move one in a plugin." : "MIDI Learn: move a knob or fader on your device.")
+                Text(learnLine)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.accent)
                     .padding(.bottom, Theme.Space.xxs)
@@ -437,6 +460,44 @@ struct TransportBar: View {
             JamStatusLine()
             messages
         }
+        // A line is said as it arrives, wherever VoiceOver is — in a sheet, over the full-screen
+        // Field, in another view; `StatusStrip` decides what and how urgently (W18, M7).
+        .onChange(of: statusStrip) { old, new in
+            if let said = StatusStrip.announcement(from: old, to: new) { Theme.Accessibility.announce(said) }
+        }
+        // A problem that stood before the strip did: audio that could not start at launch.
+        .onAppear {
+            if let said = StatusStrip.announcement(from: StatusStrip(), to: statusStrip) {
+                Theme.Accessibility.announce(said)
+            }
+        }
+    }
+
+    private static let exporting = "Exporting the song…"
+
+    private var learnLine: String {
+        midi.learnTarget == nil
+            ? "MIDI Learn: tap a control, or move one in a plugin."
+            : "MIDI Learn: move a knob or fader on your device."
+    }
+
+    /// The strip's lines as VoiceOver hears of them. Each one changes with an event, never with the
+    /// clock — an export's step at most once a stem — so watching them is no hot state (Law 6).
+    private var statusStrip: StatusStrip {
+        StatusStrip(saveError: documents.saveError,
+                    audioError: engine.lastError,
+                    documentError: documents.lastError,
+                    notice: Self.notices(engine.notice, engine.plugins.notice),
+                    learning: midi.isLearning ? learnLine : nil,
+                    exportStep: documents.isExporting ? (documents.exportProgress ?? Self.exporting) : nil,
+                    exportResult: spokenExportResult)
+    }
+
+    /// The loudness line of the export just made, as it is said: a comma where the screen has a
+    /// middle dot, which VoiceOver would name.
+    private var spokenExportResult: String? {
+        guard documents.lastExportIsNews, let loudness = documents.lastExportLoudness else { return nil }
+        return Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak, separator: ", ")
     }
 
     /// The audio and the document each say their own message, so one never hides the other
@@ -525,12 +586,12 @@ struct TransportBar: View {
         return standing.isEmpty ? nil : standing.joined(separator: " ")
     }
 
-    static func exportText(integrated: Double, truePeak: Double) -> String {
+    static func exportText(integrated: Double, truePeak: Double, separator: String = " · ") -> String {
         func value(_ number: Double, _ unit: String) -> String {
             number.isFinite ? NumberText.string(number, decimals: 1, unit: unit) : "silent"
         }
         let warning = truePeak > -1 ? " — peaks above −1 dBTP may distort when encoded" : ""
-        return "Last export: " + value(integrated, "LUFS") + " · " + value(truePeak, "dBTP") + warning
+        return "Last export: " + value(integrated, "LUFS") + separator + value(truePeak, "dBTP") + warning
     }
 }
 
@@ -578,12 +639,27 @@ private struct JamStatusLine: View {
     @Environment(JamSession.self) private var jam: JamSession?
 
     var body: some View {
-        if let line = jam?.transportLine {
-            Text(line.text)
-                .font(Theme.Font.caption)
-                .foregroundStyle(line.warning ? Theme.Color.warning : Theme.Color.textSecondary)
-                .padding(.bottom, Theme.Space.xxs)
+        // A stack even when it is empty, so the line is said as it changes (`onChange` needs a view).
+        VStack(spacing: 0) {
+            if let line = jam?.transportLine {
+                Text(line.text)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(line.warning ? Theme.Color.warning : Theme.Color.textSecondary)
+                    .padding(.bottom, Theme.Space.xxs)
+            }
         }
+        .onChange(of: jam?.transportLine?.text) { old, new in
+            if let said = spoken(new, after: old) { Theme.Accessibility.announce(said) }
+        }
+    }
+
+    /// The line as it changes, wherever VoiceOver is — the Jam page may be closed: a host lost or
+    /// gone urgently (W18, M7/m22). The host's own line going back from "Starting on the next
+    /// bar." to "Hosting a Jam." is not said: the music starting says it.
+    private func spoken(_ text: String?, after previous: String?) -> Announcement? {
+        guard let text, let jam else { return nil }
+        if previous != nil, jam.role == .hosting, !jam.startIsPending { return nil }
+        return Announcement(text, priority: jam.hostIsGone ? .urgent : .normal)
     }
 }
 
@@ -630,7 +706,8 @@ struct TempoField: View {
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
-            .frame(minWidth: valueWidth)
+            // A full touch target to tap or drag, not the number's own ~42 pt (W18, m14).
+            .frame(minWidth: valueWidth, minHeight: Theme.Size.touch)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 2)
@@ -812,6 +889,9 @@ struct SongMenu: View {
                 timeSignatureMenu
             }
             Section("Export") {
+                // Why the entries below are dimmed, as a line of the menu that cannot be tapped
+                // (W18, m15): a song like Four Tracks opens with every one of them off.
+                if let reason = exportWaitReason { Text(reason) }
                 Button("Export WAV…", systemImage: "square.and.arrow.up") {
                     Task {
                         // A finished export is the newest news: its loudness line must not wait for a
@@ -924,8 +1004,19 @@ struct SongMenu: View {
             .frame(minHeight: Theme.Size.touch)
         }
         .accessibilityLabel("Song \(documents.songTitle)")
-        .accessibilityHint("New song or open another. Songs save automatically.")
+        // What the menu holds, by its sections, not only its first two entries (W18, m16).
+        .accessibilityHint("Songs, export, sync, connections and About. Songs save automatically.")
         .onAppear { documents.refresh() }
+    }
+
+    /// What the dimmed export entries wait for, or nil while the main ones can run. A song without
+    /// video keeps Export Video dimmed for good, which its own name explains; it is not said here.
+    private var exportWaitReason: String? {
+        if documents.isExporting { return "An export is under way." }
+        if !store.project.arrangementHasSound {
+            return "Exports render the arrangement. Place a clip with notes or an audio region in Arrange first."
+        }
+        return nil
     }
 
     /// The song's key and scale, and whether a keyboard is held in them. Through the writer like
@@ -1075,16 +1166,13 @@ struct SongMenu: View {
 private struct SurfaceBar: View {
     @Binding var selection: StudioView.Surface
 
-    private static var items: [(surface: StudioView.Surface, title: String)] {
-        [(.instrument, "Instrument"), (.tracks, "Tracks"), (.arrange, "Arrange"), (.session, "Session"),
-         (.mixer, "Mixer"), (.field, "Field"), (.sky, "Sky")]
-    }
+    private static var items: [StudioView.Surface] { [.instrument, .tracks, .arrange, .session, .mixer, .field, .sky] }
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Theme.Space.s) {
-                ForEach(Self.items, id: \.surface) { item in
-                    chip(item.surface, item.title)
+                ForEach(Self.items, id: \.self) { surface in
+                    chip(surface, surface.title)
                 }
             }
             .padding(.horizontal, Theme.Space.m)
@@ -1096,7 +1184,7 @@ private struct SurfaceBar: View {
         }
         .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("View")
+        .accessibilityLabel("Views")
     }
 
     private func chip(_ surface: StudioView.Surface, _ title: String) -> some View {

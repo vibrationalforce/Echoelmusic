@@ -36,72 +36,29 @@ struct TrackRow: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
     @Environment(StudioRouter.self) private var router
+    @Environment(\.dynamicTypeSize) private var typeSize
     let track: Track
     let open: (TrackID) -> Void
 
     var body: some View {
+        // At the accessibility text sizes the name stands over the buttons: beside up to four of
+        // them it kept only what the row had left, a few letters (W18, M8).
+        let stacked = typeSize.isAccessibilitySize
+        let layout = stacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.Space.s))
+            : AnyLayout(HStackLayout(spacing: Theme.Space.m))
         HStack(spacing: Theme.Space.m) {
             RoundedRectangle(cornerRadius: Theme.Radius.small)
                 .fill(Theme.Color.track(track.colorIndex))
                 .frame(width: 6)
                 .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: Theme.Space.xxs) {
-                Text(track.name)
-                    .font(Theme.Font.body)
-                    .foregroundStyle(Theme.Color.text)
-                    .lineLimit(1)
-                Text(track.typeName)
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.textSecondary)
+            layout {
+                nameColumn(minHeight: stacked ? Theme.Size.touch : Theme.Size.trackRowHeight)
+                buttons
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .onTapGesture { if track.kind == .instrument { open(track.id) } }
-            .accessibilityElement(children: .ignore)
-            .accessibilityAddTraits(track.kind == .instrument ? .isButton : [])
-            .accessibilityHint(track.kind == .instrument ? "Opens the editor." : "")
-            .accessibilityLabel("\(track.name), \(track.typeName), \(Theme.Color.trackName(track.colorIndex))")
-            .accessibilityAction(named: "Rename Track") { router.sheet = .rename(.track(track.id)) }
-            .accessibilityAction(named: "Move Track Up") { move(by: -1) }
-            .accessibilityAction(named: "Move Track Down") { move(by: 1) }
-            .accessibilityAction(named: "Delete Track") {
-                try? store.perform(.removeTrack(track.id))
-            }
-
-            if track.kind == .audio || track.kind == .instrument { ArmButton(track: track) }
-            if track.kind == .video { VideoTrackButtons(track: track) }
-            if track.kind == .instrument {
-                let isLive = engine.liveTrackID(in: store.project) == track.id
-                Button {
-                    engine.setLiveTrack(track.id)
-                } label: {
-                    Image(systemName: "pianokeys")
-                }
-                .buttonStyle(ToolButtonStyle(isActive: isLive))
-                .accessibilityLabel("Play \(track.name) from MIDI")
-                .accessibilityValue(isLive ? "On" : "Off")
-            }
-
-            Button {
-                try? store.perform(.setMute(track.id, !track.mixer.isMuted))
-            } label: {
-                Text("M")
-            }
-            .buttonStyle(ToolButtonStyle(isActive: track.mixer.isMuted, activeColor: Theme.Color.accent))
-            .accessibilityLabel("Mute \(track.name)")
-            .accessibilityValue(track.mixer.isMuted ? "On" : "Off")
-
-            Button {
-                try? store.perform(.setSolo(track.id, !track.mixer.isSoloed))
-            } label: {
-                Text("S")
-            }
-            .buttonStyle(ToolButtonStyle(isActive: track.mixer.isSoloed, activeColor: Theme.Color.play))
-            .accessibilityLabel("Solo \(track.name)")
-            .accessibilityValue(track.mixer.isSoloed ? "On" : "Off")
         }
         .padding(.horizontal, Theme.Space.m)
+        .padding(.vertical, stacked ? Theme.Space.s : 0)
         .frame(minHeight: Theme.Size.trackRowHeight)
         .background(Theme.Color.surface)
         .contextMenu {
@@ -121,6 +78,70 @@ struct TrackRow: View {
                 try? store.perform(.removeTrack(track.id))
             }
         }
+    }
+
+    /// The name and the kind, the door to an instrument track's editor: the row's whole height, not
+    /// the two lines alone, which were about 39 pt (W18, m13). Two lines for a long name.
+    private func nameColumn(minHeight: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Space.xxs) {
+            Text(track.name)
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.Color.text)
+                .lineLimit(2)
+            Text(track.typeName)
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture { if track.kind == .instrument { open(track.id) } }
+        .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(track.kind == .instrument ? .isButton : [])
+        .accessibilityHint(track.kind == .instrument ? "Opens the editor." : "")
+        .accessibilityLabel("\(track.name), \(track.typeName), \(Theme.Color.trackName(track.colorIndex))")
+        .accessibilityAction(named: "Rename Track") { router.sheet = .rename(.track(track.id)) }
+        .accessibilityAction(named: "Move Track Up") { move(by: -1) }
+        .accessibilityAction(named: "Move Track Down") { move(by: 1) }
+        .accessibilityAction(named: "Delete Track") {
+            try? store.perform(.removeTrack(track.id))
+        }
+    }
+
+    /// Arm, the video doors, live play, mute and solo, side by side whatever the layout.
+    private var buttons: some View {
+        HStack(spacing: Theme.Space.m) {
+            if track.kind == .audio || track.kind == .instrument { ArmButton(track: track) }
+            if track.kind == .video { VideoTrackButtons(track: track) }
+            if track.kind == .instrument { liveButton }
+            Button {
+                try? store.perform(.setMute(track.id, !track.mixer.isMuted))
+            } label: {
+                Text("M")
+            }
+            .buttonStyle(ToolButtonStyle(isActive: track.mixer.isMuted, activeColor: Theme.Color.accent))
+            .accessibilityLabel("Mute \(track.name)")
+            .accessibilityValue(track.mixer.isMuted ? "On" : "Off")
+            Button {
+                try? store.perform(.setSolo(track.id, !track.mixer.isSoloed))
+            } label: {
+                Text("S")
+            }
+            .buttonStyle(ToolButtonStyle(isActive: track.mixer.isSoloed, activeColor: Theme.Color.play))
+            .accessibilityLabel("Solo \(track.name)")
+            .accessibilityValue(track.mixer.isSoloed ? "On" : "Off")
+        }
+    }
+
+    private var liveButton: some View {
+        let isLive = engine.liveTrackID(in: store.project) == track.id
+        return Button {
+            engine.setLiveTrack(track.id)
+        } label: {
+            Image(systemName: "pianokeys")
+        }
+        .buttonStyle(ToolButtonStyle(isActive: isLive))
+        .accessibilityLabel("Play \(track.name) from MIDI")
+        .accessibilityValue(isLive ? "On" : "Off")
     }
 
     private var index: Int? { store.project.trackIndex(track.id) }

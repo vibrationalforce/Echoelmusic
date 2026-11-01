@@ -88,7 +88,16 @@ struct SettingField: View {
         .accessibilityAdjustableAction { direction in
             commit(snapped(value + (direction == .increment ? step : -step)))
         }
+        // As `ParameterField`: VoiceOver's double-tap types the value, as a tap does, and never
+        // falls through to the touch double-tap that returns it to the standard (W18); Reset is an
+        // action of its own where there is a standard.
+        .accessibilityAction { typeValue() }
         .accessibilityAction(named: "Type a Value", typeValue)
+        .accessibilityActions {
+            if let standard {
+                Button("Reset") { commit(snapped(standard)) }
+            }
+        }
     }
 
     private var shown: String { unit.isEmpty ? String(value) : "\(value) \(unit)" }
