@@ -467,4 +467,32 @@ final class PolySynthTests: XCTestCase {
         _ = render(&synth, seconds: 0.1)
         XCTAssertLessThan(peak(render(&synth, seconds: 0.02)), 1e-6)
     }
+
+    /// A turned Character — a knob, automation, a body route — reaches a sounding voice as a glide,
+    /// as the cutoff and the level do. It drives the FM index, the morph's position and the sub's
+    /// level straight into the waveform, so a step in the value was a step in the sound: an FM tone
+    /// moving from index 2.2 to 5 jumped further in one sample than the brighter tone ever moves
+    /// (click hunt, 2026-11-01). Measured on FM with the filter open: around the change no sample
+    /// moves further than the steady tone after it does.
+    func testACharacterChangeGlidesInsteadOfJumping() {
+        // The sub with a sine on top is smooth too: its step is the sub's level.
+        for engine in [SynthEngine.fm, .sub] {
+            var patch = SynthPatch(waveform: .sine, cutoff: 18_000, resonance: 0, filterEnvelopeAmount: 0)
+            patch.engine = engine
+            patch.character = 0.36
+            var synth = PolySynth(patch: patch, sampleRate: rate)
+            synth.noteOn(pitch: 57, velocity: 100)
+            // Mid-waveform: at 24,000 samples both FM phases stand at zero and the index moves nothing.
+            var heard = render(&synth, frames: 24_037)
+            patch.character = engine == .sub ? 1 : 0.84
+            synth.setPatch(patch)
+            heard += render(&synth, frames: 24_000)
+            func steepest(_ range: Range<Int>) -> Float {
+                range.map { Swift.abs(heard[$0] - heard[$0 - 1]) }.max() ?? 0
+            }
+            let steady = steepest(26_000..<48_000)
+            let around = steepest(24_030..<24_400)
+            XCTAssertLessThanOrEqual(around, steady * 1.05, "\(engine): the change moves no faster than the tone")
+        }
+    }
 }
