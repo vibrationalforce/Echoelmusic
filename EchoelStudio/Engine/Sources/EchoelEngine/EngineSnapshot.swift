@@ -227,6 +227,9 @@ public struct EngineSnapshot: Sendable {
     public let generation: UInt64
     public let time: TimeConversion
     public let timeSignature: TimeSignature
+    /// The song's key without its names, handed to every insert at each chunk (VOX): a harmonizer
+    /// sings its choir styles in it. Compiled here, so the render thread never reads the song.
+    public let key: SongKey
     public private(set) var lanes: [Lane]
     public private(set) var audioLanes: [AudioLane]
     public private(set) var returns: [ReturnLane]
@@ -269,6 +272,7 @@ public struct EngineSnapshot: Sendable {
         self.generation = generation
         time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
         timeSignature = project.timeSignature
+        key = SongKey(project.context)
         let anySolo = project.tracks.contains { $0.mixer.isSoloed }
         let master = project.master
         let conversion = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
