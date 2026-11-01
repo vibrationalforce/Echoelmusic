@@ -21,10 +21,10 @@
     </script>
 
     <title>Resolume over OSC: breathe on any parameter — Echoel</title>
-    <meta name="description" content="Enable OSC input in Resolume, point Echoel at it, right-click a parameter and breathe. Which body channels map straight across, and the one that does not.">
+    <meta name="description" content="Enable OSC input in Resolume, point the earlier Echoel app (10.79) at it, right-click a parameter and breathe. Which body channels map straight across.">
     <meta name="theme-color" content="#000000">
     <meta property="og:title" content="Resolume over OSC: breathe on any parameter — Echoel">
-    <meta property="og:description" content="Enable OSC input in Resolume, point Echoel at it, then right-click a parameter and breathe — Resolume learns the address. Which body channels map straight, and the one that does not.">
+    <meta property="og:description" content="Enable OSC input in Resolume, point the earlier Echoel app (10.79) at it, then right-click a parameter and breathe — Resolume learns the address.">
     <meta property="og:url" content="https://echoelmusic.com/resolume-osc.html">
     <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
     <meta property="og:image:width" content="1200">
@@ -34,7 +34,7 @@
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Resolume over OSC: breathe on any parameter — Echoel">
-    <meta name="twitter:description" content="Enable OSC input in Resolume, point Echoel at it, then right-click a parameter and breathe — Resolume learns the address. Which body channels map straight, and the one that does not.">
+    <meta name="twitter:description" content="Enable OSC input in Resolume, point the earlier Echoel app (10.79) at it, then right-click a parameter and breathe — Resolume learns the address.">
     <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
@@ -43,7 +43,7 @@
     <link rel="alternate" hreflang="en" href="https://echoelmusic.com/resolume-osc.html">
     
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Integrations","item":"https://echoelmusic.com/integrations.html"},{"@type":"ListItem","position":3,"name":"Resolume over OSC","item":"https://echoelmusic.com/resolume-osc.html"}]}</script>
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Drive Resolume parameters from a performer's breath and pulse over OSC","description":"Resolume learns an OSC address from any parameter. Echoel sends the body one way over OSC, so opacity, effect mix and speed can follow a performer.","totalTime":"PT10M","tool":[{"@type":"HowToTool","name":"Resolume Arena or Avenue"},{"@type":"HowToTool","name":"Echoel on iPhone"}],"step":[{"@type":"HowToStep","name":"Open the port","text":"Resolume Preferences, OSC tab: enable OSC input and note the port."},{"@type":"HowToStep","name":"Point Echoel at it","text":"Echoel Routing, OSC host is the computer running Resolume and the port matches; patchbay Body to OSC out."},{"@type":"HowToStep","name":"Teach the parameter","text":"Right-click a parameter, Edit OSC, then breathe: Resolume binds the address that moves."},{"@type":"HowToStep","name":"Pick channels that already run nought to one","text":"Breath phase, coherence and normalized HRV map straight; heart rate is in beats per minute and needs an input range or the beat event instead."}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Drive Resolume parameters from a performer's breath and pulse over OSC","description":"Resolume learns an OSC address from any parameter. The earlier Echoel app sends the body one way over OSC, so opacity, effect mix and speed can follow a performer.","totalTime":"PT10M","tool":[{"@type":"HowToTool","name":"Resolume Arena or Avenue"},{"@type":"HowToTool","name":"Echoel on iPhone"}],"step":[{"@type":"HowToStep","name":"Open the port","text":"Resolume Preferences, OSC tab: enable OSC input and note the port."},{"@type":"HowToStep","name":"Point Echoel at it","text":"Echoel Routing, OSC host is the computer running Resolume and the port matches; patchbay Body to OSC out."},{"@type":"HowToStep","name":"Teach the parameter","text":"Right-click a parameter, Edit OSC, then breathe: Resolume binds the address that moves."},{"@type":"HowToStep","name":"Pick channels that already run nought to one","text":"Breath phase, coherence and normalized HRV map straight; heart rate is in beats per minute and needs an input range or the beat event instead."}]}</script>
     <link rel="stylesheet" href="shared.css?v=10.26.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
@@ -79,7 +79,7 @@
 
         <main id="main">
         <h1>Resolume: breathe on any parameter</h1>
-        <p><strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a new music workstation for iPhone and iPad. It does not send OSC, Art-Net or sACN yet. This page describes the earlier app (10.79.515), which is frozen; when the outputs return is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>.</p>
+        <p><strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a new music workstation for iPhone and iPad, still being tested on devices; what it holds is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>. Its Connections page sends OSC, ADM-OSC, Art-Net and sACN to your local network, each off until you switch it on &mdash; in TestFlight, not yet checked on a device. This guide was written for the earlier app (10.79.515), which is frozen; its steps have not been checked against Echoel Studio.</p>
         <p class="lead">Resolume learns an OSC address by watching what moves. Echoel sends a performer’s body out over OSC, one way, on open standards &mdash; so layer opacity, an effect mix or a clip’s speed can follow a breath or a settling pulse with nothing installed on either side.</p>
 
         <h2>1. Open the port in Resolume</h2>

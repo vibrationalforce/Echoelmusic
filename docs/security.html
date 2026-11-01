@@ -77,10 +77,10 @@
     <main id="main" class="subpage">
         <div class="subpage-hero">
             <h1>Security</h1>
-            <p class="date">Updated: February 2026</p>
+            <p class="date">Updated: November 2026</p>
             <span class="hero-badge">Privacy-First Design</span>
         </div>
-        <div class="subpage-summary"><strong>Local-first, and no servers.</strong> Echoelmusic stores and processes your data on your device, protected by Apple's on-device Data Protection. No accounts, no tracking, nothing sent to us. Biosignal values leave the device only over connections you switch on yourself &mdash; OSC/ADM-OSC, lighting output, or nearby session sharing &mdash; and Apple Health data is excluded from those. The first two are plain UDP and unencrypted by design; nearby sharing is encrypted device-to-device.</div>
+        <div class="subpage-summary"><strong>Local-first, and no servers.</strong> Echoel stores and processes your data on your device, protected by Apple's on-device Data Protection. No accounts, no tracking, nothing sent to us. Anything that leaves the device does so only over a connection you switch on yourself; for Echoel Studio, the app in TestFlight, the full list is in its section of the <a href="privacy.html#studio">Privacy Policy</a>. In the earlier app (10.79), biosignal values left the device only over OSC/ADM-OSC, lighting output or nearby session sharing, and Apple Health data was excluded from those; the first two are plain UDP and unencrypted by design, while nearby sharing is encrypted device-to-device.</div>
 
         <section>
             <h2>Local-First Architecture</h2>
@@ -98,7 +98,7 @@
             <ul>
                 <li><strong>Apple Data Protection:</strong> On-device files are encrypted at rest by iOS Data Protection (hardware-backed), unlocked only while the device is.</li>
                 <li><strong>No servers:</strong> we operate none, so your data is never sent to us and there is no account or database to breach.</li>
-                <li><strong>What you switch on does travel:</strong> if you explicitly enable OSC / ADM-OSC output or Art-Net / sACN lighting, biosignal values leave the device <strong>unencrypted</strong> to a destination you choose &mdash; plain UDP, because those open standards define no encryption, and that is the point of those features. Treat that network as you would any stage or studio LAN. <strong>Nearby session sharing is different:</strong> it runs device-to-device over Apple's MultipeerConnectivity with encryption <em>required</em>, so it is not on that list. In all cases, values read from Apple Health or Apple Watch are excluded and never leave.</li>
+                <li><strong>What you switch on does travel:</strong> if you explicitly enable OSC / ADM-OSC output or Art-Net / sACN lighting, biosignal values leave the device <strong>unencrypted</strong> to a destination you choose &mdash; plain UDP, because those open standards define no encryption, and that is the point of those features. Treat that network as you would any stage or studio LAN. <strong>Nearby session sharing is different:</strong> it runs device-to-device over Apple's MultipeerConnectivity with encryption <em>required</em>, so it is not on that list. In all cases, values read from Apple Health or Apple Watch are excluded and never leave. In Echoel Studio, body values go out on the Connections page only while you allow it there, and a live stream started with Go Live sends the Field&rsquo;s picture and the master mix &mdash; no body measurement &mdash; to the streaming service you entered.</li>
             </ul>
         </section>
 
@@ -106,20 +106,21 @@
             <h2>No Accounts, No Login</h2>
             <ul>
                 <li><strong>Nothing to sign into:</strong> Echoelmusic has no user accounts, no passwords, and stores no credentials &mdash; so there is nothing to authenticate or leak.</li>
-                <li><strong>You hold the keys:</strong> Access to HealthKit and the camera is gated entirely by the iOS permission prompts you grant, and can be revoked any time in Settings. The microphone is not among them &mdash; the app does not use it.</li>
+                <li><strong>You hold the keys:</strong> Access to the camera, the microphone, Bluetooth, the local network and your location &mdash; and, in the earlier app, HealthKit &mdash; is gated entirely by the iOS permission prompts you grant, and can be revoked any time in Settings. Echoel Studio asks for the microphone only when you arm an audio track or set one to hear its input; the earlier app (10.79) does not use it.</li>
             </ul>
         </section>
 
         <section>
             <h2>Biometric Data Handling</h2>
-            <p>Heart rate, HRV, and other biometric data read from Apple HealthKit is:</p>
+            <p>In the earlier app, heart rate, HRV and other biometric data read from Apple HealthKit is:</p>
             <ul>
                 <li><strong>Processed locally:</strong> All biometric-to-audio mapping happens on-device in real time</li>
                 <li><strong>Never transmitted:</strong> Biometric data is not sent to any server or third party</li>
                 <li><strong>Not stored permanently:</strong> Session data exists only during active use</li>
                 <li><strong>User-controlled:</strong> Biometric access requires explicit permission and can be revoked at any time</li>
             </ul>
-            <p>Echoelmusic is <strong>not a medical device</strong>. Biometric readings are used for creative and entertainment purposes only. See our <a href="health.html">Health Disclaimer</a>.</p>
+            <p>In Echoel Studio, heart rate, HRV and coherence derived from a Bluetooth chest strap stay on the device and are not written to a file; a song stores only which source moves which value. They leave the device only if you allow body sharing on the Connections page. Apple Health is not in Echoel Studio.</p>
+            <p>Echoel is <strong>not a medical device</strong>. Biometric readings are used for creative and entertainment purposes only. See our <a href="health.html">Health Disclaimer</a>.</p>
         </section>
 
         <section>
@@ -134,7 +135,7 @@
 
         <section>
             <h2>Open Source &amp; Transparency</h2>
-            <p>The instrument is built on native Apple frameworks (Core Audio, HealthKit, Metal, AVFoundation, CoreMIDI). No analytics, advertising or tracking SDKs are included in the app.</p>
+            <p>The earlier app is built on native Apple frameworks only (Core Audio, HealthKit, Metal, AVFoundation, CoreMIDI). Echoel Studio adds one open-source library, HaishinKit (BSD-3), for its live stream. Neither includes analytics, advertising or tracking SDKs.</p>
             <p>We believe transparency builds trust. If you have questions about our security practices, we are happy to discuss them.</p>
         </section>
 
