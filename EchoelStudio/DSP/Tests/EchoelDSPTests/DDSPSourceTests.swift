@@ -79,6 +79,20 @@ final class DDSPSourceTests: XCTestCase {
         }
     }
 
+    /// The partial loop's sine, one value at a time, is the lane-wise one to the last bit: the loop
+    /// over plain floats plays what the SIMD arithmetic played, only in time (click hunt,
+    /// 2026-11-01).
+    func testTheSineOfOneValueIsTheLaneWiseSineExactly() {
+        for start in stride(from: 0, to: 4_096, by: 64) {
+            var phases = DDSPSource.Bank()
+            for i in 0..<DDSPSource.partialCount { phases[i] = Float(start + i) / 4_096 }
+            let lanes = DDSPSource.sine(phases)
+            for i in 0..<DDSPSource.partialCount {
+                XCTAssertEqual(DDSPSource.sine(phases[i]), lanes[i], "phase \(phases[i])")
+            }
+        }
+    }
+
     func testTheRenderIsDeterministicAndFinite() {
         let first = tone(character: 0.3, frames: 12_000).samples
         let second = tone(character: 0.3, frames: 12_000).samples

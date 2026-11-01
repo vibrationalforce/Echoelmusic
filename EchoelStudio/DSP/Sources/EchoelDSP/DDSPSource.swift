@@ -120,14 +120,36 @@ struct DDSPSource: Sendable {
     static let c7: Float = -0.004_681_754_1
     static let c9: Float = 0.000_160_441_18
 
-    /// Each partial's position in its cycle, 0 ..< 1.
-    private var phases: Bank
-    /// Each partial's amplitude now, gliding toward `target`.
-    private var amplitudes: Bank
-    /// The amplitude table for `tableCharacter`, normalised to unit power.
-    private var target: Bank
-    /// 1 below the anti-alias band, 0 from Nyquist up, for the increment of the last update.
-    private var taper: Bank
+    /// The partials' state and constants side by side in memory, so `next` runs one loop of plain
+    /// floats over them (`sumPartials`). Arithmetic written on `SIMD64` values compiles element by
+    /// element through the standard library's generic code: 37 µs a sample for one voice, where a
+    /// sample lasts 21 µs at 48 kHz — the Body Voice, which plays on this engine, could not render
+    /// in time and the device dropped out (click hunt, 2026-11-01, measured in a release build).
+    /// The same arithmetic as a loop over floats is vector instructions: the same sound, the same
+    /// order of every operation, at a fraction of the cost.
+    struct Partials {
+        /// Each partial's position in its cycle, 0 ..< 1.
+        var phases: Bank
+        /// Each partial's amplitude now, gliding toward `target`.
+        var amplitudes: Bank
+        /// The amplitude table for `tableCharacter`, normalised to unit power.
+        var target: Bank
+        /// 1 below the anti-alias band, 0 from Nyquist up, for the increment of the last update.
+        var taper: Bank
+        /// The partial numbers, a copy of `DDSPSource.ratios` the loop reads in place.
+        var ratios: Bank
+        /// Scratch: what each partial plays this sample, before the sum.
+        var heard: Bank
+    }
+
+    private var partials: Partials
+    /// Where each field of `partials` starts, counted in floats.
+    private let amplitudeLane: Int
+    private let targetLane: Int
+    private let taperLane: Int
+    private let ratioLane: Int
+    private let heardLane: Int
+    private static let laneCount = 6 * partialCount
     /// The one-pole states of the noise bank.
     private var bands: Bands
     /// The harmonic/noise blend now, gliding; −1 until the first sample seeds it.
@@ -140,10 +162,15 @@ struct DDSPSource: Sendable {
     private var prng: UInt32 = 0x1234_5678
 
     init() {
-        phases = Self.startPhases
-        amplitudes = Bank(repeating: 0)
-        target = Bank(repeating: 0)
-        taper = Bank(repeating: 1)
+        partials = Partials(phases: Self.startPhases, amplitudes: Bank(repeating: 0), target: Bank(repeating: 0),
+                            taper: Bank(repeating: 1), ratios: Self.ratios, heard: Bank(repeating: 0))
+        let float = MemoryLayout<Float>.stride
+        let bank = MemoryLayout<Bank>.stride / float
+        amplitudeLane = (MemoryLayout<Partials>.offset(of: \Partials.amplitudes) ?? bank * float) / float
+        targetLane = (MemoryLayout<Partials>.offset(of: \Partials.target) ?? 2 * bank * float) / float
+        taperLane = (MemoryLayout<Partials>.offset(of: \Partials.taper) ?? 3 * bank * float) / float
+        ratioLane = (MemoryLayout<Partials>.offset(of: \Partials.ratios) ?? 4 * bank * float) / float
+        heardLane = (MemoryLayout<Partials>.offset(of: \Partials.heard) ?? 5 * bank * float) / float
         bands = Bands(repeating: 0)
         // The remaining constants are read here, off the render thread, so the first `next`
         // finds them initialised (see the type's note).
@@ -157,8 +184,8 @@ struct DDSPSource: Sendable {
     /// A fresh note on a silent voice: partials back at their starting phases and at nothing,
     /// so they glide in; the blend and the table are built again from the first sample.
     mutating func reset() {
-        phases = Self.startPhases
-        amplitudes = Bank(repeating: 0)
+        partials.phases = Self.startPhases
+        partials.amplitudes = Bank(repeating: 0)
         bands = Bands(repeating: 0)
         harmonicity = -1
         noiseLevel = -1
@@ -199,10 +226,7 @@ struct DDSPSource: Sendable {
             if Swift.abs(noiseLevel - noiseTarget) < Self.blendSnap { noiseLevel = noiseTarget }
         }
 
-        phases = phases + Self.ratios * dt
-        phases = phases - phases.rounded(.down)
-        amplitudes = amplitudes + (target - amplitudes) * Self.amplitudeGlide
-        let harmonic = (Self.sine(phases) * (amplitudes * taper)).sum()
+        let harmonic = sumPartials(dt: dt)
 
         let white = nextWhite()
         bands = bands * Self.bandPoles + Self.bandGains * white
@@ -211,12 +235,44 @@ struct DDSPSource: Sendable {
         return harmonic * harmonicity + noise * noiseLevel * (1 - harmonicity)
     }
 
+    /// Every partial one step on — its phase by its frequency, its amplitude toward the table — and
+    /// the sum of what they play. Two loops over plain floats: the first has no dependence between
+    /// partials and becomes vector instructions, the second adds in the partials' order, as
+    /// `SIMD.sum()` does.
+    @inline(__always)
+    private mutating func sumPartials(dt: Float) -> Float {
+        let glide = Self.amplitudeGlide
+        let a = amplitudeLane, t = targetLane, w = taperLane, r = ratioLane, h = heardLane
+        return withUnsafeMutablePointer(to: &partials) { (state: UnsafeMutablePointer<Partials>) -> Float in
+            state.withMemoryRebound(to: Float.self, capacity: Self.laneCount) { (lanes: UnsafeMutablePointer<Float>) -> Float in
+                for i in 0..<Self.partialCount {
+                    var phase = lanes[i] + lanes[r + i] * dt
+                    phase = phase - phase.rounded(.down)
+                    lanes[i] = phase
+                    let amplitude = lanes[a + i] + (lanes[t + i] - lanes[a + i]) * glide
+                    lanes[a + i] = amplitude
+                    lanes[h + i] = Self.sine(phase) * (amplitude * lanes[w + i])
+                }
+                var sum: Float = -0.0
+                for i in 0..<Self.partialCount { sum += lanes[h + i] }
+                return sum
+            }
+        }
+    }
+
     /// The anti-alias weights for this increment: 1 − smoothstep across the band.
     @inline(__always)
     private mutating func updateTaper(dt: Float) {
-        let position = (Self.ratios * dt - Self.taperStart) * Self.taperScale
-        let t = pointwiseMin(pointwiseMax(position, Bank(repeating: 0)), Bank(repeating: 1))
-        taper = 1 - t * t * (3 - t * 2)
+        let w = taperLane, r = ratioLane
+        withUnsafeMutablePointer(to: &partials) { (state: UnsafeMutablePointer<Partials>) in
+            state.withMemoryRebound(to: Float.self, capacity: Self.laneCount) { (lanes: UnsafeMutablePointer<Float>) in
+                for i in 0..<Self.partialCount {
+                    let position = (lanes[r + i] * dt - Self.taperStart) * Self.taperScale
+                    let t = Swift.min(Swift.max(position, 0), 1)
+                    lanes[w + i] = 1 - t * t * (3 - t * 2)
+                }
+            }
+        }
     }
 
     /// The amplitude of partial n is n^−p for the exponent `character` chooses, the set
@@ -231,7 +287,29 @@ struct DDSPSource: Sendable {
             table[i] = a
             power += a * a
         }
-        target = power > 0 ? table / power.squareRoot() : table
+        if power > 0 {
+            let root = power.squareRoot()
+            for i in 0..<Self.partialCount { table[i] = table[i] / root }
+        }
+        partials.target = table
+    }
+
+    /// sin(2πt) for t in 0 ..< 1: the same folding and polynomial as the lane-wise `sine` below,
+    /// one value at a time, for the loop in `sumPartials`.
+    @inline(__always)
+    static func sine(_ t: Float) -> Float {
+        let x = t - 0.5
+        let z = Swift.max(x, -x)
+        let d = z - 0.25
+        let w = 0.25 - Swift.max(d, -d)
+        let u = w * 4
+        let u2 = u * u
+        var q = u2 * c9 + c7
+        q = q * u2 + c5
+        q = q * u2 + c3
+        q = q * u2 + c1
+        q = q * u
+        return x >= 0 ? -q : q
     }
 
     /// sin(2πt) for each lane of `t`, t in 0 ..< 1: the cycle folded onto a quarter wave and the
