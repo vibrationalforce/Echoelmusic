@@ -6,10 +6,17 @@ import SwiftUI
 /// import a file there; tap a clip to edit its notes, drag a clip or audio region to move it
 /// by whole bars, hold for Duplicate, Split at Playhead, Consolidate and Delete. One drag is one
 /// undo step, and so is each of those.
+/// A video part shows its hits (CUT): where the picture cuts and where a sound in its own audio
+/// begins. With Snap to Hits a dragged clip or audio region lands on a hit within reach instead of
+/// the bar, and Place at Next Hit moves one to the next hit.
 /// Reads no playhead, so nothing here rebuilds while the song plays.
 struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(StudioRouter.self) private var router
+    @Environment(DocumentController.self) private var documents
+    /// The video files' hits; they change only when a file's search ends.
+    @Environment(VideoHits.self) private var videoHits: VideoHits?
+    @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
     /// Opens the note editor on this clip of this track.
     let open: (TrackID, ClipID) -> Void
     /// Asks for an audio file to place on a track at a tick — or, on a video track, a video.
@@ -25,6 +32,8 @@ struct ArrangeView: View {
         let project = store.project
         let bars = Arranging.songBars(of: project) + Self.spareBars
         let laneWidth = CGFloat(bars) * pointsPerBar
+        let files = videoHits?.files ?? [:]
+        let hits = Hits.ticks(in: project, files: files)
         ScrollView(.vertical) {
             HStack(alignment: .top, spacing: 0) {
                 VStack(spacing: Theme.Space.hairline) {
@@ -49,11 +58,7 @@ struct ArrangeView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: Theme.Size.trackRowHeight)
                             .background(Theme.Color.surface)
-                            .contextMenu {
-                                Button("Rename Track…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
-                                AutomateMenu(owner: .track(track.id))
-                                ModulateMenu(owner: .track(track.id))
-                            }
+                            .contextMenu { trackMenu(track, showsHits: !hits.isEmpty) }
                             .accessibilityHidden(true)
                         ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
                             AutomationName(lane: lane)
@@ -69,7 +74,7 @@ struct ArrangeView: View {
                         BarRuler(bars: bars, pointsPerBar: pointsPerBar)
                         ForEach(project.tracks) { track in
                             ArrangeLane(track: track, project: project, pointsPerBar: pointsPerBar,
-                                        open: open, importAudio: importAudio)
+                                        open: open, importAudio: importAudio, files: files, hits: hits)
                                 .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
                             ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
                                 AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
@@ -91,6 +96,24 @@ struct ArrangeView: View {
             }
         }
         .background(Theme.Color.background)
+        // A video file added to the song is searched for its hits once, off the main thread.
+        .task(id: videoMedia(of: project)) {
+            videoHits?.find(in: store.project) { documents.mediaURL($0) }
+        }
+    }
+
+    private func videoMedia(of project: Project) -> [MediaID] {
+        project.media.filter { $0.kind == .video }.map(\.id)
+    }
+
+    /// A track name's hold menu; a video track with hits also switches Snap to Hits.
+    @ViewBuilder private func trackMenu(_ track: Track, showsHits: Bool) -> some View {
+        Button("Rename Track…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
+        if track.kind == .video, showsHits {
+            Toggle("Snap to Hits", systemImage: "scope", isOn: $snapsToHits)
+        }
+        AutomateMenu(owner: .track(track.id))
+        ModulateMenu(owner: .track(track.id))
     }
 }
 
@@ -98,6 +121,17 @@ extension ArrangeView {
     /// The song's lanes that belong to `owner`, in the order they were made.
     static func lanes(of owner: ParameterAddress.Owner, in project: Project) -> [AutomationLane] {
         project.automation.filter { $0.target.owner == owner }
+    }
+
+    /// Whether a dragged clip or region lands on a hit within reach (CUT): kept on this device, on at first.
+    nonisolated static let snapsToHitsKey = "arrange.snapToHits"
+    /// How near a hit, in points, a dragged start must come to land on it.
+    static let hitReach: CGFloat = 12
+
+    /// The hit a start dragged to `tick` lands on; nil with snapping off or no hit within reach.
+    static func hit(near tick: Tick, in hits: [Tick], ticksPerPoint: Double, snapping: Bool) -> Tick? {
+        guard snapping, !hits.isEmpty, ticksPerPoint.isFinite, ticksPerPoint > 0 else { return nil }
+        return Hits.nearest(to: tick, in: hits, tolerance: Tick((Double(hitReach) * ticksPerPoint).rounded()))
     }
 }
 
@@ -131,6 +165,10 @@ private struct ArrangeLane: View {
     /// Opens the note editor on this clip of this track.
     let open: (TrackID, ClipID) -> Void
     let importAudio: (TrackID, Tick) -> Void
+    /// The video files' hits, and every hit the song's video tracks show (CUT).
+    let files: [MediaID: Hits.FileHits]
+    let hits: [Tick]
+    @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
 
     private var signature: TimeSignature { project.timeSignature }
 
@@ -138,14 +176,25 @@ private struct ArrangeLane: View {
         Double(MusicalTime.ticksPerBar(signature)) / Double(pointsPerBar)
     }
 
+    /// While snapping is on, a faint line at each hit in every lane but the video's own: where a
+    /// clip dragged here can land.
+    private var guides: [Tick] {
+        snapsToHits && track.kind != .video ? hits : []
+    }
+
     var body: some View {
         ZStack(alignment: .topLeading) {
-            Canvas { context, size in
+            Canvas { [guides, ticksPerPoint] context, size in
                 var x: CGFloat = 0
                 while x < size.width {
                     context.fill(Path(CGRect(x: x, y: 0, width: 1, height: size.height)),
                                  with: .color(Theme.Color.border.opacity(0.6)))
                     x += pointsPerBar
+                }
+                for tick in guides {
+                    let at = CGFloat(Double(tick) / ticksPerPoint)
+                    context.fill(Path(CGRect(x: at, y: 0, width: 1, height: size.height)),
+                                 with: .color(Theme.Color.accent.opacity(0.35)))
                 }
             }
             .background(Theme.Color.surface)
@@ -166,7 +215,7 @@ private struct ArrangeLane: View {
         ForEach(track.placements) { placement in
             if let clip = track.clips.first(where: { $0.id == placement.clip }) {
                 PlacementBlock(track: track, placement: placement, clip: clip, signature: signature,
-                               pointsPerBar: pointsPerBar, open: open)
+                               pointsPerBar: pointsPerBar, open: open, hits: hits)
             }
         }
     }
@@ -175,7 +224,9 @@ private struct ArrangeLane: View {
         ForEach(track.regions) { region in
             if let file = project.mediaFile(region.media), let stop = Arranging.end(of: region, in: project) {
                 RegionBlock(track: track, region: region, file: file, length: stop - region.start,
-                            signature: signature, pointsPerBar: pointsPerBar)
+                            signature: signature, pointsPerBar: pointsPerBar, hits: hits,
+                            ownHits: file.kind == .video
+                                ? Hits.hits(of: region, in: project, file: files[region.media] ?? .none) : [])
             }
         }
     }
@@ -256,13 +307,17 @@ private struct PlacementBlock: View {
     let pointsPerBar: CGFloat
     /// Opens the note editor on this clip of this track.
     let open: (TrackID, ClipID) -> Void
+    /// Every hit the song's video shows (CUT).
+    let hits: [Tick]
 
     @State private var dragX: CGFloat = 0
+    @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
 
     private var ticksPerBar: Tick { MusicalTime.ticksPerBar(signature) }
     private var ticksPerPoint: Double { Double(ticksPerBar) / Double(pointsPerBar) }
     private var startBar: Int { Int(placement.start / Swift.max(1, ticksPerBar)) + 1 }
     private var lengthBars: Int { Int((clip.length + ticksPerBar - 1) / Swift.max(1, ticksPerBar)) }
+    private var nextHit: Tick? { Hits.next(after: placement.start, in: hits) }
 
     var body: some View {
         accessible(block.contextMenu { menu })
@@ -290,20 +345,43 @@ private struct PlacementBlock: View {
             .onTapGesture { open(track.id, clip.id) }
             .gesture(
                 DragGesture(minimumDistance: 6, coordinateSpace: .named(ArrangeLane.space))
-                    .onChanged { dragX = $0.translation.width }
+                    .onChanged { dragX = dragOffset($0.translation.width) }
                     .onEnded { value in
-                        let delta = Tick((Double(value.translation.width) * ticksPerPoint).rounded())
                         dragX = 0
-                        if let command = Arranging.moved(placement, in: track, byTicks: delta, signature: signature) {
-                            try? store.perform(command)
-                        }
+                        drop(movedBy: value.translation.width)
                     }
             )
+    }
+
+    /// Where the block shows while the finger moves: on a hit as soon as one is within reach.
+    private func dragOffset(_ translation: CGFloat) -> CGFloat {
+        let tick = placement.start + Tick((Double(translation) * ticksPerPoint).rounded())
+        guard let hit = ArrangeView.hit(near: tick, in: hits, ticksPerPoint: ticksPerPoint, snapping: snapsToHits) else {
+            return translation
+        }
+        return CGFloat(Double(hit - placement.start) / ticksPerPoint)
+    }
+
+    /// One undo step: onto the hit within reach, else to the nearest bar.
+    private func drop(movedBy translation: CGFloat) {
+        let delta = Tick((Double(translation) * ticksPerPoint).rounded())
+        if let hit = ArrangeView.hit(near: placement.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
+                                     snapping: snapsToHits) {
+            if let command = Hits.placed(placement, in: track, at: hit) { try? store.perform(command) }
+        } else if let command = Arranging.moved(placement, in: track, byTicks: delta, signature: signature) {
+            try? store.perform(command)
+        }
     }
 
     /// The hold menu, apart from the block so each expression stays small enough to type-check.
     @ViewBuilder private var menu: some View {
         Button("Edit Notes", systemImage: "pianokeys") { open(track.id, clip.id) }
+        if nextHit != nil {
+            Button("Place at Next Hit", systemImage: "arrow.right.to.line") { placeAtNextHit() }
+        }
+        if !hits.isEmpty {
+            Toggle("Snap to Hits", systemImage: "scope", isOn: $snapsToHits)
+        }
         Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
         Button("Split at Playhead", systemImage: "scissors") { splitAtPlayhead() }
         if Arranging.consolidated(placement, in: track) != nil {
@@ -326,6 +404,7 @@ private struct PlacementBlock: View {
             .accessibilityAction { open(track.id, clip.id) }
             .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
+            .accessibilityAction(named: "Place at Next Hit") { placeAtNextHit() }
             .accessibilityAction(named: "Duplicate") { duplicate() }
             .accessibilityAction(named: "Split at Playhead") { splitAtPlayhead() }
             .accessibilityAction(named: "Consolidate") { consolidate() }
@@ -341,6 +420,12 @@ private struct PlacementBlock: View {
 
     private func duplicate() {
         if let command = Arranging.duplicated(placement, in: track) { try? store.perform(command) }
+    }
+
+    /// Starts the clip exactly on the first hit after its start, one undo step; nothing after the last hit.
+    private func placeAtNextHit() {
+        guard let hit = nextHit, let command = Hits.placed(placement, in: track, at: hit) else { return }
+        try? store.perform([command], title: "Place at Next Hit")
     }
 
     /// Cuts where the playhead stands now; nothing happens when it is outside the clip.
@@ -361,7 +446,9 @@ private struct PlacementBlock: View {
 
 /// A placed audio region: the file's name over its length. Drag moves it by whole bars, one
 /// undo step on release; drag an edge to trim it to the beat; hold for Duplicate, Split at
-/// Playhead Bar, Consolidate (pieces of one file only), Bake Effects and Delete.
+/// Playhead Bar, Consolidate (pieces of one file only), Bake Effects and Delete. A video part
+/// shows its hits (CUT); an audio region lands on one within reach and moves to the next on Place
+/// at Next Hit.
 private struct RegionBlock: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -373,11 +460,15 @@ private struct RegionBlock: View {
     let length: Tick
     let signature: TimeSignature
     let pointsPerBar: CGFloat
+    /// Every hit the song's video shows, and — for a video part — the hits it shows itself (CUT).
+    let hits: [Tick]
+    let ownHits: [Hits.Hit]
 
     @State private var dragX: CGFloat = 0
     /// Live drag of the left and right edge, in points, until the finger lifts.
     @State private var trimLeft: CGFloat = 0
     @State private var trimRight: CGFloat = 0
+    @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
 
     private var ticksPerBar: Tick { MusicalTime.ticksPerBar(signature) }
     private var ticksPerPoint: Double { Double(ticksPerBar) / Double(pointsPerBar) }
@@ -386,8 +477,19 @@ private struct RegionBlock: View {
     private var spokenLabel: String {
         let kind = file.kind == .video ? "video" : "audio"
         let time = NumberText.string(seconds, decimals: 1)
-        return "\(file.name), \(kind), bar \(startBar), \(time) seconds"
+        return "\(file.name), \(kind), bar \(startBar), \(time) seconds" + spokenHits
     }
+
+    /// How many hits a video part shows, as it is said: ", 2 cuts, 1 sound".
+    private var spokenHits: String {
+        guard !ownHits.isEmpty else { return "" }
+        let cuts = ownHits.filter { $0.kind == .cut }.count, sounds = ownHits.count - cuts
+        return ", \(cuts) \(cuts == 1 ? "cut" : "cuts"), \(sounds) \(sounds == 1 ? "sound" : "sounds")"
+    }
+
+    /// An audio region lands on hits; a video part brings its own and moves by bars.
+    private var snapsHere: Bool { file.kind == .audio && snapsToHits }
+    private var nextHit: Tick? { file.kind == .audio ? Hits.next(after: region.start, in: hits) : nil }
 
     var body: some View {
         accessible(block.contextMenu { menu })
@@ -409,6 +511,7 @@ private struct RegionBlock: View {
                     .lineLimit(1)
                     .padding(Theme.Space.xs)
             }
+            .overlay { hitMarks }
             .overlay(alignment: .leading) { edgeHandle(.start) }
             .overlay(alignment: .trailing) { edgeHandle(.end) }
             .frame(width: width, height: Theme.Size.trackRowHeight - Theme.Space.s)
@@ -416,19 +519,65 @@ private struct RegionBlock: View {
             .opacity(dragX == 0 && trimLeft == 0 && trimRight == 0 ? 1 : 0.8)
             .gesture(
                 DragGesture(minimumDistance: 6, coordinateSpace: .named(ArrangeLane.space))
-                    .onChanged { dragX = $0.translation.width }
+                    .onChanged { dragX = dragOffset($0.translation.width) }
                     .onEnded { value in
-                        let delta = Tick((Double(value.translation.width) * ticksPerPoint).rounded())
                         dragX = 0
-                        if let command = Arranging.moved(region, in: track, byTicks: delta, signature: signature) {
-                            try? store.perform(command)
-                        }
+                        drop(movedBy: value.translation.width)
                     }
             )
     }
 
+    /// A video part's hits over it: a line the full height where the picture cuts, a short one
+    /// from the bottom where a sound in its own audio begins. Drawn, never touched.
+    private var hitMarks: some View {
+        Canvas { [ownHits, ticksPerPoint] context, size in
+            for hit in ownHits {
+                let x = CGFloat(Double(hit.tick - region.start) / ticksPerPoint)
+                guard x >= 0, x <= size.width else { continue }
+                let top = hit.kind == .cut ? 0 : size.height * 0.55
+                context.fill(Path(CGRect(x: x, y: top, width: 1.5, height: size.height - top)),
+                             with: .color(Theme.Color.accent))
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    /// Where the block shows while the finger moves: an audio region on a hit as soon as one is
+    /// within reach.
+    private func dragOffset(_ translation: CGFloat) -> CGFloat {
+        let tick = region.start + Tick((Double(translation) * ticksPerPoint).rounded())
+        guard let hit = ArrangeView.hit(near: tick, in: hits, ticksPerPoint: ticksPerPoint, snapping: snapsHere) else {
+            return translation
+        }
+        return CGFloat(Double(hit - region.start) / ticksPerPoint)
+    }
+
+    /// One undo step: onto the hit within reach, else to the nearest bar.
+    private func drop(movedBy translation: CGFloat) {
+        let delta = Tick((Double(translation) * ticksPerPoint).rounded())
+        if let hit = ArrangeView.hit(near: region.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
+                                     snapping: snapsHere) {
+            if let command = Hits.placed(region, in: track, at: hit) { try? store.perform(command) }
+        } else if let command = Arranging.moved(region, in: track, byTicks: delta, signature: signature) {
+            try? store.perform(command)
+        }
+    }
+
+    /// Starts the region exactly on the first hit after its start, one undo step.
+    private func placeAtNextHit() {
+        guard let hit = nextHit, let command = Hits.placed(region, in: track, at: hit) else { return }
+        try? store.perform([command], title: "Place at Next Hit")
+    }
+
     /// The hold menu, apart from the block so each expression stays small enough to type-check.
     @ViewBuilder private var menu: some View {
+        if nextHit != nil {
+            Button("Place at Next Hit", systemImage: "arrow.right.to.line") { placeAtNextHit() }
+        }
+        if !hits.isEmpty {
+            Toggle("Snap to Hits", systemImage: "scope", isOn: $snapsToHits)
+        }
         Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
         Button("Split at Playhead Bar", systemImage: "scissors") { split() }
         if Arranging.consolidated(region, in: track, project: store.project) != nil {
@@ -465,6 +614,7 @@ private struct RegionBlock: View {
             .accessibilityLabel(spokenLabel)
             .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
+            .accessibilityAction(named: "Place at Next Hit") { placeAtNextHit() }
             .accessibilityAction(named: "Duplicate") { duplicate() }
             .accessibilityAction(named: "Split at Playhead Bar") { split() }
             .accessibilityAction(named: "Consolidate") { consolidate() }

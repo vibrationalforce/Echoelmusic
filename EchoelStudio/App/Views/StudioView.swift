@@ -33,6 +33,8 @@ struct StudioView: View {
     @State private var jam = JamSession()
     /// The tempo lock, Fixed or Flow (W12); owned here so Flow goes on while another view is open.
     @State private var flow = FlowController()
+    /// The hits of the song's video files (CUT): found once per file, shown and snapped to in Arrange.
+    @State private var videoHits = VideoHits()
 
     enum Surface: Hashable {
         case instrument, tracks, arrange, session, mixer, field, sky
@@ -73,6 +75,7 @@ struct StudioView: View {
         .environment(connections)
         .environment(jam)
         .environment(flow)
+        .environment(videoHits)
         .background(Theme.Color.background)
         .onAppear {
             engine.setSamples(documents.samples)
