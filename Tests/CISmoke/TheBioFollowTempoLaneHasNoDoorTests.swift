@@ -37,6 +37,12 @@
 // ⚠️ LIMIT, stated because it is real: `codeOnly` strips comments but KEEPS string literals, so
 // a needle inside a string would count as a call. No such string exists today; if one ever does,
 // claim 1 reports a hit that is not a caller — read the reported count, do not trust it blind.
+//
+// ⭐ W-MAP (2026-11-01): the register moved VERBATIM from the root `CLAUDE.md` (now the map of the
+// repo) to `Sources/CLAUDE.md`, and `lawFile` follows it. Graded against the parent `424c2a532`:
+// claim 4 has NO verdict there — `Sources/CLAUDE.md` does not exist, one ANCHOR ABSENCE (#486);
+// on this tree it is the same counterweight it was, transcribed in Python (`git grep -c` of the
+// needle in the new file = 1). Claims 1–3 read only `Sources/` Swift and are untouched.
 
 import Foundation
 import XCTest
@@ -45,7 +51,7 @@ import XCTest
 final class TheBioFollowTempoLaneHasNoDoorTests: XCTestCase {
 
     private static let laneFile = "Sources/Echoelmusic/Core/BioTempoDirector.swift"
-    private static let lawFile = "CLAUDE.md"
+    private static let lawFile = "Sources/CLAUDE.md"
 
     private func repoRoot() throws -> URL {
         let root = URL(fileURLWithPath: #filePath)
@@ -108,7 +114,7 @@ final class TheBioFollowTempoLaneHasNoDoorTests: XCTestCase {
         XCTAssertTrue(hits.isEmpty, """
             `BioTempoDirector` is now reached from production code: \(hits). That is allowed and \
             may well be right (#364) — the founder's "BPM both" ask is exactly this lane. But the \
-            register entry in `CLAUDE.md` (the app-unwired-pure-cores sentence in the ARCHITECTURE \
+            register entry in `Sources/CLAUDE.md` (the app-unwired-pure-cores sentence in the ARCHITECTURE \
             block) says zero constructions and zero calls, and it must be corrected in the SAME \
             commit. Check also whether the TEMPO INVARIANT block's T1 enumeration of tempo sources \
             needs a fifth entry: a doored bio-follow lane is a new writer of the clock.
@@ -123,7 +129,7 @@ final class TheBioFollowTempoLaneHasNoDoorTests: XCTestCase {
         XCTAssertTrue(lane.contains("struct BioTempoDirector"), """
             `Sources/Echoelmusic/Core/BioTempoDirector.swift` no longer declares \
             `struct BioTempoDirector`. If it was deleted, remove its clause from the \
-            app-unwired-pure-cores sentence in `CLAUDE.md` in the same commit; if it was renamed, \
+            app-unwired-pure-cores sentence in `Sources/CLAUDE.md` in the same commit; if it was renamed, \
             re-anchor all four claims here. Either way claim 1 above is currently proving nothing.
             """)
     }
@@ -136,7 +142,7 @@ final class TheBioFollowTempoLaneHasNoDoorTests: XCTestCase {
             try file("Sources/Echoelmusic/Sequencer/BioComposer.swift"))
         XCTAssertTrue(composer.contains("tempo(for: input)"), """
             `BioComposer.compose` no longer calls `tempo(for: input)`. The register entry for \
-            `BioTempoDirector` in `CLAUDE.md` calls it a TWIN of the live servo and names this \
+            `BioTempoDirector` in `Sources/CLAUDE.md` calls it a TWIN of the live servo and names this \
             call as where the live one runs — re-measure which function feeds the clock before \
             trusting that sentence, and correct it in the same commit.
             """)
@@ -148,7 +154,7 @@ final class TheBioFollowTempoLaneHasNoDoorTests: XCTestCase {
     func testTheRegisterNamesTheLane() throws {
         let law = try file(Self.lawFile)
         XCTAssertTrue(law.contains("Core/BioTempoDirector"), """
-            `CLAUDE.md` no longer names `Core/BioTempoDirector` in its app-unwired-pure-cores \
+            `Sources/CLAUDE.md` no longer names `Core/BioTempoDirector` in its app-unwired-pure-cores \
             sentence. If the lane was wired or deleted, that is fine — but then claims 1 and 2 \
             here describe a world that no longer exists and must move in the same commit.
             """)

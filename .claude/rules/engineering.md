@@ -10,7 +10,8 @@ for params) — where those are more specific, they win. This file adds the cros
 - Respect existing project patterns, caching mechanisms, and architecture. Reuse what
   exists (`EngineBus` is the one coupling spine) before adding.
 - Do NOT refactor unrelated parts of the codebase, or introduce a new framework/library,
-  without an explicit request. (Echoel ships ZERO external deps today — see CLAUDE.md.)
+  without an explicit request. (The earlier app ships ZERO external deps — `Sources/CLAUDE.md`;
+  Echoel Studio links one, HaishinKit, since W14 — `EchoelStudio/project.yml`.)
 - Match current code style, conventions, and design paradigms — read the surrounding file
   first and write code that looks like it belongs.
 

@@ -40,6 +40,12 @@
 // would be the flattering direction (#433/#464). What they buy is the future: the day someone
 // doors the parent, or adds a second construction site, or deletes the file, exactly one of them
 // speaks and names what else must move.
+//
+// ⭐ W-MAP (2026-11-01): the register line moved VERBATIM from the root `CLAUDE.md` (now the map
+// of the repo) to `Sources/CLAUDE.md`; claim 4 reads it there. On the parent `424c2a532` that file
+// does not exist, so claim 4 has no verdict there (one ANCHOR ABSENCE, #486); on this tree it is
+// the counterweight it was, transcribed in Python. Every "`CLAUDE.md`" in this header means that
+// register, which now lives in `Sources/CLAUDE.md`.
 
 import Foundation
 import XCTest
@@ -91,7 +97,7 @@ final class TheBreathGuideHasNoDoorTests: XCTestCase {
         let calls = all.components(separatedBy: "BreathGuideView(").count - 1
         XCTAssertEqual(calls, 1, """
             `BreathGuideView` no longer has exactly one construction site (found \(calls)). If a \
-            SECOND appeared, it may now be reachable and `CLAUDE.md`'s register line must move in \
+            SECOND appeared, it may now be reachable and `Sources/CLAUDE.md`'s register line must move in \
             this commit; if it dropped to zero, it became a plain C1 orphan and the register \
             line's "one hop down" reasoning is wrong.
             """)
@@ -113,7 +119,7 @@ final class TheBreathGuideHasNoDoorTests: XCTestCase {
             `BioSourceView` is constructed \(parentCalls)× now. It was the LAST survivor of the \
             removed six-surface bottom bar and had no builder at all; if it gained one, the \
             breathing guide may be reachable again — check the chain to a rendering parent (a \
-            construction site is not a door) and move `CLAUDE.md`'s register line with it.
+            construction site is not a door) and move `Sources/CLAUDE.md`'s register line with it.
             """)
     }
 
@@ -128,7 +134,7 @@ final class TheBreathGuideHasNoDoorTests: XCTestCase {
                 `\(Self.guideFile)` no longer mentions `\(needle)`. This file is kept DESPITE \
                 being unreachable because it carries the reduce-motion opt-out and the pattern \
                 model behind the flash-rate ceiling. If that work genuinely moved elsewhere, say \
-                where — in `CLAUDE.md`'s register line, in this commit.
+                where — in `Sources/CLAUDE.md`'s register line, in this commit.
                 """)
         }
     }
@@ -137,10 +143,10 @@ final class TheBreathGuideHasNoDoorTests: XCTestCase {
     /// a defect into a recorded decision, and it is what silently went missing for months.
     func testTheRegisterNamesIt() throws {
         let root = try repoRoot()
-        let law = try String(contentsOf: root.appendingPathComponent("CLAUDE.md"),
+        let law = try String(contentsOf: root.appendingPathComponent("Sources/CLAUDE.md"),
                              encoding: .utf8)
         XCTAssertTrue(law.contains("BreathGuideView"), """
-            `CLAUDE.md` no longer names `BreathGuideView`. Unreachable is not a defect; \
+            `Sources/CLAUDE.md` no longer names `BreathGuideView`. Unreachable is not a defect; \
             unreachable and UNWRITTEN-DOWN is, and that is exactly the state #947 found it in. \
             If it was re-doored, the register line should say so rather than disappear.
             """)

@@ -145,11 +145,18 @@ def assertion_pattern(var):
 
 
 def is_foreign(path):
-    """A repo file this script owns: not Swift source, not under `Sources/`."""
+    """A repo file this script owns: not Swift source, not under `Sources/` — except PROSE there.
+
+    ⭐ W-MAP (2026-11-01): the earlier app's law moved verbatim from the root `CLAUDE.md` to
+    `Sources/CLAUDE.md`, and the guards that pin it followed it there. `moved-needles.py` and
+    `dead-needles.py` were built for `Sources/` CODE; a Markdown law file under `Sources/` is
+    the same kind of file this script already reads at the root, so it stays in this checker's
+    territory instead of falling between the two.
+    """
     if path.endswith(".swift"):
         return False
     if path.startswith("Sources/"):
-        return False
+        return path.endswith(".md")
     return "." in os.path.basename(path)
 
 
@@ -324,6 +331,9 @@ def selftest():
     assert not is_foreign("Tests/CISmoke/XTests.swift")
     assert is_foreign("CLAUDE.md") and is_foreign("docs/faq.html")
     assert is_foreign("Tests/CISmoke/CLAUDE.md")
+    #    …and the earlier app's law, which W-MAP moved under `Sources/`, still is (2026-11-01).
+    assert is_foreign("Sources/CLAUDE.md")
+    assert not is_foreign("Sources/Echoelmusic/Resources/Localizable.xcstrings")
     # 6. an undecodable needle is skipped, never guessed at.
     assert decode_needle('a\\nb') is None
     # 6b. a RETRACTED assertion, kept as a `//` quotation, is not an assertion. This is the

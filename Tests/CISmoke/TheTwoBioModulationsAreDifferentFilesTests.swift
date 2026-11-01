@@ -40,6 +40,12 @@
 // ⚠️ Comments are stripped before every scan. This repo writes ⛔ blocks that NAME the types they
 // discuss, so a raw scan reads the register's own prose as a call site (#453/#762). String literals
 // SURVIVE `codeOnly` — a needle inside a string would count as a reference. None exists today.
+//
+// ⭐ W-MAP (2026-11-01): the root `CLAUDE.md` became the map of the repo, and the earlier app's
+// law moved VERBATIM to `Sources/CLAUDE.md`; `lawFile` and claim 4 read it there. Graded against the
+// parent `424c2a532`: that file does not exist there, so those claims have no verdict on it (one
+// ANCHOR ABSENCE, #486); on this tree they are the counterweights they were, transcribed in Python
+// against the moved text. A `CLAUDE.md` in the history above means that text, wherever it lives now.
 
 import Foundation
 import XCTest
@@ -49,7 +55,7 @@ final class TheTwoBioModulationsAreDifferentFilesTests: XCTestCase {
 
     private static let unwiredFile = "Sources/Echoelmusic/Studio/BioModulation.swift"
     private static let liveFile = "Sources/Echoelmusic/Core/BioModulationMap.swift"
-    private static let lawFile = "CLAUDE.md"
+    private static let lawFile = "Sources/CLAUDE.md"
 
     private func repoRoot() throws -> URL {
         let root = URL(fileURLWithPath: #filePath)
@@ -130,14 +136,14 @@ final class TheTwoBioModulationsAreDifferentFilesTests: XCTestCase {
                 FileManager.default.fileExists(
                     atPath: root.appendingPathComponent(path).path), """
                 \(path) is gone. If it was renamed or deleted deliberately, retire this guard and \
-                the ⚠️ #1165 clause in CLAUDE.md's app-unwired-cores sentence in the SAME commit \
+                the ⚠️ #1165 clause in Sources/CLAUDE.md's app-unwired-cores sentence in the SAME commit \
                 — a warning about a collision that no longer exists sends the next reader hunting \
                 for a file that is not there.
                 """)
         }
         XCTAssertTrue("BioModulationMap".hasPrefix("BioModulation"), """
             The prefix relationship this guard is built on no longer holds. That means a rename \
-            already happened — remove the ⚠️ #1165 clause from CLAUDE.md and delete this file.
+            already happened — remove the ⚠️ #1165 clause from Sources/CLAUDE.md and delete this file.
             """)
     }
 
@@ -149,7 +155,7 @@ final class TheTwoBioModulationsAreDifferentFilesTests: XCTestCase {
         let hits = wholeWordCount(of: "BioModulationMap", in: text)
         XCTAssertGreaterThan(hits, 0, """
             `BioModulationMap` now has ZERO code references outside its own file. Either it was \
-            just orphaned — in which case it belongs in CLAUDE.md's app-unwired list and the \
+            just orphaned — in which case it belongs in Sources/CLAUDE.md's app-unwired list and the \
             ⚠️ #1165 clause must be rewritten, because the trap it warns about (a live neighbour) \
             is gone — or a caller was deleted by accident. Do not "fix" this by deleting the file: \
             its `isMeasured` is what makes the bio panel say a channel is MEASURED rather than \
@@ -166,7 +172,7 @@ final class TheTwoBioModulationsAreDifferentFilesTests: XCTestCase {
             let hits = wholeWordCount(of: name, in: text)
             XCTAssertEqual(hits, 0, """
                 `\(name)` (declared in \(Self.unwiredFile)) now has \(hits) code reference(s) \
-                outside its own file. That file is named in CLAUDE.md's app-unwired pure cores \
+                outside its own file. That file is named in Sources/CLAUDE.md's app-unwired pure cores \
                 sentence. If it has genuinely been wired, MOVE it out of that list in the same \
                 commit — a register that still calls a wired core unwired is the exact defect \
                 #1163 was opened for, one direction over.
@@ -180,7 +186,7 @@ final class TheTwoBioModulationsAreDifferentFilesTests: XCTestCase {
         let law = try file(Self.lawFile)
         for needle in ["Studio/BioModulation", "Core/CloudSync"] {
             XCTAssertTrue(law.contains(needle), """
-                CLAUDE.md's app-unwired pure cores sentence no longer names `\(needle)` with its \
+                Sources/CLAUDE.md's app-unwired pure cores sentence no longer names `\(needle)` with its \
                 path. The bare name is the defect: `git grep -c BioModulation -- Sources` returns \
                 ten files, because `Core/BioModulationMap` is a different and LIVE file, so a bare \
                 register entry reads as stale when it is correct — and points a cleanup at the \

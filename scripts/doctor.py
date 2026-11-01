@@ -1633,11 +1633,16 @@ def section_d() -> Section:
             if re.match(r"\s*\.(sheet|fullScreenCover|alert|fileImporter)\s*\(", line):
                 modifiers += 1
 
-    claude = read(ROOT / "CLAUDE.md")
+    # ⭐ W-MAP (2026-11-01): the law is TWO files — the always-loaded map (`CLAUDE.md`) and the
+    # earlier app's law, moved verbatim to the directory-scoped `Sources/CLAUDE.md`. Every check in
+    # this section that read "CLAUDE.md" reads both; a claim that moved must not leave the check.
+    laws = [(rel(f), read(f)) for f in (ROOT / "CLAUDE.md", ROOT / "Sources/CLAUDE.md")
+            if f.exists()]
     quoted: list[str] = []
-    for i, line in enumerate(claude.splitlines()):
-        if re.search(r"\d+\s+Swift under|\d+ test files|presentation.modifier", line, re.I):
-            quoted.append(f"CLAUDE.md:{i + 1}  {line.strip()[:150]}")
+    for name, text in laws:
+        for i, line in enumerate(text.splitlines()):
+            if re.search(r"\d+\s+Swift under|\d+ test files|presentation.modifier", line, re.I):
+                quoted.append(f"{name}:{i + 1}  {line.strip()[:150]}")
 
     sec.findings.append(Finding(
         INFO,
@@ -1661,21 +1666,35 @@ def section_d() -> Section:
     # the aspiration would make this section red on a correct tree today, and a check that reds
     # correct work gets muted or deleted — with the law it carries (#364). Raise the ceiling only
     # together with a reason; lowering it is free.
+    #
+    # ⭐ W-MAP (2026-11-01): TWO ceilings, the two `TheLawFileStaysUnderItsCeilingTests` pins with
+    # teeth. 25 000 B on the map — the root `CLAUDE.md`, always loaded, now a map of the repo — and
+    # the old 150 000 B on `Sources/CLAUDE.md`, the earlier app's law that moved there verbatim and
+    # loads only while a session works in `Sources/`. The 45 000 B aspiration above was finally met
+    # by moving app law into its directory, not by deleting any of it.
     always = [ROOT / "CLAUDE.md"] + sorted((ROOT / ".claude/rules").glob("*.md"))
     sizes = [(rel(f), f.stat().st_size) for f in always if f.exists()]
     root_bytes = next((b for n, b in sizes if n == "CLAUDE.md"), 0)
     total = sum(b for _, b in sizes)
+    map_ceiling = 25_000
     ceiling = 150_000
+    legacy = ROOT / "Sources/CLAUDE.md"
+    legacy_bytes = legacy.stat().st_size if legacy.exists() else 0
+    over = root_bytes > map_ceiling or legacy_bytes > ceiling
     sec.findings.append(Finding(
-        WARN if root_bytes > ceiling else INFO,
-        f"Always-loaded surface = {total:,} B ({len(sizes)} files); CLAUDE.md = {root_bytes:,} B",
-        [f"{b:>9,} B  {n}" for n, b in sorted(sizes, key=lambda x: -x[1])],
-        f"CLAUDE.md is over the {ceiling:,} B ceiling — an accreting ledger has grown back into it. "
-        "Move the PROVENANCE (count chains, superseded stands, retraction blocks that no longer "
-        "guide a decision) to memory/LEDGER_COUNTS.md and leave a routing line. Delete nothing."
-        if root_bytes > ceiling else
-        "Under the ceiling. This number only moves in the wrong direction by accretion, so it is "
-        "worth re-reading whenever a cycle adds a paragraph to CLAUDE.md rather than to a ledger."))
+        WARN if over else INFO,
+        f"Always-loaded surface = {total:,} B ({len(sizes)} files); the map CLAUDE.md = "
+        f"{root_bytes:,} B; Sources/CLAUDE.md = {legacy_bytes:,} B",
+        [f"{b:>9,} B  {n}" for n, b in sorted(sizes, key=lambda x: -x[1])]
+        + [f"{legacy_bytes:>9,} B  Sources/CLAUDE.md — directory-scoped, NOT always loaded"],
+        f"Over a ceiling (the map {map_ceiling:,} B, Sources/CLAUDE.md {ceiling:,} B). Move app law "
+        "into its directory's CLAUDE.md and PROVENANCE (count chains, superseded stands, retraction "
+        "blocks that no longer guide a decision) to memory/LEDGER_COUNTS.md; leave a routing line. "
+        "Delete nothing."
+        if over else
+        f"Under both ceilings (the map {map_ceiling:,} B, Sources/CLAUDE.md {ceiling:,} B). These "
+        "numbers only move in the wrong direction by accretion, so re-read them whenever a cycle "
+        "adds a paragraph to a law file rather than to a ledger."))
 
     # --- what the SessionStart hook reads, measured rather than recited ------------------------
     #
@@ -1732,14 +1751,15 @@ def section_d() -> Section:
     # mode this whole skill warns about. Restricted to the four trees where a mention is always a
     # live pointer and never an obituary.
     routable = re.compile(r"`((?:memory|scripts|\.claude|docs)/[^`\s]+|[A-Za-z][\w/]*/CLAUDE\.md)`")
-    missing: dict[str, list[int]] = {}
-    for i, line in enumerate(claude.splitlines()):
-        for hit in routable.findall(line):
-            target = hit.rstrip(".,;:)")
-            if "*" in target or "…" in target:
-                continue
-            if not (ROOT / target).exists():
-                missing.setdefault(target, []).append(i + 1)
+    missing: dict[str, list[str]] = {}
+    for name, text in laws:
+        for i, line in enumerate(text.splitlines()):
+            for hit in routable.findall(line):
+                target = hit.rstrip(".,;:)")
+                if "*" in target or "…" in target:
+                    continue
+                if not (ROOT / target).exists():
+                    missing.setdefault(target, []).append(f"{name}:{i + 1}")
     # ⛔ THE FIRST VERSION REPORTED `.claude/settings.local.json` THREE TIMES, and that file is
     # SUPPOSED to be absent here: it is gitignored (it holds the GitHub token) and CLAUDE.md's own
     # text says "If token missing: ask the user to create it". Flagging a deliberately-absent file
@@ -1753,10 +1773,10 @@ def section_d() -> Section:
                 missing.pop(ignored.strip(), None)
         except (OSError, subprocess.SubprocessError) as exc:
             raise InstrumentUnavailable(f"git check-ignore could not run: {exc}") from exc
-    broken = [f"CLAUDE.md:{n}  {t}" for t, ns in sorted(missing.items()) for n in ns]
+    broken = [f"{n}  {t}" for t, ns in sorted(missing.items()) for n in ns]
     if broken:
         sec.findings.append(Finding(
-            WARN, f"{len(broken)} routing target(s) in CLAUDE.md do not exist",
+            WARN, f"{len(broken)} routing target(s) in the law files do not exist",
             broken[:20],
             "A pointer into memory/ scripts/ .claude/ docs/ or a directory CLAUDE.md is always a "
             "live instruction, never an obituary — a session follows it and finds nothing, then "

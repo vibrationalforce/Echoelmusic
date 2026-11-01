@@ -29,6 +29,12 @@
 // not exist. Claim 2 is a COUNTERWEIGHT (#343) — green on both trees, and it is what keeps
 // claim 1 from being a sentence about a sentence.
 // SOURCE-TEXT SCAN throughout (§1); nothing here observes behaviour.
+//
+// ⭐ W-MAP (2026-11-01): the root `CLAUDE.md` became the map of the repo, and the earlier app's
+// law moved VERBATIM to `Sources/CLAUDE.md`; claim 1's two needles read it there. Graded against the
+// parent `424c2a532`: that file does not exist there, so those claims have no verdict on it (one
+// ANCHOR ABSENCE, #486); on this tree they are the counterweights they were, transcribed in Python
+// against the moved text. A `CLAUDE.md` in the history above means that text, wherever it lives now.
 
 import Foundation
 import XCTest
@@ -38,11 +44,11 @@ final class TheMultitrackRecorderIsGoneFromTheIdentityLineTests: XCTestCase {
     /// Claim 1 — the identity block records the deletion, and records that it is retracting an
     /// earlier CORRECTION rather than an original claim.
     func testTheIdentityBlockRecordsTheDeletion() throws {
-        let law = try text("CLAUDE.md")
+        let law = try text("Sources/CLAUDE.md")
         XCTAssertTrue(
             law.contains("**GELÖSCHT mit #1302** (Founder 2026-09-12, kein Mikrofon mehr): `MultiTrackRecorder` ist als DATEI weg"),
-            "CLAUDE.md's identity block no longer records that `MultiTrackRecorder` was deleted "
-            + "by #1302. That paragraph is the first thing a session reads; a claim there that "
+            "Sources/CLAUDE.md's identity block no longer records that `MultiTrackRecorder` was deleted "
+            + "by #1302. That paragraph is the first thing an earlier-app session reads; a claim there that "
             + "the recorder is 'gebaut, flag-gated AUS, türlos' sends the next cycle looking "
             + "for a door onto a type that is not in the tree.")
         XCTAssertTrue(
@@ -78,7 +84,7 @@ final class TheMultitrackRecorderIsGoneFromTheIdentityLineTests: XCTestCase {
                              + "for claim 2's absence to mean anything (#454/#926).")
         XCTAssertEqual(offenders, [],
                        "`MultiTrackRecorder` is referenced in CODE again by \(offenders). This "
-                       + "guard forbids rebuilding it (#364) — it reports it: move CLAUDE.md's "
+                       + "guard forbids rebuilding it (#364) — it reports it: move Sources/CLAUDE.md's "
                        + "identity line in the SAME commit, and say which of built / "
                        + "flag-gated / doorless it actually is.")
     }

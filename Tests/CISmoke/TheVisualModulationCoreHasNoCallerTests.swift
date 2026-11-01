@@ -54,6 +54,12 @@
 //
 // ⚠️ WHAT NO TEST HERE CAN SAY: whether the visual path SHOULD be wired. That is a product call
 // and the ship gate already answers it for v1 ("light/space demonstrable, not required").
+//
+// ⭐ W-MAP (2026-11-01): the root `CLAUDE.md` became the map of the repo, and the earlier app's
+// law moved VERBATIM to `Sources/CLAUDE.md`; the register claim read it there. Graded against the
+// parent `424c2a532`: that file does not exist there, so those claims have no verdict on it (one
+// ANCHOR ABSENCE, #486); on this tree they are the counterweights they were, transcribed in Python
+// against the moved text. A `CLAUDE.md` in the history above means that text, wherever it lives now.
 
 import Foundation
 import XCTest
@@ -72,7 +78,7 @@ final class TheVisualModulationCoreHasNoCallerTests: XCTestCase {
         XCTAssertEqual(hits, [], """
             Something in Sources/ now builds a visual modulation route: \(hits). That is a real \
             capability arriving, not a defect — and this guard's job is to make sure the PROSE \
-            arrives with it. In the same commit: MOVE the core from CLAUDE.md's unwired list to \
+            arrives with it. In the same commit: MOVE the core from Sources/CLAUDE.md's unwired list to \
             the wired side — #921 put it on the unwired list, so adding it to the wired side \
             without removing it there makes the register claim both at once — and update the \
             "no caller yet" note in Core/EngineBus.swift. Then decide the interleaving question \
@@ -176,9 +182,9 @@ final class TheVisualModulationCoreHasNoCallerTests: XCTestCase {
     /// present has no such failure mode, and `TheLawFileStaysUnderItsCeilingTests` already pins
     /// ledger headings the same way.
     func testTheRegisterStillNamesTheCoreAsUnwired() throws {
-        let law = try rawText("CLAUDE.md")
+        let law = try rawText("Sources/CLAUDE.md")
         XCTAssertTrue(law.contains("`Core/VisualModulation`"), """
-            CLAUDE.md no longer names Core/VisualModulation in its list of app-unwired pure \
+            Sources/CLAUDE.md no longer names Core/VisualModulation in its list of app-unwired pure \
             cores. If the core was WIRED, this claim is red together with the two scans above \
             and the repair is the same one they name. If it was merely edited out, the register \
             gap #921 found has reopened: the neighbouring line truthfully says BioVisualParams \

@@ -48,6 +48,12 @@
 // caller (claim 4 red). Green on today's tree and on the tree before
 // this slice, i.e. **0 regression catches, 7 COUNTERWEIGHTS (#343)** — they buy the day someone
 // renames an address, not today.
+//
+// ⭐ W-MAP (2026-11-01): the root `CLAUDE.md` became the map of the repo, and the earlier app's
+// law moved VERBATIM to `Sources/CLAUDE.md`; `lawSection()` and claims 1–3 read it there. Graded against the
+// parent `424c2a532`: that file does not exist there, so those claims have no verdict on it (one
+// ANCHOR ABSENCE, #486); on this tree they are the counterweights they were, transcribed in Python
+// against the moved text. A `CLAUDE.md` in the history above means that text, wherever it lives now.
 
 import Foundation
 import XCTest
@@ -109,9 +115,10 @@ final class TheWireContractMatchesTheLawTests: XCTestCase {
         return ""
     }
 
-    /// The OSC section of `CLAUDE.md`, from its heading to the next top-level heading.
+    /// The OSC section of `Sources/CLAUDE.md` (moved there verbatim by W-MAP, 2026-11-01), from
+    /// its heading to the next top-level heading.
     private func lawSection() throws -> String {
-        let law = try String(contentsOf: try repoRoot().appendingPathComponent("CLAUDE.md"),
+        let law = try String(contentsOf: try repoRoot().appendingPathComponent("Sources/CLAUDE.md"),
                              encoding: .utf8)
         guard let start = law.range(of: Self.heading) else { return "" }
         let rest = law[start.upperBound...]
@@ -194,7 +201,7 @@ final class TheWireContractMatchesTheLawTests: XCTestCase {
             }
         }
         XCTAssertTrue(missing.isEmpty, """
-            CLAUDE.md's OSC section documents \(missing.count) address(es) that no code in \
+            Sources/CLAUDE.md's OSC section documents \(missing.count) address(es) that no code in \
             Sources/ can send: \(missing.joined(separator: ", ")). This is the 2026-07-04 defect \
             repeating — an integrator wiring to one of these listens to a socket that never \
             speaks. Either restore the sender or strike the line, in this commit.
@@ -237,7 +244,7 @@ final class TheWireContractMatchesTheLawTests: XCTestCase {
     func testBothScansCanFire() throws {
         let documented = addressTokens(in: try lawSection())
         XCTAssertGreaterThan(documented.count, 5, """
-            The OSC section of CLAUDE.md yielded \(documented.count) address tokens. It carries \
+            The OSC section of Sources/CLAUDE.md yielded \(documented.count) address tokens. It carries \
             more than that; the heading anchor "\(Self.heading)" or the section boundary has \
             moved, and claim 1 is now vacuous rather than green.
             """)
@@ -271,7 +278,7 @@ final class TheWireContractMatchesTheLawTests: XCTestCase {
         }
         XCTAssertEqual(callers.count, 1, """
             The immersive object formatter now has \(callers.count) callers \
-            (\(callers.joined(separator: ", "))). CLAUDE.md names ADMOSCSender as THE sender of \
+            (\(callers.joined(separator: ", "))). Sources/CLAUDE.md names ADMOSCSender as THE sender of \
             that address space; a second producer must be documented, or the object indices of \
             two senders will collide on a real rig.
             """)
