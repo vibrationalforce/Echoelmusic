@@ -173,6 +173,42 @@ final class ExportTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: url), WAVFile.data(left: left, right: right, sampleRate: 44_100))
     }
 
+    /// A writer of one channel writes a mono file of the two sides averaged (W17): a bake whose
+    /// sides came out the same is written mono, and the song holds it as one channel.
+    func testAWriterOfOneChannelWritesTheSidesAveraged() throws {
+        let left: [Float] = [0.5, -1, 0.25]
+        let right: [Float] = [0.5, 0, -0.25]
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("mono-\(UUID()).wav")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let writer = try WAVWriter(url: url, sampleRate: 48_000, channels: 1)
+        XCTAssertEqual(writer.channels, 1)
+        try left.withUnsafeBufferPointer { l in
+            try right.withUnsafeBufferPointer { r in
+                guard let lp = l.baseAddress, let rp = r.baseAddress else { return XCTFail("no storage") }
+                try writer.append(left: lp, right: rp, count: 3)
+            }
+        }
+        try writer.finish()
+        let data = try Data(contentsOf: url)
+        XCTAssertEqual(data.count, 44 + 3 * 3, "three bytes a frame")
+        func u32(_ at: Int) -> UInt32 { data[at..<at + 4].enumerated().reduce(0) { $0 | UInt32($1.element) << (8 * $1.offset) } }
+        func u16(_ at: Int) -> UInt16 { UInt16(data[at]) | UInt16(data[at + 1]) << 8 }
+        XCTAssertEqual(u16(22), 1, "mono")
+        XCTAssertEqual(u32(28), 48_000 * 3)
+        XCTAssertEqual(u16(32), 3)
+        XCTAssertEqual(u32(40), 9)
+        func sample(_ frame: Int) -> Int32 {
+            let at = 44 + 3 * frame
+            let raw = Int32(data[at]) | Int32(data[at + 1]) << 8 | Int32(data[at + 2]) << 16
+            return (raw << 8) >> 8
+        }
+        XCTAssertEqual(sample(0), WAVFile.integer(0.5, bits: 24))
+        XCTAssertEqual(sample(1), WAVFile.integer(-0.5, bits: 24))
+        XCTAssertEqual(sample(2), 0)
+        XCTAssertEqual(WAVFile.maximumFrames(.twentyFour, channels: 1), (Int(UInt32.max) - 36) / 3,
+                       "one channel fits twice the frames")
+    }
+
     func testTheHeaderNeverCountsPastWhatRIFFCanHold() {
         let header = WAVFile.header(frames: .max, sampleRate: 48_000, bitDepth: .twentyFour)
         func u32(_ at: Int) -> UInt32 { header[at..<at + 4].enumerated().reduce(0) { $0 | UInt32($1.element) << (8 * $1.offset) } }

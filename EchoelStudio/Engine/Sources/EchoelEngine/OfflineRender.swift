@@ -234,8 +234,8 @@ extension OfflineRender {
     }
 }
 
-/// A stereo PCM WAV file (RIFF, little-endian, interleaved). 24-bit by default, the studio
-/// standard; samples beyond full scale are clipped, never wrapped.
+/// A PCM WAV file (RIFF, little-endian, interleaved), stereo unless a writer asks for one channel.
+/// 24-bit by default, the studio standard; samples beyond full scale are clipped, never wrapped.
 public enum WAVFile {
     public enum BitDepth: Int, Sendable { case sixteen = 16, twentyFour = 24 }
 
@@ -263,17 +263,22 @@ public enum WAVFile {
         return out
     }
 
-    /// The most stereo frames one file can hold: RIFF counts its size in 32 bits — about four
-    /// hours at 48 kHz in 24-bit (715,827,876 frames), six at 16-bit.
-    public static func maximumFrames(_ bitDepth: BitDepth) -> Int {
-        (Int(UInt32.max) - 36) / (2 * bitDepth.rawValue / 8)
+    /// The most frames of `channels` (1 or 2) one file can hold: RIFF counts its size in 32 bits —
+    /// in stereo about four hours at 48 kHz in 24-bit (715,827,876 frames), six at 16-bit.
+    public static func maximumFrames(_ bitDepth: BitDepth, channels: Int = 2) -> Int {
+        (Int(UInt32.max) - 36) / (writtenChannels(channels) * bitDepth.rawValue / 8)
     }
 
-    /// The 44-byte header for `frames` stereo frames.
-    static func header(frames: Int, sampleRate: Double, bitDepth: BitDepth) -> Data {
+    /// 1 or 2: a file holds one channel or two.
+    static func writtenChannels(_ channels: Int) -> Int {
+        channels == 1 ? 1 : 2
+    }
+
+    /// The 44-byte header for `frames` frames of `channels` (1 or 2).
+    static func header(frames: Int, sampleRate: Double, bitDepth: BitDepth, channels requested: Int = 2) -> Data {
         let bytesPerSample = bitDepth.rawValue / 8
-        let channels = 2
-        let dataSize = Swift.min(frames, maximumFrames(bitDepth)) * channels * bytesPerSample
+        let channels = writtenChannels(requested)
+        let dataSize = Swift.min(frames, maximumFrames(bitDepth, channels: channels)) * channels * bytesPerSample
         let rate = UInt32(sampleRate > 0 && sampleRate.isFinite ? Swift.min(sampleRate.rounded(), 768_000) : 48_000)
 
         var out = Data(capacity: 44)
@@ -306,8 +311,10 @@ public enum WAVFile {
     }
 }
 
-/// Writes a stereo WAV file block by block, so an export never holds the song in memory. The
-/// header is written first with the sizes left open and completed by `finish`.
+/// Writes a WAV file block by block, so an export never holds the song in memory. The header is
+/// written first with the sizes left open and completed by `finish`. Stereo by default; a writer of
+/// one channel writes the two sides it is given averaged — a bake whose sides came out the same
+/// writes a mono file, which a song then holds as one channel (W17).
 public final class WAVWriter {
     public enum WriteError: Error, Equatable {
         /// The song is longer than one WAV file can hold (`WAVFile.maximumFrames`).
@@ -317,25 +324,32 @@ public final class WAVWriter {
     private let handle: FileHandle
     private let bitDepth: WAVFile.BitDepth
     private let sampleRate: Double
+    /// 1 or 2.
+    public let channels: Int
     private var bytes: [UInt8] = []
     public private(set) var frameCount = 0
 
-    /// Creates `url`, replacing a file that is there.
-    public init(url: URL, sampleRate: Double, bitDepth: WAVFile.BitDepth = .twentyFour) throws {
+    /// Creates `url`, replacing a file that is there, for frames of `channels` (1, or 2 for anything else).
+    public init(url: URL, sampleRate: Double, bitDepth: WAVFile.BitDepth = .twentyFour, channels: Int = 2) throws {
         FileManager.default.createFile(atPath: url.path, contents: nil)
         handle = try FileHandle(forWritingTo: url)
         self.bitDepth = bitDepth
         self.sampleRate = sampleRate
-        try handle.write(contentsOf: WAVFile.header(frames: 0, sampleRate: sampleRate, bitDepth: bitDepth))
+        self.channels = WAVFile.writtenChannels(channels)
+        try handle.write(contentsOf: WAVFile.header(frames: 0, sampleRate: sampleRate, bitDepth: bitDepth,
+                                                    channels: self.channels))
     }
 
+    /// Appends `count` frames: `left` and `right` side by side, or, in a file of one channel, the
+    /// two averaged.
     public func append(left: UnsafePointer<Float>, right: UnsafePointer<Float>, count: Int) throws {
         guard count > 0 else { return }
-        guard frameCount + count <= WAVFile.maximumFrames(bitDepth) else { throw WriteError.tooLong }
+        guard frameCount + count <= WAVFile.maximumFrames(bitDepth, channels: channels) else { throw WriteError.tooLong }
         let bytesPerSample = bitDepth.rawValue / 8
-        let size = count * 2 * bytesPerSample
+        let size = count * channels * bytesPerSample
         if bytes.count != size { bytes = [UInt8](repeating: 0, count: size) }
         let bits = bitDepth.rawValue
+        let stereo = channels == 2
         bytes.withUnsafeMutableBufferPointer { out in
             var i = 0
             func put(_ sample: Float) {
@@ -346,8 +360,12 @@ public final class WAVWriter {
                 }
             }
             for frame in 0..<count {
-                put(left[frame])
-                put(right[frame])
+                if stereo {
+                    put(left[frame])
+                    put(right[frame])
+                } else {
+                    put((left[frame] + right[frame]) * 0.5)
+                }
             }
         }
         try handle.write(contentsOf: bytes)
@@ -357,7 +375,8 @@ public final class WAVWriter {
     /// Writes the sizes into the header and closes the file.
     public func finish() throws {
         try handle.seek(toOffset: 0)
-        try handle.write(contentsOf: WAVFile.header(frames: frameCount, sampleRate: sampleRate, bitDepth: bitDepth))
+        try handle.write(contentsOf: WAVFile.header(frames: frameCount, sampleRate: sampleRate, bitDepth: bitDepth,
+                                                    channels: channels))
         try handle.close()
     }
 }
