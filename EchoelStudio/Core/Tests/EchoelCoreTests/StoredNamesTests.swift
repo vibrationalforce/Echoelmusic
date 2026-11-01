@@ -22,7 +22,7 @@ final class StoredNamesTests: XCTestCase {
                                "ptolemy-intense-diatonic"]
     private let synthKeys = ["synth.waveform", "synth.cutoff", "synth.resonance", "synth.filterAmount",
                              "synth.filterDecay", "synth.attack", "synth.decay", "synth.sustain", "synth.release",
-                             "synth.level", "synth.engine", "synth.character", "synth.filter"]
+                             "synth.level", "synth.engine", "synth.character", "synth.filter", "synth.vibrato"]
     private let drumsKeys = ["drums.level"]
     private let samplerKeys = ["sampler.root", "sampler.attack", "sampler.release", "sampler.level", "sampler.mode"]
 
