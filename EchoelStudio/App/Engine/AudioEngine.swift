@@ -962,13 +962,26 @@ final class AudioEngine {
         }
     }
 
-    /// The song as the engine plays it: itself, or the clock's tempo — and a jam host's time
-    /// signature — in place of its own while a clock is followed (`ClockFollower.played`). Every
-    /// snapshot, seek, placement and automation point goes through this one function (review
-    /// 2026-10-28, 2.2).
+    /// Flow (W12): the tempo the pulse sets while the tempo lock is open (`FlowController`), nil
+    /// while it is Fixed. Played, never written into the song, like `externalTempo`; a followed
+    /// clock or jam host wins over it (`TempoSource`).
+    var flowTempo: Double? {
+        didSet {
+            guard flowTempo != oldValue, !followsExternalClock, let project else { return }
+            publish(project)
+        }
+    }
+
+    /// The song as the engine plays it: itself; or the clock's tempo — and a jam host's time
+    /// signature — in place of its own while a clock is followed (`ClockFollower.played`); or, in
+    /// Flow, the tempo the pulse set, the song's own time signature kept. Every snapshot, seek,
+    /// placement and automation point goes through this one function (review 2026-10-28, 2.2).
     private func playing(_ project: Project) -> Project {
-        guard followsExternalClock else { return project }
-        return ClockFollower.played(project, tempo: externalTempo, signature: externalSignature)
+        if followsExternalClock {
+            return ClockFollower.played(project, tempo: externalTempo, signature: externalSignature)
+        }
+        guard let flowTempo else { return project }
+        return ClockFollower.played(project, tempo: flowTempo)
     }
 
     /// The bars the song loops over while it does (bar 1 to the end of its last bar, in the played
