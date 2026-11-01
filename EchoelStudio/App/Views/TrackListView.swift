@@ -36,29 +36,37 @@ struct TrackRow: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
     @Environment(StudioRouter.self) private var router
-    @Environment(\.dynamicTypeSize) private var typeSize
+    /// The least room the name keeps beside the buttons — about a dozen letters, "Instrument 1" —
+    /// growing with the text. Beside four buttons a 375 pt phone left it about 45 pt, a few letters
+    /// (W18, M8); readable names come before short rows (founder decision, W18b-2).
+    @ScaledMetric(relativeTo: .body) private var nameRoom: CGFloat = 90
     let track: Track
     let open: (TrackID) -> Void
 
     var body: some View {
-        // At the accessibility text sizes the name stands over the buttons: beside up to four of
-        // them it kept only what the row had left, a few letters (W18, M8).
-        let stacked = typeSize.isAccessibilitySize
-        let layout = stacked
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.Space.s))
-            : AnyLayout(HStackLayout(spacing: Theme.Space.m))
         HStack(spacing: Theme.Space.m) {
             RoundedRectangle(cornerRadius: Theme.Radius.small)
                 .fill(Theme.Color.track(track.colorIndex))
                 .frame(width: 6)
                 .accessibilityHidden(true)
-            layout {
-                nameColumn(minHeight: stacked ? Theme.Size.touch : Theme.Size.trackRowHeight)
-                buttons
+            // One line where the name keeps its room, else the name over the buttons — measured row
+            // by row at any text size: a wide phone, or a track with fewer buttons, keeps one line.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: Theme.Space.m) {
+                    nameColumn(idealWidth: nameRoom, minHeight: Theme.Size.trackRowHeight)
+                    buttons
+                }
+                VStack(alignment: .leading, spacing: Theme.Space.s) {
+                    nameColumn(idealWidth: nil, minHeight: Theme.Size.touch)
+                    // At the trailing edge, where a one-line row has them: mute and solo stay one
+                    // column down the list, whichever rows break.
+                    buttons
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .padding(.vertical, Theme.Space.s)
             }
         }
         .padding(.horizontal, Theme.Space.m)
-        .padding(.vertical, stacked ? Theme.Space.s : 0)
         .frame(minHeight: Theme.Size.trackRowHeight)
         .background(Theme.Color.surface)
         .contextMenu {
@@ -82,7 +90,8 @@ struct TrackRow: View {
 
     /// The name and the kind, the door to an instrument track's editor: the row's whole height, not
     /// the two lines alone, which were about 39 pt (W18, m13). Two lines for a long name.
-    private func nameColumn(minHeight: CGFloat) -> some View {
+    /// `idealWidth` is the room it asks for beside the buttons; nil over them.
+    private func nameColumn(idealWidth: CGFloat?, minHeight: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: Theme.Space.xxs) {
             Text(track.name)
                 .font(Theme.Font.body)
@@ -92,7 +101,7 @@ struct TrackRow: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
         }
-        .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .leading)
+        .frame(idealWidth: idealWidth, maxWidth: .infinity, minHeight: minHeight, alignment: .leading)
         .contentShape(Rectangle())
         .onTapGesture { if track.kind == .instrument { open(track.id) } }
         .accessibilityElement(children: .ignore)
