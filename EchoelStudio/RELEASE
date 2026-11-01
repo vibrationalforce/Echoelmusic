@@ -1,20 +1,17 @@
-11.0.0, nineteenth upload — Field over your video, Jam with nearby iPhones, tempo to the hundredth
+11.0.0, twentieth upload — the Jam starts together on the next bar
 
-What is new since 10027. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10028. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- Field over Video: Export Video has Field Layer (Off, Screen, Add, Normal) and Field Opacity;
-  the Field is drawn over your video take in every frame shape, vertical too. The video window
-  previews the same picture. Two exports of the same song draw the same film; body values are
-  not part of an export.
-- Jam: Song menu, Connect, Jam…. Host a Jam or Join a Jam; nearby iPhones follow the host's
-  tempo, time signature and Play/Stop, directly and encrypted, without Wi-Fi or internet. Only
-  timing and device names travel, no sound and no body values. Off until you host or join.
-- Tempo to the hundredth: type 100,25; the transport shows only the places it needs
-  (120, 100,5, 100,25).
+- Jam count-in: while phones are in your jam, Play waits for the next bar line of the jam's
+  grid, so every phone comes in together on bar 1. While it waits, the transport shows Stop and
+  the line under it reads "Starting on the next bar."; a second press calls the start off. The
+  note editor's Play does the same. Without phones in the jam, Play starts at once as before.
 
-Previous: 11.0.0 (10027), eighteenth upload — the identity finished. 10025 and earlier: see
-git history of this file.
-group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
+Previous: 11.0.0 (10028), nineteenth upload — Field over your video, Jam with nearby iPhones,
+tempo to the hundredth. 10027 and earlier: see git history of this file.
+group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
+of earlier songs has not been seen on a device yet. (Until 10028 this line said "still not
+requested" — stale since that commit.)
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -27,7 +24,8 @@ Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer e
 2. A camera take, Field Layer Screen at 60 %: the video window shows the Field over you.
 3. Export Video, 9:16, about 30 s, with that layer: the Field sits upright over you and pulses
    with the beat; does Screen look right to your eye, or too bright in the mid tones?
-4. Two iPhones, Wi-Fi off: one hosts at 100,25 BPM with the click on, the other joins; it comes
-   in on the next bar and both clicks sound together, still after five minutes.
+4. Two iPhones, Wi-Fi off, click on: one hosts at 100,25 BPM, the other joins. The host presses
+   Play in the middle of a bar: the line reads "Starting on the next bar.", both phones begin
+   together on that bar, and the clicks still sound together after five minutes.
 5. Put the host in airplane mode: the other shows "Jam host lost. Playing on at 100,25 BPM."
    and keeps playing.
