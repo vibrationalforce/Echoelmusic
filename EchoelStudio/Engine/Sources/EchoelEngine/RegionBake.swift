@@ -55,15 +55,33 @@ public enum RegionBake {
         return cut
     }
 
-    /// The region through its track's `effects`, as mono frames at `sampleRate`, from the region's
-    /// start to where the sound dies away. `effects` are units made for this render alone (as for
-    /// an export), in the track's insert order. Nil when there is nothing to bake.
+    /// Two sides closer than this, relative to their level, are the same: the centre pan's two
+    /// gains, cos and sin of π/4, may differ in their last bit, and a difference 100 dB down is no
+    /// width.
+    static let sameSides: Float = 1e-5
+
+    /// What a bake gives back: the frames of one channel, or of two.
+    public struct Baked: Equatable, Sendable {
+        public let left: [Float]
+        /// Nil for a mono bake: the two sides came out the same in every frame.
+        public let right: [Float]?
+
+        public var frameCount: Int { left.count }
+        public var channelCount: Int { right == nil ? 1 : 2 }
+    }
+
+    /// The region through its track's `effects`, at `sampleRate`, from the region's start to where
+    /// the sound dies away. `effects` are units made for this render alone (as for an export), in
+    /// the track's insert order. Nil when there is nothing to bake.
     ///
-    /// The track's bus is stereo and Echoel's audio files are mono: the two sides are summed, and
-    /// the centre pan's −3 dB is taken back out, so a mono effect bakes to exactly the level it
-    /// plays at and a wide one (the harmonizer's spread voices) folds to the middle.
+    /// The track's bus is stereo. Where its two sides came out the same in every frame — a mono
+    /// file through effects that treat both sides alike — the bake is one channel; where they
+    /// differ — a stereo file, or a wide effect such as the harmonizer's spread voices or a
+    /// ping-pong delay — it keeps both (W17: before, a wide bake folded to the middle). Either way
+    /// the centre pan's −3 dB is taken back out of each side, so the baked region, on a track at
+    /// the original's fader and pan, plays as the original did through its inserts.
     public static func render(_ song: Project, track: TrackID, region: RegionID, sampleRate: Double,
-                              samples: [MediaID: SampleBuffer], effects: [any HostedProcessor]) -> [Float]? {
+                              samples: [MediaID: SampleBuffer], effects: [any HostedProcessor]) -> Baked? {
         guard let cut = project(song, track: track, region: region),
               let start = cut.track(track)?.regions.first?.start else { return nil }
         let result = OfflineRender.render(cut, sampleRate: sampleRate, tailSeconds: 0, samples: samples,
@@ -71,14 +89,29 @@ public enum RegionBake {
         let time = TimeConversion(tempoMap: cut.tempoMap, sampleRate: result.sampleRate)
         let first = Int(Swift.max(0, Swift.min(time.sample(at: start), Int64(result.left.count))))
         guard first < result.left.count, result.left.count == result.right.count else { return nil }
-        // Centre pan is cos(π/4) on each side: (L + R) / 2 / cos(π/4) = (L + R) / √2.
-        let scale = Float(1 / 2.0.squareRoot())
-        var frames: [Float] = []
-        frames.reserveCapacity(result.left.count - first)
-        for i in first..<result.left.count {
-            let value = (result.left[i] + result.right[i]) * scale
-            frames.append(value.isFinite ? value : 0)
+        let wide = (first..<result.left.count).contains { (index: Int) -> Bool in
+            let left = result.left[index], right = result.right[index]
+            return Swift.abs(left - right) > Swift.max(Swift.abs(left), Swift.abs(right)) * sameSides
         }
-        return frames
+        guard wide else {
+            // Centre pan is cos(π/4) on each side: (L + R) / 2 / cos(π/4) = (L + R) / √2.
+            let scale = Float(1 / 2.0.squareRoot())
+            var frames: [Float] = []
+            frames.reserveCapacity(result.left.count - first)
+            for i in first..<result.left.count {
+                let value = (result.left[i] + result.right[i]) * scale
+                frames.append(value.isFinite ? value : 0)
+            }
+            return Baked(left: frames, right: nil)
+        }
+        // Each side over cos(π/4): × √2.
+        let scale = Float(2.0.squareRoot())
+        let side = { (values: [Float]) -> [Float] in
+            values[first...].map { (value: Float) -> Float in
+                let scaled = value * scale
+                return scaled.isFinite ? scaled : 0
+            }
+        }
+        return Baked(left: side(result.left), right: side(result.right))
     }
 }

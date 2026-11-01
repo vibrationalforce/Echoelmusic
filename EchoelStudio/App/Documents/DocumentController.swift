@@ -1807,21 +1807,28 @@ final class DocumentController {
         }
         guard song == songsOpened, let target = newTakeTarget(fileExtension: "wav") else { return }
         let url = target.url
-        let result: Result<(count: Int, buffer: SampleBuffer?), Error> = await Task.detached(priority: .userInitiated) {
+        let result: Result<(count: Int, channels: Int, buffer: SampleBuffer?), Error> = await Task.detached(priority: .userInitiated) {
             Result {
                 let chain = offline.chains[trackID].map { $0 as [any HostedProcessor] } ?? []
-                guard let frames = RegionBake.render(project, track: trackID, region: regionID, sampleRate: rate,
-                                                     samples: buffers, effects: chain), !frames.isEmpty else {
+                guard let baked = RegionBake.render(project, track: trackID, region: regionID, sampleRate: rate,
+                                                    samples: buffers, effects: chain), baked.frameCount > 0 else {
                     throw CancellationError()
                 }
                 guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
-                let writer = try WAVWriter(url: url, sampleRate: rate)
-                try frames.withUnsafeBufferPointer { pointer in
-                    guard let base = pointer.baseAddress else { return }
-                    try writer.append(left: base, right: base, count: pointer.count)
+                // Stereo when the inserts or the file made the two sides differ, else one channel (W17).
+                let right = baked.right ?? baked.left
+                let writer = try WAVWriter(url: url, sampleRate: rate, channels: baked.channelCount)
+                try baked.left.withUnsafeBufferPointer { left in
+                    try right.withUnsafeBufferPointer { other in
+                        guard let l = left.baseAddress, let r = other.baseAddress else { return }
+                        try writer.append(left: l, right: r, count: Swift.min(left.count, other.count))
+                    }
                 }
                 try writer.finish()
-                return (frames.count, SampleBuffer(samples: frames, sampleRate: rate))
+                let buffer = baked.right == nil
+                    ? SampleBuffer(samples: baked.left, sampleRate: rate)
+                    : SampleBuffer(left: baked.left, right: right, sampleRate: rate)
+                return (baked.frameCount, baked.channelCount, buffer)
             }
         }.value
         guard song == songsOpened, case .success(let baked) = result else {
