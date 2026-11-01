@@ -387,6 +387,30 @@ final class ClickHuntTests: XCTestCase {
         XCTAssertLessThan(settled, 1e-4, "back on the grid after the seek")
     }
 
+    /// The sampler on a sine: notes, a repeated key, overlapping notes, more notes than voices,
+    /// notes held past the sample's end, and the same as one-shots.
+    func testTheSamplerPlaysWithoutAClick() throws {
+        let tone = (0..<24_000).map { (i: Int) -> Float in Float(0.4 * sin(2 * Double.pi * 261.63 * Double(i) / 48_000)) }
+        let buffer = try XCTUnwrap(SampleBuffer(samples: tone, sampleRate: rate))
+        let sixteenth = quarter / 4
+        var notes: [Note] = []
+        for k in 0..<20 {
+            notes.append(Note(pitch: 60 + (k % 5), velocity: 100, start: Tick(k) * sixteenth, length: 3 * sixteenth))
+        }
+        notes.append(Note(pitch: 60, velocity: 100, start: bar, length: 2 * bar))
+        for mode in [0.0, 1.0] {
+            var song = try instrumentSong(notes, device: .sampler,
+                                          settings: [(.samplerRoot, 60), (.samplerMode, mode)], tempo: 240)
+            let media = MediaFile(name: "Tone", path: "Media/tone.wav", frameCount: buffer.frameCount, sampleRate: rate)
+            try Command.addMedia(media).apply(to: &song.project)
+            try Command.setInstrumentSample(song.track, media.id).apply(to: &song.project)
+            let core = core()
+            publish(song.project, to: core, samples: [media.id: buffer])
+            core.play()
+            assertNoClicks(render(core, frames: 3 * 48_000), "sampler, mode \(mode)")
+        }
+    }
+
     func testTheKitPlaysAPatternWithoutAClick() throws {
         let sixteenth = quarter / 4
         var notes: [Note] = []
