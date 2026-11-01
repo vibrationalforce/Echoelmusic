@@ -679,8 +679,34 @@ final class AudioEngine {
                 step("session: configure playback")
                 try session.setCategory(.playback, mode: .default, options: [])
             }
+            // 48 kHz and a 512-frame buffer, as the earlier app asked on devices (`SessionPreference`,
+            // AUD 2026-11-01): Studio asked for nothing and played at whatever buffer another app or
+            // the route left. Wishes iOS may refuse — the session then plays on with its own values,
+            // and the refusal is on record.
+            step("session: prefer rate", [("Hz", SessionPreference.sampleRate)])
+            do {
+                try session.setPreferredSampleRate(SessionPreference.sampleRate)
+            } catch {
+                failed("session: preferred rate refused", error)
+            }
+            step("session: prefer buffer", [("frames", Double(SessionPreference.bufferFrames))])
+            do {
+                try session.setPreferredIOBufferDuration(SessionPreference.bufferDuration(atRate: SessionPreference.sampleRate))
+            } catch {
+                failed("session: preferred buffer refused", error)
+            }
             step("session: activate")
             try session.setActive(true)
+            // iOS turns the buffer's duration back into frames at the rate it granted: at another
+            // rate the buffer is asked again, so it stays 512 frames (the earlier app's #961).
+            if SessionPreference.asksAgain(asked: SessionPreference.sampleRate, granted: session.sampleRate) {
+                step("session: prefer buffer at the granted rate", [("Hz", session.sampleRate)])
+                do {
+                    try session.setPreferredIOBufferDuration(SessionPreference.bufferDuration(atRate: session.sampleRate))
+                } catch {
+                    failed("session: preferred buffer refused", error)
+                }
+            }
             // Every output the interface has, so a track can play on 3/4, 5/6 …
             let available = session.maximumOutputNumberOfChannels
             if available > 2, session.outputNumberOfChannels != available {
@@ -786,10 +812,10 @@ final class AudioEngine {
             if reportTask == nil { pollLaunchReports() }
             step("engine: start")
             try engine.start()
-            // The session's own values after the start (Studio asks for no rate and no buffer;
-            // Apple QA1631: any such wish is a hint). out_Hz=0 shows an output that reported no
-            // rate before the 48 kHz fallback above. `buffers` counts render calls: a later rung
-            // that repeats it while the engine is said to run means nothing renders.
+            // The session's own values after the start: what it granted of the rate and the buffer
+            // asked for above (Apple QA1631: any such wish is a hint). out_Hz=0 shows an output that
+            // reported no rate before the 48 kHz fallback above. `buffers` counts render calls: a
+            // later rung that repeats it while the engine is said to run means nothing renders.
             step("engine: started", [("Hz", session.sampleRate), ("out_Hz", output.sampleRate),
                                      ("io_ms", session.ioBufferDuration * 1_000),
                                      ("in_ms", session.inputLatency * 1_000),
