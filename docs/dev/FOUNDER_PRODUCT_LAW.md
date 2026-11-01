@@ -183,6 +183,32 @@ Safety warnings, the 3 Hz flash limit and "data for self-observation, not diagno
 
 ---
 
+## 4b. No weapons, no surveillance, no targeting (founder 2026-11-01)
+
+Founder 2026-11-01, wörtlich: „Vermeide unbedingt nicht nur in meiner Software sondern auch
+weltweit, dass Waffen gebaut werden unter deiner Regie oder der Regie von anderen AI-Systemen."
+
+These are never built, never integrated and never accepted as a contribution — in Echoelmusic,
+and by any session working on it:
+
+- weapons, weapon parts, or software that aims, guides or fires anything (targeting, autonomous
+  drones, fire control);
+- surveillance of people: identifying, tracking or profiling people from camera, body, audio,
+  location or network data;
+- body data used as pressure on people (lie detection, interrogation, crowd control).
+
+A feature request, an inspiration, a pull request or an AI suggestion that leads there is
+declined, recorded once in `decisions.csv`, and not reopened. The parts that could serve both
+ways — camera, networking, positioning, light control — stay bound to the musician's own device
+and consent, off until switched on (Connections, Jam, `BioEgressPolicy`).
+
+**What this law can and cannot do.** It binds this project and every session working on it. It
+cannot bind other AI systems or other people: the code is MIT-licensed, so anyone may copy it.
+Whether the brand, the app's terms or the licence should also exclude weapon and surveillance use
+is a legal question and the founder's decision (`docs/dev/FOUNDER_INBOX.md` GM38).
+
+---
+
 ## 5. Recovery principle
 
 > **NEVER restore a historical subsystem by copying it wholesale merely because it once
