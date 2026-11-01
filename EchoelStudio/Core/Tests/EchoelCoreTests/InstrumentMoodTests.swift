@@ -54,4 +54,20 @@ final class InstrumentMoodTests: XCTestCase {
         XCTAssertEqual(after.preset, "Pluck")
         XCTAssertEqual(InstrumentMood.current(of: after), dark)
     }
+
+    /// A choir preset is made for the choir and named for its vowel (VOX): it brings the choir and
+    /// its own character, where keeping the engine and the mood would sing another vowel on DDSP.
+    func testAChoirPresetBringsItsEngineAndItsVowel() throws {
+        var project = try StarterProject.empty.project()
+        let id = try XCTUnwrap(project.tracks.first).id
+        let dark = try XCTUnwrap(InstrumentMood.all.first { $0.name == "Dark" })
+        try apply(InstrumentSound.choosing(engine: 6, on: id) + dark.commands(for: id), to: &project)
+        try apply(InstrumentSound.choosing(preset: "Choir Ah", on: try XCTUnwrap(project.track(id))), to: &project)
+        let instrument = try XCTUnwrap(project.track(id)).instrument
+        XCTAssertEqual(instrument.preset, "Choir Ah")
+        XCTAssertEqual(SynthParameter.engine.choices[Int(instrument.value(.engine))], "Choir")
+        XCTAssertEqual(instrument.value(.character), 0.5, "ah")
+        XCTAssertFalse(instrument.isEditedFromPreset)
+        XCTAssertNil(InstrumentMood.current(of: instrument), "the preset's own colour")
+    }
 }
