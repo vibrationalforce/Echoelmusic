@@ -187,6 +187,24 @@ final class ClickHuntTests: XCTestCase {
         }
     }
 
+    /// A start at a region's first frame is no start inside it: the region rises by its own edge
+    /// fade and plays as it is from there. So an export or a bake of a region at the song's start
+    /// stays the region — the start's fade is for a start inside a sounding region only.
+    func testAStartAtARegionsFirstFrameLeavesTheRegionAsItIs() throws {
+        let song = try audioSong(try sineBuffer(seconds: 1, stereo: false))
+        let core = core()
+        publish(song.project, to: core, samples: song.samples)
+        core.play()
+        let out = render(core, frames: 2_048)
+        let centre = Float(0.5.squareRoot())
+        var worst: Float = 0
+        for i in Int(EngineCore.regionFadeFrames)..<2_048 {
+            let file = Float(0.5 * sin(2 * Double.pi * 220 * Double(i) / 48_000))
+            worst = Swift.max(worst, Swift.abs(out.left[i] - file * centre))
+        }
+        XCTAssertLessThan(worst, 1e-5, "after its own edge, the region as it is")
+    }
+
     func testASeekWhilePlayingDoesNotClick() throws {
         let song = try audioSong(try sineBuffer(seconds: 4, stereo: true))
         let core = core()

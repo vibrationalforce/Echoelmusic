@@ -1665,7 +1665,7 @@ public final class EngineCore: @unchecked Sendable {
     /// Output frames of fade at each edge of an audio region.
     static let regionFadeFrames: Double = 64
     /// Output frames the audio lanes fade in over after a start, a seek, a jump or the loop's wrap
-    /// (`movedFrom`): twice a region's edge, because a start at a region's first frame multiplies
+    /// (`movedFrom`): twice a region's edge, because a start a few frames into a region multiplies
     /// the two fades, and two ramps of one length end twice as steep as one — a kink of 3 % of the
     /// level where one ramp leaves 1.6 % (click hunt, 2026-11-01). 2.7 ms at 48 kHz.
     static let moveFadeFrames: Double = 128
@@ -1734,7 +1734,9 @@ public final class EngineCore: @unchecked Sendable {
                 } else {
                     heard = Self.readsOn
                 }
-                // What follows fades in either way; only what played fades out.
+                // What played fades out; what follows fades in where it is under way — a region
+                // that begins here rises by its own edge, so an export from the song's start stays
+                // the region as it is.
                 if heard != Self.readsOn {
                     if heard != Self.nothingToFade {
                         playhead = heard
@@ -1742,7 +1744,7 @@ public final class EngineCore: @unchecked Sendable {
                                  fadeIn: 0..<0, fadeOut: 0..<length)
                         playhead = home
                     }
-                    fadeEnd = length
+                    if isUnderWay(lane, index: index, state: state) { fadeEnd = length }
                 }
             }
             while from < frames {
@@ -1803,6 +1805,21 @@ public final class EngineCore: @unchecked Sendable {
     /// the left and its right on the right; a mono one plays in both alike. The track's pan then
     /// scales the two sides (`EngineSnapshot.gains`): for a stereo region it is a balance, which
     /// never moves the left into the right (W17).
+    /// Whether the lane's audio is under way at the playhead: a launched clip, or a region that
+    /// began before the playhead and runs past it — read where `addAudio` reads it.
+    private func isUnderWay(_ lane: EngineSnapshot.AudioLane, index: Int, state: SessionSlot) -> Bool {
+        if state.overrides { return true }
+        let held = index >= 0 && index < Self.smoothedAudioTracks ? heldRegion[index] : -1
+        for (i, region) in lane.regions.enumerated() {
+            let shift = i == held ? heldShift[index] : 0
+            guard region.startSample + shift < playhead else {
+                if held >= 0 { continue } else { break }
+            }
+            if region.endSample + shift > playhead { return true }
+        }
+        return false
+    }
+
     private func addAudio(_ lane: EngineSnapshot.AudioLane, index: Int, state: SessionSlot, from: Int, to: Int,
                           _ snapshot: EngineSnapshot, fadeIn: Range<Int>, fadeOut: Range<Int>?) {
         guard to > from else { return }
