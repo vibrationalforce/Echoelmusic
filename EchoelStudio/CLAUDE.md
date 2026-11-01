@@ -5,10 +5,11 @@ This directory is the new app. **The build plan is `docs/dev/NEUPLANUNG_2026-10-
 rewritten, phase P0 before 1.0); product and scope are in `docs/dev/NEUSTART_2026-10-17.md`.
 Read both before any change here. The song format is public: `docs/FORMAT.md`, pinned by
 `Core/Tests/EchoelCoreTests/FormatGoldenTests.swift` — a change that breaks it is a format
-version bump with a migration, never an edit to the golden files.** The root `CLAUDE.md`
-describes the legacy bio-instrument under `Sources/Echoelmusic` — its PRODUCT rules do not
-apply here. Its engineering lessons do, and the ones that matter are restated below so
-nothing has to be fished out of the long file.
+version bump with a migration, never an edit to the golden files.** The root `CLAUDE.md` is
+the map of the whole repo, and its universal laws apply here too. The legacy bio-instrument
+under `Sources/Echoelmusic` has its own law in `Sources/CLAUDE.md` (moved there 2026-11-01) —
+its PRODUCT rules do not apply here. Its engineering lessons do, and the ones that matter are
+restated below so nothing has to be fished out of the long file.
 
 ## Layout
 

@@ -1,6 +1,7 @@
 # CLAUDE.md — `Tests/CISmoke/` (the blocking bundle)
 
-Scope: this directory only. The root `CLAUDE.md` owns product, brand and state; this file
+Scope: this directory only. The root `CLAUDE.md` is the map of the repo, and the earlier app's
+product, brand and state live in `Sources/CLAUDE.md` (moved there verbatim 2026-11-01); this file
 owns **how a guard is written, graded and reported**. Every law below is one this repo has
 already paid for; none is invented.
 
