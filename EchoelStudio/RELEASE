@@ -1,23 +1,26 @@
-11.0.0, twenty-first upload — the Instrument page, and audio in stereo
+11.0.0, twenty-second upload — the Body Voice breathes, and the main paths work with VoiceOver
 
-What is new since 10029. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10030. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- Instrument: the first chip in the bar. The Field on top, your pulse, Body Source, Body Voice,
-  the tempo lock Fixed | Flow, Sound and Mood; the keys stay under the page.
-- Body Voice: a Body track on a pad sound, silent until you switch it on. The keys play it;
-  coherence opens and brightens its sound and your pulse sets its vibrato — three ordinary routes
-  you can see and change under Modulate. Pulse, HRV and coherence are for self-observation.
-- Flow: the tempo follows your pulse only through four stages — a steady reading for 5 s, folded
-  into 60–160 BPM near the tempo that plays, at most 2 BPM per bar, gliding over 2 s — and only
-  while the song plays. Never while a Jam host or a MIDI clock sets the tempo. Flow writes nothing
-  into the song; switching back to Fixed keeps the tempo it reached, as one undo step.
-- Vibrato is a new synth parameter, also in the plug-in (at the end of its list).
-- Stereo: imported audio, regions, clips and Bake Effects keep left and right. Mono stays mono;
-  more than two channels fold to stereo. Pan on a stereo region works as balance. A wide file can
-  sound up to 3 dB louder than its former mono mix. Recording stays mono.
+- Breath, read from the timing of your heartbeats (camera or strap): "Breath" joins Modulate,
+  and the Body Voice swells as you breathe in (Breath → Level). It joins after about a minute
+  of slow, deep breathing and stays at "measuring" otherwise — a breath is never invented.
+  The Field moves with it too. Breath never touches the tempo.
+- Bake Effects writes 32-bit float files: a baked effect louder than full scale sounds the same
+  after the song is closed and opened again. Export WAV and stems stay 24 bit.
+- VoiceOver: in the piano roll, Add Note writes a note, notes are spoken by bar and beat, and
+  each note can move by an octave or a bar or get longer or shorter. The drum grid has a Lanes
+  rotor and names the beat of each step. The number pad takes the focus and gives it back.
+  Errors, an export's start and end and a lost Jam host are spoken. A double tap on a fader,
+  pan or value field opens the number pad; Reset is its own action. Pan reads "Center" or
+  "20 percent left".
+- Large text: track names move above their buttons whenever they would get too little room,
+  also on small phones; mixer strips and effect columns grow with the text; a long press shows
+  the transport, key and bar buttons large.
+- Piano roll zoom from 100 to 250 %, kept on this device. Empty drum steps are easier to see.
 
-Previous: 11.0.0 (10029), twentieth upload — the Jam starts together on the next bar. 10028 and
-earlier: see git history of this file.
+Previous: 11.0.0 (10030), twenty-first upload — the Instrument page, and audio in stereo. 10029
+and earlier: see git history of this file.
 group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
 of earlier songs has not been seen on a device yet.
 
@@ -27,15 +30,17 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. A fingertip on the rear camera, open Instrument, Body Source: the camera, switch Body Voice on
-   and play the keys. Breathe slowly and calmly for a minute: does the sound open and brighten,
-   and does the vibrato follow your pulse?
+1. A fingertip on the rear camera, open Instrument, Body Source: the camera, Body Voice on, play
+   the keys and breathe slowly and deeply, about six times a minute. After about a minute does
+   "Breath" join the measuring line, and does the sound swell as you breathe in and fall as you
+   breathe out?
 2. Press Play on a song and set the tempo lock to Flow: the tempo field reads FLOW and the tempo
    moves slowly toward your pulse, bar by bar. Switch to Fixed: it stays where it got to, and
    Undo takes that back.
-3. Import a stereo file with a sound only on the left, and play it: left stays left. Bake a
-   region through Chorus: the baked track stays wide.
-4. Two iPhones, Wi-Fi off, click on: one hosts, the other joins. The host presses Play in the
-   middle of a bar: "Starting on the next bar.", both begin together on that bar, and the clicks
-   still sound together after five minutes.
+3. Import a stereo file with a sound only on the left: left stays left. Bake a region through
+   Chorus and the EQ with High Mid Gain all the way up, close the song and open it again: the
+   bake is still wide and not harshly clipped.
+4. VoiceOver on: in an empty MIDI clip, Add Note is spoken back with its bar and beat; in a drum
+   grid, the Lanes rotor jumps to Snare. Then the largest text size: track names, the mixer and
+   the effect fields read without cut-off words.
 5. After trying Instrument: should Echoel open on Instrument instead of Tracks?
