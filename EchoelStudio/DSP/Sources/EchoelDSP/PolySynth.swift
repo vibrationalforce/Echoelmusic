@@ -142,7 +142,7 @@ public struct SynthVoice: Sendable {
         }
         // Every key strikes, a repeated one too: a mallet rings again on top of its tail, and the
         // DDSP's noise takes a sequence of its own from the note counter.
-        source.strike(character: patch.character, order: order)
+        source.strike(character: patch.character, order: order, pitch: pitch, sampleRate: sampleRate)
         controlCountdown = 0
         ampEnvelope.gateOn()
         filterEnvelope.gateOn()
