@@ -40,6 +40,10 @@ public final class EffectKernel: @unchecked Sendable {
     private let revision = Atomic<UInt64>(0)
     private var applied: UInt64 = .max
     private let reductionBits = Atomic<UInt32>(0)
+    /// The song's key (`SongKey.packed`), which the harmonizer's key-following styles sing in. Any
+    /// thread writes it (`follow(key:)`); the render thread picks it up with the parameters. Until
+    /// a host tells it — another app has no song key — it is C, with no scale: major on C.
+    private let keyBits = Atomic<UInt64>(SongKey().packed)
 
     private var equalizer: ParametricEQ
     private var compressor: Compressor
@@ -120,6 +124,18 @@ public final class EffectKernel: @unchecked Sendable {
         guard address >= 0, address < parameters.count else { return 0 }
         return Float(bitPattern: values[address].load(ordering: .relaxed))
     }
+
+    /// Any thread, the render thread included (the engine hands every insert the snapshot's key at
+    /// each chunk): the song's key. Only a change reaches the sound, at the start of the next block.
+    public func follow(key: SongKey) {
+        let packed = key.packed
+        guard keyBits.load(ordering: .relaxed) != packed else { return }
+        keyBits.store(packed, ordering: .relaxed)
+        revision.wrappingAdd(1, ordering: .releasing)
+    }
+
+    /// The key the effect plays in now.
+    public var key: SongKey { SongKey(packed: keyBits.load(ordering: .relaxed)) }
 
     /// How far the output sits behind the input, in seconds: the pitch correction's delay, 0 for
     /// every other effect (the harmonizer's voices lag, its dry sound does not).
@@ -284,14 +300,36 @@ public final class EffectKernel: @unchecked Sendable {
             func shift(_ address: Int) -> Double? {
                 HarmonyInterval(index: parameter(address)).semitones.map { Double($0) }
             }
+            let style = HarmonyStyle(index: parameter(5))
             let s = Harmonizer.Settings(first: shift(0), second: shift(1), third: shift(2), level: value(3),
-                                        spread: value(4))
+                                        spread: value(4), voicing: Self.voicing(style, in: key))
             if s != harmonizer.settings { harmonizer.settings = s }
         case .granular:
             guard let granulator else { return }
             let s = Granulator.Settings(size: value(0), density: value(1), pitch: value(2), position: value(3),
                                         spray: value(4), spread: value(5), mix: value(6))
             if s != granulator.settings { granulator.settings = s }
+        }
+    }
+
+    /// The harmonizer's voicing for a style in a key: the style's two voices for every pitch class,
+    /// or the ison's root. Arithmetic on two vectors: it runs on the render thread when the style or
+    /// the key changes.
+    static func voicing(_ style: HarmonyStyle, in key: SongKey) -> Harmonizer.Voicing {
+        switch style {
+        case .free:
+            return .free
+        case .ison:
+            return .ison(root: key.root, reference: key.concertPitch)
+        case .organum, .organumAtTheFourth, .fauxbourdon, .diatonicThirds:
+            var left = SIMD16<Float>.zero
+            var right = SIMD16<Float>.zero
+            for note in 0..<12 {
+                guard let sides = style.sides(for: note, in: key) else { return .free }
+                left[note] = Float(sides.left)
+                right[note] = Float(sides.right)
+            }
+            return .following(left: left, right: right, reference: key.concertPitch)
         }
     }
 
@@ -411,6 +449,8 @@ public final class EffectKernel: @unchecked Sendable {
             choose("voice3", "Voice 3", intervals, HarmonyInterval.off.rawValue)
             add("level", "Level", 0...1, 0.5, .amount)
             add("spread", "Spread", 0...1, 0.5, .amount)
+            // Appended (VOX): an insert saved before it has no value here and plays Free, as it did.
+            choose("style", "Style", HarmonyStyle.allCases.map(\.title), HarmonyStyle.free.rawValue)
         case .granular:
             add("size", "Grain Size", 0.01...0.5, 0.08, .seconds)
             add("density", "Density", 0...1, 0.5, .amount)

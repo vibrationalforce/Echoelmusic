@@ -49,6 +49,25 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertNil(u.parameterTree?.parameter(withAddress: 3)?.valueStrings, "a number has no names")
     }
 
+    /// The engine hands every insert the song's key (VOX): Echoel's harmonizer takes it through its
+    /// host, keeps it when its resources are made again, and lists its styles by name; a unit that is
+    /// not Echoel's never hears of it.
+    func testTheHarmonizerTakesTheSongsKeyThroughItsHost() throws {
+        let u = try unit(.harmonizer)
+        let style = try XCTUnwrap(u.parameterTree?.parameter(withAddress: 5))
+        XCTAssertEqual(style.unit, .indexed)
+        XCTAssertEqual(style.valueStrings, HarmonyStyle.allCases.map(\.title))
+        XCTAssertEqual(u.key, SongKey(), "C, no scale, until the engine says otherwise")
+        let gMajor = SongKey(MusicalContext(root: 7, scale: .major))
+        HostedEffect(render: u.renderBlock, sampleRate: 48_000, maximumFrames: 4_096, owner: u).follow(key: gMajor)
+        XCTAssertEqual(u.key, gMajor)
+        u.deallocateRenderResources()
+        try u.allocateRenderResources()
+        XCTAssertEqual(u.key, gMajor, "a new kernel keeps the key")
+        HostedEffect(render: u.renderBlock, sampleRate: 48_000, maximumFrames: 4_096, owner: nil).follow(key: SongKey())
+        XCTAssertEqual(u.key, gMajor, "a host without Echoel's unit passes nothing on")
+    }
+
     func testOnlyThePitchCorrectionReportsALatency() throws {
         XCTAssertEqual(try unit(.pitchCorrection).latency, 0.019, accuracy: 0.0005)
         XCTAssertEqual(try unit(.harmonizer).latency, 0)

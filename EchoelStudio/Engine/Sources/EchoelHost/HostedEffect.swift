@@ -5,6 +5,14 @@ import EchoelKernels
 import Foundation
 import Synchronization
 
+/// A unit that sings in the song's key: Echoel's own effects (`StandardEffectUnit`), whose
+/// harmonizer has choir styles in the key (VOX). No Audio Unit API carries a key, so the engine's
+/// snapshot hands it to every insert and `HostedEffect` passes it on to a unit that takes it.
+public protocol SongKeyFollowing: AnyObject {
+    /// Any thread, the render thread included: must not allocate or lock.
+    func follow(key: SongKey)
+}
+
 /// An Audio Unit effect on a track's insert chain, processed inside the engine's own render
 /// pass like `HostedUnit`. The unit pulls the track's stereo bus through a pull-input block made
 /// once, here; its output replaces the bus.
@@ -23,6 +31,8 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     private let renderBlock: AURenderBlock
     private let scheduleParameter: AUScheduleParameterBlock?
     private let owner: AnyObject?
+    /// The owner, when it sings in the song's key; found once, here, not on the render thread.
+    private let keyFollower: (any SongKeyFollowing)?
     /// What the unit's host blocks read, when they were set on it.
     private let clock: HostClock?
     private let outLeft: UnsafeMutablePointer<Float>
@@ -49,6 +59,7 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
         self.maximumFrames = Swift.max(1, maximumFrames)
         self.isBypassed = isBypassed
         self.owner = owner
+        keyFollower = owner as? any SongKeyFollowing
         outLeft = .allocate(capacity: self.maximumFrames)
         outLeft.initialize(repeating: 0, count: self.maximumFrames)
         outRight = .allocate(capacity: self.maximumFrames)
@@ -86,6 +97,11 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
 
     public func follow(_ transport: HostTransport) {
         clock?.update(transport)
+    }
+
+    /// The song's key, for a unit that sings in it; any other unit never hears of it.
+    public func follow(key: SongKey) {
+        keyFollower?.follow(key: key)
     }
 
     public func schedule(address: UInt64, value: Float, offset: Int, ramp: Int) {

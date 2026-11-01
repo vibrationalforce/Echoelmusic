@@ -1279,17 +1279,31 @@ public final class EngineCore: @unchecked Sendable {
                                       beat: position / quarter,
                                       downbeat: (position / barTicks).rounded(.down) * barTicks / quarter,
                                       samplesToNextBeat: toNextBeat, sample: Double(playhead))
+        // And in which key: a harmonizer's choir styles sing in it (VOX). The effect takes only a change.
+        let key = snapshot.key
         for lane in snapshot.lanes {
             lane.unit?.follow(transport)
-            for effect in lane.inserts { effect.follow(transport) }
+            for effect in lane.inserts {
+                effect.follow(transport)
+                effect.follow(key: key)
+            }
         }
         for lane in snapshot.audioLanes {
-            for effect in lane.inserts { effect.follow(transport) }
+            for effect in lane.inserts {
+                effect.follow(transport)
+                effect.follow(key: key)
+            }
         }
         for lane in snapshot.returns {
-            for effect in lane.inserts { effect.follow(transport) }
+            for effect in lane.inserts {
+                effect.follow(transport)
+                effect.follow(key: key)
+            }
         }
-        for effect in snapshot.masterEffects { effect.follow(transport) }
+        for effect in snapshot.masterEffects {
+            effect.follow(transport)
+            effect.follow(key: key)
+        }
     }
 
     private func renderUnits(frames: Int) {

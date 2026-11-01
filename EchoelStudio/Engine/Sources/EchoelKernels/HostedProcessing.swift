@@ -86,6 +86,9 @@ public protocol HostedProcessor: ParameterScheduling {
     var insert: InsertID? { get }
     /// Where the song is for the next `process` call. Render thread, must not allocate.
     func follow(_ transport: HostTransport)
+    /// The song's key for the next `process` call, from the snapshot: the harmonizer's choir styles
+    /// sing in it (VOX). Render thread, must not allocate.
+    func follow(key: SongKey)
     /// Replaces `frames` of the bus with the effect's output.
     func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>)
     /// The blocks the effect refused to process since it was made (see `HostedInstrument`).
@@ -101,5 +104,7 @@ extension HostedInstrument {
 
 extension HostedProcessor {
     public func follow(_ transport: HostTransport) {}
+    /// A unit that is not one of Echoel's effects knows no song key.
+    public func follow(key: SongKey) {}
     public var renderFailures: Int { 0 }
 }

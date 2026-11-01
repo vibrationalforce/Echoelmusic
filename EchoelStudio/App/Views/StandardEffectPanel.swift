@@ -23,15 +23,17 @@ struct StandardEffectPanel: View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             if effect == .compressor || effect == .limiter { ReductionMeter(slot: .insert(insert)) }
             if effect == .pitchCorrection { songKeyButton }
+            if effect == .harmonizer, let style = shownParameters.first, style.identifier == "style" {
+                HarmonyStyleNote(address: insertAddress(of: style), parameter: style)
+            }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: columnWidth), spacing: Theme.Space.s)],
                       alignment: .leading, spacing: Theme.Space.s) {
-                ForEach(EffectKernel.parameters(for: effect), id: \.address) { parameter in
-                    let address = ParameterAddress(owner, .plugin(PluginParameter(.insert(insert),
-                                                                                  address: UInt64(parameter.address))))
+                ForEach(shownParameters, id: \.address) { parameter in
+                    let target = insertAddress(of: parameter)
                     if parameter.unit == .choice {
-                        EffectChoiceField(address: address, parameter: parameter)
+                        EffectChoiceField(address: target, parameter: parameter)
                     } else {
-                        EffectParameterField(address: address, parameter: parameter)
+                        EffectParameterField(address: target, parameter: parameter)
                     }
                 }
             }
@@ -45,6 +47,19 @@ struct StandardEffectPanel: View {
 }
 
 extension StandardEffectPanel {
+    /// The effect's parameters in the order the page shows them: their stored order, except that the
+    /// harmonizer's Style, stored last (VOX), comes first — it decides what the voices sing.
+    var shownParameters: [EffectParameter] {
+        let all = EffectKernel.parameters(for: effect)
+        guard effect == .harmonizer, let style = all.first(where: { $0.identifier == "style" }) else { return all }
+        return [style] + all.filter { $0.identifier != "style" }
+    }
+
+    /// Where a parameter of this insert is automated and learned.
+    func insertAddress(of parameter: EffectParameter) -> ParameterAddress {
+        ParameterAddress(owner, .plugin(PluginParameter(.insert(insert), address: UInt64(parameter.address))))
+    }
+
     /// Sets the correction's key, scale, tone system and concert A to the song's own frame, through
     /// the writer like a hand on each control. The effect keeps its values afterwards: a song whose
     /// key changes later asks for another tap, so a correction never moves under a take by itself.
@@ -115,6 +130,41 @@ private struct ReductionMeter: View {
             .accessibilityLabel("Gain Reduction")
             .accessibilityValue(NumberText.string(Double(reduction), decimals: 1, unit: "decibels"))
         }
+    }
+}
+
+/// The harmonizer's chosen style in a sentence, the key it sings in, and that the three voices
+/// belong to Free. The style lives in the unit, not the song: read in this leaf, so the panel above
+/// it stays still (Law 6). The key is the song's own (Song Settings).
+private struct HarmonyStyleNote: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
+    let address: ParameterAddress
+    let parameter: EffectParameter
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1.0 / 15)) { _ in
+            let low = parameter.range.lowerBound, high = parameter.range.upperBound
+            let value = engine.plugins.position(of: address).map { low + Float($0) * (high - low) } ?? parameter.defaultValue
+            Text(sentences(for: HarmonyStyle(index: value), in: store.project.context))
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func sentences(for style: HarmonyStyle, in context: MusicalContext) -> String {
+        var text = style.summary
+        if style.followsKey {
+            if context.scale == .chromatic, MusicalContext.rootNames.indices.contains(context.root) {
+                text += " The song sets no scale, so the voices sing in \(MusicalContext.rootNames[context.root]) Major."
+            } else {
+                text += " The voices sing in the song's key, \(context.title)."
+            }
+        }
+        if style != .free { text += " Voice 1 to 3 play in Free." }
+        return text
     }
 }
 

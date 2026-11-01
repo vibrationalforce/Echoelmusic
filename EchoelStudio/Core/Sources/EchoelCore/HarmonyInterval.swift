@@ -62,9 +62,10 @@ public enum HarmonyInterval: Int, CaseIterable, Sendable, Identifiable {
         }
     }
 
-    /// The choice at a stored index; an index this build does not know reads as Off.
+    /// The choice at a stored index; an index this build does not know reads as Off. The render
+    /// thread reads it (the harmonizer's settings), so it builds no list (`allCases` would).
     public init(index: Float) {
-        guard index.isFinite, index >= 0, index < Float(Self.allCases.count) else {
+        guard index.isFinite, index >= 0, index < 1_000 else {
             self = .off
             return
         }

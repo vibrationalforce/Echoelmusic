@@ -83,6 +83,83 @@ final class EffectKernelTests: XCTestCase {
         XCTAssertEqual(cents(PitchTracker.frequency(of: Array(output.suffix(4_096)), sampleRate: rate), 369.99), 0, accuracy: 3)
     }
 
+    /// Both sides of the effect's output, minus the dry sound: the voices alone.
+    private func voices(_ kernel: EffectKernel, _ input: [Float]) -> (left: [Float], right: [Float]) {
+        var l = input, r = input
+        l.withUnsafeMutableBufferPointer { a in
+            r.withUnsafeMutableBufferPointer { b in
+                guard let x = a.baseAddress, let y = b.baseAddress else { return }
+                kernel.process(left: x, right: y, frames: a.count)
+            }
+        }
+        let minus = { (out: [Float]) -> [Float] in zip(out, input).map { (pair: (Float, Float)) -> Float in pair.0 - pair.1 } }
+        return (minus(l), minus(r))
+    }
+
+    /// A harmonizer with its two side voices hard left and right at full level, in `style`.
+    private func harmonizer(_ style: HarmonyStyle) throws -> EffectKernel {
+        let kernel = EffectKernel(effect: .harmonizer, sampleRate: rate)
+        let names = kernel.parameters.map(\.identifier)
+        kernel.setParameter(try XCTUnwrap(names.firstIndex(of: "level")), 1)
+        kernel.setParameter(try XCTUnwrap(names.firstIndex(of: "spread")), 1)
+        kernel.setParameter(try XCTUnwrap(names.firstIndex(of: "style")), Float(style.rawValue))
+        return kernel
+    }
+
+    /// The style is the effect's last parameter, a named choice that starts at Free: an insert saved
+    /// before it existed keeps its addresses and plays as it did.
+    func testTheHarmonizersStyleIsItsLastParameterAndStartsFree() {
+        let kernel = EffectKernel(effect: .harmonizer, sampleRate: rate)
+        XCTAssertEqual(kernel.parameters.map(\.identifier), ["voice1", "voice2", "voice3", "level", "spread", "style"])
+        let style = kernel.parameters[5]
+        XCTAssertEqual(style.unit, .choice)
+        XCTAssertEqual(style.choices, HarmonyStyle.allCases.map(\.title))
+        XCTAssertEqual(style.choice(at: kernel.parameter(5)), "Free")
+        let saved = EffectKernel(effect: .harmonizer, sampleRate: rate, values: [12, 0, 0, 1, 0.5])
+        XCTAssertEqual(saved.parameter(5), Float(HarmonyStyle.free.rawValue), "five stored values: the style takes its default")
+    }
+
+    func testOrganumSingsAFifthAndAnOctaveBelowTheVoice() throws {
+        let sung = voices(try harmonizer(.organum), voiceTone(330))
+        XCTAssertEqual(cents(PitchTracker.frequency(of: Array(sung.left.suffix(6_000)), sampleRate: rate),
+                             330 * pow(2, -7.0 / 12)), 0, accuracy: 3)
+        XCTAssertEqual(cents(PitchTracker.frequency(of: Array(sung.right.suffix(6_000)), sampleRate: rate), 165), 0,
+                       accuracy: 3)
+    }
+
+    /// Diatonic thirds come from the key the host hands over: E takes G and C in C major, G sharp
+    /// and C sharp in E major.
+    func testDiatonicThirdsSingInTheSongsKey() throws {
+        let inC = try harmonizer(.diatonicThirds)
+        inC.follow(key: SongKey(MusicalContext(root: 0, scale: .major)))
+        let c = voices(inC, voiceTone(329.63))
+        XCTAssertEqual(cents(PitchTracker.frequency(of: Array(c.left.suffix(6_000)), sampleRate: rate), 392.00), 0, accuracy: 4)
+        XCTAssertEqual(cents(PitchTracker.frequency(of: Array(c.right.suffix(6_000)), sampleRate: rate), 261.63), 0, accuracy: 4)
+        let inE = try harmonizer(.diatonicThirds)
+        inE.follow(key: SongKey(MusicalContext(root: 4, scale: .major)))
+        XCTAssertEqual(inE.key.root, 4)
+        let e = voices(inE, voiceTone(329.63))
+        XCTAssertEqual(cents(PitchTracker.frequency(of: Array(e.left.suffix(6_000)), sampleRate: rate), 415.30), 0, accuracy: 4)
+        XCTAssertEqual(cents(PitchTracker.frequency(of: Array(e.right.suffix(6_000)), sampleRate: rate), 277.18), 0, accuracy: 4)
+    }
+
+    /// The ison sings the key's root below the voice: D under an A in D Dorian.
+    func testTheIsonSingsTheKeysRoot() throws {
+        let kernel = try harmonizer(.ison)
+        kernel.follow(key: SongKey(MusicalContext(root: 2, scale: .dorian)))
+        let sung = voices(kernel, voiceTone(440))
+        XCTAssertEqual(cents(PitchTracker.frequency(of: Array(sung.left.suffix(6_000)), sampleRate: rate), 293.66), 0,
+                       accuracy: 5)
+    }
+
+    /// A style a later build adds plays Free here; Free keeps the chosen intervals.
+    func testAStyleThisBuildDoesNotKnowPlaysFree() throws {
+        XCTAssertEqual(EffectKernel.voicing(HarmonyStyle(index: 40), in: SongKey()), .free)
+        let kernel = EffectKernel(effect: .harmonizer, sampleRate: rate)
+        kernel.setParameter(5, 40)
+        XCTAssertEqual(kernel.parameter(5), Float(HarmonyStyle.allCases.count - 1), "the range holds the known styles")
+    }
+
     func testAHarmonizerVoiceIsChosenByItsIntervalsName() throws {
         let kernel = EffectKernel(effect: .harmonizer, sampleRate: rate)
         let voice = kernel.parameters[0]

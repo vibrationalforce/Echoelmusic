@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import EchoelKernels
 import XCTest
 @testable import EchoelEngine
@@ -14,6 +15,8 @@ private final class KernelInsert: HostedProcessor, @unchecked Sendable {
     init(_ kernel: EffectKernel) { self.kernel = kernel }
 
     func schedule(address: UInt64, value: Float, offset: Int, ramp: Int) {}
+
+    func follow(key: SongKey) { kernel.follow(key: key) }
 
     func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
         kernel.process(left: left, right: right, frames: frames)
@@ -85,6 +88,35 @@ final class ExportTests: XCTestCase {
         let last = try XCTUnwrap(result.left.indices.last)
         let ending: Float = Swift.max(Swift.abs(result.left[last]), Swift.abs(result.right[last]))
         XCTAssertGreaterThanOrEqual(ending, OfflineRender.quietLevel, "the file ends with the sound, not seconds after it")
+    }
+
+    /// The song's key reaches an insert through the snapshot (VOX): under the same sung A, a
+    /// harmonizer's ison holds D in D major and C in C major, in the export as in playback.
+    func testAnInsertSingsInTheSongsKeyInTheExport() throws {
+        let rate = 48_000.0
+        func isonHertz(root: Int) throws -> Double {
+            var song = Project(tempo: 120)
+            let track = TrackID(), clip = ClipID()
+            try Command.addTrack(id: track, name: "Voice", kind: .instrument, index: nil).apply(to: &song)
+            try Command.createClip(track: track, id: clip, name: "A", length: bar).apply(to: &song)
+            try Command.addNotes(clip, [Note(pitch: 69, start: 0, length: bar)]).apply(to: &song)
+            try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 0).apply(to: &song)
+            try XCTUnwrap(Command.setParameter(.keyRoot, to: Double(root))).apply(to: &song)
+            try XCTUnwrap(Command.setParameter(.scale, to: Double(Scale.allCases.firstIndex(of: .major) ?? 0))).apply(to: &song)
+            try Command.setInstrumentParameter(track, key: SynthParameter.waveform.key.rawValue, value: 0).apply(to: &song)
+            let dry = OfflineRender.render(song, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0)
+            let harmonizer = KernelInsert(EffectKernel(effect: .harmonizer, sampleRate: rate))
+            harmonizer.kernel.setParameter(3, 1)                                    // level
+            harmonizer.kernel.setParameter(5, Float(HarmonyStyle.ison.rawValue))    // style
+            let wet = OfflineRender.render(song, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0,
+                                           effects: [track: [harmonizer]])
+            XCTAssertEqual(harmonizer.kernel.key.root, root, "the snapshot handed the insert the song's key")
+            let ison = zip(wet.left, dry.left).map { (pair: (Float, Float)) -> Float in pair.0 - pair.1 }
+            let end = Int(1.8 * rate)
+            return try XCTUnwrap(PitchTracker.frequency(of: Array(ison[(end - 6_000)..<end]), sampleRate: rate))
+        }
+        XCTAssertEqual(1_200 * log2(try isonHertz(root: 2) / 293.66), 0, accuracy: 5, "D4 under A4 in D major")
+        XCTAssertEqual(1_200 * log2(try isonHertz(root: 0) / 261.63), 0, accuracy: 5, "C4 under A4 in C major")
     }
 
     func testAnEmptySongRendersNothing() {
