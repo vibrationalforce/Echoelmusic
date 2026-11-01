@@ -68,7 +68,7 @@ final class StoredNamesTests: XCTestCase {
     /// it is. A renamed preset would leave every earlier song showing a sound the menu no longer
     /// offers, so a name stays.
     func testEveryStoredPresetNameStillNamesAPreset() {
-        let names = ["Init", "Pluck", "Warm Pad", "Sub Bass", "Square Lead", "Soft Keys"]
+        let names = ["Init", "Pluck", "Warm Pad", "Sub Bass", "Square Lead", "Soft Keys", "Choir Ah", "Choir Oo", "Low Chant"]
         XCTAssertEqual(Set(InstrumentPreset.all.map(\.name)), Set(names), "never rename a preset; add a new one here")
         XCTAssertEqual(InstrumentSettings().preset, InstrumentPreset.initial.name)
     }
