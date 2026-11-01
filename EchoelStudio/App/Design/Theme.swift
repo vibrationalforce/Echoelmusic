@@ -195,5 +195,8 @@ private struct ToolButtonFace: View {
             )
             .opacity(isEnabled ? (configuration.isPressed ? Theme.Motion.pressedOpacity : 1) : 0.4)
             .animation(Theme.Motion.quick, value: configuration.isPressed)
+            // The transport, the keys and the bar of views stop growing at the second accessibility
+            // size; past it a long press shows the button large, as the system's bars do (W18, m20).
+            .accessibilityShowsLargeContentViewer()
     }
 }

@@ -59,10 +59,13 @@ struct PlayKeysView: View {
                 .lineLimit(1)
             Spacer(minLength: Theme.Space.s)
             if let track, track.instrument.device != .drums {
+                // Each octave button says where the keys start, so a press is heard to land
+                // (W18, m19): VoiceOver reads the new value of the button it pressed.
                 Button { lowest = clampedLowest - 12 } label: { Image(systemName: "minus") }
                     .buttonStyle(ToolButtonStyle())
                     .disabled(clampedLowest <= Self.lowestC)
                     .accessibilityLabel("Octave Down")
+                    .accessibilityValue("Lowest key \(Keyboard.name(of: clampedLowest))")
                 Text(Keyboard.name(of: clampedLowest))
                     .font(Theme.Font.value)
                     .foregroundStyle(Theme.Color.text)
@@ -73,6 +76,7 @@ struct PlayKeysView: View {
                     .buttonStyle(ToolButtonStyle())
                     .disabled(clampedLowest >= Self.highestC)
                     .accessibilityLabel("Octave Up")
+                    .accessibilityValue("Lowest key \(Keyboard.name(of: clampedLowest))")
             }
         }
     }
