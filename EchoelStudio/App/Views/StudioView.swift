@@ -9,6 +9,7 @@ struct StudioView: View {
     @Environment(AudioEngine.self) private var engine
     @Environment(DocumentController.self) private var documents
     @Environment(HeartRateStrap.self) private var strap
+    @Environment(CameraPulseSource.self) private var camera
     @Environment(MIDIInput.self) private var midi
 
     @State private var router = StudioRouter()
@@ -30,8 +31,10 @@ struct StudioView: View {
     /// The jam (W16); off until the musician hosts or joins one on its page. Owned here so a jam
     /// keeps its clock while the page is closed.
     @State private var jam = JamSession()
+    /// The tempo lock, Fixed or Flow (W12); owned here so Flow goes on while another view is open.
+    @State private var flow = FlowController()
 
-    enum Surface: Hashable { case tracks, arrange, session, mixer, field, sky }
+    enum Surface: Hashable { case instrument, tracks, arrange, session, mixer, field, sky }
 
     var body: some View {
         @Bindable var router = router
@@ -54,12 +57,14 @@ struct StudioView: View {
         .environment(streaming)
         .environment(connections)
         .environment(jam)
+        .environment(flow)
         .background(Theme.Color.background)
         .onAppear {
             engine.setSamples(documents.samples)
             engine.update(store.project)
             connections.attach(engine: engine, store: store, strap: strap)
             jam.attach(engine: engine, store: store, midi: midi)
+            flow.attach(engine: engine, store: store, strap: strap, camera: camera, midi: midi, jam: jam)
         }
         .onChange(of: store.project) { _, project in engine.update(project) }
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
@@ -77,9 +82,9 @@ struct StudioView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .transition(.opacity)
                 }
-                // One picture at a time: the window rests while the Field or the sky is the view,
-                // or the Field fills the screen.
-                if showsFieldWindow, surface != .field, surface != .sky, !fieldFullscreen {
+                // One picture at a time: the window rests while the Field, the Instrument (which
+                // shows it) or the sky is the view, or the Field fills the screen.
+                if showsFieldWindow, surface != .field, surface != .instrument, surface != .sky, !fieldFullscreen {
                     FieldWindow(expand: { openFieldFullscreen() }, close: { showsFieldWindow = false })
                         .padding(Theme.Space.m)
                         .transition(.opacity)
@@ -91,7 +96,8 @@ struct StudioView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 }
             }
-            if showsKeys {
+            // The Instrument is played on the keys, so they stay under it whatever the Keys switch says.
+            if showsKeys || surface == .instrument {
                 Divider().overlay(Theme.Color.border)
                 PlayKeysView()
             }
@@ -166,6 +172,9 @@ struct StudioView: View {
     /// picture, not two.
     @ViewBuilder private var surfaceView: some View {
         switch surface {
+        case .instrument:
+            // The heart of Echoel (W12): the Field, the pulse, the Body Voice, the tempo lock.
+            InstrumentSurface(showsField: !fieldFullscreen, expand: { openFieldFullscreen() })
         case .tracks: TrackListView { router.sheet = .clipEditor($0) }
         case .arrange:
             ArrangeView(open: { router.sheet = .clip($0, $1) },
@@ -579,13 +588,14 @@ private struct JamStatusLine: View {
 }
 
 /// Tempo as a number you drag vertically (up = faster) or step with the buttons. One drag is
-/// one undo step. While an external MIDI clock or a jam's host sets the pace, it shows theirs and
-/// is locked.
+/// one undo step. While an external MIDI clock, a jam's host or Flow (W12) sets the pace, it shows
+/// theirs, names it under the number and is locked.
 struct TempoField: View {
     @Environment(ProjectStore.self) private var store
     @Environment(MIDIInput.self) private var midi
     @Environment(JamSession.self) private var jam: JamSession?
     @Environment(NumberPadController.self) private var pad: NumberPadController?
+    @Environment(FlowController.self) private var flow: FlowController?
     @State private var dragStart: Double?
     @State private var taps = TapTempo()
     @ScaledMetric(relativeTo: .title2) private var valueWidth: CGFloat = 72
@@ -611,11 +621,12 @@ struct TempoField: View {
                 Text(NumberText.string(shownTempo, decimalsUpTo: 2))
                     .font(Theme.Font.valueLarge)
                     .foregroundStyle(isTyped ? Theme.Color.accent : Theme.Color.text)
-                // "EXT" stands where the unit stands, in the same three letters' room: while an
-                // external MIDI clock sets the tempo, the number is the clock's — and "JAM" while a
-                // jam's host sets it. A word would not fit under the number; VoiceOver says it in
-                // full below, and the line under the transport says "Following the Jam."
-                Text(followsJam ? "JAM" : midi.followedSource == nil ? "BPM" : "EXT")
+                // "EXT" stands where the unit stands, in the same few letters' room: while an
+                // external MIDI clock sets the tempo, the number is the clock's — "JAM" while a jam's
+                // host sets it, "FLOW" while the pulse does (T1: the source is always named). A word
+                // would not fit under the number; VoiceOver says it in full below, and the line
+                // under the transport says "Following the Jam."
+                Text(Self.unit(source))
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
@@ -638,8 +649,7 @@ struct TempoField: View {
             .onTapGesture(perform: typeTempo)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Tempo")
-            .accessibilityValue(NumberText.string(shownTempo, decimalsUpTo: 2, unit: "BPM")
-                                + (followsJam ? ", Following the Jam" : followsClock ? ", External Clock" : ""))
+            .accessibilityValue(NumberText.string(shownTempo, decimalsUpTo: 2, unit: "BPM") + Self.spoken(source))
             .accessibilityAdjustableAction { direction in
                 nudge(direction == .increment ? 1 : -1)
             }
@@ -659,10 +669,37 @@ struct TempoField: View {
         }
     }
 
-    /// A MIDI clock or a jam's host sets the pace: the field shows theirs and takes no edit.
-    private var followsClock: Bool { midi.followedSource != nil || followsJam }
+    /// A MIDI clock, a jam's host or Flow sets the pace: the field shows theirs and takes no edit.
+    private var followsClock: Bool { midi.followedSource != nil || followsJam || flows }
 
     private var followsJam: Bool { jam?.followsJam == true }
+
+    private var flows: Bool { flow?.lock == .flow }
+
+    /// What sets the pace now (T1).
+    private var source: TempoSource {
+        TempoSource.current(followsJam: followsJam, followsMIDIClock: midi.followedSource != nil, flows: flows)
+    }
+
+    /// The source's name under the number.
+    static func unit(_ source: TempoSource) -> String {
+        switch source {
+        case .song: "BPM"
+        case .flow: "FLOW"
+        case .midiClock: "EXT"
+        case .jam: "JAM"
+        }
+    }
+
+    /// The source in full, for VoiceOver.
+    static func spoken(_ source: TempoSource) -> String {
+        switch source {
+        case .song: ""
+        case .flow: ", Following the Pulse"
+        case .midiClock: ", External Clock"
+        case .jam: ", Following the Jam"
+        }
+    }
 
     private static let padOwner = "project.tempo"
 
@@ -681,11 +718,15 @@ struct TempoField: View {
         })
     }
 
-    /// While a clock or a jam is followed it sets the pace; the song's own tempo waits underneath,
-    /// unchanged.
+    /// While a clock, a jam or Flow sets the pace, the field shows it; the song's own tempo waits
+    /// underneath, unchanged.
     private var shownTempo: Double {
-        if followsJam { return jam?.followedTempo ?? store.project.tempo }
-        return followsClock ? (midi.clockTempo ?? store.project.tempo) : store.project.tempo
+        switch source {
+        case .jam: jam?.followedTempo ?? store.project.tempo
+        case .midiClock: midi.clockTempo ?? store.project.tempo
+        case .flow: flow?.shownTempo ?? store.project.tempo
+        case .song: store.project.tempo
+        }
     }
 
     /// A run of taps is one undo step: a new measurement closes the one before.
@@ -1035,7 +1076,7 @@ private struct SurfaceBar: View {
     @Binding var selection: StudioView.Surface
 
     private static var items: [(surface: StudioView.Surface, title: String)] {
-        [(.tracks, "Tracks"), (.arrange, "Arrange"), (.session, "Session"),
+        [(.instrument, "Instrument"), (.tracks, "Tracks"), (.arrange, "Arrange"), (.session, "Session"),
          (.mixer, "Mixer"), (.field, "Field"), (.sky, "Sky")]
     }
 

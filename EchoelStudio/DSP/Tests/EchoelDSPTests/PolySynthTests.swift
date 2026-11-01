@@ -317,6 +317,27 @@ final class PolySynthTests: XCTestCase {
         XCTAssertTrue(rested.allSatisfy { (439.5...440.5).contains($0) }, "the wheel down, the note is in tune again")
     }
 
+    /// The patch's own vibrato (W12) swings the pitch as far as the wheel at the same depth, with
+    /// the wheel at rest — the value a route moves with the pulse — and back at zero the note is in
+    /// tune again.
+    func testThePatchVibratoSwingsThePitchAsFarAsTheWheelAndRestsInTune() throws {
+        var patch = SynthPatch(waveform: .sine, cutoff: 18_000, filterEnvelopeAmount: 0)
+        patch.ampEnvelope = .init(attack: 0.001, decay: 0.01, sustain: 1, release: 0.05)
+        patch.vibrato = 1
+        var synth = PolySynth(patch: patch, sampleRate: rate)
+        synth.noteOn(pitch: 69, velocity: 127)
+        _ = render(&synth, seconds: 0.5)
+        let swung = cycleFrequencies(render(&synth, seconds: 2))
+        let low = try XCTUnwrap(swung.min()), high = try XCTUnwrap(swung.max())
+        XCTAssertTrue((426...429).contains(low), "50 cents down is 427.5 Hz, got \(low)")
+        XCTAssertTrue((451...454.5).contains(high), "50 cents up is 452.9 Hz, got \(high)")
+        patch.vibrato = 0
+        synth.setPatch(patch)
+        _ = render(&synth, seconds: 0.5)
+        let rested = cycleFrequencies(render(&synth, seconds: 1))
+        XCTAssertTrue(rested.allSatisfy { (439.5...440.5).contains($0) }, "the patch's vibrato at zero, in tune again")
+    }
+
     /// The engine does not render a silent synth, so wheels moved between two notes arrive with
     /// no buffer in between. The next note starts where they are — in tune from its first cycle,
     /// not scooping down from the old bend under a fading vibrato (audit 2026-10-23).
