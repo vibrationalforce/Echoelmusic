@@ -104,8 +104,28 @@ public final class EngineCore: @unchecked Sendable {
     /// Computed, not stored: a stored static is initialised lazily, once, on first read — here
     /// the render thread.
     private static var nothingToFade: Int64 { .min }
+    /// `remapFade` for a lane whose sounding region read on across the tempo change
+    /// (`heldRegion`): nothing moved there, so nothing fades.
+    private static var readsOn: Int64 { .max }
+    /// Per audio lane: the region that was sounding when the tempo changed, by its index in the
+    /// lane (−1 for none), and how many samples later than its place under the current tempo it
+    /// plays, so it reads on from where it was in its file instead of jumping to where the new
+    /// tempo puts the playhead in it — as a region that is not stretched plays in any studio.
+    /// Flow writes a new tempo twice a second, a followed clock or jam host more often; each one
+    /// moved the read position by the time since the region began times the tempo's change — a
+    /// second of audio skipped or repeated, ten seconds in, by a step of 10 % (click hunt,
+    /// 2026-11-01). The next region starts on the grid again, and so does every region after a
+    /// seek, a start or a stop.
+    private let heldRegion: UnsafeMutablePointer<Int>
+    private let heldShift: UnsafeMutablePointer<Int64>
     /// A tempo change moved the playhead this chunk; the audio lanes crossfade across it.
     private var remapped = false
+    /// The transport started this chunk, or a seek, a jump or the loop's wrap moved the playhead
+    /// while it played: where the audio lanes read before (`nothingToFade` for a start — nothing
+    /// was heard), so what played fades out while the new place fades in. Without it a start or a
+    /// seek inside a region stepped from silence, or from one waveform, straight into another
+    /// (click hunt, 2026-11-01: a step of 87 % of the level). Nil in every other chunk.
+    private var movedFrom: Int64?
     /// A snapshot put the stored values back into the kernels this chunk, over what the lanes had
     /// set; a live note must not hear them before the next automation step.
     private var patchesReset = false
@@ -256,6 +276,10 @@ public final class EngineCore: @unchecked Sendable {
         liveSinceStop.initialize(repeating: false, count: self.slotCapacity)
         remapFade = .allocate(capacity: Self.smoothedAudioTracks)
         remapFade.initialize(repeating: 0, count: Self.smoothedAudioTracks)
+        heldRegion = .allocate(capacity: Self.smoothedAudioTracks)
+        heldRegion.initialize(repeating: -1, count: Self.smoothedAudioTracks)
+        heldShift = .allocate(capacity: Self.smoothedAudioTracks)
+        heldShift.initialize(repeating: 0, count: Self.smoothedAudioTracks)
         busLeft = .allocate(capacity: self.slotCapacity * Self.maximumFrames)
         busLeft.initialize(repeating: 0, count: self.slotCapacity * Self.maximumFrames)
         busRight = .allocate(capacity: self.slotCapacity * Self.maximumFrames)
@@ -305,6 +329,8 @@ public final class EngineCore: @unchecked Sendable {
         stale.deallocate()
         liveSinceStop.deallocate()
         remapFade.deallocate()
+        heldRegion.deallocate()
+        heldShift.deallocate()
         gainMemory.deallocate()
         sendMemory.deallocate()
         busLeft.deallocate()
@@ -608,6 +634,16 @@ public final class EngineCore: @unchecked Sendable {
         let stopping = wasPlaying && !playing
         // What a hosted unit learns as "the transport changed": a start, a stop or a jump.
         let transportMoved = stopping || (playing && !wasPlaying) || seek >= 0
+        if playing, !wasPlaying {
+            movedFrom = Self.nothingToFade
+        } else if playing, seek >= 0 {
+            movedFrom = heardAt
+        } else {
+            movedFrom = nil
+        }
+        // A region read on across a tempo change goes back to the grid when the playhead jumps or
+        // the transport starts; the stopping block still fades out what it was playing.
+        if seek >= 0 || (playing && !wasPlaying) { releaseHeldRegions() }
         if stopping { releaseAllNotes() }
         if !wasPlaying, playing {
             // Paused, nothing was heard: the start fades nothing out (A10 review, E).
@@ -1008,6 +1044,7 @@ public final class EngineCore: @unchecked Sendable {
             if audioOwners[index] != owner {
                 audioOwners[index] = owner
                 forget(point: slotCapacity + index)
+                heldRegion[index] = -1
             }
         }
         for bus in 0..<Self.returnCapacity {
@@ -1087,7 +1124,10 @@ public final class EngineCore: @unchecked Sendable {
     private func followTempo(from old: SnapshotBox, to snapshot: EngineSnapshot) -> Bool {
         let was = old.snapshot
         let signatureChanged = was.timeSignature != snapshot.timeSignature
-        guard was.time != snapshot.time, playhead > 0 else { return signatureChanged }
+        guard was.time != snapshot.time, playhead > 0 else {
+            keepHeldRegions(from: was, to: snapshot)
+            return signatureChanged
+        }
         let before = playhead
         let seconds = snapshot.time.tempoMap.seconds(atPosition: was.time.position(atSample: before))
         guard seconds.isFinite else { return signatureChanged }
@@ -1097,6 +1137,8 @@ public final class EngineCore: @unchecked Sendable {
             // Nothing found below means nothing played: reading `before` against the new
             // regions would sound audio the old tempo never reached (A10 review, A).
             remapFade[index] = Self.nothingToFade
+            let held = heldRegion[index]
+            heldRegion[index] = -1
             guard let same = was.audioLanes.first(where: { $0.track == lane.track }) else { continue }
             // The slot's session is this track's only while the slot was this track's; a slot
             // handed over is reset after this, and plays its regions (A10 review, D).
@@ -1114,13 +1156,52 @@ public final class EngineCore: @unchecked Sendable {
             // A region starts on a tick too; the same region is the same index, since a tempo
             // change moves regions but never reorders or adds them.
             guard same.regions.count == lane.regions.count else { continue }
-            for (i, region) in same.regions.enumerated() where region.startSample <= before && region.endSample > before {
-                remapFade[index] = before + lane.regions[i].startSample - region.startSample
-                break
+            var sounding = 0, first = -1
+            for (i, region) in same.regions.enumerated() {
+                let shift = i == held ? heldShift[index] : 0
+                guard region.startSample + shift <= before, region.endSample + shift > before else { continue }
+                sounding += 1
+                if first < 0 {
+                    first = i
+                    remapFade[index] = before + lane.regions[i].startSample - (region.startSample + shift)
+                }
+            }
+            // One region sounding: it reads on from where it was in its file, under the new tempo
+            // as under the old, and nothing on the lane fades. Two at once crossfade as before.
+            if sounding == 1 {
+                let shift = first == held ? heldShift[index] : 0
+                heldRegion[index] = first
+                heldShift[index] = playhead - before + same.regions[first].startSample + shift - lane.regions[first].startSample
+                remapFade[index] = Self.readsOn
             }
         }
         remapped = true
         return signatureChanged
+    }
+
+    /// Render thread: every region read on across a tempo change goes back to its place.
+    private func releaseHeldRegions() {
+        heldRegion.update(repeating: -1, count: Self.smoothedAudioTracks)
+    }
+
+    /// A snapshot that keeps the tempo keeps a lane's held region only while it is the same region
+    /// at the same place: an edit that moves, trims or replaces it, or one before it, puts the lane
+    /// back on the grid.
+    private func keepHeldRegions(from was: EngineSnapshot, to snapshot: EngineSnapshot) {
+        for index in 0..<Self.smoothedAudioTracks where heldRegion[index] >= 0 {
+            let held = heldRegion[index]
+            guard index < snapshot.audioLanes.count, index < was.audioLanes.count,
+                  snapshot.audioLanes[index].track == was.audioLanes[index].track,
+                  held < snapshot.audioLanes[index].regions.count, held < was.audioLanes[index].regions.count else {
+                heldRegion[index] = -1
+                continue
+            }
+            let a = was.audioLanes[index].regions[held], b = snapshot.audioLanes[index].regions[held]
+            if a.buffer !== b.buffer || a.startSample != b.startSample || a.endSample != b.endSample
+                || a.offset != b.offset || a.length != b.length || a.step != b.step {
+                heldRegion[index] = -1
+            }
+        }
     }
 
     private func playLiveEvents() {
@@ -1551,6 +1632,11 @@ public final class EngineCore: @unchecked Sendable {
 
     /// Output frames of fade at each edge of an audio region.
     static let regionFadeFrames: Double = 64
+    /// Output frames the audio lanes fade in over after a start, a seek, a jump or the loop's wrap
+    /// (`movedFrom`): twice a region's edge, because a start at a region's first frame multiplies
+    /// the two fades, and two ramps of one length end twice as steep as one — a kink of 3 % of the
+    /// level where one ramp leaves 1.6 % (click hunt, 2026-11-01). 2.7 ms at 48 kHz.
+    static let moveFadeFrames: Double = 128
 
     /// Audio regions are read straight from the snapshot at the playhead — no voices, no state —
     /// so a seek or an edit lands on the right frame at once.
@@ -1594,23 +1680,38 @@ public final class EngineCore: @unchecked Sendable {
                 let state = session ? sessions[lane.slot] : SessionSlot()
                 let home = playhead
                 playhead = fadingFrom
-                addAudio(lane, state: state, from: 0, to: length, snapshot, fadeIn: 0..<0, fadeOut: 0..<length)
+                addAudio(lane, index: index, state: state, from: 0, to: length, snapshot, fadeIn: 0..<0, fadeOut: 0..<length)
                 playhead = home
             }
-            if playing, remapped || nudgedBy != 0 {
-                // A nudge or a tempo change moves the read position: what would have played fades
-                // out while the moved audio fades in, so a sustained sound does not tick.
-                let length = Swift.min(Int(Self.regionFadeFrames), frames)
+            if playing, remapped || nudgedBy != 0 || movedFrom != nil {
+                // A start, a seek, a nudge or a tempo change moves the read position: what would
+                // have played fades out while the moved audio fades in, so a sustained sound does
+                // not tick — and a start inside a region rises from silence instead of stepping.
+                let length = Swift.min(Int(movedFrom == nil ? Self.regionFadeFrames : Self.moveFadeFrames), frames)
                 let state = session ? sessions[lane.slot] : SessionSlot()
                 let home = playhead
-                let heard = remapped && index < Self.smoothedAudioTracks ? remapFade[index] : playhead - nudgedBy
-                // What follows fades in either way; only what played fades out.
-                if heard != Self.nothingToFade {
-                    playhead = heard
-                    addAudio(lane, state: state, from: 0, to: length, snapshot, fadeIn: 0..<0, fadeOut: 0..<length)
-                    playhead = home
+                // Where the lane read before this chunk; `readsOn` where nothing moved — its
+                // sounding region read on across the tempo change and no nudge moved it since.
+                let heard: Int64
+                if let movedFrom {
+                    heard = movedFrom
+                } else if remapped, index < Self.smoothedAudioTracks, remapFade[index] != Self.readsOn {
+                    heard = remapFade[index]
+                } else if nudgedBy != 0 || (remapped && index >= Self.smoothedAudioTracks) {
+                    heard = playhead - nudgedBy
+                } else {
+                    heard = Self.readsOn
                 }
-                fadeEnd = length
+                // What follows fades in either way; only what played fades out.
+                if heard != Self.readsOn {
+                    if heard != Self.nothingToFade {
+                        playhead = heard
+                        addAudio(lane, index: index, state: state, from: 0, to: length, snapshot,
+                                 fadeIn: 0..<0, fadeOut: 0..<length)
+                        playhead = home
+                    }
+                    fadeEnd = length
+                }
             }
             while from < frames {
                 var until = frames
@@ -1623,14 +1724,15 @@ public final class EngineCore: @unchecked Sendable {
                     }
                 }
                 let state = session ? sessions[lane.slot] : SessionSlot()
-                addAudio(lane, state: state, from: from, to: until, snapshot, fadeIn: fadeStart..<fadeEnd, fadeOut: nil)
+                addAudio(lane, index: index, state: state, from: from, to: until, snapshot,
+                         fadeIn: fadeStart..<fadeEnd, fadeOut: nil)
                 if due {
                     fireAudio(lane)
                     let next = sessions[lane.slot]
                     if next.overrides != state.overrides || next.clip != state.clip {
                         fadeStart = until
                         fadeEnd = Swift.min(until + Int(Self.regionFadeFrames), frames)
-                        addAudio(lane, state: state, from: fadeStart, to: fadeEnd, snapshot, fadeIn: 0..<0,
+                        addAudio(lane, index: index, state: state, from: fadeStart, to: fadeEnd, snapshot, fadeIn: 0..<0,
                                  fadeOut: fadeStart..<fadeEnd)
                     }
                 }
@@ -1669,7 +1771,7 @@ public final class EngineCore: @unchecked Sendable {
     /// the left and its right on the right; a mono one plays in both alike. The track's pan then
     /// scales the two sides (`EngineSnapshot.gains`): for a stereo region it is a balance, which
     /// never moves the left into the right (W17).
-    private func addAudio(_ lane: EngineSnapshot.AudioLane, state: SessionSlot, from: Int, to: Int,
+    private func addAudio(_ lane: EngineSnapshot.AudioLane, index: Int, state: SessionSlot, from: Int, to: Int,
                           _ snapshot: EngineSnapshot, fadeIn: Range<Int>, fadeOut: Range<Int>?) {
         guard to > from else { return }
         segmentLeft.update(repeating: 0, count: Self.maximumFrames)
@@ -1680,14 +1782,20 @@ public final class EngineCore: @unchecked Sendable {
                 renderLoop(loop, launchTick: state.launchTick, from: start, to: end, snapshot)
             }
         } else {
-            for region in lane.regions {
-                guard region.startSample < end else { break }
-                guard region.endSample > start else { continue }
-                let first = Int(Swift.max(region.startSample, start) - playhead)
-                let count = Int(Swift.min(region.endSample, end) - playhead) - first
+            let held = index >= 0 && index < Self.smoothedAudioTracks ? heldRegion[index] : -1
+            for (i, region) in lane.regions.enumerated() {
+                // The held region plays where it read on to; every other one at its place.
+                let shift = i == held ? heldShift[index] : 0
+                let regionStart = region.startSample + shift, regionEnd = region.endSample + shift
+                guard regionStart < end else {
+                    if held >= 0 { continue } else { break }
+                }
+                guard regionEnd > start else { continue }
+                let first = Int(Swift.max(regionStart, start) - playhead)
+                let count = Int(Swift.min(regionEnd, end) - playhead) - first
                 guard count > 0 else { continue }
                 region.buffer.add(intoLeft: segmentLeft + first, right: segmentRight + first, count: count,
-                                  elapsed: playhead + Int64(first) - region.startSample, step: region.step,
+                                  elapsed: playhead + Int64(first) - regionStart, step: region.step,
                                   offset: region.offset, length: region.length,
                                   fade: Self.regionFadeFrames * region.step)
             }

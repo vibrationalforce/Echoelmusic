@@ -72,20 +72,26 @@ public struct SynthVoice: Sendable {
     private var gain: Float = 0
     private var gainTarget: Float = 0
     private var controlCountdown = 0
-    /// Cutoff (in octaves above 1 Hz), resonance and level glide towards the patch instead of
-    /// jumping, so an automated sweep or a 7-bit MIDI knob sounds continuous.
+    /// Cutoff (in octaves above 1 Hz), resonance, level and the engine's Character glide towards
+    /// the patch instead of jumping, so an automated sweep, a 7-bit MIDI knob or a body route
+    /// sounds continuous. Character most of all: it is the FM index, the morph's position and the
+    /// sub's level, written straight into the waveform, so a step in it was a step in the sound
+    /// (click hunt, 2026-11-01).
     private var cutoffOctaves: Float
     private var resonance: Float
     private var level: Float
+    private var character: Float
     private let cutoffPole: Float
     private let resonancePole: Float
     private let levelPole: Float
+    private let characterPole: Float
 
     /// Glide time constants, in seconds. Short enough to follow a fast ride, long enough that a
     /// step of one MIDI value — or of one automation update — is never heard as a step.
     static let cutoffGlide: Float = 0.008
     static let resonanceGlide: Float = 0.008
     static let levelGlide: Float = 0.005
+    static let characterGlide: Float = 0.008
 
     /// Samples between filter coefficient updates: the filter envelope and the gliding cutoff
     /// move at this rate (0.33 ms at 48 kHz) and the prewarp `tan` runs 1/16 as often as a
@@ -96,9 +102,11 @@ public struct SynthVoice: Sendable {
         cutoffOctaves = Self.octaves(patch.cutoff)
         resonance = Self.clampedResonance(patch.resonance)
         level = Self.clampedLevel(patch.level)
+        character = Self.clampedCharacter(patch.character)
         cutoffPole = Self.pole(Self.cutoffGlide, sampleRate)
         resonancePole = Self.pole(Self.resonanceGlide, sampleRate)
         levelPole = Self.pole(Self.levelGlide, sampleRate)
+        characterPole = Self.pole(Self.characterGlide, sampleRate)
         filter = SVFilter(mode: patch.filterMode, cutoff: patch.cutoff, resonance: patch.resonance, sampleRate: sampleRate)
         ladder = LadderFilter(cutoff: patch.cutoff, resonance: patch.resonance, sampleRate: sampleRate)
         ampEnvelope = Envelope(settings: patch.ampEnvelope, sampleRate: sampleRate)
@@ -117,6 +125,7 @@ public struct SynthVoice: Sendable {
     static func octaves(_ hz: Float) -> Float { log2f(hz.isFinite ? Swift.max(hz, 1) : 1_000) }
     static func clampedResonance(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 0.95) : 0.3 }
     static func clampedLevel(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 1) : 0 }
+    static func clampedCharacter(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 1) : 0.5 }
 
     mutating func start(pitch: UInt8, velocity: UInt8, order: UInt64, sampleRate: Float, patch: SynthPatch) {
         let wasSilent = !ampEnvelope.isActive
@@ -137,6 +146,7 @@ public struct SynthVoice: Sendable {
             cutoffOctaves = Self.octaves(patch.cutoff)
             resonance = Self.clampedResonance(patch.resonance)
             level = Self.clampedLevel(patch.level)
+            character = Self.clampedCharacter(patch.character)
             filter.setResonance(resonance)
             ladder.setResonance(resonance)
         }
@@ -188,11 +198,13 @@ public struct SynthVoice: Sendable {
         let targetOctaves = Self.octaves(patch.cutoff)
         let targetResonance = Self.clampedResonance(patch.resonance)
         let targetLevel = Self.clampedLevel(patch.level)
+        let targetCharacter = Self.clampedCharacter(patch.character)
         let usesLadder = patch.filterModel == .ladder
         for i in buffer.indices {
             cutoffOctaves = targetOctaves + (cutoffOctaves - targetOctaves) * cutoffPole
             resonance = targetResonance + (resonance - targetResonance) * resonancePole
             level = targetLevel + (level - targetLevel) * levelPole
+            character = targetCharacter + (character - targetCharacter) * characterPole
             gain = gainTarget + (gain - gainTarget) * levelPole
             let modulation = filterEnvelope.next()
             if controlCountdown <= 0 {
@@ -208,7 +220,7 @@ public struct SynthVoice: Sendable {
             }
             controlCountdown -= 1
             let bend = pitch?[i - first] ?? ratio
-            let tone = source.next(patch.engine, character: patch.character, main: &oscillator, dt: increment * bend)
+            let tone = source.next(patch.engine, character: character, main: &oscillator, dt: increment * bend)
             let shaped = usesLadder ? ladder.process(tone) : filter.process(tone)
             let sample = shaped * ampEnvelope.next()
             buffer[i] += sample * gain * level
