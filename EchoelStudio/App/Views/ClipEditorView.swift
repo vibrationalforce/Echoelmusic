@@ -312,7 +312,7 @@ struct PianoRoll: View {
                     try store.perform(.removeNotes(clip.id, [id]))
                     announce("\(NoteEditing.name(of: note.pitch)) deleted.")
                 } catch {
-                    announce("The note could not be deleted.")
+                    announce("The note could not be deleted.", urgent: true)
                 }
                 selected = nil
             }
@@ -341,13 +341,14 @@ struct PianoRoll: View {
             let place = NoteEditing.spokenPosition(note.start, signature: store.project.timeSignature, grid: grid)
             announce("Added \(NoteEditing.name(of: note.pitch)), \(place).")
         } catch {
-            announce("The note could not be added.")
+            announce("The note could not be added.", urgent: true)
         }
     }
 
     /// What an action did, for VoiceOver: its focus stays on the grid, so nothing else says it.
-    private func announce(_ text: String) {
-        AccessibilityNotification.Announcement(AttributedString(text)).post()
+    /// Said the app's one way (`Theme.Accessibility`); a failure urgently.
+    private func announce(_ text: String, urgent: Bool = false) {
+        Theme.Accessibility.announce(Announcement(text, priority: urgent ? .urgent : .normal))
     }
 
     private func drawGrid(in context: inout GraphicsContext, size: CGSize) {
@@ -503,7 +504,9 @@ struct NoteBlock: View {
             }
             return
         }
-        guard perform(.updateNotes(clip.id, [moved])) else { return announce("The note could not be moved.") }
+        guard perform(.updateNotes(clip.id, [moved])) else {
+            return announce("The note could not be moved.", urgent: true)
+        }
         announce(semitones != 0 ? NoteEditing.name(of: moved.pitch)
                                 : NoteEditing.spokenPosition(moved.start, signature: signature, grid: grid))
     }
@@ -513,12 +516,16 @@ struct NoteBlock: View {
             announce(steps > 0 ? "End of the clip." : "Shortest length.")
             return
         }
-        guard perform(.updateNotes(clip.id, [resized])) else { return announce("The note could not be resized.") }
+        guard perform(.updateNotes(clip.id, [resized])) else {
+            return announce("The note could not be resized.", urgent: true)
+        }
         announce("\(NoteEditing.spokenLength(resized.length, grid: grid)) long")
     }
 
     private func delete() {
-        guard perform(.removeNotes(clip.id, [note.id])) else { return announce("The note could not be deleted.") }
+        guard perform(.removeNotes(clip.id, [note.id])) else {
+            return announce("The note could not be deleted.", urgent: true)
+        }
         announce("\(name) deleted.")
     }
 
@@ -533,8 +540,9 @@ struct NoteBlock: View {
         }
     }
 
-    /// What an action did, for VoiceOver, which stays on the note and would say nothing.
-    private func announce(_ text: String) {
-        AccessibilityNotification.Announcement(AttributedString(text)).post()
+    /// What an action did, for VoiceOver, which stays on the note and would say nothing. Said
+    /// the app's one way (`Theme.Accessibility`); a failure urgently.
+    private func announce(_ text: String, urgent: Bool = false) {
+        Theme.Accessibility.announce(Announcement(text, priority: urgent ? .urgent : .normal))
     }
 }
