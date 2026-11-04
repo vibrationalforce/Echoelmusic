@@ -38,6 +38,44 @@ final class ReverbTests: XCTestCase {
         XCTAssertGreaterThan(rms(long, from: 1.1, to: 1.2), 10 * rms(left, from: 1.1, to: 1.2), "a longer decay rings longer")
     }
 
+    /// The peak of `seconds` of a 0.5 sine at `hertz` through `settings`, after the first second.
+    private func sustainedPeak(_ settings: Reverb.Settings, hertz: Double, seconds: Double = 6) -> Float {
+        let reverb = Reverb(sampleRate: rate, settings: settings)
+        var left = [Float](repeating: 0, count: 512), right = left
+        var peak: Float = 0
+        var done = 0
+        while done < Int(seconds * rate) {
+            for i in 0..<512 {
+                let phase: Double = 2 * Double.pi * hertz * Double(done + i) / rate
+                left[i] = Float(sin(phase)) * 0.5
+                right[i] = left[i]
+            }
+            left.withUnsafeMutableBufferPointer { l in
+                right.withUnsafeMutableBufferPointer { r in
+                    guard let a = l.baseAddress, let b = r.baseAddress else { return }
+                    reverb.process(left: a, right: b, frames: 512)
+                }
+            }
+            if done >= Int(rate) { peak = Swift.max(peak, left.map(abs).max() ?? 0, right.map(abs).max() ?? 0) }
+            done += 512
+        }
+        return peak
+    }
+
+    /// A held tone on one of the network's modes rang up to 8.6 from a 0.5 sine — +24.7 dB — at
+    /// Size 1, Decay 20 s, Damping 20 kHz, Mix 1, and to +16 dB at the default decay (audit
+    /// 2026-11-04). The guard holds the wet within +6 dB of the input's peak, with a little room
+    /// for its follower's ripple.
+    func testAHeldToneNeverRingsFarAboveTheInput() {
+        let extreme = Reverb.Settings(size: 1, decay: 20, damping: 20_000, predelay: 0.02, mix: 1)
+        for hertz in [220.0, 1_107.5, 1_178.0] {
+            let peak = sustainedPeak(extreme, hertz: hertz)
+            XCTAssertLessThan(20 * log10(Double(peak) / 0.5), 8, "\(hertz) Hz rang to \(peak)")
+        }
+        let atDefault = sustainedPeak(.init(mix: 1), hertz: 280.3)
+        XCTAssertLessThan(20 * log10(Double(atDefault) / 0.5), 8, "the default decay rang to \(atDefault)")
+    }
+
     func testThePredelayHoldsTheTailBackAndTheSidesDiffer() {
         let (left, right) = response(.init(predelay: 0.1, mix: 1), seconds: 0.5)
         let first = left.firstIndex { abs($0) > 1e-9 } ?? 0

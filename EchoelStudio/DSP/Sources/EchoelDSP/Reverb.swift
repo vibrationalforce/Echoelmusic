@@ -8,6 +8,14 @@ import Foundation
 /// each line darkens the tail the way air does. Size moves the line lengths with a glide, so a
 /// size change bends the tail rather than clicking it.
 ///
+/// A sustained tone on one of the network's modes builds up by 1/(1 − g) for a loop gain g: a
+/// 0.5 sine came out at 8.6 — +24.7 dB — at Size 1, Decay 20 s, Damping 20 kHz, Mix 1, and by
+/// +16 dB at the default decay (audit 2026-11-04). Eight lines have too few modes per hertz for
+/// any loudness normalisation to fix that without making the whole reverb ~15 dB quieter, so the
+/// wet signal has a guard instead: it never rises above `guardRatio` times the input's peak, a
+/// peak that falls as fast as the tail does (60 dB in `decay`). A tail that starts under that
+/// bound stays under it, so the guard is silent on ordinary material and only a resonance meets it.
+///
 /// Owned by the render thread; allocated in `init`, nothing allocates after that.
 public final class Reverb: @unchecked Sendable {
     public struct Settings: Equatable, Codable, Sendable {
@@ -49,6 +57,8 @@ public final class Reverb: @unchecked Sendable {
     static let lineMilliseconds: [Double] = [29.7, 37.1, 41.1, 43.7, 47.3, 53.9, 59.3, 67.1]
     static let diffuserMilliseconds: [Double] = [4.77, 3.59, 2.73, 1.79]
     static let lines = 8
+    /// How far the wet signal may rise above the input's peak: +6 dB.
+    public static let guardRatio: Float = 2
 
     public var settings: Settings {
         didSet { settings = settings.clamped; update() }
@@ -75,6 +85,15 @@ public final class Reverb: @unchecked Sendable {
     /// The mix as it sounds now, gliding to a new one in ~10 ms (see `StereoDelay`).
     private var wetNow: Float = 0
     private let mixGlide: Float
+    /// The guard: the input's peak falling at the tail's rate, the wet's peak, and the gain on the
+    /// wet, which falls in ~2 ms and recovers in ~40 ms.
+    private var inputPeak: Float = 0
+    private var inputPeakFall: Float = 0
+    private var wetPeak: Float = 0
+    private let wetPeakFall: Float
+    private var guardGain: Float = 1
+    private let guardAttack: Float
+    private let guardRecovery: Float
 
     private let preCapacity: Int
     private let pre: UnsafeMutablePointer<Float>
@@ -108,6 +127,9 @@ public final class Reverb: @unchecked Sendable {
         glide = 1 - Foundation.exp(-1 / (0.1 * rate))
         gainGlide = Float(glide)
         mixGlide = Float(1 - Foundation.exp(-1 / (Compressor.gainGlideSeconds * rate)))
+        wetPeakFall = Float(Foundation.exp(-1 / (0.02 * rate)))
+        guardAttack = Float(1 - Foundation.exp(-1 / (0.002 * rate)))
+        guardRecovery = Float(1 - Foundation.exp(-1 / (0.04 * rate)))
         preCapacity = Int(Self.maximumPredelay * rate) + 2
         pre = .allocate(capacity: preCapacity)
         pre.initialize(repeating: 0, count: preCapacity)
@@ -153,6 +175,9 @@ public final class Reverb: @unchecked Sendable {
         }
         hasRun = false
         wetNow = Float(settings.mix)
+        inputPeak = 0
+        wetPeak = 0
+        guardGain = 1
     }
 
     private func update() {
@@ -163,6 +188,7 @@ public final class Reverb: @unchecked Sendable {
             // −60 dB after `decay` seconds: g^(decay·rate / length) = 10^-3.
             gain[i] = Float(Foundation.pow(10, -3 * target[i] / (settings.decay * sampleRate)))
         }
+        inputPeakFall = Float(Foundation.pow(10, -3 / (settings.decay * sampleRate)))
         dampCoefficient = Float(1 - Foundation.exp(-2 * Double.pi * settings.damping / sampleRate))
         preLength = Swift.min(Int(settings.predelay * sampleRate), preCapacity - 1)
         if !hasRun {
@@ -233,10 +259,19 @@ public final class Reverb: @unchecked Sendable {
                 right[i] = inRight * dry
                 continue
             }
-            left[i] = inLeft * dry + wetLeft * 0.5 * wet
-            right[i] = inRight * dry + wetRight * 0.5 * wet
+            // The guard (see the type's note).
+            inputPeak = Swift.max(Swift.max(Swift.abs(inLeft), Swift.abs(inRight)), inputPeak * inputPeakFall)
+            wetPeak = Swift.max(Swift.max(Swift.abs(wetLeft), Swift.abs(wetRight)) * 0.5, wetPeak * wetPeakFall)
+            let bound = Self.guardRatio * inputPeak
+            let guardTarget: Float = wetPeak > bound ? bound / wetPeak : 1
+            guardGain += (guardTarget - guardGain) * (guardTarget < guardGain ? guardAttack : guardRecovery)
+            let wetGain = 0.5 * wet * guardGain
+            left[i] = inLeft * dry + wetLeft * wetGain
+            right[i] = inRight * dry + wetRight * wetGain
         }
         wetNow = Swift.abs(wetTarget - wet) < 1e-6 ? wetTarget : wet
         for l in 0..<Self.lines where Swift.abs(damp[l]) < 1e-20 { damp[l] = 0 }
+        if inputPeak < 1e-20 { inputPeak = 0 }
+        if wetPeak < 1e-20 { wetPeak = 0 }
     }
 }
