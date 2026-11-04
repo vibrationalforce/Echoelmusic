@@ -155,6 +155,17 @@ extension Project {
                       region.length <= file.frameCount - region.offset else {
                     throw Self.invalid("regions", "a region reaches past the end of its file")
                 }
+                // Fades, level and warp (AUD-2, optional inside format 4): the ranges the editor keeps.
+                let rise = region.fadeIn ?? 0, fall = region.fadeOut ?? 0
+                guard rise >= 0, fall >= 0, rise <= region.length, fall <= region.length - rise else {
+                    throw Self.invalid("regions", "a region's fades are longer than the region")
+                }
+                if let gain = region.gainDB, !(gain.isFinite && AudioRegion.gainRange.contains(gain)) {
+                    throw Self.invalid("regions", "a region's gain is outside \(AudioRegion.gainRange) dB")
+                }
+                if let bpm = region.nativeBPM, !(bpm.isFinite && AudioRegion.nativeBPMRange.contains(bpm)) {
+                    throw Self.invalid("regions", "a region's native tempo is outside \(AudioRegion.nativeBPMRange) BPM")
+                }
             }
         }
         // A route moves a parameter that exists in this song; unlike a lane it is not kept for a

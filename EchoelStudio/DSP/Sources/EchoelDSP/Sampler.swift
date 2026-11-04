@@ -244,8 +244,11 @@ extension SampleBuffer {
     /// The same stretch, read exactly as `add(into:…)` reads it, added into `left` and `right`,
     /// `count` frames each: a mono sample into both sides alike, a stereo one side by side — its
     /// left never reaches the right. Render-thread safe.
+    /// `envelope` is the region's own level and fades (AUD-2); unity plays the stretch exactly as
+    /// before it existed.
     public func add(intoLeft left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, count: Int,
-                    elapsed: Int64, step: Double, offset: Double, length: Double, fade: Double) {
+                    elapsed: Int64, step: Double, offset: Double, length: Double, fade: Double,
+                    envelope: RegionEnvelope = .unity) {
         guard count > 0, step.isFinite, step > 0, offset.isFinite, offset >= 0, length.isFinite, length > 0 else { return }
         let stop = Swift.min(offset + length, Double(frameCount))
         let stereo = channelCount == 2
@@ -257,11 +260,7 @@ extension SampleBuffer {
             let index = Int(read)
             let next = index + 1 < frameCount ? index + 1 : index
             let t = Float(read - Double(index))
-            var gain: Float = 1
-            if fade > 0 {
-                let edge = Swift.min(read - offset, stop - read)
-                if edge < fade { gain = Float(edge / fade) }
-            }
+            let gain = envelope.level(since: read - offset, until: stop - read, edge: fade)
             if stereo {
                 let a = frames[2 * index], b = frames[2 * next]
                 let c = frames[2 * index + 1], d = frames[2 * next + 1]

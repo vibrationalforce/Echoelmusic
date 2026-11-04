@@ -341,6 +341,40 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with a region's optional fades, level and warp (AUD-2, 2026-11-04): added inside
+    /// format 4, so an earlier format-4 build opens the file and plays the region plain.
+    private let formatFourRegionEdits = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Faded",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "media": [
+        { "id": "3ED10000-0000-4000-8000-000000000005", "name": "Drums",
+          "path": "Media/3ED10000-0000-4000-8000-000000000005.wav", "frameCount": 96000, "sampleRate": 48000 }
+      ],
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-00000000000B",
+          "name": "Drums",
+          "kind": "audio",
+          "colorIndex": 1,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "regions": [
+            { "id": "4E610000-0000-4000-8000-000000000005", "media": "3ED10000-0000-4000-8000-000000000005",
+              "start": 0, "offset": 0, "length": 96000,
+              "fadeIn": 4800, "fadeOut": 9600, "fadeInCurve": "equalPower", "fadeOutCurve": "sCurve",
+              "gainDB": -6, "nativeBPM": 100, "followsTempo": true }
+          ]
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     private let pad = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000004") ?? UUID())
     private let room = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000005") ?? UUID())
 
@@ -372,7 +406,8 @@ final class FormatGoldenTests: XCTestCase {
     }
 
     func testEveryGoldenFileSurvivesARoundTrip() throws {
-        for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour] {
+        for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
+                     formatFourRegionEdits] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -632,6 +667,29 @@ final class FormatGoldenTests: XCTestCase {
             .replacingOccurrences(of: "\"kind\": \"video\",", with: "\"kind\": \"hologram\",")
         XCTAssertNotEqual(Data(unknownKind.utf8), formatFour, "the replacement must land")
         XCTAssertThrowsError(try ProjectCodec.decode(Data(unknownKind.utf8)), "a media kind this build does not know")
+    }
+
+    func testARegionOpensWithItsFadesLevelAndWarp() throws {
+        let project = try ProjectCodec.decode(formatFourRegionEdits)
+        let region = try XCTUnwrap(project.tracks.first?.regions.first)
+        XCTAssertEqual(region.fadeIn, 4_800)
+        XCTAssertEqual(region.fadeOut, 9_600)
+        XCTAssertEqual(region.fadeInCurve, .equalPower)
+        XCTAssertEqual(region.fadeOutCurve, .sCurve)
+        XCTAssertEqual(region.gainDB, -6)
+        XCTAssertEqual(region.nativeBPM, 100)
+        XCTAssertEqual(region.warpBPM, 100)
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let tracks = try XCTUnwrap(root["tracks"] as? [[String: Any]])
+        let stored = try XCTUnwrap((tracks.first?["regions"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(stored.keys), ["id", "media", "start", "offset", "length", "fadeIn", "fadeOut", "fadeInCurve",
+                                          "fadeOutCurve", "gainDB", "nativeBPM", "followsTempo"])
+        for data in [formatTwoMedia, formatFour] {
+            for track in try ProjectCodec.decode(data).tracks {
+                XCTAssertTrue(track.regions.allSatisfy { $0.fadeIn == nil && $0.fadeOut == nil && $0.gainDB == nil
+                    && $0.nativeBPM == nil && $0.followsTempo == nil }, "an older region plays plain")
+            }
+        }
     }
 
     func testAnOlderSongOpensWithNoVideo() throws {

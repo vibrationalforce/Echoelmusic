@@ -52,6 +52,7 @@ extension Command {
         case placeAudio, moveRegion, trimRegion, removeRegion
         case placeVideo, splitRegion
         case splitPlacement, consolidatePlacements, consolidateRegions
+        case setRegionFades, setRegionGain
         case addScene, removeScene, renameScene, setSlot
     }
 
@@ -127,6 +128,8 @@ extension Command {
         case .splitPlacement: .splitPlacement
         case .consolidatePlacements: .consolidatePlacements
         case .consolidateRegions: .consolidateRegions
+        case .setRegionFades: .setRegionFades
+        case .setRegionGain: .setRegionGain
         case .addScene: .addScene
         case .removeScene: .removeScene
         case .renameScene: .renameScene
@@ -468,6 +471,19 @@ public enum CommandCatalog {
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
                                             P("offset", .integer, "First frame that plays."),
                                             P("length", .integer, "Frames that play, at least 1, ending at or before the file's end.")])
+        case .setRegionFades:
+            return CommandSpec(name: "audio.fades", title: "Set Region Fades",
+                               summary: "Sets an audio region's fade-in and fade-out, in frames of its file, and the curve of each (linear, equalPower, exponential, sCurve). Both together fit in the region; 0 is no fade.",
+                               parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
+                                            P("fadeIn", .integer, "Frames the region rises over from its start."),
+                                            P("fadeOut", .integer, "Frames the region falls over to its end."),
+                                            P("fadeInCurve", .string, "linear, equalPower, exponential or sCurve."),
+                                            P("fadeOutCurve", .string, "linear, equalPower, exponential or sCurve.")])
+        case .setRegionGain:
+            return CommandSpec(name: "audio.gain", title: "Set Region Gain",
+                               summary: "Sets an audio region's own level in dB, before the track's fader, from -60 to +24.",
+                               parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
+                                            P("gainDB", .number, "The level in dB; 0 plays the file as it is.")])
         case .removeRegion:
             return CommandSpec(name: "audio.remove", title: "Delete Region",
                                summary: "Removes an audio or video region from the timeline; the file stays in the song.",

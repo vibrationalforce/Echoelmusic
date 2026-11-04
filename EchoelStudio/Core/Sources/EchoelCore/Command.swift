@@ -119,6 +119,11 @@ public enum Command: Codable, Equatable, Sendable {
     /// rendering is needed: pieces of one file that follow each other in the file and on the
     /// timeline, as a split leaves them. Overlapping or separate audio needs a bounce and is refused.
     case consolidateRegions(track: TrackID, [RegionID])
+    /// A region's fade-in and fade-out, in frames of its file, and their curves. Both lengths
+    /// together fit in the region; 0 is no fade.
+    case setRegionFades(track: TrackID, RegionID, fadeIn: Int, fadeOut: Int, fadeInCurve: FadeCurve, fadeOutCurve: FadeCurve)
+    /// A region's own level in dB, before the track's fader (`AudioRegion.gainRange`).
+    case setRegionGain(track: TrackID, RegionID, gainDB: Double)
 
     // Session
     case addScene(id: SceneID, name: String, index: Int?)
@@ -862,9 +867,18 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "at", reason: "must fall inside the region")
             }
             let head = Int(elapsed.rounded())
+            // The head keeps the fade-in, the tail the fade-out; both keep the region's gain and warp.
+            var tail = region
+            tail.id = newID
+            tail.start = tick
+            tail.offset = region.offset + head
+            tail.length = region.length - head
+            tail.fadeIn = nil
             project.tracks[t].regions[r].length = head
-            project.tracks[t].regions.append(AudioRegion(id: newID, media: region.media, start: tick,
-                                                         offset: region.offset + head, length: region.length - head))
+            project.tracks[t].regions[r].fadeOut = nil
+            Self.holdFades(&project.tracks[t].regions[r])
+            Self.holdFades(&tail)
+            project.tracks[t].regions.append(tail)
             project.tracks[t].regions.sort { $0.start < $1.start }
 
         case let .moveRegion(trackID, id, start):
@@ -887,6 +901,8 @@ extension Command {
             }
             project.tracks[t].regions[r].offset = offset
             project.tracks[t].regions[r].length = length
+            // A shorter region keeps its fades as far as they fit, the fade-in first.
+            Self.holdFades(&project.tracks[t].regions[r])
 
         case let .removeRegion(trackID, id):
             let t = try project.requireTrack(trackID)
@@ -911,6 +927,36 @@ extension Command {
             let chosen = Set(ids)
             project.tracks[t].regions.removeAll { chosen.contains($0.id) && $0.id != joined.id }
             if let r = project.tracks[t].regionIndex(joined.id) { project.tracks[t].regions[r] = joined }
+
+        case let .setRegionFades(trackID, id, fadeIn, fadeOut, fadeInCurve, fadeOutCurve):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .audio else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only audio regions fade")
+            }
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            let length = project.tracks[t].regions[r].length
+            guard fadeIn >= 0, fadeIn <= length else {
+                throw CommandError.invalidValue(parameter: "fadeIn", reason: "must be within 0…\(length) frames")
+            }
+            guard fadeOut >= 0, fadeOut <= length - fadeIn else {
+                throw CommandError.invalidValue(parameter: "fadeOut", reason: "must be within 0…\(length - fadeIn) frames")
+            }
+            project.tracks[t].regions[r].fadeIn = fadeIn == 0 ? nil : fadeIn
+            project.tracks[t].regions[r].fadeOut = fadeOut == 0 ? nil : fadeOut
+            project.tracks[t].regions[r].fadeInCurve = fadeInCurve
+            project.tracks[t].regions[r].fadeOutCurve = fadeOutCurve
+
+        case let .setRegionGain(trackID, id, gainDB):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .audio else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only audio regions have a level")
+            }
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            guard gainDB.isFinite, AudioRegion.gainRange.contains(gainDB) else {
+                throw CommandError.invalidValue(parameter: "gainDB",
+                                                reason: "must be within \(AudioRegion.gainRange.lowerBound)…\(AudioRegion.gainRange.upperBound) dB")
+            }
+            project.tracks[t].regions[r].gainDB = gainDB == 0 ? nil : gainDB
 
         case let .addScene(id, name, index):
             guard project.sceneIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
@@ -948,6 +994,14 @@ extension Command {
         guard length > 0, length <= MusicalTime.maximumTick else {
             throw CommandError.invalidValue(parameter: "length", reason: "must be within 1…\(MusicalTime.maximumTick) ticks")
         }
+    }
+
+    /// Holds a region's stored fades inside its length, the fade-in first ("in wins"); a fade that
+    /// no longer fits any of is no fade.
+    static func holdFades(_ region: inout AudioRegion) {
+        let (rise, fall) = region.effectiveFades
+        region.fadeIn = rise == 0 ? nil : rise
+        region.fadeOut = fall == 0 ? nil : fall
     }
 
     static func validateStart(_ start: Tick) throws {
@@ -1098,8 +1152,16 @@ extension Project {
     /// The result keeps the earliest region's id.
     public func joinedWithoutRendering(_ regions: [AudioRegion]) -> AudioRegion? {
         let ordered = regions.sorted { $0.start < $1.start }
-        guard let first = ordered.first, ordered.count >= 2, mediaFile(first.media) != nil else { return nil }
+        guard let first = ordered.first, let last = ordered.last, ordered.count >= 2, mediaFile(first.media) != nil else { return nil }
+        // One level and one way of following the tempo for the whole, and no fade inside it: a fade
+        // between two pieces, or two levels, would be lost by the join and needs a bounce.
+        guard ordered.allSatisfy({ $0.gainDB == first.gainDB && $0.nativeBPM == first.nativeBPM
+                                    && $0.followsTempo == first.followsTempo }),
+              ordered.dropFirst().allSatisfy({ ($0.fadeIn ?? 0) == 0 }),
+              ordered.dropLast().allSatisfy({ ($0.fadeOut ?? 0) == 0 }) else { return nil }
         var joined = first
+        joined.fadeOut = last.fadeOut
+        joined.fadeOutCurve = last.fadeOutCurve
         for (before, next) in zip(ordered, ordered.dropFirst()) {
             guard next.media == first.media, next.start > before.start,
                   next.offset == before.offset + before.length,
