@@ -105,13 +105,13 @@ final class FieldLayerPass: @unchecked Sendable {
         DiagnosticLog.app.note("field layer: shader compiling")
         let library: MTLLibrary
         do {
-            library = try device.makeLibrary(source: shaderSource, options: nil)
+            library = try device.makeLibrary(source: FieldShader.layer.source, options: nil)
         } catch {
             DiagnosticLog.app.note("field layer: shader compile failed", error: error)
             return nil
         }
-        guard let vertex = library.makeFunction(name: "layer_vertex"),
-              let fragment = library.makeFunction(name: "layer_fragment") else {
+        guard let vertex = library.makeFunction(name: FieldShader.layer.vertexFunction),
+              let fragment = library.makeFunction(name: FieldShader.layer.fragmentFunction) else {
             DiagnosticLog.app.note("field layer: shader entry point missing")
             return nil
         }
@@ -131,7 +131,7 @@ final class FieldLayerPass: @unchecked Sendable {
     }
 
     /// The numbers the layer shader reads. Mirrored by BYTE LAYOUT in the MSL `Layer` struct in
-    /// `shaderSource` — twelve floats, no compiler checks the two agree: a field is only ever
+    /// `FieldShader.layer` (EchoelCore) — twelve floats, no compiler checks the two agree: a field is only ever
     /// appended at the end, in both places, in one commit.
     private struct LayerUniforms {
         // From an output pixel back to the picture's: x' = a·x + c·y + tx, y' = b·x + d·y + ty.
@@ -166,43 +166,6 @@ final class FieldLayerPass: @unchecked Sendable {
             hasPicture = 1
         }
     }
-
-    // MARK: - Shader (Metal Shading Language, compiled at runtime like the Field's)
-
-    private static let shaderSource = """
-    #include <metal_stdlib>
-    using namespace metal;
-
-    struct LayerOut { float4 pos [[position]]; };
-    struct Layer { float a; float b; float c; float d; float tx; float ty;
-                   float sourceWidth; float sourceHeight; float hasPicture;
-                   float video; float field; float product; };
-
-    // A full-screen triangle from the vertex id: no vertex buffer.
-    vertex LayerOut layer_vertex(uint vid [[vertex_id]]) {
-        float2 p = float2((vid << 1) & 2, vid & 2);
-        LayerOut o;
-        o.pos = float4(p * 2.0 - 1.0, 0.0, 1.0);
-        return o;
-    }
-
-    fragment float4 layer_fragment(LayerOut in [[stage_in]],
-                                   constant Layer& u [[buffer(0)]],
-                                   texture2d<float> picture [[texture(0)]],
-                                   texture2d<float> field [[texture(1)]]) {
-        constexpr sampler smooth(filter::linear, address::clamp_to_edge);
-        // Pixel coordinates, origin top left: AVFoundation's placement works in the same space.
-        float2 p = in.pos.xy;
-        float2 s = float2(u.a * p.x + u.c * p.y + u.tx, u.b * p.x + u.d * p.y + u.ty);
-        float3 v = float3(0.0);
-        if (u.hasPicture > 0.5 && s.x >= 0.0 && s.y >= 0.0 && s.x < u.sourceWidth && s.y < u.sourceHeight) {
-            v = picture.sample(smooth, s / float2(u.sourceWidth, u.sourceHeight)).rgb;
-        }
-        float3 f = field.read(uint2(p)).rgb;
-        float3 o = v * u.video + f * u.field + v * f * u.product;
-        return float4(clamp(o, 0.0, 1.0), 1.0);
-    }
-    """
 }
 
 /// Where the picture sits in the output, as the layer pass reads it: the way from an output pixel
