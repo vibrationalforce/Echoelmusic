@@ -243,6 +243,7 @@ struct PianoRoll: View {
         }
         .overlay(alignment: .bottomTrailing) {
             HStack(spacing: Theme.Space.s) {
+                chordMenu
                 timingMenu
                 selectionBar
             }
@@ -396,6 +397,58 @@ struct PianoRoll: View {
         .buttonStyle(ToolButtonStyle())
         .accessibilityLabel("Timing")
         .accessibilityHint(selected == nil ? "Quantize or humanize every note." : "Quantize or humanize the chosen note.")
+    }
+
+    /// Chords that fit next, best first (ECHOELTOOLS D5): ranked by harmonic function in the song's
+    /// key, without a model. A pick places the chord after the last note, one bar long; nothing is
+    /// written until one is picked. A borrowed chord names the notes it brings from outside the scale.
+    private var chordMenu: some View {
+        let context = store.project.context
+        let place = ChordSuggest.position(in: clip, context: context)
+        let chords = Array(ChordSuggest.ranked(after: place.previous, sounding: place.sounding, in: context)
+            .prefix(Self.suggestedChords))
+        return Menu {
+            if chords.isEmpty {
+                Text("Set a key and scale in the Song menu to get chord suggestions.")
+            } else if place.start >= clip.length {
+                Text("No room after the last note.")
+            } else {
+                Section(place.previous.map { "After \($0.name)" } ?? "To open") {
+                    ForEach(chords, id: \.pitchClasses) { chord in
+                        Button(chordTitle(chord, in: context)) { insert(chord) }
+                    }
+                }
+            }
+        } label: {
+            Label("Chords", systemImage: "pianokeys")
+        }
+        .menuStyle(.button)
+        .buttonStyle(ToolButtonStyle())
+        .accessibilityLabel("Chords")
+        .accessibilityHint("Suggests chords that fit after the last note.")
+    }
+
+    private static let suggestedChords = 6
+
+    private func chordTitle(_ chord: ChordSuggest.Chord, in context: MusicalContext) -> String {
+        let outside = ChordSuggest.outside(chord, in: context).map { MusicalContext.rootNames[$0] }
+        return outside.isEmpty ? chord.name : "\(chord.name) — borrowed, \(outside.joined(separator: " ")) outside the scale"
+    }
+
+    private func insert(_ chord: ChordSuggest.Chord) {
+        let context = store.project.context
+        let meter = store.project.clipMeter(clip.id)
+        let start = ChordSuggest.position(in: clip, context: context).start
+        guard let command = ChordSuggest.insert(chord, in: clip, context: context, length: meter.ticksPerBar(at: start)) else {
+            return announce("No room after the last note.")
+        }
+        do {
+            try store.perform([command], title: "Chord")
+            let place = NoteEditing.spokenPosition(start, meter: meter, grid: NoteEditing.spokenStep(for: grid))
+            announce("Added \(chord.name), \(place).")
+        } catch {
+            announce("The chord could not be added.", urgent: true)
+        }
     }
 
     private var chosen: Set<NoteID> {

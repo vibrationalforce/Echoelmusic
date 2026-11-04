@@ -63,13 +63,49 @@ struct StepGridView: View {
                     .lineLimit(2)
                     .minimumScaleFactor(0.6)
                     .frame(width: nameColumn, height: cellSize, alignment: .leading)
-                    .contextMenu {
-                        Button("Clear \(lane.name)", systemImage: "xmark", role: .destructive) { clear(lane) }
-                    }
+                    .contextMenu { laneMenu(lane) }
                     .accessibilityAddTraits(.isHeader)
                     .accessibilityAction(named: "Clear \(lane.name)") { clear(lane) }
+                    .accessibilityAction(named: "Rotate \(lane.name) Later") { rotate(lane, by: 1) }
+                    .accessibilityAction(named: "Rotate \(lane.name) Earlier") { rotate(lane, by: -1) }
             }
         }
+    }
+
+    /// Euclidean rhythms (ECHOELTOOLS A12): a few classic spreads, each filling the lane over the
+    /// whole clip in the editor's steps; Rotate turns whatever the lane holds by one step. Only
+    /// what the musician picks is written, one undo step each.
+    @ViewBuilder
+    private func laneMenu(_ lane: DrumLane) -> some View {
+        Menu("Euclidean Rhythm", systemImage: "circle.dotted") {
+            ForEach(Self.euclideanSpreads, id: \.self) { spread in
+                Button("\(spread[0]) over \(spread[1])") { euclid(lane, hits: spread[0], steps: spread[1]) }
+            }
+        }
+        Button("Rotate Later", systemImage: "arrow.right") { rotate(lane, by: 1) }
+        Button("Rotate Earlier", systemImage: "arrow.left") { rotate(lane, by: -1) }
+        Button("Clear \(lane.name)", systemImage: "xmark", role: .destructive) { clear(lane) }
+    }
+
+    /// Hits over steps: the tresillo and cinquillo, then spreads over three and four beats.
+    private static let euclideanSpreads: [[Int]] = [[3, 8], [5, 8], [7, 8], [5, 12], [7, 12],
+                                                    [3, 16], [5, 16], [7, 16], [9, 16], [11, 16]]
+
+    private func euclid(_ lane: DrumLane, hits: Int, steps: Int) {
+        guard let commands = StepEditing.euclid(in: clip, pitch: lane.pitch, hits: hits, steps: steps, step: step) else {
+            return Theme.Accessibility.announce(Announcement("\(lane.name) already plays \(hits) over \(steps).", priority: .normal))
+        }
+        do {
+            try store.perform(commands, title: "Euclidean Rhythm")
+            Theme.Accessibility.announce(Announcement("\(lane.name): \(hits) over \(steps).", priority: .normal))
+        } catch {
+            Theme.Accessibility.announce(Announcement("The rhythm could not be written.", priority: .urgent))
+        }
+    }
+
+    private func rotate(_ lane: DrumLane, by steps: Int) {
+        guard let command = StepEditing.rotateLane(in: clip, pitch: lane.pitch, by: steps, step: step) else { return }
+        try? store.perform(command)
     }
 
     private func laneRow(_ lane: DrumLane, count: Int, meter: MeterMap) -> some View {
