@@ -95,7 +95,7 @@ private struct ArrangeAutomationTouchLayer: View {
                     Self.draw(shown, lit: live?.id, songTicks: songTicks, in: &context, size: canvasSize)
                 }
                 Text(name)
-                    .font(EchoelTheme.font(10, .semibold))
+                    .font(EchoelTheme.font(11, .semibold))
                     .foregroundStyle(EchoelTheme.text)
                     .padding(.horizontal, 4)
                     .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall).fill(EchoelTheme.surface))

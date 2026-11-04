@@ -352,7 +352,7 @@ struct SessionLaunchView: View {
                             .lineLimit(1)
                     }
                     if let word = state.flatMap(SessionGrid.word) {
-                        Text(word).font(EchoelTheme.font(10, .semibold))
+                        Text(word).font(EchoelTheme.font(11, .semibold))
                     }
                 }
                 .foregroundStyle(state == .playing ? EchoelTheme.accent : EchoelTheme.text)
