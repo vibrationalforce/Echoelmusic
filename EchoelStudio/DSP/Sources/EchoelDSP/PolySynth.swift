@@ -24,6 +24,13 @@ public struct SynthPatch: Equatable, Codable, Sendable {
     /// a value a modulation route can move — the Body voice's pulse — where the wheel is a player's
     /// hand. The deeper of the two sets the swing.
     public var vibrato: Float = 0
+    /// Slide (EchoelTools A2, the bass-line glide): seconds a note takes to glide from the note it
+    /// overlaps — a key struck while another is still held, not at the same moment — on the same
+    /// voice, its envelopes not struck again. 0 is off: every note its own voice.
+    public var slide: Float = 0
+    /// Accent (A2): how much a note struck at velocity `PolySynth.accentVelocity` or harder opens
+    /// the filter envelope further and plays louder, 0…1. 0 is off.
+    public var accent: Float = 0
 
     public enum FilterModel: String, CaseIterable, Codable, Sendable {
         case stateVariable, ladder
@@ -66,6 +73,14 @@ public struct SynthVoice: Sendable {
     var ampEnvelope: Envelope
     var filterEnvelope: Envelope
     private var increment: Float = 0
+    /// While a slide glides: the increment it goes to (`slide(…)`), in octaves, and how far it
+    /// moves each sample. `glideOctaves` is where it is.
+    private var glideOctaves: Float = 0
+    private var glideTarget: Float = 0
+    private var glidePole: Float = 0
+    private var isGliding = false
+    /// Struck at accent velocity: the filter envelope opens further.
+    private var accented = false
     /// The velocity's gain now and where it is going: a fresh note takes it at once, a note
     /// struck again while it sounds glides there like the level does, because a jump from a hard
     /// to a soft velocity mid-waveform is a click (audit 2026-10-23).
@@ -141,8 +156,9 @@ public struct SynthVoice: Sendable {
         isPedalled = false
         startOrder = order
         increment = temperament.frequency(of: Int(pitch)) / sampleRate
-        let v = Float(Swift.min(velocity, 127)) / 127
-        gainTarget = v * v
+        isGliding = false
+        gainTarget = Self.velocityGain(velocity, patch: patch)
+        accented = Self.isAccented(velocity, patch: patch)
         if wasSilent {
             gain = gainTarget
             oscillator.reset()
@@ -163,6 +179,38 @@ public struct SynthVoice: Sendable {
         controlCountdown = 0
         ampEnvelope.gateOn()
         filterEnvelope.gateOn()
+    }
+
+    /// The gain a velocity plays at: its square, raised by the patch's accent at accent velocity.
+    static func velocityGain(_ velocity: UInt8, patch: SynthPatch) -> Float {
+        let v = Float(Swift.min(velocity, 127)) / 127
+        let accent = isAccented(velocity, patch: patch) ? 1 + PolySynth.accentGain * clampedAccent(patch.accent) : 1
+        return v * v * accent
+    }
+
+    static func isAccented(_ velocity: UInt8, patch: SynthPatch) -> Bool {
+        velocity >= PolySynth.accentVelocity && clampedAccent(patch.accent) > 0
+    }
+
+    static func clampedAccent(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 1) : 0 }
+
+    /// A slide: this sounding, held voice glides to `pitch` over the patch's slide time and takes
+    /// the new note's velocity and order. The envelopes go on where they are, the source is not
+    /// struck again — the line is one note that moves (A2).
+    mutating func slide(to pitch: UInt8, velocity: UInt8, order: UInt64, sampleRate: Float, patch: SynthPatch,
+                        temperament: Temperament) {
+        let target = temperament.frequency(of: Int(pitch)) / sampleRate
+        guard target.isFinite, target > 0, increment.isFinite, increment > 0 else { return }
+        self.pitch = pitch
+        startOrder = order
+        glideOctaves = log2f(increment)
+        glideTarget = log2f(target)
+        let seconds = patch.slide.isFinite ? Swift.min(Swift.max(patch.slide, 0.001), 10) : 0.001
+        // A time constant of a third of the slide: the glide is 95 % there when the time is up.
+        glidePole = Self.pole(seconds / 3, sampleRate)
+        isGliding = true
+        gainTarget = Self.velocityGain(velocity, patch: patch)
+        accented = Self.isAccented(velocity, patch: patch)
     }
 
     /// The key is up but the pedal holds the note.
@@ -201,7 +249,8 @@ public struct SynthVoice: Sendable {
                          pitch: [Float]? = nil, ratio: Float = 1) {
         guard ampEnvelope.isActive else { return }
         let first = buffer.startIndex
-        let amount = patch.filterEnvelopeAmount.isFinite ? Swift.min(Swift.max(patch.filterEnvelopeAmount, 0), 8) : 0
+        var amount = patch.filterEnvelopeAmount.isFinite ? Swift.min(Swift.max(patch.filterEnvelopeAmount, 0), 8) : 0
+        if accented { amount += PolySynth.accentOctaves * Self.clampedAccent(patch.accent) }
         let targetOctaves = Self.octaves(patch.cutoff)
         let targetResonance = Self.clampedResonance(patch.resonance)
         let targetLevel = Self.voiceLevel(patch)
@@ -228,6 +277,14 @@ public struct SynthVoice: Sendable {
                 controlCountdown = Self.controlInterval
             }
             controlCountdown -= 1
+            if isGliding {
+                glideOctaves = glideTarget + (glideOctaves - glideTarget) * glidePole
+                if Swift.abs(glideOctaves - glideTarget) < 1e-6 {
+                    glideOctaves = glideTarget
+                    isGliding = false
+                }
+                increment = exp2f(glideOctaves)
+            }
             let bend = pitch?[i - first] ?? ratio
             let tone = source.next(patch.engine, character: character, main: &oscillator, dt: increment * bend, table: table)
             let shaped = usesLadder ? ladder.process(tone) : filter.process(tone)
@@ -260,6 +317,10 @@ public struct PolySynth: Sendable {
     private var bend: Float = 1
     private var bendTarget: Float = 1
     private var isSustaining = false
+    /// Samples rendered so far, and when each note started: a slide joins a note struck while an
+    /// earlier one still sounds, never two struck at the same moment (a chord).
+    private var clock: UInt64 = 0
+    private var lastStartClock: UInt64 = .max
     /// Vibrato depth 0…1 now and where the modulation wheel wants it, and the vibrato's phase 0..<1.
     /// The depth goes where the wheel or the patch's own vibrato wants it, whichever is deeper
     /// (`vibratoGoal`).
@@ -282,6 +343,12 @@ public struct PolySynth: Sendable {
     /// The factory bank, taken once where the synth is made: the render thread never touches the
     /// lazily built global.
     private let factory: WavetableBank
+
+    /// The velocity from which a note is accented (A2), and what a full accent adds: octaves of
+    /// filter envelope and a share of level.
+    public static let accentVelocity: UInt8 = 100
+    static let accentOctaves: Float = 2
+    static let accentGain: Float = 0.5
 
     /// Semitones the wheel bends at either end: the General MIDI default.
     public static let bendRange: Float = 2
@@ -336,6 +403,13 @@ public struct PolySynth: Sendable {
     public mutating func noteOn(pitch: UInt8, velocity: UInt8) {
         guard pitch <= 127 else { return }
         guard velocity > 0 else { noteOff(pitch: pitch); return }
+        if let held = slideVoice(for: pitch) {
+            voices[held].slide(to: pitch, velocity: velocity, order: nextOrder, sampleRate: sampleRate, patch: patch,
+                               temperament: temperament)
+            nextOrder &+= 1
+            lastStartClock = clock
+            return
+        }
         let index = voiceIndex(for: pitch)
         if activeVoiceCount == 0 {
             // Nothing sounds, and the engine renders nothing then: a wheel moved since the last
@@ -351,6 +425,19 @@ public struct PolySynth: Sendable {
         voices[index].start(pitch: pitch, velocity: velocity, order: nextOrder, sampleRate: sampleRate, patch: patch,
                             temperament: temperament)
         nextOrder &+= 1
+        lastStartClock = clock
+    }
+
+    /// The voice a new key slides on: with Slide on, the newest held voice of another pitch, if it
+    /// started before this sample — a key struck at the same moment is a chord, not a slide.
+    private func slideVoice(for pitch: UInt8) -> Int? {
+        guard patch.slide.isFinite, patch.slide > 0, lastStartClock != clock else { return nil }
+        var newest: (index: Int, order: UInt64)?
+        for (i, voice) in voices.enumerated() where voice.isActive && voice.isHeld {
+            if voice.pitch == pitch { return nil }
+            if newest.map({ voice.startOrder > $0.order }) ?? true { newest = (i, voice.startOrder) }
+        }
+        return newest?.index
     }
 
     public mutating func noteOff(pitch: UInt8) {
@@ -427,6 +514,7 @@ public struct PolySynth: Sendable {
     /// Adds every sounding voice into `buffer`; the caller clears it first.
     public mutating func render(into buffer: UnsafeMutableBufferPointer<Float>) {
         guard !buffer.isEmpty else { return }
+        clock &+= UInt64(buffer.count)
         let patch = self.patch
         let table = self.table
         guard bend != bendTarget || vibrato > 0 || vibratoGoal > 0 else {

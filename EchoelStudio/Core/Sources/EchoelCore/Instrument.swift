@@ -173,6 +173,8 @@ public struct SynthParameter: Sendable, Equatable {
         // A new row goes at the end: a song stores the key, and the plugin its place.
         case waveform, cutoff, resonance, filterAmount, filterDecay, attack, decay, sustain, release, level, engine, character, filter
         case vibrato
+        // Appended 2026-11-04 (EchoelTools A2): the bass-line glide and accent.
+        case slide, accent
 
         /// The row this case stands for. Builds a value: read it off the render thread.
         public var parameter: SynthParameter {
@@ -196,6 +198,10 @@ public struct SynthParameter: Sendable, Equatable {
             case .filter: SynthParameter("synth.filter", "Filter", .choice, 0...1, 0, .stepped, choices: ["Clean", "Ladder"])
             // The vibrato with the modulation wheel at rest (W12): what a route moves with the pulse.
             case .vibrato: SynthParameter("synth.vibrato", "Vibrato", .amount, 0...1, 0, .linear)
+            // A key struck while another is held glides there on the same voice (0: off).
+            case .slide: SynthParameter("synth.slide", "Slide", .seconds, 0...2, 0, .linear)
+            // A note at velocity 100 or more opens the filter further and plays louder (0: off).
+            case .accent: SynthParameter("synth.accent", "Accent", .amount, 0...1, 0, .linear)
             }
         }
 
@@ -220,6 +226,8 @@ public struct SynthParameter: Sendable, Equatable {
     public static let character = Name.character.parameter
     public static let filter = Name.filter.parameter
     public static let vibrato = Name.vibrato.parameter
+    public static let slide = Name.slide.parameter
+    public static let accent = Name.accent.parameter
 
     /// In display order: one row per `Name`.
     public static let all: [SynthParameter] = Name.allCases.map(\.parameter)
@@ -333,6 +341,15 @@ public struct InstrumentPreset: Sendable, Equatable {
         InstrumentPreset("Low Chant", [.engine: 7, .character: 0.25, .cutoff: 2_200, .resonance: 0.1, .filterAmount: 0,
                                        .filterDecay: 0.3, .attack: 0.5, .decay: 0.8, .sustain: 0.95, .release: 1.4,
                                        .level: 0.4]),
+        // The bass pair of EchoelTools A3. Reese: two saws beating against each other — the
+        // supersaw held close — under the ladder, slowly opening. 808 Glide: a sine that falls away,
+        // each overlapping note gliding into the next, accented notes punching through.
+        InstrumentPreset("Reese Bass", [.engine: 1, .character: 0.18, .filter: 1, .cutoff: 420, .resonance: 0.25,
+                                        .filterAmount: 1.2, .filterDecay: 0.6, .attack: 0.005, .decay: 0.4, .sustain: 0.9,
+                                        .release: 0.2, .level: 0.3]),
+        InstrumentPreset("808 Glide", [.engine: 3, .character: 0.15, .waveform: 0, .cutoff: 1_200, .resonance: 0.1,
+                                       .filterAmount: 0.8, .filterDecay: 0.25, .attack: 0.002, .decay: 1.6, .sustain: 0.25,
+                                       .release: 0.35, .level: 0.38, .slide: 0.12, .accent: 0.4]),
     ]
 
     public static func named(_ name: String) -> InstrumentPreset? {

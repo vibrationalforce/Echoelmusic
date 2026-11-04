@@ -22,7 +22,8 @@ final class StoredNamesTests: XCTestCase {
                                "ptolemy-intense-diatonic"]
     private let synthKeys = ["synth.waveform", "synth.cutoff", "synth.resonance", "synth.filterAmount",
                              "synth.filterDecay", "synth.attack", "synth.decay", "synth.sustain", "synth.release",
-                             "synth.level", "synth.engine", "synth.character", "synth.filter", "synth.vibrato"]
+                             "synth.level", "synth.engine", "synth.character", "synth.filter", "synth.vibrato",
+                             "synth.slide", "synth.accent"]
     private let drumsKeys = ["drums.level"]
     private let samplerKeys = ["sampler.root", "sampler.attack", "sampler.release", "sampler.level", "sampler.mode"]
 
@@ -77,7 +78,8 @@ final class StoredNamesTests: XCTestCase {
     /// it is. A renamed preset would leave every earlier song showing a sound the menu no longer
     /// offers, so a name stays.
     func testEveryStoredPresetNameStillNamesAPreset() {
-        let names = ["Init", "Pluck", "Warm Pad", "Sub Bass", "Square Lead", "Soft Keys", "Choir Ah", "Choir Oo", "Low Chant"]
+        let names = ["Init", "Pluck", "Warm Pad", "Sub Bass", "Square Lead", "Soft Keys", "Choir Ah", "Choir Oo", "Low Chant",
+                     "Reese Bass", "808 Glide"]
         XCTAssertEqual(Set(InstrumentPreset.all.map(\.name)), Set(names), "never rename a preset; add a new one here")
         XCTAssertEqual(InstrumentSettings().preset, InstrumentPreset.initial.name)
     }
