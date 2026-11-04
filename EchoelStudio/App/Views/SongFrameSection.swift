@@ -42,7 +42,7 @@ struct SongFrameSection: View {
     @ViewBuilder private var meterChanges: some View {
         heading("Time Signature Changes")
             .padding(.top, Theme.Space.m)
-        caption("Bar 1 counts \(StudioView.title(store.project.timeSignature)), the time signature in the Song menu. "
+        caption("Bar 1 counts \(SongMenu.title(store.project.timeSignature)), the time signature in the Song menu. "
                 + "A change starts on a bar line.")
         ForEach(store.project.timeSignatureChanges, id: \.tick) { change in
             meterRow(change)
@@ -68,13 +68,13 @@ struct SongFrameSection: View {
                 .foregroundStyle(Theme.Color.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Menu {
-                ForEach(StudioView.commonSignatures, id: \.self) { signature in
-                    Button(StudioView.title(signature)) {
+                ForEach(SongMenu.commonSignatures, id: \.self) { signature in
+                    Button(SongMenu.title(signature)) {
                         try? store.perform(.setTimeSignatureChange(at: tick, signature))
                     }
                 }
             } label: {
-                Text(StudioView.title(change.signature))
+                Text(SongMenu.title(change.signature))
                     .font(Theme.Font.value)
                     .foregroundStyle(Theme.Color.text)
                     .frame(minHeight: Theme.Size.touch)
@@ -84,7 +84,7 @@ struct SongFrameSection: View {
                         .strokeBorder(Theme.Color.borderStrong, lineWidth: 1))
             }
             .accessibilityLabel("Time Signature at \(place)")
-            .accessibilityValue(StudioView.title(change.signature))
+            .accessibilityValue(SongMenu.title(change.signature))
             Button {
                 try? store.perform(.removeTimeSignatureChange(at: tick))
             } label: {
