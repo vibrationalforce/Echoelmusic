@@ -136,7 +136,9 @@ final class ThePartStartIsTypedAsABarTests: XCTestCase {
         XCTAssertEqual(barBody.components(separatedBy: "PartStartField(part: part,").count - 1, 1,
                        "the field is mounted once, in the part bar")
         // Review of 6c69dacad, LOW-5: directly under the title row — not inside a condition.
-        XCTAssertNotNil(barBody.range(of: #"songCanStart:\s*songCanStart\)\s*\}\s*PartStartField\(part: part,"#,
+        // W-RED (2026-11-01): since AE-3 the title row is a `ViewThatFits` whose last arm stacks the
+        // buttons; the field follows its closing braces — still unconditional, still directly under.
+        XCTAssertNotNil(barBody.range(of: #"headingButtons\(part, stacked: true\)\s*\}\s*\}\s*PartStartField\(part: part,"#,
                                       options: .regularExpression),
                         "the field sits unconditionally under the title row")
         XCTAssertEqual(code.components(separatedBy: "PartStartField(").count - 1, 1, "and nowhere else")
@@ -146,7 +148,10 @@ final class ThePartStartIsTypedAsABarTests: XCTestCase {
                       "the field is handed the song's own length, by the Workstation's own summary (#416)")
         XCTAssertLessThan(bodyEnd.lowerBound, leaf.lowerBound, "the leaf is its own struct, outside the bar")
 
-        let field = String(code[leaf.upperBound...])
+        // W-RED (2026-11-01): bounded to the leaf — EP-4's `PartBeatField` follows it and writes its
+        // own one move on its own release.
+        let leafEnd = code.range(of: "\nprivate struct ", range: leaf.upperBound..<code.endIndex)?.lowerBound ?? code.endIndex
+        let field = String(code[leaf.upperBound..<leafEnd])
         guard let call = field.range(of: "EchoelValueField(label: \"Starts at bar\","),
               let commit = field.range(of: "private func commitDraft() {") else {
             return XCTFail("the leaf no longer offers \"Starts at bar\" or no longer commits through `commitDraft`")
