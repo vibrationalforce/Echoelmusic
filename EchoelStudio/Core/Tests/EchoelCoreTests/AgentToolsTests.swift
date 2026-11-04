@@ -301,4 +301,137 @@ final class AgentToolsTests: XCTestCase {
             XCTAssertTrue(text.contains("clips at bars 1–87 (one 4-beat clip, 65 times)."), text)
         }
     }
+
+    // MARK: Key, parameters, notes outside the scale, Euclidean rhythms (ECHOELTOOLS D1–D3, A12)
+
+    func testSetKeySetsRootAndScaleAndTheDescriptionNamesThem() async throws {
+        try await MainActor.run {
+            let store = ProjectStore()
+            XCTAssertTrue(AgentTools.describe(store.project).contains("no key (chromatic)"))
+            try AgentToolsTests.run([.setKey(root: "Bb", scale: "dorian")], on: store)
+            XCTAssertEqual(store.project.context.root, 10)
+            XCTAssertEqual(store.project.context.scale, .dorian)
+            XCTAssertTrue(AgentTools.describe(store.project).contains("key B♭ Dorian."))
+            try AgentToolsTests.run([.setKey(root: "F#", scale: "Harmonic Minor")], on: store)
+            XCTAssertEqual(store.project.context.root, 6)
+            XCTAssertEqual(store.project.context.scale, .harmonicMinor)
+            XCTAssertEqual(store.undoStack.count, 2, "each request is one undo step")
+            store.undo()
+            XCTAssertEqual(store.project.context.scale, .dorian)
+            XCTAssertEqual(store.project.context.root, 10, "root and scale come back together")
+        }
+    }
+
+    func testSetKeyRefusesWhatIsNoKeyAndNamesTheScales() throws {
+        let project = Project()
+        XCTAssertThrowsError(try AgentTools.commands(for: .setKey(root: "H", scale: "major"), in: project))
+        XCTAssertThrowsError(try AgentTools.commands(for: .setKey(root: "C4", scale: "major"), in: project))
+        do {
+            _ = try AgentTools.commands(for: .setKey(root: "C", scale: "klingon"), in: project)
+            XCTFail("an unknown scale is refused")
+        } catch {
+            XCTAssertTrue(String(describing: error).contains("Mixolydian"), "the answer lists the scales")
+        }
+        XCTAssertEqual(try AgentTools.commands(for: .setKey(root: "", scale: "chromatic"), in: project), [.setScale(.chromatic)],
+                       "chromatic needs no root")
+        var major = Project()
+        try Command.setScale(.major).apply(to: &major)
+        XCTAssertThrowsError(try AgentTools.commands(for: .setKey(root: "c", scale: "Ionian"), in: major),
+                             "an unchanged key is said, not done again")
+    }
+
+    func testSetParameterSetsOneValueInItsUnitAsOneUndoStep() async throws {
+        try await MainActor.run {
+            let store = ProjectStore()
+            try AgentToolsTests.run([.addTrack(name: "Bass", kind: "instrument", sound: "Sub Bass")], on: store)
+            let id = try XCTUnwrap(store.project.tracks.first?.id)
+            try AgentToolsTests.run([
+                .setParameter(track: "bass", parameter: "filter", value: 800),
+                .setParameter(track: "bass", parameter: "Volume", value: -9),
+                .setParameter(track: "master", parameter: "pan", value: -0.5),
+            ], on: store)
+            XCTAssertEqual(store.project.value(of: ParameterAddress(.track(id), SynthParameter.cutoff.key)), 800)
+            XCTAssertEqual(store.project.tracks.first?.mixer.volumeDB, -9)
+            XCTAssertEqual(store.project.value(of: .masterPan), -0.5)
+            XCTAssertEqual(store.undoStack.count, 2, "the track and the three values: two turns")
+            store.undo()
+            XCTAssertEqual(store.project.tracks.first?.mixer.volumeDB, 0, "one undo takes the whole turn back")
+        }
+    }
+
+    func testSetParameterRefusesWhatIsOutOfRangeOrUnknown() async throws {
+        try await MainActor.run {
+            let store = ProjectStore()
+            try AgentToolsTests.run([.addTrack(name: "Bass", kind: "instrument", sound: "Sub Bass")], on: store)
+            @MainActor func message(_ action: AgentAction) -> String {
+                do { _ = try AgentTools.commands(for: action, in: store.project); return "" } catch { return String(describing: error) }
+            }
+            XCTAssertTrue(message(.setParameter(track: "Bass", parameter: "pan", value: 3)).contains("-1"))
+            XCTAssertTrue(message(.setParameter(track: "Bass", parameter: "wobble", value: 1)).contains("cutoff"))
+            XCTAssertFalse(message(.setParameter(track: "Bass", parameter: "cutoff", value: .nan)).isEmpty)
+            XCTAssertEqual(message(.setParameter(track: "Bass", parameter: "volume", value: -1_000)), "",
+                           "below the fader's floor is silence, not an error")
+        }
+    }
+
+    func testNotesOutsideTheScaleAreWrittenAsAskedAndNamed() throws {
+        var project = Project()
+        try Command.setKeyRoot(0).apply(to: &project)
+        try Command.setScale(.major).apply(to: &project)
+        let track = TrackID()
+        try Command.addTrack(id: track, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        let plan = try AgentTools.plan(for: .writeNotes(track: "Keys", notes: "C4 1 1, F#4 2 1, E4+G4 3 1, Bb3 4.5 0.5",
+                                                        bar: 1, bars: 1, replace: false), in: project)
+        let written = plan.commands.flatMap { command -> [Note] in
+            if case let .addNotes(_, notes) = command { return notes }
+            return []
+        }
+        XCTAssertEqual(written.map(\.pitch).sorted(), [58, 60, 64, 66, 67], "nothing is moved into the scale")
+        XCTAssertEqual(plan.remark, "Outside C Major, written as asked: F♯4 at beat 2, A♯3 at beat 4.5.")
+
+        let inScale = try AgentTools.plan(for: .writeNotes(track: "Keys", notes: "C4 1 1", bar: 1, bars: 1, replace: false),
+                                          in: project)
+        XCTAssertNil(inScale.remark)
+        try Command.setScale(.chromatic).apply(to: &project)
+        XCTAssertNil(try AgentTools.plan(for: .writeNotes(track: "Keys", notes: "F#4 1 1", bar: 1, bars: 1, replace: false),
+                                         in: project).remark, "a song without a key has nothing outside it")
+    }
+
+    func testAEuclideanRhythmIsADrumPatternOfItsSteps() async throws {
+        try await MainActor.run {
+            let store = ProjectStore()
+            try AgentToolsTests.run([
+                .addTrack(name: "Drums", kind: "drums", sound: nil),
+                .euclideanRhythm(track: "Drums", drum: "kick", hits: 3, steps: 8, rotation: 0, bar: 1, bars: 1),
+            ], on: store)
+            let clip = try XCTUnwrap(store.project.tracks.first?.clips.first)
+            let step: Tick = 240
+            let kicks: [Tick] = clip.notes.filter { $0.pitch == 36 }.map(\.start).sorted()
+            let expected: [Tick] = [0, 3, 6, 8, 11, 14].map { $0 * step }
+            XCTAssertEqual(kicks, expected, "the tresillo twice in a bar of sixteenths")
+            @MainActor func message(_ action: AgentAction) -> String {
+                do { _ = try AgentTools.commands(for: action, in: store.project); return "" } catch { return String(describing: error) }
+            }
+            XCTAssertTrue(message(.euclideanRhythm(track: "Drums", drum: "kick", hits: 9, steps: 8, rotation: 0, bar: 1, bars: 1)).contains("1 to 8"))
+            XCTAssertTrue(message(.euclideanRhythm(track: "Drums", drum: "kick", hits: 1, steps: 65, rotation: 0, bar: 1, bars: 1)).contains("64"))
+            XCTAssertEqual(message(.euclideanRhythm(track: "Drums", drum: "kick", hits: 5, steps: 16, rotation: .min, bar: 1, bars: 1)), "",
+                           "any rotation turns within the cycle")
+        }
+    }
+
+    func testChordSuggestionsNameTheChordsAfterTheLastOne() throws {
+        var project = Project()
+        let track = TrackID(), clip = ClipID()
+        try Command.addTrack(id: track, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        XCTAssertThrowsError(try AgentTools.chordSuggestions(track: "Keys", bar: 1, in: project), "no key, no chords")
+        try Command.setScale(.major).apply(to: &project)
+        try Command.setKeyRoot(7).apply(to: &project)
+        try Command.createClip(track: track, id: clip, name: "A", length: 3_840).apply(to: &project)
+        try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 0).apply(to: &project)
+        try Command.addNotes(clip, [62, 66, 69].map { Note(pitch: $0, velocity: 100, start: 0, length: 960) }).apply(to: &project)
+        let text = try AgentTools.chordSuggestions(track: "Keys", bar: 1, in: project)
+        XCTAssertTrue(text.hasPrefix("In G Major, after D: "), text)
+        XCTAssertTrue(text.contains("G (tonic, "), "the tonic is among the answers after the dominant: \(text)")
+        XCTAssertTrue(text.contains("borrowed:") == false || text.contains("outside the scale"), text)
+    }
 }

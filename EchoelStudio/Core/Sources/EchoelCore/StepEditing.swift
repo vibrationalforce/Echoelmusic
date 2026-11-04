@@ -75,4 +75,75 @@ public enum StepEditing {
         let ids = clip.notes.filter { $0.pitch == pitch }.map(\.id)
         return ids.isEmpty ? nil : .removeNotes(clip.id, ids)
     }
+
+    // MARK: Euclidean rhythms (ECHOELTOOLS A12)
+
+    /// The longest Euclidean cycle, in steps: four bars of sixteenths.
+    public static let euclideanSteps = 1...64
+
+    /// `hits` onsets spread as evenly as `steps` allow — Toussaint's Euclidean rhythms (3 over 8
+    /// is the tresillo `x..x..x.`, 5 over 8 the cinquillo's necklace) — starting on a hit, then
+    /// turned `rotation` steps later (a negative rotation turns it earlier). Step `i` is a hit
+    /// when `i · hits mod steps < hits`, the Bresenham form of Bjorklund's algorithm: the same
+    /// necklace, no recursion, no allocation beyond the result. Nil when `steps` is outside
+    /// `euclideanSteps` or `hits` outside 0…`steps`. It is a pattern tool, not a voice: it only
+    /// says which steps play.
+    public static func euclidean(hits: Int, steps: Int, rotation: Int = 0) -> [Bool]? {
+        guard euclideanSteps.contains(steps), (0...steps).contains(hits) else { return nil }
+        // Reduced first, so no model- or menu-given number can overflow the subtraction below.
+        let turn = ((rotation % steps) + steps) % steps
+        return (0..<steps).map { index in
+            let source = (index - turn + steps) % steps
+            return (source * hits) % steps < hits
+        }
+    }
+
+    /// Fills `pitch`'s lane with a Euclidean rhythm of `step`-long steps, repeated over the whole
+    /// clip, and clears what the lane held — one command list, so it is one undo step. The other
+    /// lanes stay. Nil when the rhythm or the pitch is out of range, or nothing would change.
+    public static func euclid(in clip: Clip, pitch: Int, hits: Int, steps: Int, rotation: Int = 0,
+                              step: Tick, velocity: Int = normalVelocity) -> [Command]? {
+        guard Note.pitchRange.contains(pitch), step > 0,
+              let pattern = euclidean(hits: hits, steps: steps, rotation: rotation) else { return nil }
+        let v = Swift.min(Swift.max(velocity, Note.velocityRange.lowerBound), Note.velocityRange.upperBound)
+        var notes: [Note] = []
+        var start: Tick = 0, index = 0
+        while start < clip.length {
+            if pattern[index % pattern.count] {
+                notes.append(Note(pitch: pitch, velocity: v, start: start, length: Swift.min(step, clip.length - start)))
+            }
+            start += step
+            index += 1
+        }
+        let old = clip.notes.filter { $0.pitch == pitch }
+        let same = old.map { [$0.start, Tick($0.velocity)] }.sorted { $0.lexicographicallyPrecedes($1) }
+            == notes.map { [$0.start, Tick($0.velocity)] }
+        if same { return nil }
+        var commands: [Command] = []
+        if !old.isEmpty { commands.append(.removeNotes(clip.id, old.map(\.id))) }
+        if !notes.isEmpty { commands.append(.addNotes(clip.id, notes)) }
+        return commands.isEmpty ? nil : commands
+    }
+
+    /// Turns one lane by `steps` steps of `step` ticks — later for a positive number — wrapping
+    /// round the clip, so a Euclidean rhythm (or any lane) can start elsewhere in its cycle.
+    /// Nil when the lane is empty or the turn is a whole cycle.
+    public static func rotateLane(in clip: Clip, pitch: Int, by steps: Int, step: Tick) -> Command? {
+        guard step > 0, clip.length > 0 else { return nil }
+        let lane = clip.notes.filter { $0.pitch == pitch }
+        guard !lane.isEmpty else { return nil }
+        let span = clip.length
+        // Reduced to one cycle first: a turn far past the clip cannot overflow the multiply.
+        let count = Tick(stepCount(of: clip, step: step))
+        let turn = ((Tick(steps) % count) + count) % count
+        let shift = (turn * step) % span
+        guard shift != 0 else { return nil }
+        let moved = lane.map { note -> Note in
+            var copy = note
+            copy.start = (note.start + shift) % span
+            copy.length = Swift.max(1, Swift.min(note.length, span - copy.start))
+            return copy
+        }
+        return .updateNotes(clip.id, moved)
+    }
 }

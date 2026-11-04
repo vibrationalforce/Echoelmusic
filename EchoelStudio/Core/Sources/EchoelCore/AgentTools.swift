@@ -29,6 +29,22 @@ public enum AgentAction: Equatable, Sendable {
     /// parameter's own unit (dB, −1…1, Hz, seconds). What the lane held in between is replaced;
     /// the rest of it stays. `curve` −1…1 bends the line, 0 is straight.
     case automate(track: String, parameter: String, fromBar: Int, toBar: Int, from: Double, to: Double, curve: Double)
+    /// The song's key and scale: a root like "D", "F#" or "Bb" and a scale by name ("minor",
+    /// "dorian"); "chromatic" leaves the song without a key.
+    case setKey(root: String, scale: String)
+    /// One parameter of a track or the master set to a value in its own unit, named as `automate`
+    /// names it (volume, pan, cutoff, attack …).
+    case setParameter(track: String, parameter: String, value: Double)
+    /// One drum as a Euclidean rhythm: `hits` spread evenly over `steps` 16th steps, turned
+    /// `rotation` steps later, repeated over `bars` bars from `bar` (ECHOELTOOLS A12).
+    case euclideanRhythm(track: String, drum: String, hits: Int, steps: Int, rotation: Int, bar: Int, bars: Int)
+}
+
+/// What one action does to the song, and what its answer has to say besides "Done": a note
+/// written outside the song's scale is written as asked and named here, never moved (D2).
+public struct AgentPlan: Equatable, Sendable {
+    public let commands: [Command]
+    public let remark: String?
 }
 
 public enum AgentError: Error, Equatable, Sendable, CustomStringConvertible {
@@ -57,6 +73,40 @@ public enum AgentTools {
 
     /// The commands for one action against the project as it is now. Throws without effect.
     public static func commands(for action: AgentAction, in project: Project) throws -> [Command] {
+        try plan(for: action, in: project).commands
+    }
+
+    /// The commands for one action and the remark its answer carries. Throws without effect.
+    public static func plan(for action: AgentAction, in project: Project) throws -> AgentPlan {
+        let commands = try actionCommands(for: action, in: project)
+        return AgentPlan(commands: commands, remark: remark(for: action, commands: commands, in: project))
+    }
+
+    /// Names the notes an action writes outside the song's key and scale, with where they start.
+    /// A drum pattern is left out: a kit's notes name drums, not pitches.
+    static func remark(for action: AgentAction, commands: [Command], in project: Project) -> String? {
+        guard case let .writeNotes(_, _, bar, _, _) = action else { return nil }
+        let context = project.context
+        guard context.scale != .chromatic else { return nil }
+        let written = commands.flatMap { command -> [Note] in
+            if case let .addNotes(_, notes) = command { return notes }
+            return []
+        }
+        let outside = written.filter { !context.contains($0.pitch) }.sorted { ($0.start, $0.pitch) < ($1.start, $1.pitch) }
+        guard !outside.isEmpty else { return nil }
+        let beat = Swift.max(project.meterMap.ticksPerBeat(at: project.meterMap.tick(ofBar: Int64(bar - 1))), 1)
+        let listed = outside.prefix(describedOutside).map {
+            "\(NoteEditing.name(of: $0.pitch)) at beat \(format(Double($0.start) / Double(beat) + 1))"
+        }
+        let more = outside.count - describedOutside
+        return "Outside \(context.title), written as asked: " + listed.joined(separator: ", ")
+            + (more > 0 ? " and \(more) more" : "") + "."
+    }
+
+    /// How many notes outside the scale a remark names before it only counts the rest.
+    static let describedOutside = 8
+
+    private static func actionCommands(for action: AgentAction, in project: Project) throws -> [Command] {
         switch action {
         case let .setTempo(bpm):
             guard bpm.isFinite, Tempo.range.contains(bpm) else {
@@ -229,7 +279,98 @@ public enum AgentTools {
             let points = (kept + [AutomationPoint(tick: start, value: from, curve: curve),
                                   AutomationPoint(tick: end, value: to)]).sorted { $0.tick < $1.tick }
             return [.setAutomation(address, points: points)]
+
+        case let .setKey(rootName, scaleName):
+            let scale = try self.scale(scaleName)
+            guard scale != .chromatic else { return [.setScale(.chromatic)] }
+            let root = try keyRoot(rootName)
+            var commands: [Command] = []
+            if project.context.root != root { commands.append(.setKeyRoot(root)) }
+            if project.context.scale != scale || project.context.unrecognizedScale != nil { commands.append(.setScale(scale)) }
+            guard !commands.isEmpty else { throw AgentError.invalid("The song is already in \(project.context.title).") }
+            return commands
+
+        case let .setParameter(reference, name, value):
+            let address = try parameter(name, on: reference, in: project)
+            guard let descriptor = project.descriptor(for: address) else {
+                throw AgentError.invalid("\"\(name)\" cannot be set on \(reference).")
+            }
+            let range = descriptor.range
+            // A fader's floor is silence: "as quiet as it goes" may come as any large negative number.
+            let wanted = descriptor.unit == .decibel && value.isFinite ? Swift.max(value, range.lowerBound) : value
+            guard wanted.isFinite, range.contains(wanted) else {
+                throw AgentError.invalid("\(descriptor.title) goes from \(format(range.lowerBound)) to \(format(range.upperBound)), not \(format(value)).")
+            }
+            guard let command = Command.setParameter(address, to: wanted) else {
+                throw AgentError.invalid("\"\(name)\" cannot be set on \(reference).")
+            }
+            return [command]
+
+        case let .euclideanRhythm(reference, drum, hits, steps, rotation, bar, bars):
+            guard StepEditing.euclideanSteps.contains(steps) else {
+                throw AgentError.invalid("A Euclidean rhythm has 1 to \(StepEditing.euclideanSteps.upperBound) steps.")
+            }
+            guard (1...steps).contains(hits), let pattern = StepEditing.euclidean(hits: hits, steps: steps, rotation: rotation) else {
+                throw AgentError.invalid("A Euclidean rhythm over \(steps) steps has 1 to \(steps) hits.")
+            }
+            let text = String(pattern.map { $0 ? "x" : "." })
+            return try actionCommands(for: .drumPattern(track: reference, drum: drum, steps: text, bar: bar, bars: bars),
+                                      in: project)
         }
+    }
+
+    /// A key's root as a pitch class: a note name without octave ("D", "F#", "Bb", "C♯").
+    public static func keyRoot(_ name: String) throws -> Int {
+        let text = name.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty, !text.contains(where: \.isNumber), let pitch = pitch(text + "4") else {
+            throw AgentError.invalid("A key's root is a note name like C, F# or Bb, not \"\(name)\".")
+        }
+        return ((pitch % 12) + 12) % 12
+    }
+
+    /// A scale by its name or a common word for it, ignoring case and spaces.
+    public static func scale(_ name: String) throws -> Scale {
+        let key = name.lowercased().filter(\.isLetter)
+        if let scale = Scale.allCases.first(where: { $0.rawValue.lowercased() == key || $0.title.lowercased().filter(\.isLetter) == key }) {
+            return scale
+        }
+        let aliases: [String: Scale] = ["ionian": .major, "aeolian": .minor, "naturalminor": .minor,
+                                        "pentatonic": .majorPentatonic, "majorpenta": .majorPentatonic,
+                                        "minorpenta": .minorPentatonic, "none": .chromatic, "nokey": .chromatic,
+                                        "wholetonescale": .wholeTone, "bluesscale": .blues]
+        guard let scale = aliases[key] else {
+            throw AgentError.invalid("There is no scale \"\(name)\". Scales: \(Scale.allCases.map(\.title).joined(separator: ", ")).")
+        }
+        return scale
+    }
+
+    /// The chords that could follow in an instrument track's clip at `bar`, best first, for the
+    /// model to read before it writes one (D5). Reads the song, changes nothing.
+    public static func chordSuggestions(track reference: String, bar: Int, in project: Project, count: Int = 6) throws -> String {
+        let context = project.context
+        guard context.scale != .chromatic else {
+            throw AgentError.invalid("The song has no key yet; set one with set_key first.")
+        }
+        let target = try track(reference, in: project)
+        guard target.kind == .instrument else { throw AgentError.wrongTrack(target.name, reason: "plays no notes") }
+        guard bar >= 1, project.meterMap.tick(ofBar: Int64(bar - 1)) < MusicalTime.maximumTick else {
+            throw AgentError.invalid("Bar \(bar) is not in the song.")
+        }
+        let start = project.meterMap.tick(ofBar: Int64(bar - 1))
+        let clip = target.placements.first { $0.start == start }.flatMap { placement in
+            target.clips.first { $0.id == placement.clip }
+        }
+        let place = clip.map { ChordSuggest.position(in: $0, context: context) }
+        let chords = ChordSuggest.ranked(after: place?.previous, sounding: place?.sounding ?? [], in: context)
+        guard !chords.isEmpty else { throw AgentError.invalid("\(context.title) has too few notes for chords.") }
+        let listed = chords.prefix(Swift.max(1, count)).map { chord -> String in
+            let notes = ChordSuggest.voicing(of: chord, after: place?.sounding ?? []).map { NoteEditing.name(of: $0).replacingOccurrences(of: "♯", with: "#") }
+            let outside = ChordSuggest.outside(chord, in: context)
+            let tail = outside.isEmpty ? "" : ", borrowed: \(outside.map { MusicalContext.rootNames[$0] }.joined(separator: " ")) outside the scale"
+            return "\(chord.name) (\(chord.function.rawValue), \(notes.joined(separator: "+"))\(tail))"
+        }
+        let after = place?.previous.map { "after \($0.name)" } ?? "to open"
+        return "In \(context.title), \(after): " + listed.joined(separator: "; ") + "."
     }
 
     /// A parameter by its plain name on a track or the master: volume, pan, or a row of the device
@@ -303,7 +444,8 @@ public enum AgentTools {
     /// small enough for the on-device model's window however long the song grows.
     public static func describe(_ project: Project) -> String {
         let meter = project.meterMap
-        var lines = ["Song \"\(project.name)\": \(tempoText(project.tempo)) BPM, \(project.timeSignature.numerator)/\(project.timeSignature.denominator)."]
+        let key = project.context.scale == .chromatic ? "no key (chromatic)" : "key \(project.context.title)"
+        var lines = ["Song \"\(project.name)\": \(tempoText(project.tempo)) BPM, \(project.timeSignature.numerator)/\(project.timeSignature.denominator), \(key)."]
         if !meter.isConstant {
             let changes = meter.segments.dropFirst().map { "bar \($0.startBar + 1) \($0.signature.numerator)/\($0.signature.denominator)" }
             lines.append("Time signature changes: " + changes.joined(separator: ", ") + ".")
