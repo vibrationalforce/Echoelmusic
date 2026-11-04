@@ -480,6 +480,55 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertGreaterThan(energy(0..<1_440), energy(24_000..<25_440))
     }
 
+    /// The click follows a ramp: each beat sounds on the sample the integrated map gives it,
+    /// and between two beats it is silent — an accelerando's beats come closer and closer.
+    func testTheClickFollowsATempoRamp() throws {
+        var s = try song([[]])
+        try Command.setTempoChange(at: 2 * bar, bpm: 240).apply(to: &s.project)
+        try Command.setTempoCurve(at: 2 * bar, curve: .linear).apply(to: &s.project)
+        let core = EngineCore(sampleRate: rate)
+        publish(s.project, to: core)
+        core.play()
+        let out = render(core, frames: 200_000).left
+        let time = TimeConversion(tempoMap: s.project.tempoMap, sampleRate: rate)
+        let beats = (0...10).map { Int(time.sample(at: Tick($0) * 960)) }
+        for (index, beat) in beats.enumerated() {
+            let first = try XCTUnwrap(firstSound(Array(out[beat...])), "beat \(index)")
+            XCTAssertLessThanOrEqual(first, 2, "beat \(index) sounds on its own sample \(beat)")
+            guard index > 0 else { continue }
+            XCTAssertEqual(out[(beat - 64)..<beat].reduce(0) { $0 + $1 * $1 }, 0, "silent just before beat \(index)")
+        }
+        let gaps = zip(beats.dropFirst(), beats).map { $0 - $1 }
+        XCTAssertEqual(gaps.prefix(8).map { $0 }, gaps.prefix(8).sorted(by: >), "the beats of the ramp come closer")
+        XCTAssertEqual(gaps[8], 12_000, "after the ramp, 240 BPM")
+    }
+
+    /// A new snapshot while a ramp plays — a note added, the same map — leaves the playhead
+    /// where it is; a ramp edited mid-way keeps the bar and beat, as a step change does.
+    func testANewSnapshotInsideARampIsNotATempoJump() throws {
+        var s = try song([[Note(pitch: 60, start: 0, length: 240)]])
+        try Command.setTempoChange(at: 4 * bar, bpm: 180).apply(to: &s.project)
+        try Command.setTempoCurve(at: 4 * bar, curve: .linear).apply(to: &s.project)
+        let core = core()
+        publish(s.project, to: core)
+        core.play()
+        _ = render(core, frames: 100_000)
+        XCTAssertEqual(core.positionSample, 100_000)
+        let clip = try XCTUnwrap(s.project.tracks.first?.clips.first?.id)
+        try Command.addNotes(clip, [Note(pitch: 64, start: 2 * bar, length: 240)]).apply(to: &s.project)
+        publish(s.project, to: core)
+        _ = render(core, frames: 256)
+        XCTAssertEqual(core.positionSample, 100_256, "same map: no re-seek")
+
+        let before = TimeConversion(tempoMap: s.project.tempoMap, sampleRate: rate).position(atSample: core.positionSample)
+        try Command.setTempoChange(at: 4 * bar, bpm: 90).apply(to: &s.project)
+        publish(s.project, to: core)
+        _ = render(core, frames: 1)
+        let after = TimeConversion(tempoMap: s.project.tempoMap, sampleRate: rate)
+        XCTAssertEqual(after.position(atSample: core.positionSample - 1), before, accuracy: 1 / after.samplesPerTick(at: Tick(before)),
+                       "the ramp turned into a ritardando, and the song stays on its tick")
+    }
+
     /// The click is for the musician, not the mix: it reaches the output but never the master
     /// inserts, so a master compressor does not duck on every beat (audit 2026-10-23).
     func testTheClickBypassesTheMasterInserts() throws {

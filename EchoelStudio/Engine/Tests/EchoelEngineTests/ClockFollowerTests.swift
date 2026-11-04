@@ -93,6 +93,15 @@ final class ClockFollowerTests: XCTestCase {
         XCTAssertEqual(song.tempo, 100, "the song itself is not written")
         XCTAssertEqual(song.tempoChanges.count, 1)
 
+        // A ramp is the song's own change too: the clock — or Flow's pulse tempo — never glides
+        // along it, and the pulse never reaches the song's ramp (law T2).
+        try Command.setTempoCurve(at: 3_840, curve: .linear).apply(to: &song)
+        XCTAssertTrue(song.tempoMap.hasRamps)
+        let flow = ClockFollower.played(song, tempo: 77)
+        XCTAssertFalse(flow.tempoMap.hasRamps)
+        XCTAssertEqual(flow.tempoMap.bpm(at: 1_920), 77, "also inside the song's own ramp")
+        XCTAssertEqual(song.tempoChanges.first?.curve, .linear, "the song keeps its ramp underneath")
+
         let unknown = ClockFollower.played(song, tempo: nil)
         XCTAssertEqual(unknown.tempo, 100, "until the clock's tempo is known, the song's own tempo")
         XCTAssertEqual(unknown.tempoChanges, [], "but never its changes, which would run it off the clock")
