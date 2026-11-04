@@ -49,6 +49,20 @@ public protocol InstrumentKernel: AnyObject, Sendable {
     func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, gain: Float)
 }
 
+extension InstrumentKernel {
+    /// Render thread: one MIDI 1.0 channel message as a host delivers it, `length` bytes. Channel
+    /// pressure and program change are two bytes long; they used to be dropped with every message
+    /// shorter than three, and a system message (status 0xF0 and up) is not a channel message.
+    /// The kernel's `receive` gets 0 for a data byte the message does not have.
+    public func receive(midi length: Int, _ status: UInt8, _ data1: UInt8, _ data2: UInt8) {
+        guard length >= 1, status >= 0x80, status < 0xF0 else { return }
+        let kind = status & 0xF0
+        let needed = kind == 0xC0 || kind == 0xD0 ? 2 : 3
+        guard length >= needed else { return }
+        receive(status: status, data1 & 0x7F, needed == 3 ? data2 & 0x7F : 0)
+    }
+}
+
 /// What the app's engine needs from a built-in kernel beyond what a plugin host gives it (S-26 D2).
 /// Engine only, render thread only, and nothing here allocates. The Audio Unit keeps using
 /// `InstrumentKernel` alone, so a host sees no difference.

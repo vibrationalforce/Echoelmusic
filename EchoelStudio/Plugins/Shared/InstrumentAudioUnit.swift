@@ -262,8 +262,9 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
                 }
                 switch header.eventType {
                 case .MIDI:
+                    // Two-byte messages too: channel pressure and program change (audit 2026-11-04).
                     let midi = current.pointee.MIDI
-                    if midi.length >= 3 { state.kernel.receive(status: midi.data.0, midi.data.1, midi.data.2) }
+                    state.kernel.receive(midi: Int(midi.length), midi.data.0, midi.data.1, midi.data.2)
                 case .parameter, .parameterRamp:
                     let parameter = current.pointee.parameter
                     state.kernel.setParameter(Int(parameter.parameterAddress), parameter.value)
