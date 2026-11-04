@@ -249,6 +249,25 @@ public struct SynthParameter: Sendable, Equatable {
     // `InstrumentDevice.parameters`. A song stores their values and lanes under these keys, so
     // the names, the order and the sampler mode's choices are frozen (Law 3, `StoredNamesTests`).
     public static let drumsLevel = SynthParameter("drums.level", "Level", .amount, 0...1, 0.8, .linear, songDefault: 1)
+    // The kit's sound beyond its level (EchoelTools A11, 2026-11-04), appended after it: how far
+    // the kick's pitch falls, the hats' and the toms' models, then each piece's tune, decay and
+    // level. Every default plays the kit exactly as it sounded before these rows existed.
+    public static let drumsKickGlide = SynthParameter("drums.kickGlide", "Kick Glide", .amount, 0...4, 1, .linear)
+    public static let drumsHatModel = SynthParameter("drums.hatModel", "Hats", .choice, 0...1, 0, .stepped,
+                                                     choices: ["Noise", "Metal"])
+    public static let drumsTomModel = SynthParameter("drums.tomModel", "Toms", .choice, 0...1, 0, .stepped,
+                                                     choices: ["Sine", "Modal"])
+    /// The kit's pieces as their rows name them, in the kit's order (kick … crash).
+    public static let drumPieces: [(key: String, title: String)] = [
+        ("kick", "Kick"), ("snare", "Snare"), ("clap", "Clap"), ("lowTom", "Low Tom"), ("highTom", "High Tom"),
+        ("closedHat", "Closed Hat"), ("openHat", "Open Hat"), ("crash", "Crash"),
+    ]
+    /// Per piece: tune in semitones, decay as a factor on the piece's own length, level as a factor.
+    public static let drumsPieceRows: [SynthParameter] = drumPieces.flatMap { piece in
+        [SynthParameter("drums.\(piece.key).tune", "\(piece.title) Tune", .amount, -24...24, 0, .linear),
+         SynthParameter("drums.\(piece.key).decay", "\(piece.title) Decay", .amount, 0.1...4, 1, .exponential),
+         SynthParameter("drums.\(piece.key).level", "\(piece.title) Level", .amount, 0...1, 1, .linear)]
+    }
     public static let samplerRoot = SynthParameter("sampler.root", "Root key", .amount, 0...127, 60, .stepped)
     public static let samplerAttack = SynthParameter("sampler.attack", "Attack", .seconds, 0.001...2, 0.001, .exponential)
     public static let samplerRelease = SynthParameter("sampler.release", "Release", .seconds, 0.01...5, 0.15, .exponential)
@@ -298,7 +317,7 @@ extension InstrumentDevice {
     public var parameters: [InstrumentParameter] {
         switch self {
         case .synth: SynthParameter.all
-        case .drums: [.drumsLevel]
+        case .drums: [.drumsLevel, .drumsKickGlide, .drumsHatModel, .drumsTomModel] + SynthParameter.drumsPieceRows
         case .sampler: [.samplerRoot, .samplerAttack, .samplerRelease, .samplerLevel, .samplerMode]
         case .plugin, .unrecognized: []
         }

@@ -24,7 +24,8 @@ final class StoredNamesTests: XCTestCase {
                              "synth.filterDecay", "synth.attack", "synth.decay", "synth.sustain", "synth.release",
                              "synth.level", "synth.engine", "synth.character", "synth.filter", "synth.vibrato",
                              "synth.slide", "synth.accent"]
-    private let drumsKeys = ["drums.level"]
+    // The kit's sound appended after its level (EchoelTools A11, 2026-11-04).
+    private let drumsKeys = ["drums.level", "drums.kickGlide", "drums.hatModel", "drums.tomModel", "drums.kick.tune", "drums.kick.decay", "drums.kick.level", "drums.snare.tune", "drums.snare.decay", "drums.snare.level", "drums.clap.tune", "drums.clap.decay", "drums.clap.level", "drums.lowTom.tune", "drums.lowTom.decay", "drums.lowTom.level", "drums.highTom.tune", "drums.highTom.decay", "drums.highTom.level", "drums.closedHat.tune", "drums.closedHat.decay", "drums.closedHat.level", "drums.openHat.tune", "drums.openHat.decay", "drums.openHat.level", "drums.crash.tune", "drums.crash.decay", "drums.crash.level"]
     private let samplerKeys = ["sampler.root", "sampler.attack", "sampler.release", "sampler.level", "sampler.mode"]
 
     func testEveryStoredNameStillReadsAsTheSameThing() {
@@ -62,6 +63,8 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(InstrumentDevice.drums.parameters.map(\.key.rawValue), drumsKeys, "a new row goes at the end")
         XCTAssertEqual(InstrumentDevice.sampler.parameters.map(\.key.rawValue), samplerKeys, "a new row goes at the end")
         XCTAssertEqual(SynthParameter.samplerMode.choices, ["Gate", "One-shot"], "the song stores the mode's index")
+        XCTAssertEqual(SynthParameter.drumsHatModel.choices, ["Noise", "Metal"], "the song stores the hats' index")
+        XCTAssertEqual(SynthParameter.drumsTomModel.choices, ["Sine", "Modal"], "the song stores the toms' index")
         // A harmonizer voice is an indexed parameter of its insert: the song stores the index.
         XCTAssertEqual(HarmonyInterval.allCases.map(\.semitones),
                        [nil, -12, -9, -8, -7, -5, -4, -3, 0, 3, 4, 5, 7, 8, 9, 12], "a new interval goes at the end")

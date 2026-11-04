@@ -49,8 +49,10 @@ final class InstrumentTablesTests: XCTestCase {
         XCTAssertEqual(project.descriptor(for: synthLevel)?.title, "Beat Synth Level (not playing)")
         let drumsLevel = ParameterAddress(.track(track), SynthParameter.drumsLevel.key)
         XCTAssertEqual(project.descriptor(for: drumsLevel)?.title, "Beat Level", "the kit's row, which plays, keeps the plain name")
-        XCTAssertEqual(project.parameters.filter { $0.address.owner == .track(track) }.map(\.title).filter { $0.contains("Level") },
-                       ["Beat Level"], "the menu offers only the playing row")
+        let levels: [String] = project.parameters.filter { $0.address.owner == .track(track) }.map(\.title)
+            .filter { $0.contains("Level") }
+        XCTAssertEqual(levels.first, "Beat Level", "the menu offers only the playing rows")
+        XCTAssertFalse(levels.contains { $0.contains("Synth") || $0.contains("not playing") }, "\(levels)")
     }
 
     func testNoTwoDevicesShareAKey() {
@@ -61,7 +63,8 @@ final class InstrumentTablesTests: XCTestCase {
 
     func testEachDeviceHasOneTableInItsPluginsOrder() {
         XCTAssertEqual(InstrumentDevice.synth.parameters, SynthParameter.all)
-        XCTAssertEqual(InstrumentDevice.drums.parameters.map(\.key.rawValue), ["drums.level"])
+        XCTAssertEqual(InstrumentDevice.drums.parameters.first?.key.rawValue, "drums.level", "the level stays at address 0")
+        XCTAssertEqual(InstrumentDevice.drums.parameters.count, 4 + 3 * SynthParameter.drumPieces.count)
         XCTAssertEqual(InstrumentDevice.sampler.parameters.map(\.key.rawValue),
                        ["sampler.root", "sampler.attack", "sampler.release", "sampler.level", "sampler.mode"])
         XCTAssertEqual(InstrumentDevice.plugin.parameters, [])
@@ -120,7 +123,7 @@ final class InstrumentTablesTests: XCTestCase {
         let samplerKeys: [String] = InstrumentDevice.sampler.parameters.map(\.key.rawValue)
         XCTAssertEqual(listed(project), samplerKeys, "the sampler's rows, not the synth's")
         try Command.setInstrumentDevice(track, .drums).apply(to: &project)
-        XCTAssertEqual(listed(project), ["drums.level"])
+        XCTAssertEqual(listed(project), InstrumentDevice.drums.parameters.map(\.key.rawValue))
         try Command.setInstrumentDevice(track, .synth).apply(to: &project)
         let synthKeys: [String] = SynthParameter.all.map(\.key.rawValue)
         XCTAssertEqual(listed(project), synthKeys)

@@ -127,7 +127,12 @@ tracks overlap, the top track shows, and within a track the part that starts lat
 
 **Instrument:** `device` (`synth` · `drums` · `sampler` · `plugin`; a name a reader does not know
 is kept as written and that track stays silent — the song still opens), `preset`, `values` (parameter
-key → number, e.g. `synth.cutoff`: the synth's `synth.*`, the drums' `drums.level` (0 … 1, absent plays 1), the sampler's
+key → number, e.g. `synth.cutoff`: the synth's `synth.*`, the drums' `drums.level` (0 … 1, absent plays 1) and, from 2026-11-04, the kit's sound —
+`drums.kickGlide` (0 … 4, how far the kick's pitch falls; 1 the kit's own drop), `drums.hatModel` (0 noise,
+1 metal), `drums.tomModel` (0 sine, 1 modal) and per piece `drums.<piece>.tune` (semitones, −24 … 24),
+`drums.<piece>.decay` (a factor on the piece's length, 0.1 … 4) and `drums.<piece>.level` (0 … 1) for the
+pieces `kick` · `snare` · `clap` · `lowTom` · `highTom` · `closedHat` · `openHat` · `crash`; absent plays the kit
+as it always sounded — the sampler's
 `sampler.root` (0 … 127, the key that plays the sample at its own speed), `sampler.attack`,
 `sampler.release` (seconds), `sampler.level` (0 … 1) and `sampler.mode` (0 gate, 1 one-shot); a key
 absent plays its default, and every device's values are kept whichever device plays), optional

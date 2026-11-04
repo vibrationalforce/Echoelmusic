@@ -40,8 +40,38 @@ final class KernelParameterContractTests: XCTestCase {
         ])
     }
 
-    func testTheDrumsPublishTheirLevel() {
-        XCTAssertEqual(DrumKernel.parameters, [entry("drums_level", "Level", .amount, 0...1, 0.8)])
+    func testTheDrumsPublishTheirLevelThenTheirSound() {
+        XCTAssertEqual(DrumKernel.parameters, [
+            entry("drums_level", "Level", .amount, 0...1, 0.8),
+            // Appended 2026-11-04 (EchoelTools A11): the kit's sound.
+            entry("drums_kickGlide", "Kick Glide", .amount, 0...4, 1),
+            entry("drums_hatModel", "Hats", .choice, 0...1, 0, ["Noise", "Metal"]),
+            entry("drums_tomModel", "Toms", .choice, 0...1, 0, ["Sine", "Modal"]),
+            entry("drums_kick_tune", "Kick Tune", .amount, -24...24, 0),
+            entry("drums_kick_decay", "Kick Decay", .amount, 0.1...4, 1),
+            entry("drums_kick_level", "Kick Level", .amount, 0...1, 1),
+            entry("drums_snare_tune", "Snare Tune", .amount, -24...24, 0),
+            entry("drums_snare_decay", "Snare Decay", .amount, 0.1...4, 1),
+            entry("drums_snare_level", "Snare Level", .amount, 0...1, 1),
+            entry("drums_clap_tune", "Clap Tune", .amount, -24...24, 0),
+            entry("drums_clap_decay", "Clap Decay", .amount, 0.1...4, 1),
+            entry("drums_clap_level", "Clap Level", .amount, 0...1, 1),
+            entry("drums_lowTom_tune", "Low Tom Tune", .amount, -24...24, 0),
+            entry("drums_lowTom_decay", "Low Tom Decay", .amount, 0.1...4, 1),
+            entry("drums_lowTom_level", "Low Tom Level", .amount, 0...1, 1),
+            entry("drums_highTom_tune", "High Tom Tune", .amount, -24...24, 0),
+            entry("drums_highTom_decay", "High Tom Decay", .amount, 0.1...4, 1),
+            entry("drums_highTom_level", "High Tom Level", .amount, 0...1, 1),
+            entry("drums_closedHat_tune", "Closed Hat Tune", .amount, -24...24, 0),
+            entry("drums_closedHat_decay", "Closed Hat Decay", .amount, 0.1...4, 1),
+            entry("drums_closedHat_level", "Closed Hat Level", .amount, 0...1, 1),
+            entry("drums_openHat_tune", "Open Hat Tune", .amount, -24...24, 0),
+            entry("drums_openHat_decay", "Open Hat Decay", .amount, 0.1...4, 1),
+            entry("drums_openHat_level", "Open Hat Level", .amount, 0...1, 1),
+            entry("drums_crash_tune", "Crash Tune", .amount, -24...24, 0),
+            entry("drums_crash_decay", "Crash Decay", .amount, 0.1...4, 1),
+            entry("drums_crash_level", "Crash Level", .amount, 0...1, 1),
+        ])
     }
 
     func testTheSamplerPublishesItsParametersInTheirHostOrder() {

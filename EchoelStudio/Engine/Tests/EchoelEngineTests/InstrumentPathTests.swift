@@ -205,6 +205,38 @@ final class InstrumentPathTests: XCTestCase {
         }
     }
 
+    /// The kit's sound the song stores (EchoelTools A11) plays as the kit configured directly —
+    /// live at any block size and in the export alike.
+    func testTheSongsDrumSoundPlaysLiveAndInTheExport() throws {
+        var t = try tune([Note(pitch: 36, velocity: 100, start: 0, length: 240),
+                          Note(pitch: 45, velocity: 110, start: 480, length: 240),
+                          Note(pitch: 46, velocity: 80, start: 960, length: 960),
+                          Note(pitch: 42, velocity: 100, start: 1_200, length: 120)], device: .drums)
+        for (key, value) in [("drums.kick.tune", -5.0), ("drums.kick.decay", 2), ("drums.kickGlide", 3),
+                             ("drums.hatModel", 1), ("drums.tomModel", 1), ("drums.lowTom.level", 0.6),
+                             ("drums.openHat.decay", 0.5)] {
+            try Command.setInstrumentParameter(t.track, key: key, value: value).apply(to: &t.project)
+        }
+        var kit = DrumKit(sampleRate: Float(rate))
+        kit.setSound(DrumKit.PieceSound(tune: -5, decay: 2), for: .kick)
+        kit.setKickGlide(3)
+        kit.setHatModel(.metal)
+        kit.setTomModel(.modal)
+        kit.setSound(DrumKit.PieceSound(level: 0.6), for: .lowTom)
+        kit.setSound(DrumKit.PieceSound(decay: 0.5), for: .openHat)
+        let expected = try reference(&kit, t, frames: 72_000)
+        var plainKit = DrumKit(sampleRate: Float(rate))
+        XCTAssertNotEqual(try reference(&plainKit, t, frames: 72_000), expected, "the sound is heard")
+        for block in [64, 256, 4_096] {
+            let core = engine()
+            publish(t, to: core)
+            core.play()
+            assertSame(render(core, frames: 72_000, block: block), expected, "drum sound, block \(block)")
+        }
+        let export = OfflineRender.render(t.project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0, frameCount: 72_000)
+        assertSame(export.left, expected, "the export plays the kit's sound")
+    }
+
     /// The song's swing plays: every second sixteenth falls late by the stored amount, on its own
     /// sample, at every block size, and the export is the same samples. At 0.37 the closed hat on
     /// tick 240 sounds at 240 + 0.37 × 80 = 269.6 ticks — 6,740 samples at 120 BPM, 48 kHz, a
