@@ -13,7 +13,12 @@ here is device-verified yet.
   export for DaVinci Resolve.
 - The Field on an external display (cable or AirPlay) with corner pin. Apple Health (Apple
   Watch) as a slow body source, read only, never sent anywhere.
-- Sample and media browser (search, filter, preview).
+- Sample and media browser (search, filter, preview with its own level, detected note and
+  root key for the sampler).
+- "Convert to MIDI" on an audio region (one voice). A Texture engine (cellular automaton).
+  DAWproject export and the Field as a transparent layer (ProRes 4444 or HEVC with alpha).
+- Apple Health's write purpose string is declared (the HealthKit entitlement requires it; Echoel
+  never writes to Health). The upload of 30b1753ed failed validation without it.
 
 Previous: 11.0.0 (10040) — wavetable from your own samples, five effects, SRT removed.
 Earlier: git history.
