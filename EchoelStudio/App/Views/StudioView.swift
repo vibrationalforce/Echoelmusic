@@ -1010,6 +1010,20 @@ struct SongMenu: View {
                 // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
                 Button("Export Video…", systemImage: "film") { router.sheet = .exportVideo }
                     .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)
+                // The Field alone with transparency (ProRes 4444 or HEVC with alpha), a layer to lay
+                // over the picture in Resolve or Final Cut (PRO-W2).
+                Menu("Export Field Layer (Alpha)", systemImage: "square.2.layers.3d") {
+                    ForEach([VideoExportPlan.Shape.landscape, .vertical, .square, .portrait], id: \.self) { shape in
+                        Button(shape.title) {
+                            Task {
+                                if let url = await documents.exportFieldAlpha(plugins: engine.plugins, shape: shape) {
+                                    router.share(url)
+                                }
+                            }
+                        }
+                    }
+                }
+                .disabled(documents.isExporting)
             }
             Section("Play and Sync") {
                 Menu("Send MIDI Clock", systemImage: "metronome") {

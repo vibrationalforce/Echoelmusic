@@ -1680,6 +1680,86 @@ final class DocumentController {
         }
     }
 
+    /// The Field alone as a movie with transparency, `shape`'s size, for compositing in Resolve or
+    /// Final Cut (`FieldAlphaExport`, PRO-W2): ProRes 4444 with alpha, or HEVC with alpha where the
+    /// device has no ProRes encoder, from the song's start for as long as the video export runs. The
+    /// mix is rendered first only to move the Field, as the video export does; the movie has no
+    /// sound. Returns the movie for the share sheet. Nothing in the song changes.
+    func exportFieldAlpha(plugins: PluginHost, shape: VideoExportPlan.Shape) async -> URL? {
+        guard !isExporting else { return nil }
+        let width = shape.width, height = shape.height
+        guard let pass = FieldLayerPass.make() else {
+            lastError = FieldAlphaExport.ExportError.noFieldLayer.errorDescription
+            return nil
+        }
+        let candidates = FieldAlphaExport.codecs(width: width, height: height)
+        guard !candidates.isEmpty else {
+            lastError = FieldAlphaExport.ExportError.noEncoder.errorDescription
+            return nil
+        }
+        let exportedSong = songsOpened
+        let songName = openSongName
+        let mix = await exportWAV(plugins: plugins, loudness: .off)
+        guard exportedSong == songsOpened else { return exportStopped(songName) }
+        guard !isExporting else { return nil }
+        isExporting = true
+        exportProgress = "Drawing the Field…"
+        defer {
+            isExporting = false
+            exportProgress = nil
+            followRenamedSong()
+            if let mix { try? FileManager.default.removeItem(at: mix) }
+        }
+        let project = store.project
+        let mixSeconds = mix.flatMap { try? AVAudioFile(forReading: $0) }.map { Double($0.length) / $0.processingFormat.sampleRate } ?? 0
+        let duration = VideoExportPlan.longFormSeconds(mixSeconds: mixSeconds, of: project)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        let url = folder.appendingPathComponent(ProjectLibrary.safeFileName(for: songName) + " Field").appendingPathExtension("mov")
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) { () async -> Result<Void, Error> in
+            do {
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                let prepared = try mix.flatMap {
+                    try VideoExport.preparedMix($0, from: 0, to: duration, loudness: .off,
+                                                into: folder.appendingPathComponent("Mix", isDirectory: true))
+                }
+                defer { if let prepared { try? FileManager.default.removeItem(at: prepared.url) } }
+                let count = Int((duration * Double(FieldExport.framesPerSecond)).rounded(.up)) + 1
+                let motion = FieldExport.motion(FieldExport.frames(of: project, fromSeconds: 0, count: count,
+                                                                   levels: FieldExport.levels(peaks: prepared?.peaks ?? [])))
+                // ProRes first; a device whose writer takes the settings and then refuses the frames
+                // gets the HEVC movie instead.
+                var lastFailure: Error = FieldAlphaExport.ExportError.noEncoder
+                for codec in candidates {
+                    do {
+                        try await FieldAlphaExport.write(motion: motion, pass: pass, codec: codec, width: width,
+                                                         height: height, to: url)
+                        return .success(())
+                    } catch FieldAlphaExport.ExportError.stopped {
+                        throw FieldAlphaExport.ExportError.stopped
+                    } catch {
+                        lastFailure = error
+                    }
+                }
+                throw lastFailure
+            } catch {
+                return .failure(error)
+            }
+        }.value
+        guard exportedSong == songsOpened else {
+            if case .success = result { try? FileManager.default.removeItem(at: url) }
+            return exportStopped(songName)
+        }
+        switch result {
+        case .success:
+            lastError = nil
+            return url
+        case .failure(let error):
+            log.error("field alpha export failed — \(error.localizedDescription, privacy: .private)")
+            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not export the Field video. Try again."
+            return nil
+        }
+    }
+
     /// The song as a DAWproject for Bitwig, Studio One, Cubase and other DAWs (`DAWprojectExport`,
     /// PRO-W2): `<song>.dawproject` with `project.xml`, `metadata.xml` and a copy of every audio file
     /// the arrangement plays under `audio/`. Returns it for the share sheet. Nothing in the song changes.
