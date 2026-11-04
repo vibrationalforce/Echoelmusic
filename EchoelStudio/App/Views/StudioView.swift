@@ -154,6 +154,7 @@ struct StudioView: View {
         case .connections: ConnectionsView()
         case .jam: JamView()
         case let .regionEdit(track, region): RegionEditView(trackID: track, regionID: region)
+        case let .convertToMIDI(track, region): ConvertToMIDIView(trackID: track, regionID: region)
         case .browser: MediaBrowserView()
         case let .importAudio(track, start):
             AudioFilePicker(pick: { url in

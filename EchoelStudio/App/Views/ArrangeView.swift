@@ -776,6 +776,7 @@ private struct RegionBlock: View {
         }
         if file.kind == .audio {
             Button("Fades, Gain & Warp…", systemImage: "slider.horizontal.below.rectangle") { editFades() }
+            Button("Convert to MIDI…", systemImage: "pianokeys") { router.sheet = .convertToMIDI(track.id, region.id) }
         }
         Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
         Button("Split at Playhead", systemImage: "scissors") { split() }
