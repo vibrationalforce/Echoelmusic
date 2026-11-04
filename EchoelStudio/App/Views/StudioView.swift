@@ -1075,6 +1075,7 @@ struct SongMenu: View {
             Section("Connect") {
                 // OSC, ADM-OSC, Art-Net and sACN out (wave W4): every one off until switched on there.
                 Button("Connections…", systemImage: "antenna.radiowaves.left.and.right") { router.sheet = .connections }
+                midi2Menu
                 // The body as a source (wave W1): off until chosen here — the chest strap or the rear
                 // camera, one at a time; only then does iOS ask for Bluetooth or the camera. The pulse
                 // shows beside Record while it is measured.
@@ -1236,6 +1237,24 @@ struct SongMenu: View {
         writer.endGesture()
     }
 
+    /// MIDI 2.0 (UMP), in and out, each off until switched on. The other side has to speak MIDI 2.0:
+    /// nothing here negotiates it (no MIDI-CI, no Property Exchange).
+    private var midi2Menu: some View {
+        Menu("MIDI 2.0 (UMP)", systemImage: "pianokeys.inverse") {
+            Toggle(isOn: Binding(get: { midi.midi2Enabled }, set: { midi.setMIDI2($0) })) {
+                Text("MIDI 2.0 In")
+                Text("High-resolution notes and controllers")
+            }
+            Toggle(isOn: Binding(get: { engine.mpe.midi2Enabled }, set: { engine.mpe.setMIDI2($0) })) {
+                Text("MPE Out over MIDI 2.0")
+                Text("Source \u{201C}Echoel MPE (MIDI 2.0)\u{201D}, per-note bend")
+            }
+            Divider()
+            Text("The other device or app must support MIDI 2.0.")
+            MIDI2UnheardLine()
+        }
+    }
+
     /// MPE out (W5b): off until an output is chosen; the live track's notes then go out as a
     /// lower zone, pressure and slide following the body.
     private var mpeMenu: some View {
@@ -1312,5 +1331,17 @@ private struct SurfaceBar: View {
             .buttonStyle(ToolButtonStyle(isActive: chosen))
             .animation(Theme.Motion.quick, value: chosen)
             .accessibilityAddTraits(chosen ? .isSelected : [])
+    }
+}
+
+/// How many MIDI 2.0 messages the engine could not hear — its own leaf, because the count moves
+/// while a controller plays and the Song menu must not rebuild with it (Law 6).
+private struct MIDI2UnheardLine: View {
+    @Environment(MIDIInput.self) private var midi
+
+    var body: some View {
+        if midi.midi2Enabled, midi.unheardCount > 0 {
+            Text("\(midi.unheardCount) messages without a MIDI 1.0 equivalent were not heard")
+        }
     }
 }

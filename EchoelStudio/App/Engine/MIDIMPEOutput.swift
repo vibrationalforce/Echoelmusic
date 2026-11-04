@@ -19,6 +19,12 @@ import os
 /// Per-note pitch bend is stated (centred) at every note-on; nothing in Studio bends a single
 /// note yet, and a track's pitch-bend lane goes to the master channel, which bends the zone.
 /// This is MPE OUT only — Studio reads no MPE zone from an input.
+///
+/// A second source, off by default (Song menu, Connect, "MIDI 2.0 Out (UMP)"): a virtual
+/// source "Echoel MPE (MIDI 2.0)" that sends the same zone over the MIDI 2.0 protocol, values
+/// scaled up and each note's bend as its per-note pitch bend (`MIDI2Translator`). The MIDI 1.0
+/// output above is untouched by it. No MIDI-CI, no Property Exchange: the receiver must be set
+/// to MIDI 2.0 by hand.
 @MainActor
 @Observable
 final class MIDIMPEOutput {
@@ -38,8 +44,11 @@ final class MIDIMPEOutput {
     /// The source slide (CC 74) follows, nil for none; kept on this device.
     private(set) var slideSource: ModulationSource?
     private(set) var lastError: String?
+    /// The MIDI 2.0 source is on; kept on this device.
+    private(set) var midi2Enabled: Bool
 
     @ObservationIgnored private var client = MIDIClientRef()
+    @ObservationIgnored private var midi2Source = MIDIEndpointRef()
     @ObservationIgnored private var port = MIDIPortRef()
     @ObservationIgnored private let pump = MPEPump()
     @ObservationIgnored private var core: EngineCore?
@@ -49,6 +58,7 @@ final class MIDIMPEOutput {
     private static let destinationsKey = "midi.mpeOut.destinations"
     private static let pressureKey = "midi.mpeOut.pressure"
     private static let slideKey = "midi.mpeOut.slide"
+    private static let midi2Key = "midi.ump.out"
 
     init() {
         let defaults = UserDefaults.standard
@@ -56,6 +66,7 @@ final class MIDIMPEOutput {
         chosen = Set(stored.map { MIDIUniqueID(truncatingIfNeeded: $0) })
         pressureSource = Self.source(defaults.string(forKey: Self.pressureKey), default: .breath)
         slideSource = Self.source(defaults.string(forKey: Self.slideKey), default: .coherence)
+        midi2Enabled = defaults.bool(forKey: Self.midi2Key)
         pump.setSources(pressure: pressureSource, slide: slideSource)
     }
 
@@ -76,7 +87,34 @@ final class MIDIMPEOutput {
         let portStatus = MIDIOutputPortCreate(client, "Echoel MPE Out" as CFString, &port)
         guard portStatus == noErr else { return fail("port", portStatus) }
         pump.start(port: port)
+        if midi2Enabled { openMIDI2Source() }
         refresh()
+    }
+
+    /// Switches the MIDI 2.0 source on or off. Off, every note it started ends first and the
+    /// source goes away; the MIDI 1.0 outputs are not touched either way.
+    func setMIDI2(_ on: Bool) {
+        guard on != midi2Enabled else { return }
+        midi2Enabled = on
+        UserDefaults.standard.set(on, forKey: Self.midi2Key)
+        guard client != 0 else { return }
+        if on {
+            openMIDI2Source()
+        } else if midi2Source != 0 {
+            pump.closeMIDI2Source()
+            midi2Source = MIDIEndpointRef()
+        }
+        applySlot()
+    }
+
+    private func openMIDI2Source() {
+        guard midi2Source == 0 else { return }
+        var source = MIDIEndpointRef()
+        let status = MIDISourceCreateWithProtocol(client, "Echoel MPE (MIDI 2.0)" as CFString, ._2_0, &source)
+        guard status == noErr else { return fail("midi 2.0 source", status) }
+        midi2Source = source
+        pump.openMIDI2Source(source)
+        log.info("mpe out: MIDI 2.0 source on")
     }
 
     /// The core whose notes are sent, its rate, how long after its render call a frame is heard,
@@ -147,7 +185,7 @@ final class MIDIMPEOutput {
 
     /// The engine times the slot's notes only while an output can hear them.
     private func applySlot() {
-        core?.setNoteOut(slot: pump.endpointsAreEmpty ? nil : slot)
+        core?.setNoteOut(slot: pump.hasNoOutput ? nil : slot)
     }
 
     private func fail(_ step: String, _ status: OSStatus) {
@@ -170,13 +208,21 @@ final class MPEPump: Sendable {
         var zone = MPEZone()
         var pressure: ModulationSource?
         var slide: ModulationSource?
+        /// The MIDI 2.0 source and its translator, both only while it is on.
+        var midi2Source = MIDIEndpointRef()
+        var midi2: MIDI2Translator?
+
+        var hasOutput: Bool { !endpoints.isEmpty || midi2Source != 0 }
     }
 
-    /// Messages for some endpoints, at one host time (0: now).
+    /// Messages for some endpoints, at one host time (0: now), and the same messages as MIDI 2.0
+    /// words for the MIDI 2.0 source (nil: not for it).
     private struct Batch {
         var endpoints: [MIDIEndpointRef]
         var time: MIDITimeStamp
         var messages: [MPEZone.Message]
+        var midi2Source = MIDIEndpointRef()
+        var midi2Words: [UInt32]?
     }
 
     private let state = Mutex(State())
@@ -189,7 +235,8 @@ final class MPEPump: Sendable {
         return (Swift.max(info.numer, 1), Swift.max(info.denom, 1))
     }()
 
-    var endpointsAreEmpty: Bool { state.withLock { $0.endpoints.isEmpty } }
+    /// Neither a chosen output nor the MIDI 2.0 source.
+    var hasNoOutput: Bool { state.withLock { !$0.hasOutput } }
 
     func start(port: MIDIPortRef) {
         state.withLock { $0.port = port }
@@ -225,7 +272,7 @@ final class MPEPump: Sendable {
             if !added.isEmpty {
                 out.append(Batch(endpoints: added, time: 0, messages: current.zone.configuration()))
             }
-            if endpoints.isEmpty { _ = current.zone.allNotesOff() }
+            if endpoints.isEmpty, current.midi2Source == 0 { _ = current.zone.allNotesOff() }
             current.endpoints = endpoints
             return out
         }
@@ -234,8 +281,39 @@ final class MPEPump: Sendable {
         runWhileChosen()
     }
 
+    /// The MIDI 2.0 source opens: it hears the zone announced (as MIDI 2.0 RPNs) first.
+    func openMIDI2Source(_ source: MIDIEndpointRef) {
+        let batch = state.withLock { (current: inout State) -> Batch in
+            current.midi2Source = source
+            var translator: MIDI2Translator? = MIDI2Translator()
+            let words = MPEOutputWords.midi2(current.zone.configuration(), translator: &translator)
+            current.midi2 = translator
+            return Batch(endpoints: [], time: 0, messages: [], midi2Source: source, midi2Words: words)
+        }
+        send(batch, port: 0)
+        runWhileChosen()
+    }
+
+    /// The MIDI 2.0 source closes: every note it sounds ends on it, then it is disposed on the
+    /// pump's queue, after any drain that still holds it.
+    func closeMIDI2Source() {
+        let (batch, source) = state.withLock { (current: inout State) -> (Batch, MIDIEndpointRef) in
+            let source = current.midi2Source
+            var copy = current.zone
+            let offs = copy.allNotesOff()
+            let words = MPEOutputWords.midi2(offs, translator: &current.midi2)
+            if current.endpoints.isEmpty { _ = current.zone.allNotesOff() }
+            current.midi2Source = MIDIEndpointRef()
+            current.midi2 = nil
+            return (Batch(endpoints: [], time: 0, messages: [], midi2Source: source, midi2Words: words), source)
+        }
+        send(batch, port: 0)
+        if source != 0 { queue.async { MIDIEndpointDispose(source) } }
+        runWhileChosen()
+    }
+
     private func runWhileChosen() {
-        let (chosen, hasPort) = state.withLock { (!$0.endpoints.isEmpty, $0.port != 0) }
+        let (chosen, hasPort) = state.withLock { ($0.hasOutput, $0.port != 0) }
         if chosen, hasPort, timer == nil {
             let source = DispatchSource.makeTimerSource(queue: queue)
             source.schedule(deadline: .now(), repeating: .milliseconds(2), leeway: .microseconds(500))
@@ -255,18 +333,24 @@ final class MPEPump: Sendable {
             guard let core = current.core else { return ([], current.port) }
             var out: [Batch] = []
             while let message = core.noteOut.pop() {
-                guard !current.endpoints.isEmpty else { continue }
+                guard current.hasOutput else { continue }
                 let messages = Self.translate(message, zone: &current.zone)
                 guard !messages.isEmpty else { continue }
                 let time = timestamp(message, sampleRate: current.sampleRate, latency: current.latency)
-                out.append(Batch(endpoints: current.endpoints, time: time, messages: messages))
+                let words = MPEOutputWords.midi2(messages, translator: &current.midi2)
+                out.append(Batch(endpoints: current.endpoints, time: time, messages: messages,
+                                 midi2Source: current.midi2Source, midi2Words: words))
             }
-            if !current.endpoints.isEmpty, let modulation = current.modulation {
+            if current.hasOutput, let modulation = current.modulation {
                 var expression: [MPEZone.Message] = []
                 // Only a value that may leave the device: an Apple Health reading never goes out (REC-1).
                 if let source = current.pressure { expression += current.zone.setPressure(modulation.shareableValue(source)) }
                 if let source = current.slide { expression += current.zone.setSlide(modulation.shareableValue(source)) }
-                if !expression.isEmpty { out.append(Batch(endpoints: current.endpoints, time: 0, messages: expression)) }
+                if !expression.isEmpty {
+                    let words = MPEOutputWords.midi2(expression, translator: &current.midi2)
+                    out.append(Batch(endpoints: current.endpoints, time: 0, messages: expression,
+                                     midi2Source: current.midi2Source, midi2Words: words))
+                }
             }
             return (out, current.port)
         }
@@ -287,12 +371,13 @@ final class MPEPump: Sendable {
     }
 
     /// Universal MIDI Packets, message type 2 (MIDI 1.0 channel voice), in order, 32 words to a
-    /// list (`MIDIEventList` holds one packet of 64).
+    /// list (`MIDIEventList` holds one packet of 64); then, for the MIDI 2.0 source, its words.
     private func send(_ batch: Batch, port: MIDIPortRef) {
-        guard port != 0, !batch.endpoints.isEmpty else { return }
-        let words: [UInt32] = batch.messages.map { message in
-            UInt32(0x2) << 28 | UInt32(message.status) << 16 | UInt32(message.data1) << 8 | UInt32(message.data2)
+        if let words = batch.midi2Words, batch.midi2Source != 0, !words.isEmpty {
+            sendMIDI2(words, time: batch.time, source: batch.midi2Source)
         }
+        guard port != 0, !batch.endpoints.isEmpty else { return }
+        let words = MPEOutputWords.midi1(batch.messages)
         var start = 0
         while start < words.count {
             var chunk = Array(words[start..<Swift.min(start + 32, words.count)])
@@ -301,6 +386,22 @@ final class MPEPump: Sendable {
                 let packet = MIDIEventListInit(pointer, ._1_0)
                 _ = MIDIEventListAdd(pointer, MemoryLayout<MIDIEventList>.size, packet, batch.time, chunk.count, &chunk)
                 for endpoint in batch.endpoints { MIDISendEventList(port, endpoint, pointer) }
+            }
+            start += chunk.count
+        }
+    }
+
+    /// Message type 4 (MIDI 2.0 channel voice, two words each), 32 words to a list, received
+    /// from the virtual source by whoever listens to it.
+    private func sendMIDI2(_ words: [UInt32], time: MIDITimeStamp, source: MIDIEndpointRef) {
+        var start = 0
+        while start + 1 < words.count {
+            var chunk = Array(words[start..<Swift.min(start + 32, words.count)])
+            var list = MIDIEventList()
+            withUnsafeMutablePointer(to: &list) { pointer in
+                let packet = MIDIEventListInit(pointer, ._2_0)
+                _ = MIDIEventListAdd(pointer, MemoryLayout<MIDIEventList>.size, packet, time, chunk.count, &chunk)
+                MIDIReceivedEventList(source, pointer)
             }
             start += chunk.count
         }
