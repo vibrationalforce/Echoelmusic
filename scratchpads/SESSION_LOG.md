@@ -1938,3 +1938,8 @@ Nächster Schritt: PR prüfen und mergen; der nächste TestFlight-Upload trägt 
 - W13: Tonsystem und Kammerton in allen gestimmten Stimmen, Swing sample-genau → Build 10033.
 - Läuft: W13b (Tempo-Rampen, dann Taktwechsel), Audit A (Code + simulierter Tester). Audit B (Historie) fand die Gedächtnislücken, die dieser Eintrag schließt.
 - doctor: `set -eo pipefail` wird erkannt (Selbsttest `pipefail_forms`); die maskierten Alt-App-Workflows bleiben founder-gated.
+
+## 2026-11-04 — Tauchfliege verschoben nach privatem Repo
+
+- Founder: alles Relevante übernehmen, dann aufräumen. Neun steuernde Dateien auf den Verweis „Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.“ gekürzt; `decisions.csv`, `memory/decisions.md`, Inspirations-Ledger und dieses Log bleiben Historie und werden nur ergänzt.
+- Kein Code berührt, kein founder-gated File berührt, nichts gerätegeprüft.

@@ -34,16 +34,11 @@
 
 ## Future Ideas (Parking Lot)
 - **Multikopfkugelige Vibrations-Interdentalbuerstchen** — Zahnpflege-Hardware mit Sonic-Feedback. Vibrations-Expertise aus Installationen uebertragen. Den Schweden (TePe) einen draufsetzen.
-- **Tauchfliegen (Tauchflieger)** — NICHT mehr TBD (Founder 2026-09-11, wörtlich: „Die
-  Tauchfliegen sind die eigentliche Hardware die ich entwickeln will"). Erklärte
-  Hardware-Richtung, eigenes Projekt — für die APP weiterhin North Star: kein Code,
-  keine Produkt-Copy, kein Roadmap-Platz.
-  ⛔ **Founder 2026-10-22 (Förder-Übergabe), ersetzt den Satz darüber:** die Tauchfliege ist ein
-  altes, getrenntes Konzept (CAD-Pläne) und wird NICHT weiterverfolgt; sie steht in keinem
-  Förder- oder Antragstext. Gemeint ist ab jetzt nur die BESTEHENDE vibrierende Installation
-  (Wasser-Pontons + vibrierendes Sofa) für inklusive Musikwahrnehmung.
+- **Tauchfliege** — Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic. Für Echoelmusic gestoppt seit 2026-10-22; am
+  2026-11-04 in ein privates Repo verschoben. Gemeint ist in Echoelmusic nur die BESTEHENDE
+  vibrierende Installation (Wasser-Pontons + vibrierendes Sofa) für inklusive Musikwahrnehmung.
 - **VAPORWAVE PALACE** — der NAME der Vibrations-Installations-Linie (Founder 2026-09-11) und der
-  Dachbegriff, unter dem Liege und Tauchflieger stehen. **Mission, wörtlich: „Ein inklusiver Ansatz
+  Dachbegriff, unter dem die Liege steht. **Mission, wörtlich: „Ein inklusiver Ansatz
   um Musik für Menschen mit Einschränkungen erfahrbarer zu machen."** ⚠️ Das ist ZUGÄNGLICHKEIT,
   nicht Wellness/Therapie — die Unterscheidung ist die rote Linie: Musik über Vibration ERFAHRBAR
   machen ist erlaubt und stark; „hilft gegen X" ist die FDA-Linie und bleibt verboten.

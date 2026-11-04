@@ -158,7 +158,7 @@ lives in scratchpads + SESSION_LOG. Phases:
    EchoelStudioView); the file contradicts itself.
 3. FEATURE_MATRIX stale on the visual dimension (cites old deleted MetalBioView; a new live one exists).
 4. ⛔ Bus `bioFrames` — REMOVED 2026-09-24 (it had no consumer); `bioEvents` drained solely by OSCSender (OSC egress) — per-RR heartbeat events still have no synth sink.
-5. North-star concepts (installation worlds, auto-driving, dive-flying/Tauchfliegen, "revolutionise
+5. North-star concepts (installation worlds, auto-driving, "revolutionise
    humanity via self-observation") are parked in `memory/vision.md` Tier-3 — never in product copy.
 
 ## Roadmap — SHIP GATE "Instrument-Complete v1"
