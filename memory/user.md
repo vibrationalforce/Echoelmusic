@@ -1,3 +1,5 @@
+> ⚠️ **Seit 2026-11-04 gilt für Identität und Richtung zuerst `memory/vision.md` (der Kompass).** Wo diese Datei die frühere App beschreibt, ist sie Geschichte.
+
 # User Profile
 
 ## Identity

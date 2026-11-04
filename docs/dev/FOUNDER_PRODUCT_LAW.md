@@ -60,6 +60,10 @@ This page is published under `docs/dev/` and must be read as a roadmap, never as
 > physical installation is no business line in the plan, development only — ship Echoel Studio on
 > the whole Apple ecosystem in one simultaneous Store launch, then the repository goes private,
 > then other operating systems. Which platforms "whole" means and what private costs: GM36.
+>
+> ⭐ **2026-11-04 (founder): funding is OPEN again** — from the week of 2026-11-09 Claude prepares
+> calls and mail drafts for all funding lines and ideas; nothing goes out without his yes
+> (`decisions.csv` 2026-11-04). The development-only course above stands for the product.
 > Logged in `decisions.csv` (2026-10-24, three rows). The measured plan for that course — what ships today,
 > the slice order, what "simultaneous" costs, and the three private-repo options — is
 > `scratchpads/PLAN_STORE_FIRST_2026-10-24.md`.

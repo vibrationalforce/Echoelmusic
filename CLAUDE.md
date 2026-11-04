@@ -74,7 +74,7 @@ NEVER use "BLAB", "Vibrational Force", legacy bio-wellness/soundscape branding, 
   steht daneben. **Ehrlich verifizieren** (`.claude/rules/engineering.md`): grün kompiliert ist nicht
   am Gerät geprüft.
 - **Build-Rhythmus** (die Founder-Regeln, seit 2026-11-01 auch für jeden Agenten, `decisions.csv`):
-  höchstens EIN TestFlight-Build pro Woche · höchstens drei gebaute Scheiben warten auf ein
+  seit 2026-11-04 (Founder: „immer wieder TestFlight deploy“) ein Build, sobald ein grüner, stimmiger Stapel landet — davor höchstens EIN TestFlight-Build pro Woche · höchstens drei gebaute Scheiben warten auf ein
   Geräte-Urteil (WIP 3) · genau fünf Geräte-Fragen je Build (`docs/dev/FOUNDER_INBOX.md`, Regeln 1–4;
   Skill `studio-release`). Außer der Reihe nur ein Absturzfix für den Build, den der Founder gerade
   testet, und ein grüner Knackfix — Knacken ist ein Blocker wie ein Absturz.
