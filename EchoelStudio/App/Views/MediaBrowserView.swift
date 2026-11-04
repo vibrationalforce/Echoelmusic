@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import EchoelEngine
 import SwiftUI
 import UniformTypeIdentifiers
@@ -22,6 +23,10 @@ struct MediaBrowserView: View {
     @State private var query = ""
     @State private var sort: MediaBrowser.Sort = .name
     @State private var isPicking = false
+    /// The listening level, the browser's own — never the master's (a device setting, not the song's).
+    @AppStorage("browser.listeningLevelDB") private var listeningLevel = -6
+    /// Listening on outputs 3/4, where the interface has them.
+    @AppStorage("browser.listensOnCue") private var listensOnCue = false
 
     var body: some View {
         NavigationStack {
@@ -39,7 +44,14 @@ struct MediaBrowserView: View {
             }, cancel: { isPicking = false }, types: [.audio, .movie, .image])
             .ignoresSafeArea()
         }
-        .onAppear { model.reload(songs: documents.songs, current: documents.currentURL) }
+        .onAppear {
+            model.reload(songs: documents.songs, current: documents.currentURL)
+            engine.preview.setLevel(decibels: Double(listeningLevel))
+            engine.preview.setCueOutput(listensOnCue)
+        }
+        .onChange(of: listeningLevel) { _, level in engine.preview.setLevel(decibels: Double(level)) }
+        .onChange(of: listensOnCue) { _, on in engine.preview.setCueOutput(on) }
+        .task(id: pitchJobIDs) { model.index(pitchJobs) }
         .onDisappear { model.stopListening(engine.preview) }
     }
 
@@ -72,6 +84,15 @@ struct MediaBrowserView: View {
         MediaBrowser.items(of: store.project, origin: .song, package: documents.currentURL) + model.items
     }
 
+    /// The audio files whose note the browser measures, with where each is read from.
+    private var pitchJobs: [MediaBrowserModel.PitchJob] {
+        allItems.filter { $0.kind == .audio }.map { item in
+            MediaBrowserModel.PitchJob(id: item.id, url: url(of: item), loaded: item.media.flatMap { documents.samples[$0] })
+        }
+    }
+
+    private var pitchJobIDs: [String] { allItems.filter { $0.kind == .audio }.map(\.id) }
+
     private var list: some View {
         let all = allItems
         let shown = MediaBrowser.shown(all, kind: kind, query: query, sort: sort)
@@ -83,6 +104,7 @@ struct MediaBrowserView: View {
                     NoteText("Listening is off while the stream is live: the stream would carry it.")
                 }
             }
+            listeningSection
             EchoelSection(footer: footer(shown: shown.count, total: all.count)) {
                 if shown.isEmpty {
                     NoteText(emptyText(total: all.count))
@@ -92,6 +114,21 @@ struct MediaBrowserView: View {
             }
         }
         .echoelList()
+        .numberPadHost()
+    }
+
+    /// The listening level and, on an interface with four outputs or more, the cue pair. Listening
+    /// is added after the master and its effects, and no export or take ever holds it.
+    private var listeningSection: some View {
+        EchoelSection("Listening", footer: "Heard on the output in use — headphones, when they are plugged in. Never in an export or a recording.") {
+            SettingField(title: "Listening Level", value: listeningLevel,
+                         range: Int(PreviewPlayer.levelRange.lowerBound)...Int(PreviewPlayer.levelRange.upperBound),
+                         unit: "dB", standard: -6, spokenUnit: "decibels") { listeningLevel = $0 }
+            if engine.outputChannels > 2 {
+                Toggle("Listen on Outputs 3/4", isOn: $listensOnCue)
+                    .accessibilityHint("Sends the browser's listening to the interface's cue pair instead of the main pair")
+            }
+        }
     }
 
     private func kindPicker(counts: [MediaBrowser.Kind: Int], total: Int) -> some View {
@@ -141,6 +178,13 @@ struct MediaBrowserView: View {
         if let seconds = item.duration { parts.append(Self.length(seconds)) }
         if let rate = item.sampleRate { parts.append(NumberText.string(rate / 1_000, decimalsUpTo: 1) + " kHz") }
         if let bpm = item.tempo { parts.append(NumberText.string(bpm, decimalsUpTo: 1) + " BPM") }
+        if item.kind == .audio, let pitch = model.pitches[item.id] {
+            switch pitch {
+            case .measuring: break
+            case .none: parts.append("Note —")
+            case .note(let reading): parts.append(MediaBrowser.pitchText(note: reading.note, cents: reading.cents))
+            }
+        }
         return parts
     }
 
@@ -174,6 +218,12 @@ struct MediaBrowserView: View {
             }
             ForEach(destinations, id: \.self) { destination in
                 Button(title(of: destination)) { place(item, on: destination) }
+                // The measured note as the sampler's root, only when the musician picks this one.
+                if case .sampler = destination, let root = measuredNote(of: item) {
+                    Button(title(of: destination) + ", Root " + NoteEditing.name(of: root)) {
+                        place(item, on: destination, rootKey: root)
+                    }
+                }
             }
         } label: {
             Label("Place", systemImage: "plus.square.on.square")
@@ -196,8 +246,14 @@ struct MediaBrowserView: View {
         }
     }
 
+    private func measuredNote(of item: MediaBrowser.Item) -> Int? {
+        if case .note(let reading) = model.pitches[item.id] { return reading.note }
+        return nil
+    }
+
     /// Puts `item` at `destination`: the playhead's tick read now, at the tap, never in the body.
-    private func place(_ item: MediaBrowser.Item, on destination: MediaBrowser.Destination) {
+    /// `rootKey` makes the measured note the sampler's root in the same undo step.
+    private func place(_ item: MediaBrowser.Item, on destination: MediaBrowser.Destination, rootKey: Int? = nil) {
         let tick = Swift.min(Swift.max(0, engine.playheadTick(in: store.project)), MusicalTime.maximumTick)
         let target: MediaBrowser.Destination
         switch destination {
@@ -207,7 +263,7 @@ struct MediaBrowserView: View {
         }
         if let media = item.media {
             do {
-                let commands = try MediaBrowser.commands(placing: media, on: target, in: store.project)
+                let commands = try MediaBrowser.commands(placing: media, on: target, in: store.project, rootKey: rootKey)
                 try store.perform(commands, title: "Place \(item.name)")
                 model.message = nil
             } catch {
@@ -220,7 +276,7 @@ struct MediaBrowserView: View {
         Task {
             switch target {
             case let .track(id, start): await documents.importAudio(url, placingOn: id, at: start)
-            case .sampler(let id): await documents.importAudio(url, onto: id)
+            case .sampler(let id): await documents.importAudio(url, onto: id, rootKey: rootKey)
             case .wavetable(let id): await documents.importWavetable(url, onto: id)
             case let .video(id, start): await documents.importVideo(url, onto: id, at: start)
             }

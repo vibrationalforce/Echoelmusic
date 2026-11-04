@@ -1700,10 +1700,12 @@ final class DocumentController {
     }
 
     /// Copies an audio file into the song and makes it `track`'s sample, switching the track
-    /// to the sampler — one undo step.
-    func importAudio(_ source: URL, onto track: TrackID) async {
+    /// to the sampler — one undo step. `rootKey`, when given (the media browser's measured note,
+    /// chosen by the musician), becomes the sampler's root in the same step.
+    func importAudio(_ source: URL, onto track: TrackID, rootKey: Int? = nil) async {
         guard let imported = await importMedia(source, placing: { file in
             [.addMedia(file), .setInstrumentDevice(track, .sampler), .setInstrumentSample(track, file.id)]
+                + MediaBrowser.rootCommands(rootKey, on: track)
         }) else { return }
         perform(imported.commands, title: "Import \(imported.file.name)")
         dropBufferUnlessHeld(imported.file.id)

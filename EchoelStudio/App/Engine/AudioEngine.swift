@@ -1430,8 +1430,11 @@ final class AudioEngine {
             } else {
                 core.render(frameCount: frames, channels: pointers.base, channelCount: count, hostTime: hostTime)
             }
-            // The browser's file on the first pair, after the song's own output guard.
-            preview.render(left: pointers.base[0], right: pointers.base[1], frames: frames, outputRate: core.sampleRate)
+            // The browser's file after the song's own output guard and master effects, on the main
+            // pair or, chosen on an interface of four outputs or more, on the cue pair 3/4.
+            let first = preview.firstChannel(channelCount: count)
+            preview.render(left: pointers.base[first], right: pointers.base[first + 1], frames: frames,
+                           outputRate: core.sampleRate)
             return noErr
         }
     }

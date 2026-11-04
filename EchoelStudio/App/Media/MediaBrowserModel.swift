@@ -26,6 +26,23 @@ final class MediaBrowserModel {
     /// Why the last action did nothing, in a sentence; nil when it worked.
     var message: String?
 
+    /// What is known of an audio file's note.
+    enum Pitch: Equatable {
+        /// Not measured yet.
+        case measuring
+        /// Measured, and no note could be told: noise, a drum, a chord, a sweep.
+        case none
+        case note(SamplePitch.Reading)
+    }
+
+    /// The note of each audio item, by item id, as far as the index has come.
+    private(set) var pitches: [String: Pitch] = [:]
+    /// Every reading this run of the app has made, by file (path, size, date): the browser opens
+    /// again without measuring again. The song stores none of it.
+    private static var pitchCache: [String: SamplePitch.Reading?] = [:]
+    @ObservationIgnored private var indexTask: Task<Void, Never>?
+    @ObservationIgnored private var indexed: Set<String> = []
+
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var listenTask: Task<Void, Never>?
 
@@ -102,6 +119,54 @@ final class MediaBrowserModel {
         if type.conforms(to: .movie) { return .video }
         if type.conforms(to: .image) { return .image }
         return nil
+    }
+
+    // MARK: - Measuring the note
+
+    /// One file to measure: the item, where it is, and its decoded buffer when the song holds one.
+    struct PitchJob: Sendable {
+        let id: String
+        let url: URL?
+        let loaded: SampleBuffer?
+    }
+
+    /// Measures the note of every audio file in `jobs` not measured yet, one after the other, off
+    /// the main thread, and shows each as it comes. A file measured before — in this browser or an
+    /// earlier one — is taken from the cache.
+    func index(_ jobs: [PitchJob]) {
+        let fresh = jobs.filter { !indexed.contains($0.id) }
+        guard !fresh.isEmpty else { return }
+        for job in fresh {
+            indexed.insert(job.id)
+            pitches[job.id] = .measuring
+        }
+        let previous = indexTask
+        indexTask = Task { [weak self] in
+            await previous?.value
+            for job in fresh {
+                guard !Task.isCancelled else { return }
+                let known = MediaBrowserModel.pitchCache
+                let result = await Task.detached(priority: .utility) { () -> (key: String?, reading: SamplePitch.Reading?) in
+                    let key = job.url.flatMap { MediaBrowserModel.fileKey($0) }
+                    if let key, let hit = known[key] { return (key, hit) }
+                    let buffer = job.loaded ?? job.url.flatMap {
+                        MediaBrowserModel.decodeOpening(of: $0, seconds: SamplePitch.analysedSeconds)
+                    }
+                    return (key, buffer.flatMap { SamplePitch.reading(of: $0) })
+                }.value
+                guard let self else { return }
+                if let key = result.key { MediaBrowserModel.pitchCache[key] = .some(result.reading) }
+                self.pitches[job.id] = result.reading.map { .note($0) } ?? Pitch.none
+            }
+        }
+    }
+
+    /// A file's identity for the cache: its path, size and date, so a changed file is measured again.
+    nonisolated static func fileKey(_ url: URL) -> String? {
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path) else { return nil }
+        let size = (attributes[.size] as? NSNumber)?.int64Value ?? -1
+        let date = (attributes[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0
+        return "\(url.standardizedFileURL.path)|\(size)|\(date)"
     }
 
     // MARK: - Importing into the browser
@@ -188,7 +253,7 @@ final class MediaBrowserModel {
         let id = item.id
         listenTask = Task { [weak self] in
             let decoded = await Task.detached(priority: .userInitiated) { () -> SampleBuffer? in
-                Self.decodeOpening(of: url)
+                Self.decodeOpening(of: url, seconds: MediaBrowserModel.listeningSeconds)
             }.value
             guard let self, !Task.isCancelled else { return }
             guard let decoded else {
@@ -206,11 +271,11 @@ final class MediaBrowserModel {
         listening = nil
     }
 
-    /// The first `listeningSeconds` of the file at `url`, both sides kept; nil when it is unreadable
-    /// or the memory is not there.
-    nonisolated private static func decodeOpening(of url: URL) -> SampleBuffer? {
+    /// The first `seconds` of the file at `url`, both sides kept; nil when it is unreadable or the
+    /// memory is not there.
+    nonisolated private static func decodeOpening(of url: URL, seconds: Double) -> SampleBuffer? {
         guard let reader = try? SampleFile.Reader(url, maximumSeconds: .infinity) else { return nil }
-        let room = Swift.min(reader.frameCount, Int((listeningSeconds * reader.sampleRate).rounded(.up)))
+        let room = Swift.min(reader.frameCount, Int((seconds * reader.sampleRate).rounded(.up)))
         guard room > 0 else { return nil }
         return try? SampleBuffer(capacity: room, channels: reader.keptChannels, sampleRate: reader.sampleRate,
                                  fill: { try reader.read(sidesInto: $0) })

@@ -211,4 +211,26 @@ final class MediaBrowserTests: XCTestCase {
             XCTAssertEqual($0 as? MediaBrowser.PlacementError, .notInSong)
         }
     }
+
+    func testTheMeasuredRootJoinsTheSamplerPlacementAsOneStep() throws {
+        let fixture = try song()
+        var project = fixture.0
+        let keys = TrackID()
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        let commands = try MediaBrowser.commands(placing: fixture.audio.id, on: .sampler(keys), in: project, rootKey: 57)
+        XCTAssertEqual(commands.count, 3)
+        for command in commands { try command.apply(to: &project) }
+        XCTAssertEqual(project.track(keys)?.instrument.value(InstrumentParameter.samplerRoot), 57)
+        let track = fixture.track
+        XCTAssertEqual(try MediaBrowser.commands(placing: fixture.audio.id, on: .track(track, at: 0), in: project, rootKey: 57).count, 1,
+                       "a root key means nothing on an audio track")
+        XCTAssertEqual(MediaBrowser.rootCommands(nil, on: keys), [])
+    }
+
+    func testAPitchReadsAsNoteAndCents() {
+        XCTAssertEqual(MediaBrowser.pitchText(note: 57, cents: 0.4), "A3")
+        XCTAssertEqual(MediaBrowser.pitchText(note: 57, cents: 4.2), "A3 +4 ct")
+        XCTAssertEqual(MediaBrowser.pitchText(note: 60, cents: -12.6), "C4 −13 ct")
+        XCTAssertEqual(MediaBrowser.pitchText(note: 60, cents: .nan), "C4")
+    }
 }

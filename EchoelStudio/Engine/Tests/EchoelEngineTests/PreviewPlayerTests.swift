@@ -1,3 +1,4 @@
+import EchoelCore
 import EchoelDSP
 import EchoelEngine
 import XCTest
@@ -108,5 +109,51 @@ final class PreviewPlayerTests: XCTestCase {
             }
         }
         XCTAssertEqual(left.max(), 0, "a rate that is not a number adds nothing")
+    }
+
+    func testTheListeningLevelIsItsOwnAndClamped() throws {
+        let player = PreviewPlayer()
+        XCTAssertEqual(player.gain, PreviewPlayer.level)
+        player.setLevel(decibels: -20)
+        XCTAssertEqual(player.gain, 0.1, accuracy: 1e-5)
+        player.play(try constant(4_800))
+        let out = render(player, frames: 4_096)
+        XCTAssertEqual(out[2_400], 0.1, accuracy: 1e-5, "the file plays at the listening level")
+        player.setLevel(decibels: 12)
+        XCTAssertEqual(player.gain, 1, accuracy: 1e-6, "never above unity")
+        player.setLevel(decibels: -200)
+        XCTAssertEqual(player.gain, Float(pow(10, -40.0 / 20)), accuracy: 1e-6)
+        player.setLevel(decibels: .nan)
+        XCTAssertEqual(player.gain, Float(pow(10, -40.0 / 20)), accuracy: 1e-6, "a value that is not a number is ignored")
+    }
+
+    func testTheCuePairIsUsedOnlyWhereTheOutputHasIt() {
+        XCTAssertEqual(PreviewPlayer.firstChannel(cue: false, channelCount: 8), 0)
+        XCTAssertEqual(PreviewPlayer.firstChannel(cue: true, channelCount: 2), 0, "a stereo output keeps the main pair")
+        XCTAssertEqual(PreviewPlayer.firstChannel(cue: true, channelCount: 3), 0)
+        XCTAssertEqual(PreviewPlayer.firstChannel(cue: true, channelCount: 4), 2, "outputs 3/4")
+        let player = PreviewPlayer()
+        player.setCueOutput(true)
+        XCTAssertTrue(player.sendsToCue)
+        XCTAssertEqual(player.firstChannel(channelCount: 6), 2)
+    }
+
+    /// The export renders the song alone: a file being listened to, at any level, changes no sample.
+    func testListeningDoesNotChangeTheExport() throws {
+        var project = Project(tempo: 120)
+        let track = TrackID(), clip = ClipID()
+        try Command.addTrack(id: track, name: "K", kind: .instrument, index: nil).apply(to: &project)
+        try Command.createClip(track: track, id: clip, name: "C", length: 3_840).apply(to: &project)
+        try Command.addNotes(clip, [Note(pitch: 60, start: 0, length: 960)]).apply(to: &project)
+        try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 0).apply(to: &project)
+        let before = OfflineRender.render(project, sampleRate: rate, tailSeconds: 0.5)
+        let player = PreviewPlayer()
+        player.setLevel(decibels: 0)
+        player.play(try constant(96_000))
+        _ = render(player, frames: 1_024)
+        let during = OfflineRender.render(project, sampleRate: rate, tailSeconds: 0.5)
+        XCTAssertTrue(player.isPlaying)
+        XCTAssertEqual(during.left, before.left)
+        XCTAssertEqual(during.right, before.right)
     }
 }
