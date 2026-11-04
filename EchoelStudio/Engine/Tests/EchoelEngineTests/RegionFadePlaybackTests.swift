@@ -135,6 +135,50 @@ final class RegionFadePlaybackTests: XCTestCase {
         }
     }
 
+    /// A region's gain changed while it plays (AUD-2 report): the level glides to the new one, as
+    /// a mixer fader does, instead of stepping mid-waveform.
+    func testAGainChangeWhileTheRegionPlaysGlides() throws {
+        for stereo in [false, true] {
+            var s = try song(try sine(seconds: 1, stereo: stereo))
+            let core = EngineCore(sampleRate: rate)
+            core.setClickEnabled(false)
+            var slots = SlotAssigner(capacity: core.slotCapacity)
+            slots.update(for: s.project)
+            core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                        sampleRate: rate, generation: 1, samples: s.samples))
+            core.play()
+            var left: [Float] = [], right: [Float] = []
+            var l = [Float](repeating: 0, count: 256), r = [Float](repeating: 0, count: 256)
+            for block in 0..<120 {
+                if block == 40 || block == 41 || block == 80 {
+                    // Up 12 dB, at once again before the first glide ends, then down to silence.
+                    let gain: Double = block == 80 ? -60 : (block == 40 ? 6 : 12)
+                    try Command.setRegionGain(track: s.track, s.region, gainDB: gain).apply(to: &s.project)
+                    core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project,
+                                                slots: slots.slots, sampleRate: rate, generation: UInt64(block),
+                                                samples: s.samples))
+                }
+                l.withUnsafeMutableBufferPointer { lp in
+                    r.withUnsafeMutableBufferPointer { rp in
+                        guard let a = lp.baseAddress, let b = rp.baseAddress else { return }
+                        core.render(frameCount: 256, left: a, right: b)
+                    }
+                }
+                left += l
+                right += r
+            }
+            let detector = ClickDetector.forSine(hertz: 330, amplitude: 0.5 * Float(pow(10, 12.0 / 20)))
+            XCTAssertEqual(detector.clicks(in: left), [], "stereo \(stereo) left")
+            XCTAssertEqual(detector.clicks(in: right), [], "stereo \(stereo) right")
+            // It arrives: the level after the glide is the new gain's.
+            let g = Float(pow(10, 12.0 / 20))
+            let peak = left[(60 * 256)..<(64 * 256)].map { abs($0) }.max() ?? 0
+            XCTAssertEqual(peak, 0.5 * centre * g, accuracy: 0.01, "stereo \(stereo)")
+            let quiet = left[(90 * 256)..<(94 * 256)].map { abs($0) }.max() ?? 1
+            XCTAssertLessThan(quiet, 0.001)
+        }
+    }
+
     func testFadesAndGainDoNotClick() throws {
         let smooth = ClickDetector.forSine(hertz: 330, amplitude: 0.5 * Float(pow(10, 6.0 / 20)))
         for stereo in [false, true] {

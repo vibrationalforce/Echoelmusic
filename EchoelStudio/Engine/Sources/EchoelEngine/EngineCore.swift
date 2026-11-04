@@ -101,6 +101,19 @@ public final class EngineCore: @unchecked Sendable {
     /// reads, so what fades out is exactly what the old tempo was playing — or `nothingToFade`
     /// when the old tempo played nothing there.
     private let remapFade: UnsafeMutablePointer<Int64>
+    /// Per audio lane, a region whose gain the song changed while it played (AUD-2 report): its
+    /// index in the lane, or −1, and the glide from the gain it played at to the new one over
+    /// `regionGainGlide` frames from `regionGainStart` — as a fader glides, so the level never
+    /// steps mid-waveform. Kept as sample positions, not as a running value, so every pass of
+    /// `addAudio` over the same frames (a fade-out of where the lane read before) hears the same.
+    private let regionGainRegion: UnsafeMutablePointer<Int>
+    private let regionGainFrom: UnsafeMutablePointer<Float>
+    private let regionGainTo: UnsafeMutablePointer<Float>
+    private let regionGainStart: UnsafeMutablePointer<Int64>
+    /// The frames a region's gain change takes to arrive: 10 ms.
+    private let regionGainGlide: Int64
+    private let rampLeft: UnsafeMutablePointer<Float>
+    private let rampRight: UnsafeMutablePointer<Float>
     /// Computed, not stored: a stored static is initialised lazily, once, on first read — here
     /// the render thread.
     private static var nothingToFade: Int64 { .min }
@@ -298,6 +311,19 @@ public final class EngineCore: @unchecked Sendable {
         heldRegion.initialize(repeating: -1, count: Self.smoothedAudioTracks)
         heldShift = .allocate(capacity: Self.smoothedAudioTracks)
         heldShift.initialize(repeating: 0, count: Self.smoothedAudioTracks)
+        regionGainRegion = .allocate(capacity: Self.smoothedAudioTracks)
+        regionGainRegion.initialize(repeating: -1, count: Self.smoothedAudioTracks)
+        regionGainFrom = .allocate(capacity: Self.smoothedAudioTracks)
+        regionGainFrom.initialize(repeating: 1, count: Self.smoothedAudioTracks)
+        regionGainTo = .allocate(capacity: Self.smoothedAudioTracks)
+        regionGainTo.initialize(repeating: 1, count: Self.smoothedAudioTracks)
+        regionGainStart = .allocate(capacity: Self.smoothedAudioTracks)
+        regionGainStart.initialize(repeating: 0, count: Self.smoothedAudioTracks)
+        regionGainGlide = Swift.max(1, Int64((self.sampleRate * 0.01).rounded()))
+        rampLeft = .allocate(capacity: Self.maximumFrames)
+        rampLeft.initialize(repeating: 0, count: Self.maximumFrames)
+        rampRight = .allocate(capacity: Self.maximumFrames)
+        rampRight.initialize(repeating: 0, count: Self.maximumFrames)
         busLeft = .allocate(capacity: self.slotCapacity * Self.maximumFrames)
         busLeft.initialize(repeating: 0, count: self.slotCapacity * Self.maximumFrames)
         busRight = .allocate(capacity: self.slotCapacity * Self.maximumFrames)
@@ -352,6 +378,12 @@ public final class EngineCore: @unchecked Sendable {
         remapFade.deallocate()
         heldRegion.deallocate()
         heldShift.deallocate()
+        regionGainRegion.deallocate()
+        regionGainFrom.deallocate()
+        regionGainTo.deallocate()
+        regionGainStart.deallocate()
+        rampLeft.deallocate()
+        rampRight.deallocate()
         gainMemory.deallocate()
         sendMemory.deallocate()
         busLeft.deallocate()
@@ -1068,6 +1100,7 @@ public final class EngineCore: @unchecked Sendable {
         guard let snapshot = current?.snapshot else { return }
         var recountBeats = true
         if let previous { recountBeats = followTempo(from: previous.takeUnretainedValue(), to: snapshot) }
+        if let previous { followRegionGains(from: previous.takeUnretainedValue().snapshot, to: snapshot) }
         unitAutomationPrimed = false
         stale.update(repeating: previous == nil, count: slotCapacity)
 
@@ -1103,6 +1136,7 @@ public final class EngineCore: @unchecked Sendable {
                 audioOwners[index] = owner
                 forget(point: slotCapacity + index)
                 heldRegion[index] = -1
+                regionGainRegion[index] = -1
             }
         }
         for bus in 0..<Self.returnCapacity {
@@ -1253,6 +1287,48 @@ public final class EngineCore: @unchecked Sendable {
         }
         remapped = true
         return signatureChanged
+    }
+
+    /// Render thread: a region the new snapshot plays at another gain than the last one — the same
+    /// file, the same frames, at the same place in its lane — glides there from the level it is
+    /// playing at now, if it sounds at the playhead. Every other gain change takes effect at once:
+    /// nothing hears it step.
+    private func followRegionGains(from was: EngineSnapshot, to snapshot: EngineSnapshot) {
+        for index in 0..<Self.smoothedAudioTracks {
+            guard index < snapshot.audioLanes.count, index < was.audioLanes.count,
+                  snapshot.audioLanes[index].track == was.audioLanes[index].track,
+                  snapshot.audioLanes[index].regions.count == was.audioLanes[index].regions.count else {
+                regionGainRegion[index] = -1
+                continue
+            }
+            let old = was.audioLanes[index].regions, new = snapshot.audioLanes[index].regions
+            let gliding = regionGainRegion[index]
+            var found = -1
+            for i in new.indices {
+                let a = old[i], b = new[i]
+                guard a.buffer === b.buffer, a.offset == b.offset, a.length == b.length, a.step == b.step else { continue }
+                if i == gliding, b.envelope.gain == regionGainTo[index] { found = i; continue }
+                guard a.envelope.gain != b.envelope.gain else { continue }
+                let shift = i == heldRegion[index] ? heldShift[index] : 0
+                guard b.startSample + shift <= playhead, b.endSample + shift > playhead else { continue }
+                regionGainFrom[index] = i == gliding ? regionGain(index, at: playhead) : a.envelope.gain
+                regionGainTo[index] = b.envelope.gain
+                regionGainStart[index] = playhead
+                found = i
+                break
+            }
+            regionGainRegion[index] = found
+        }
+    }
+
+    /// The gain the gliding region of lane `index` plays at on output sample `sample`. Before the
+    /// glide began (a jump back) it is the new gain.
+    @inline(__always)
+    private func regionGain(_ index: Int, at sample: Int64) -> Float {
+        let since = sample - regionGainStart[index]
+        guard since >= 0, since < regionGainGlide else { return regionGainTo[index] }
+        let t = Float(since) / Float(regionGainGlide)
+        return regionGainFrom[index] + (regionGainTo[index] - regionGainFrom[index]) * t
     }
 
     /// Render thread: every region read on across a tempo change goes back to its place.
@@ -1829,6 +1905,10 @@ public final class EngineCore: @unchecked Sendable {
                 }
                 from = until
             }
+            if playing, index < Self.smoothedAudioTracks, regionGainRegion[index] >= 0,
+               playhead + Int64(frames) >= regionGainStart[index] + regionGainGlide {
+                regionGainRegion[index] = -1
+            }
             // The input, through the same inserts, fader and pan as what the track plays.
             if lane.monitor >= 0, lane.monitor < InputMonitor.channelLimit {
                 let input = heard + lane.monitor * Self.maximumFrames
@@ -1889,6 +1969,7 @@ public final class EngineCore: @unchecked Sendable {
             }
         } else {
             let held = index >= 0 && index < Self.smoothedAudioTracks ? heldRegion[index] : -1
+            let gliding = index >= 0 && index < Self.smoothedAudioTracks ? regionGainRegion[index] : -1
             for (i, region) in lane.regions.enumerated() {
                 // The held region plays where it read on to; every other one at its place.
                 let shift = i == held ? heldShift[index] : 0
@@ -1900,6 +1981,23 @@ public final class EngineCore: @unchecked Sendable {
                 let first = Int(Swift.max(regionStart, start) - playhead)
                 let count = Int(Swift.min(regionEnd, end) - playhead) - first
                 guard count > 0 else { continue }
+                if i == gliding {
+                    // Its gain changed while it played: at unity, then gliding to the new gain.
+                    var envelope = region.envelope
+                    envelope.gain = 1
+                    rampLeft.update(repeating: 0, count: count)
+                    rampRight.update(repeating: 0, count: count)
+                    region.buffer.add(intoLeft: rampLeft, right: rampRight, count: count,
+                                      elapsed: playhead + Int64(first) - regionStart, step: region.step,
+                                      offset: region.offset, length: region.length,
+                                      fade: Self.regionFadeFrames * region.step, envelope: envelope)
+                    for k in 0..<count {
+                        let gain = regionGain(index, at: playhead + Int64(first + k))
+                        segmentLeft[first + k] += rampLeft[k] * gain
+                        segmentRight[first + k] += rampRight[k] * gain
+                    }
+                    continue
+                }
                 region.buffer.add(intoLeft: segmentLeft + first, right: segmentRight + first, count: count,
                                   elapsed: playhead + Int64(first) - regionStart, step: region.step,
                                   offset: region.offset, length: region.length,
