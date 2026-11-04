@@ -1,9 +1,6 @@
 # Pitch an ein Senior Apple Developer Team — eine Schleife, ein Satz
 
-Stand `main` `1e7c64aec`, 2026-10-14. Daneben lag das Konzeptpaket TAUCHFLIEGE R14
-(Übergabe 2026-10-05, 37 Befunde, alle offen). Das Paket bleibt außerhalb des
-Repos: CAD und Film sind Konzept, keine Fertigung, und AUD-032 lässt die
-Bildrechte offen. Keine Airbus-Partnerschaft (AUD-034).
+Stand `main` `1e7c64aec`, 2026-10-14. Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.
 
 ## Der Satz im Raum
 
@@ -54,19 +51,9 @@ gleichzeitiger Sprung auf iPad, Mac, Vision, Android und ein Implantat.
    Tür in andere Apple-Hosts. VST3 und CLAP bleiben spätere Türen. Kein
    Android-Neubau, keine zweite Codebasis.
 
-## Was die Tauchfliege-Übergabe dem Pitch verbietet
+## Kein Fahrzeug
 
-R14 ist eine Prüfübergabe, keine Zulassung. Die Tore G0 bis G4 sind ausdrücklich
-keine Testfreigabe. Personen an Bord sind nicht der nächste Schritt.
-
-- AUD-023: Personenbeförderung fällt bei EASA in die zertifizierte Kategorie,
-  nicht unter eine kleine Drohnen-Erlaubnis.
-- AUD-029: Zwei Sitze, ein großes Fenster oder „autonom“ beweisen keine
-  Inklusion. Zugang, Gurt, Hilfe, Sinne und Evakuierung sind nicht gezeigt.
-- AUD-031: Eine Steuerung für Land, Wasser, Tiefe und Luft gibt es nicht.
-  Unter Wasser gilt kein GNSS.
-- AUD-002 bis AUD-016: Masse, Auftrieb, Schub, Energie und Druckkörper der
-  früheren Zahlen wurden nachgerechnet und gelten nicht.
+Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.
 
 Echoelmusic kann später ein OSC- oder MIDI-Signal an eine **andere**,
 zertifizierte Anlage schicken, so wie es heute Licht und Raum schickt. Es wird
@@ -79,8 +66,8 @@ für ein Implantat im App-Store-Text.
 
 Im Repo gibt es keine Neuralink-Schnittstelle. Eine behauptete Gedankensteuerung
 eines Fahrzeugs oder des Instruments wäre eine Medizin- und eine
-Sicherheitsbehauptung. Beides ist hier verboten: die App ist kein Medizinprodukt,
-und die Tauchfliege hat keinen Träger und kein Sicherheitsdossier.
+Sicherheitsbehauptung. Beides ist hier verboten: die App ist kein Medizinprodukt
+und steuert kein Fahrzeug.
 
 WATCH, bis drei Dinge gleichzeitig schriftlich da sind: eine dokumentierte
 Eingabeschnittstelle, die Einwilligung der Person, und ein Verantwortlicher,
@@ -89,11 +76,9 @@ anbietet.
 
 ## Was in diesem Raum nicht gesagt wird
 
-- „Airbus baut das.“ Die Übergabe sagt das Gegenteil.
 - „Wir sind auf allen Apple-Plattformen.“ Eine ist ausgeliefert.
 - „VR/XR ist fertig.“ Es gibt ein Metal-Bild und einen türlosen Raumausgang.
-- „Neuralink steuert die Tauchfliege.“ Weder die Schnittstelle noch das Fahrzeug
-  existieren als Produkt.
+- „Neuralink steuert die App.“ Es gibt keine Schnittstelle.
 - Heilung, Therapie, Diagnose.
 
 ## Nächste Scheibe
