@@ -4,7 +4,8 @@ import SwiftUI
 /// Keys and pads on the screen, so the phone alone plays the live track the way a plugged-in
 /// keyboard does. Every touch goes through the one live router (`AudioEngine.live`): the song's
 /// key lock, the chosen live track and a running MIDI take apply to it unchanged. A drum track
-/// shows its kit as pads; every other instrument track shows a keyboard.
+/// shows its kit as pads; every other instrument track shows a keyboard — piano keys, or the hex
+/// keyboard (`HexKeyLayout`), chosen by the header's hexagon button.
 struct PlayKeysView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -12,6 +13,8 @@ struct PlayKeysView: View {
     @AppStorage("playKeys.lowestNote") private var lowest = 48
     /// Whether the keys show under the surface; the transport's keys button switches it.
     nonisolated static let shownKey = "playKeys.shown"
+    /// Piano keys or the hex keyboard; kept on this device, never in the song.
+    @AppStorage("playKeys.hex") private var showsHex = false
 
     private static let lowestC = 0
     private static let highestC = 96
@@ -27,6 +30,10 @@ struct PlayKeysView: View {
             if let track {
                 if track.instrument.device == .drums {
                     DrumPads(router: engine.live, compact: isCompact)
+                } else if showsHex {
+                    HexKeyboard(router: engine.live, lowest: clampedLowest,
+                                minimumCell: isCompact ? 44 : 48)
+                        .frame(height: isCompact ? Swift.min(keyHeight, 100) : Swift.min(keyHeight * 1.3, 220))
                 } else {
                     Keyboard(router: engine.live, lowest: clampedLowest)
                         .frame(height: isCompact ? Swift.min(keyHeight, 84) : Swift.min(keyHeight, 180))
@@ -59,6 +66,11 @@ struct PlayKeysView: View {
                 .lineLimit(1)
             Spacer(minLength: Theme.Space.s)
             if let track, track.instrument.device != .drums {
+                Button { showsHex.toggle() } label: { Image(systemName: "hexagon") }
+                    .buttonStyle(ToolButtonStyle(isActive: showsHex))
+                    .accessibilityLabel("Hex Keyboard")
+                    .accessibilityValue(showsHex ? "On" : "Off")
+                    .accessibilityHint("Switches between piano keys and a hex keyboard of thirds and fifths.")
                 // Each octave button says where the keys start, so a press is heard to land
                 // (W18, m19): VoiceOver reads the new value of the button it pressed.
                 Button { lowest = clampedLowest - 12 } label: { Image(systemName: "minus") }
@@ -136,6 +148,60 @@ private struct Keyboard: View {
     }
 }
 
+/// The hex keyboard: rows of hexagons from the lowest C, a major third to the right, a minor
+/// third up-left, a fifth up-right (`HexKeyLayout`), as many cells about `minimumCell` wide as
+/// the space holds. Each cell is a `PlayKey`, so it plays exactly as a piano key does.
+private struct HexKeyboard: View {
+    let router: LiveRouter
+    let lowest: Int
+    let minimumCell: CGFloat
+
+    var body: some View {
+        GeometryReader { geometry in
+            let fit = HexKeyLayout.fitting(width: Double(geometry.size.width), height: Double(geometry.size.height),
+                                           minimumCell: Double(minimumCell))
+            let board = HexKeyLayout(columns: fit.columns, rows: fit.rows, lowest: lowest)
+            let cell = geometry.size.width / CGFloat(Swift.max(board.width, 1))
+            let boardHeight = CGFloat(board.height) * cell
+            let top = Swift.max(0, geometry.size.height - boardHeight)
+            ZStack(alignment: .topLeading) {
+                ForEach(board.cells) { key in
+                    PlayKey(router: router, note: key.pitch, style: .hex(key.pitchClass),
+                            label: Self.label(of: key.pitch))
+                        .frame(width: cell, height: cell * CGFloat(HexKeyLayout.heightPerWidth))
+                        .position(x: CGFloat(key.x) * cell, y: top + boardHeight - CGFloat(key.y) * cell)
+                }
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Hex Keyboard")
+        .accessibilityAddTraits(.allowsDirectInteraction)
+    }
+
+    /// The note's name on its cell; the C's also carry their octave, as on the piano keys.
+    private static func label(of pitch: Int) -> String {
+        let name = NoteEditing.name(of: pitch)
+        return pitch % 12 == 0 ? name : String(name.prefix { !$0.isNumber && $0 != "-" })
+    }
+}
+
+/// A pointy-top hexagon filling its rectangle's width.
+private struct Hexagon: Shape {
+    func path(in rect: CGRect) -> Path {
+        let inset = rect.insetBy(dx: 1, dy: 1)
+        let quarter = inset.height / 4
+        var path = Path()
+        path.move(to: CGPoint(x: inset.midX, y: inset.minY))
+        path.addLine(to: CGPoint(x: inset.maxX, y: inset.minY + quarter))
+        path.addLine(to: CGPoint(x: inset.maxX, y: inset.maxY - quarter))
+        path.addLine(to: CGPoint(x: inset.midX, y: inset.maxY))
+        path.addLine(to: CGPoint(x: inset.minX, y: inset.maxY - quarter))
+        path.addLine(to: CGPoint(x: inset.minX, y: inset.minY + quarter))
+        path.closeSubpath()
+        return path
+    }
+}
+
 /// The kit as two rows of four pads, kick at the bottom left as on a drum machine.
 private struct DrumPads: View {
     let router: LiveRouter
@@ -173,7 +239,7 @@ private struct DrumPads: View {
 /// keys, not one struck twice (`LiveKeys` tells keys apart by channel; the instrument does not
 /// hear it).
 private struct PlayKey: View {
-    enum Style { case white, black, pad }
+    enum Style: Equatable { case white, black, pad, hex(Int) }
 
     let router: LiveRouter
     let note: Int
@@ -188,23 +254,21 @@ private struct PlayKey: View {
     private static let noteOff: UInt8 = 0x8F
 
     var body: some View {
-        RoundedRectangle(cornerRadius: style == .pad ? Theme.Radius.medium : Theme.Radius.small)
+        shape
             .fill(fill)
-            .overlay(
-                RoundedRectangle(cornerRadius: style == .pad ? Theme.Radius.medium : Theme.Radius.small)
-                    .stroke(Theme.Color.border, lineWidth: 1)
-            )
-            .overlay(alignment: style == .pad ? .center : .bottom) {
+            .overlay(shape.stroke(Theme.Color.border, lineWidth: 1))
+            .overlay(alignment: labelCentred ? .center : .bottom) {
                 if let label {
                     Text(label)
                         .font(Theme.Font.caption)
-                        .foregroundStyle(style == .white ? Theme.Color.keyLabel : Theme.Color.textSecondary)
-                        .padding(.bottom, style == .pad ? 0 : Theme.Space.xs)
+                        .foregroundStyle(labelColor)
+                        .padding(.bottom, labelCentred ? 0 : Theme.Space.xs)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                 }
             }
-            .contentShape(Rectangle())
+            // A hexagon is touched only inside its outline: the rows' frames overlap.
+            .contentShape(shape)
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .updating($touching) { _, state, _ in state = true }
@@ -216,9 +280,40 @@ private struct PlayKey: View {
                 if !isDown { release() }
             }
             .onDisappear { release() }
-            .accessibilityLabel(label ?? Keyboard.name(of: note))
+            .accessibilityLabel(spokenName)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { strike() }
+    }
+
+    private var shape: AnyShape {
+        switch style {
+        case .pad: return AnyShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
+        case .hex: return AnyShape(Hexagon())
+        case .white, .black: return AnyShape(RoundedRectangle(cornerRadius: Theme.Radius.small))
+        }
+    }
+
+    private var labelCentred: Bool {
+        switch style {
+        case .pad, .hex: return true
+        case .white, .black: return false
+        }
+    }
+
+    private var labelColor: Color {
+        switch style {
+        case .white: return Theme.Color.keyLabel
+        case .hex: return struck != nil ? Theme.Color.onAccent : Theme.Color.text
+        case .black, .pad: return Theme.Color.textSecondary
+        }
+    }
+
+    /// A key is said by its full name with its octave; a pad by its drum.
+    private var spokenName: String {
+        switch style {
+        case .pad: return label ?? Keyboard.name(of: note)
+        case .white, .black, .hex: return Keyboard.name(of: note)
+        }
     }
 
     private var fill: Color {
@@ -227,6 +322,7 @@ private struct PlayKey: View {
         case .white: return Theme.Color.keyWhite
         case .black: return Theme.Color.keyBlack
         case .pad: return Theme.Color.surfaceRaised
+        case .hex(let pitchClass): return Theme.Color.pitchClass(pitchClass)
         }
     }
 
