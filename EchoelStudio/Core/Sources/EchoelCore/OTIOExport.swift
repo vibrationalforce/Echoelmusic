@@ -13,7 +13,9 @@ import Foundation
 /// "Drums 2"), each region on the first that is free at its start — a later-starting region lands
 /// on a higher track, which is the one an editor shows, as Echoel does. A region that follows the
 /// song's tempo carries a `LinearTimeWarp.1` with the speed it plays at over its stretch.
-/// Nothing here touches a file; the app writes the text and the bundle.
+/// A folder of takes is exported as what it plays (`Track.playedRegions`), the comp's pieces on
+/// one track; an overlap of a few frames — a crossfade's rounding — is a `Transition.1` dissolve
+/// cut at its middle. Nothing here touches a file; the app writes the text and the bundle.
 public enum OTIOExport {
     public typealias FrameRate = EDLExport.FrameRate
 
@@ -37,6 +39,11 @@ public enum OTIOExport {
         /// The speed the file plays at, 1 for a region at the file's own speed.
         public let speed: Double
         public let followsTempo: Bool
+        /// A dissolve from the cut before into this one (`Transition.1`): frames before the cut point,
+        /// played from this cut's file, and frames after it, played from the one before. 0 and 0 is
+        /// a plain cut.
+        public var dissolveIn = 0
+        public var dissolveOut = 0
     }
 
     /// One OTIO track: an Echoel track, or one of the extra lanes its overlapping regions need.
@@ -59,7 +66,7 @@ public enum OTIOExport {
         var video: [Lane] = [], audio: [Lane] = []
         for track in project.tracks where track.kind == .video || track.kind == .audio {
             var cuts: [Cut] = []
-            for region in track.regions {
+            for region in track.playedRegions(in: project) {
                 guard let file = project.mediaFile(region.media), file.sampleRate > 0, file.sampleRate.isFinite,
                       let stop = Arranging.end(of: region, in: project),
                       let recordIn = frames(map.seconds(at: region.start)),
@@ -81,8 +88,28 @@ public enum OTIOExport {
             let ordered = cuts.enumerated().sorted { a, b in
                 a.element.recordIn != b.element.recordIn ? a.element.recordIn < b.element.recordIn : a.offset < b.offset
             }.map(\.element)
+            // A comp's pieces overlap by its crossfade (`playedRegions`, 10 ms around each cut): such
+            // an overlap — a few frames at most — is a dissolve on one track, cut at its middle, never
+            // a second track.
+            let crossfade = frames(2 * TakeComp.halfCrossfadeSeconds).map { $0 + 1 } ?? 1
             var packed: [[Cut]] = []
             for cut in ordered {
+                if let first = packed.first, let last = first.last, last.recordOut > cut.recordIn,
+                   last.recordOut - cut.recordIn <= crossfade, cut.recordOut > last.recordOut,
+                   cut.recordIn > last.recordIn {
+                    let middle = (cut.recordIn + last.recordOut) / 2
+                    let outgoing = Cut(media: last.media, name: last.name, recordIn: last.recordIn, recordOut: middle,
+                                   sourceIn: last.sourceIn, available: last.available, speed: last.speed,
+                                   followsTempo: last.followsTempo, dissolveIn: last.dissolveIn,
+                                   dissolveOut: last.dissolveOut)
+                    let incoming = Cut(media: cut.media, name: cut.name, recordIn: middle, recordOut: cut.recordOut,
+                                   sourceIn: cut.sourceIn + middle - cut.recordIn, available: cut.available,
+                                   speed: cut.speed, followsTempo: cut.followsTempo,
+                                   dissolveIn: middle - cut.recordIn, dissolveOut: last.recordOut - middle)
+                    packed[0][packed[0].count - 1] = outgoing
+                    packed[0].append(incoming)
+                    continue
+                }
                 if let free = packed.firstIndex(where: { ($0.last?.recordOut ?? 0) <= cut.recordIn }) {
                     packed[free].append(cut)
                 } else {
@@ -111,6 +138,16 @@ public enum OTIOExport {
             var cursor = 0
             for cut in lane.cuts {
                 if cut.recordIn > cursor { items.append(gap(cut.recordIn - cursor, rate: r)) }
+                if cut.dissolveIn > 0 || cut.dissolveOut > 0 {
+                    items.append(.object([
+                        ("OTIO_SCHEMA", .string("Transition.1")),
+                        ("metadata", .object([])),
+                        ("name", .string("")),
+                        ("in_offset", time(Double(cut.dissolveIn), rate: r)),
+                        ("out_offset", time(Double(cut.dissolveOut), rate: r)),
+                        ("transition_type", .string("SMPTE_Dissolve")),
+                    ]))
+                }
                 items.append(clip(cut, rate: r, url: mediaURLs[cut.media] ?? EDLExport.clean(cut.name, fallback: "Clip")))
                 cursor = cut.recordOut
             }

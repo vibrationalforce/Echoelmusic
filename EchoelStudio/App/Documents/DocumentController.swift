@@ -1680,6 +1680,145 @@ final class DocumentController {
         }
     }
 
+    /// The Field alone as a movie with transparency, `shape`'s size, for compositing in Resolve or
+    /// Final Cut (`FieldAlphaExport`, PRO-W2): ProRes 4444 with alpha, or HEVC with alpha where the
+    /// device has no ProRes encoder, from the song's start for as long as the video export runs. The
+    /// mix is rendered first only to move the Field, as the video export does; the movie has no
+    /// sound. Returns the movie for the share sheet. Nothing in the song changes.
+    func exportFieldAlpha(plugins: PluginHost, shape: VideoExportPlan.Shape) async -> URL? {
+        guard !isExporting else { return nil }
+        let width = shape.width, height = shape.height
+        guard let pass = FieldLayerPass.make() else {
+            lastError = FieldAlphaExport.ExportError.noFieldLayer.errorDescription
+            return nil
+        }
+        let candidates = FieldAlphaExport.codecs(width: width, height: height)
+        guard !candidates.isEmpty else {
+            lastError = FieldAlphaExport.ExportError.noEncoder.errorDescription
+            return nil
+        }
+        let exportedSong = songsOpened
+        let songName = openSongName
+        let mix = await exportWAV(plugins: plugins, loudness: .off)
+        guard exportedSong == songsOpened else { return exportStopped(songName) }
+        guard !isExporting else { return nil }
+        isExporting = true
+        exportProgress = "Drawing the Field…"
+        defer {
+            isExporting = false
+            exportProgress = nil
+            followRenamedSong()
+            if let mix { try? FileManager.default.removeItem(at: mix) }
+        }
+        let project = store.project
+        let mixSeconds = mix.flatMap { try? AVAudioFile(forReading: $0) }.map { Double($0.length) / $0.processingFormat.sampleRate } ?? 0
+        let duration = VideoExportPlan.longFormSeconds(mixSeconds: mixSeconds, of: project)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        let url = folder.appendingPathComponent(ProjectLibrary.safeFileName(for: songName) + " Field").appendingPathExtension("mov")
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) { () async -> Result<Void, Error> in
+            do {
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                let prepared = try mix.flatMap {
+                    try VideoExport.preparedMix($0, from: 0, to: duration, loudness: .off,
+                                                into: folder.appendingPathComponent("Mix", isDirectory: true))
+                }
+                defer { if let prepared { try? FileManager.default.removeItem(at: prepared.url) } }
+                let count = Int((duration * Double(FieldExport.framesPerSecond)).rounded(.up)) + 1
+                let motion = FieldExport.motion(FieldExport.frames(of: project, fromSeconds: 0, count: count,
+                                                                   levels: FieldExport.levels(peaks: prepared?.peaks ?? [])))
+                // ProRes first; a device whose writer takes the settings and then refuses the frames
+                // gets the HEVC movie instead.
+                var lastFailure: Error = FieldAlphaExport.ExportError.noEncoder
+                for codec in candidates {
+                    do {
+                        try await FieldAlphaExport.write(motion: motion, pass: pass, codec: codec, width: width,
+                                                         height: height, to: url)
+                        return .success(())
+                    } catch FieldAlphaExport.ExportError.stopped {
+                        throw FieldAlphaExport.ExportError.stopped
+                    } catch {
+                        lastFailure = error
+                    }
+                }
+                throw lastFailure
+            } catch {
+                return .failure(error)
+            }
+        }.value
+        guard exportedSong == songsOpened else {
+            if case .success = result { try? FileManager.default.removeItem(at: url) }
+            return exportStopped(songName)
+        }
+        switch result {
+        case .success:
+            lastError = nil
+            return url
+        case .failure(let error):
+            log.error("field alpha export failed — \(error.localizedDescription, privacy: .private)")
+            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not export the Field video. Try again."
+            return nil
+        }
+    }
+
+    /// The song as a DAWproject for Bitwig, Studio One, Cubase and other DAWs (`DAWprojectExport`,
+    /// PRO-W2): `<song>.dawproject` with `project.xml`, `metadata.xml` and a copy of every audio file
+    /// the arrangement plays under `audio/`. Returns it for the share sheet. Nothing in the song changes.
+    func exportDAWproject() async -> URL? {
+        guard !isExporting else { return nil }
+        isExporting = true
+        defer { isExporting = false }
+        let project = store.project
+        let songName = openSongName
+        let name = ProjectLibrary.safeFileName(for: songName)
+        let exports = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        let used = ExportMedia.arrangementMedia(of: project)
+            .filter { id in project.mediaFile(id)?.kind == .audio }
+        let paths = ExportMedia.names(for: project, using: used, folder: DAWprojectExport.mediaFolder)
+        let media: [(id: MediaID, source: URL, name: String)] = project.media.compactMap { file in
+            guard let inside = paths[file.id], let source = mediaURL(file) else { return nil }
+            return (file.id, source, inside)
+        }
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "11.0.0"
+        let bundle = exports.appendingPathComponent(name).appendingPathExtension("dawproject")
+        let result: Result<URL, Error> = await Task.detached(priority: .userInitiated) {
+            Result {
+                let files = FileManager.default
+                try files.createDirectory(at: exports, withIntermediateDirectories: true)
+                let present = media.filter { files.fileExists(atPath: $0.source.path) }
+                // The format names each file's channel count; read from the file, stereo if it cannot say.
+                var channels: [MediaID: Int] = [:]
+                for item in present {
+                    if let file = try? AVAudioFile(forReading: item.source) {
+                        channels[item.id] = Int(file.fileFormat.channelCount)
+                    }
+                }
+                let presentPaths = Dictionary(uniqueKeysWithValues: present.map { ($0.id, $0.name) })
+                let xml = DAWprojectExport.projectXML(for: project, mediaPaths: presentPaths, channels: channels,
+                                                      version: version)
+                var parts = [
+                    ExportBundleWriter.Part(name: DAWprojectExport.projectFile, source: .data(Data(xml.utf8))),
+                    ExportBundleWriter.Part(name: DAWprojectExport.metadataFile,
+                                            source: .data(Data(DAWprojectExport.metadataXML(title: songName).utf8))),
+                ]
+                parts += present.map { ExportBundleWriter.Part(name: $0.name, source: .file($0.source)) }
+                try ExportBundleWriter.write(parts, to: bundle)
+                return bundle
+            }
+        }.value
+        switch result {
+        case .success(let url):
+            lastError = nil
+            return url
+        case .failure(let error):
+            log.error("DAWproject export failed — \(error.localizedDescription, privacy: .private)")
+            try? FileManager.default.removeItem(at: bundle)
+            lastError = (error as? ZipArchive.Failure) == .tooLarge
+                ? "The song's audio is larger than 4 GB, more than a DAWproject can hold. Export stems instead."
+                : "Could not export the DAWproject. Try again."
+            return nil
+        }
+    }
+
     /// Reads a Standard MIDI File (a copy the picker handed over) and adds its tracks to the song
     /// as instrument tracks — one undo step. A file the reader refuses says why on the status line.
     func importMIDI(_ source: URL) {
