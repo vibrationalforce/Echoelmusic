@@ -699,3 +699,20 @@ general.
   - 2026-10-08 — GMMW plan written (`scratchpads/PLAN_GMMW_2026-10-08.md`): P0 crash sweep → SH-1 →
     audio editor AE-series (W1–W4c shipped; AE-1 = W4c `845319d`) → P1 consolidation → GA → VV → AI.
     "GMMW = Generators tier" stays PROPOSED until the founder answers GM1. No status in §5 changes.
+
+
+---
+
+## Nachtrag 2026-11-04 — was an diesem Tag entschieden und gebaut wurde (angehängt, nichts darüber geändert)
+
+**Gebaut und auf `main` (CI-grün, nicht gerätegeprüft):** Knack-Reparatur (48 kHz/512, elf Stellen) · Tonsysteme und Kammerton in allen gestimmten Stimmen · Swing · Tempo-Rampen · Taktwechsel überall · Chladni-Platte, Dish, Water, Aurora, Depth, Look-Blend, Spektrum/Scope · Hex-Tasten · Lautheitsabgleich der Engines, Hall-Guard, Ausgangsschutz im AUv3, Export „Peak −1 dBTP“ · Magnet Aus…1/128 + Triolen, Quantize mit Stärke/Swing, Humanize · Region-Fades, Gain, Warp (WSOLA) · Arpeggiator, Velocity · Assistent: set_key, set_parameter, Skalenmeldung, Euklid, Akkordvorschläge · ehrliche Workflow-Gates · OpenSSL in About. Builds 10032–10035 VALID.
+
+**In Arbeit:** Pluck, Morph 8 Formen, Wavetable aus eigenen Samples, 303-Slide/Accent · Formant, Transient, M/S, Multiband · Drum-Ausbau, Break-Slicer · SAFE (SRT raus samt statischem OpenSSL, Datenschutz Video-Takes, KI-Kennzeichnung, SECURITY.md, Hinweise Gehör/Hautton/Alkohol).
+
+**Entschieden (Founder oder delegiert):** Build-Rhythmus „sobald grün“ statt wöchentlich · Förderung wieder offen (Entwürfe ab 9.11., nichts ohne Ja) · bis zu 5 Teams parallel bei getrennten Dateien · Arpeggiator erlaubt (formt gehaltene Noten) · alle Werkzeuge der Feature-Matrix werden zurückgeholt, nicht nur zehn · Interop in Profi-Pipelines (OTIO für Resolve, DAWproject, EDL, FCPXML, ADM-BWF, ProRes/Alpha) gehört zum Ökosystem-Teil des Produktgesetzes · Siri über App Intents, kein eigenes Sprachmodell · kein NFT/Bitcoin; Umverteilung über freie Lizenzen für Inklusion/Schulen, feste Quote an gemeinnützige Partner, Sponsoring-Fonds · HaishinKit-Update am 15.11. prüfen · Quantum: keine Echtzeit-Rolle.
+
+**Plattform-Fahrplan:** ein Swift-Kern hinter Ports & Adapters — jetzt iPhone/iPad, 12 Monate Web + CLAP/VST3 + XR im Browser + MCP, 3 Jahre Android/Desktop/visionOS, 5 Jahre alle Systeme gleichrangig (`docs/dev/RESEARCH_PLATFORMS_XR_AI_REALTIME_2026-11-04.md`).
+
+**Wellen der nächsten Wochen** (`docs/dev/RESEARCH_PRO_CREATOR_GAPS_2026-11-04.md` §4, plus die Rückholliste der Feature-Matrix): W1 App Intents, Marker, Video auf Takt, A/B-Zustände, EDL · W2 OTIO, DAWproject, ProRes/Alpha, Untertitel (SpeechAnalyzer), Audio→MIDI (Basic Pitch) · W3 ADM-BWF, Mix/Master-Assistent, Farbangleich, Motiv-Maske, Klangsuche · W4 Stem-Trennung mit sauberer Lizenz, Live-Set, Ableton Link, Fixtures/Cues, Timecode · W5 eigene Bedienoberflächen, Auto-Crop, Clip-Aliase, Sampler-Ausbau, MIDI 2.0 Clip · Rückholung: externer Bildschirm, HealthKit, Comping, Binaural, MIDI 2.0, Browser, Learn, Bewegung (Gesicht nur mit Einwilligung), Textur-Engine, Phase-Vocoder.
+
+**Offen beim Founder:** Prototype Fund bis 30.11. · UG vor erstem Verkauf · GM40 Planeten-Stimmungen · GM41 (wird jetzt umgesetzt) · GM36 Repo offen · Installation als Kulturprojekt · Marke „Echoel“ · erster gemeinnütziger Partner · Ableton Link · Stem-Lizenz.
