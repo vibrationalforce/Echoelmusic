@@ -1,6 +1,6 @@
 # Pitch an ein Senior Apple Developer Team — eine Schleife, ein Satz
 
-Stand `main` `1e7c64aec`, 2026-10-14. Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.
+Stand `main` `1e7c64aec`, 2026-10-14.
 
 ## Der Satz im Raum
 
@@ -52,8 +52,6 @@ gleichzeitiger Sprung auf iPad, Mac, Vision, Android und ein Implantat.
    Android-Neubau, keine zweite Codebasis.
 
 ## Kein Fahrzeug
-
-Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.
 
 Echoelmusic kann später ein OSC- oder MIDI-Signal an eine **andere**,
 zertifizierte Anlage schicken, so wie es heute Licht und Raum schickt. Es wird
