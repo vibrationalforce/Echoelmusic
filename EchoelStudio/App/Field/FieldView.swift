@@ -18,8 +18,19 @@ struct FieldView: View {
     @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
     @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
     @AppStorage(FieldPattern.blendMixStorageKey) private var mixPercent = FieldPattern.standardMixPercent
+    @AppStorage(FieldMeter.storageKey) private var meterName = FieldMeter.off.rawValue
 
     var body: some View {
+        let meter = FieldMeter(stored: meterName)
+        if meter != .off {
+            FieldMeterView(meter: meter, reduceMotion: reduceMotion)
+        } else {
+            picture
+        }
+    }
+
+    @ViewBuilder
+    private var picture: some View {
         #if canImport(MetalKit) && canImport(UIKit)
         if MetalField.isAvailable {
             MetalFieldView(reduceMotion: reduceMotion, pattern: FieldPattern(stored: patternName),

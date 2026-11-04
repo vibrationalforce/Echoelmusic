@@ -95,17 +95,25 @@ struct FieldFullscreen: View {
     }
 }
 
-/// The Field's picture: a menu of the patterns, beside the full-screen button. A named choice, so
+/// The Field's picture: a menu of the patterns, the blended look and the meters, beside the
+/// full-screen button. A named choice, so
 /// a picker (never a number); kept on this device, so it changes no song and needs no command.
 /// Shown only where the GPU draws the Field — the Canvas draws the rings alone.
 struct FieldPatternMenu: View {
     @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
     @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
+    @AppStorage(FieldMeter.storageKey) private var meterName = FieldMeter.off.rawValue
 
     var body: some View {
         #if canImport(MetalKit) && canImport(UIKit)
         if MetalField.isAvailable {
             Menu {
+                // The picture, or a meter of the master in its place.
+                Picker("Show", selection: $meterName) {
+                    ForEach(FieldMeter.allCases, id: \.rawValue) { meter in
+                        Text(meter.title).tag(meter.rawValue)
+                    }
+                }
                 Picker("Pattern", selection: $patternName) {
                     ForEach(FieldPattern.allCases, id: \.rawValue) { pattern in
                         Text(pattern.title).tag(pattern.rawValue)
@@ -125,7 +133,8 @@ struct FieldPatternMenu: View {
             .menuStyle(.button)
             .buttonStyle(ToolButtonStyle())
             .accessibilityLabel("Pattern")
-            .accessibilityValue(FieldPattern(stored: patternName).title)
+            .accessibilityValue(FieldMeter(stored: meterName) == .off ? FieldPattern(stored: patternName).title
+                                                                       : FieldMeter(stored: meterName).title)
         }
         #endif
     }
@@ -139,11 +148,12 @@ struct FieldBlendMix: View {
     @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
     @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
     @AppStorage(FieldPattern.blendMixStorageKey) private var mixPercent = FieldPattern.standardMixPercent
+    @AppStorage(FieldMeter.storageKey) private var meterName = FieldMeter.off.rawValue
 
     var body: some View {
         #if canImport(MetalKit) && canImport(UIKit)
-        if MetalField.isAvailable, let partner = FieldPattern.blend(stored: partnerName),
-           partner != FieldPattern(stored: patternName) {
+        if MetalField.isAvailable, FieldMeter(stored: meterName) == .off,
+           let partner = FieldPattern.blend(stored: partnerName), partner != FieldPattern(stored: patternName) {
             VStack {
                 Spacer(minLength: 0)
                 HStack {

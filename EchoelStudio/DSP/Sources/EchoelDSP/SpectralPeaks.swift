@@ -177,6 +177,38 @@ public final class SpectrumAnalyzer: @unchecked Sendable {
         return peaks
     }
 
+    /// The spectrum the last `analyze` measured, in `count` bands spaced evenly on a log axis from
+    /// `lowest` to `highest` hertz: each band's strongest bin in dBFS, mapped −72 dBFS → 0 and
+    /// 0 dBFS → 1 — the Field's spectrum meter. A band narrower than a bin reads the bin under its
+    /// centre. Allocation-free; the same thread that ran `analyze` asks, never another.
+    public func bandLevels(into levels: UnsafeMutablePointer<Double>, count: Int,
+                           lowest: Double = 20, highest: Double = 20_000) {
+        guard count > 0 else { return }
+        let binHertz = sampleRate / Double(size)
+        let half = size / 2
+        let low = Swift.max(lowest.isFinite ? lowest : 20, binHertz)
+        let high = Swift.max(Swift.min(highest.isFinite ? highest : 20_000, sampleRate / 2), low * 1.01)
+        let ratio = Foundation.log(high / low)
+        for band in 0..<count {
+            let from = low * Foundation.exp(ratio * Double(band) / Double(count))
+            let to = low * Foundation.exp(ratio * Double(band + 1) / Double(count))
+            var first = Int((from / binHertz).rounded(.up)), last = Int((to / binHertz).rounded(.down))
+            if first > last {
+                first = Int(((from + to) / 2 / binHertz).rounded())
+                last = first
+            }
+            first = Swift.min(Swift.max(first, 1), half)
+            last = Swift.min(Swift.max(last, first), half)
+            var strongest = 0.0
+            for bin in first...last where magnitude[bin] > strongest { strongest = magnitude[bin] }
+            let decibels = 20 * Foundation.log10(Swift.max(strongest, 1e-9))
+            levels[band] = Swift.min(Swift.max((decibels + Self.meterRangeDecibels) / Self.meterRangeDecibels, 0), 1)
+        }
+    }
+
+    /// The span the spectrum meter shows below full scale.
+    public static let meterRangeDecibels = 72.0
+
     /// In-place iterative radix-2 FFT over the bit-reversed `real`/`imaginary`.
     private func transform() {
         var span = 2

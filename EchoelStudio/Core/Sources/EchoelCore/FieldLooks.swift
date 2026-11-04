@@ -440,3 +440,19 @@ public enum FieldMeter: String, CaseIterable, Sendable {
         self = stored.flatMap(FieldMeter.init(rawValue:)) ?? .off
     }
 }
+
+/// How a meter's reading follows the sound: up quickly, down slowly (a peak meter's ballistics),
+/// so a level is legible and a drum hit does not strobe the line. Time-based, the same at any
+/// frame rate. The meters draw thin lines, never filled areas: a line's lit area stays far below
+/// the quarter of the picture a flash is measured over (WCAG 2.3.1).
+public enum MeterBallistics {
+    public static let attackSeconds = 0.03
+    public static let releaseSeconds = 0.35
+
+    /// `shown` one step `seconds` later towards `target`; non-finite readings are 0.
+    public static func follow(_ shown: Double, _ target: Double, after seconds: Double) -> Double {
+        let goal = target.isFinite ? target : 0
+        let from = shown.isFinite ? shown : 0
+        return FieldMotion.ease(from, goal, tau: goal > from ? attackSeconds : releaseSeconds, seconds: seconds)
+    }
+}

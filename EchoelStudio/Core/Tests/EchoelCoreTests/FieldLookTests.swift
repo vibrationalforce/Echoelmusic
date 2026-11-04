@@ -217,6 +217,17 @@ final class FieldLookTests: XCTestCase {
         }
     }
 
+    func testAMeterRisesQuicklyAndFallsSlowly() {
+        let up = MeterBallistics.follow(0, 1, after: 1.0 / 30)
+        let down = 1 - MeterBallistics.follow(1, 0, after: 1.0 / 30)
+        XCTAssertGreaterThan(up, 0.6)
+        XCTAssertLessThan(down, 0.1)
+        XCTAssertEqual(MeterBallistics.follow(.nan, .infinity, after: 1.0 / 30), 0)
+        var shown = 0.0
+        for _ in 0..<120 { shown = MeterBallistics.follow(shown, 0.7, after: 1.0 / 60) }
+        XCTAssertEqual(shown, 0.7, accuracy: 1e-6)
+    }
+
     func testTheMeterNamesAreStoredAndOrdered() {
         XCTAssertEqual(FieldMeter.allCases.map(\.rawValue), ["off", "spectrum", "scope"])
         XCTAssertEqual(FieldMeter(stored: "scope"), .scope)
