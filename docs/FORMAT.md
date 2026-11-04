@@ -110,7 +110,14 @@ slot, not a colour), `mixer`, `clips`, `placements` (`{id, clip, start}` on the 
 per scene) — all required; optional: `instrument`, `regions`
 (audio on the timeline), `inserts`, `sends` (`{target, levelDB}` into a return track), `output`
 (first channel of an interface stereo pair, absent = master), `input`, `monitor`
-(`auto` · `in` · `off`; another name is kept and behaves as `auto`). What a track holds follows
+(`auto` · `in` · `off`; another name is kept and behaves as `auto`), `arpeggio` (an instrument
+track's arpeggiator, absent = none: `on` (bool, absent = true), `rate` (`quarter` `eighth`
+`sixteenth` `thirtySecond` `quarterTriplet` `eighthTriplet` `sixteenthTriplet` `thirtySecondTriplet`,
+absent = `sixteenth`), `order` (`up` `down` `upDown` `downUp` `asPlayed` `random`, absent = `up`),
+`octaves` 1 … 4, `gate` 0.05 … 1 (the share of a step a note sounds, 1 legato), `latch` (bool),
+`seed` 0 … 4294967295 (the random order's sequence); a rate or order a reader does not know is kept
+by name and plays as `sixteenth` or `up`. It re-times the notes the track plays and never writes
+one). What a track holds follows
 its kind: an instrument track has MIDI clips and no regions; an audio track has audio clips (in
 session slots only) and regions of audio files; a return track has effects only — no clips,
 placements, slots or regions; a video track has regions of video files only — no clips,

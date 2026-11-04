@@ -52,11 +52,26 @@ final class AgentExecutor {
             return "Not done: the musician opened a different song. Stop and say so."
         }
         do {
-            let commands = try AgentTools.commands(for: action, in: store.project)
-            try store.perform(commands, title: AgentExecutor.undoTitle, coalescingKey: turnKey)
+            let plan = try AgentTools.plan(for: action, in: store.project)
+            try store.perform(plan.commands, title: AgentExecutor.undoTitle, coalescingKey: turnKey)
             changedSong = true
-            onAction?(summary)
-            return "Done: \(summary)."
+            // A note outside the scale is named in the chat as well as to the model (D2).
+            onAction?(plan.remark.map { "\(summary). \($0)" } ?? summary)
+            return "Done: \(summary)." + (plan.remark.map { " \($0)" } ?? "")
+        } catch let error as AgentError {
+            return "Not done: \(error.description)"
+        } catch {
+            return "Not done: \(error)"
+        }
+    }
+
+    /// The chords that fit next in a track's clip: reads the song, changes nothing (D5).
+    func suggestChords(track: String, bar: Int) -> String {
+        guard store.documentGeneration == document else {
+            return "Not done: the musician opened a different song. Stop and say so."
+        }
+        do {
+            return try AgentTools.chordSuggestions(track: track, bar: bar, in: store.project)
         } catch let error as AgentError {
             return "Not done: \(error.description)"
         } catch {
@@ -210,7 +225,9 @@ final class AgentModel {
             SetTempoTool(executor: executor), AddTrackTool(executor: executor), RemoveTrackTool(executor: executor),
             RenameTrackTool(executor: executor), SetSoundTool(executor: executor), DrumPatternTool(executor: executor),
             WriteNotesTool(executor: executor), MixTool(executor: executor), EffectTool(executor: executor),
-            RepeatClipTool(executor: executor), AutomateTool(executor: executor),
+            RepeatClipTool(executor: executor), AutomateTool(executor: executor), SetKeyTool(executor: executor),
+            SetParameterTool(executor: executor), EuclideanRhythmTool(executor: executor),
+            SuggestChordsTool(executor: executor),
         ]
         session = LanguageModelSession(tools: tools, instructions: Self.instructions)
     }
@@ -229,11 +246,16 @@ final class AgentModel {
     steps, 16 steps per bar of 4/4: x is a hit, X an accented hit, . a rest. A four-on-the-floor \
     kick is x...x...x...x... and a backbeat snare ....x.......x... . Notes are named like C4 \
     (middle C), F#3 or Bb2; a chord joins notes with +, for example C4+E4+G4.
+    Write notes, chords, melodies and drum patterns only when the musician asks for them. Keep notes \
+    in the song's key and scale (the song line names it; set_key changes it); write_notes names any \
+    note outside the scale in its answer — tell the musician, never pretend it fits. Before writing \
+    chords, suggest_chords lists the chords that fit after the last one.
     Sounds for an instrument track: \(InstrumentPreset.all.map(\.name).joined(separator: ", ")).
     Drums: \(DrumLane.standardKit.map(\.name).joined(separator: ", ")).
     Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).
     A movement of a parameter over bars (a fade, a filter opening) is the automate tool; values are in \
-    the parameter's unit: volume in dB (0 is unity, -144 silence), pan -1 to 1, cutoff in Hz.
+    the parameter's unit: volume in dB (0 is unity, -144 silence), pan -1 to 1, cutoff in Hz. One \
+    value that stays (a darker sound, a slower attack) is set_parameter, in the same units.
     Answer in one or two short sentences, in the language the musician writes in.
     """
 }
@@ -490,6 +512,97 @@ struct AutomateTool: Tool {
                                      toBar: arguments.toBar, from: arguments.from, to: arguments.to,
                                      curve: arguments.curve ?? 0),
                            "\(arguments.parameter) on \(arguments.track) from \(arguments.from) to \(arguments.to), bars \(arguments.fromBar)–\(arguments.toBar)")
+    }
+}
+@available(iOS 26.0, *)
+struct SetKeyTool: Tool {
+    let executor: AgentExecutor
+    let name = "set_key"
+    let description = "Sets the song's key and scale. It writes no notes; a keyboard and the notes the assistant writes follow it."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "The key's root note without octave: C, F#, Bb.")
+        var root: String
+        @Guide(description: "major, minor, dorian, phrygian, lydian, mixolydian, locrian, harmonic minor, melodic minor, major pentatonic, minor pentatonic, blues, whole tone, or chromatic for no key.")
+        var scale: String
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        await executor.run(.setKey(root: arguments.root, scale: arguments.scale), "key \(arguments.root) \(arguments.scale)")
+    }
+}
+
+@available(iOS 26.0, *)
+struct SetParameterTool: Tool {
+    let executor: AgentExecutor
+    let name = "set_parameter"
+    let description = "Sets one parameter of a track or the master to a value that stays: a sound darker, an attack slower, a track quieter."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "The track's name or number, or master.")
+        var track: String
+        @Guide(description: "volume, pan, or a parameter of the track's instrument. Synth: cutoff, resonance, filter envelope, attack, decay, sustain, release, level. Sampler: root key, attack, release, level, mode. Drums: level.")
+        var parameter: String
+        @Guide(description: "The value in the parameter's unit: dB, -1 to 1, Hz, seconds.")
+        var value: Double
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        await executor.run(.setParameter(track: arguments.track, parameter: arguments.parameter, value: arguments.value),
+                           "\(arguments.parameter) on \(arguments.track) to \(arguments.value)")
+    }
+}
+
+@available(iOS 26.0, *)
+struct EuclideanRhythmTool: Tool {
+    let executor: AgentExecutor
+    let name = "euclidean_rhythm"
+    let description = "Writes one drum as a Euclidean rhythm: a number of hits spread as evenly as possible over a number of 16th steps. Only when the musician asks for one."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "The drums track's name or number.")
+        var track: String
+        @Guide(description: "One drum of the kit, for example Kick, Snare, Closed Hat.")
+        var drum: String
+        @Guide(description: "How many hits, 1 up to the steps.")
+        var hits: Int
+        @Guide(description: "How many 16th steps the cycle has, 1 to 64. 3 hits over 8 steps is the tresillo.")
+        var steps: Int
+        @Guide(description: "How many steps later the cycle starts. Leave out for 0.")
+        var rotation: Int?
+        @Guide(description: "The first bar, 1 or later. Leave out for bar 1.")
+        var bar: Int?
+        @Guide(description: "How many bars, 1 to 64. Leave out for 1.")
+        var bars: Int?
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        await executor.run(.euclideanRhythm(track: arguments.track, drum: arguments.drum, hits: arguments.hits,
+                                            steps: arguments.steps, rotation: arguments.rotation ?? 0,
+                                            bar: arguments.bar ?? 1, bars: arguments.bars ?? 1),
+                           "\(arguments.drum) on \(arguments.track): \(arguments.hits) over \(arguments.steps)")
+    }
+}
+
+@available(iOS 26.0, *)
+struct SuggestChordsTool: Tool {
+    let executor: AgentExecutor
+    let name = "suggest_chords"
+    let description = "Lists the chords that fit next in an instrument track's clip, best first, by harmonic function in the song's key. Changes nothing."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "The instrument track's name or number.")
+        var track: String
+        @Guide(description: "The bar the clip starts at. Leave out for bar 1.")
+        var bar: Int?
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        await executor.suggestChords(track: arguments.track, bar: arguments.bar ?? 1)
     }
 }
 #endif
