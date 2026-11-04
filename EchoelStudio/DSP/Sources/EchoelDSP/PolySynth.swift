@@ -127,13 +127,15 @@ public struct SynthVoice: Sendable {
     static func clampedLevel(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 1) : 0 }
     static func clampedCharacter(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 1) : 0.5 }
 
-    mutating func start(pitch: UInt8, velocity: UInt8, order: UInt64, sampleRate: Float, patch: SynthPatch) {
+    /// `temperament` places the note: the song's tone system and concert pitch.
+    mutating func start(pitch: UInt8, velocity: UInt8, order: UInt64, sampleRate: Float, patch: SynthPatch,
+                        temperament: Temperament = .standard) {
         let wasSilent = !ampEnvelope.isActive
         self.pitch = pitch
         isHeld = true
         isPedalled = false
         startOrder = order
-        increment = 440 * powf(2, (Float(pitch) - 69) / 12) / sampleRate
+        increment = temperament.frequency(of: Int(pitch)) / sampleRate
         let v = Float(Swift.min(velocity, 127)) / 127
         gainTarget = v * v
         if wasSilent {
@@ -242,6 +244,9 @@ public struct PolySynth: Sendable {
 
     public private(set) var patch: SynthPatch
     public private(set) var voices: [SynthVoice]
+    /// Where each pitch class sounds: the song's tone system and concert pitch (`Temperament`).
+    /// Twelve equal steps at A = 440 Hz until the engine sets it; a plugin in another host keeps that.
+    public private(set) var temperament = Temperament.standard
     private let sampleRate: Float
     private var nextOrder: UInt64 = 1
     /// Pitch-bend frequency ratio now, and where the wheel wants it.
@@ -288,6 +293,12 @@ public struct PolySynth: Sendable {
 
     public var activeVoiceCount: Int { voices.reduce(0) { $0 + ($1.isActive ? 1 : 0) } }
 
+    /// The tuning the next notes start in. A note already sounding keeps its pitch: retuning it
+    /// would be a jump in the middle of a held tone. Arithmetic only: render-safe.
+    public mutating func setTemperament(_ temperament: Temperament) {
+        self.temperament = temperament
+    }
+
     public mutating func setPatch(_ patch: SynthPatch) {
         self.patch = patch
         for i in voices.indices { voices[i].apply(patch) }
@@ -308,7 +319,8 @@ public struct PolySynth: Sendable {
             vibrato = vibratoGoal
             vibratoPhase = 0
         }
-        voices[index].start(pitch: pitch, velocity: velocity, order: nextOrder, sampleRate: sampleRate, patch: patch)
+        voices[index].start(pitch: pitch, velocity: velocity, order: nextOrder, sampleRate: sampleRate, patch: patch,
+                            temperament: temperament)
         nextOrder &+= 1
     }
 
