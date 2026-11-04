@@ -63,6 +63,64 @@ final class MeterMapTests: XCTestCase {
             .signature(at: 0), TimeSignature(5, 4))
     }
 
+    // MARK: - Where bars are counted
+
+    /// Snapping, a tap, the song's length, a short video export and the assistant's "bar 4" all
+    /// count the bars of the meter, not the first bar's length.
+    func testEveryBarCountReadsTheMeter() throws {
+        var project = Project()
+        let keys = TrackID()
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        try Command.setTimeSignatureChange(at: 2 * bar44, TimeSignature(7, 8)).apply(to: &project)
+        let meter = project.meterMap
+        XCTAssertEqual(Arranging.nearestBar(2 * bar44 + bar78 / 2 + 1, meter: meter), 2 * bar44 + bar78)
+        XCTAssertEqual(Arranging.barStart(2 * bar44 + bar78 + 5, meter: meter), 2 * bar44 + bar78)
+
+        // "Bar 4" is the second bar of 7/8.
+        let commands = try AgentTools.commands(for: .writeNotes(track: "Keys", notes: "C4 1 1", bar: 4, bars: 2, replace: false),
+                                               in: project)
+        for command in commands { try command.apply(to: &project) }
+        let placement = try XCTUnwrap(project.track(keys)?.placements.first)
+        XCTAssertEqual(placement.start, 2 * bar44 + bar78)
+        XCTAssertEqual(project.track(keys)?.clips.first?.length, 2 * bar78)
+        XCTAssertEqual(Arranging.songBars(of: project), 5)
+        XCTAssertTrue(AgentTools.describe(project).contains("Time signature changes: bar 3 7/8."))
+        XCTAssertTrue(AgentTools.describe(project).contains("bars 4–5"), AgentTools.describe(project))
+
+        let automate = try AgentTools.commands(for: .automate(track: "Keys", parameter: "volume", fromBar: 3, toBar: 5,
+                                                              from: -6, to: 0, curve: 0), in: project)
+        guard case let .setAutomation(_, points)? = automate.first else { return XCTFail("\(automate)") }
+        XCTAssertEqual(points.map(\.tick), [2 * bar44, 2 * bar44 + 2 * bar78])
+
+        let range = try XCTUnwrap(VideoExportPlan.shortRange(in: project, startBar: 3, seconds: 0.1))
+        XCTAssertEqual(range, (2 * bar44)...(2 * bar44 + bar78), "at least one bar of 7/8")
+    }
+
+    /// A MIDI file carries every signature as a 0x58 at its bar line; read back into an empty
+    /// song, the meter is the same — and a clip ends on a bar line of it.
+    func testTheMeterRoundTripsThroughAMIDIFile() throws {
+        var song = Project(name: "Odd")
+        let keys = TrackID(), clip = ClipID()
+        try Command.setTimeSignatureChange(at: 2 * bar44, TimeSignature(7, 8)).apply(to: &song)
+        try Command.setTimeSignatureChange(at: 2 * bar44 + bar78, TimeSignature(3, 4)).apply(to: &song)
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &song)
+        try Command.createClip(track: keys, id: clip, name: "C", length: 2 * bar44 + bar78 + 100).apply(to: &song)
+        try Command.addNotes(clip, [Note(pitch: 60, start: 2 * bar44 + bar78 + 50, length: 40)]).apply(to: &song)
+        try Command.placeClip(track: keys, id: PlacementID(), clip: clip, start: 0).apply(to: &song)
+
+        let content = try MIDIFileImport.read(MIDIFile.data(for: song))
+        XCTAssertEqual(content.timeSignature, .common)
+        XCTAssertEqual(content.timeSignatureChanges, song.timeSignatureChanges)
+        var empty = Project()
+        try Command.setTimeSignatureChange(at: bar44, TimeSignature(5, 4)).apply(to: &empty)
+        for command in try MIDIFileImport.commands(for: content, fileName: "Odd", in: empty) {
+            try command.apply(to: &empty)
+        }
+        XCTAssertEqual(empty.meterMap, song.meterMap, "the file's meter replaces the song's")
+        let imported = try XCTUnwrap(empty.tracks.last?.clips.first)
+        XCTAssertEqual(imported.length, 2 * bar44 + bar78 + 3 * quarter, "the clip ends on the next 3/4 bar line")
+    }
+
     // MARK: - Format
 
     func testASongWithoutChangesIsStoredExactlyAsBefore() throws {

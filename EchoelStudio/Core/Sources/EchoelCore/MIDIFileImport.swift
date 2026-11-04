@@ -57,6 +57,9 @@ public enum MIDIFileImport {
         /// Tempo changes after the start, in document ticks.
         public var tempoChanges: [TempoChange]
         public var timeSignature: TimeSignature?
+        /// Later time signatures, each on a bar line of the one before it; a change the file puts
+        /// off a bar line is dropped (a song cannot hold it).
+        public var timeSignatureChanges: [TimeSignatureChange] = []
     }
 
     // MARK: Reading
@@ -95,10 +98,21 @@ public enum MIDIFileImport {
         }
 
         var tempos: [Tick: Double] = [:]
-        var signature: TimeSignature?
+        var signatures: [(tick: Tick, signature: TimeSignature)] = []
         for track in parsed {
             for (tick, bpm) in track.tempos { tempos[tick] = bpm }
-            if signature == nil { signature = track.signature }
+            if signatures.isEmpty { signatures = track.signatures }
+        }
+        // The first names the song's signature (as it always did); the later ones are changes.
+        let signature = signatures.first?.signature
+        var changes: [TimeSignatureChange] = []
+        if let signature {
+            for later in signatures.dropFirst() where later.tick > 0 && later.tick <= MusicalTime.maximumTick {
+                let meter = MeterMap(signature: signature, changes: changes)
+                guard later.tick > (changes.last?.tick ?? 0), meter.isBarLine(later.tick),
+                      later.signature != meter.signature(at: later.tick) else { continue }
+                changes.append(TimeSignatureChange(tick: later.tick, signature: later.signature))
+            }
         }
         let tracks = format == 0 ? parsed.flatMap(splitByChannel) : parsed.compactMap(asTrack)
         guard !tracks.isEmpty else { throw ReadError.noNotes }
@@ -106,7 +120,8 @@ public enum MIDIFileImport {
                        tempo: tempos[0],
                        tempoChanges: tempos.filter { $0.key > 0 }.sorted { $0.key < $1.key }
                            .map { TempoChange(tick: $0.key, bpm: $0.value) },
-                       timeSignature: signature)
+                       timeSignature: signature,
+                       timeSignatureChanges: changes)
     }
 
     /// A note as read, with its channel, before the file's tracks become the song's.
@@ -119,7 +134,7 @@ public enum MIDIFileImport {
         var name: String?
         var notes: [ChannelNote] = []
         var tempos: [(Tick, Double)] = []
-        var signature: TimeSignature?
+        var signatures: [(tick: Tick, signature: TimeSignature)] = []
     }
 
     static func parseTrack(_ reader: inout ByteReader, division: Int64) throws -> ParsedTrack {
@@ -164,9 +179,13 @@ public enum MIDIFileImport {
                         let bpm = Swift.min(Swift.max(60_000_000 / Double(micros), Tempo.range.lowerBound), Tempo.range.upperBound)
                         track.tempos.append((tick, bpm))
                     }
-                case 0x58 where payload.count >= 2 && track.signature == nil && payload[1] < 8:
+                case 0x58 where payload.count >= 2 && payload[1] < 8:
                     let signature = TimeSignature(Int(payload[0]), 1 << Int(payload[1]))
-                    if signature.isValid { track.signature = signature }
+                    // At one tick the last one counts.
+                    if signature.isValid {
+                        if track.signatures.last?.tick == tick { track.signatures.removeLast() }
+                        track.signatures.append((tick, signature))
+                    }
                 default:
                     break
                 }
@@ -237,11 +256,15 @@ public enum MIDIFileImport {
         guard tracks.count <= free else { throw ReadError.tooManyTracks(needed: tracks.count, free: Swift.max(free, 0)) }
 
         var commands: [Command] = []
-        var signature = project.timeSignature
+        var meter = project.meterMap
         if !project.arrangementHasEvents && !project.arrangementHasSound {
-            if let fileSignature = content.timeSignature, fileSignature != project.timeSignature {
-                commands.append(.setTimeSignature(fileSignature))
-                signature = fileSignature
+            if let fileSignature = content.timeSignature {
+                // The file's meter replaces the song's: changes go last first, so each removal
+                // and each addition leaves every later change on a bar line.
+                commands += project.timeSignatureChanges.reversed().map { .removeTimeSignatureChange(at: $0.tick) }
+                if fileSignature != project.timeSignature { commands.append(.setTimeSignature(fileSignature)) }
+                commands += content.timeSignatureChanges.map { .setTimeSignatureChange(at: $0.tick, $0.signature) }
+                meter = MeterMap(signature: fileSignature, changes: content.timeSignatureChanges)
             }
             if let tempo = content.tempo { commands.append(.setTempo(bpm: tempo)) }
             if content.tempo != nil || !content.tempoChanges.isEmpty {
@@ -251,14 +274,14 @@ public enum MIDIFileImport {
             }
         }
 
-        let bar = Swift.max(MusicalTime.ticksPerBar(signature), 1)
+        let bar = meter.ticksPerBar(at: 0)
         let base = fileName.trimmingCharacters(in: .whitespacesAndNewlines)
         for (index, imported) in tracks.enumerated() {
             let track = TrackID(), clip = ClipID()
             let name = imported.name.map { Names.derived($0, suffix: "") }
                 ?? Names.derived(base.isEmpty ? "MIDI" : base, suffix: tracks.count == 1 ? "" : "\(index + 1)")
             let last = imported.notes.map { $0.start + $0.length }.max() ?? bar
-            let length = Swift.min(Swift.max((last + bar - 1) / bar * bar, bar), MusicalTime.maximumTick)
+            let length = Swift.min(Swift.max(meter.nextBarLine(atOrAfter: last), bar), MusicalTime.maximumTick)
             commands.append(.addTrack(id: track, name: name, kind: .instrument, index: nil))
             if imported.isDrums { commands.append(.setInstrumentDevice(track, .drums)) }
             commands.append(.createClip(track: track, id: clip, name: name, length: length))

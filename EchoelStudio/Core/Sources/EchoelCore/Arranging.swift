@@ -6,10 +6,13 @@ import Foundation
 public enum Arranging {
     /// `tick` rounded to the nearest bar line; never before bar 1.
     public static func nearestBar(_ tick: Tick, signature: TimeSignature) -> Tick {
-        let bar = MusicalTime.ticksPerBar(signature)
-        guard bar > 0 else { return Swift.max(0, tick) }
-        let snapped = (Swift.max(0, tick) + bar / 2) / bar * bar
-        return Swift.min(snapped, MusicalTime.maximumTick / bar * bar)
+        nearestBar(tick, meter: MeterMap(signature: signature))
+    }
+
+    /// `tick` rounded to the nearest bar line of the song's meter; never before bar 1, never past
+    /// the last bar line a song holds.
+    public static func nearestBar(_ tick: Tick, meter: MeterMap) -> Tick {
+        Swift.min(meter.nearestBarLine(tick), meter.barStart(at: MusicalTime.maximumTick))
     }
 
     /// The bar line at or before `tick`; never before bar 1.
@@ -24,9 +27,12 @@ public enum Arranging {
     }
 
     public static func barStart(_ tick: Tick, signature: TimeSignature) -> Tick {
-        let bar = MusicalTime.ticksPerBar(signature)
-        guard bar > 0 else { return Swift.max(0, tick) }
-        return Swift.max(0, tick) / bar * bar
+        barStart(tick, meter: MeterMap(signature: signature))
+    }
+
+    /// The bar line of the song's meter at or before `tick`; never before bar 1.
+    public static func barStart(_ tick: Tick, meter: MeterMap) -> Tick {
+        meter.barStart(at: Swift.max(0, tick))
     }
 
     /// Where a placement stops sounding: one clip length after its start.
@@ -63,7 +69,11 @@ public enum Arranging {
     /// Nil when it lands where it started.
     public static func moved(_ region: AudioRegion, in track: Track, byTicks delta: Tick,
                              signature: TimeSignature) -> Command? {
-        let target = nearestBar(region.start + delta, signature: signature)
+        moved(region, in: track, byTicks: delta, meter: MeterMap(signature: signature))
+    }
+
+    public static func moved(_ region: AudioRegion, in track: Track, byTicks delta: Tick, meter: MeterMap) -> Command? {
+        let target = nearestBar(region.start + delta, meter: meter)
         guard target != region.start else { return nil }
         return .moveRegion(track: track.id, region.id, start: target)
     }
@@ -71,22 +81,25 @@ public enum Arranging {
     /// The song's length in whole bars: up to the end of the last placement or audio region,
     /// at least one bar.
     public static func songBars(of project: Project) -> Int {
-        let bar = MusicalTime.ticksPerBar(project.timeSignature)
-        guard bar > 0 else { return 1 }
+        let meter = project.meterMap
         let last = project.tracks.reduce(Tick(0)) { result, track in
             let clips = track.placements.reduce(result) { Swift.max($0, Self.end(of: $1, in: track) ?? 0) }
             return track.regions.reduce(clips) { Swift.max($0, Self.end(of: $1, in: project) ?? 0) }
         }
-        return Swift.max(1, Int((last + bar - 1) / bar))
+        return Swift.max(1, Int(clamping: meter.bar(at: meter.nextBarLine(atOrAfter: last))))
     }
 
     /// A tap on the track's lane at `tick`. On a placement: nil — the view opens or selects it.
     /// On empty space: the track's clip placed at the bar the tap fell in. Nil for a track
     /// that has no clip yet, or one that plays no notes.
     public static func tap(on track: Track, at tick: Tick, signature: TimeSignature) -> Command? {
+        tap(on: track, at: tick, meter: MeterMap(signature: signature))
+    }
+
+    public static func tap(on track: Track, at tick: Tick, meter: MeterMap) -> Command? {
         guard track.kind == .instrument, tick >= 0, placement(in: track, at: tick) == nil,
               let clip = track.clips.first else { return nil }
-        let start = barStart(tick, signature: signature)
+        let start = barStart(tick, meter: meter)
         guard start <= MusicalTime.maximumTick else { return nil }
         return .placeClip(track: track.id, id: PlacementID(), clip: clip.id, start: start)
     }
@@ -95,7 +108,11 @@ public enum Arranging {
     /// Nil when it lands where it started.
     public static func moved(_ placement: Placement, in track: Track, byTicks delta: Tick,
                              signature: TimeSignature) -> Command? {
-        let target = nearestBar(placement.start + delta, signature: signature)
+        moved(placement, in: track, byTicks: delta, meter: MeterMap(signature: signature))
+    }
+
+    public static func moved(_ placement: Placement, in track: Track, byTicks delta: Tick, meter: MeterMap) -> Command? {
+        let target = nearestBar(placement.start + delta, meter: meter)
         guard target != placement.start else { return nil }
         return .movePlacement(track: track.id, placement.id, start: target)
     }
@@ -110,11 +127,13 @@ public enum Arranging {
                                in track: Track, project: Project) -> [Command]? {
         guard let file = project.mediaFile(region.media), file.sampleRate > 0, file.sampleRate.isFinite,
               let stop = end(of: region, in: project) else { return nil }
-        let beat = MusicalTime.ticksPerBeat(project.timeSignature)
+        let meter = project.meterMap
         let map = project.tempoMap
+        // The nearest beat of the bar the edge is in.
         func snapped(_ tick: Tick) -> Tick {
             let clamped = Swift.min(Swift.max(0, tick), MusicalTime.maximumTick)
-            return beat > 0 ? (clamped + beat / 2) / beat * beat : clamped
+            let start = meter.beatStart(at: clamped), beat = meter.ticksPerBeat(at: clamped)
+            return clamped - start >= (beat + 1) / 2 ? start + beat : start
         }
         func frames(from: Tick, to: Tick) -> Int {
             Int(((map.seconds(at: to) - map.seconds(at: from)) * file.sampleRate).rounded())

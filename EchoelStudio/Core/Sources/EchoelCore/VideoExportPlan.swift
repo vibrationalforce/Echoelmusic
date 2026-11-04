@@ -80,13 +80,13 @@ public enum VideoExportPlan {
     /// The stretch of whole bars from `startBar` (1-based) that lasts closest to `seconds` at the
     /// song's tempo map, at least one bar: the tick range a short export of about that length covers.
     public static func shortRange(in project: Project, startBar: Int, seconds: Double) -> ClosedRange<Tick>? {
-        let bar = MusicalTime.ticksPerBar(project.timeSignature)
-        guard bar > 0, startBar >= 1, seconds.isFinite, seconds > 0 else { return nil }
-        let (start, overflow) = Tick(startBar - 1).multipliedReportingOverflow(by: bar)
-        guard !overflow, start < MusicalTime.maximumTick else { return nil }
+        guard startBar >= 1, seconds.isFinite, seconds > 0 else { return nil }
+        let meter = project.meterMap
+        let start = meter.tick(ofBar: Int64(startBar - 1))
+        guard start < MusicalTime.maximumTick else { return nil }
         let map = project.tempoMap
         let target = map.tick(atSeconds: map.seconds(at: start) + seconds)
-        let end = Swift.max(start + bar, Arranging.nearestBar(target, signature: project.timeSignature))
+        let end = Swift.max(start + meter.ticksPerBar(at: start), Arranging.nearestBar(target, meter: meter))
         return start...Swift.min(end, MusicalTime.maximumTick)
     }
 

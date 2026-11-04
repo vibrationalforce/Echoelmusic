@@ -132,8 +132,8 @@ public enum AgentTools {
         case let .writeNotes(reference, text, bar, bars, replace):
             let target = try track(reference, in: project)
             guard target.kind == .instrument else { throw AgentError.wrongTrack(target.name, reason: "plays no notes") }
-            let beat = MusicalTime.ticksPerBeat(project.timeSignature)
             let place = try region(on: target, bar: bar, bars: bars, in: project)
+            let beat = project.meterMap.ticksPerBeat(at: project.meterMap.tick(ofBar: Int64(bar - 1)))
             var commands = place.commands
             let clip = place.clip
             let notes = try parseNotes(text, beat: beat, regionLength: place.length)
@@ -190,11 +190,11 @@ public enum AgentTools {
         case let .repeatClip(reference, bar, times):
             let target = try track(reference, in: project)
             guard (1...maximumBars).contains(times) else { throw AgentError.invalid("Repeat a clip 1 to \(maximumBars) times.") }
-            let barTicks = MusicalTime.ticksPerBar(project.timeSignature)
-            guard bar >= 1, Tick(bar) <= MusicalTime.maximumTick / barTicks else {
+            let meter = project.meterMap
+            guard bar >= 1, meter.tick(ofBar: Int64(bar - 1)) < MusicalTime.maximumTick else {
                 throw AgentError.invalid("Bar \(bar) is not in the song.")
             }
-            let start = Tick(bar - 1) * barTicks
+            let start = meter.tick(ofBar: Int64(bar - 1))
             guard let placement = target.placements.first(where: { $0.start == start }),
                   let clip = target.clips.first(where: { $0.id == placement.clip }) else {
                 throw AgentError.wrongTrack(target.name, reason: "has no clip starting at bar \(bar)")
@@ -212,8 +212,8 @@ public enum AgentTools {
             guard let descriptor = project.descriptor(for: address) else {
                 throw AgentError.invalid("\"\(name)\" cannot be automated on \(reference).")
             }
-            let barTicks = MusicalTime.ticksPerBar(project.timeSignature)
-            let lastBar = Int(MusicalTime.maximumTick / barTicks)
+            let meter = project.meterMap
+            let lastBar = Int(meter.bar(at: MusicalTime.maximumTick))
             guard fromBar >= 1, toBar > fromBar, toBar <= lastBar else {
                 throw AgentError.invalid("A movement runs from one bar to a later one, both between 1 and \(lastBar).")
             }
@@ -224,7 +224,7 @@ public enum AgentTools {
             guard curve.isFinite, AutomationPoint.curveRange.contains(curve) else {
                 throw AgentError.invalid("A curve is between -1 and 1; 0 is straight.")
             }
-            let start = Tick(fromBar - 1) * barTicks, end = Tick(toBar - 1) * barTicks
+            let start = meter.tick(ofBar: Int64(fromBar - 1)), end = meter.tick(ofBar: Int64(toBar - 1))
             let kept = (project.automation(for: address)?.points ?? []).filter { $0.tick < start || $0.tick > end }
             let points = (kept + [AutomationPoint(tick: start, value: from, curve: curve),
                                   AutomationPoint(tick: end, value: to)]).sorted { $0.tick < $1.tick }
@@ -302,8 +302,12 @@ public enum AgentTools {
     /// is one range, and a track lists at most `describedRanges` of them, so the text stays
     /// small enough for the on-device model's window however long the song grows.
     public static func describe(_ project: Project) -> String {
-        let bar = MusicalTime.ticksPerBar(project.timeSignature)
+        let meter = project.meterMap
         var lines = ["Song \"\(project.name)\": \(tempoText(project.tempo)) BPM, \(project.timeSignature.numerator)/\(project.timeSignature.denominator)."]
+        if !meter.isConstant {
+            let changes = meter.segments.dropFirst().map { "bar \($0.startBar + 1) \($0.signature.numerator)/\($0.signature.denominator)" }
+            lines.append("Time signature changes: " + changes.joined(separator: ", ") + ".")
+        }
         if project.tracks.isEmpty { lines.append("No tracks yet.") }
         for (index, track) in project.tracks.enumerated() {
             var parts = ["\(index + 1). \(track.name)"]
@@ -320,7 +324,7 @@ public enum AgentTools {
             case .returnTrack: parts.append("return")
             case .video: parts.append("video")
             }
-            let bars = clipRanges(of: track, bar: bar, beat: MusicalTime.ticksPerBeat(project.timeSignature))
+            let bars = clipRanges(of: track, meter: meter)
             if !bars.isEmpty {
                 let listed = bars.prefix(describedRanges).joined(separator: ", ")
                 let more = bars.count - describedRanges
@@ -341,12 +345,13 @@ public enum AgentTools {
     /// "bar 3", "bars 1–4", "bars 1–65 (one 1-bar clip, 65 times)".
     /// A repeated clip is named by its length: in bars when it is whole bars, else in beats — a
     /// 4/4 bar in a 3/4 song is four beats, not "1 bar" (review 2026-10-23).
-    private static func clipRanges(of track: Track, bar: Tick, beat: Tick) -> [String] {
+    private static func clipRanges(of track: Track, meter: MeterMap) -> [String] {
         var ranges: [String] = []
         var run: (clip: ClipID, length: Tick, start: Tick, end: Tick, count: Int)?
         func close() {
             guard let open = run else { return }
-            let first = open.start / bar + 1, last = (open.end - 1) / bar + 1
+            let first = meter.bar(at: open.start) + 1, last = meter.bar(at: open.end - 1) + 1
+            let bar = meter.ticksPerBar(at: open.start), beat = meter.ticksPerBeat(at: open.start)
             var text = first == last ? "bar \(first)" : "bars \(first)–\(last)"
             if open.count > 1 {
                 let size = open.length % bar == 0
@@ -493,10 +498,10 @@ public enum AgentTools {
         guard bar >= 1, bars >= 1, bars <= maximumBars else {
             throw AgentError.invalid("A region starts at bar 1 or later and is 1 to \(maximumBars) bars long.")
         }
-        let barTicks = MusicalTime.ticksPerBar(project.timeSignature)
-        // Checked before multiplying, so a wild number from the model cannot overflow.
-        guard Tick(bar) <= MusicalTime.maximumTick / barTicks else { throw AgentError.invalid("Bar \(bar) is not in the song.") }
-        let start = Tick(bar - 1) * barTicks, length = Tick(bars) * barTicks
+        let meter = project.meterMap
+        // `tick(ofBar:)` saturates, so a wild number from the model cannot overflow.
+        guard meter.tick(ofBar: Int64(bar - 1)) < MusicalTime.maximumTick else { throw AgentError.invalid("Bar \(bar) is not in the song.") }
+        let start = meter.tick(ofBar: Int64(bar - 1)), length = meter.tick(ofBar: Int64(bar - 1 + bars)) - start
         guard start + length <= MusicalTime.maximumTick else { throw AgentError.invalid("That is past the end of the song.") }
         if let placement = track.placements.first(where: { $0.start == start }),
            var clip = track.clips.first(where: { $0.id == placement.clip }) {
@@ -508,7 +513,7 @@ public enum AgentTools {
                 let shared = track.placements.contains { $0.clip == clip.id && $0.id != placement.id }
                 let blocked = track.placements.contains { $0.start > start && $0.start < start + length }
                 if shared || blocked {
-                    let have = Swift.max(1, clip.length / barTicks)
+                    let have = Swift.max(1, meter.bar(at: start + clip.length) - meter.bar(at: start))
                     throw AgentError.wrongTrack(track.name, reason: "has a \(have)-bar clip at bar \(bar) that \(shared ? "plays elsewhere too" : "runs into the next clip") if lengthened; write \(have) bars there, or start at a free bar")
                 }
                 commands.append(.setClipLength(clip.id, length: length))
