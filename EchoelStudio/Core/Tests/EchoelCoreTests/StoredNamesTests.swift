@@ -33,6 +33,8 @@ final class StoredNamesTests: XCTestCase {
         // A media file names its kind from format 4 on; absent is audio.
         XCTAssertEqual(MediaKind.allCases.map(\.rawValue), ["audio", "video"])
         XCTAssertEqual(MonitorMode.allCases.map(\.rawValue), ["auto", "in", "off"])
+        // A tempo change stores how the tempo reaches it by name; absent is a step (W13b).
+        XCTAssertEqual(TempoCurve.allCases.map(\.rawValue), ["step", "linear"])
         // A modulation route stores its source, curve and polarity by name (W2).
         XCTAssertEqual(ModulationSource.allCases.map(\.rawValue),
                        ["body.heartRate", "body.hrv", "body.coherence", "body.breath", "lfo.1", "macro.1", "midi.cc.1"])

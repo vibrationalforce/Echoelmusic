@@ -34,7 +34,7 @@ public struct ParameterSpec: Equatable, Sendable {
 
 extension Command {
     public enum Kind: String, CaseIterable, Sendable {
-        case renameProject, setTempo, setTimeSignature, setTempoChange, removeTempoChange
+        case renameProject, setTempo, setTimeSignature, setTempoChange, removeTempoChange, setTempoCurve
         case setKeyRoot, setScale, setTuning, setConcertPitch, setSwing
         case addTrack, removeTrack, renameTrack, moveTrack, setTrackColor
         case setInstrumentParameter, loadInstrumentPreset, setInstrumentDevice, setInstrumentSample
@@ -61,6 +61,7 @@ extension Command {
         case .setTimeSignature: .setTimeSignature
         case .setTempoChange: .setTempoChange
         case .removeTempoChange: .removeTempoChange
+        case .setTempoCurve: .setTempoCurve
         case .setKeyRoot: .setKeyRoot
         case .setScale: .setScale
         case .setTuning: .setTuning
@@ -160,6 +161,11 @@ public enum CommandCatalog {
             return CommandSpec(name: "tempo.change.remove", title: "Remove Tempo Change",
                                summary: "Removes the tempo change at a position.",
                                parameters: [P("tick", .ticks, "Position of the change in ticks.")])
+        case .setTempoCurve:
+            return CommandSpec(name: "tempo.change.curve", title: "Set Tempo Curve",
+                               summary: "How the tempo reaches a change: step (jumps on it) or linear (glides from the tempo before, arriving on it).",
+                               parameters: [P("tick", .ticks, "Position of the change in ticks."),
+                                            P("curve", .string, TempoCurve.allCases.map(\.rawValue).joined(separator: ", ") + ".")])
         case .setKeyRoot:
             return CommandSpec(name: "context.root", title: "Change Key",
                                summary: "Sets the key's root as a pitch class: 0 = C, 1 = C♯ … 11 = B. Writes no notes.",

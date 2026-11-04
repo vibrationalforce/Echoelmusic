@@ -259,7 +259,8 @@ public struct TimeConversion: Equatable, Sendable {
         self.init(tempoMap: TempoMap(bpm: bpm), sampleRate: sampleRate)
     }
 
-    /// Samples per tick at the tempo sounding at `tick`.
+    /// Samples per tick at the tempo sounding at `tick` — inside a ramp, the tempo at that tick,
+    /// which is the slope of the clock there, not the length of any whole stretch.
     public func samplesPerTick(at tick: Tick) -> Double {
         sampleRate * 60 / (tempoMap.bpm(at: tick) * Double(MusicalTime.ticksPerQuarter))
     }
@@ -281,10 +282,14 @@ public struct TimeConversion: Equatable, Sendable {
 
     /// The sample on which an event at `tick` plus `nudge` (0 ≤ nudge < 1) falls, rounded down
     /// like `sample(at:)`, which it is exactly when `nudge` is 0. A tempo changes only on a whole
-    /// tick, so the fraction lies in the tempo of `tick`. Arithmetic only: render-safe.
+    /// tick, so the fraction lies in the segment of `tick`; in a constant one it is the plain
+    /// product (bit-identical to the map before ramps), in a ramp the segment integrates it.
+    /// Arithmetic only: render-safe.
     public func sample(at tick: Tick, nudge: Double) -> Int64 {
         guard nudge > 0, nudge < 1 else { return sample(at: tick) }
-        let seconds = tempoMap.seconds(at: tick) + nudge * 60 / (tempoMap.bpm(at: tick) * Double(MusicalTime.ticksPerQuarter))
+        let seconds = tempoMap.isRamp(at: tick)
+            ? tempoMap.seconds(atPosition: Double(tick) + nudge)
+            : tempoMap.seconds(at: tick) + nudge * 60 / (tempoMap.bpm(at: tick) * Double(MusicalTime.ticksPerQuarter))
         return MusicalTime.integer((seconds * sampleRate).rounded(.down))
     }
 
