@@ -192,6 +192,24 @@ final class SamplerTests: XCTestCase {
         XCTAssertEqual(out[600], 0, "half the sample length is the whole note")
     }
 
+    /// The song's tuning reaches a keymapped sample: a class raised by a whole octave (the limit)
+    /// plays its root note twice as fast, and the default leaves the root as recorded.
+    func testTheTemperamentPitchesTheKeymappedSample() throws {
+        let buffer = try XCTUnwrap(ramp(1_000))
+        var sampler = Sampler(patch: flat(), sampleRate: rate)
+        sampler.setSample(buffer)
+        var lanes = SIMD16<Float>.zero
+        lanes[0] = 1_200
+        sampler.setTemperament(Temperament(cents: lanes))
+        sampler.noteOn(pitch: 60, velocity: 127)
+        let out = render(&sampler, frames: 1_000)
+        XCTAssertEqual(out[250], 0.5, accuracy: 0.01)
+        XCTAssertEqual(out[600], 0, "C raised an octave plays the sample in half its length")
+        XCTAssertEqual(Temperament.standard.ratio(of: 60, from: 60), 1)
+        XCTAssertEqual(Temperament(cents: lanes).ratio(of: 62, from: 60), Foundation.pow(2, 2.0 / 12), accuracy: 1e-9,
+                       "a class the temperament leaves alone is equal-tempered")
+    }
+
     func testAGatedNoteReleasesAndAOneShotDoesNot() throws {
         let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 48_000), sampleRate: 48_000))
         var gated = Sampler(patch: SamplerPatch(oneShot: false), sampleRate: rate)

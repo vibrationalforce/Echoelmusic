@@ -119,6 +119,35 @@ final class ExportTests: XCTestCase {
         XCTAssertEqual(1_200 * log2(try isonHertz(root: 0) / 261.63), 0, accuracy: 5, "C4 under A4 in C major")
     }
 
+    /// The song's tone system and concert pitch reach the synth's notes in the export — the same
+    /// engine that plays live. E4 in just intonation on C sits 13.7 cents below its equal-tempered
+    /// 329.63 Hz (5/4 is 386.3 cents, not 400), and A = 442 Hz lifts every class by 7.85 cents.
+    func testTheSynthPlaysTheSongsToneSystemAndConcertPitchInTheExport() throws {
+        let rate = 48_000.0
+        func hertz(_ pitch: Int, tuning: String?, concertPitch: Double?) throws -> Double {
+            var song = Project(tempo: 120)
+            let track = TrackID(), clip = ClipID()
+            try Command.addTrack(id: track, name: "Voice", kind: .instrument, index: nil).apply(to: &song)
+            try Command.createClip(track: track, id: clip, name: "A", length: bar).apply(to: &song)
+            try Command.addNotes(clip, [Note(pitch: pitch, start: 0, length: bar)]).apply(to: &song)
+            try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 0).apply(to: &song)
+            try Command.setInstrumentParameter(track, key: SynthParameter.waveform.key.rawValue, value: 0).apply(to: &song)
+            if let tuning, let index = TuningSystem.library.firstIndex(where: { $0.id == tuning }) {
+                try XCTUnwrap(Command.setParameter(.tuning, to: Double(index))).apply(to: &song)
+            }
+            if let concertPitch { try XCTUnwrap(Command.setParameter(.concertPitch, to: concertPitch)).apply(to: &song) }
+            let out = OfflineRender.render(song, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0)
+            let end = Int(1.8 * rate)
+            return try XCTUnwrap(PitchTracker.frequency(of: Array(out.left[(end - 6_000)..<end]), sampleRate: rate))
+        }
+        XCTAssertEqual(1_200 * log2(try hertz(64, tuning: nil, concertPitch: nil) / 329.628), 0, accuracy: 2,
+                       "the default song is twelve equal steps at A = 440")
+        XCTAssertEqual(1_200 * log2(try hertz(64, tuning: "just-major", concertPitch: nil) / 329.628), -13.7, accuracy: 2,
+                       "a just major third on C")
+        XCTAssertEqual(1_200 * log2(try hertz(69, tuning: nil, concertPitch: 442) / 440), 7.85, accuracy: 2,
+                       "concert pitch 442")
+    }
+
     func testAnEmptySongRendersNothing() {
         let result = OfflineRender.render(Project())
         XCTAssertEqual(result.frameCount, 0)

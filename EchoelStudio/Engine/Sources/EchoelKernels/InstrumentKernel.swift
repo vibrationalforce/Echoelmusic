@@ -65,6 +65,10 @@ public protocol EngineInstrumentKernel: InstrumentKernel {
     /// comes to rest without a glide (pedal up, wheels centred), so the next note sounds as on a
     /// fresh kernel and nothing the last owner did with its wheels carries over.
     func reset()
+    /// Render thread: the song's tuning (`Temperament`) for the notes that start from now on.
+    /// The engine hands it over with every snapshot; a plugin in another host never gets one and
+    /// plays twelve equal steps at A = 440 Hz. A sounding note keeps its pitch.
+    func retune(_ temperament: Temperament)
 }
 
 /// A built-in kernel the engine hands a sample on the render thread (the sampler). The Audio Unit
@@ -82,5 +86,20 @@ extension SynthKernel: InstrumentKernel {
 }
 
 extension SynthKernel: EngineInstrumentKernel {}
-extension DrumKernel: EngineInstrumentKernel {}
+extension DrumKernel: EngineInstrumentKernel {
+    /// The kit is not retuned, on purpose: a General MIDI drum note names a drum (36 kick, 38
+    /// snare), not a pitch, so a tone system has nothing to move here.
+    public func retune(_ temperament: Temperament) {}
+}
 extension SamplerKernel: SampleAssigningKernel {}
+
+extension Temperament {
+    /// The song's tone system and concert pitch as the voices play them. Builds arrays: call it
+    /// where the snapshot is compiled, never on the render thread. An unknown tone system plays
+    /// twelve equal steps (`TuningSystem.named`), a system that does not repeat at the octave too.
+    public init(_ context: MusicalContext) {
+        var lanes = SIMD16<Float>.zero
+        for (index, value) in context.centsTable().prefix(12).enumerated() { lanes[index] = Float(value) }
+        self.init(cents: lanes)
+    }
+}

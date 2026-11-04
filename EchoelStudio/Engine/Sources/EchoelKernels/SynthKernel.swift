@@ -110,6 +110,11 @@ public final class SynthKernel: @unchecked Sendable {
         if next != synth.patch { synth.setPatch(next) }
     }
 
+    /// Render thread. The tuning the next notes start in (`EngineInstrumentKernel.retune`).
+    public func retune(_ temperament: Temperament) {
+        if temperament != synth.temperament { synth.setTemperament(temperament) }
+    }
+
     /// Render thread. Whether a voice is sounding.
     public var isSounding: Bool { synth.activeVoiceCount > 0 }
 

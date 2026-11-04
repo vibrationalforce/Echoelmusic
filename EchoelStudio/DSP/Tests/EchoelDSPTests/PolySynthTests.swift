@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import EchoelDSP
 
@@ -140,6 +141,46 @@ final class PolySynthTests: XCTestCase {
         var patch = SynthPatch(waveform: .sine, cutoff: 18_000, filterEnvelopeAmount: 0)
         patch.ampEnvelope = .init(attack: 0.001, decay: 0.01, sustain: 1, release: 0.05)
         return PolySynth(patch: patch, sampleRate: rate)
+    }
+
+    /// The song's tuning places a note: A at concert pitch 442 Hz is 1200·log2(442/440) ≈ 7.85
+    /// cents above every equal-tempered class, and A is then 442 Hz. A note already sounding keeps
+    /// the pitch it started at; the next note takes the new tuning.
+    func testTheTemperamentPlacesTheNextNoteAndASoundingNoteKeepsItsPitch() throws {
+        var synth = sineSynth()
+        let shift = Float(1200 * Foundation.log2(442.0 / 440.0))
+        synth.setTemperament(Temperament(cents: SIMD16<Float>(repeating: shift)))
+        synth.noteOn(pitch: 69, velocity: 127)
+        _ = render(&synth, seconds: 0.05)
+        let tuned = cycleFrequencies(render(&synth, seconds: 0.5))
+        let mean = tuned.reduce(0, +) / Float(tuned.count)
+        XCTAssertEqual(mean, 442, accuracy: 0.3)
+        synth.setTemperament(.standard)
+        let kept = cycleFrequencies(render(&synth, seconds: 0.5))
+        XCTAssertEqual(kept.reduce(0, +) / Float(kept.count), 442, accuracy: 0.3, "the sounding note is not retuned")
+        synth.allNotesOff()
+        _ = render(&synth, seconds: 0.3)
+        synth.noteOn(pitch: 69, velocity: 127)
+        _ = render(&synth, seconds: 0.05)
+        let standard = cycleFrequencies(render(&synth, seconds: 0.5))
+        XCTAssertEqual(standard.reduce(0, +) / Float(standard.count), 440, accuracy: 0.3)
+    }
+
+    /// One class moved, the others not: a quarter-comma-like E 14 cents flat sounds there, and C
+    /// stays at its equal-tempered 261.63 Hz.
+    func testTheTemperamentMovesOnlyThePitchClassItNames() throws {
+        var lanes = SIMD16<Float>.zero
+        lanes[4] = -13.7
+        let temperament = Temperament(cents: lanes)
+        XCTAssertEqual(temperament.frequency(of: 64), 329.628 * Float(Foundation.pow(2, -13.7 / 1200)), accuracy: 0.01)
+        XCTAssertEqual(temperament.frequency(of: 60), 261.626, accuracy: 0.01)
+        XCTAssertEqual(temperament.frequency(of: 76), 2 * temperament.frequency(of: 64), accuracy: 0.01)
+        var synth = sineSynth()
+        synth.setTemperament(temperament)
+        synth.noteOn(pitch: 64, velocity: 127)
+        _ = render(&synth, seconds: 0.05)
+        let cycles = cycleFrequencies(render(&synth, seconds: 0.5))
+        XCTAssertEqual(cycles.reduce(0, +) / Float(cycles.count), temperament.frequency(of: 64), accuracy: 0.3)
     }
 
     func testTheWheelBendsTwoSemitonesEachWayAndRestsInTune() {

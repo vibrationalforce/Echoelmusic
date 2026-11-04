@@ -312,6 +312,9 @@ public struct Sampler: Sendable {
     public static let defaultVoiceCount = 16
 
     public private(set) var patch: SamplerPatch
+    /// Where each pitch class sounds (`Temperament`); the sample's root is taken as recorded in
+    /// twelve equal steps at A = 440 Hz. Standard until the engine sets the song's.
+    public private(set) var temperament = Temperament.standard
     private var sample: SampleBuffer?
     private var voices: [SamplerVoice]
     private let sampleRate: Float
@@ -346,6 +349,11 @@ public struct Sampler: Sendable {
         for i in voices.indices { voices[i].silence() }
     }
 
+    /// The tuning the next notes start in; a sounding note keeps its speed. Render-safe.
+    public mutating func setTemperament(_ temperament: Temperament) {
+        self.temperament = temperament
+    }
+
     public mutating func setPatch(_ patch: SamplerPatch) {
         self.patch = patch
         for i in voices.indices { voices[i].envelope.update(patch.envelope) }
@@ -365,8 +373,8 @@ public struct Sampler: Sendable {
         if activeVoiceCount == 0 { levelNow = Self.playable(patch.level) }
         nextOrder &+= 1
         let index = voiceIndex(for: pitch)
-        let semitones = Double(Int(Swift.min(pitch, 127)) - Int(sample.rootPitch))
-        let increment = sample.sampleRate / Double(sampleRate) * Foundation.pow(2, semitones / 12)
+        let increment = sample.sampleRate / Double(sampleRate)
+            * temperament.ratio(of: Int(Swift.min(pitch, 127)), from: Int(sample.rootPitch))
         voices[index].start(pitch: pitch, velocity: velocity, increment: increment, order: nextOrder)
         return SamplerVoiceHandle(index: index, order: nextOrder)
     }

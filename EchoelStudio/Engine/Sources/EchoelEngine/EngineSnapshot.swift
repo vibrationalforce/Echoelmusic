@@ -230,6 +230,9 @@ public struct EngineSnapshot: Sendable {
     /// The song's key without its names, handed to every insert at each chunk (VOX): a harmonizer
     /// sings its choir styles in it. Compiled here, so the render thread never reads the song.
     public let key: SongKey
+    /// The song's tone system and concert pitch as every built-in tuned voice plays them (synth,
+    /// sampler): compiled here, handed to each kernel when the snapshot is taken up.
+    public let temperament: Temperament
     public private(set) var lanes: [Lane]
     public private(set) var audioLanes: [AudioLane]
     public private(set) var returns: [ReturnLane]
@@ -273,6 +276,7 @@ public struct EngineSnapshot: Sendable {
         time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
         timeSignature = project.timeSignature
         key = SongKey(project.context)
+        temperament = Temperament(project.context)
         let anySolo = project.tracks.contains { $0.mixer.isSoloed }
         let master = project.master
         let conversion = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)

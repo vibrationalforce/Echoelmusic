@@ -3,7 +3,9 @@ import Foundation
 /// A song as a Standard MIDI File (format 1), for any other DAW or notation program: a first
 /// track with the song name, its tempo map and time signature, then one track per instrument
 /// track with what the arrangement plays — the same notes the engine plays, overlaps resolved
-/// the same way. Muted tracks are written too, as every DAW does; the receiver decides.
+/// the same way. Muted tracks are written too, as every DAW does; the receiver decides. The song's
+/// swing is NOT applied: the file holds the notes as written, so a file read back into a song with
+/// swing is not swung twice (the audio export plays it).
 public enum MIDIFile {
     /// Ticks per quarter note in the file: the document's own resolution, so nothing is rounded.
     public static let division = UInt16(MusicalTime.ticksPerQuarter)

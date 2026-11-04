@@ -741,12 +741,14 @@ public final class EngineCore: @unchecked Sendable {
                 if session.index >= 0, session.index < lane.clips.count {
                     let clip = lane.clips[session.index]
                     if session.cursor < clip.events.count {
-                        due.offer(snapshot.time.sample(at: session.base + clip.events[session.cursor].tick), index, .session)
+                        let event = clip.events[session.cursor]
+                        due.offer(snapshot.time.sample(at: session.base + event.tick, nudge: event.nudge), index, .session)
                     }
                 }
                 let cursor = cursors[lane.slot]
                 if !session.overrides, cursor < lane.events.count {
-                    due.offer(snapshot.time.sample(at: lane.events[cursor].tick), index, .arrangement)
+                    let event = lane.events[cursor]
+                    due.offer(snapshot.time.sample(at: event.tick, nudge: event.nudge), index, .arrangement)
                 }
             }
             guard due.sample < blockEnd else { break }
@@ -1117,6 +1119,12 @@ public final class EngineCore: @unchecked Sendable {
             }
             sampleTargets[slot]?.assign(sample)
         }
+        // Every built-in kernel plays the song's tuning from its next note on: a value compare when
+        // nothing changed, sixteen floats when it did. The drum kit takes it and ignores it.
+        let temperament = snapshot.temperament
+        for slot in 0..<slotCapacity {
+            for index in 0..<builtInCount { kernel(slot, index)?.retune(temperament) }
+        }
         // A track that changes instrument starts the new one silent and cuts the old one.
         for lane in snapshot.lanes where devices[lane.slot] != lane.device {
             resetBuiltIns(lane.slot)
@@ -1287,7 +1295,8 @@ public final class EngineCore: @unchecked Sendable {
         for lane in snapshot.lanes where !keeping || stale[lane.slot] {
             // The playhead's tick is rounded down: skip events of that tick that already played.
             var cursor = PlaybackPlan.firstIndex(in: lane.events, atOrAfter: tick)
-            while cursor < lane.events.count, snapshot.time.sample(at: lane.events[cursor].tick) < playhead { cursor += 1 }
+            while cursor < lane.events.count,
+                  snapshot.time.sample(at: lane.events[cursor].tick, nudge: lane.events[cursor].nudge) < playhead { cursor += 1 }
             cursors[lane.slot] = cursor
         }
         if !keeping || recountingBeats {
@@ -1309,7 +1318,7 @@ public final class EngineCore: @unchecked Sendable {
             session.base = session.launchTick + passes * length
             var cursor = PlaybackPlan.firstIndex(in: clip.events, atOrAfter: tick - session.base)
             while cursor < clip.events.count,
-                  snapshot.time.sample(at: session.base + clip.events[cursor].tick) < playhead { cursor += 1 }
+                  snapshot.time.sample(at: session.base + clip.events[cursor].tick, nudge: clip.events[cursor].nudge) < playhead { cursor += 1 }
             session.cursor = cursor
             sessions[lane.slot] = session
         }
