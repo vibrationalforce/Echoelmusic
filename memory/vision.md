@@ -74,7 +74,7 @@ Gemessen fehlend gegenüber den Wünschen des Founders (Chat 2026-11-04 16:31: �
 - **GM41** Datenschutzseite um Video-Takes ergänzen. Empfehlung: ja.
 - **GM30** frühere Engines zurück (MIDI-Prozessor, Preis, Reihenfolge) · **GM23** Ableton Link · **GM16** Plattform-Reihenfolge.
 - **GM2/GM4/GM22** Bild speichert sich mit dem Song / reagiert auf Musik · **GM10/GM11** Körper-Adjektive, Cloud-Anbieter · **GM12** dSYMs/MetricKit · **GM14** Arbeitskopie nach Absturz.
-- **GM19** Entrainment-Labels in der Alt-App · **GM9** „EchoelAI"-Wort · **GM21/GM28** Store-Text (s. C9) · **GM31–GM34** Strategie, Booking, One Clock, Werte.
+- **GM19** Entrainment-Labels in der Alt-App · **GM9** „EchoelAI"-Wort · **GM21/GM28** Store-Text (s. C9) · **GM31 · GM33 · GM34** Strategie, One Clock, Werte.
 - Gerätechecks 10027–10034 (fünf je Build, RELEASE). Status je Zeile: `grep -n '^| GM' docs/dev/FOUNDER_INBOX.md`.
 
 ## f) Wo die Wahrheit steht
