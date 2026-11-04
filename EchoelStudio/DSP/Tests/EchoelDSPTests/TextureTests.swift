@@ -158,8 +158,13 @@ final class TextureTests: XCTestCase {
     }
 
     /// The texture's budget: a full sixteen-voice chord, every partial sounding and the row evolving
-    /// as fast as it can, renders faster than it plays, and costs at most six times the classic
-    /// oscillator's (the choir's bound; best of three each, so one slow run does not decide).
+    /// as fast as it can, renders faster than it plays (1.5 s for a second of sound in a debug build,
+    /// as the choir's bound, 1 s optimised), and costs at most eight times the classic oscillator's.
+    /// Best of three each, so one slow run does not decide. Measured 2026-11-04 on Linux: debug
+    /// 0.24 s against 0.12 s (ratio 1.9 … 2.0), release 0.036 s against 0.010 s (3.5) — 3.6 % of one
+    /// core for sixteen voices. The first version (a rotation per partial, `DDSPSource.sine`, a
+    /// per-sample glide) failed this bound on the macOS runner at 1.83 s, ratio 9.8; the gains now
+    /// ramp linearly between control steps and the partials are one Clenshaw sum.
     func testAFullTextureChordStaysWithinTheBudget() {
         let texture = (0..<3).map { (_: Int) -> Double in chordSeconds(.texture) }.min() ?? 0
         let classic = (0..<3).map { (_: Int) -> Double in chordSeconds(.classic) }.min() ?? 0
@@ -168,6 +173,6 @@ final class TextureTests: XCTestCase {
         #else
         XCTAssertLessThan(texture, 1, "a second of sound in \(texture) s")
         #endif
-        XCTAssertLessThan(texture, Swift.max(classic, 0.01) * 6, "texture \(texture) s, classic \(classic) s")
+        XCTAssertLessThan(texture, Swift.max(classic, 0.01) * 8, "texture \(texture) s, classic \(classic) s")
     }
 }

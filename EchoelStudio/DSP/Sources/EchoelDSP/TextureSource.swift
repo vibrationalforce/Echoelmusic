@@ -1,10 +1,11 @@
 import Foundation
 
 /// The amplitudes a texture voice glides, allocated once per voice where the voice is made —
-/// never on the render thread — and released with it. Three lanes of `TextureSource.partialCount`
-/// floats: each partial's weight (tilt × density), its target, and its amplitude now.
+/// never on the render thread — and released with it. Five lanes of `TextureSource.partialCount`
+/// floats: each partial's weight (tilt × density), its target, its amplitude now, its tapered gain
+/// now and the gain's ramp per sample until the next control step.
 final class TextureLanes: @unchecked Sendable {
-    static let laneCount = 3
+    static let laneCount = 5
     let values: UnsafeMutablePointer<Float>
 
     init() {
@@ -103,6 +104,10 @@ struct TextureSource: Sendable {
     private var tableCharacter: Float = -1
     private var tableDensity: Float = -1
     private var controlCountdown = 0
+    /// How many partials, from the first, sit below Nyquist at the last control step.
+    private var audible = 0
+    /// Samples since the last control step: how far each gain has ramped.
+    private var ramped = 0
     /// The targets must be built again: a strike, a generation or new weights.
     private var stale = true
     /// A fresh note takes its targets at once; the amp envelope is its attack.
@@ -113,7 +118,7 @@ struct TextureSource: Sendable {
     private var density: Float = 0.6
     /// Generations per sample.
     private var step: Float = 0
-    /// Per-sample glide of each amplitude toward its target.
+    /// Glide of each amplitude toward its target, per control step.
     private var glide: Float = 0.01
     private var seed: UInt32 = 0
 
@@ -129,6 +134,8 @@ struct TextureSource: Sendable {
         tableCharacter = -1
         tableDensity = -1
         controlCountdown = 0
+        audible = 0
+        ramped = 0
         stale = true
         snap = true
     }
@@ -143,7 +150,8 @@ struct TextureSource: Sendable {
         step = r / sr
         // A quarter of a generation, never faster than 4 ms, never slower than 80 ms.
         let seconds = r > 0 ? Swift.min(Swift.max(0.25 / r, 0.004), 0.08) : 0.08
-        glide = 1 - expf(-1 / (seconds * sr))
+        // Per control step: the amplitudes move once every `controlInterval` samples.
+        glide = 1 - expf(-Float(Self.controlInterval) / (seconds * sr))
         self.seed = seed
     }
 
@@ -157,22 +165,60 @@ struct TextureSource: Sendable {
 
     /// One sample. `dt` is the note's increment in cycles per sample (finite, 0 < dt < 0.5, as
     /// `EngineSource` guarantees); `character` is 0 … 1.
+    ///
+    /// The per-sample work is one loop over the audible partials: two Clenshaw sums, the gains and
+    /// their linear ramps. Everything else — the generation's targets, the glide
+    /// toward them, the taper below Nyquist and how many partials are audible — moves once every
+    /// `controlInterval` samples, at a fixed count from the note's start, so a block size changes
+    /// nothing.
     @inline(__always)
     mutating func next(character: Float, dt: Float) -> Float {
-        let n = Self.partialCount
-        let weight = lanes.values, target = lanes.values + n, amplitude = lanes.values + 2 * n
-        if controlCountdown <= 0 {
-            controlCountdown = Self.controlInterval
-            if Swift.abs(character - tableCharacter) > 1e-4 || density != tableDensity {
-                rebuildWeights(character: character, into: weight)
-                stale = true
-            }
-        }
-        controlCountdown -= 1
         generation += step
         if generation >= 1 {
             generation -= 1
             row = Self.evolve(row, rule: rule)
+            stale = true
+        }
+        if controlCountdown <= 0 {
+            controlCountdown = Self.controlInterval
+            control(character: character, dt: dt)
+        }
+        controlCountdown -= 1
+
+        // Σ (gₖ + t·dₖ)·sin(kθ) for the audible partials, t the samples since the control step,
+        // as two Clenshaw sums: bₖ = xₖ + 2cosθ·bₖ₊₁ − bₖ₊₂, and the sum is b₁·sinθ. One read per
+        // partial and sum, nothing written, no partial's own oscillator to drift.
+        let gain = lanes.values + 3 * Self.partialCount, slope = lanes.values + 4 * Self.partialCount
+        let angle = 2 * Float.pi * phase
+        let s1 = sinf(angle)
+        let twoCos = 2 * cosf(angle)
+        var g1: Float = 0, g2: Float = 0, d1: Float = 0, d2: Float = 0
+        var k = audible
+        while k > 0 {
+            k -= 1
+            let g0 = gain[k] + twoCos * g1 - g2
+            g2 = g1
+            g1 = g0
+            let d0 = slope[k] + twoCos * d1 - d2
+            d2 = d1
+            d1 = d0
+        }
+        let sum = (g1 + Float(ramped) * d1) * s1
+        ramped += 1
+        phase += dt
+        if phase >= 1 { phase -= 1 }
+        return sum.isFinite ? sum : 0
+    }
+
+    /// Once per `controlInterval`: new weights if Character or density moved, new targets if the
+    /// row did, each amplitude one glide step toward its target, and the ramp each partial's gain
+    /// takes there over the next interval — tapered from 85 % of Nyquist, silent at it.
+    private mutating func control(character: Float, dt: Float) {
+        let n = Self.partialCount
+        let weight = lanes.values, target = lanes.values + n, amplitude = lanes.values + 2 * n
+        let gain = lanes.values + 3 * n, slope = lanes.values + 4 * n
+        if Swift.abs(character - tableCharacter) > 1e-4 || density != tableDensity {
+            rebuildWeights(character: character, into: weight)
             stale = true
         }
         if stale {
@@ -182,35 +228,35 @@ struct TextureSource: Sendable {
                 let share = k == 0 ? 0.5 + 0.5 * cells : cells
                 target[k] = weight[k] * normalization * share
             }
-            if snap {
-                snap = false
-                amplitude.update(from: target, count: n)
-            }
         }
-
-        // sin(2πkθ) for every partial from sin and cos of the note, by rotation: exact to the
-        // polynomial's error, restarted every sample, so a gliding note never drifts.
-        let s1 = DDSPSource.sine(phase)
-        var quarter = phase + 0.25
-        if quarter >= 1 { quarter -= 1 }
-        let c1 = DDSPSource.sine(quarter)
-        var s = s1, c = c1
-        var sum: Float = 0
-        let g = glide
+        let fresh = snap
+        snap = false
+        // The gains where the last interval's ramps have taken them.
+        if ramped > 0 {
+            let travelled = Float(ramped)
+            for k in 0..<n { gain[k] += slope[k] * travelled }
+        }
+        ramped = 0
+        let step = 1 / Float(Self.controlInterval)
+        var count = 0
         for k in 0..<n {
             let frequency = Float(k + 1) * dt
-            guard frequency < 0.5 else { break }
-            let a = amplitude[k] + (target[k] - amplitude[k]) * g
-            amplitude[k] = a
             let taper = Swift.min(Swift.max((0.5 - frequency) * Self.taperScale, 0), 1)
-            sum += a * taper * s
-            let rotated = s * c1 + c * s1
-            c = c * c1 - s * s1
-            s = rotated
+            let a = fresh ? target[k] : amplitude[k] + (target[k] - amplitude[k]) * glide
+            amplitude[k] = a
+            let end = a * taper
+            if fresh { gain[k] = end }
+            slope[k] = (end - gain[k]) * step
+            // A partial that has just crossed out of the band falls to nothing over the interval
+            // instead of being cut; once there it is not computed.
+            if taper <= 0, Swift.abs(gain[k]) < 1e-7 {
+                gain[k] = 0
+                slope[k] = 0
+            } else {
+                count = k + 1
+            }
         }
-        phase += dt
-        if phase >= 1 { phase -= 1 }
-        return sum.isFinite ? sum : 0
+        audible = count
     }
 
     /// The weight of each partial — the tilt Character sets, times whether density lets it sound —
