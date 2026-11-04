@@ -204,7 +204,7 @@ struct EchoelAgentNotice: Equatable, Sendable {
         return EchoelAgentNotice(requestID: last.requestID, state: state, message: message, canUndo: last.canUndo)
     }
 
-    static let undoesTheLastSentence = "Undo takes back only the last of these."
+    static let undoesTheLastSentence = "Undo reverses only the last of these."
 
     /// The notice for a finished request. Done steps say what they did; anything else says why not.
     static func from(_ report: EchoelExecutionReport, canUndo: Bool) -> EchoelAgentNotice {

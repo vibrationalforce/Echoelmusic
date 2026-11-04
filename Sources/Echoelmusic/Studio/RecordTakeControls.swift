@@ -320,7 +320,7 @@ enum RecordTake {
             return String(localized: "The part grid is full (") + "\(gridSize)" + String(localized: " parts). Remove a part to make room for the recording.")
         case .firstTake:
             return String(localized: "Runs the transport from bar 1 over the empty piece and records the armed tracks where you play. ")
-                + String(localized: "Stop ends the take; it becomes the piece's first part.")
+                + String(localized: "Stop ends the recording; it becomes the piece's first part.")
         }
     }
 

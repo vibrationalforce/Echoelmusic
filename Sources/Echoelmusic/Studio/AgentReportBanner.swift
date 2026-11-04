@@ -59,7 +59,7 @@ struct AgentReportBanner: View {
                         .buttonStyle(.borderedProminent)
                         .frame(minHeight: 44)
                         .disabled(desk.isWorking)
-                        .accessibilityHint("Makes the change Echoel proposed. Echoel's Undo takes it back.")
+                        .accessibilityHint("Makes the change Echoel proposed. Echoel's Undo reverses it.")
                         Button("Discard") { desk.discardProposal() }
                             .buttonStyle(.bordered)
                             .frame(minHeight: 44)
