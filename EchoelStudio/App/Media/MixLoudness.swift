@@ -112,12 +112,12 @@ enum MixLoudness {
     /// The whole mix at `source`, which measured `measured`, brought to `loudness` as a 24-bit WAV at
     /// `url`. A file left half-written is removed.
     static func write(_ source: URL, measured: LoudnessNormalizer.Measurement, loudness: ExportLoudness,
-                      to url: URL) throws -> Report {
+                      to url: URL, cues: [WAVCue] = []) throws -> Report {
         let file = try AVAudioFile(forReading: source)
         let writer = try WAVWriter(url: url, sampleRate: file.processingFormat.sampleRate)
         do {
             let report = try write(file, from: 0, to: file.length, measured: measured, loudness: loudness, into: writer)
-            try writer.finish()
+            try writer.finish(cues: cues)
             return report
         } catch {
             try? FileManager.default.removeItem(at: url)

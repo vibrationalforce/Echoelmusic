@@ -26,6 +26,14 @@ public struct Project: Codable, Equatable, Sendable {
     }
     /// Absent — nil — while there are none, so a song without changes is stored exactly as before.
     private var storedSignatureChanges: [TimeSignatureChange]?
+    /// Named positions on the timeline, ticks rising, one per tick (PRO-W1, optional inside
+    /// format 4). Shown on the ruler; exported as MIDI markers, WAV cue points and EDL locators.
+    public var markers: [Marker] {
+        get { storedMarkers ?? [] }
+        set { storedMarkers = newValue.isEmpty ? nil : newValue }
+    }
+    /// Absent — nil — while there are none, so a song without markers is stored exactly as before.
+    private var storedMarkers: [Marker]?
     /// Key, scale, tone system, concert pitch and swing — the frame the musician sets.
     public var context: MusicalContext
     public var tracks: [Track]
@@ -58,7 +66,8 @@ public struct Project: Codable, Equatable, Sendable {
         masterInserts: [Insert] = [],
         context: MusicalContext = MusicalContext(),
         modRoutes: [ModulationRoute] = [],
-        timeSignatureChanges: [TimeSignatureChange] = []
+        timeSignatureChanges: [TimeSignatureChange] = [],
+        markers: [Marker] = []
     ) {
         self.formatVersion = Self.currentFormatVersion
         self.name = name
@@ -75,12 +84,14 @@ public struct Project: Codable, Equatable, Sendable {
         self.masterInserts = masterInserts
         self.modRoutes = modRoutes
         self.storedSignatureChanges = timeSignatureChanges.isEmpty ? nil : timeSignatureChanges
+        self.storedMarkers = markers.isEmpty ? nil : markers
     }
 
     private enum CodingKeys: String, CodingKey {
         case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master, media, midiMappings, automation
         case masterInserts, context, modRoutes
         case storedSignatureChanges = "timeSignatureChanges"
+        case storedMarkers = "markers"
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -98,6 +109,8 @@ public struct Project: Codable, Equatable, Sendable {
         timeSignature = try c.decode(TimeSignature.self, forKey: .timeSignature)
         let signatureChanges = try c.decodeIfPresent([TimeSignatureChange].self, forKey: .storedSignatureChanges) ?? []
         storedSignatureChanges = signatureChanges.isEmpty ? nil : signatureChanges
+        let markers = try c.decodeIfPresent([Marker].self, forKey: .storedMarkers) ?? []
+        storedMarkers = markers.isEmpty ? nil : markers
         tracks = try c.decode([Track].self, forKey: .tracks)
         scenes = try c.decode([Scene].self, forKey: .scenes)
         master = try c.decode(MixerStrip.self, forKey: .master)

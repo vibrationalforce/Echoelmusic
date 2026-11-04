@@ -239,6 +239,17 @@ extension OfflineRender {
     }
 }
 
+/// A named position in a WAV file, in its frames: written as a cue point with a label.
+public struct WAVCue: Equatable, Sendable {
+    public let frame: Int
+    public let name: String
+
+    public init(frame: Int, name: String) {
+        self.frame = frame
+        self.name = name
+    }
+}
+
 /// A WAV file (RIFF, little-endian, interleaved), stereo unless a writer asks for one channel.
 /// 24-bit integer PCM by default, the studio standard for exports and stems, where samples beyond
 /// full scale are clipped, never wrapped. 32-bit float keeps them: Bake Effects writes it, so an
@@ -246,11 +257,14 @@ extension OfflineRender {
 public enum WAVFile {
     public enum BitDepth: Int, Sendable { case sixteen = 16, twentyFour = 24, float32 = 32 }
 
-    public static func data(left: [Float], right: [Float], sampleRate: Double, bitDepth: BitDepth = .twentyFour) -> Data {
+    public static func data(left: [Float], right: [Float], sampleRate: Double, bitDepth: BitDepth = .twentyFour,
+                            cues: [WAVCue] = []) -> Data {
         let frames = Swift.min(left.count, right.count, maximumFrames(bitDepth))
         let bytesPerSample = bitDepth.rawValue / 8
         let dataSize = frames * 2 * bytesPerSample
-        var out = header(frames: frames, sampleRate: sampleRate, bitDepth: bitDepth)
+        let tail = cueChunks(cues, frames: frames)
+        var out = header(frames: frames, sampleRate: sampleRate, bitDepth: bitDepth,
+                         trailing: tail.isEmpty ? 0 : dataSize % 2 + tail.count)
         out.reserveCapacity(headerLength(bitDepth) + dataSize)
 
         var bytes = [UInt8](repeating: 0, count: dataSize)
@@ -267,7 +281,56 @@ public enum WAVFile {
             put(right[frame])
         }
         out.append(contentsOf: bytes)
+        if !tail.isEmpty {
+            if dataSize % 2 == 1 { out.append(0) }
+            out.append(tail)
+        }
         return out
+    }
+
+    /// The `cue ` chunk and its `LIST`/`adtl` labels for `cues` inside a file of `frames` frames —
+    /// the cue points Pro Tools, Logic, Reaper, Resolve and Audition read as markers. A cue past
+    /// the end of the file is left out; none at all is no chunk.
+    public static func cueChunks(_ cues: [WAVCue], frames: Int) -> Data {
+        let kept = cues.filter { $0.frame >= 0 && $0.frame <= frames && $0.frame <= Int(UInt32.max) }
+        guard !kept.isEmpty else { return Data() }
+        var out = Data()
+        out.append(contentsOf: Array("cue ".utf8))
+        append(UInt32(4 + 24 * kept.count), to: &out)
+        append(UInt32(kept.count), to: &out)
+        for (index, cue) in kept.enumerated() {
+            let position = UInt32(cue.frame)
+            append(UInt32(index + 1), to: &out)                         // cue point id
+            append(position, to: &out)                                  // play-order position
+            out.append(contentsOf: Array("data".utf8))
+            append(UInt32(0), to: &out)                                 // chunk start
+            append(UInt32(0), to: &out)                                 // block start
+            append(position, to: &out)                                  // sample offset
+        }
+        var labels = Data()
+        labels.append(contentsOf: Array("adtl".utf8))
+        for (index, cue) in kept.enumerated() {
+            let text = Array(cue.name.utf8.prefix(255)) + [0]
+            labels.append(contentsOf: Array("labl".utf8))
+            append(UInt32(4 + text.count), to: &labels)
+            append(UInt32(index + 1), to: &labels)
+            labels.append(contentsOf: text)
+            if text.count % 2 == 1 { labels.append(0) }
+        }
+        out.append(contentsOf: Array("LIST".utf8))
+        append(UInt32(labels.count), to: &out)
+        out.append(labels)
+        return out
+    }
+
+    /// The song's markers as cue points of a file rendered from the song's start at `sampleRate`.
+    public static func cues(for project: Project, sampleRate: Double) -> [WAVCue] {
+        guard sampleRate.isFinite, sampleRate > 0 else { return [] }
+        return project.markerSeconds().compactMap { marker in
+            let frame = (marker.seconds * sampleRate).rounded()
+            guard frame.isFinite, frame >= 0, frame <= Double(UInt32.max) else { return nil }
+            return WAVCue(frame: Int(frame), name: marker.name)
+        }
     }
 
     /// The most frames of `channels` (1 or 2) one file can hold: RIFF counts its size in 32 bits —
@@ -290,7 +353,8 @@ public enum WAVFile {
     }
 
     /// The header for `frames` frames of `channels` (1 or 2).
-    static func header(frames: Int, sampleRate: Double, bitDepth: BitDepth, channels requested: Int = 2) -> Data {
+    static func header(frames: Int, sampleRate: Double, bitDepth: BitDepth, channels requested: Int = 2,
+                       trailing: Int = 0) -> Data {
         let bytesPerSample = bitDepth.rawValue / 8
         let channels = writtenChannels(requested)
         let held = Swift.min(Swift.max(0, frames), maximumFrames(bitDepth, channels: channels))
@@ -300,7 +364,7 @@ public enum WAVFile {
 
         var out = Data(capacity: headerLength(bitDepth))
         out.append(contentsOf: Array("RIFF".utf8))
-        append(UInt32(headerLength(bitDepth) - 8 + dataSize), to: &out)
+        append(UInt32(clamping: headerLength(bitDepth) - 8 + dataSize + Swift.max(0, trailing)), to: &out)
         out.append(contentsOf: Array("WAVE".utf8))
         out.append(contentsOf: Array("fmt ".utf8))
         append(UInt32(float ? 18 : 16), to: &out)                      // fmt chunk size
@@ -405,11 +469,22 @@ public final class WAVWriter {
         frameCount += count
     }
 
-    /// Writes the sizes into the header and closes the file.
-    public func finish() throws {
+    /// Writes `cues` after the samples (the song's markers, `WAVFile.cues(for:sampleRate:)`), the
+    /// sizes into the header, and closes the file.
+    public func finish(cues: [WAVCue] = []) throws {
+        let tail = WAVFile.cueChunks(cues, frames: frameCount)
+        let dataSize = frameCount * channels * (bitDepth.rawValue / 8)
+        var trailing = 0
+        if !tail.isEmpty {
+            try handle.seekToEnd()
+            // A chunk starts on an even byte: an odd sample block is padded first.
+            if dataSize % 2 == 1 { try handle.write(contentsOf: Data([0])) }
+            try handle.write(contentsOf: tail)
+            trailing = dataSize % 2 + tail.count
+        }
         try handle.seek(toOffset: 0)
         try handle.write(contentsOf: WAVFile.header(frames: frameCount, sampleRate: sampleRate, bitDepth: bitDepth,
-                                                    channels: channels))
+                                                    channels: channels, trailing: trailing))
         try handle.close()
     }
 }

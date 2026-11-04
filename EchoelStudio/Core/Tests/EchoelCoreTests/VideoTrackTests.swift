@@ -109,6 +109,33 @@ final class VideoTrackTests: XCTestCase {
         XCTAssertEqual(slow.track(video)?.regions.first?.length, 96_000, "1 s at 120, then 1 s at 60")
     }
 
+    /// PRO-W1 slice 3: a video part moves and trims on the same magnet as an audio region — Bar,
+    /// Beat or a note value, or to the tick with it off — so a picture cut lands on the bar grid.
+    func testAVideoPartMovesAndTrimsOnTheSharedMagnet() throws {
+        var (p, video, _, _) = try song()
+        let shot = RegionID()
+        try Command.placeVideo(track: video, id: shot, media: take.id, start: 0).apply(to: &p)
+        let region = try XCTUnwrap(p.track(video)?.regions.first)
+        let track = try XCTUnwrap(p.track(video))
+        let meter = p.meterMap
+        XCTAssertNil(Arranging.moved(region, in: track, byTicks: 1_000, meter: meter, snap: .bar), "short of half a bar")
+        XCTAssertEqual(Arranging.moved(region, in: track, byTicks: 2_500, meter: meter, snap: .bar),
+                       .moveRegion(track: video, shot, start: 3_840))
+        XCTAssertEqual(Arranging.moved(region, in: track, byTicks: 1_000, meter: meter, snap: .beat),
+                       .moveRegion(track: video, shot, start: 960))
+        XCTAssertEqual(Arranging.moved(region, in: track, byTicks: 1_000, meter: meter, snap: .off),
+                       .moveRegion(track: video, shot, start: 1_000))
+        // Ten seconds at 120 BPM end on bar 6; the end dragged back lands on bar 5.
+        XCTAssertNil(Arranging.trimmed(region, edge: .end, byTicks: -1_000, in: track, project: p, snap: .bar))
+        XCTAssertEqual(Arranging.trimmed(region, edge: .end, byTicks: -2_500, in: track, project: p, snap: .bar),
+                       [.trimRegion(track: video, shot, offset: 0, length: 384_000)])
+        let start = try XCTUnwrap(Arranging.trimmed(region, edge: .start, byTicks: 1_000, in: track, project: p, snap: .beat))
+        XCTAssertEqual(start, [.trimRegion(track: video, shot, offset: 24_000, length: 456_000),
+                               .moveRegion(track: video, shot, start: 960)], "the picture that stays sits where it sat")
+        for command in start { try command.apply(to: &p) }
+        XCTAssertNoThrow(try p.validate())
+    }
+
     func testAudioRegionsSplitTheSameWay() throws {
         var (p, _, audio, _) = try song()
         let region = RegionID(), tail = RegionID()

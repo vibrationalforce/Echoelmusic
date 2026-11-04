@@ -1072,7 +1072,8 @@ final class DocumentController {
                         meter.process(left: left, right: right, count: count)
                     }.frameCount
                     guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
-                    try writer.finish()
+                    // The song's markers ride along as cue points (PRO-W1).
+                    try writer.finish(cues: WAVFile.cues(for: project, sampleRate: rate))
                 } catch {
                     try? FileManager.default.removeItem(at: renderFile)
                     throw error
@@ -1081,7 +1082,8 @@ final class DocumentController {
                 guard loudness.changesMix else { return (MixLoudness.Report(measured), frames) }
                 defer { try? FileManager.default.removeItem(at: renderFile) }
                 guard frames > 0 else { return (MixLoudness.Report(measured), 0) }
-                let report = try MixLoudness.write(renderFile, measured: measured, loudness: loudness, to: url)
+                let report = try MixLoudness.write(renderFile, measured: measured, loudness: loudness, to: url,
+                                                   cues: WAVFile.cues(for: project, sampleRate: rate))
                 return (report, frames)
             }
         }.value
@@ -1245,7 +1247,8 @@ final class DocumentController {
             try writer.append(left: left, right: right, count: count)
         }
         guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
-        try writer.finish()
+        // Every stem carries the song's markers as cue points, so they line up in any DAW (PRO-W1).
+        try writer.finish(cues: WAVFile.cues(for: project, sampleRate: sampleRate))
     }
 
     /// What a song's open decoded: the buffers, the files past the budget or the free memory, and
@@ -1469,6 +1472,64 @@ final class DocumentController {
         } catch {
             log.error("MIDI export failed — \(error.localizedDescription, privacy: .private)")
             lastError = "Could not export the MIDI file. Try again."
+            return nil
+        }
+    }
+
+    /// The arrangement as a CMX 3600 edit decision list for DaVinci Resolve and any editor
+    /// (`EDLExport`, PRO-W1): a folder named after the song with the `.edl` and a copy of every audio
+    /// and video file a region plays, each under its name in the song, so the editor relinks the
+    /// clips by name. Returns the folder for the share sheet. Nothing in the song changes.
+    func exportEDL(rate: EDLExport.FrameRate) async -> URL? {
+        guard !isExporting else { return nil }
+        isExporting = true
+        defer { isExporting = false }
+        let project = store.project
+        let songName = openSongName
+        let name = ProjectLibrary.safeFileName(for: songName)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+            .appendingPathComponent(name + " EDL", isDirectory: true)
+        let used = Set(project.tracks.flatMap { $0.regions.map(\.media) })
+        // Each file a region plays, under its own name in the song, once; a second file of the same
+        // name gets a number.
+        var copies: [(source: URL, name: String, id: MediaID)] = []
+        var taken = Set<String>()
+        for file in project.media where used.contains(file.id) {
+            guard let source = mediaURL(file) else { continue }
+            let ext = source.pathExtension
+            let stem = ProjectLibrary.safeFileName(for: file.name)
+            var candidate = ext.isEmpty ? stem : "\(stem).\(ext)"
+            var number = 2
+            while taken.contains(candidate.lowercased()) {
+                candidate = ext.isEmpty ? "\(stem) \(number)" : "\(stem) \(number).\(ext)"
+                number += 1
+            }
+            taken.insert(candidate.lowercased())
+            copies.append((source, candidate, file.id))
+        }
+        let fileNames = Dictionary(uniqueKeysWithValues: copies.map { ($0.id, $0.name) })
+        let text = EDLExport.text(for: project, title: songName, rate: rate, fileNames: fileNames)
+        let listName = name
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            Result {
+                let files = FileManager.default
+                if files.fileExists(atPath: folder.path) { try files.removeItem(at: folder) }
+                try files.createDirectory(at: folder, withIntermediateDirectories: true)
+                try Data(text.utf8).write(to: folder.appendingPathComponent(listName).appendingPathExtension("edl"),
+                                          options: .atomic)
+                for copy in copies where files.fileExists(atPath: copy.source.path) {
+                    try files.copyItem(at: copy.source, to: folder.appendingPathComponent(copy.name))
+                }
+            }
+        }.value
+        switch result {
+        case .success:
+            lastError = nil
+            return folder
+        case .failure(let error):
+            log.error("EDL export failed — \(error.localizedDescription, privacy: .private)")
+            try? FileManager.default.removeItem(at: folder)
+            lastError = "Could not export the edit decision list. Try again."
             return nil
         }
     }

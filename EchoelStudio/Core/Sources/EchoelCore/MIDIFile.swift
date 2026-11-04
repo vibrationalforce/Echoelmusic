@@ -1,7 +1,7 @@
 import Foundation
 
 /// A song as a Standard MIDI File (format 1), for any other DAW or notation program: a first
-/// track with the song name, its tempo map and every time signature, then one track per instrument
+/// track with the song name, its tempo map, every time signature and the markers, then one track per instrument
 /// track with what the arrangement plays — the same notes the engine plays, overlaps resolved
 /// the same way. Muted tracks are written too, as every DAW does; the receiver decides. The song's
 /// swing is NOT applied: the file holds the notes as written, so a file read back into a song with
@@ -66,6 +66,10 @@ public enum MIDIFile {
                 events.append(tempo(bpm, at: tick))
                 tick = next
             }
+        }
+        // The song's markers as Marker meta events (FF 06), where every DAW shows them on its ruler.
+        for marker in project.markers {
+            events.append(Event(tick: marker.tick, bytes: meta(0x06, Array(marker.name.utf8))))
         }
         return events
     }

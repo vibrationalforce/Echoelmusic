@@ -19,6 +19,12 @@ public enum Command: Codable, Equatable, Sendable {
     case setConcertPitch(hertz: Double)
     case setSwing(Double)
 
+    // Markers (PRO-W1): named positions on the timeline, one per tick.
+    case addMarker(at: Tick, name: String)
+    case renameMarker(at: Tick, name: String)
+    case moveMarker(from: Tick, to: Tick)
+    case removeMarker(at: Tick)
+
     // Tracks
     case addTrack(id: TrackID, name: String, kind: TrackKind, index: Int?)
     case removeTrack(TrackID)
@@ -29,6 +35,9 @@ public enum Command: Codable, Equatable, Sendable {
     // Instrument
     case setInstrumentParameter(TrackID, key: String, value: Double)
     case loadInstrumentPreset(TrackID, name: String)
+    /// A built-in instrument's whole sound at once — its preset name and every stored value — as
+    /// an A/B comparison takes it back (PRO-W1). A value of a later build may only stay as it is.
+    case setInstrumentSound(TrackID, preset: String, values: [String: Double])
     case setInstrumentDevice(TrackID, InstrumentDevice)
     case setInstrumentSample(TrackID, MediaID?)
     /// The audio file the synth's wavetable engine is cut from, or nil for the factory shapes.
@@ -286,6 +295,44 @@ extension Command {
             }
             project.context.swing = amount
 
+        case let .addMarker(tick, name):
+            try Self.validateMarkerTick(tick)
+            guard project.marker(at: tick) == nil else {
+                throw CommandError.invalidValue(parameter: "tick", reason: "a marker already stands at \(tick)")
+            }
+            guard project.markers.count < Marker.maximumCount else {
+                throw CommandError.invalidValue(parameter: "markers", reason: "a song holds at most \(Marker.maximumCount) markers")
+            }
+            var markers = project.markers
+            markers.append(Marker(tick: tick, name: try Names.validated(name, parameter: "name")))
+            markers.sort { $0.tick < $1.tick }
+            project.markers = markers
+
+        case let .renameMarker(tick, name):
+            guard let index = project.markers.firstIndex(where: { $0.tick == tick }) else {
+                throw CommandError.invalidValue(parameter: "tick", reason: "no marker at \(tick)")
+            }
+            project.markers[index].name = try Names.validated(name, parameter: "name")
+
+        case let .moveMarker(from, to):
+            guard let index = project.markers.firstIndex(where: { $0.tick == from }) else {
+                throw CommandError.invalidValue(parameter: "from", reason: "no marker at \(from)")
+            }
+            try Self.validateMarkerTick(to)
+            guard to == from || project.marker(at: to) == nil else {
+                throw CommandError.invalidValue(parameter: "to", reason: "a marker already stands at \(to)")
+            }
+            var markers = project.markers
+            markers[index].tick = to
+            markers.sort { $0.tick < $1.tick }
+            project.markers = markers
+
+        case let .removeMarker(tick):
+            guard project.marker(at: tick) != nil else {
+                throw CommandError.invalidValue(parameter: "tick", reason: "no marker at \(tick)")
+            }
+            project.markers.removeAll { $0.tick == tick }
+
         case let .addTrack(id, name, kind, index):
             guard project.trackIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
             guard project.canAddTrack(kind) else {
@@ -341,6 +388,28 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "value", reason: "must be within \(parameter.range)")
             }
             project.tracks[t].instrument.values[key] = value
+
+        case let .setInstrumentSound(id, preset, values):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].kind == .instrument else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
+            }
+            let name = preset.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty, preset.count <= 2 * Names.maximumLength else {
+                throw CommandError.invalidValue(parameter: "preset", reason: "must not be empty")
+            }
+            let current = project.tracks[t].instrument.values
+            for (key, value) in values {
+                if let parameter = SynthParameter.builtIn(ParameterKey(rawValue: key)) {
+                    guard parameter.accepts(value) else {
+                        throw CommandError.invalidValue(parameter: "values", reason: "\(key) must be within \(parameter.range)")
+                    }
+                } else if current[key] != value {
+                    throw CommandError.invalidValue(parameter: "values", reason: "no instrument parameter named \(key)")
+                }
+            }
+            project.tracks[t].instrument.preset = preset
+            project.tracks[t].instrument.values = values
 
         case let .loadInstrumentPreset(id, name):
             let t = try project.requireTrack(id)
@@ -1053,6 +1122,12 @@ extension Command {
         let (rise, fall) = region.effectiveFades
         region.fadeIn = rise == 0 ? nil : rise
         region.fadeOut = fall == 0 ? nil : fall
+    }
+
+    static func validateMarkerTick(_ tick: Tick) throws {
+        guard tick >= 0, tick <= MusicalTime.maximumTick else {
+            throw CommandError.invalidValue(parameter: "tick", reason: "must be within 0…\(MusicalTime.maximumTick) ticks")
+        }
     }
 
     static func validateStart(_ start: Tick) throws {

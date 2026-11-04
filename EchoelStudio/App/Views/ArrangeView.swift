@@ -78,6 +78,10 @@ struct ArrangeView: View {
                 ScrollView(.horizontal) {
                     VStack(alignment: .leading, spacing: Theme.Space.hairline) {
                         BarRuler(bars: bars, meter: meter, ticksPerPoint: ticksPerPoint, width: laneWidth)
+                            .overlay(alignment: .topLeading) {
+                                MarkerStrip(markers: project.markers, meter: meter, ticksPerPoint: ticksPerPoint)
+                            }
+                            .contextMenu { MarkerAddButton() }
                         ForEach(project.tracks) { track in
                             ArrangeLane(track: track, project: project, pointsPerBar: pointsPerBar,
                                         open: open, importAudio: importAudio, files: files, hits: hits)
@@ -192,6 +196,100 @@ private struct BarRuler: View {
         .background(Theme.Color.surface)
         .accessibilityHidden(true)
     }
+}
+
+/// "Add Marker" on the ruler's hold menu: a marker on the magnet's line nearest the playhead,
+/// named "Marker N", one undo step. The playhead is read when the button is pressed, never in a body.
+private struct MarkerAddButton: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
+    @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
+
+    var body: some View {
+        Button("Add Marker at Playhead", systemImage: "flag") {
+            let project = store.project
+            let tick = snap.nearest(engine.playheadTick(in: project), meter: project.meterMap)
+            try? store.perform(.addMarker(at: tick, name: project.nextMarkerName()))
+        }
+    }
+}
+
+/// The song's markers on the ruler: a flag with its name at each one. Hold one to rename, move or
+/// delete it; VoiceOver reaches each as its own element with the same actions.
+private struct MarkerStrip: View {
+    let markers: [Marker]
+    let meter: MeterMap
+    let ticksPerPoint: Double
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            ForEach(markers, id: \.tick) { marker in
+                MarkerFlag(marker: marker, meter: meter)
+                    .offset(x: CGFloat(Double(marker.tick) / ticksPerPoint))
+            }
+        }
+        .frame(height: Theme.Size.rulerHeight, alignment: .topLeading)
+    }
+}
+
+private struct MarkerFlag: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(StudioRouter.self) private var router
+    @Environment(AudioEngine.self) private var engine
+    @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
+    let marker: Marker
+    let meter: MeterMap
+
+    private var bar: Int { Int(clamping: meter.bar(at: marker.tick)) + 1 }
+
+    var body: some View {
+        HStack(spacing: Theme.Space.xs) {
+            Rectangle()
+                .fill(Theme.Color.accent)
+                .frame(width: 2, height: Theme.Size.rulerHeight)
+            Text(marker.name)
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.text)
+                .lineLimit(1)
+                .padding(.horizontal, Theme.Space.xs)
+                .background(Theme.Color.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.small))
+        }
+        .frame(height: Theme.Size.rulerHeight)
+        .contentShape(Rectangle())
+        .contextMenu { menu }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Marker \(marker.name), bar \(bar)")
+        .accessibilityAction(named: "Rename") { rename() }
+        .accessibilityAction(named: "Move to Playhead") { moveToPlayhead() }
+        .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
+        .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
+        .accessibilityAction(named: "Delete") { remove() }
+    }
+
+    @ViewBuilder private var menu: some View {
+        Button("Rename Marker…", systemImage: "pencil") { rename() }
+        Button("Move to Playhead", systemImage: "arrow.right.to.line") { moveToPlayhead() }
+        Button("Move One Bar Later", systemImage: "arrow.right") { move(byBars: 1) }
+        Button("Move One Bar Earlier", systemImage: "arrow.left") { move(byBars: -1) }
+        Button("Delete Marker", systemImage: "trash", role: .destructive) { remove() }
+    }
+
+    private func rename() { router.sheet = .rename(.marker(marker.tick)) }
+
+    private func moveToPlayhead() {
+        let project = store.project
+        let to = snap.nearest(engine.playheadTick(in: project), meter: project.meterMap)
+        guard to != marker.tick else { return }
+        try? store.perform(.moveMarker(from: marker.tick, to: to))
+    }
+
+    private func move(byBars bars: Int64) {
+        let to = Swift.max(0, marker.tick + Arranging.ticks(movingBars: bars, from: marker.tick, meter: meter))
+        guard to != marker.tick else { return }
+        try? store.perform(.moveMarker(from: marker.tick, to: to))
+    }
+
+    private func remove() { try? store.perform(.removeMarker(at: marker.tick)) }
 }
 
 /// One track's lane: bar lines, its placements, and taps on empty space.

@@ -68,6 +68,7 @@ Every audio and video file is a plain file you can take out of `Media/`.
 | `tempoChanges` | `[{tick, bpm, curve}]` | optional; ticks rising, after 0; `curve` optional (below) |
 | `timeSignature` | `{numerator, denominator}` | required; denominator a power of two ≤ 32 |
 | `timeSignatureChanges` | `[{tick, numerator, denominator}]` | optional; ticks rising, after 0, each on a bar line (below) |
+| `markers` | `[{tick, name}]` | optional; ticks rising from 0, each once, at most 1 000 (below) |
 | `context` | musical context | optional; absent = C, chromatic, 12 equal at 440 Hz, straight |
 | `master` | mixer strip | required |
 | `masterInserts` | `[insert]` | optional; effects after the master fader |
@@ -196,6 +197,13 @@ Everything after the owner is the key, slashes included. Keys: `tempo`, `key.roo
 others in an instrument's `values`: `synth.*`, `drums.*`, `sampler.*` — a mapping or a lane may
 name any of them, and a lane plays while its device plays the track); `plugin.instrument/<n>` and `plugin.insert/<insert id>/<n>`,
 where `n` is the Audio Unit's own parameter address. A key a reader does not know is kept.
+
+**Marker:** `{tick, name}` — a named position on the timeline, at most one per tick, ticks rising
+from 0 to the song's last tick, the name never empty. Added inside format 4 (2026-11-04); Echoel
+writes the key only when the song has a marker, so a song without one is stored exactly as before,
+and an earlier format-4 build opens a song with markers and shows none. A MIDI export writes each
+as a Marker event (FF 06) in the first track; a WAV or stem export as a cue point (`cue ` chunk)
+with its name as a label (`LIST`/`adtl`/`labl`), at its frame from the song's start.
 
 **Mapping:** `{control: {channel, number}, target}` — `channel` 0 … 15 (shown as 1 … 16),
 `number` 0 … 127, `target` a parameter address. One mapping per control. The controller's travel

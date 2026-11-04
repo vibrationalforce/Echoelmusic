@@ -22,6 +22,7 @@ struct EffectsView: View {
                         chain(inserts)
                         addMenu(count: inserts.count)
                         if let id = selected, let insert = inserts.first(where: { $0.id == id }) {
+                            CompareRow(device: .insert(id))
                             if let standard = StandardEffect(component: insert.plugin) {
                                 StandardEffectPanel(owner: owner, insert: id, effect: standard)
                                     .id(id)

@@ -28,6 +28,8 @@ struct SoundPanel: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Space.l) {
                 devicePicker
+                // Two settings of this instrument side by side, for the session (PRO-W1).
+                CompareRow(device: .instrument(track.id))
                 switch track.instrument.device {
                 case .drums:
                     // The kit map's one source, shared with the AUv3 drum page and pinned by a test.

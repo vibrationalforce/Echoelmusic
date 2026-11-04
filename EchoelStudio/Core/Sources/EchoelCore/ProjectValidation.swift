@@ -41,6 +41,7 @@ extension Project {
             previous = change.tick
         }
         try Self.validateMeter(signature: timeSignature, changes: timeSignatureChanges)
+        try Self.validateMarkers(markers, nameLimit: 2 * Names.maximumLength)
         try Self.validate(master, name: "master")
         try Self.validateName(name, "name")
         var sceneIDs = Set<SceneID>()
@@ -252,7 +253,7 @@ extension Project {
         }
     }
 
-    private static func invalid(_ parameter: String, _ reason: String) -> CommandError {
+    static func invalid(_ parameter: String, _ reason: String) -> CommandError {
         .invalidValue(parameter: parameter, reason: reason)
     }
 }

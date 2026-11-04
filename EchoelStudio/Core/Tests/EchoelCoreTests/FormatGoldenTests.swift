@@ -443,6 +443,22 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with markers on the timeline (PRO-W1, 2026-11-04): an optional song field added
+    /// inside format 4, so an earlier format-4 build opens the file and shows no markers.
+    private let formatFourMarkers = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Marked",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "markers": [ { "tick": 0, "name": "Intro" }, { "tick": 15360, "name": "Drop" } ],
+      "scenes": [],
+      "tracks": [],
+      "modRoutes": []
+    }
+    """.utf8)
+
     private let pad = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000004") ?? UUID())
     private let room = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000005") ?? UUID())
 
@@ -475,7 +491,7 @@ final class FormatGoldenTests: XCTestCase {
 
     func testEveryGoldenFileSurvivesARoundTrip() throws {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
-                     formatFourRegionEdits, formatFourArpeggio] {
+                     formatFourRegionEdits, formatFourArpeggio, formatFourMarkers] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -809,6 +825,29 @@ final class FormatGoldenTests: XCTestCase {
         let many = String(decoding: formatFourWavetable, as: UTF8.self).replacingOccurrences(of: "\"frames\": 24", with: "\"frames\": 65")
         XCTAssertNotEqual(Data(many.utf8), formatFourWavetable, "the replacement must land")
         XCTAssertThrowsError(try ProjectCodec.decode(Data(many.utf8)))
+    }
+
+    func testASongOpensWithItsMarkersAndAnOlderOneWithNone() throws {
+        let project = try ProjectCodec.decode(formatFourMarkers)
+        XCTAssertEqual(project.markers, [Marker(tick: 0, name: "Intro"), Marker(tick: 15_360, name: "Drop")])
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let stored = try XCTUnwrap(root["markers"] as? [[String: Any]])
+        XCTAssertEqual(stored.count, 2)
+        XCTAssertEqual(Set(stored[0].keys), ["tick", "name"])
+        for data in [earliest, current, formatTwo, formatTwoMedia, formatThree, formatFour, formatFourWavetable] {
+            let older = try ProjectCodec.decode(data)
+            XCTAssertTrue(older.markers.isEmpty, "an older song has no markers")
+            let written = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(older)) as? [String: Any])
+            XCTAssertNil(written["markers"], "a song without markers writes no key")
+        }
+        // Markers out of order, on one tick twice, past the song's end or without a name refuse the song.
+        let text = String(decoding: formatFourMarkers, as: UTF8.self)
+        for (from, to) in [("\"tick\": 15360", "\"tick\": 0"), ("\"tick\": 15360", "\"tick\": 99999999999"),
+                           ("\"name\": \"Drop\"", "\"name\": \"  \""), ("\"tick\": 0,", "\"tick\": -1,")] {
+            let broken = text.replacingOccurrences(of: from, with: to)
+            XCTAssertNotEqual(broken, text, "the replacement must land")
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), "\(to)")
+        }
     }
 
     func testAnOlderSongOpensWithNoVideo() throws {

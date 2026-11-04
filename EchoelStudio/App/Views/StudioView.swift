@@ -78,6 +78,8 @@ struct StudioView: View {
         .environment(videoHits)
         .background(Theme.Color.background)
         .onAppear {
+            // A stem export asked for by Siri or Shortcuts comes up in the share sheet (PRO-W1).
+            StudioIntentBridge.shared.share = { [weak router = self.router] url in router?.share(url) }
             engine.setSamples(documents.samples)
             engine.update(store.project)
             connections.attach(engine: engine, store: store, strap: strap)
@@ -976,6 +978,16 @@ struct SongMenu: View {
                     if let url = documents.exportMIDI() { router.share(url) }
                 }
                 .disabled(!store.project.arrangementHasEvents)
+                // The arrangement's video and audio regions as an edit decision list with the
+                // files beside it, for DaVinci Resolve and any editor (PRO-W1).
+                Menu("Export EDL for Resolve", systemImage: "list.and.film") {
+                    ForEach(EDLExport.FrameRate.allCases, id: \.self) { rate in
+                        Button(rate.title) {
+                            Task { if let folder = await documents.exportEDL(rate: rate) { router.share(folder) } }
+                        }
+                    }
+                }
+                .disabled(documents.isExporting || !store.project.tracks.contains { !$0.regions.isEmpty })
                 // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
                 Button("Export Video…", systemImage: "film") { router.sheet = .exportVideo }
                     .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)

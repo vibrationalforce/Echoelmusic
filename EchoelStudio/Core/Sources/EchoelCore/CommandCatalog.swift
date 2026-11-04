@@ -55,6 +55,8 @@ extension Command {
         case setRegionFades, setRegionGain, setRegionWarp
         case addScene, removeScene, renameScene, setSlot
         case setInstrumentWavetable
+        case addMarker, renameMarker, moveMarker, removeMarker
+        case setInstrumentSound
     }
 
     public var kind: Kind {
@@ -138,6 +140,11 @@ extension Command {
         case .removeScene: .removeScene
         case .renameScene: .renameScene
         case .setSlot: .setSlot
+        case .addMarker: .addMarker
+        case .renameMarker: .renameMarker
+        case .moveMarker: .moveMarker
+        case .removeMarker: .removeMarker
+        case .setInstrumentSound: .setInstrumentSound
         }
     }
 }
@@ -553,6 +560,29 @@ public enum CommandCatalog {
                                summary: "Puts a clip into a track's slot in a scene, or empties the slot.",
                                parameters: [P("track", .trackID, "The track."), P("scene", .sceneID, "The scene."),
                                             P("clip", .clipID, "The clip; omit to empty the slot.", optional: true)])
+        case .setInstrumentSound:
+            return CommandSpec(name: "instrument.sound", title: "Compare Sound",
+                               summary: "Sets a built-in instrument's whole sound at once: its preset name and every stored parameter value, as an A/B comparison takes it back.",
+                               parameters: [P("track", .trackID, "The instrument track."), P("preset", .string, "The preset name."),
+                                            P("values", .string, "Every stored value by parameter key.")])
+        case .addMarker:
+            return CommandSpec(name: "marker.add", title: "Add Marker",
+                               summary: "Puts a named marker on the timeline. One marker per position; exported as MIDI markers and WAV cue points.",
+                               parameters: [P("tick", .ticks, "Position in ticks (960 per quarter note), from 0."),
+                                            P("name", .string, "The marker's name.")])
+        case .renameMarker:
+            return CommandSpec(name: "marker.rename", title: "Rename Marker",
+                               summary: "Gives the marker at a position a new name.",
+                               parameters: [P("tick", .ticks, "The marker's position in ticks."), P("name", .string, "The new name.")])
+        case .moveMarker:
+            return CommandSpec(name: "marker.move", title: "Move Marker",
+                               summary: "Moves the marker at one position to another where no marker stands.",
+                               parameters: [P("from", .ticks, "The marker's position in ticks."),
+                                            P("to", .ticks, "The new position in ticks.")])
+        case .removeMarker:
+            return CommandSpec(name: "marker.remove", title: "Delete Marker",
+                               summary: "Removes the marker at a position.",
+                               parameters: [P("tick", .ticks, "The marker's position in ticks.")])
         }
     }
 }
