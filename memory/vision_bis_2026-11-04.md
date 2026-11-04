@@ -10,7 +10,7 @@
 
 - **Software-Kern:** Echoelmusic / Echoel Studio als offener Steuerbus (OSC, MIDI, Art-Net/sACN, ADM-OSC). Bio optional. DMMW-Scope.
 - **Nah-Hardware:** Bestehende vibrierende Wasser-Installation (VAPORWAVE PALACE: Pontons/Platte + Exciter + Liege) als Abonnent für sinnlichen Zugang und Inklusion.
-- ⛔ **GESTOPPT (Founder 22.10. „Tauchfliege raus“, 24.10. „keine Installation im Plan“; markiert 31.10.):** nicht als aktuelles Ziel lesen, nicht in Echoelmusic-Texte, Pitches oder Anträge. Wortlaut der Vision, nur zur Nachvollziehbarkeit: **Mittel-Hardware:** Tauchfliege als modularer bio-inspirierter hybrider amphibischer Abonnent (Luft↔Wasser, Plastron-inspirierte Oberflächen, effiziente Antriebe). Für Mobilität, marine Beobachtung oder immersive Kunst. Anbindung nur über offene Standards — keine App-Umbauten.
+- ⛔ **Tauchfliege:** Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic. (Für Echoelmusic gestoppt 22./24.10., markiert 31.10.; am 2026-11-04 in ein privates Repo verschoben, die Beschreibung steht nur noch dort.)
 - **Werte-Schicht (immer aktiv):** Ernsthafter Umweltschutz und Nachhaltigkeit (niedriger Fußabdruck, reparierbar, optionales Monitoring), Frieden durch Transparenz und Offenheit, Inklusion als Zugang und Teilhabe (nicht Therapie). Reichtum und Ansehen entstehen aus hochwertiger, ehrlicher Umsetzung des Produkts plus konsistenter Werte-Praxis.
 
 Durable knowledge. Read at session start with the rest of `memory/`. This is the

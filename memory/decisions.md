@@ -5751,3 +5751,8 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Decision:** W-RED hat das blockierende Bündel von 30 versteckten Roten auf 0 gebracht; das xcresult-Werkzeug meldet vorerst nur und kommt erst nach mehreren sauberen Läufen in den Auto-Merge.
 - **Offen beim Founder:** Planeten-Kammertöne öffentlich? · Datenschutzseite zu Video-Takes · GM37–GM39 · Gerätechecks 10027–10033.
 - **Review:** 2026-12-04.
+
+### 2026-11-04 — Tauchfliege verschoben nach privatem Repo
+- **Decision:** Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic. Die steuernden Dateien (Agent `vision-coach`, Skills `vision-alignment` und `future-management`, `memory/user.md`, `memory/vision_bis_2026-11-04.md`, `memory/project_knowledge.md`, zwei Dokumente unter `docs/dev/`, ein Scratchpad) tragen nur noch diesen Verweis. Entscheidungs-Historie bleibt, wie sie ist; diese Zeile ergänzt sie.
+- **Why:** Founder 2026-11-04: „Repo Echoelmusic nochmal durchgehen nach allem was relevant ist und dann aufräumen“. Der Inhalt ist vollständig und per Prüfsumme belegt im privaten Projekt übernommen. Die Zeile vom selben Tag „Kein Repo für Tauchfliege“ meinte ein öffentliches.
+- **Review:** 2026-12-04.

@@ -22,7 +22,7 @@
 **Status:** Needs clarity
 
 - Current Apple pitches are solid but still soft on long-term vision.
-- Tauchfliege / multi-domain is correctly positioned as long-term only.
+- Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.
 - Institutional emails (DPMA, BfN) are drafted but not yet finalized.
 - Small Business Program is already active (15%).
 
@@ -36,7 +36,6 @@
 
 - Eeole rebranding is discussed but not decided.
 - Public materials still use Echoel / Echoelmusic.
-- No clear decision on whether Tauchfliege should appear in any external text.
 
 **Recommendation:** Decide on rebranding scope before any major external push. Until then, use Echoelmusic consistently.
 
