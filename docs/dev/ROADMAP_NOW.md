@@ -42,7 +42,7 @@ In dieser Ordnung, jede Zeile erst am Gerät, bevor die nächste anfängt:
 
 ## Nicht diese App
 
-- Fahrzeuge und Personenbeförderung. Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.
+- Fahrzeuge und Personenbeförderung.
 - Neuralink und jede Gedankensteuerung. Keine Schnittstelle im Repo, kein Medizinprodukt.
 - Wellness, Therapie, Diagnose, Heilfrequenzen.
 - Eine zweite Navigation, ein Dashboard, ein „Session“-Knopf neben Play.
