@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelEngine
 import Foundation
 import Observation
 
@@ -18,6 +19,8 @@ final class RecordController {
     @ObservationIgnored private var target: (track: TrackID, file: DocumentController.TakeTarget)?
     /// The instrument track a MIDI take records onto, while one does.
     @ObservationIgnored private var midiTrack: TrackID?
+    /// Where that take began on the engine's two clocks: its passes of the loop are counted from it.
+    @ObservationIgnored private var midiStart = LoopRecording.Moment(sample: 0, played: 0)
     /// The song `inputFollowsSong` last saw, so it can tell an opened song from an edit.
     @ObservationIgnored private var seenGeneration: Int?
     /// `inputOpensForUnseenSong` waits for the microphone answer: the launch, the audio's return,
@@ -135,6 +138,7 @@ final class RecordController {
         // that failed at the same rate leaves the transport playing over a stopped engine.
         guard engine.canPlay() else { return }
         if store.project.track(track)?.kind == .instrument {
+            midiStart = engine.beginLoopCapture()
             engine.live.startCapture()
             midiTrack = track
             isRecording = true
@@ -181,41 +185,36 @@ final class RecordController {
         guard isRecording, let track = midiTrack else { return }
         isRecording = false
         midiTrack = nil
-        commitMIDI(engine.live.stopCapture(), onto: track)
+        let events = engine.live.stopCapture()
+        commitMIDI(events, loop: engine.endLoopCapture(), onto: track)
     }
 
     /// The notes of a MIDI take as one new clip on `track`, placed on the bar it began in —
-    /// one undo step. Each note sits where it was heard: the output latency is taken off.
-    private func commitMIDI(_ events: [LiveRouter.Captured], onto track: TrackID) {
-        guard let rate = engine.sampleRate, store.project.track(track) != nil else { return }
+    /// one undo step. Each note sits where it was heard: the output latency is taken off. When the
+    /// song looped while the take recorded, each pass of the loop is a clip of its own, folded
+    /// with the ones before it so the newest sounds — the whole loop record still one undo step,
+    /// as one take always was (Loop record, `LoopRecording`).
+    private func commitMIDI(_ captured: [LiveRouter.Captured],
+                            loop: (wraps: [Int64], loop: Range<Tick>?, end: LoopRecording.Moment), onto track: TrackID) {
+        guard let rate = engine.sampleRate, let held = store.project.track(track) else { return }
         let time = TimeConversion(tempoMap: engine.playedTempoMap(of: store.project), sampleRate: rate)
-        let latency = engine.outputLatencySamples
-        func tick(_ sample: Int64) -> Tick { time.tick(atSample: Swift.max(0, sample - latency)) }
-        var take = MIDITake()
-        for event in events {
-            let at = tick(event.sample)
-            switch event.status & 0xF0 {
-            case 0x90 where event.data2 > 0: take.noteOn(pitch: Int(event.data1), velocity: Int(event.data2), at: at)
-            case 0x80, 0x90: take.noteOff(pitch: Int(event.data1), at: at)
-            case 0xE0: take.control(.pitchBend, value: Int(event.data1 & 0x7F) | Int(event.data2 & 0x7F) << 7, at: at)
-            case 0xB0: take.control(.controller(number: Int(event.data1)), value: Int(event.data2), at: at)
-            default: break
-            }
+        let events = captured.map {
+            LoopRecording.Event(moment: LoopRecording.Moment(sample: $0.sample, played: $0.played),
+                                status: $0.status, data1: $0.data1, data2: $0.data2)
         }
         // The bars of the meter the take was played in (a jam host's while following one).
         let meter = engine.playedMeterMap(of: store.project)
-        guard let clip = take.clip(endingAt: tick(engine.positionSample), meter: meter) else { return }
-        let id = ClipID()
-        let number = (store.project.track(track)?.clips.filter { $0.name.hasPrefix("Take ") }.count ?? 0) + 1
+        var passes = LoopRecording.midiPasses(events, from: midiStart, to: loop.end, wraps: loop.wraps, loop: loop.loop,
+                                              latency: engine.outputLatencySamples, time: time, meter: meter)
+        guard !passes.isEmpty else { return }
+        if passes.count > 1, let span = loop.loop {
+            passes = LoopRecording.newest(passes, room: LoopRecording.room(on: held, in: store.project, over: span))
+        }
+        let number = held.clips.filter { $0.name.hasPrefix("Take ") }.count + 1
         // A take over earlier ones joins them as a lane of their take folder and sounds over its
         // span (Recovery 4); the earlier takes stay, to be comped. Over nothing it stays a clip.
-        let placement = PlacementID()
-        try? store.perform([.createClip(track: track, id: id, name: "Take \(number)", length: clip.length),
-                            .addNotes(id, clip.notes),
-                            .setControls(id, clip.controls),
-                            .placeClip(track: track, id: placement, clip: id, start: clip.start),
-                            .foldTake(track: track, take: placement.rawValue, group: TakeGroupID())],
-                           title: "Record MIDI")
+        try? store.perform(LoopRecording.midiCommands(passes, track: track, firstNumber: number),
+                           title: passes.count > 1 ? "Loop Record MIDI" : "Record MIDI")
     }
 
     /// The transport's Stop: ends a take first, so the take never outlives the song playing.

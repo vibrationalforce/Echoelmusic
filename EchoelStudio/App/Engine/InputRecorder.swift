@@ -14,6 +14,7 @@ final class InputRecorder: @unchecked Sendable {
     private let core: EngineCore
     private let armed = Atomic<Bool>(false)
     private let start = Atomic<Int64>(-1)
+    private let startPlayedFrames = Atomic<Int64>(-1)
     private let channel = Atomic<Int>(0)
     private let scratch: UnsafeMutablePointer<Float>
     private static let scratchFrames = 8_192
@@ -34,6 +35,7 @@ final class InputRecorder: @unchecked Sendable {
     func arm(channel: Int) {
         self.channel.store(Swift.max(0, channel), ordering: .releasing)
         start.store(-1, ordering: .releasing)
+        startPlayedFrames.store(-1, ordering: .releasing)
         armed.store(true, ordering: .releasing)
     }
 
@@ -45,6 +47,10 @@ final class InputRecorder: @unchecked Sendable {
     /// The output sample the playhead stood at when the take's first frame arrived; −1 before.
     var startSample: Int64 { start.load(ordering: .acquiring) }
 
+    /// `EngineCore.playedFrames` when the take's first frame arrived: the clock a loop's wraps are
+    /// counted on, so the file can be cut into passes (Loop record).
+    var startPlayed: Int64 { startPlayedFrames.load(ordering: .acquiring) }
+
     /// Render thread.
     func receive(_ list: UnsafePointer<AudioBufferList>, frames: Int) {
         guard frames > 0 else { return }
@@ -52,6 +58,7 @@ final class InputRecorder: @unchecked Sendable {
         guard armed.load(ordering: .acquiring) else { return }
         if start.load(ordering: .relaxed) < 0 {
             // The playhead has already moved past the block that plays with this input block.
+            startPlayedFrames.store(core.playedFrames - Int64(frames), ordering: .releasing)
             start.store(Swift.max(0, core.positionSample - Int64(frames)), ordering: .releasing)
         }
         let buffers = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: list))
@@ -189,6 +196,8 @@ struct RecordedTake: Sendable {
     let sampleRate: Double
     /// See `InputRecorder.startSample`.
     let startSample: Int64
+    /// See `InputRecorder.startPlayed`.
+    let startPlayed: Int64
     /// Output plus input latency in samples, as the session reported it when the take began.
     let latency: Int64
     /// The tempo map the engine played when the take began — a followed clock's, not the song's,
@@ -196,4 +205,8 @@ struct RecordedTake: Sendable {
     /// the map at the stop may be a drifted clock's, under which the same sample is a later tick
     /// (`RecordingPlacement`, review 2026-10-28, 2.2).
     let tempoMap: TempoMap
+    /// The loop the song ran over while the take recorded, nil while it did not loop; and
+    /// `EngineCore.playedFrames` at each of its wraps. The take's passes are cut from them.
+    let loop: Range<Tick>?
+    let wraps: [Int64]
 }

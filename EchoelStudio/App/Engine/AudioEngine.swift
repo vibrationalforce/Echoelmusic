@@ -56,7 +56,8 @@ final class AudioEngine {
     /// a rebuild of the graph under it ends it with what it captured (`endTakeBeforeRebuild`), and
     /// its file drains from its own ring.
     @ObservationIgnored private var take: (url: URL, writer: TakeWriter, recorder: InputRecorder,
-                                           sampleRate: Double, latency: Int64, tempoMap: TempoMap)?
+                                           sampleRate: Double, latency: Int64, tempoMap: TempoMap,
+                                           core: EngineCore, loop: Range<Tick>?)?
     @ObservationIgnored private var drainTask: Task<Void, Never>?
     /// Where the take stands between Record, an end from outside, the stop and the closed file.
     /// What a pause, a jump or a rebuild does to it is decided there and tested in the package.
@@ -182,9 +183,10 @@ final class AudioEngine {
     private(set) var keysFollowScale = UserDefaults.standard.bool(forKey: AudioEngine.keysFollowScaleKey)
 
     /// The song loops: while playing, the playhead goes back to bar 1 at the end of the last bar
-    /// that holds a clip, so a beat repeats and a part can be layered over it. A MIDI take keeps
-    /// recording through the wrap, so each pass lands on the same bars (an overdub in one clip);
-    /// an audio take suspends the loop, since one file cannot be placed twice. Kept on this
+    /// that holds a clip, so a beat repeats and a part can be layered over it. A take keeps
+    /// recording through every wrap, and each pass becomes a take of its own in the track's take
+    /// folder, the newest sounding (Loop record, `LoopRecording`): an audio take is still one file
+    /// written without a break, and its passes are regions of it at different offsets. Kept on this
     /// device, never in the song, like the key lock: the file format stays as it is.
     private(set) var loopsSong = UserDefaults.standard.object(forKey: AudioEngine.loopsSongKey) as? Bool ?? true
     private static let loopsSongKey = "loopsSong"
@@ -198,7 +200,7 @@ final class AudioEngine {
     }
 
     private func applyLoop() {
-        core?.setLoop(loopsSong && take == nil ? songLoop : nil)
+        core?.setLoop(loopsSong ? songLoop : nil)
     }
 
     /// Bar 1 to the end of the last bar a clip or an audio region reaches, in the bars of the
@@ -920,10 +922,12 @@ final class AudioEngine {
         // followed clock's, not the song's. The take is placed with it, never with the map at the
         // stop, which a drifting clock has moved on by then (`RecordedTake.tempoMap`).
         let tempoMap = project.map { playing($0).tempoMap } ?? TempoMap(bpm: Tempo.defaultBPM)
-        take = (url, writer, recorder, core.sampleRate, Swift.max(0, latency), tempoMap)
+        // The loop the take runs over, and its wraps from here on: each pass is cut from the one
+        // file after the stop (Loop record).
+        core.setReportsLoopWraps(true)
+        take = (url, writer, recorder, core.sampleRate, Swift.max(0, latency), tempoMap, core, activeLoop)
         takeLife.begin()
         recorder.arm(channel: channel)
-        applyLoop()
         drainTask = Task.detached(priority: .userInitiated) {
             while !Task.isCancelled {
                 try? await writer.drain()
@@ -938,10 +942,12 @@ final class AudioEngine {
         // Never the engine's recorder: after a rebuild that is a different one, or none.
         guard let current = take, takeLife.stop() else { return nil }
         take = nil
-        applyLoop()
         defer { takeLife.finished() }
         let recorder = current.recorder
         recorder.disarm()
+        // Read where the take ran: after a rebuild the engine has another core.
+        let wraps = current.core.takeLoopWraps()
+        current.core.setReportsLoopWraps(false)
         // The ring holds what was captured, so the drain below needs no running engine.
         suspendIfIdleInBackground()
         drainTask?.cancel()
@@ -966,7 +972,29 @@ final class AudioEngine {
             return nil
         }
         return RecordedTake(url: current.url, sampleRate: current.sampleRate, startSample: firstSample,
-                            latency: current.latency, tempoMap: current.tempoMap)
+                            startPlayed: recorder.startPlayed, latency: current.latency, tempoMap: current.tempoMap,
+                            loop: current.loop, wraps: wraps)
+    }
+
+    /// A MIDI take starts: from now on the core reports each wrap of the loop, and the moment the
+    /// take began on both of its clocks (Loop record).
+    func beginLoopCapture() -> LoopRecording.Moment {
+        core?.setReportsLoopWraps(true)
+        return currentMoment
+    }
+
+    /// A MIDI take ends: the wraps since `beginLoopCapture`, the loop it ran over and the moment it
+    /// ended. Synchronous, against the core the take was played on.
+    func endLoopCapture() -> (wraps: [Int64], loop: Range<Tick>?, end: LoopRecording.Moment) {
+        let end = currentMoment
+        let wraps = core?.takeLoopWraps() ?? []
+        core?.setReportsLoopWraps(false)
+        return (wraps, activeLoop, end)
+    }
+
+    /// The playhead and the played frames, now.
+    var currentMoment: LoopRecording.Moment {
+        LoopRecording.Moment(sample: core?.positionSample ?? 0, played: core?.playedFrames ?? 0)
     }
 
     /// Hands the current project to the render thread. Call on every project change; it is
@@ -1049,10 +1077,10 @@ final class AudioEngine {
     }
 
     /// The bars the song loops over while it does (bar 1 to the end of its last bar, in the played
-    /// time signature); nil while the loop is off or a take suspends it. A jam's guest comes in on
+    /// time signature); nil while the loop is off. A jam's guest comes in on
     /// the bar of its own loop that matches the host's (`JamStart.songTick`).
     var activeLoop: Range<Tick>? {
-        loopsSong && take == nil ? songLoop : nil
+        loopsSong ? songLoop : nil
     }
 
     /// The decoded audio files sampler tracks play. Republishes the current project with them.
