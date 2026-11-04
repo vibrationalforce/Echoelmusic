@@ -235,6 +235,36 @@ final class InstrumentPathTests: XCTestCase {
         assertSame(export.left, expected, "the export swings as playback does")
     }
 
+    /// A ramp from 120 to 240 BPM over the first two bars, swung: every hit lands on the sample
+    /// the integrated map gives it — live at any block size and in the export alike.
+    func testATempoRampPlacesEveryHitOnItsIntegratedSample() throws {
+        let hits = (0..<24).map { (index: Int) -> Note in
+            Note(pitch: index % 4 == 0 ? 36 : 42, velocity: 100, start: Tick(index) * 240, length: 120)
+        }
+        var t = try tune(hits, device: .drums)
+        try Command.setTempoChange(at: 2 * bar, bpm: 240).apply(to: &t.project)
+        try Command.setTempoCurve(at: 2 * bar, curve: .linear).apply(to: &t.project)
+        try Command.setSwing(0.5).apply(to: &t.project)
+        let time = TimeConversion(tempoMap: t.project.tempoMap, sampleRate: rate)
+        // 120 → 240 over 7 680 ticks: ∫ = 60 / (960 k) · ln 2, k = 120 / 7 680 BPM per tick.
+        XCTAssertEqual(time.sample(at: 2 * bar), Int64((4 * Foundation.log(2) * rate).rounded(.down)))
+        var kit = DrumKit(sampleRate: Float(rate))
+        let frames = 96_000
+        let expected = try reference(&kit, t, frames: frames)
+        var steppedKit = DrumKit(sampleRate: Float(rate))
+        var stepped = t
+        try Command.setTempoCurve(at: 2 * bar, curve: .step).apply(to: &stepped.project)
+        XCTAssertNotEqual(try reference(&steppedKit, stepped, frames: frames), expected, "the ramp is heard")
+        for block in [64, 256, 4_096] {
+            let core = engine()
+            publish(t, to: core)
+            core.play()
+            assertSame(render(core, frames: frames, block: block), expected, "ramped drums, block \(block)")
+        }
+        let export = OfflineRender.render(t.project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0, frameCount: frames)
+        assertSame(export.left, expected, "the export ramps as playback does")
+    }
+
     func testTheSamplerSoundsExactlyLikeItsSamplerPlayedDirectly() throws {
         // Two overlapping notes and a re-trigger of the first pitch while it is still held.
         var t = try tune([Note(pitch: 60, velocity: 100, start: 0, length: 960),

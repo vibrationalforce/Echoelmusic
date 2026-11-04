@@ -31,9 +31,9 @@ Every audio and video file is a plain file you can take out of `Media/`.
 - A key it does not know is ignored, except inside an instrument's `values`, where it is kept
   for the build that knows it.
 - **A name it does not know** follows one rule. Where the field only chooses how the song plays —
-  an instrument's `device`, the `tuning`, the `scale`, a track's `monitor` — the song opens, the
-  name is kept and saved back unchanged, and it plays as the field's fallback: silent, twelve
-  equal steps, chromatic, `auto`. A track's `kind` decides what the track holds and has no
+  an instrument's `device`, the `tuning`, the `scale`, a track's `monitor`, a tempo change's
+  `curve` — the song opens, the name is kept and saved back unchanged, and it plays as the
+  field's fallback: silent, twelve equal steps, chromatic, `auto`, `step`. A track's `kind` decides what the track holds and has no
   fallback, so a new kind comes with a new format number and an unknown one refuses the song.
   The same holds for a parameter address's owner (`project`, `master`, `track`): a new owner is
   a new format number, and an address with an owner this build does not know refuses the song.
@@ -65,7 +65,7 @@ Every audio and video file is a plain file you can take out of `Media/`.
 | `formatVersion` | integer | required |
 | `name` | string | required |
 | `tempo` | number | required; the tempo from tick 0 |
-| `tempoChanges` | `[{tick, bpm}]` | optional; ticks rising, after 0 |
+| `tempoChanges` | `[{tick, bpm, curve}]` | optional; ticks rising, after 0; `curve` optional (below) |
 | `timeSignature` | `{numerator, denominator}` | required; denominator a power of two ≤ 32 |
 | `context` | musical context | optional; absent = C, chromatic, 12 equal at 440 Hz, straight |
 | `master` | mixer strip | required |
@@ -76,6 +76,15 @@ Every audio and video file is a plain file you can take out of `Media/`.
 | `midiMappings` | `[mapping]` | optional; learned controllers |
 | `automation` | `[lane]` | optional; one lane per parameter |
 | `modRoutes` | `[route]` | **required** in format 3; sources that move parameters |
+
+**Tempo change:** `{tick, bpm, curve}`. `curve` says how the tempo reaches the change: `step`
+(absent = `step`) — the tempo jumps on `tick`; `linear` — it glides from the tempo before the
+change, its beats per minute rising or falling evenly per tick, and arrives at `bpm` on `tick`
+(an accelerando or ritardando; a linear change right after the song start glides from `tempo`).
+Either way the tempo then holds until the next change. Echoel writes `curve` only for `linear`,
+so a song without ramps is stored exactly as before; a build that predates ramps opens a song
+with them and plays every change as a step. A standard MIDI file has no ramps: an export writes
+a ramp as a tempo step on every sixteenth note.
 
 **Mixer strip:** `{volumeDB, pan, isMuted, isSoloed}`.
 

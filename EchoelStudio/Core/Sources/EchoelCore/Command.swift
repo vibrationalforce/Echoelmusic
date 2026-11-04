@@ -10,6 +10,7 @@ public enum Command: Codable, Equatable, Sendable {
     case setTimeSignature(TimeSignature)
     case setTempoChange(at: Tick, bpm: Double)
     case removeTempoChange(at: Tick)
+    case setTempoCurve(at: Tick, curve: TempoCurve)
     case setKeyRoot(Int)
     case setScale(Scale)
     case setTuning(id: String)
@@ -202,8 +203,10 @@ extension Command {
             guard bpm.isFinite, Tempo.range.contains(bpm) else {
                 throw CommandError.invalidValue(parameter: "bpm", reason: "must be within \(Tempo.range)")
             }
+            // A new tempo for a change keeps how the tempo reaches it (a ramp stays a ramp).
+            let kept = project.tempoChanges.first { $0.tick == tick }
             project.tempoChanges.removeAll { $0.tick == tick }
-            project.tempoChanges.append(TempoChange(tick: tick, bpm: bpm))
+            project.tempoChanges.append(kept?.with(bpm: bpm) ?? TempoChange(tick: tick, bpm: bpm))
             project.tempoChanges.sort { $0.tick < $1.tick }
 
         case .removeTempoChange(let tick):
@@ -211,6 +214,12 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "tick", reason: "no tempo change at \(tick)")
             }
             project.tempoChanges.removeAll { $0.tick == tick }
+
+        case let .setTempoCurve(tick, curve):
+            guard let index = project.tempoChanges.firstIndex(where: { $0.tick == tick }) else {
+                throw CommandError.invalidValue(parameter: "tick", reason: "no tempo change at \(tick)")
+            }
+            project.tempoChanges[index] = project.tempoChanges[index].with(curve: curve)
 
         case .setKeyRoot(let root):
             guard MusicalContext.rootRange.contains(root) else {

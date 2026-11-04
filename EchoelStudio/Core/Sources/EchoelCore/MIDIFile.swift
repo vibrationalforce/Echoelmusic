@@ -46,12 +46,34 @@ public enum MIDIFile {
         let signature = project.timeSignature
         let power = UInt8(Swift.max(0, Int(Foundation.log2(Double(Swift.max(1, signature.denominator))).rounded())))
         events.append(Event(tick: 0, bytes: meta(0x58, [UInt8(clamping: signature.numerator), power, 24, 8])))
-        for segment in project.tempoMap.segments {
-            let micros = UInt32(Swift.min(Swift.max((60_000_000 / segment.bpm).rounded(), 1), 0xFF_FFFF))
-            events.append(Event(tick: segment.startTick,
-                                bytes: meta(0x51, [UInt8(micros >> 16 & 0xFF), UInt8(micros >> 8 & 0xFF), UInt8(micros & 0xFF)])))
+        let map = project.tempoMap
+        for (index, segment) in map.segments.enumerated() {
+            guard segment.isRamp, index + 1 < map.segments.count else {
+                events.append(tempo(segment.bpm, at: segment.startTick))
+                continue
+            }
+            // A standard MIDI file has no ramps: a step on every sixteenth note, each at the tempo
+            // that lasts as long as the ramp's own sixteenth, so every step lands where the song
+            // plays it (`docs/FORMAT.md`, tempo change).
+            let end = map.segments[index + 1].startTick
+            var tick = segment.startTick
+            while tick < end {
+                let next = Swift.min(tick + rampStep, end)
+                let seconds = map.seconds(at: next) - map.seconds(at: tick)
+                let bpm = seconds > 0 ? Double(next - tick) * 60 / (seconds * Double(MusicalTime.ticksPerQuarter)) : segment.bpm
+                events.append(tempo(bpm, at: tick))
+                tick = next
+            }
         }
         return events
+    }
+
+    /// The length of one tempo step a ramp is written as: a sixteenth note.
+    static let rampStep: Tick = MusicalTime.ticksPerQuarter / 4
+
+    static func tempo(_ bpm: Double, at tick: Tick) -> Event {
+        let micros = UInt32(Swift.min(Swift.max((60_000_000 / bpm).rounded(), 1), 0xFF_FFFF))
+        return Event(tick: tick, bytes: meta(0x51, [UInt8(micros >> 16 & 0xFF), UInt8(micros >> 8 & 0xFF), UInt8(micros & 0xFF)]))
     }
 
     static func events(of track: Track, channel: UInt8) -> [Event] {

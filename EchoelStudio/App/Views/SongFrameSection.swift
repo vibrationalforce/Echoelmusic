@@ -2,7 +2,8 @@ import EchoelCore
 import SwiftUI
 
 /// The song's groove and its tempo changes, on the Song page: swing as a value field, and each
-/// tempo change as a bar with its tempo, typed on the number pad. Every edit is one command, so
+/// tempo change as a bar with its tempo, typed on the number pad, and how the tempo reaches it —
+/// on the bar (step) or gliding there from the tempo before (ramp). Every edit is one command, so
 /// one undo step. The page hosts the pad; the playhead is read only when a change is added,
 /// never in a body, so nothing here rebuilds while the song plays.
 struct SongFrameSection: View {
@@ -17,7 +18,8 @@ struct SongFrameSection: View {
             caption("Swing delays every second sixteenth note; 0 plays them straight.")
             heading("Tempo Changes")
                 .padding(.top, Theme.Space.m)
-            caption("From bar 1 the song plays at \(bpmText(store.project.tempo)), the tempo in the transport.")
+            caption("From bar 1 the song plays at \(bpmText(store.project.tempo)), the tempo in the transport. "
+                    + "A ramp glides from the tempo before it and arrives on its bar.")
             ForEach(store.project.tempoChanges, id: \.tick) { change in
                 row(change)
             }
@@ -55,6 +57,7 @@ struct SongFrameSection: View {
             .accessibilityLabel("Tempo at \(place)")
             .accessibilityValue(bpmText(change.bpm))
             .accessibilityHint("Type a tempo.")
+            curvePicker(change, place: place)
             Button {
                 try? store.perform(.removeTempoChange(at: change.tick))
             } label: {
@@ -63,6 +66,22 @@ struct SongFrameSection: View {
             .buttonStyle(ToolButtonStyle())
             .accessibilityLabel("Remove Tempo Change at \(place)")
         }
+    }
+
+    /// Step or ramp, one command each. A curve a later build wrote shows as Step, which it plays as.
+    private func curvePicker(_ change: TempoChange, place: String) -> some View {
+        let tick = change.tick
+        return Picker("Curve at \(place)", selection: Binding(get: { change.curve }, set: { curve in
+            try? store.perform(.setTempoCurve(at: tick, curve: curve))
+        })) {
+            Text("Step").tag(TempoCurve.step)
+            Text("Ramp").tag(TempoCurve.linear)
+        }
+        .pickerStyle(.menu)
+        .labelsHidden()
+        .fixedSize()
+        .accessibilityLabel("Tempo Curve at \(place)")
+        .accessibilityHint("Step changes the tempo on the bar; Ramp glides to it from the tempo before.")
     }
 
     /// Types the change's tempo on the page's pad; the typed tempo replaces it at the same tick.
