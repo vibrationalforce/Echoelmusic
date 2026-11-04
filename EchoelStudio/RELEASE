@@ -9,6 +9,7 @@ here is device-verified yet.
 - The Field gets four more patterns — Dish, Water, Aurora, Depth — driven by the same sound
   analysis as the Chladni plate, a cross-blend of two looks, and Spectrum and Scope views.
 - About lists OpenSSL 3.3.2, which ships inside the SRT library, with its full license.
+- A timing test of the choir no longer fails on a slow shared CI machine (debug margin).
 
 Previous: 11.0.0 (10035) — loudness fixes, magnet and quantize, region fades, gain and warp;
 10034 — tempo ramps, meter changes, Chladni plate, hex keys. Earlier: git history of this file.
