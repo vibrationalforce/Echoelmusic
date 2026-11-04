@@ -60,7 +60,7 @@ final class FlangerTests: XCTestCase {
     func testABadSampleEmptiesTheLinesAndSettingsAreClamped() {
         let flanger = Flanger(sampleRate: rate, settings: .init(rate: 100, depth: 5, feedback: .nan, mix: 2))
         XCTAssertEqual(flanger.settings, .init(rate: 8, depth: 1, feedback: 0.5, mix: 1))
-        XCTAssertEqual(Flanger.Settings(feedback: -3).clamped.feedback, -0.95)
+        XCTAssertEqual(Flanger.Settings(feedback: -3).clamped.feedback, -0.9, "feedback stops at ±0.9 (audit 2026-11-04: −0.95 rang to +18 dB)")
         var input = [Float](repeating: 0.5, count: 2_000)
         input[10] = .nan
         let (l, r) = run(flanger, left: input, right: input)

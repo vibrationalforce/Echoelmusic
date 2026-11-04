@@ -275,6 +275,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             if done < frames {
                 state.kernel.render(frames: frames - done, left: left + done, right: right + done, gain: 1)
             }
+            // Under full scale whatever the patch: a host may sum into a bus that cuts flat.
+            OutputSafety.apply(left: left, right: right, frames: frames)
             // Locked, the demo's silence fades in and out instead of switching (A9).
             if !state.unlocked.load(ordering: .relaxed) {
                 DemoGate.apply(left: left, right: right, frames: frames, fromFrame: demoFrom,

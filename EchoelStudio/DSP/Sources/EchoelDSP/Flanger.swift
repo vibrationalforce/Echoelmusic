@@ -27,19 +27,22 @@ public final class Flanger: @unchecked Sendable {
         }
 
         /// Every value inside its range; a non-finite value takes the default (for feedback that
-        /// matters: clamping NaN to the lower bound would be the loudest setting, −0.95).
+        /// matters: clamping NaN to the lower bound would be the loudest setting).
         public var clamped: Settings {
             let base = Settings()
             func clamp(_ value: Double, _ range: ClosedRange<Double>, _ fallback: Double) -> Double {
                 value.isFinite ? Swift.min(Swift.max(value, range.lowerBound), range.upperBound) : fallback
             }
             return Settings(rate: clamp(rate, 0.05...8, base.rate), depth: clamp(depth, 0...1, base.depth),
-                            feedback: clamp(feedback, -0.95...0.95, base.feedback), mix: clamp(mix, 0...1, base.mix))
+                            feedback: clamp(feedback, -Flanger.maximumFeedback...Flanger.maximumFeedback, base.feedback), mix: clamp(mix, 0...1, base.mix))
         }
     }
 
     /// The centre of the sway and its widest swing, in seconds.
     public static let centreSeconds = 0.003
+    /// Feedback stops at ±0.9: at −0.95 a 0.5 sine rang to 4.0 (+18 dB), at −0.9 to 2.2 (audit
+    /// 2026-11-04).
+    public static let maximumFeedback = 0.9
     public static let spreadSeconds = 0.002
 
     public var settings: Settings {
