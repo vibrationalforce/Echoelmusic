@@ -499,6 +499,7 @@ private struct PlacementBlock: View {
 /// at Next Hit.
 private struct RegionBlock: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(StudioRouter.self) private var router
     @Environment(AudioEngine.self) private var engine
     @Environment(DocumentController.self) private var documents
     let track: Track
@@ -525,7 +526,20 @@ private struct RegionBlock: View {
     private var spokenLabel: String {
         let kind = file.kind == .video ? "video" : "audio"
         let time = NumberText.string(seconds, decimals: 1)
-        return "\(file.name), \(kind), bar \(startBar), \(time) seconds" + spokenHits
+        return "\(file.name), \(kind), bar \(startBar), \(time) seconds" + spokenHits + spokenEdits
+    }
+
+    /// A region's fades and level, as they are said: ", fade in, fade out, minus 6 decibels".
+    private var spokenEdits: String {
+        var parts: [String] = []
+        let fades = region.effectiveFades
+        if fades.fadeIn > 0 { parts.append("fade in") }
+        if fades.fadeOut > 0 { parts.append("fade out") }
+        if region.warpBPM != nil { parts.append("follows the song tempo") }
+        if let gain = region.gainDB, gain != 0 {
+            parts.append("\(gain < 0 ? "minus" : "plus") \(NumberText.string(Swift.abs(gain), decimals: 0)) decibels")
+        }
+        return parts.isEmpty ? "" : ", " + parts.joined(separator: ", ")
     }
 
     /// How many hits a video part shows, as it is said: ", 2 cuts, 1 sound".
@@ -559,6 +573,7 @@ private struct RegionBlock: View {
                     .lineLimit(1)
                     .padding(Theme.Space.xs)
             }
+            .overlay { fadeMarks }
             .overlay { hitMarks }
             .overlay(alignment: .leading) { edgeHandle(.start) }
             .overlay(alignment: .trailing) { edgeHandle(.end) }
@@ -573,6 +588,35 @@ private struct RegionBlock: View {
                         drop(movedBy: value.translation.width)
                     }
             )
+    }
+
+    /// The region's fades over it, drawn as the curve they play: a line from the bottom corner
+    /// rising to the top over the fade-in, falling to the bottom over the fade-out. Drawn, never
+    /// touched; the hold menu's Fades & Gain sets them.
+    private var fadeMarks: some View {
+        let fades = region.effectiveFades
+        let total = Double(Swift.max(region.length, 1))
+        let inShare = Double(fades.fadeIn) / total, outShare = Double(fades.fadeOut) / total
+        let inCurve = region.fadeInCurve, outCurve = region.fadeOutCurve
+        return Canvas { context, size in
+            func curve(_ share: Double, _ shape: FadeCurve, rising: Bool) {
+                guard share > 0 else { return }
+                let width = size.width * CGFloat(share)
+                var path = Path()
+                for step in 0...24 {
+                    let progress = Double(step) / 24
+                    let level = CGFloat(shape.level(rising ? progress : 1 - progress))
+                    let x = (rising ? 0 : size.width - width) + width * CGFloat(progress)
+                    let point = CGPoint(x: x, y: size.height * (1 - level))
+                    if step == 0 { path.move(to: point) } else { path.addLine(to: point) }
+                }
+                context.stroke(path, with: .color(Theme.Color.text.opacity(0.7)), lineWidth: 1)
+            }
+            curve(inShare, inCurve, rising: true)
+            curve(outShare, outCurve, rising: false)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     /// A video part's hits over it: a line the full height where the picture cuts, a short one
@@ -627,6 +671,9 @@ private struct RegionBlock: View {
         if !hits.isEmpty {
             Toggle("Snap to Hits", systemImage: "scope", isOn: $snapsToHits)
         }
+        if file.kind == .audio {
+            Button("Fades, Gain & Warp…", systemImage: "slider.horizontal.below.rectangle") { editFades() }
+        }
         Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
         Button("Split at Playhead", systemImage: "scissors") { split() }
         if Arranging.consolidated(region, in: track, project: store.project) != nil {
@@ -642,6 +689,11 @@ private struct RegionBlock: View {
 
     private func removeFile() {
         try? store.perform(.removeMedia(file.id))
+    }
+
+    private func editFades() {
+        guard file.kind == .audio else { return }
+        router.sheet = .regionEdit(track.id, region.id)
     }
 
     /// An audio region on a track with an effect switched on, and no export or bake under way.
@@ -664,6 +716,7 @@ private struct RegionBlock: View {
             .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
             .accessibilityAction(named: "Place at Next Hit") { placeAtNextHit() }
+            .accessibilityAction(named: "Fades, Gain and Warp") { editFades() }
             .accessibilityAction(named: "Duplicate") { duplicate() }
             .accessibilityAction(named: "Split at Playhead") { split() }
             .accessibilityAction(named: "Consolidate") { consolidate() }

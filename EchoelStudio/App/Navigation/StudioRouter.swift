@@ -45,6 +45,8 @@ enum StudioSheet: Identifiable, Hashable {
     case connections
     /// Phones in one room play to one bar: host a jam or join one nearby (W16).
     case jam
+    /// One audio region's fades and gain (AUD-2).
+    case regionEdit(TrackID, RegionID)
 
     var id: Self { self }
 }
