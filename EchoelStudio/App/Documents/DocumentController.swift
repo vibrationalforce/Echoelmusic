@@ -1680,6 +1680,65 @@ final class DocumentController {
         }
     }
 
+    /// The song as a DAWproject for Bitwig, Studio One, Cubase and other DAWs (`DAWprojectExport`,
+    /// PRO-W2): `<song>.dawproject` with `project.xml`, `metadata.xml` and a copy of every audio file
+    /// the arrangement plays under `audio/`. Returns it for the share sheet. Nothing in the song changes.
+    func exportDAWproject() async -> URL? {
+        guard !isExporting else { return nil }
+        isExporting = true
+        defer { isExporting = false }
+        let project = store.project
+        let songName = openSongName
+        let name = ProjectLibrary.safeFileName(for: songName)
+        let exports = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        let used = ExportMedia.arrangementMedia(of: project)
+            .filter { id in project.mediaFile(id)?.kind == .audio }
+        let paths = ExportMedia.names(for: project, using: used, folder: DAWprojectExport.mediaFolder)
+        let media: [(id: MediaID, source: URL, name: String)] = project.media.compactMap { file in
+            guard let inside = paths[file.id], let source = mediaURL(file) else { return nil }
+            return (file.id, source, inside)
+        }
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "11.0.0"
+        let bundle = exports.appendingPathComponent(name).appendingPathExtension("dawproject")
+        let result: Result<URL, Error> = await Task.detached(priority: .userInitiated) {
+            Result {
+                let files = FileManager.default
+                try files.createDirectory(at: exports, withIntermediateDirectories: true)
+                let present = media.filter { files.fileExists(atPath: $0.source.path) }
+                // The format names each file's channel count; read from the file, stereo if it cannot say.
+                var channels: [MediaID: Int] = [:]
+                for item in present {
+                    if let file = try? AVAudioFile(forReading: item.source) {
+                        channels[item.id] = Int(file.fileFormat.channelCount)
+                    }
+                }
+                let presentPaths = Dictionary(uniqueKeysWithValues: present.map { ($0.id, $0.name) })
+                let xml = DAWprojectExport.projectXML(for: project, mediaPaths: presentPaths, channels: channels,
+                                                      version: version)
+                var parts = [
+                    ExportBundleWriter.Part(name: DAWprojectExport.projectFile, source: .data(Data(xml.utf8))),
+                    ExportBundleWriter.Part(name: DAWprojectExport.metadataFile,
+                                            source: .data(Data(DAWprojectExport.metadataXML(title: songName).utf8))),
+                ]
+                parts += present.map { ExportBundleWriter.Part(name: $0.name, source: .file($0.source)) }
+                try ExportBundleWriter.write(parts, to: bundle)
+                return bundle
+            }
+        }.value
+        switch result {
+        case .success(let url):
+            lastError = nil
+            return url
+        case .failure(let error):
+            log.error("DAWproject export failed — \(error.localizedDescription, privacy: .private)")
+            try? FileManager.default.removeItem(at: bundle)
+            lastError = (error as? ZipArchive.Failure) == .tooLarge
+                ? "The song's audio is larger than 4 GB, more than a DAWproject can hold. Export stems instead."
+                : "Could not export the DAWproject. Try again."
+            return nil
+        }
+    }
+
     /// Reads a Standard MIDI File (a copy the picker handed over) and adds its tracks to the song
     /// as instrument tracks — one undo step. A file the reader refuses says why on the status line.
     func importMIDI(_ source: URL) {

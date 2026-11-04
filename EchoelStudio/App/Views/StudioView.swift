@@ -1001,6 +1001,12 @@ struct SongMenu: View {
                     }
                 }
                 .disabled(documents.isExporting || !store.project.tracks.contains { !$0.regions.isEmpty })
+                // The song as a DAWproject — tracks, clips, notes, tempo, markers and the audio — for
+                // Bitwig, Studio One, Cubase and other DAWs (PRO-W2).
+                Button("Export DAWproject", systemImage: "square.and.arrow.up.on.square") {
+                    Task { if let url = await documents.exportDAWproject() { router.share(url) } }
+                }
+                .disabled(documents.isExporting || store.project.tracks.isEmpty)
                 // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
                 Button("Export Video…", systemImage: "film") { router.sheet = .exportVideo }
                     .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)
