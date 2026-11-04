@@ -25,6 +25,17 @@ public enum Command: Codable, Equatable, Sendable {
     case moveMarker(from: Tick, to: Tick)
     case removeMarker(at: Tick)
 
+    // Light (CUES): fixtures patched on DMX universes, cues, and where a cue starts.
+    case addFixture(PatchedFixture)
+    case patchFixture(FixtureID, universe: Int, address: Int)
+    case renameFixture(FixtureID, name: String)
+    case removeFixture(FixtureID)
+    case addCue(LightCue, index: Int?)
+    case setCue(LightCue)
+    case removeCue(CueID)
+    case placeCue(CueID, at: Tick)
+    case removeCuePlacement(at: Tick)
+
     // Tracks
     case addTrack(id: TrackID, name: String, kind: TrackKind, index: Int?)
     case removeTrack(TrackID)
@@ -323,6 +334,25 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "amount", reason: "must be within 0…1")
             }
             project.context.swing = amount
+
+        case .addFixture(let fixture):
+            try project.applyLight { try $0.addFixture(fixture) }
+        case let .patchFixture(id, universe, address):
+            try project.applyLight { try $0.patchFixture(id, universe: universe, address: address) }
+        case let .renameFixture(id, name):
+            try project.applyLight { try $0.renameFixture(id, name: name) }
+        case .removeFixture(let id):
+            try project.applyLight { try $0.removeFixture(id) }
+        case let .addCue(cue, index):
+            try project.applyLight { try $0.addCue(cue, index: index) }
+        case .setCue(let cue):
+            try project.applyLight { try $0.setCue(cue) }
+        case .removeCue(let id):
+            try project.applyLight { try $0.removeCue(id) }
+        case let .placeCue(id, tick):
+            try project.applyLight { try $0.placeCue(id, at: tick) }
+        case .removeCuePlacement(let tick):
+            try project.applyLight { try $0.removeCuePlacement(at: tick) }
 
         case let .addMarker(tick, name):
             try Self.validateMarkerTick(tick)

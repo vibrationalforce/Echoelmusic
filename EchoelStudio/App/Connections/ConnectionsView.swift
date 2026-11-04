@@ -17,6 +17,10 @@ struct ConnectionsView: View {
                 ForEach(ConnectionsController.Kind.allCases) { kind in
                     ConnectionSection(kind: kind)
                 }
+                EchoelSection("Light Show") {
+                    NavigationLink("Fixtures and Cues…") { LightShowView() }
+                        .accessibilityHint("Patch fixtures, build cues, GO and Blackout.")
+                }
                 EchoelSection {
                     NoteText("Every connection is off when Echoel starts, and its socket exists only while it is on. All four protocols are plain UDP, unencrypted by their standards: use them on a network you trust. Each packet goes to the one address you type.")
                 }

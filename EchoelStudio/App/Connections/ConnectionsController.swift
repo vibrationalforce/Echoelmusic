@@ -116,6 +116,21 @@ final class ConnectionsController {
     @ObservationIgnored private var slew = LightSlew()
     @ObservationIgnored private var lastChannels: [UInt8] = []
     @ObservationIgnored private var lastLightSent: ContinuousClock.Instant?
+    // The song's light show (CUES), played instead of the one-fixture light while the song has a rig.
+    /// The cue the show last started, by GO or by the timeline; nil before the first.
+    private(set) var liveCue: CueID?
+    /// Blackout: every light fades to 0 at the flash limit's rate, position holds. Not stored.
+    private(set) var blackout = false
+    @ObservationIgnored private var showGuard = RigFlashGuard()
+    /// What the show asked for last, before the blackout: a GO fades from here.
+    @ObservationIgnored private var showTarget: RigState?
+    /// A cue started by GO, with what it fades from and when; the timeline takes over again when
+    /// the playhead crosses one of its cues.
+    @ObservationIgnored private var manual: (cue: CueID, from: RigState, start: ContinuousClock.Instant)?
+    @ObservationIgnored private var lastTimelineIndex: Int?
+    @ObservationIgnored private var lastUniverses: [Int: [UInt8]] = [:]
+    /// Each universe numbers its own packets, as both standards count per universe.
+    @ObservationIgnored private var showSequences: [Int: (artNet: UInt8, sacn: UInt8)] = [:]
     @ObservationIgnored private var artNetSequence: UInt8 = 0
     @ObservationIgnored private var sacnSequence: UInt8 = 0
     /// The E1.31 component identifier, made once for this installation and kept.
@@ -271,11 +286,23 @@ final class ConnectionsController {
         guard let sender = senders.removeValue(forKey: kind) else { return }
         generations[kind] = (generations[kind] ?? 0) + 1
         if kind == .sacn {
-            // Three goodbyes, then the socket goes; a moment later, so they are on their way.
-            for _ in 0..<Self.goodbyeCount {
-                sacnSequence = E131Packet.nextSequence(sacnSequence)
-                sender.send(E131Packet.packet(universe: sacnUniverse, sequence: sacnSequence, cid: cid, channels: lastChannels,
-                                              options: E131Packet.streamTerminatedOption))
+            // Three goodbyes on every universe it fed, then the socket goes; a moment later, so
+            // they are on their way.
+            if lastUniverses.isEmpty {
+                for _ in 0..<Self.goodbyeCount {
+                    sacnSequence = E131Packet.nextSequence(sacnSequence)
+                    sender.send(E131Packet.packet(universe: sacnUniverse, sequence: sacnSequence, cid: cid, channels: lastChannels,
+                                                  options: E131Packet.streamTerminatedOption))
+                }
+            }
+            for universe in lastUniverses.keys.sorted() {
+                var sequence = showSequences[universe] ?? (0, 0)
+                for _ in 0..<Self.goodbyeCount {
+                    sequence.sacn = E131Packet.nextSequence(sequence.sacn)
+                    sender.send(E131Packet.packet(universe: sacnAddress(of: universe), sequence: sequence.sacn, cid: cid,
+                                                  channels: lastUniverses[universe] ?? [], options: E131Packet.streamTerminatedOption))
+                }
+                showSequences[universe] = sequence
             }
             Task {
                 try? await Task.sleep(for: .milliseconds(100))
@@ -313,6 +340,7 @@ final class ConnectionsController {
             // Both lights share the slew and the last channels; a restart of either re-sends.
             lastChannels = []
             lastLightSent = nil
+            lastUniverses = [:]
         }
     }
 
@@ -363,7 +391,11 @@ final class ConnectionsController {
             sendObjects(project: project, engine: engine, now: now)
         }
         if enabled.contains(.artNet) || enabled.contains(.sacn) {
-            sendLight(frame: frame, elapsed: elapsed, now: now)
+            if project.lighting.fixtures.isEmpty {
+                sendLight(frame: frame, elapsed: elapsed, now: now)
+            } else {
+                sendShow(project: project, engine: engine, playhead: playhead, frame: frame, elapsed: elapsed, now: now)
+            }
         }
         refreshActivity(now: now)
     }
@@ -432,6 +464,84 @@ final class ConnectionsController {
             sender.send(E131Packet.packet(universe: sacnUniverse, sequence: sacnSequence, cid: cid, channels: channels))
         }
         lastChannels = channels
+        lastLightSent = now
+    }
+
+    // MARK: - The light show
+
+    /// Starts the cue after the one showing (the first when none is), fading from what shows now.
+    func go(in project: Project) {
+        let cues = project.lighting.cues
+        guard !cues.isEmpty else { return }
+        let next = liveCue.flatMap { live in cues.firstIndex { $0.id == live } }.map { $0 + 1 } ?? 0
+        go(to: cues[next < cues.count ? next : 0].id, in: project)
+    }
+
+    /// Starts `cue` now, fading from what shows now over the cue's fade.
+    func go(to cue: CueID, in project: Project) {
+        guard project.lighting.cue(cue) != nil else { return }
+        manual = (cue, showTarget ?? project.lighting.restState, ContinuousClock.now)
+        liveCue = cue
+        log.info("connections: light GO")
+    }
+
+    func setBlackout(_ on: Bool) {
+        blackout = on
+        log.info("connections: blackout \(on ? "on" : "off", privacy: .public)")
+    }
+
+    /// Universe `n` of the rig on the wire: the universe set in Connections is the rig's first.
+    private func artNetAddress(of universe: Int) -> Int {
+        Self.clamp(artNetUniverse + universe - 1, to: ArtDMXPacket.universeRange)
+    }
+
+    private func sacnAddress(of universe: Int) -> Int {
+        Self.clamp(sacnUniverse + universe - 1, to: E131Packet.universeRange)
+    }
+
+    private func sendShow(project: Project, engine: AudioEngine, playhead: Tick, frame: FieldFrame, elapsed: Double,
+                          now: ContinuousClock.Instant) {
+        let lighting = project.lighting
+        let look = LightFixture.look(for: frame, sharesBody: consent.sharesBody)
+        let map = engine.playedTempoMap(of: project)
+        // The timeline takes over from a GO when the playhead crosses one of its cues.
+        let index = engine.isPlaying ? lighting.placements.lastIndex { $0.tick <= playhead } : nil
+        if let index, index != lastTimelineIndex {
+            manual = nil
+            liveCue = lighting.placements[index].cue
+        }
+        lastTimelineIndex = index
+        var target: RigState
+        if let manual, let cue = lighting.cue(manual.cue) {
+            target = Lighting.interpolate(from: manual.from, to: lighting.target(of: cue, songLook: look),
+                                          progress: Lighting.progress(elapsed: Self.seconds(now - manual.start), fade: cue.fade))
+        } else if engine.isPlaying,
+                  let timeline = lighting.timelineTarget(atSeconds: map.seconds(at: playhead), tempoMap: map, songLook: { _ in look }) {
+            target = timeline
+        } else {
+            target = showTarget ?? lighting.restState
+        }
+        // A fixture patched since the last tick rests until a cue sets it; a removed one is gone.
+        target = target.filter { lighting.fixture($0.key) != nil }
+        for (id, values) in lighting.restState where target[id] == nil { target[id] = values }
+        showTarget = target
+        let state = showGuard.next(towards: blackout ? RigFlashGuard.dark(target) : target, after: elapsed)
+        let universes = lighting.universes(state)
+        guard universes != lastUniverses || isDue(lastLightSent, now: now, after: Self.lightRestateSeconds) else { return }
+        for universe in universes.keys.sorted() {
+            guard let channels = universes[universe] else { continue }
+            var sequence = showSequences[universe] ?? (0, 0)
+            if let sender = senders[.artNet] {
+                sequence.artNet = ArtDMXPacket.nextSequence(sequence.artNet)
+                sender.send(ArtDMXPacket.packet(universe: artNetAddress(of: universe), sequence: sequence.artNet, channels: channels))
+            }
+            if let sender = senders[.sacn] {
+                sequence.sacn = E131Packet.nextSequence(sequence.sacn)
+                sender.send(E131Packet.packet(universe: sacnAddress(of: universe), sequence: sequence.sacn, cid: cid, channels: channels))
+            }
+            showSequences[universe] = sequence
+        }
+        lastUniverses = universes
         lastLightSent = now
     }
 

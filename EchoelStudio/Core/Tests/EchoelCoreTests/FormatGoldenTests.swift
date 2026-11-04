@@ -618,6 +618,39 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with a light show (CUES, 2026-11-05): an optional song field added inside format 4,
+    /// so an earlier format-4 build opens the file and shows no rig.
+    private let formatFourLighting = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Lit",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "lighting": {
+        "fixtures": [
+          { "id": "F1C70000-0000-4000-8000-000000000001", "name": "Head 1", "profile": "movingHead",
+            "universe": 1, "address": 1 },
+          { "id": "F1C70000-0000-4000-8000-000000000002", "name": "Strobe 1", "profile": "strobe",
+            "universe": 1, "address": 9 },
+          { "id": "F1C70000-0000-4000-8000-000000000003", "name": "Haze", "profile": "fogMachine",
+            "universe": 2, "address": 1 }
+        ],
+        "cues": [
+          { "id": "C0E00000-0000-4000-8000-000000000001", "name": "Open", "fade": 2,
+            "values": [ { "fixture": "F1C70000-0000-4000-8000-000000000001",
+                          "values": { "pan": 0.25, "tilt": 0.75, "dimmer": 1, "red": 1, "laterKey": 0.5 } } ] },
+          { "id": "C0E00000-0000-4000-8000-000000000002", "name": "Song", "fade": 0, "look": "song", "values": [] }
+        ],
+        "placements": [ { "tick": 0, "cue": "C0E00000-0000-4000-8000-000000000001" },
+                        { "tick": 7680, "cue": "C0E00000-0000-4000-8000-000000000002" } ]
+      },
+      "scenes": [],
+      "tracks": [],
+      "modRoutes": []
+    }
+    """.utf8)
+
     /// Format 4 with a take folder (Recovery 4, 2026-11-04): an optional track field added inside
     /// format 4, so an earlier format-4 build opens the file and plays both takes as plain regions.
     private let formatFourTakes = Data("""
@@ -692,7 +725,7 @@ final class FormatGoldenTests: XCTestCase {
 
     func testEveryGoldenFileSurvivesARoundTrip() throws {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
-                     formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes,
+                     formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes, formatFourLighting,
                      formatFourTexture, formatFourBake, formatFourMotion, formatFourGrade] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
@@ -1153,6 +1186,41 @@ final class FormatGoldenTests: XCTestCase {
         let text = String(decoding: formatFourMarkers, as: UTF8.self)
         for (from, to) in [("\"tick\": 15360", "\"tick\": 0"), ("\"tick\": 15360", "\"tick\": 99999999999"),
                            ("\"name\": \"Drop\"", "\"name\": \"  \""), ("\"tick\": 0,", "\"tick\": -1,")] {
+            let broken = text.replacingOccurrences(of: from, with: to)
+            XCTAssertNotEqual(broken, text, "the replacement must land")
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), "\(to)")
+        }
+    }
+
+    func testASongOpensWithItsLightShowAndAnOlderOneWithNone() throws {
+        let project = try ProjectCodec.decode(formatFourLighting)
+        let lighting = project.lighting
+        XCTAssertEqual(lighting.fixtures.map(\.profile), [.movingHead, .strobe, nil])
+        XCTAssertEqual(lighting.fixtures[2].profileName, "fogMachine", "a profile this build does not know is kept")
+        let head = lighting.fixtures[0].id
+        XCTAssertEqual(lighting.cues[0].value(.pan, of: head), 0.25)
+        XCTAssertEqual(lighting.cues[0].values[0].values["laterKey"], 0.5, "an attribute this build does not know is kept")
+        XCTAssertTrue(lighting.cues[1].followsSong)
+        XCTAssertEqual(lighting.placements.map(\.tick), [0, 7_680])
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let stored = try XCTUnwrap(root["lighting"] as? [String: Any])
+        XCTAssertEqual(Set(stored.keys), ["fixtures", "cues", "placements"])
+        XCTAssertEqual((stored["fixtures"] as? [[String: Any]])?[2]["profile"] as? String, "fogMachine")
+        XCTAssertNil((stored["cues"] as? [[String: Any]])?[0]["look"], "a snapshot cue writes no look")
+        for data in [earliest, current, formatTwo, formatTwoMedia, formatThree, formatFour, formatFourMarkers] {
+            let older = try ProjectCodec.decode(data)
+            XCTAssertTrue(older.lighting.isEmpty, "an older song has no light show")
+            let written = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(older)) as? [String: Any])
+            XCTAssertNil(written["lighting"], "a song without a light show writes no key")
+        }
+        // Overlapping fixtures, a channel past 512, a value past 1, a placement naming no cue, a
+        // cue naming no fixture, or placements out of order refuse the song.
+        let text = String(decoding: formatFourLighting, as: UTF8.self)
+        for (from, to) in [("\"address\": 9", "\"address\": 8"), ("\"address\": 9", "\"address\": 512"),
+                           ("\"red\": 1", "\"red\": 1.5"), ("\"tick\": 7680", "\"tick\": 0"),
+                           ("\"cue\": \"C0E00000-0000-4000-8000-000000000002\"", "\"cue\": \"C0E00000-0000-4000-8000-000000000009\""),
+                           ("\"fixture\": \"F1C70000-0000-4000-8000-000000000001\"", "\"fixture\": \"F1C70000-0000-4000-8000-000000000009\""),
+                           ("\"fade\": 2", "\"fade\": -1"), ("\"universe\": 2", "\"universe\": 65")] {
             let broken = text.replacingOccurrences(of: from, with: to)
             XCTAssertNotEqual(broken, text, "the replacement must land")
             XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), "\(to)")

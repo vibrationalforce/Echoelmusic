@@ -69,6 +69,7 @@ Every audio and video file is a plain file you can take out of `Media/`.
 | `timeSignature` | `{numerator, denominator}` | required; denominator a power of two ≤ 32 |
 | `timeSignatureChanges` | `[{tick, numerator, denominator}]` | optional; ticks rising, after 0, each on a bar line (below) |
 | `markers` | `[{tick, name}]` | optional; ticks rising from 0, each once, at most 1 000 (below) |
+| `lighting` | light show | optional; fixtures, cues and where cues start (below) |
 | `context` | musical context | optional; absent = C, chromatic, 12 equal at 440 Hz, straight |
 | `master` | mixer strip | required |
 | `masterInserts` | `[insert]` | optional; effects after the master fader |
@@ -273,6 +274,35 @@ writes the key only when the song has a marker, so a song without one is stored 
 and an earlier format-4 build opens a song with markers and shows none. A MIDI export writes each
 as a Marker event (FF 06) in the first track; a WAV or stem export as a cue point (`cue ` chunk)
 with its name as a label (`LIST`/`adtl`/`labl`), at its frame from the song's start.
+
+**Light show:** `{fixtures, cues, placements}` — added inside format 4 (CUES, 2026-11-05); Echoel
+writes the key only when the song has a fixture or a cue, so a song without one is stored exactly
+as before, and an earlier format-4 build opens it and shows no rig.
+
+- `fixtures` — at most 512 `{id, name, profile, universe, address}`. `profile` one of `dimmer`
+  (intensity), `rgb`, `rgbw`, `rgbaUV` (red, green, blue, amber, UV), `movingHead` (pan coarse,
+  pan fine, tilt coarse, tilt fine, intensity, red, green, blue) or `strobe` (intensity, then the
+  fixture's own strobe rate, which Echoel always sends as 0); the channels follow `address`
+  (1 … 512) in that order inside `universe` (1 … 64, counted from the universe set in the app's
+  Connections). A profile a reader does not know is kept by name and saved back; that fixture
+  stays dark and holds only its `address`. Two fixtures of one universe whose channels overlap,
+  or a fixture that runs past channel 512, refuse the song.
+- `cues` — at most 1 000 `{id, name, fade, look, values}`, in list order (the order GO walks).
+  `fade` the seconds a cue takes to arrive from what was showing, 0 … 600; `look` optional —
+  `song` lights the cue from the song (the key's colour, the level, the beat) and keeps its
+  positions; absent, or a name a reader does not know, plays the snapshot. `values` is
+  `[{fixture, values}]`, one per fixture at most: a fixture's id and its values by attribute name —
+  `dimmer` `red` `green` `blue` `white` `amber` `uv` `pan` `tilt` — each 0 … 1 of the channel's
+  travel; pan and tilt travel on 16 bits. An attribute a reader does not know is kept. A value the
+  cue does not set rests: dark, a head at its centre. A cue naming a fixture the rig lacks, a
+  value outside 0 … 1 or a fade outside its range refuses the song.
+- `placements` — at most 1 000 `{tick, cue}`, ticks rising from 0, each once: the cue starts there
+  while the song plays and fades in linearly from what the one before it showed at that moment
+  (pan and tilt on their 16-bit grid). A placement naming no cue refuses the song.
+
+How fast the light may change is the player's and is not stored: every light-making channel
+follows its target no faster than three flashes a second allow, so a cut or a GO is slowed, never
+a flash.
 
 **Mapping:** `{control: {channel, number}, target}` — `channel` 0 … 15 (shown as 1 … 16),
 `number` 0 … 127, `target` a parameter address. One mapping per control. The controller's travel

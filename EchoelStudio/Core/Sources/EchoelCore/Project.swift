@@ -34,6 +34,13 @@ public struct Project: Codable, Equatable, Sendable {
     }
     /// Absent — nil — while there are none, so a song without markers is stored exactly as before.
     private var storedMarkers: [Marker]?
+    /// The light show: fixtures, cues and where cues start (CUES, optional inside format 4).
+    public var lighting: Lighting {
+        get { storedLighting ?? Lighting() }
+        set { storedLighting = newValue.isEmpty ? nil : newValue }
+    }
+    /// Absent — nil — while the song has no rig and no cue, so it is stored exactly as before.
+    private var storedLighting: Lighting?
     /// Key, scale, tone system, concert pitch and swing — the frame the musician sets.
     public var context: MusicalContext
     public var tracks: [Track]
@@ -92,6 +99,7 @@ public struct Project: Codable, Equatable, Sendable {
         case masterInserts, context, modRoutes
         case storedSignatureChanges = "timeSignatureChanges"
         case storedMarkers = "markers"
+        case storedLighting = "lighting"
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -111,6 +119,8 @@ public struct Project: Codable, Equatable, Sendable {
         storedSignatureChanges = signatureChanges.isEmpty ? nil : signatureChanges
         let markers = try c.decodeIfPresent([Marker].self, forKey: .storedMarkers) ?? []
         storedMarkers = markers.isEmpty ? nil : markers
+        let lighting = try c.decodeIfPresent(Lighting.self, forKey: .storedLighting) ?? Lighting()
+        storedLighting = lighting.isEmpty ? nil : lighting
         tracks = try c.decode([Track].self, forKey: .tracks)
         scenes = try c.decode([Scene].self, forKey: .scenes)
         master = try c.decode(MixerStrip.self, forKey: .master)

@@ -61,6 +61,8 @@ extension Command {
         case addMarker, renameMarker, moveMarker, removeMarker
         case setInstrumentSound
         case foldTake, compTake, removeTakeGroup
+        case addFixture, patchFixture, renameFixture, removeFixture
+        case addCue, setCue, removeCue, placeCue, removeCuePlacement
     }
 
     public var kind: Kind {
@@ -156,6 +158,15 @@ extension Command {
         case .foldTake: .foldTake
         case .compTake: .compTake
         case .removeTakeGroup: .removeTakeGroup
+        case .addFixture: .addFixture
+        case .patchFixture: .patchFixture
+        case .renameFixture: .renameFixture
+        case .removeFixture: .removeFixture
+        case .addCue: .addCue
+        case .setCue: .setCue
+        case .removeCue: .removeCue
+        case .placeCue: .placeCue
+        case .removeCuePlacement: .removeCuePlacement
         }
     }
 }
@@ -631,6 +642,44 @@ public enum CommandCatalog {
             return CommandSpec(name: "take.unfold", title: "Unfold Takes",
                                summary: "Dissolves a take folder: its takes stay on the track as plain regions or clips, and all of them sound.",
                                parameters: [P("track", .trackID, "The track."), P("group", .string, "The take folder.")])
+        case .addFixture:
+            return CommandSpec(name: "light.fixture.add", title: "Add Fixture",
+                               summary: "Patches a light fixture of a generic profile (dimmer, RGB, RGBW, RGBA+UV, moving head, strobe) at a DMX universe and first channel. A patch whose channels overlap another fixture's is refused.",
+                               parameters: [P("fixture", .string, "The fixture: id, name, profile, universe 1…64 and address 1…512.")])
+        case .patchFixture:
+            return CommandSpec(name: "light.fixture.patch", title: "Patch Fixture",
+                               summary: "Moves a fixture to another universe and first channel. Refused where its channels would overlap another fixture's.",
+                               parameters: [P("fixture", .string, "The fixture's identifier."), P("universe", .integer, "Universe 1…64."),
+                                            P("address", .integer, "First DMX channel 1…512.")])
+        case .renameFixture:
+            return CommandSpec(name: "light.fixture.rename", title: "Rename Fixture",
+                               summary: "Gives a fixture a new name.",
+                               parameters: [P("fixture", .string, "The fixture's identifier."), P("name", .string, "The new name.")])
+        case .removeFixture:
+            return CommandSpec(name: "light.fixture.remove", title: "Remove Fixture",
+                               summary: "Removes a fixture from the rig and its values from every cue.",
+                               parameters: [P("fixture", .string, "The fixture's identifier.")])
+        case .addCue:
+            return CommandSpec(name: "light.cue.add", title: "Add Cue",
+                               summary: "Adds a light cue: a snapshot of fixture values, or the song's own look, reached over a fade time.",
+                               parameters: [P("cue", .string, "The cue: id, name, fade in seconds, look and values."),
+                                            P("index", .integer, "Where in the cue list; omit for the end.", optional: true)])
+        case .setCue:
+            return CommandSpec(name: "light.cue.set", title: "Edit Cue",
+                               summary: "Replaces a cue's name, fade time, look and fixture values.",
+                               parameters: [P("cue", .string, "The cue with its id.")])
+        case .removeCue:
+            return CommandSpec(name: "light.cue.remove", title: "Delete Cue",
+                               summary: "Removes a cue and every place on the timeline where it starts.",
+                               parameters: [P("cue", .string, "The cue's identifier.")])
+        case .placeCue:
+            return CommandSpec(name: "light.cue.place", title: "Place Cue",
+                               summary: "Starts a cue at a position on the timeline; it fades in from what was showing. One cue per position.",
+                               parameters: [P("cue", .string, "The cue's identifier."), P("tick", .ticks, "Position in ticks, from 0.")])
+        case .removeCuePlacement:
+            return CommandSpec(name: "light.cue.unplace", title: "Remove Cue From Timeline",
+                               summary: "Removes the cue that starts at a position on the timeline; the cue stays in the list.",
+                               parameters: [P("tick", .ticks, "The position in ticks.")])
         }
     }
 }

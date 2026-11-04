@@ -66,6 +66,34 @@ final class StoredNamesTests: XCTestCase {
         } else {
             XCTFail("a colour correction encodes")
         }
+        // A light show stores its fixture profiles, the attributes of a cue's values and a cue's
+        // look by name, and every field by these keys (CUES); a new profile or attribute goes at the end.
+        XCTAssertEqual(FixtureProfile.allCases.map(\.rawValue), ["dimmer", "rgb", "rgbw", "rgbaUV", "movingHead", "strobe"])
+        XCTAssertEqual(LightAttribute.allCases.map(\.rawValue),
+                       ["dimmer", "red", "green", "blue", "white", "amber", "uv", "pan", "tilt"])
+        XCTAssertEqual(LightCue.songLook, "song")
+        let rigFixture = PatchedFixture(name: "Wash", profile: .rgb, universe: 1, address: 1)
+        let light = Lighting(fixtures: [rigFixture],
+                             cues: [LightCue(name: "Cue 1", fade: 1, look: LightCue.songLook,
+                                             values: [CueFixtureValues(fixture: rigFixture.id, values: ["red": 1])])],
+                             placements: [])
+        if let data = try? JSONEncoder().encode(light),
+           let stored = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            XCTAssertEqual(Set(stored.keys), ["fixtures", "cues", "placements"])
+            XCTAssertEqual(Set(((stored["fixtures"] as? [[String: Any]])?.first ?? [:]).keys),
+                           ["id", "name", "profile", "universe", "address"])
+            let cue = (stored["cues"] as? [[String: Any]])?.first ?? [:]
+            XCTAssertEqual(Set(cue.keys), ["id", "name", "fade", "look", "values"])
+            XCTAssertEqual(Set(((cue["values"] as? [[String: Any]])?.first ?? [:]).keys), ["fixture", "values"])
+        } else {
+            XCTFail("a light show encodes")
+        }
+        if let data = try? JSONEncoder().encode(CuePlacement(tick: 0, cue: CueID())),
+           let stored = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            XCTAssertEqual(Set(stored.keys), ["tick", "cue"])
+        } else {
+            XCTFail("a placed cue encodes")
+        }
         // A track's arpeggiator stores its rate and order by name; absent is no arpeggiator (EDIT-2).
         XCTAssertEqual(ArpRate.allCases.map(\.rawValue), ["quarter", "eighth", "sixteenth", "thirtySecond", "quarterTriplet",
                                                          "eighthTriplet", "sixteenthTriplet", "thirtySecondTriplet"])
