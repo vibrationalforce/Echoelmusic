@@ -2,7 +2,7 @@ import Foundation
 
 /// The arrangement's decisions as pure functions — bar snapping, hit-testing, song length and
 /// which command a tap or a drag becomes — so the arrange view stays thin and this is tested
-/// directly. Placements move in whole bars; finer placement is a later grid option.
+/// directly. Placements move, trim and split on the shared magnet (`SnapGrid`), stepless when it is off.
 public enum Arranging {
     /// `tick` rounded to the nearest bar line; never before bar 1.
     public static func nearestBar(_ tick: Tick, signature: TimeSignature) -> Tick {
@@ -90,7 +90,14 @@ public enum Arranging {
     }
 
     public static func moved(_ region: AudioRegion, in track: Track, byTicks delta: Tick, meter: MeterMap) -> Command? {
-        let target = nearestBar(region.start + delta, meter: meter)
+        moved(region, in: track, byTicks: delta, meter: meter, snap: .bar)
+    }
+
+    /// The command for a region dragged by `delta` ticks onto the nearest line of the magnet
+    /// (`SnapGrid`); with the magnet off, exactly where it was dropped.
+    public static func moved(_ region: AudioRegion, in track: Track, byTicks delta: Tick, meter: MeterMap,
+                             snap: SnapGrid) -> Command? {
+        let target = snap.nearest(region.start + delta, meter: meter)
         guard target != region.start else { return nil }
         return .moveRegion(track: track.id, region.id, start: target)
     }
@@ -129,7 +136,15 @@ public enum Arranging {
     }
 
     public static func moved(_ placement: Placement, in track: Track, byTicks delta: Tick, meter: MeterMap) -> Command? {
-        let target = nearestBar(placement.start + delta, meter: meter)
+        moved(placement, in: track, byTicks: delta, meter: meter, snap: .bar)
+    }
+
+    /// The command for a placement dragged by `delta` ticks onto the nearest line of the magnet
+    /// (`SnapGrid`); with the magnet off, exactly where it was dropped. Nil when it lands where
+    /// it started.
+    public static func moved(_ placement: Placement, in track: Track, byTicks delta: Tick, meter: MeterMap,
+                             snap: SnapGrid) -> Command? {
+        let target = snap.nearest(placement.start + delta, meter: meter)
         guard target != placement.start else { return nil }
         return .movePlacement(track: track.id, placement.id, start: target)
     }
@@ -142,16 +157,19 @@ public enum Arranging {
     /// song; dragged before the file's first frame it stops there. Nil when nothing changes.
     public static func trimmed(_ region: AudioRegion, edge: Edge, byTicks delta: Tick,
                                in track: Track, project: Project) -> [Command]? {
+        trimmed(region, edge: edge, byTicks: delta, in: track, project: project, snap: .beat)
+    }
+
+    /// The same with the edge on the nearest line of the magnet (`SnapGrid`); with it off, to
+    /// the tick.
+    public static func trimmed(_ region: AudioRegion, edge: Edge, byTicks delta: Tick,
+                               in track: Track, project: Project, snap: SnapGrid) -> [Command]? {
         guard let file = project.mediaFile(region.media), file.sampleRate > 0, file.sampleRate.isFinite,
               let stop = end(of: region, in: project) else { return nil }
         let meter = project.meterMap
         let map = project.tempoMap
-        // The nearest beat of the bar the edge is in.
-        func snapped(_ tick: Tick) -> Tick {
-            let clamped = Swift.min(Swift.max(0, tick), MusicalTime.maximumTick)
-            let start = meter.beatStart(at: clamped), beat = meter.ticksPerBeat(at: clamped)
-            return clamped - start >= (beat + 1) / 2 ? start + beat : start
-        }
+        // The nearest line of the magnet in the bar the edge is in.
+        func snapped(_ tick: Tick) -> Tick { snap.nearest(tick, meter: meter) }
         func frames(from: Tick, to: Tick) -> Int {
             Int(((map.seconds(at: to) - map.seconds(at: from)) * file.sampleRate).rounded())
         }
@@ -199,6 +217,12 @@ public enum Arranging {
 
     /// The command that cuts the placement at `tick` — the playhead, read when the musician asks.
     /// Nil when the tick is not strictly inside it.
+    /// The cut at the magnet's line nearest `tick` (`SnapGrid`); with it off, at `tick` itself.
+    public static func split(_ placement: Placement, in track: Track, at tick: Tick, meter: MeterMap,
+                             snap: SnapGrid) -> Command? {
+        split(placement, in: track, at: snap.nearest(tick, meter: meter))
+    }
+
     public static func split(_ placement: Placement, in track: Track, at tick: Tick) -> Command? {
         guard let stop = Self.end(of: placement, in: track), tick > placement.start, tick < stop else { return nil }
         return .splitPlacement(track: track.id, placement.id, at: tick, head: ClipID(), tail: ClipID(), placement: PlacementID())

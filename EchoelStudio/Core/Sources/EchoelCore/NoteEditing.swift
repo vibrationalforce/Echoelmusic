@@ -20,6 +20,17 @@ public enum NoteEditing {
         }
     }
 
+    /// How long a note written with the magnet off is, and the step its actions and speech count
+    /// in: a sixteenth.
+    public static let freeNoteLength: Tick = MusicalTime.ticksPerQuarter / 4
+
+    /// The step the editor's actions and speech count in for a grid of `grid` ticks: the grid when
+    /// it is a note value VoiceOver can name, else a sixteenth (the magnet off, a bar, a beat of
+    /// an odd meter) — so nothing is ever said in ticks.
+    public static func spokenStep(for grid: Tick) -> Tick {
+        noteValues.contains { $0.ticks == grid } ? grid : freeNoteLength
+    }
+
     /// `tick` rounded down to the grid; negative ticks snap to 0.
     public static func snap(_ tick: Tick, to grid: Tick) -> Tick {
         guard grid > 0 else { return Swift.max(0, tick) }
@@ -39,7 +50,7 @@ public enum NoteEditing {
             return .removeNotes(clip.id, [hit.id])
         }
         let start = snap(tick, to: grid)
-        let length = Swift.max(1, Swift.min(grid, clip.length - start))
+        let length = Swift.max(1, Swift.min(grid > 0 ? grid : freeNoteLength, clip.length - start))
         return .addNotes(clip.id, [Note(pitch: pitch, velocity: velocity, start: start, length: length)])
     }
 
@@ -216,6 +227,7 @@ public enum NoteEditing {
             (quarter / 8, "thirty-second", "thirty-seconds"),
             (quarter / 12, "thirty-second triplet", "thirty-second triplets"),
             (quarter / 16, "sixty-fourth", "sixty-fourths"),
+            (quarter / 32, "hundred-twenty-eighth", "hundred-twenty-eighths"),
         ]
     }()
 
