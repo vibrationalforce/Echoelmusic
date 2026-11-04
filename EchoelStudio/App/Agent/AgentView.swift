@@ -13,6 +13,8 @@ struct AgentView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                disclosure
+                Divider().overlay(Theme.Color.border)
                 conversation
                 Divider().overlay(Theme.Color.border)
                 inputRow
@@ -27,6 +29,25 @@ struct AgentView: View {
             }
         }
         .preferredColorScheme(.dark)
+    }
+
+    /// Fixed, always visible, outside the scrolling conversation: the replies here are written by
+    /// a model, and the musician is told so before reading any of them (EU AI Act Art. 50 — people
+    /// interacting with an AI system are informed of it). Which model, and that it stays on the device.
+    private var disclosure: some View {
+        HStack(spacing: Theme.Space.s) {
+            Image(systemName: "cpu").accessibilityHidden(true)
+            Text("On-device AI (Apple Foundation Models)")
+            Spacer(minLength: 0)
+        }
+        .font(Theme.Font.caption)
+        .foregroundStyle(Theme.Color.textSecondary)
+        .padding(.horizontal, Theme.Space.l)
+        .padding(.vertical, Theme.Space.s)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Color.surface)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
     }
 
     private var conversation: some View {

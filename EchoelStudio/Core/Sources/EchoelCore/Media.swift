@@ -95,6 +95,9 @@ public struct MediaFile: Codable, Equatable, Sendable, Identifiable {
     /// A relative path with no parent steps and no empty segment, inside `Media/`.
     public static func isSafePath(_ path: String) -> Bool {
         guard !path.isEmpty, !path.hasPrefix("/"), !path.contains("\\") else { return false }
+        // A NUL or another control character ends or bends a path in the C calls below Foundation;
+        // Echoel writes `Media/<uuid>.<ext>`, so no song of ours carries one (team SAFE 2026-11-04).
+        guard !path.unicodeScalars.contains(where: { $0.value < 0x20 || $0.value == 0x7F }) else { return false }
         let parts = path.split(separator: "/", omittingEmptySubsequences: false)
         guard parts.count >= 2, parts.first == Substring(directory) else { return false }
         return parts.allSatisfy { !$0.isEmpty && $0 != "." && $0 != ".." }
@@ -105,9 +108,24 @@ extension MediaFile {
     /// Where the file lives inside the song package at `package`, or nil when the stored path
     /// would leave the package. A song file read from disk was never checked by `media.add`,
     /// so a reader resolves through this, never by appending the path itself.
+    ///
+    /// A crafted package can also hold a symbolic link under `Media/` that points out of it (a path
+    /// check alone cannot see that): no step from the package down to the file may be a link
+    /// (team SAFE 2026-11-04). Steps that do not exist yet — a file about to be imported — pass.
     public func url(in package: URL) -> URL? {
         guard Self.isSafePath(path) else { return nil }
-        return path.split(separator: "/").reduce(package) { $0.appendingPathComponent(String($1)) }
+        var url = package
+        for part in path.split(separator: "/") {
+            url = url.appendingPathComponent(String(part))
+            if Self.isSymbolicLink(url) { return nil }
+        }
+        return url
+    }
+
+    /// Whether `url` itself is a link: only a link has a destination to read. False for a file, a
+    /// folder, and what does not exist.
+    private static func isSymbolicLink(_ url: URL) -> Bool {
+        (try? FileManager.default.destinationOfSymbolicLink(atPath: url.path)) != nil
     }
 }
 

@@ -58,14 +58,14 @@ _Last reviewed: 2026-09-12._
 - Echoel Studio (`EchoelStudio/project.yml`) links ONE outside package since 2026-10-31 (wave W14,
   live streaming), pinned exactly, used only under `EchoelStudio/App/Streaming/`, never by the
   Audio Unit extension:
-  - **HaishinKit.swift 2.2.5** (HaishinKit, RTMPHaishinKit, SRTHaishinKit) — BSD-3-Clause,
+  - **HaishinKit.swift 2.2.5** (products HaishinKit and RTMPHaishinKit) — BSD-3-Clause,
     https://github.com/HaishinKit/HaishinKit.swift
-  - **Logboard** (pulled in by HaishinKit) — BSD-3-Clause.
-  - **libsrt** (binary xcframework pulled in by SRTHaishinKit, Haivision SRT library, unmodified) —
-    MPL-2.0; source: https://github.com/Haivision/srt
-  - **OpenSSL 3.3.2** (linked statically inside that libsrt binary — measured 2026-11-04 with
-    `strings libsrt.a`; the xcframework's build script merges libcrypto and libssl) — Apache-2.0;
-    shown in full in About → Acknowledgments since 2026-11-04. Its encryption is never switched on.
+  - **Logboard 2.6.0** (pulled in by HaishinKit) — BSD-3-Clause.
+  - ⛔ **libsrt and OpenSSL 3.3.2 are no longer linked (2026-11-04, team SAFE).** They came with
+    the SRTHaishinKit product (OpenSSL linked statically inside the libsrt binary, measured with
+    `strings libsrt.a`). SRT left Studio v1 so that no OpenSSL ships and
+    `ITSAppUsesNonExemptEncryption` NO stays true without a refusal rule; both entries left About →
+    Acknowledgments in the same commit.
   - Their full licence texts and copyright lines must be shown in the in-app acknowledgments before
     a build with streaming reaches the App Store (action item below).
 - The earlier app (`Package.swift`, `Sources/`) links none: `dependencies: []`.
@@ -98,10 +98,11 @@ The Echoel source is MIT-licensed — see `LICENSE` (© 2024–2025 Echoelmusic)
       the same attention as one that understates it.
 - [x] **Echoel Studio, 2026-10-31 (team DOORS):** About → Acknowledgments shows the full texts
       offline (`EchoelStudio/App/Views/Acknowledgments.swift`): HaishinKit 2.2.5 and Logboard
-      2.6.0 (BSD-3-Clause, their LICENSE.md at those tags), libsrt 1.5.4 (MPL-2.0 notice,
-      copyright line, source URL) and Atkinson Hyperlegible (OFL 1.1). Device check pending.
+      2.6.0 (BSD-3-Clause, their LICENSE.md at those tags) and Atkinson Hyperlegible (OFL 1.1);
+      libsrt and OpenSSL left with SRT on 2026-11-04. Device check pending.
       The earlier app (`Sources/`) still has no such screen.
-- [x] Export compliance, decided 2026-10-31: an SRT address with `passphrase` or `pbkeylen` is
-      refused (`StreamTarget.AddressError.srtEncryption`, tested in `StreamingTests`), so libsrt's
-      own encryption is never switched on and `ITSAppUsesNonExemptEncryption` NO stays true.
+- [x] Export compliance, decided 2026-10-31 and tightened 2026-11-04: SRT (libsrt with OpenSSL)
+      is not linked at all; an srt:// address or a stored Custom SRT destination is refused
+      (`StreamTarget.AddressError.srtRemoved`, tested in `StreamingTests`). Encryption in transit is
+      RTMPS via iOS, so `ITSAppUsesNonExemptEncryption` NO stays true.
 - [ ] Counsel review before release.

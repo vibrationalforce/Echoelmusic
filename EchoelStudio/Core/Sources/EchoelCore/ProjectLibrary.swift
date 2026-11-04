@@ -121,7 +121,17 @@ public struct ProjectLibrary: Sendable {
     public func read(_ url: URL) throws -> Project {
         let document = url.appendingPathComponent(Self.documentName)
         guard FileManager.default.fileExists(atPath: document.path) else { throw LibraryError.notAPackage(url) }
-        return try ProjectCodec.decode(Data(contentsOf: document))
+        return try ProjectCodec.decode(Self.boundedContents(of: document))
+    }
+
+    /// A document's bytes, refused by its size on disk before any is read when it is larger than a
+    /// song document can be (`ProjectCodec.maximumDocumentBytes`).
+    static func boundedContents(of document: URL) throws -> Data {
+        if let size = try? document.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+           size > ProjectCodec.maximumDocumentBytes {
+            throw ProjectCodec.DecodeError.tooLarge(bytes: size)
+        }
+        return try Data(contentsOf: document)
     }
 
     /// A song read by `readRecovering`, and whether it came from the copy kept one save back.
@@ -142,7 +152,7 @@ public struct ProjectLibrary: Sendable {
             if case ProjectCodec.DecodeError.newerFormat = error { throw error }
             if case LibraryError.notAPackage = error { throw error }
             let previous = url.appendingPathComponent(Self.previousDocumentName)
-            guard let data = try? Data(contentsOf: previous), let project = try? ProjectCodec.decode(data) else { throw error }
+            guard let data = try? Self.boundedContents(of: previous), let project = try? ProjectCodec.decode(data) else { throw error }
             return Recovered(project: project, fromPrevious: true)
         }
     }

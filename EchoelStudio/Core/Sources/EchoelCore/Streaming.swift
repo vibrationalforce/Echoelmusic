@@ -9,8 +9,11 @@ import Foundation
 /// no encoder can write it into a song, a preference or a log: the app keeps it in the keychain
 /// and hands it in only to build the one address it is sent to (`StreamTarget.publishURL`).
 
-/// How a stream travels. RTMP and RTMPS (RTMP over TLS) are what the platforms ingest; SRT is
-/// the open low-latency transport (Haivision, MPL-2.0) relays and self-hosted servers take.
+/// How a stream travels. RTMP and RTMPS (RTMP over TLS, which iOS encrypts) are what the
+/// platforms ingest. `srt` is no longer a transport this build can send (removed 2026-11-04: the
+/// SRT library brought OpenSSL into the binary, and the app declares no non-exempt encryption);
+/// the case stays only so an address or a stored destination that names it is recognised and
+/// answered with `AddressError.srtRemoved` instead of a generic "wrong scheme".
 public enum StreamTransport: String, Codable, Sendable, CaseIterable {
     case rtmp
     case rtmps
@@ -80,7 +83,15 @@ public enum StreamPlatform: String, Codable, Sendable, CaseIterable {
     case owncast
     case peertube
     case customRTMP
+    /// Removed 2026-11-04 (no SRT in Studio v1). Kept so a destination the device stored earlier
+    /// still decodes — it shows as unsupported and can be deleted — and never offered again.
     case customSRT
+
+    /// The presets a new destination can start from: every platform but the removed SRT one.
+    public static var offered: [StreamPlatform] { allCases.filter(\.isOffered) }
+
+    /// Whether this build can stream to the preset at all.
+    public var isOffered: Bool { self != .customSRT }
 
     public var title: String {
         switch self {
@@ -98,12 +109,12 @@ public enum StreamPlatform: String, Codable, Sendable, CaseIterable {
         case .owncast: "Owncast"
         case .peertube: "PeerTube"
         case .customRTMP: "Custom RTMP"
-        case .customSRT: "Custom SRT"
+        case .customSRT: "Custom SRT (removed)"
         }
     }
 
     /// The transport the preset starts with. A destination may change RTMP to RTMPS and back by
-    /// its server's scheme; SRT is only for `customSRT`.
+    /// its server's scheme. `customSRT` names the removed transport so it can say so.
     public var transport: StreamTransport {
         switch self {
         case .youtube, .youtubeShorts, .facebook, .instagram, .kick, .x, .linkedin, .vimeo: .rtmps
@@ -168,12 +179,12 @@ public enum StreamPlatform: String, Codable, Sendable, CaseIterable {
         case .owncast: "Your Owncast server: rtmp://your-server/live and the stream key from its admin page."
         case .peertube: "PeerTube → Go live: the live RTMP URL and the live stream key."
         case .customRTMP: "Any RTMP server, for example your own MediaMTX relay (open source, MIT): rtmp://host/app."
-        case .customSRT: "Any SRT listener, for example your own MediaMTX relay: srt://host:port; the key becomes the streamid."
+        case .customSRT: "SRT is not part of this version. Delete this destination and add Custom RTMP (rtmp:// or rtmps://) instead."
         }
     }
 
     /// Whether the address needs a key on top of the server. The custom ones may carry the
-    /// whole address in the server field (a relay path, an SRT streamid in the query).
+    /// whole address in the server field (a relay path).
     public var needsKey: Bool {
         switch self {
         case .customRTMP, .customSRT: false
@@ -211,31 +222,31 @@ public struct StreamTarget: Codable, Hashable, Identifiable, Sendable {
     public enum AddressError: Error, Equatable, Sendable {
         case noServer
         case notAnAddress
-        /// The scheme is not one this destination's transport speaks (http, or rtmp on an SRT target).
+        /// The scheme is not one this destination's transport speaks (http, ftp, …).
         case wrongScheme(String)
         case noHost
         case noKey
-        /// A key carries a character its address cannot carry (a space, a line break, or a `#`
-        /// in RTMP / an `&` in SRT, which the stack reads as the end of the key).
+        /// A key carries a character its address cannot carry (a space, a line break, or a `#`,
+        /// which the stack reads as the end of the key).
         case badKey
         /// An RTMP address needs an application and a stream name: rtmp://host/app/name.
         case noStreamName
-        /// An SRT address asks for SRT's own encryption (`passphrase` or `pbkeylen` in its query).
-        /// libsrt would encrypt with its own code, which this build does not ship to do: the app
-        /// declares no non-exempt encryption (`ITSAppUsesNonExemptEncryption` is NO). An encrypted
-        /// stream goes over RTMPS, which iOS encrypts.
-        case srtEncryption
+        /// SRT was removed from this build (2026-11-04): an srt:// address, or a destination stored
+        /// as Custom SRT by an earlier build, is refused before anything connects. The library
+        /// would have brought its own encryption (OpenSSL) while the app declares none
+        /// (`ITSAppUsesNonExemptEncryption` is NO). An encrypted stream goes over RTMPS.
+        case srtRemoved
 
         public var explanation: String {
             switch self {
             case .noServer: "Add the server address."
             case .notAnAddress: "The server is not an address."
-            case .wrongScheme(let scheme): "\(scheme.isEmpty ? "No" : "“\(scheme)”") is not a stream address — use rtmp://, rtmps:// or srt://."
+            case .wrongScheme(let scheme): "\(scheme.isEmpty ? "No" : "“\(scheme)”") is not a stream address — use rtmp:// or rtmps://."
             case .noHost: "The server address has no host."
             case .noKey: "Add the stream key."
             case .badKey: "The stream key has a space or a character it cannot carry."
             case .noStreamName: "An RTMP address needs an app and a stream name: rtmp://host/app/name."
-            case .srtEncryption: "SRT encryption (a passphrase or pbkeylen in the address) is not offered. Remove it, or stream encrypted over RTMPS."
+            case .srtRemoved: "SRT is not supported in this version. Choose Custom RTMP with an rtmp:// or rtmps:// address."
             }
         }
     }
@@ -246,41 +257,33 @@ public struct StreamTarget: Codable, Hashable, Identifiable, Sendable {
         return StreamTransport(rawValue: scheme)
     }
 
-    /// The one address the stream is sent to: the server with the key appended — as the stream
-    /// name (RTMP: `server/key`) or as the SRT `streamid`. Built only to connect, never stored or
+    /// The one address the stream is sent to: the server with the key appended as the stream
+    /// name (`server/key`). Built only to connect, never stored or
     /// logged (`redactedServer` is what a log may say).
     public func publishURL(key: String) throws(AddressError) -> URL {
         let server = Self.trimmed(self.server)
         guard !server.isEmpty else { throw .noServer }
         guard let parts = URLComponents(string: server) else { throw .notAnAddress }
         let scheme = parts.scheme?.lowercased() ?? ""
-        guard let transport = StreamTransport(rawValue: scheme),
-              (platform == .customSRT) == (transport == .srt) else { throw .wrongScheme(scheme) }
+        guard platform.isOffered, scheme != StreamTransport.srt.rawValue else { throw .srtRemoved }
+        guard let transport = StreamTransport(rawValue: scheme), transport.isRTMP else { throw .wrongScheme(scheme) }
         guard let host = parts.host, !host.isEmpty else { throw .noHost }
-        if transport == .srt, Self.asksForEncryption(parts) { throw .srtEncryption }
         let key = Self.trimmed(key)
         if key.isEmpty, platform.needsKey { throw .noKey }
-        let forbidden: Set<Character> = transport.isRTMP ? ["#"] : ["&"]
+        let forbidden: Set<Character> = ["#"]
         let unsafe = key.contains { (character: Character) -> Bool in
             character.isWhitespace || character.isNewline || forbidden.contains(character)
                 || character.unicodeScalars.contains { CharacterSet.controlCharacters.contains($0) }
         }
         guard !unsafe else { throw .badKey }
 
-        let address: String
-        if transport.isRTMP {
-            var base = server
-            while base.hasSuffix("/") { base.removeLast() }
-            address = key.isEmpty ? base : base + "/" + key
-        } else if key.isEmpty {
-            address = server
-        } else {
-            address = server + (parts.query == nil ? "?" : "&") + "streamid=" + key
-        }
+        var base = server
+        while base.hasSuffix("/") { base.removeLast() }
+        let address = key.isEmpty ? base : base + "/" + key
         guard let url = URL(string: address) else { throw .notAnAddress }
         // The stack takes the first path component as the RTMP application and the rest as the
         // stream name; without both, the server refuses the publish after connecting.
-        if transport.isRTMP, url.pathComponents.filter({ $0 != "/" }).count < 2 { throw .noStreamName }
+        if url.pathComponents.filter({ $0 != "/" }).count < 2 { throw .noStreamName }
         return url
     }
 
@@ -289,17 +292,6 @@ public struct StreamTarget: Codable, Hashable, Identifiable, Sendable {
     public var redactedServer: String {
         guard let parts = URLComponents(string: Self.trimmed(server)), let host = parts.host else { return "—" }
         return (parts.scheme.map { $0 + "://" } ?? "") + host
-    }
-
-    /// Whether an SRT address's query turns on SRT's own encryption: a `passphrase` (any value —
-    /// libsrt refuses a short one rather than streaming in the clear) or a `pbkeylen`, by name in
-    /// any case, also where the query is written percent-encoded.
-    private static func asksForEncryption(_ parts: URLComponents) -> Bool {
-        let names = (parts.queryItems ?? []).map { $0.name.lowercased() }
-        let raw = (parts.percentEncodedQuery ?? "").lowercased()
-        let decoded = raw.removingPercentEncoding ?? raw
-        let pairs = decoded.split(separator: "&").map { $0.split(separator: "=", maxSplits: 1).first.map(String.init) ?? "" }
-        return (names + pairs).contains { ["passphrase", "pbkeylen"].contains($0.trimmingCharacters(in: .whitespaces)) }
     }
 
     private static func trimmed(_ text: String) -> String {

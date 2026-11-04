@@ -20,6 +20,11 @@ public enum StarterProject: CaseIterable, Sendable {
         }
     }
 
+    /// Where a new song's master fader starts (team SAFE 2026-11-04): six decibels below unity, a
+    /// moderate listening level for headphones, with headroom — the Four Tracks starter played hard
+    /// at 0 dB peaked at +2.6 dBFS (`OutputGuardTests`). The musician raises it on the Mixer.
+    public static let masterVolumeDB: Double = -6
+
     /// The starter as a new song named "New Song". Every id comes from `newID`; the default makes
     /// fresh ones, and that matters: the engine and the app tell tracks apart by id across a song
     /// switch, so two songs sharing an id would share a voice, an armed track and a plugin.
@@ -44,6 +49,7 @@ public enum StarterProject: CaseIterable, Sendable {
             try Command.placeClip(track: drums, id: PlacementID(newID()), clip: beat, start: 0).apply(to: &project)
             try Command.addScene(id: SceneID(newID()), name: "Scene 1", index: nil).apply(to: &project)
         }
+        try Command.setVolume(.master, db: Self.masterVolumeDB).apply(to: &project)
         return project
     }
 }
