@@ -57,7 +57,9 @@ import XCTest
 final class TheAnchorMissSkipsDoNotGrowTests: XCTestCase {
 
     /// Today's count after the first two rungs. Lower it when you migrate a site; never raise it.
-    private static let ratchet = 75
+    /// ⭐ W-RED (2026-11-01): it had grown to 117 (red, unseen — the merge reads only the build
+    /// step); 47 anchor misses in 21 files now fail (`failedAnchor`, a re-anchored helper) (`FailedAnchor.swift`), 70.
+    private static let ratchet = 70
     /// Lines above a skip in which a `fileExists` check makes it a missing-TREE skip.
     private static let windowLines = 3
     private static let ownFile = "TheAnchorMissSkipsDoNotGrowTests.swift"
