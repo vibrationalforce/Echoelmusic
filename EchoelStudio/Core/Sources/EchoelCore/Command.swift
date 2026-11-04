@@ -31,6 +31,8 @@ public enum Command: Codable, Equatable, Sendable {
     case loadInstrumentPreset(TrackID, name: String)
     case setInstrumentDevice(TrackID, InstrumentDevice)
     case setInstrumentSample(TrackID, MediaID?)
+    /// The pads the sampler's file is cut into (the break slicer); empty plays it across the keys.
+    case setSamplerSlices(TrackID, [SampleSlice])
     /// The audio file the synth's wavetable engine is cut from, or nil for the factory shapes.
     case setInstrumentWavetable(TrackID, WavetableSource?)
     case setInstrumentPlugin(TrackID, PluginComponent?)
@@ -383,7 +385,24 @@ extension Command {
                     throw CommandError.invalidValue(parameter: "media", reason: "a sampler plays an audio file, not a video")
                 }
             }
+            // Slices are frames of one file: another file starts uncut.
+            if project.tracks[t].instrument.sample != media { project.tracks[t].instrument.slices = nil }
             project.tracks[t].instrument.sample = media
+
+        case let .setSamplerSlices(id, slices):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].kind == .instrument else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
+            }
+            if slices.isEmpty {
+                project.tracks[t].instrument.slices = nil
+                break
+            }
+            guard let media = project.tracks[t].instrument.sample, let file = project.mediaFile(media) else {
+                throw CommandError.invalidValue(parameter: "slices", reason: "the sampler has no file to cut")
+            }
+            try SampleSlice.validate(slices, frameCount: file.frameCount)
+            project.tracks[t].instrument.slices = slices
 
         case let .setInstrumentWavetable(id, source):
             let t = try project.requireTrack(id)
@@ -539,7 +558,10 @@ extension Command {
             project.media.remove(at: m)
             // Nothing may point at a file the song no longer has.
             for t in project.tracks.indices {
-                if project.tracks[t].instrument.sample == id { project.tracks[t].instrument.sample = nil }
+                if project.tracks[t].instrument.sample == id {
+                    project.tracks[t].instrument.sample = nil
+                    project.tracks[t].instrument.slices = nil
+                }
                 if project.tracks[t].instrument.wavetable?.media == id { project.tracks[t].instrument.wavetable = nil }
                 project.tracks[t].regions.removeAll { $0.media == id }
                 let gone = Set(project.tracks[t].clips.filter { $0.audio?.media == id }.map(\.id))

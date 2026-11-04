@@ -39,6 +39,7 @@ extension Command {
         case setKeyRoot, setScale, setTuning, setConcertPitch, setSwing
         case addTrack, removeTrack, renameTrack, moveTrack, setTrackColor
         case setInstrumentParameter, loadInstrumentPreset, setInstrumentDevice, setInstrumentSample
+        case setSamplerSlices
         case setInstrumentPlugin, setPluginState
         case addInsert, removeInsert, moveInsert, setInsertBypass, setInsertState
         case addMasterInsert, removeMasterInsert, moveMasterInsert, setMasterInsertBypass, setMasterInsertState
@@ -81,6 +82,7 @@ extension Command {
         case .loadInstrumentPreset: .loadInstrumentPreset
         case .setInstrumentDevice: .setInstrumentDevice
         case .setInstrumentSample: .setInstrumentSample
+        case .setSamplerSlices: .setSamplerSlices
         case .setInstrumentWavetable: .setInstrumentWavetable
         case .setInstrumentPlugin: .setInstrumentPlugin
         case .setPluginState: .setPluginState
@@ -250,6 +252,11 @@ public enum CommandCatalog {
                                summary: "Sets the audio file the sampler of an instrument track plays, or clears it.",
                                parameters: [P("track", .trackID, "An instrument track."),
                                             P("media", .mediaID, "A file in the song's media, or null to clear.")])
+        case .setSamplerSlices:
+            return CommandSpec(name: "instrument.slices", title: "Slice to Pads",
+                               summary: "Cuts the sampler's file into up to 16 pads played by consecutive notes from 36, each from its start frame to the next one's; an empty list plays the file across the keys again.",
+                               parameters: [P("track", .trackID, "An instrument track whose sampler has a file."),
+                                            P("slices", .string, "Rising start frames of the file, at most 16, each with an optional tune (semitones) and reverse.")])
         case .setInstrumentWavetable:
             return CommandSpec(name: "instrument.wavetable", title: "Choose Wavetable",
                                summary: "Sets the audio file the synth's Wavetable engine is cut from, and into how many cycles, or clears it to play the built-in shapes.",

@@ -320,6 +320,52 @@ final class InstrumentPathTests: XCTestCase {
         }
     }
 
+    /// A sampler's file cut into pads by Slice to Pads, with the pattern it played written as a
+    /// clip: each note plays its slice as the sampler cut directly plays it — live at any block size
+    /// and in the export alike — and at another song tempo the pattern follows it (EchoelTools A11).
+    func testASlicedBreakPlaysItsPatternLiveAndInTheExportAndFollowsTheTempo() throws {
+        var t = try tune([], device: .sampler)
+        let loop: [Float] = (0..<48_000).map { (index: Int) -> Float in
+            let within = Double(index % 12_000) / 48_000
+            return Float(sin(2 * Double.pi * 180 * within) * Foundation.exp(-within * 12))
+        }
+        try load(loop, into: &t)
+        let file = try XCTUnwrap(t.project.media.first)
+        let starts = BreakSlicing.starts(onsets: [0.25, 0.5, 0.75], frameCount: file.frameCount, sampleRate: file.sampleRate)
+        XCTAssertEqual(starts, [0, 12_000, 24_000, 36_000])
+        for command in BreakSlicing.commands(track: t.track, file: file, starts: starts, writePattern: true, at: bar) {
+            try command.apply(to: &t.project)
+        }
+        let buffer = try XCTUnwrap(t.samples.values.first)
+        var sampler = Sampler(sampleRate: Float(rate))
+        sampler.setSample(buffer)
+        sampler.setSlices(SampleSlices(starts: starts, frameCount: buffer.frameCount))
+        // The clip starts on bar 2: two seconds at 120 BPM.
+        let frames = 2 * 48_000 + 72_000
+        let expected = try reference(&sampler, t, frames: frames)
+        XCTAssertEqual(peak(Array(expected[..<(2 * 48_000)])), 0, "nothing before the clip")
+        XCTAssertGreaterThan(peak(Array(expected[(2 * 48_000)...])), 0.01, "the pattern plays the pads")
+        for block in [64, 256, 4_096] {
+            let core = engine()
+            publish(t, to: core)
+            core.play()
+            assertSame(render(core, frames: frames, block: block), expected, "sliced break, block \(block)")
+        }
+        let export = OfflineRender.render(t.project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0,
+                                          samples: t.samples, frameCount: frames)
+        assertSame(export.left, expected, "the export plays the pads as playback does")
+
+        // At 150 BPM the second pad starts 0.2 s after the first instead of 0.25 s: the break follows.
+        var fast = t
+        try Command.setTempo(bpm: 150).apply(to: &fast.project)
+        let plan = PlaybackPlan(compiling: fast.project)
+        let ons = try XCTUnwrap(plan.tracks.first).events.filter { if case .noteOn = $0.kind { true } else { false } }
+        let time = TimeConversion(tempoMap: fast.project.tempoMap, sampleRate: rate)
+        let samplesAt = ons.map { time.sample(at: $0.tick, nudge: $0.nudge) }
+        XCTAssertEqual(ons.map(\.pitch), [36, 37, 38, 39])
+        XCTAssertEqual(samplesAt[1] - samplesAt[0], 9_600)
+    }
+
     // MARK: - What each instrument hears
 
     func testTheDrumsAndTheSamplerIgnoreAClipsBendsAndControllers() throws {

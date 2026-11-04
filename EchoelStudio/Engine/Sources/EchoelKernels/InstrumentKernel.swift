@@ -103,6 +103,8 @@ public protocol SampleAssigningKernel: EngineInstrumentKernel {
     /// Render thread: plays `buffer` from now on (nil: no sample). The caller keeps the buffer
     /// alive until it knows rendering moved on.
     func assign(_ buffer: SampleBuffer?)
+    /// Render thread: the pads `buffer` is cut into from the next note on (`.none`: none).
+    func assign(slices: SampleSlices)
 }
 
 extension SynthKernel: InstrumentKernel {

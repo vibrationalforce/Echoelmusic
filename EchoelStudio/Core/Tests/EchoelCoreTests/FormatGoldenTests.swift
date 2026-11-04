@@ -412,6 +412,38 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with a sampler whose file is cut into pads (the break slicer, 2026-11-04): an
+    /// optional instrument field added inside format 4, so an earlier format-4 build opens the file
+    /// and its sampler plays the whole file across the keys.
+    private let formatFourSlices = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Break",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "media": [
+        { "id": "3ED10000-0000-4000-8000-000000000007", "name": "Amen",
+          "path": "Media/3ED10000-0000-4000-8000-000000000007.wav", "frameCount": 96000, "sampleRate": 48000 }
+      ],
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-00000000000F",
+          "name": "Break",
+          "kind": "instrument",
+          "colorIndex": 2,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "instrument": { "device": "sampler", "preset": "Init", "values": { "drums.kick.tune": -3, "drums.hatModel": 1 },
+                          "sample": "3ED10000-0000-4000-8000-000000000007",
+                          "slices": [ { "start": 0 }, { "start": 12000, "tune": -2 }, { "start": 48000, "reverse": true } ] }
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     /// Format 4 with a synth that cuts its wavetable from a file of the song (2026-11-04): an
     /// optional instrument field added inside format 4, so an earlier format-4 build opens the file
     /// and its synth plays the engine it knows.
@@ -783,6 +815,28 @@ final class FormatGoldenTests: XCTestCase {
                 XCTAssertNil(track["arpeggio"], "a track without an arpeggiator writes no key")
             }
         }
+    }
+
+    func testASamplerOpensWithItsSlicesAndTheKitWithItsSound() throws {
+        let project = try ProjectCodec.decode(formatFourSlices)
+        let instrument = try XCTUnwrap(project.tracks.first?.instrument)
+        XCTAssertEqual(instrument.slices, [SampleSlice(start: 0), SampleSlice(start: 12_000, tune: -2),
+                                           SampleSlice(start: 48_000, reverse: true)])
+        XCTAssertEqual(instrument.value(.drumsHatModel), 1)
+        XCTAssertEqual(instrument.value(SynthParameter.drumsPieceRows[0]), -3, "drums.kick.tune")
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
+        for data in [earliest, current, formatTwo, formatTwoMedia, formatThree, formatFour, formatFourWavetable] {
+            for track in try ProjectCodec.decode(data).tracks {
+                XCTAssertNil(track.instrument.slices, "an older sampler plays its file across the keys")
+                for row in InstrumentDevice.drums.parameters {
+                    XCTAssertEqual(track.instrument.value(row), row.songDefault, "an older kit sounds as it always did")
+                }
+            }
+        }
+        // Slices that do not rise refuse the song.
+        let falling = String(decoding: formatFourSlices, as: UTF8.self).replacingOccurrences(of: "\"start\": 48000", with: "\"start\": 6000")
+        XCTAssertNotEqual(Data(falling.utf8), formatFourSlices, "the replacement must land")
+        XCTAssertThrowsError(try ProjectCodec.decode(Data(falling.utf8)))
     }
 
     func testASynthOpensWithItsWavetable() throws {

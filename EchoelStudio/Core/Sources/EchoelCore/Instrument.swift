@@ -17,6 +17,9 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
     /// The file the synth's wavetable engine is cut from, and into how many cycles; nil plays the
     /// factory shapes. Optional, added inside format 4 (2026-11-04).
     public var wavetable: WavetableSource?
+    /// The pads the sampler's file is cut into (the break slicer); nil plays it across the keys.
+    /// Optional, added inside format 4 (2026-11-04); never stored empty.
+    public var slices: [SampleSlice]?
     public var preset: String
     public var values: [String: Double]
     /// The Audio Unit the plugin device plays, kept when the track switches to a built-in
@@ -37,7 +40,7 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
         self.pluginState = pluginState
     }
 
-    private enum CodingKeys: String, CodingKey { case device, sample, wavetable, preset, values, plugin, pluginState }
+    private enum CodingKeys: String, CodingKey { case device, sample, wavetable, preset, values, plugin, pluginState, slices }
 
     /// Songs written before devices existed are synth tracks. A device from a later build opens
     /// as `.unrecognized`: the track plays nothing here and keeps its instrument for that build,
@@ -57,6 +60,7 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
         values = try c.decode([String: Double].self, forKey: .values)
         plugin = try c.decodeIfPresent(PluginComponent.self, forKey: .plugin)
         pluginState = try c.decodeIfPresent(Data.self, forKey: .pluginState)
+        slices = try c.decodeIfPresent([SampleSlice].self, forKey: .slices)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -68,6 +72,7 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
         try c.encode(values, forKey: .values)
         try c.encodeIfPresent(plugin, forKey: .plugin)
         try c.encodeIfPresent(pluginState, forKey: .pluginState)
+        if let slices, !slices.isEmpty { try c.encode(slices, forKey: .slices) }
     }
 
     /// The wavetable's file while the synth plays its wavetable engine: what is heard. Nil otherwise.

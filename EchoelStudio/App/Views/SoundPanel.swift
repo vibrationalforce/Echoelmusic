@@ -177,10 +177,16 @@ struct SoundPanel: View {
         choicePicker(.samplerMode)
         deviceFields(.sampler)
 
-        let root = Int(track.instrument.value(.samplerRoot).rounded())
-        Text("Plays the sample at its own pitch on \(NoteEditing.name(of: root)) (MIDI \(root)); other notes transpose it.")
-            .font(Theme.Font.caption)
-            .foregroundStyle(Theme.Color.textSecondary)
+        if track.instrument.slices == nil {
+            let root = Int(track.instrument.value(.samplerRoot).rounded())
+            Text("Plays the sample at its own pitch on \(NoteEditing.name(of: root)) (MIDI \(root)); other notes transpose it.")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+        }
+        // The break slicer: the loaded file cut into pads.
+        if let loaded {
+            SliceSection(track: track, file: loaded)
+        }
     }
 
     /// A built-in instrument's numbers, one field each; its choices have their own picker.

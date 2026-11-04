@@ -31,6 +31,9 @@ public struct EngineSnapshot: Sendable {
         /// The wavetable the synth plays, cut from the track's file (`Wavetables`), held like the
         /// sample; nil plays the factory shapes.
         public var wavetable: WavetableBank? = nil
+        /// The pads a sampler lane's sample is cut into (`InstrumentSettings.slices`), in frames of
+        /// that buffer; `.none` plays it across the keys. A value: nothing to keep alive.
+        public var slices = SampleSlices.none
         /// The track's insert effects, in order, held like the unit.
         public let inserts: [any HostedProcessor]
         public let sends: [SendTap]
@@ -405,6 +408,10 @@ public struct EngineSnapshot: Sendable {
                         clips: events.clips, eventsRevision: revisions[events.track] ?? generation,
                         mix: outward ? moving(track, output < 0) : nil, patchLanes: patchLanes, patchRoutes: patchRoutes)
             lane.arpeggio = track.playingArpeggio.map(ArpSettings.init)
+            if let buffer = lane.sample, let cut = track.instrument.slices, !cut.isEmpty {
+                lane.slices = SampleSlices(starts: cut.map(\.start), frameCount: buffer.frameCount,
+                                           tunes: cut.map { Float($0.tune) }, reversed: cut.map(\.reverse))
+            }
             // Whatever engine plays: switching to the wavetable mid-song finds its table there.
             if device == .synth { lane.wavetable = track.instrument.wavetable.flatMap { wavetables[$0] } }
             return lane

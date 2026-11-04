@@ -137,7 +137,12 @@ as it always sounded — the sampler's
 `sampler.release` (seconds), `sampler.level` (0 … 1) and `sampler.mode` (0 gate, 1 one-shot); a key
 absent plays its default, and every device's values are kept whichever device plays), optional
 `sample` (a media id), `plugin` (a plugin component) and `pluginState` (the plugin's own saved
-state, base64, at most 8 MiB), and — added inside format 4, 2026-11-04 — `wavetable`
+state, base64, at most 8 MiB), and — added inside format 4, 2026-11-04 — `slices` (the break
+slicer: the sampler's file cut into pads, 1 … 16 objects `{start, tune?, reverse?}` — `start` a frame
+of the file, rising and inside it; `tune` semitones −24 … 24, absent 0; `reverse` absent false. Slice
+*n* (from 0) plays on note 36 + *n* from its start to the next one's, the last to the file's end, at the
+file's own speed — the root key moves nothing. Absent plays the file across the keys; never written
+empty; a list that does not rise, starts past the file or names no file refuses the song) and `wavetable`
 (`{media, frames}`: the audio file the synth's Wavetable engine is cut from and the number of
 single cycles, 2 … 64, spread across it; absent plays the built-in shapes; a file the song lacks
 or a count outside the range refuses the song). How a file becomes cycles (a pitch estimate,

@@ -232,6 +232,13 @@ extension Project {
             guard let file = mediaFile(sample) else { throw CommandError.unknownMedia(sample) }
             guard file.kind == .audio else { throw Self.invalid("instrument", "a sampler plays an audio file") }
         }
+        if let slices = instrument.slices {
+            guard !slices.isEmpty else { throw Self.invalid("instrument", "slices are absent, never empty") }
+            guard let sample = instrument.sample, let file = mediaFile(sample) else {
+                throw Self.invalid("instrument", "slices cut no file")
+            }
+            try SampleSlice.validate(slices, frameCount: file.frameCount)
+        }
         if let wavetable = instrument.wavetable {
             guard let file = mediaFile(wavetable.media) else { throw CommandError.unknownMedia(wavetable.media) }
             guard file.kind == .audio else { throw Self.invalid("instrument", "a wavetable is cut from an audio file") }

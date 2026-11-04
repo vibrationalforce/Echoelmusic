@@ -1179,11 +1179,14 @@ public final class EngineCore: @unchecked Sendable {
         // this thread.
         for slot in 0..<slotCapacity {
             var sample: SampleBuffer?
+            var slices = SampleSlices.none
             for lane in snapshot.lanes where lane.slot == slot {
                 sample = lane.sample
+                slices = lane.slices
                 break
             }
             sampleTargets[slot]?.assign(sample)
+            sampleTargets[slot]?.assign(slices: slices)
         }
         // And every synth at this snapshot's wavetable or the factory shapes, before the
         // acknowledgement for the same reason: the previous snapshot holds the bank let go of.
