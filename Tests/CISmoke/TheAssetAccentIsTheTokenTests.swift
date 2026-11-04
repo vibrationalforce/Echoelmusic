@@ -81,11 +81,11 @@ final class TheAssetAccentIsTheTokenTests: XCTestCase {
         let code = SourceText.codeOnly(try text(Self.theme))
         let pattern = #"static let accent\s*=\s*Color\(red: ([0-9.]+), green: ([0-9.]+), blue: ([0-9.]+)\)"#
         guard let m = code.range(of: pattern, options: .regularExpression) else {
-            throw XCTSkip("ANCHOR MISSING: `static let accent = Color(red:green:blue:)` in EchoelTheme — re-anchor this guard with the token's new spelling (#454)")
+            throw failedAnchor("ANCHOR MISSING: `static let accent = Color(red:green:blue:)` in EchoelTheme — re-anchor this guard with the token's new spelling (#454)")
         }
         let nums = code[m].components(separatedBy: CharacterSet(charactersIn: "0123456789.").inverted)
             .compactMap(Double.init)
-        guard nums.count == 3 else { throw XCTSkip("ANCHOR MISSING: three components expected, got \(nums.count)") }
+        guard nums.count == 3 else { throw failedAnchor("ANCHOR MISSING: three components expected, got \(nums.count)") }
         return RGB(r: nums[0], g: nums[1], b: nums[2])
     }
 

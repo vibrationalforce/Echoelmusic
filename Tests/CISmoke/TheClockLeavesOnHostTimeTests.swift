@@ -118,7 +118,7 @@ final class TheClockLeavesOnHostTimeTests: XCTestCase {
     private func body(of signature: String, in text: String) throws -> String {
         XCTAssertEqual(text.components(separatedBy: signature).count - 1, 1, "`\(signature)` must occur exactly once")
         guard let head = text.range(of: signature) else {
-            throw XCTSkip("ANCHOR MISSING: \(signature)")
+            throw failedAnchor("ANCHOR MISSING: \(signature)")
         }
         var depth = 1
         var i = head.upperBound
@@ -127,6 +127,6 @@ final class TheClockLeavesOnHostTimeTests: XCTestCase {
             if text[i] == "}" { depth -= 1; if depth == 0 { return String(text[head.upperBound..<i]) } }
             i = text.index(after: i)
         }
-        throw XCTSkip("no closing brace after \(signature)")
+        throw failedAnchor("no closing brace after \(signature)")
     }
 }

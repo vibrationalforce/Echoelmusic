@@ -227,7 +227,7 @@ final class TapTargetFloorTests: XCTestCase {
         let anchor = #"locationNamer.manualPlace = """#
         let hits = studio.indices.filter { studio[$0].contains(anchor) }
         guard let clear = hits.first else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 the clear-place ✕ is gone from EchoelStudioView — if the manual-place field \
                 was removed this test should be removed with it, not left to pass vacuously
                 """)
@@ -517,7 +517,7 @@ final class TapTargetFloorTests: XCTestCase {
               let stop = narration[start...].firstIndex(where: {
                   $0.contains("accessibilityLabel(caption.driver.voiceOverLabel)")
               })
-        else { throw XCTSkip("the narration disclosure is gone — remove this case with it") }
+        else { throw failedAnchor("the narration disclosure is gone — remove this case with it") }
         let control = narration[start...stop]
         XCTAssertTrue(control.contains { $0.contains("frame(minHeight: EchoelTheme.controlTapHeight)") }, """
             the narration disclosure lost its 44 pt `frame(minHeight: EchoelTheme.controlTapHeight)` (#617, D1) — back to a \
