@@ -27,9 +27,9 @@ final class KernelParameterContractTests: XCTestCase {
             entry("synth_level", "Level", .amount, 0...1, 0.25),
             // Appended 2026-10-28: new values join at the end, so every earlier address holds.
             // Choir appended 2026-11-01 (VOX): a wider range keeps every stored index.
-            // Pluck (A6) and Wavetable appended 2026-11-04.
-            entry("synth_engine", "Engine", .choice, 0...9, 0,
-                  ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP", "Choir", "Pluck", "Wavetable"]),
+            // Pluck (A6), Wavetable and Texture (A10) appended 2026-11-04.
+            entry("synth_engine", "Engine", .choice, 0...10, 0,
+                  ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP", "Choir", "Pluck", "Wavetable", "Texture"]),
             entry("synth_character", "Character", .amount, 0...1, 0.5),
             entry("synth_filter", "Filter", .choice, 0...1, 0, ["Clean", "Ladder"]),
             // Appended 2026-11-01 (W12): the vibrato a route moves with the pulse.
@@ -37,6 +37,11 @@ final class KernelParameterContractTests: XCTestCase {
             // Appended 2026-11-04 (A2): the bass-line slide and accent.
             entry("synth_slide", "Slide", .seconds, 0...2, 0),
             entry("synth_accent", "Accent", .amount, 0...1, 0),
+            // Appended 2026-11-04 (A10): the texture engine's automaton.
+            entry("synth_textureRule", "Rule", .choice, 0...7, 0, ["90", "30", "110", "150", "184", "45", "73", "105"]),
+            entry("synth_textureDensity", "Density", .amount, 0...1, 0.6),
+            entry("synth_textureRate", "Evolve Rate", .hertz, 0...40, 8),
+            entry("synth_textureSeed", "Seed", .amount, 0...9_999, 0),
         ])
     }
 

@@ -149,9 +149,16 @@ single cycles, 2 … 64, spread across it; absent plays the built-in shapes; a f
 or a count outside the range refuses the song). How a file becomes cycles (a pitch estimate,
 zero crossings, band limits) is the player's and is not stored; the count is, so a position
 finds the same cycle in every build. `synth.engine` stores the index of the synth's engine:
-0 Classic, 1 Supersaw, 2 FM, 3 Sub, 4 Morph, 5 Mallet, 6 DDSP, 7 Choir, 8 Pluck, 9 Wavetable — a
-new engine goes at the end; a build that predates an engine reads its index as out of range and
-refuses the song, as for any value outside a parameter's range.
+0 Classic, 1 Supersaw, 2 FM, 3 Sub, 4 Morph, 5 Mallet, 6 DDSP, 7 Choir, 8 Pluck, 9 Wavetable,
+10 Texture — a new engine goes at the end; a build that predates an engine reads its index as out of
+range and refuses the song, as for any value outside a parameter's range. The Texture engine (added
+inside format 4, 2026-11-04) reads four values of its own, each absent plays its default: `synth.textureRule` the index of an elementary
+cellular-automaton rule, by Wolfram's number 0 `90`, 1 `30`, 2 `110`, 3 `150`, 4 `184`, 5 `45`, 6 `73`,
+7 `105` (absent 0; a new rule goes at the end); `synth.textureDensity` 0 … 1, how many of the sixteen
+harmonics may sound (absent 0.6); `synth.textureRate` 0 … 40 generations per second, 0 holds the row
+(absent 8); `synth.textureSeed` 0 … 9999, the row every note starts from — 0 a single cell in the middle
+of sixty-four (absent 0). How the row shapes the partials is the player's; rule, seed and rate are
+stored, so a song grows the same rows in every build.
 
 **Plugin component:** `{type, subtype, manufacturer, name, manufacturerName}` — an Audio Unit by
 the three codes the system finds it by, each the four ASCII characters as one big-endian integer

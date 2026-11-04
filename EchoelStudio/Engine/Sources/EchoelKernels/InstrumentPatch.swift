@@ -59,6 +59,7 @@ extension SynthParameter.Name {
             case 7: patch.engine = .choir
             case 8: patch.engine = .pluck
             case 9: patch.engine = .wavetable
+            case 10: patch.engine = .texture
             default: patch.engine = .classic
             }
         case .character: patch.character = v
@@ -66,6 +67,12 @@ extension SynthParameter.Name {
         case .vibrato: patch.vibrato = v
         case .slide: patch.slide = v
         case .accent: patch.accent = v
+        // A value that is not a number plays the default; the door never lets one in, a route clamps.
+        case .textureRule: patch.textureRule = value.isFinite ? Int(Swift.min(Swift.max(value, 0), 7).rounded()) : 0
+        case .textureDensity: patch.textureDensity = v
+        case .textureRate: patch.textureRate = v
+        case .textureSeed:
+            patch.textureSeed = value.isFinite ? UInt32(Swift.min(Swift.max(value, 0), 9_999).rounded()) : 0
         }
     }
 }
