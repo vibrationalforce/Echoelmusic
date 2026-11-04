@@ -1,7 +1,7 @@
 import EchoelCore
 import SwiftUI
 
-/// The song's groove and its tempo changes, on the Song page: swing as a value field, and each
+/// The song's groove, its tempo changes and its time signature changes, on the Song page: swing as a value field, and each
 /// tempo change as a bar with its tempo, typed on the number pad, and how the tempo reaches it —
 /// on the bar (step) or gliding there from the tempo before (ramp). Every edit is one command, so
 /// one undo step. The page hosts the pad; the playhead is read only when a change is added,
@@ -33,11 +33,83 @@ struct SongFrameSection: View {
             .buttonStyle(.plain)
             .foregroundStyle(Theme.Color.text)
             .accessibilityHint("Adds a tempo change at the bar nearest the playhead, at the tempo playing there.")
+            meterChanges
         }
     }
 
+    /// Each change of time signature as its bar and a menu of signatures; a change that would
+    /// leave a later one off its bar line is refused by the command and nothing moves.
+    @ViewBuilder private var meterChanges: some View {
+        heading("Time Signature Changes")
+            .padding(.top, Theme.Space.m)
+        caption("Bar 1 counts \(StudioView.title(store.project.timeSignature)), the time signature in the Song menu. "
+                + "A change starts on a bar line.")
+        ForEach(store.project.timeSignatureChanges, id: \.tick) { change in
+            meterRow(change)
+        }
+        Button(action: addMeterAtPlayhead) {
+            Label("Add Time Signature at Playhead Bar", systemImage: "plus")
+                .font(Theme.Font.label)
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
+                .background(RoundedRectangle(cornerRadius: Theme.Radius.medium)
+                    .stroke(Theme.Color.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Theme.Color.text)
+        .accessibilityHint("Adds a time signature change at the bar line nearest the playhead.")
+    }
+
+    private func meterRow(_ change: TimeSignatureChange) -> some View {
+        let place = Self.placeText(change.tick, meter: store.project.meterMap)
+        let tick = change.tick
+        return HStack(spacing: Theme.Space.s) {
+            Text(place)
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.Color.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Menu {
+                ForEach(StudioView.commonSignatures, id: \.self) { signature in
+                    Button(StudioView.title(signature)) {
+                        try? store.perform(.setTimeSignatureChange(at: tick, signature))
+                    }
+                }
+            } label: {
+                Text(StudioView.title(change.signature))
+                    .font(Theme.Font.value)
+                    .foregroundStyle(Theme.Color.text)
+                    .frame(minHeight: Theme.Size.touch)
+                    .padding(.horizontal, Theme.Space.s)
+                    .background(RoundedRectangle(cornerRadius: Theme.Radius.medium).fill(Theme.Color.surface))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium)
+                        .strokeBorder(Theme.Color.borderStrong, lineWidth: 1))
+            }
+            .accessibilityLabel("Time Signature at \(place)")
+            .accessibilityValue(StudioView.title(change.signature))
+            Button {
+                try? store.perform(.removeTimeSignatureChange(at: tick))
+            } label: {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(ToolButtonStyle())
+            .accessibilityLabel("Remove Time Signature Change at \(place)")
+        }
+    }
+
+    /// A change at the bar line nearest the playhead, in the signature playing there, to be picked
+    /// from its menu. At bar 1 it goes one bar after the last change instead.
+    private func addMeterAtPlayhead() {
+        let project = store.project
+        let meter = project.meterMap
+        var tick = Arranging.nearestBar(engine.playheadTick(in: project), meter: meter)
+        if tick == 0 {
+            let last = project.timeSignatureChanges.map(\.tick).max() ?? 0
+            tick = meter.nextBarLine(atOrAfter: last + 1)
+        }
+        try? store.perform(.setTimeSignatureChange(at: tick, meter.signature(at: tick)))
+    }
+
     private func row(_ change: TempoChange) -> some View {
-        let place = Self.placeText(change.tick, signature: store.project.timeSignature)
+        let place = Self.placeText(change.tick, meter: store.project.meterMap)
         return HStack(spacing: Theme.Space.s) {
             Text(place)
                 .font(Theme.Font.body)
@@ -98,23 +170,21 @@ struct SongFrameSection: View {
     /// the transport's tempo rules — it goes one bar after the last change instead.
     private func addAtPlayhead() {
         let project = store.project
-        let signature = project.timeSignature
-        let bar = MusicalTime.ticksPerBar(signature)
-        var tick = Arranging.nearestBar(engine.playheadTick(in: project), signature: signature)
-        if tick == 0 { tick = (project.tempoChanges.map(\.tick).max() ?? 0) / bar * bar + bar }
+        let meter = project.meterMap
+        var tick = Arranging.nearestBar(engine.playheadTick(in: project), meter: meter)
+        if tick == 0 { tick = meter.nextBarLine(atOrAfter: (project.tempoChanges.map(\.tick).max() ?? 0) + 1) }
         try? store.perform(.setTempoChange(at: tick, bpm: project.tempoMap.bpm(at: tick)))
     }
 
     private static func owner(_ change: TempoChange) -> String { "tempoChange/\(change.tick)" }
 
     /// "Bar 9", or "Bar 9, beat 3" for a change that does not fall on a bar line (an assistant's
-    /// or an imported file's), counted in the song's time signature.
-    static func placeText(_ tick: Tick, signature: TimeSignature) -> String {
-        let bar = MusicalTime.ticksPerBar(signature), beat = MusicalTime.ticksPerBeat(signature)
-        guard bar > 0, beat > 0 else { return "Tick \(tick)" }
-        let within = tick % bar
-        let barText = "Bar \(tick / bar + 1)"
-        guard within != 0 else { return barText }
+    /// or an imported file's), counted in the bars of the song's meter.
+    static func placeText(_ tick: Tick, meter: MeterMap) -> String {
+        let start = meter.barStart(at: tick), beat = meter.ticksPerBeat(at: tick)
+        let within = tick - start
+        let barText = "Bar \(meter.bar(at: tick) + 1)"
+        guard within != 0, beat > 0 else { return barText }
         let beats = Double(within) / Double(beat) + 1
         return barText + ", beat " + NumberText.string(beats, decimalsUpTo: 2)
     }

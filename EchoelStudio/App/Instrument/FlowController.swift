@@ -133,8 +133,7 @@ final class FlowController {
         // The song's own bar lines, while it plays: one step at each.
         if engine.isPlaying {
             let project = store.project
-            let span = MusicalTime.ticksPerBar(project.timeSignature)
-            let bar = span > 0 ? engine.playheadTick(in: project) / span : 0
+            let bar = engine.playedMeterMap(of: project).bar(at: engine.playheadTick(in: project))
             if let lastBar, bar != lastBar { flow.bar() }
             lastBar = bar
         } else {

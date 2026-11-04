@@ -31,7 +31,11 @@ struct ArrangeView: View {
     var body: some View {
         let project = store.project
         let bars = Arranging.songBars(of: project) + Self.spareBars
-        let laneWidth = CGFloat(bars) * pointsPerBar
+        // The first bar is `pointsPerBar` wide; every later one as wide as its ticks (a 7/8 bar
+        // after 4/4 is narrower), so x stays proportional to musical time.
+        let meter = project.meterMap
+        let ticksPerPoint = Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar)
+        let laneWidth = CGFloat(Double(meter.tick(ofBar: Int64(bars))) / ticksPerPoint)
         let files = videoHits?.files ?? [:]
         let hits = Hits.ticks(in: project, files: files)
         ScrollView(.vertical) {
@@ -71,7 +75,7 @@ struct ArrangeView: View {
                 .frame(width: nameWidth)
                 ScrollView(.horizontal) {
                     VStack(alignment: .leading, spacing: Theme.Space.hairline) {
-                        BarRuler(bars: bars, pointsPerBar: pointsPerBar)
+                        BarRuler(bars: bars, meter: meter, ticksPerPoint: ticksPerPoint, width: laneWidth)
                         ForEach(project.tracks) { track in
                             ArrangeLane(track: track, project: project, pointsPerBar: pointsPerBar,
                                         open: open, importAudio: importAudio, files: files, hits: hits)
@@ -135,22 +139,24 @@ extension ArrangeView {
     }
 }
 
-/// Bar numbers along the top.
+/// Bar numbers along the top, at the bar lines of the song's meter.
 private struct BarRuler: View {
     let bars: Int
-    let pointsPerBar: CGFloat
+    let meter: MeterMap
+    let ticksPerPoint: Double
+    let width: CGFloat
 
     var body: some View {
-        Canvas { context, size in
+        Canvas { [meter, ticksPerPoint] context, size in
             for bar in 0..<bars {
-                let x = CGFloat(bar) * pointsPerBar
+                let x = CGFloat(Double(meter.tick(ofBar: Int64(bar))) / ticksPerPoint)
                 context.fill(Path(CGRect(x: x, y: size.height - 6, width: 1, height: 6)),
                              with: .color(Theme.Color.border))
                 context.draw(Text("\(bar + 1)").font(Theme.Font.caption).foregroundStyle(Theme.Color.textSecondary),
                              at: CGPoint(x: x + 4, y: size.height / 2), anchor: .leading)
             }
         }
-        .frame(width: CGFloat(bars) * pointsPerBar, height: Theme.Size.rulerHeight)
+        .frame(width: width, height: Theme.Size.rulerHeight)
         .background(Theme.Color.surface)
         .accessibilityHidden(true)
     }
@@ -170,10 +176,11 @@ private struct ArrangeLane: View {
     let hits: [Tick]
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
 
-    private var signature: TimeSignature { project.timeSignature }
+    private var meter: MeterMap { project.meterMap }
 
+    /// The first bar is `pointsPerBar` wide; x is proportional to ticks from there on.
     private var ticksPerPoint: Double {
-        Double(MusicalTime.ticksPerBar(signature)) / Double(pointsPerBar)
+        Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar)
     }
 
     /// While snapping is on, a faint line at each hit in every lane but the video's own: where a
@@ -184,12 +191,14 @@ private struct ArrangeLane: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            Canvas { [guides, ticksPerPoint] context, size in
-                var x: CGFloat = 0
-                while x < size.width {
+            Canvas { [guides, ticksPerPoint, meter] context, size in
+                var bar: Int64 = 0
+                while true {
+                    let x = CGFloat(Double(meter.tick(ofBar: bar)) / ticksPerPoint)
+                    guard x < size.width, x.isFinite else { break }
                     context.fill(Path(CGRect(x: x, y: 0, width: 1, height: size.height)),
                                  with: .color(Theme.Color.border.opacity(0.6)))
-                    x += pointsPerBar
+                    bar += 1
                 }
                 for tick in guides {
                     let at = CGFloat(Double(tick) / ticksPerPoint)
@@ -214,7 +223,7 @@ private struct ArrangeLane: View {
     @ViewBuilder private var placementBlocks: some View {
         ForEach(track.placements) { placement in
             if let clip = track.clips.first(where: { $0.id == placement.clip }) {
-                PlacementBlock(track: track, placement: placement, clip: clip, signature: signature,
+                PlacementBlock(track: track, placement: placement, clip: clip, meter: meter,
                                pointsPerBar: pointsPerBar, open: open, hits: hits)
             }
         }
@@ -224,7 +233,7 @@ private struct ArrangeLane: View {
         ForEach(track.regions) { region in
             if let file = project.mediaFile(region.media), let stop = Arranging.end(of: region, in: project) {
                 RegionBlock(track: track, region: region, file: file, length: stop - region.start,
-                            signature: signature, pointsPerBar: pointsPerBar, hits: hits,
+                            meter: meter, pointsPerBar: pointsPerBar, hits: hits,
                             ownHits: file.kind == .video
                                 ? Hits.hits(of: region, in: project, file: files[region.media] ?? .none) : [])
             }
@@ -255,14 +264,14 @@ private struct ArrangeLane: View {
         let tick = Tick((Double(x) * ticksPerPoint).rounded(.down))
         if track.kind == .audio || track.kind == .video {
             if Arranging.region(in: track, at: tick, project: project) == nil {
-                importAudio(track.id, Arranging.barStart(tick, signature: signature))
+                importAudio(track.id, Arranging.barStart(tick, meter: meter))
             }
             return
         }
         guard track.kind == .instrument else { return }
         if track.clips.isEmpty {
-            createClip(at: Arranging.barStart(tick, signature: signature))
-        } else if let command = Arranging.tap(on: track, at: tick, signature: signature) {
+            createClip(at: Arranging.barStart(tick, meter: meter))
+        } else if let command = Arranging.tap(on: track, at: tick, meter: meter) {
             try? store.perform(command)
         }
     }
@@ -270,13 +279,12 @@ private struct ArrangeLane: View {
     private func placeAtEnd() {
         let clipsEnd = track.placements.compactMap { Arranging.end(of: $0, in: track) }.max() ?? 0
         let audioEnd = track.regions.compactMap { Arranging.end(of: $0, in: project) }.max() ?? 0
-        let start = Arranging.barStart(Swift.max(clipsEnd, audioEnd) + MusicalTime.ticksPerBar(signature) - 1,
-                                       signature: signature)
+        let start = meter.nextBarLine(atOrAfter: Swift.max(clipsEnd, audioEnd))
         if track.kind == .audio || track.kind == .video {
             importAudio(track.id, start)
         } else if track.clips.isEmpty {
             createClip(at: start)
-        } else if let command = Arranging.tap(on: track, at: start, signature: signature) {
+        } else if let command = Arranging.tap(on: track, at: start, meter: meter) {
             try? store.perform(command)
         }
     }
@@ -287,7 +295,7 @@ private struct ArrangeLane: View {
         let clip = ClipID()
         try? store.perform([
             .createClip(track: track.id, id: clip, name: Names.derived(track.name, suffix: "Clip"),
-                        length: 4 * MusicalTime.ticksPerBar(signature)),
+                        length: Swift.max(Arranging.ticks(movingBars: 4, from: start, meter: meter), 1)),
             .placeClip(track: track.id, id: PlacementID(), clip: clip, start: start),
         ], title: "New Clip")
     }
@@ -303,7 +311,7 @@ private struct PlacementBlock: View {
     let track: Track
     let placement: Placement
     let clip: Clip
-    let signature: TimeSignature
+    let meter: MeterMap
     let pointsPerBar: CGFloat
     /// Opens the note editor on this clip of this track.
     let open: (TrackID, ClipID) -> Void
@@ -313,10 +321,11 @@ private struct PlacementBlock: View {
     @State private var dragX: CGFloat = 0
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
 
-    private var ticksPerBar: Tick { MusicalTime.ticksPerBar(signature) }
-    private var ticksPerPoint: Double { Double(ticksPerBar) / Double(pointsPerBar) }
-    private var startBar: Int { Int(placement.start / Swift.max(1, ticksPerBar)) + 1 }
-    private var lengthBars: Int { Int((clip.length + ticksPerBar - 1) / Swift.max(1, ticksPerBar)) }
+    private var ticksPerPoint: Double { Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar) }
+    private var startBar: Int { Int(clamping: meter.bar(at: placement.start)) + 1 }
+    private var lengthBars: Int {
+        Int(clamping: meter.bar(at: meter.nextBarLine(atOrAfter: placement.start + clip.length)) - meter.bar(at: placement.start))
+    }
     private var nextHit: Tick? { Hits.next(after: placement.start, in: hits) }
 
     var body: some View {
@@ -368,7 +377,7 @@ private struct PlacementBlock: View {
         if let hit = ArrangeView.hit(near: placement.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
                                      snapping: snapsToHits) {
             if let command = Hits.placed(placement, in: track, at: hit) { try? store.perform(command) }
-        } else if let command = Arranging.moved(placement, in: track, byTicks: delta, signature: signature) {
+        } else if let command = Arranging.moved(placement, in: track, byTicks: delta, meter: meter) {
             try? store.perform(command)
         }
     }
@@ -413,7 +422,8 @@ private struct PlacementBlock: View {
     }
 
     private func move(byBars bars: Tick) {
-        if let command = Arranging.moved(placement, in: track, byTicks: bars * ticksPerBar, signature: signature) {
+        if let command = Arranging.moved(placement, in: track,
+                                         byTicks: Arranging.ticks(movingBars: bars, from: placement.start, meter: meter), meter: meter) {
             try? store.perform(command)
         }
     }
@@ -458,7 +468,7 @@ private struct RegionBlock: View {
     let file: MediaFile
     /// The region's length in ticks at the song's tempo.
     let length: Tick
-    let signature: TimeSignature
+    let meter: MeterMap
     let pointsPerBar: CGFloat
     /// Every hit the song's video shows, and — for a video part — the hits it shows itself (CUT).
     let hits: [Tick]
@@ -470,9 +480,8 @@ private struct RegionBlock: View {
     @State private var trimRight: CGFloat = 0
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
 
-    private var ticksPerBar: Tick { MusicalTime.ticksPerBar(signature) }
-    private var ticksPerPoint: Double { Double(ticksPerBar) / Double(pointsPerBar) }
-    private var startBar: Int { Int(region.start / Swift.max(1, ticksPerBar)) + 1 }
+    private var ticksPerPoint: Double { Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar) }
+    private var startBar: Int { Int(clamping: meter.bar(at: region.start)) + 1 }
     private var seconds: Double { file.sampleRate > 0 ? Double(region.length) / file.sampleRate : 0 }
     private var spokenLabel: String {
         let kind = file.kind == .video ? "video" : "audio"
@@ -559,7 +568,7 @@ private struct RegionBlock: View {
         if let hit = ArrangeView.hit(near: region.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
                                      snapping: snapsHere) {
             if let command = Hits.placed(region, in: track, at: hit) { try? store.perform(command) }
-        } else if let command = Arranging.moved(region, in: track, byTicks: delta, signature: signature) {
+        } else if let command = Arranging.moved(region, in: track, byTicks: delta, meter: meter) {
             try? store.perform(command)
         }
     }
@@ -650,7 +659,7 @@ private struct RegionBlock: View {
     }
 
     private func trim(_ edge: Arranging.Edge, beats: Tick) {
-        apply(edge, byTicks: beats * MusicalTime.ticksPerBeat(signature))
+        apply(edge, byTicks: beats * meter.ticksPerBeat(at: region.start))
     }
 
     private func apply(_ edge: Arranging.Edge, byTicks delta: Tick) {
@@ -659,7 +668,8 @@ private struct RegionBlock: View {
     }
 
     private func move(byBars bars: Tick) {
-        if let command = Arranging.moved(region, in: track, byTicks: bars * ticksPerBar, signature: signature) {
+        if let command = Arranging.moved(region, in: track,
+                                         byTicks: Arranging.ticks(movingBars: bars, from: region.start, meter: meter), meter: meter) {
             try? store.perform(command)
         }
     }
@@ -672,7 +682,7 @@ private struct RegionBlock: View {
     /// stay movable and trimmable, and one Undo joins them again.
     private func split() {
         let project = store.project
-        let at = Arranging.nearestBar(engine.playheadTick(in: project), signature: project.timeSignature)
+        let at = Arranging.nearestBar(engine.playheadTick(in: project), meter: project.meterMap)
         try? store.perform(.splitRegion(track: track.id, region.id, at: at, newID: RegionID()))
     }
 

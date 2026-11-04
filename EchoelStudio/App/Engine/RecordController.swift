@@ -201,8 +201,9 @@ final class RecordController {
             default: break
             }
         }
-        let bar = MusicalTime.ticksPerBar(store.project.timeSignature)
-        guard let clip = take.clip(endingAt: tick(engine.positionSample), bar: bar) else { return }
+        // The bars of the meter the take was played in (a jam host's while following one).
+        let meter = engine.playedMeterMap(of: store.project)
+        guard let clip = take.clip(endingAt: tick(engine.positionSample), meter: meter) else { return }
         let id = ClipID()
         let number = (store.project.track(track)?.clips.filter { $0.name.hasPrefix("Take ") }.count ?? 0) + 1
         try? store.perform([.createClip(track: track, id: id, name: "Take \(number)", length: clip.length),

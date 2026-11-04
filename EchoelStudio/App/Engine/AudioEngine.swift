@@ -163,12 +163,10 @@ final class AudioEngine {
         core?.setLoop(loopsSong && take == nil ? songLoop : nil)
     }
 
-    /// Bar 1 to the end of the last bar a clip or an audio region reaches; at least one bar.
-    nonisolated static func loopRange(songEnd: Tick, signature: TimeSignature) -> Range<Tick>? {
-        let bar = MusicalTime.ticksPerBar(signature)
-        guard bar > 0, songEnd >= 0 else { return nil }
-        let bars = Swift.max(1, (songEnd + bar - 1) / bar)
-        return 0..<Swift.min(bars * bar, MusicalTime.maximumTick)
+    /// Bar 1 to the end of the last bar a clip or an audio region reaches, in the bars of the
+    /// meter the song plays; at least one bar.
+    nonisolated static func loopRange(songEnd: Tick, meter: MeterMap) -> Range<Tick>? {
+        Arranging.songLoop(songEnd: songEnd, meter: meter)
     }
     private static let keysFollowScaleKey = "keysFollowScale"
 
@@ -1221,6 +1219,11 @@ final class AudioEngine {
         playing(project).tempoMap
     }
 
+    /// The bars as the engine counts them: the song's, or a jam host's while following one.
+    func playedMeterMap(of project: Project) -> MeterMap {
+        playing(project).meterMap
+    }
+
     /// The playhead as a song position. For actions, never a view body.
     func playheadTick(in project: Project) -> Tick {
         guard let core else { return 0 }
@@ -1279,7 +1282,7 @@ final class AudioEngine {
         meterIndices = core.meterIndices(for: snapshot)
         core.publish(snapshot)
         let songEnd = Swift.max(plan.songEnd, snapshot.time.tick(atSample: snapshot.audioEnd))
-        songLoop = Self.loopRange(songEnd: songEnd, signature: project.timeSignature)
+        songLoop = Self.loopRange(songEnd: songEnd, meter: snapshot.meter)
         applyLoop()
     }
 
