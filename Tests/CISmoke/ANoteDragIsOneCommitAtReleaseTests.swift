@@ -361,13 +361,24 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
                       && editor.contains(".sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .local))"),
                       "hold first, then slide — so a swipe still scrolls the grid")
 
-        let updating = try body(of: ".updating($live) {", in: editor)
-        for banned in ["setClipNotes", "onRelease", "clipStore", "timeline"] {
-            XCTAssertFalse(updating.contains(banned),
-                           "the per-sample closure touches `\(banned)` — nothing may be written while the finger moves")
+        // W-RED (2026-11-01): anchored from EACH `.updating($live)` — the hold-then-slide and EP-3b's
+        // direct slide — never on the file's first `.onEnded`: the pinch zoom's `MagnifyGesture`
+        // has one too, sits earlier in the file, and commits nothing to the clip.
+        var from = editor.startIndex
+        var gestures = 0
+        while let at = editor.range(of: ".updating($live) {", range: from..<editor.endIndex) {
+            let rest = String(editor[at.lowerBound...])
+            let updating = try body(of: ".updating($live) {", in: rest)
+            for banned in ["setClipNotes", "onRelease", "clipStore", "timeline"] {
+                XCTAssertFalse(updating.contains(banned),
+                               "the per-sample closure touches `\(banned)` — nothing may be written while the finger moves")
+            }
+            let ended = try body(of: ".onEnded {", in: rest)
+            XCTAssertTrue(ended.contains("onRelease(gesture)"), "the one commit is handed over at release")
+            gestures += 1
+            from = at.upperBound
         }
-        let ended = try body(of: ".onEnded {", in: editor)
-        XCTAssertTrue(ended.contains("onRelease(gesture)"), "the one commit is handed over at release")
+        XCTAssertGreaterThan(gestures, 0, "ANCHOR MISSING: no `.updating($live)` gesture in the editor")
 
         let finish = try body(of: "private func finish(", in: editor)
         XCTAssertEqual(finish.components(separatedBy: "timeline.setClipNotes(").count - 1, 2,

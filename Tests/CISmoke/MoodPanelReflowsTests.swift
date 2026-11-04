@@ -111,7 +111,9 @@ final class MoodPanelReflowsTests: XCTestCase {
         // added inside a grid pass while the original stayed outside — the copy-paste shape
         // this guard exists to catch. (`weatherRow` is covered bundle-wide by
         // `WeatherIsAMoodRubricTests`, which asserts exactly one; the other two had nothing.)
-        for fragment in ["moodPresetBar", "weatherRow", "Text(\"Friendly"] {
+        // W-RED (2026-11-01): the caption is `Text(String(localized: "Friendly …"))` since the catalog
+        // pass, so the needle is the literal's opening, not the `Text("` spelling around it.
+        for fragment in ["moodPresetBar", "weatherRow", "\"Friendly ↔ scary"] {
             let hits = body.indices.filter { body[$0].contains(fragment) }
             guard !hits.isEmpty else {
                 XCTFail("`\(fragment)` is gone from `moodPanel`. If it moved on purpose, move "

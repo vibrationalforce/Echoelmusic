@@ -75,11 +75,19 @@ final class APluginKeepsItsSettingsInTheSongTests: XCTestCase {
         let store = SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
         XCTAssertEqual(store.components(separatedBy: "settingPluginFullState(").count - 1, 1,
                        "the settings are written in exactly one place in the store")
-        guard let start = store.range(of: "public func setLanePluginState(_ laneID: UUID, _ state: Data?) {"),
-              let end = store.range(of: "public func editLanePlugin(", range: start.upperBound..<store.endIndex) else {
+        // W-RED (2026-11-01): the BRACE-MATCHED body (#408). The old slice ran to `editLanePlugin(`
+        // and swallowed H6-2's effect writers in between, whose `editLanePluginEffect` IS an Undo step.
+        guard let start = store.range(of: "public func setLanePluginState(_ laneID: UUID, _ state: Data?) {") else {
             return XCTFail("`setLanePluginState` is gone or moved — re-anchor")
         }
-        let body = String(store[start.upperBound..<end.lowerBound])
+        var depth = 1
+        var index = start.upperBound
+        while index < store.endIndex, depth > 0 {
+            if store[index] == "{" { depth += 1 } else if store[index] == "}" { depth -= 1 }
+            index = store.index(after: index)
+        }
+        XCTAssertEqual(depth, 0, "UNBALANCED: `setLanePluginState` never closes")
+        let body = String(store[start.upperBound..<index])
         XCTAssertFalse(body.contains("pushUndo("), "moving a plugin's own control is not an Undo step")
         XCTAssertTrue(body.contains("persist()"), "the settings are saved with the song")
     }
