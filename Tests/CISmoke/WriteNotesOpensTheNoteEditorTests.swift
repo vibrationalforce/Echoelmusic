@@ -126,8 +126,10 @@ final class WriteNotesOpensTheNoteEditorTests: XCTestCase {
                                    "New MIDI Part must open the part it made")
         XCTAssertLessThan(landed.lowerBound, opened.lowerBound)
 
+        // W-RED (2026-11-01): GA-2b's "Edit a copy" (part bar) opens the copy's notes — pinned by
+        // `AGeneratedTakeCanBeKeptTests` claim 7 — and is named here as the third writer.
         XCTAssertEqual(try filesUnderSources(containing: "setNotesOpen("),
-                       ["Studio/WorkstationSelection.swift", "Studio/WorkstationView.swift"],
+                       ["Studio/SelectedPartBar.swift", "Studio/WorkstationSelection.swift", "Studio/WorkstationView.swift"],
                        "a new writer of the notes switch must be named here (the owner declares it)")
     }
 
