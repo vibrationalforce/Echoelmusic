@@ -4,12 +4,13 @@ import Foundation
 /// the classic oscillator, a seven-saw supersaw, two-operator FM, the oscillator with a sine
 /// an octave below, a morph through eight shapes (A7), a struck object — six decaying modes
 /// (A5) — the harmonic-plus-noise model of the earlier app's `EchoelDDSP` (W5,
-/// `DDSPSource`), a small choir singing a vowel (VOX, `ChoirSource`), or a plucked string (A6,
-/// `PluckSource`). `character` (0 … 1) is
+/// `DDSPSource`), a small choir singing a vowel (VOX, `ChoirSource`), a plucked string (A6,
+/// `PluckSource`), a wavetable, or a texture a cellular automaton shapes (A10, `TextureSource`).
+/// `character` (0 … 1) is
 /// each engine's one control — the supersaw's detune, the FM index, the sub's level, the morph's
 /// position, the mallet's material from wood to metal, the DDSP's brightness, harmonicity and
 /// noise together (dark and breathy to bright and pure), the choir's vowel from oo to ee, the
-/// pluck's brightness; the classic oscillator ignores it. Ported from the earlier app's `EchoelPolySynth` engines
+/// pluck's brightness, the wavetable's position, the texture's tilt from dark to bright; the classic oscillator ignores it. Ported from the earlier app's `EchoelPolySynth` engines
 /// as one value type a voice owns; nothing here allocates.
 public enum SynthEngine: String, CaseIterable, Codable, Sendable {
     // A song stores the index of the choice: a new engine goes at the end.
@@ -20,6 +21,10 @@ public enum SynthEngine: String, CaseIterable, Codable, Sendable {
     /// A wavetable (the user's own sample cut into cycles, or the factory shapes): `character` the
     /// position across its cycles (`WavetableBank`).
     case wavetable
+    /// A texture (A10): a cellular automaton's row shapes sixteen partials of the note; `character`
+    /// their tilt from dark to bright, the patch's rule, density, rate and seed the rest
+    /// (`TextureSource`).
+    case texture
 
     /// A gain inside the voice, so the same patch sounds about as loud on every engine. Without it
     /// a preset jumped by up to 16 LU when only its engine changed ("Sub Bass": FM −26.4, Sub
@@ -50,6 +55,9 @@ public enum SynthEngine: String, CaseIterable, Codable, Sendable {
         case .pluck: 1.778     // +5.0 dB
         // Measured like the held engines, on the factory shapes (−13.9 LUFS before, 2026-11-04).
         case .wavetable: 0.708 // −3.0 dB
+        // Measured like the held engines, with the patch's texture defaults (−20.1 LUFS before,
+        // 2026-11-04): a row is rarely all alive, so it sits below a full sine.
+        case .texture: 1.429   // +3.1 dB
         }
     }
 }
@@ -199,6 +207,8 @@ struct EngineSource: Sendable {
     private var pluck: PluckSource
     /// Where the wavetable engine is in its cycle, 0 ..< 1.
     private var tablePhase: Float = 0
+    /// The texture's automaton and its sixteen partials; their lanes are allocated here, once.
+    private var texture = TextureSource()
 
     init(sampleRate: Float) {
         pluck = PluckSource(sampleRate: sampleRate)
@@ -217,11 +227,19 @@ struct EngineSource: Sendable {
         choir.reset()
         pluck.reset()
         tablePhase = 0
+        texture.reset()
     }
 
     /// How long the plucked string rings, from the patch's Decay and Sustain. Before each render.
     mutating func setPluckRing(decaySeconds: Float, sustain: Float, sampleRate: Float) {
         pluck.ringSamples = PluckSource.ringSeconds(decay: decaySeconds, sustain: sustain) * sampleRate
+    }
+
+    /// The texture's rule, density, rate and seed, from the patch. Before each render, and before a
+    /// strike, so a note starts from the seed the patch names.
+    mutating func setTexture(_ patch: SynthPatch, sampleRate: Float) {
+        texture.configure(ruleIndex: patch.textureRule, density: patch.textureDensity, rate: patch.textureRate,
+                          seed: patch.textureSeed, sampleRate: sampleRate)
     }
 
     /// A key struck this voice: the mallet's modes sound again, the DDSP's noise starts a
@@ -239,6 +257,7 @@ struct EngineSource: Sendable {
         ddsp.reseed(order)
         choir.strike(pitch: pitch, sampleRate: sampleRate, order: order)
         pluck.strike(order: order, dt: dt)
+        texture.strike()
     }
 
     /// One sample. `main` is the voice's own oscillator; `dt` its increment this sample.
@@ -303,6 +322,8 @@ struct EngineSource: Sendable {
             tablePhase += dt
             if tablePhase >= 1 { tablePhase -= 1 }
             return out
+        case .texture:
+            return texture.next(character: c, dt: dt)
         }
     }
 }

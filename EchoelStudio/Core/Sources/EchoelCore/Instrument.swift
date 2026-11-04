@@ -180,6 +180,8 @@ public struct SynthParameter: Sendable, Equatable {
         case vibrato
         // Appended 2026-11-04 (EchoelTools A2): the bass-line glide and accent.
         case slide, accent
+        // Appended 2026-11-04 (EchoelTools A10): the texture engine's automaton.
+        case textureRule, textureDensity, textureRate, textureSeed
 
         /// The row this case stands for. Builds a value: read it off the render thread.
         public var parameter: SynthParameter {
@@ -196,9 +198,9 @@ public struct SynthParameter: Sendable, Equatable {
             case .release: SynthParameter("synth.release", "Release", .seconds, 0.001...10, 0.25, .exponential)
             case .level: SynthParameter("synth.level", "Level", .amount, 0...1, 0.25, .linear)
             // The engine stores the index of its choice: a new engine goes at the end.
-            case .engine: SynthParameter("synth.engine", "Engine", .choice, 0...9, 0, .stepped,
+            case .engine: SynthParameter("synth.engine", "Engine", .choice, 0...10, 0, .stepped,
                                          choices: ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP", "Choir",
-                                                   "Pluck", "Wavetable"])
+                                                   "Pluck", "Wavetable", "Texture"])
             case .character: SynthParameter("synth.character", "Character", .amount, 0...1, 0.5, .linear)
             case .filter: SynthParameter("synth.filter", "Filter", .choice, 0...1, 0, .stepped, choices: ["Clean", "Ladder"])
             // The vibrato with the modulation wheel at rest (W12): what a route moves with the pulse.
@@ -207,6 +209,16 @@ public struct SynthParameter: Sendable, Equatable {
             case .slide: SynthParameter("synth.slide", "Slide", .seconds, 0...2, 0, .linear)
             // A note at velocity 100 or more opens the filter further and plays louder (0: off).
             case .accent: SynthParameter("synth.accent", "Accent", .amount, 0...1, 0, .linear)
+            // The texture engine (A10). The rule stores the index of its choice, Wolfram's number
+            // as its name: a new rule goes at the end.
+            case .textureRule: SynthParameter("synth.textureRule", "Rule", .choice, 0...7, 0, .stepped,
+                                              choices: ["90", "30", "110", "150", "184", "45", "73", "105"])
+            // How many of the sixteen partials may sound: 0 the fundamental alone, 1 all.
+            case .textureDensity: SynthParameter("synth.textureDensity", "Density", .amount, 0...1, 0.6, .linear)
+            // Generations a second; 0 holds the row.
+            case .textureRate: SynthParameter("synth.textureRate", "Evolve Rate", .hertz, 0...40, 8, .linear)
+            // The row each note starts from: 0 a single middle cell, any other a row drawn from it.
+            case .textureSeed: SynthParameter("synth.textureSeed", "Seed", .amount, 0...9_999, 0, .stepped)
             }
         }
 
@@ -233,6 +245,14 @@ public struct SynthParameter: Sendable, Equatable {
     public static let vibrato = Name.vibrato.parameter
     public static let slide = Name.slide.parameter
     public static let accent = Name.accent.parameter
+    public static let textureRule = Name.textureRule.parameter
+    public static let textureDensity = Name.textureDensity.parameter
+    public static let textureRate = Name.textureRate.parameter
+    public static let textureSeed = Name.textureSeed.parameter
+    /// The rows only the texture engine plays: the Sound page shows them while it is chosen.
+    public static let textureRows: [SynthParameter] = [textureRule, textureDensity, textureRate, textureSeed]
+    /// The `synth.engine` index of the texture engine.
+    public static let textureEngineIndex = 10
 
     /// In display order: one row per `Name`.
     public static let all: [SynthParameter] = Name.allCases.map(\.parameter)
@@ -374,6 +394,12 @@ public struct InstrumentPreset: Sendable, Equatable {
         InstrumentPreset("808 Glide", [.engine: 3, .character: 0.15, .waveform: 0, .cutoff: 1_200, .resonance: 0.1,
                                        .filterAmount: 0.8, .filterDecay: 0.25, .attack: 0.002, .decay: 1.6, .sustain: 0.25,
                                        .release: 0.35, .level: 0.38, .slide: 0.12, .accent: 0.4]),
+        // The texture engine's (A10): rule 90 growing from the middle cell, the harmonics opening
+        // and closing a few times a second under a slow swell, the filter open above them.
+        InstrumentPreset("Cell Texture", [.engine: 10, .character: 0.55, .textureRule: 0, .textureDensity: 0.8,
+                                          .textureRate: 6, .textureSeed: 0, .cutoff: 9_000, .resonance: 0.1,
+                                          .filterAmount: 0, .filterDecay: 0.3, .attack: 0.3, .decay: 0.6, .sustain: 0.9,
+                                          .release: 1.2, .level: 0.35]),
     ]
 
     public static func named(_ name: String) -> InstrumentPreset? {

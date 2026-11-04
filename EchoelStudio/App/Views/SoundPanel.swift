@@ -223,18 +223,30 @@ struct SoundPanel: View {
         .accessibilityLabel("Preset \(track.instrument.preset)\(track.instrument.isEditedFromPreset ? ", edited" : "")")
 
         choicePicker(.engine, style: .menu)
-        if Int(track.instrument.value(.engine).rounded()) == WavetableSource.engineIndex {
+        let engineIndex = Int(track.instrument.value(.engine).rounded())
+        if engineIndex == WavetableSource.engineIndex {
             wavetableControls
+        }
+        let texture = engineIndex == SynthParameter.textureEngineIndex
+        if texture {
+            choicePicker(.textureRule, style: .menu)
         }
         choicePicker(.waveform)
         choicePicker(.filter)
 
         LazyVGrid(columns: [GridItem(.adaptive(minimum: columnWidth), spacing: Theme.Space.s)],
                   alignment: .leading, spacing: Theme.Space.s) {
-            ForEach(SynthParameter.all.filter { $0.unit != .choice }, id: \.key) { parameter in
+            ForEach(synthFields(texture: texture), id: \.key) { parameter in
                 ParameterField(address: ParameterAddress(.track(track.id), parameter.key))
             }
         }
+    }
+
+    /// The synth's numbers, one field each; the texture's own (density, rate, seed) only while the
+    /// texture engine plays, since no other engine hears them.
+    private func synthFields(texture: Bool) -> [SynthParameter] {
+        let textureKeys = Set(SynthParameter.textureRows.map(\.key))
+        return SynthParameter.all.filter { $0.unit != .choice && (texture || !textureKeys.contains($0.key)) }
     }
 
     /// The file the Wavetable engine is cut from: its name, a new file, one of the song's, or the

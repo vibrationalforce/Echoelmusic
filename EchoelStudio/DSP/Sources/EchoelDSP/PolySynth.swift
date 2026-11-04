@@ -31,6 +31,13 @@ public struct SynthPatch: Equatable, Codable, Sendable {
     /// Accent (A2): how much a note struck at velocity `PolySynth.accentVelocity` or harder opens
     /// the filter envelope further and plays louder, 0…1. 0 is off.
     public var accent: Float = 0
+    /// The texture engine (A10): which of its eight rules evolves the row (`TextureSource.ruleNumber`),
+    /// how many harmonics may sound (0 … 1), generations per second (0 … 40, 0 holds the row) and
+    /// the row a note starts from.
+    public var textureRule: Int = 0
+    public var textureDensity: Float = 0.6
+    public var textureRate: Float = 8
+    public var textureSeed: UInt32 = 0
 
     public enum FilterModel: String, CaseIterable, Codable, Sendable {
         case stateVariable, ladder
@@ -173,6 +180,7 @@ public struct SynthVoice: Sendable {
             filter.setResonance(resonance)
             ladder.setResonance(resonance)
         }
+        if patch.engine == .texture { source.setTexture(patch, sampleRate: sampleRate) }
         // Every key strikes, a repeated one too: a mallet rings again on top of its tail, and the
         // DDSP's noise takes a sequence of its own from the note counter.
         source.strike(character: patch.character, order: order, pitch: pitch, sampleRate: sampleRate, dt: increment)
@@ -258,6 +266,7 @@ public struct SynthVoice: Sendable {
         let usesLadder = patch.filterModel == .ladder
         if patch.engine == .pluck { source.setPluckRing(decaySeconds: patch.ampEnvelope.decay, sustain: patch.ampEnvelope.sustain,
                                                              sampleRate: sampleRate) }
+        if patch.engine == .texture { source.setTexture(patch, sampleRate: sampleRate) }
         for i in buffer.indices {
             cutoffOctaves = targetOctaves + (cutoffOctaves - targetOctaves) * cutoffPole
             resonance = targetResonance + (resonance - targetResonance) * resonancePole

@@ -475,6 +475,33 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with a synth on the texture engine (A10, 2026-11-04): four synth values added inside
+    /// format 4 and the engine's index appended (10), so every earlier index holds.
+    private let formatFourTexture = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Cells",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-00000000000F",
+          "name": "Cells",
+          "kind": "instrument",
+          "colorIndex": 5,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "instrument": { "device": "synth", "preset": "Cell Texture",
+                          "values": { "synth.engine": 10, "synth.character": 0.55, "synth.textureRule": 2,
+                                      "synth.textureDensity": 0.75, "synth.textureRate": 12, "synth.textureSeed": 4711 } }
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     /// Format 4 with markers on the timeline (PRO-W1, 2026-11-04): an optional song field added
     /// inside format 4, so an earlier format-4 build opens the file and shows no markers.
     private let formatFourMarkers = Data("""
@@ -565,7 +592,8 @@ final class FormatGoldenTests: XCTestCase {
 
     func testEveryGoldenFileSurvivesARoundTrip() throws {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
-                     formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes] {
+                     formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes,
+                     formatFourTexture] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -921,6 +949,34 @@ final class FormatGoldenTests: XCTestCase {
         let many = String(decoding: formatFourWavetable, as: UTF8.self).replacingOccurrences(of: "\"frames\": 24", with: "\"frames\": 65")
         XCTAssertNotEqual(Data(many.utf8), formatFourWavetable, "the replacement must land")
         XCTAssertThrowsError(try ProjectCodec.decode(Data(many.utf8)))
+    }
+
+    func testASynthOpensOnTheTextureEngineWithItsAutomaton() throws {
+        let project = try ProjectCodec.decode(formatFourTexture)
+        let instrument = try XCTUnwrap(project.tracks.first?.instrument)
+        XCTAssertEqual(instrument.value(.engine), 10)
+        XCTAssertEqual(SynthParameter.engine.choices[10], "Texture")
+        XCTAssertEqual(instrument.value(.textureRule), 2)
+        XCTAssertEqual(SynthParameter.textureRule.choices[2], "110", "the index names Wolfram's rule 110")
+        XCTAssertEqual(instrument.value(.textureDensity), 0.75)
+        XCTAssertEqual(instrument.value(.textureRate), 12)
+        XCTAssertEqual(instrument.value(.textureSeed), 4711)
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
+        // A song without the texture's values plays their defaults.
+        let lead = try XCTUnwrap(ProjectCodec.decode(current).tracks.first?.instrument)
+        XCTAssertEqual(lead.value(.textureRule), 0)
+        XCTAssertEqual(lead.value(.textureDensity), 0.6)
+        XCTAssertEqual(lead.value(.textureRate), 8)
+        XCTAssertEqual(lead.value(.textureSeed), 0)
+        // A rule, an engine or a seed past its range refuses the song.
+        for (from, to) in [("\"synth.textureRule\": 2", "\"synth.textureRule\": 8"),
+                           ("\"synth.engine\": 10", "\"synth.engine\": 11"),
+                           ("\"synth.textureSeed\": 4711", "\"synth.textureSeed\": 10000"),
+                           ("\"synth.textureRate\": 12", "\"synth.textureRate\": 41")] {
+            let broken = String(decoding: formatFourTexture, as: UTF8.self).replacingOccurrences(of: from, with: to)
+            XCTAssertNotEqual(Data(broken.utf8), formatFourTexture, "the replacement must land")
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), to)
+        }
     }
 
     func testASongOpensWithItsMarkersAndAnOlderOneWithNone() throws {
