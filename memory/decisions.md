@@ -5743,3 +5743,11 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Why:** Founder 2026-11-01: „Echoelmusic Repo soll in allen Belangen besser sein“ (Inspiration „Claude Agentic OS“: CLAUDE.md als Karte). Gemessen: jede Sitzung zahlte 149.149 B Gesetz, überwiegend für die eingefrorene Alt-App.
 - **Folge:** immer geladene Fläche 169.013 B → rund 47 KB (`python3 scripts/doctor.py --section D`). Ein Commit, der nur `Sources/CLAUDE.md` ändert, startet Merge und beide Alt-App-Gates (`Sources/**`); einer, der nur die Karte ändert, weiterhin nicht (Passagier-Regel). App-Gesetz wächst künftig in seinem Verzeichnis.
 - **Review:** 2026-12-01.
+
+### 2026-11-04 — Förderung wieder offen, Builds ohne Wochenrhythmus, Tonsystem und Swing hörbar
+- **Decision:** Förderung ist wieder offen (Founder 13:28): ab der Woche des 09.11. bereitet Claude Calls und Mail-Entwürfe zu allen Förderlinien und Ideen vor; nichts geht ohne sein Ja hinaus. Das löst den Stopp vom 24.10. ab.
+- **Decision:** Der Wochenrhythmus der Builds ist ausgesetzt (Founder 15:36 „immer wieder TestFlight deploy“). 10032 = Knack-Fix (AUD, elf Stellen, 48 kHz/512), 10033 = Tonsystem und Swing (W13). Fünf Gerätechecks pro Build bleiben.
+- **Decision:** echoelmusic.com bleibt; diese Woche nur die App. Kein Repo für Tauchfliege.
+- **Decision:** W-RED hat das blockierende Bündel von 30 versteckten Roten auf 0 gebracht; das xcresult-Werkzeug meldet vorerst nur und kommt erst nach mehreren sauberen Läufen in den Auto-Merge.
+- **Offen beim Founder:** Planeten-Kammertöne öffentlich? · Datenschutzseite zu Video-Takes · GM37–GM39 · Gerätechecks 10027–10033.
+- **Review:** 2026-12-04.
