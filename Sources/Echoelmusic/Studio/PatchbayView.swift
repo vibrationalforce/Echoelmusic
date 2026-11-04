@@ -167,7 +167,7 @@ struct PatchbayView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(16)
+            .padding(EchoelTheme.spaceL)
         }
         .background(EchoelTheme.bg)
     }
@@ -192,7 +192,7 @@ struct PatchbayView: View {
     /// — so `EchoelStudioView`'s modal metadata chain does not grow. A paired controller
     /// becomes a CoreMIDI source that `MIDIInput` auto-connects → real synth notes.
     private var bluetoothMIDISection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
             Text("Bluetooth MIDI").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             NavigationLink {
                 BluetoothMIDIPairingView()
@@ -212,7 +212,7 @@ struct PatchbayView: View {
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 }
-                .padding(12)
+                .padding(EchoelTheme.spaceM)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
@@ -238,7 +238,7 @@ struct PatchbayView: View {
     /// NUMERIC parameters. This is a binary route on/off, same grammar as the other
     /// route switches on this surface.
     private var networkMIDISection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
             Text("Network MIDI").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             VStack(alignment: .leading, spacing: 6) {
                 // COPY IS DELIBERATELY TWO-DIRECTIONAL (corrected 2026-07-28). The label
@@ -263,7 +263,7 @@ struct PatchbayView: View {
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(12)
+            .padding(EchoelTheme.spaceM)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
@@ -297,7 +297,7 @@ struct PatchbayView: View {
     /// and change nothing. Disabled and visible beats hidden: the dependency is the thing a
     /// player needs to understand, and hiding the row would make it a mystery instead.
     private var midiOutSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
             Text("MIDI out").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             VStack(alignment: .leading, spacing: 6) {
                 Toggle(isOn: $midiOutMPE) {
@@ -359,7 +359,7 @@ struct PatchbayView: View {
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(12)
+            .padding(EchoelTheme.spaceM)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
@@ -423,7 +423,7 @@ struct PatchbayView: View {
     @ViewBuilder
     private var modulationSection: some View {
         @Bindable var engine = modulationEngine
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
             Text("Body → parameter").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             VStack(alignment: .leading, spacing: 10) {
                 if engine.matrix.routes.isEmpty {
@@ -448,7 +448,7 @@ struct PatchbayView: View {
                 } label: {
                     Label("Add route", systemImage: "plus")
                         .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                        .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
+                        .padding(.horizontal, EchoelTheme.spaceM).frame(minHeight: EchoelTheme.controlTapHeight)
                         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                             .strokeBorder(EchoelTheme.border, lineWidth: 1))
                 }
@@ -457,7 +457,7 @@ struct PatchbayView: View {
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(12)
+            .padding(EchoelTheme.spaceM)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
@@ -477,7 +477,7 @@ struct PatchbayView: View {
     /// do. The status line is a LEAF (`OSCInputStatusLine`): `lastReceivedTimestamp` moves per
     /// cue, and this body hosts the port `TextField`s (the 10.76.50 law).
     private var oscInSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
             Text("OSC input · control").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             Toggle(isOn: $oscInEnabled) {
                 Text("Accept OSC control")
@@ -507,7 +507,7 @@ struct PatchbayView: View {
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(12)
+        .padding(EchoelTheme.spaceM)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.surface))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
@@ -544,7 +544,7 @@ struct PatchbayView: View {
     }
 
     private var networkOutSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceM) {
             Text("Network output").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             // Rule 6, eleventh family: each sender OWNS its default port (and the two light
             // senders their universe); the row only carries the owner's number to the key.
@@ -595,7 +595,7 @@ struct PatchbayView: View {
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(12)
+        .padding(EchoelTheme.spaceM)
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
         .onChange(of: oscClinicalDetail) { _, _ in osc.applyEgressPreferences() }
@@ -616,7 +616,7 @@ struct PatchbayView: View {
     /// FREEZE LAW: reads `streamsScene` only — a cold flag. Never `lastSentTimestamp` or
     /// `lastSceneObjectCount` here; the activity dot in the ADM-OSC row above is the leaf.
     private var admSceneStreamRow: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
             Toggle(isOn: admSceneStream) {
                 Text("Every track as its own object (ADM-OSC)")
                     .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
@@ -790,7 +790,7 @@ struct PatchbayView: View {
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(12)
+        .padding(EchoelTheme.spaceM)
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
     }
@@ -886,7 +886,7 @@ struct PatchbayView: View {
             Button { router.applyAllSuggestions() } label: {
                 Label("Smart patch", systemImage: "wand.and.stars")
                     .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.onPrimary)
-                    .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
+                    .padding(.horizontal, EchoelTheme.spaceM).frame(minHeight: EchoelTheme.controlTapHeight)
                     .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.text))
             }
             .buttonStyle(.plain)
@@ -897,7 +897,7 @@ struct PatchbayView: View {
             .disabled(router.suggestions().isEmpty)
             Button { router.clearAll() } label: {
                 Text("Clear").font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                    .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
+                    .padding(.horizontal, EchoelTheme.spaceM).frame(minHeight: EchoelTheme.controlTapHeight)
                     .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
             }
             .buttonStyle(.plain)
@@ -912,8 +912,8 @@ struct PatchbayView: View {
 
     private func sourceCard(_ src: SignalPort) -> some View {
         let sinks = router.graph.sinks.filter { $0.id != src.id }
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+        return VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
+            HStack(spacing: EchoelTheme.spaceS) {
                 Image(systemName: kindIcon(src.kind)).font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.accent)
                 Text(src.name).font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
                 statusTag(src)
@@ -923,7 +923,7 @@ struct PatchbayView: View {
                 destinationRow(src, dst)
             }
         }
-        .padding(12)
+        .padding(EchoelTheme.spaceM)
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
     }
@@ -936,7 +936,7 @@ struct PatchbayView: View {
         return Button {
             if compatible { router.toggle(src.id, dst.id) }
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: EchoelTheme.spaceS) {
                 Image(systemName: connected ? "checkmark.circle.fill" : (compatible ? "circle" : "minus.circle"))
                     .font(EchoelTheme.font(15))
                     .foregroundStyle(connected ? EchoelTheme.accent : (compatible ? EchoelTheme.dim : EchoelTheme.border))
@@ -1030,7 +1030,7 @@ private struct ModulationRouteRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
             HStack(spacing: 10) {
                 Toggle("", isOn: $route.enabled).labelsHidden().tint(EchoelTheme.accent)
                     .accessibilityLabel("Route enabled")
@@ -1065,7 +1065,7 @@ private struct ModulationRouteRow: View {
                 .accessibilityHint("The body value that maps to none of this route's depth. Raise it to ignore the bottom of the channel's range.")
             EchoelValueField(label: "Bio max", value: inputHighBinding, range: 0...1, decimals: 2)
                 .accessibilityHint("The body value that maps to all of this route's depth. Lower it to reach full depth without reaching the top of the channel's range.")
-            HStack(spacing: 12) {
+            HStack(spacing: EchoelTheme.spaceM) {
                 Toggle("Invert", isOn: $route.invert).tint(EchoelTheme.accent)
                     .font(EchoelTheme.font(12))
                 Picker("Curve", selection: $route.curve) {
@@ -1120,9 +1120,9 @@ private struct MIDIStatusRow: View {
                                          now: CFAbsoluteTimeGetCurrent())
             let outRung = MIDIOutRung.rung(enabled: midiOut.enabled, isReady: midiOut.isReady)
             let destinations = midiOut.destinationCount
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
                 Text("MIDI").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
                     statusLine(label: "MIDI in",
                                line: inRung.line(source: midiPub.sourceName),
                                caption: inRung.caption,
@@ -1133,7 +1133,7 @@ private struct MIDIStatusRow: View {
                                spoken: outRung.spoken(destinations: destinations))
                 }
             }
-            .padding(12)
+            .padding(EchoelTheme.spaceM)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))

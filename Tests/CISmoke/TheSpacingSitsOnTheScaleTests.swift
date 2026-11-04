@@ -33,7 +33,9 @@ final class TheSpacingSitsOnTheScaleTests: XCTestCase {
 
     /// Measured 2026-10-04 on the F2a tree. LOWER it in the commit that migrates another file;
     /// never raise it — a new literal gap takes a step from the scale instead.
-    private static let ceiling = 696
+    /// ⭐ W-RED (2026-11-01): the count had grown to 712 (red, unseen — the merge reads only the
+    /// build step); 27 on-scale gaps in `PatchbayView.swift` took their tokens (same points), 685.
+    private static let ceiling = 685
 
     /// A numeric literal as a stack's `spacing:` or as a `.padding(` amount, with or without
     /// an edge set in front of it.
