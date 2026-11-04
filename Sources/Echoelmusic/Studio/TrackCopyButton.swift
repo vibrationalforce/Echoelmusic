@@ -29,7 +29,7 @@ struct TrackCopyButton: View {
                 }
             } label: {
                 Label(String(localized: "Duplicate track"), systemImage: "plus.square.on.square")
-                    .font(EchoelTheme.font(13, .medium))
+                    .font(EchoelTheme.font(13))
                     .foregroundStyle(EchoelTheme.text)
                     .padding(.horizontal, 12)
                     .frame(minHeight: 44)

@@ -1009,7 +1009,7 @@ struct ArrangePartBlock: View {
     @ViewBuilder private var nameTag: some View {
         if !name.isEmpty {
             Text(name)
-                .font(EchoelTheme.font(11, .medium))
+                .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.text)
                 .lineLimit(1)
                 .truncationMode(.tail)

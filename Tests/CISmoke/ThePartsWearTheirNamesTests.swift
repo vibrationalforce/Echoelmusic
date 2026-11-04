@@ -87,7 +87,9 @@ final class ThePartsWearTheirNamesTests: XCTestCase {
         XCTAssertTrue(file.contains(".accessibilityLabel(label)"), "the block's label keeps its one rule")
         XCTAssertTrue(file.contains("label: spokenName + String(localized: \", part at \") + SessionGrid.label(forTick: start),"),
                       "the spoken track-and-position label is unchanged")
-        XCTAssertTrue(file.contains(".font(EchoelTheme.font(11, .medium))"), "the tag sits on the 11-pt floor")
+        // W-RED (2026-11-01): `.medium` dropped — the bundled family has no such face, so it drew as
+        // regular all along (`TypeWeightsThatExistTests`); the floor is the size, and it stays.
+        XCTAssertTrue(file.contains(".font(EchoelTheme.font(11))"), "the tag sits on the 11-pt floor")
     }
 
     private func text(_ relativePath: String) throws -> String {
