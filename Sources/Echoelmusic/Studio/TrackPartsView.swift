@@ -230,7 +230,7 @@ enum TrackParts {
         guard let region = timeline.document.regions.first(where: { $0.id == part.id }),
               let from = lanes.firstIndex(where: { $0.id == region.laneID }),
               let to = lanes.firstIndex(where: { $0.id == laneID }) else {
-            timeline.moveRegion(id: part.id, toStartTick: tick)
+            move(part, toStartTick: tick, timeline: timeline)   // the time-only move, one spelling
             return
         }
         timeline.moveRegion(id: part.id, toStartTick: tick, laneOffset: to - from)
