@@ -5,6 +5,26 @@ import Foundation
 /// signature over 0 or a tempo of 0 would stop the render thread. So the reader checks it all
 /// before the song opens, and refuses a file that breaks a rule rather than playing it.
 extension Project {
+    /// Every time signature change after tick 0, at rising ticks, a signature a song can have,
+    /// on a bar line of the signature before it — and at most `maximumTick`.
+    static func validateMeter(signature: TimeSignature, changes: [TimeSignatureChange]) throws {
+        var meter = MeterMap(signature: signature)
+        var previous: Tick = 0
+        for change in changes {
+            guard change.tick > previous, change.tick <= MusicalTime.maximumTick else {
+                throw invalid("timeSignatureChanges", "ticks must rise from after 0 to at most \(MusicalTime.maximumTick)")
+            }
+            guard change.signature.isValid else {
+                throw invalid("timeSignatureChanges", "numerator 1…32, denominator a power of two up to 32")
+            }
+            guard meter.isBarLine(change.tick) else {
+                throw invalid("timeSignatureChanges", "the change at tick \(change.tick) is not on a bar line")
+            }
+            previous = change.tick
+            meter = MeterMap(signature: signature, changes: changes.filter { $0.tick <= change.tick })
+        }
+    }
+
     public func validate() throws {
         guard timeSignature.isValid else { throw Self.invalid("timeSignature", "numerator 1…32, denominator a power of two up to 32") }
         guard tempo.isFinite, Tempo.range.contains(tempo) else { throw Self.invalid("tempo", "must be within \(Tempo.range)") }
@@ -20,6 +40,7 @@ extension Project {
             }
             previous = change.tick
         }
+        try Self.validateMeter(signature: timeSignature, changes: timeSignatureChanges)
         try Self.validate(master, name: "master")
         try Self.validateName(name, "name")
         var sceneIDs = Set<SceneID>()

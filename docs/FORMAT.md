@@ -67,6 +67,7 @@ Every audio and video file is a plain file you can take out of `Media/`.
 | `tempo` | number | required; the tempo from tick 0 |
 | `tempoChanges` | `[{tick, bpm, curve}]` | optional; ticks rising, after 0; `curve` optional (below) |
 | `timeSignature` | `{numerator, denominator}` | required; denominator a power of two ≤ 32 |
+| `timeSignatureChanges` | `[{tick, numerator, denominator}]` | optional; ticks rising, after 0, each on a bar line (below) |
 | `context` | musical context | optional; absent = C, chromatic, 12 equal at 440 Hz, straight |
 | `master` | mixer strip | required |
 | `masterInserts` | `[insert]` | optional; effects after the master fader |
@@ -85,6 +86,13 @@ Either way the tempo then holds until the next change. Echoel writes `curve` onl
 so a song without ramps is stored exactly as before; a build that predates ramps opens a song
 with them and plays every change as a step. A standard MIDI file has no ramps: an export writes
 a ramp as a tempo step on every sixteenth note.
+
+**Time signature change:** `{tick, numerator, denominator}`. `timeSignature` is the first bar's;
+from `tick` the song counts bars of the change's signature until the next change. `tick` must fall
+on a bar line of the signature before it — a file with a change off a bar line, or with a
+signature no song can have, is refused. Echoel writes the key only when a song has a change, so a
+song without one is stored exactly as before; a build that predates changes opens a song with
+them and counts the first bar's signature throughout (its notes and tempo are unaffected).
 
 **Mixer strip:** `{volumeDB, pan, isMuted, isSoloed}`.
 

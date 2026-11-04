@@ -35,6 +35,7 @@ public struct ParameterSpec: Equatable, Sendable {
 extension Command {
     public enum Kind: String, CaseIterable, Sendable {
         case renameProject, setTempo, setTimeSignature, setTempoChange, removeTempoChange, setTempoCurve
+        case setTimeSignatureChange, removeTimeSignatureChange
         case setKeyRoot, setScale, setTuning, setConcertPitch, setSwing
         case addTrack, removeTrack, renameTrack, moveTrack, setTrackColor
         case setInstrumentParameter, loadInstrumentPreset, setInstrumentDevice, setInstrumentSample
@@ -62,6 +63,8 @@ extension Command {
         case .setTempoChange: .setTempoChange
         case .removeTempoChange: .removeTempoChange
         case .setTempoCurve: .setTempoCurve
+        case .setTimeSignatureChange: .setTimeSignatureChange
+        case .removeTimeSignatureChange: .removeTimeSignatureChange
         case .setKeyRoot: .setKeyRoot
         case .setScale: .setScale
         case .setTuning: .setTuning
@@ -160,6 +163,15 @@ public enum CommandCatalog {
         case .removeTempoChange:
             return CommandSpec(name: "tempo.change.remove", title: "Remove Tempo Change",
                                summary: "Removes the tempo change at a position.",
+                               parameters: [P("tick", .ticks, "Position of the change in ticks.")])
+        case .setTimeSignatureChange:
+            return CommandSpec(name: "meter.change.set", title: "Set Time Signature Change",
+                               summary: "From a bar line after the song start, counts bars in a new time signature until the next change. Replaces a change at the same position; refused off a bar line or when a later change would leave its bar line.",
+                               parameters: [P("tick", .ticks, "Position of a bar line in ticks (960 per quarter note), after 0."),
+                                            P("timeSignature", .timeSignature, "Numerator 1–32, denominator 1, 2, 4, 8, 16 or 32.")])
+        case .removeTimeSignatureChange:
+            return CommandSpec(name: "meter.change.remove", title: "Remove Time Signature Change",
+                               summary: "Removes the time signature change at a position; refused when a later change would leave its bar line.",
                                parameters: [P("tick", .ticks, "Position of the change in ticks.")])
         case .setTempoCurve:
             return CommandSpec(name: "tempo.change.curve", title: "Set Tempo Curve",
