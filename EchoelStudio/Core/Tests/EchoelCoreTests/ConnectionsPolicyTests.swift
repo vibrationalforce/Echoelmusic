@@ -11,6 +11,21 @@ final class ConnectionsPolicyTests: XCTestCase {
         XCTAssertTrue(BioEgressPolicy.allowsEgress(.camera))
         XCTAssertTrue(BioEgressPolicy.allowsEgress(.ble))
         XCTAssertFalse(BioEgressPolicy.allowsEgress(.health), "Health-store data never leaves the device")
+        // Recovery 9: the phone's own motion sensors are measured here, like the camera and the strap.
+        XCTAssertTrue(BioEgressPolicy.allowsEgress(.motion))
+    }
+
+    /// Motion goes the camera's way: only with body sharing on, and only as a classified address.
+    func testMotionNeedsBodySharingLikeTheCamera() {
+        let motion = "/echoelmusic/bio/motion"
+        for source in [BodyChannel.Source.camera, .motion] {
+            XCTAssertFalse(BioEgressPolicy.allowsEgress(address: motion, source: source, consent: .off), "\(source)")
+            XCTAssertTrue(BioEgressPolicy.allowsEgress(address: motion, source: source,
+                                                       consent: BioEgressPolicy.Consent(sharesBody: true)), "\(source)")
+        }
+        XCTAssertFalse(BioEgressPolicy.allowsEgress(address: "/echoelmusic/bio/motion/tilt", source: .motion,
+                                                    consent: BioEgressPolicy.Consent(sharesBody: true)),
+                       "an address nobody classified stays silent")
     }
 
     func testEveryAddressHasOneClassOrNone() {

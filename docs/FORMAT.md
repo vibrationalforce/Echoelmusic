@@ -273,7 +273,11 @@ whole step, until the next point, and `curve` has no effect there.
 
 **Modulation route:** `{id, source, target, depth, curve, polarity, enabled}`, every key
 required. `source` one of `body.heartRate` `body.hrv` `body.coherence` `body.breath` `lfo.1`
-`macro.1` `midi.cc.1`; `target` a parameter address in its text form; `depth` −1 … 1; `curve`
+`macro.1` `midi.cc.1`, and — added inside format 4 (2026-11-04), the phone's own motion —
+`body.motion.tiltX` `body.motion.tiltY` `body.motion.rotation` `body.motion.energy` (sideways tilt
+and forward tilt, 0.5 lying flat; turning, 0.5 at rest; movement without gravity, 0 lying still).
+A format-4 build from before that date refuses a song with one of these four, as it refuses any
+source it does not know; `target` a parameter address in its text form; `depth` −1 … 1; `curve`
 `linear` or `square` (signed: `u·|u|`); `polarity` `unipolar` (the source's 0 … 1 as is) or
 `bipolar` (centred, −1 … 1); `enabled` true or false. An unknown source, curve or polarity
 refuses the song — a route is never guessed. Each source is normalized to 0 … 1; a parameter's

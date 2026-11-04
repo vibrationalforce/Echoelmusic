@@ -3,7 +3,8 @@ import SwiftUI
 
 /// "Modulate" for one owner (wave W2): the body moves the owner's volume, pan or instrument values. Only sources
 /// with a producer are offered — the pulse, HRV, coherence and breath of the chest strap or the
-/// camera (W1; the breath, read from the timing of the heartbeat, since W12b); a source nothing
+/// camera (W1; the breath, read from the timing of the heartbeat, since W12b), and the phone's own tilt, turning and
+/// movement (Recovery 9); a source nothing
 /// measures would be a control that does nothing. Every change goes through
 /// `ProjectStore.perform` (`modulation.set` / `modulation.remove`), one undo step each.
 struct ModulateMenu: View {
@@ -11,13 +12,16 @@ struct ModulateMenu: View {
     @Environment(HeartRateStrap.self) private var strap
     @Environment(CameraPulseSource.self) private var camera
     @Environment(HealthHeartRate.self) private var health
+    @Environment(PhoneMotionSource.self) private var phoneMotion
     let owner: ParameterAddress.Owner
 
     /// The sources a route can be made from today, with the words the menu uses: a body source's
     /// pulse and what its beat-to-beat intervals carry. HRV needs 8 beats and coherence 16
     /// before they add anything, the breath a few slow, even breaths.
     static let sources: [(ModulationSource, String)] = [(.heartRate, "Heart Rate"), (.hrv, "HRV"),
-                                                        (.coherence, "Coherence"), (.breath, "Breath")]
+                                                        (.coherence, "Coherence"), (.breath, "Breath"),
+                                                        (.motionTiltX, "Tilt Left/Right"), (.motionTiltY, "Tilt Forward/Back"),
+                                                        (.motionRotation, "Turning"), (.motionEnergy, "Movement")]
     /// The depths offered, as a share of the control's travel.
     static let depths: [Double] = [0.1, 0.25, 0.5, 1]
 
@@ -42,9 +46,9 @@ struct ModulateMenu: View {
         let project = store.project
         let routable = targets(in: project)
         let routes = project.modRoutes.filter { routable.contains($0.target) }
-        let measuring = strap.measuring.union(camera.measuring).union(health.measuring)
+        let measuring = strap.measuring.union(camera.measuring).union(health.measuring).union(phoneMotion.measuring)
         Menu("Modulate", systemImage: "waveform.path.ecg") {
-            Text(Self.measuringLine(measuring, sourceOn: strap.isOn || camera.isOn || health.isOn))
+            Text(Self.measuringLine(measuring, sourceOn: strap.isOn || camera.isOn || health.isOn || phoneMotion.isOn))
             ForEach(routable, id: \.self) { target in
                 if let descriptor = project.descriptor(for: target) {
                     Menu(descriptor.title) {

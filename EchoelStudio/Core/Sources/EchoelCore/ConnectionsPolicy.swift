@@ -6,8 +6,8 @@ import Foundation
 /// the Connections panel. Pure; `ConnectionsPolicyTests` replays every decision.
 ///
 /// Three questions, asked in this order, each failing closed:
-/// 1. **May this body's numbers leave at all?** Only what Echoel measures itself — the camera and
-///    a chest strap. Anything read from the Health store stays on the device, whatever the
+/// 1. **May this body's numbers leave at all?** Only what Echoel measures itself — the camera,
+///    a chest strap and the phone's own motion sensors. Anything read from the Health store stays on the device, whatever the
 ///    musician switches on (App Store Review 5.1.3: Health data is never shared with third
 ///    parties, and a UDP packet to a typed host is beyond our vouching).
 /// 2. **Did the musician ask?** `Consent.sharesBody` is the panel's toggle, off at every launch.
@@ -41,7 +41,7 @@ public enum BioEgressPolicy {
     /// review step. A default would hand a future Health-derived source the answer silently.
     public static func allowsEgress(_ source: BodyChannel.Source) -> Bool {
         switch source {
-        case .camera, .ble:
+        case .camera, .ble, .motion:
             return true
         case .health:
             return false

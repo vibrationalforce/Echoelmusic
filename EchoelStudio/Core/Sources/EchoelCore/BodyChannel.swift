@@ -14,7 +14,9 @@ import Foundation
 /// Pure: time is the caller's monotonic host clock in milliseconds; nothing here reads a clock,
 /// a sensor or the main actor.
 public struct BodyChannel: Equatable, Sendable {
-    public enum Source: String, Sendable { case camera, ble, health }
+    /// `motion` is the iPhone's own sensors (`PhoneMotion`): measured here, like the camera and
+    /// the strap, and needing no permission.
+    public enum Source: String, Sendable { case camera, ble, health, motion }
     public enum Permission: String, Sendable { case granted, denied, unknown }
     public enum State: String, Sendable { case off, waiting, denied, suspended, valid, invalid, stale }
     /// What became of one event.
