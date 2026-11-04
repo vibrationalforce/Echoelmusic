@@ -266,12 +266,14 @@ public struct EngineSnapshot: Sendable {
     /// other one's own output is quiet, and every send still arrives, so the return a track feeds
     /// carries its reverb. Isolating a track quiets every return; the stems of one song add up
     /// to its mix.
+    /// `warped` holds the stretch of every warped region (`RegionWarp`); one whose stretch is not
+    /// there yet is silent.
     public init(plan: PlaybackPlan, project: Project, slots: [TrackID: Int], sampleRate: Double, generation: UInt64,
                 samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
                 effects: [TrackID: [any HostedProcessor]] = [:], outputChannels: Int = 2,
                 revisions: [TrackID: UInt64] = [:], monitoring: [TrackID: Int] = [:],
                 masterEffects: [any HostedProcessor] = [], isolating: TrackID? = nil,
-                modulation: ModulationInputs? = nil) {
+                modulation: ModulationInputs? = nil, warped: [RegionWarp.Key: SampleBuffer] = [:]) {
         /// Whether a track's own output reaches the mix in this render.
         let heard = { (track: TrackID) in isolating == nil || isolating == track }
         let inserts = { (track: TrackID) in (effects[track] ?? []).filter { $0.sampleRate == sampleRate } }
@@ -347,7 +349,8 @@ public struct EngineSnapshot: Sendable {
             let (output, into) = route(track)
             let (left, right) = outward ? Self.gains(track: track.mixer, master: into) : (0, 0)
             let regions = track.regions.compactMap { region in
-                Self.resolve(region, samples: samples, time: conversion, sampleRate: sampleRate)
+                Self.resolve(region, samples: samples, time: conversion, sampleRate: sampleRate,
+                             project: project, warped: warped)
             }
             let loops = track.clips.compactMap { clip -> AudioLoop? in
                 guard let audio = clip.audio, let buffer = samples[audio.media], sampleRate > 0, sampleRate.isFinite else { return nil }
@@ -437,8 +440,26 @@ public struct EngineSnapshot: Sendable {
     /// Nil when the file is not loaded or nothing of the region falls inside the loaded file
     /// (the file on disk may be shorter than when it was measured).
     static func resolve(_ region: AudioRegion, samples: [MediaID: SampleBuffer], time: TimeConversion,
-                        sampleRate: Double) -> Region? {
+                        sampleRate: Double, project: Project? = nil,
+                        warped: [RegionWarp.Key: SampleBuffer] = [:]) -> Region? {
         guard let buffer = samples[region.media], sampleRate > 0, sampleRate.isFinite else { return nil }
+        if region.warpBPM != nil {
+            // A warped region plays its stretch, which already runs in song time from its start.
+            guard let project, let key = RegionWarp.key(of: region, in: project, buffer: buffer),
+                  let stretched = warped[key], stretched.frameCount > 0 else { return nil }
+            let step = stretched.sampleRate / sampleRate
+            let start = time.sample(at: region.start)
+            let end = start + Int64((Double(stretched.frameCount) / step).rounded(.up))
+            var resolved = Region(startSample: start, endSample: end, buffer: stretched, offset: 0,
+                                  length: Double(stretched.frameCount), step: step)
+            // The fades as the file has them, laid over the stretch in proportion.
+            var envelope = envelope(of: region, playing: Swift.min(region.length, buffer.frameCount - region.offset))
+            let scale = Double(stretched.frameCount) / Double(Swift.max(1, Swift.min(region.length, buffer.frameCount - region.offset)))
+            envelope.fadeIn *= scale
+            envelope.fadeOut *= scale
+            resolved.envelope = envelope
+            return resolved
+        }
         let length = Swift.min(region.length, buffer.frameCount - region.offset)
         guard region.offset >= 0, length > 0 else { return nil }
         let step = buffer.sampleRate / sampleRate

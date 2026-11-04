@@ -1,0 +1,149 @@
+import EchoelCore
+import EchoelDSP
+import XCTest
+@testable import EchoelEngine
+
+/// AUD-2 warp: a region follows the song's tempo with its pitch, stretched off the render thread,
+/// exported as it plays, without a click.
+final class RegionWarpPlaybackTests: XCTestCase {
+    private let rate = 48_000.0
+    private let centre = Float(0.5).squareRoot()
+
+    private struct Song {
+        var project: Project
+        var track: TrackID
+        var region: RegionID
+        var samples: [MediaID: SampleBuffer]
+    }
+
+    private func sine(hertz: Double, seconds: Double, stereo: Bool = false) throws -> SampleBuffer {
+        let count = Int(seconds * rate)
+        let left = (0..<count).map { (i: Int) -> Float in Float(0.5 * sin(2 * Double.pi * hertz * Double(i) / 48_000)) }
+        guard stereo else { return try XCTUnwrap(SampleBuffer(samples: left, sampleRate: rate)) }
+        let right = (0..<count).map { (i: Int) -> Float in Float(0.3 * sin(2 * Double.pi * hertz * 1.5 * Double(i) / 48_000)) }
+        return try XCTUnwrap(SampleBuffer(left: left, right: right, sampleRate: rate))
+    }
+
+    /// One region of `buffer` at the song's start, warped from `native` BPM.
+    private func song(_ buffer: SampleBuffer, tempo: Double, native: Double, changes: [TempoChange] = []) throws -> Song {
+        var project = Project(tempo: tempo)
+        project.tempoChanges = changes
+        let track = TrackID(), region = RegionID()
+        let media = MediaFile(name: "Tone", path: "Media/tone.wav", frameCount: buffer.frameCount, sampleRate: rate)
+        try Command.addTrack(id: track, name: "Audio", kind: .audio, index: nil).apply(to: &project)
+        try Command.addMedia(media).apply(to: &project)
+        try Command.placeAudio(track: track, id: region, media: media.id, start: 0).apply(to: &project)
+        try Command.setRegionWarp(track: track, region, nativeBPM: native, followsTempo: true).apply(to: &project)
+        return Song(project: project, track: track, region: region, samples: [media.id: buffer])
+    }
+
+    private func live(_ s: Song, frames: Int, warped: [RegionWarp.Key: SampleBuffer], block: Int = 256) -> (left: [Float], right: [Float]) {
+        let core = EngineCore(sampleRate: rate)
+        core.setClickEnabled(false)
+        var slots = SlotAssigner(capacity: core.slotCapacity)
+        slots.update(for: s.project)
+        core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                    sampleRate: rate, generation: 1, samples: s.samples, warped: warped))
+        core.play()
+        var left = [Float](repeating: 0, count: frames), right = [Float](repeating: 0, count: frames)
+        var start = 0
+        while start < frames {
+            let n = Swift.min(block, frames - start)
+            left.withUnsafeMutableBufferPointer { l in
+                right.withUnsafeMutableBufferPointer { r in
+                    guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                    core.render(frameCount: n, left: lp + start, right: rp + start)
+                }
+            }
+            start += n
+        }
+        return (left, right)
+    }
+
+    /// Cycles per second in `signal[range]`, from its rising zero crossings.
+    private func frequency(_ signal: [Float], in range: Range<Int>) -> Double {
+        var crossings: [Double] = []
+        for i in range.dropFirst() where signal[i - 1] < 0 && signal[i] >= 0 {
+            let a = Double(signal[i - 1]), b = Double(signal[i])
+            crossings.append(Double(i - 1) + a / (a - b))
+        }
+        guard let first = crossings.first, let last = crossings.last, crossings.count > 2 else { return 0 }
+        return Double(crossings.count - 1) / ((last - first) / rate)
+    }
+
+    func testAWarpedRegionFollowsTheTempoAndKeepsItsPitch() throws {
+        // One second recorded at 120 BPM is two beats: at 80 BPM it lasts 1.5 s, at 150 BPM 0.8 s.
+        for tempo in [80.0, 150] {
+            let s = try song(try sine(hertz: 440, seconds: 1), tempo: tempo, native: 120)
+            let warped = RegionWarp.prepare(s.project, samples: s.samples)
+            XCTAssertEqual(warped.count, 1)
+            let expected = Int(2 * 60 / tempo * rate)
+            let out = live(s, frames: expected + 4_800, warped: warped).left
+            let sounding = out.lastIndex { abs($0) > 1e-4 } ?? 0
+            XCTAssertEqual(Double(sounding), Double(expected), accuracy: 64, "ends on its second beat at \(tempo) BPM")
+            XCTAssertTrue(out[(expected + 1)...].allSatisfy { $0 == 0 })
+            XCTAssertEqual(frequency(out, in: 4_800..<(expected - 4_800)), 440, accuracy: 2, "pitch unchanged at \(tempo) BPM")
+        }
+    }
+
+    func testTheStretchIsMadeOffTheRenderThreadAndAMissingOneIsSilent() throws {
+        let s = try song(try sine(hertz: 440, seconds: 1), tempo: 90, native: 120)
+        let out = live(s, frames: 24_000, warped: [:]).left
+        XCTAssertTrue(out.allSatisfy { $0 == 0 }, "never played at the wrong speed while its stretch is made")
+        // A moved region at a steady tempo keeps its stretch: the key does not hold its place.
+        var moved = s
+        try Command.moveRegion(track: s.track, s.region, start: 3_840).apply(to: &moved.project)
+        let a = try XCTUnwrap(RegionWarp.pending(in: s.project, samples: s.samples).first?.0)
+        let b = try XCTUnwrap(RegionWarp.pending(in: moved.project, samples: moved.samples).first?.0)
+        XCTAssertEqual(a, b)
+    }
+
+    func testARampedTempoStretchesTheRegionAsItRamps() throws {
+        // 120 → 60 BPM over the region's four beats: it ends where the song puts its fourth beat.
+        let ramp = [TempoChange(tick: 4 * 960, bpm: 60, curve: .linear)]
+        let s = try song(try sine(hertz: 440, seconds: 2), tempo: 120, native: 120, changes: ramp)
+        let warped = RegionWarp.prepare(s.project, samples: s.samples)
+        let region = try XCTUnwrap(s.project.track(s.track)?.regions.first)
+        let stop = try XCTUnwrap(Arranging.end(of: region, in: s.project))
+        XCTAssertEqual(stop, 4 * 960)
+        let expected = Int((s.project.tempoMap.seconds(at: stop) * rate).rounded())
+        let out = live(s, frames: expected + 4_800, warped: warped).left
+        let sounding = out.lastIndex { abs($0) > 1e-4 } ?? 0
+        XCTAssertEqual(Double(sounding), Double(expected), accuracy: 64)
+        XCTAssertEqual(frequency(out, in: 9_600..<(expected - 9_600)), 440, accuracy: 3, "pitch unchanged through the ramp")
+    }
+
+    func testTheExportIsWhatPlaysLive() throws {
+        for stereo in [false, true] {
+            var s = try song(try sine(hertz: 330, seconds: 1, stereo: stereo), tempo: 100, native: 120)
+            try Command.setRegionFades(track: s.track, s.region, fadeIn: 4_800, fadeOut: 4_800,
+                                       fadeInCurve: .sCurve, fadeOutCurve: .equalPower).apply(to: &s.project)
+            let export = OfflineRender.render(s.project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0, samples: s.samples)
+            XCTAssertEqual(export.frameCount, Int(2 * 60 / 100.0 * rate), "the export runs to the warped end")
+            XCTAssertEqual(OfflineRender.fixedFrameCount(s.project, sampleRate: rate, tailSeconds: 0, samples: s.samples),
+                           Int64(export.frameCount), "known before anything renders")
+            let played = live(s, frames: export.frameCount, warped: RegionWarp.prepare(s.project, samples: s.samples), block: 300)
+            for i in 0..<export.frameCount {
+                guard abs(export.left[i] - played.left[i]) <= 1e-6, abs(export.right[i] - played.right[i]) <= 1e-6 else {
+                    XCTFail("stereo \(stereo): sample \(i) differs")
+                    break
+                }
+            }
+        }
+    }
+
+    func testAWarpedRegionDoesNotClick() throws {
+        let smooth = ClickDetector.forSine(hertz: 330 * 1.5, amplitude: 0.5)
+        for (tempo, native) in [(96.0, 120.0), (150, 120), (120, 120)] {
+            for stereo in [false, true] {
+                let s = try song(try sine(hertz: 330, seconds: 1, stereo: stereo), tempo: tempo, native: native)
+                var out = live(s, frames: Int(2 * 60 / tempo * rate) + 2_048, warped: RegionWarp.prepare(s.project, samples: s.samples))
+                out.left.insert(contentsOf: [Float](repeating: 0, count: 2_048), at: 0)
+                out.right.insert(contentsOf: [Float](repeating: 0, count: 2_048), at: 0)
+                let left = smooth.clicks(in: out.left), right = smooth.clicks(in: out.right)
+                XCTAssertEqual(left, [], "\(tempo)/\(native) stereo \(stereo): \(left.prefix(3))")
+                XCTAssertEqual(right, [], "\(tempo)/\(native) stereo \(stereo): \(right.prefix(3))")
+            }
+        }
+    }
+}
