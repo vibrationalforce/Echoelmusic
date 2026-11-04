@@ -1,5 +1,6 @@
 #if canImport(MetalKit) && canImport(UIKit)
 import EchoelCore
+import EchoelDSP
 import Foundation
 import MetalKit
 import SwiftUI
@@ -28,6 +29,8 @@ struct MetalFieldView: UIViewRepresentable {
     @Environment(AudioEngine.self) private var engine
     /// The system's Reduce Motion, read by the SwiftUI parent and handed down cold.
     let reduceMotion: Bool
+    /// The picture the musician chose, handed down cold like Reduce Motion.
+    var pattern: FieldPattern = .rings
 
     func makeCoordinator() -> MetalFieldRenderer { MetalFieldRenderer() }
 
@@ -65,6 +68,12 @@ struct MetalFieldView: UIViewRepresentable {
         renderer.store = store
         renderer.engine = engine
         renderer.reduceMotion = reduceMotion
+        renderer.setPattern(pattern)
+    }
+
+    /// The view goes: the renderer stops asking the engine for the spectrum.
+    static func dismantleUIView(_ view: MTKView, coordinator: MetalFieldRenderer) {
+        coordinator.setPattern(.rings)
     }
 }
 
@@ -134,9 +143,73 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         }
     }
 
+    /// The Chladni plate's numbers, read by the shader at buffer 1 — mirrored by BYTE LAYOUT in the
+    /// MSL `Chladni` struct (six `float4`, then four `float`): changed in both places in one commit.
+    /// `active` 0 draws the rings, so every pass binds one, the rings' passes a zero one.
+    private struct ChladniUniforms {
+        var fromM = SIMD4<Float>(repeating: 0)
+        var fromN = SIMD4<Float>(repeating: 0)
+        var fromW = SIMD4<Float>(repeating: 0)
+        var toM = SIMD4<Float>(repeating: 0)
+        var toN = SIMD4<Float>(repeating: 0)
+        var toW = SIMD4<Float>(repeating: 0)
+        var active: Float = 0
+        var mix: Float = 1
+        var light: Float = 0
+        var grains: Float = 0
+
+        init() {}
+
+        /// One frame of `ChladniMotion` with `grains` sand grains along each side of the plate.
+        init(_ shown: ChladniMotion.Shown, grains: Double) {
+            fromM = SIMD4<Float>(shown.from.m)
+            fromN = SIMD4<Float>(shown.from.n)
+            fromW = SIMD4<Float>(shown.from.weight)
+            toM = SIMD4<Float>(shown.to.m)
+            toN = SIMD4<Float>(shown.to.n)
+            toW = SIMD4<Float>(shown.to.weight)
+            active = 1
+            mix = Float(shown.mix)
+            light = Float(shown.light)
+            self.grains = Float(grains)
+        }
+    }
+
+    /// Sand grains along one side of the plate at full detail: 180 × 180 ≈ 32 000 grains, one per
+    /// cell of the grid the shader lays over the plate. The detail level scales the side
+    /// (`FieldDetail.patternScale`): about 16 000 grains at low, 8 000 at minimal.
+    static let grainsPerSide = 180.0
+
     weak var store: ProjectStore?
     weak var engine: AudioEngine?
     var reduceMotion = false
+    private(set) var pattern: FieldPattern = .rings
+    private weak var listeningTo: AudioEngine?
+    private var chladni = ChladniUniforms()
+    private var lastEncodedChladni = ChladniUniforms()
+    private var chladniMotion = ChladniMotion()
+    /// The master's partials as last read on the main thread, for this frame's plate.
+    private var peaks = SpectralPeaks.silent
+
+    /// Switches the picture; the Chladni plate listens to the master while it is drawn, and only then.
+    @MainActor
+    func setPattern(_ next: FieldPattern) {
+        if pattern != next {
+            pattern = next
+            chladniMotion = ChladniMotion()
+            if next == .chladni {
+                DiagnosticLog.app.note("field: pattern chladni")
+            } else {
+                DiagnosticLog.app.note("field: pattern rings")
+            }
+        }
+        let wanted = next == .chladni ? engine : nil
+        if listeningTo !== wanted {
+            listeningTo?.listenForSpectrum(false, by: ObjectIdentifier(self))
+            wanted?.listenForSpectrum(true, by: ObjectIdentifier(self))
+            listeningTo = wanted
+        }
+    }
 
     private var commandQueue: MTLCommandQueue?
     private var pipeline: MTLRenderPipelineState?
@@ -225,8 +298,10 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         guard let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) else { return false }
         encoder.setRenderPipelineState(pipeline)
         var sent = Uniforms(aspect: aspect, shown: shown)
+        var plate = ChladniUniforms()
         encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
         encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
+        encoder.setFragmentBytes(&plate, length: MemoryLayout<ChladniUniforms>.stride, index: 1)
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
         encoder.endEncoding()
         return true
@@ -248,6 +323,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             if let store, let engine {
                 frame = FieldFrame.current(store: store, engine: engine)
             }
+            peaks = listeningTo?.fieldSpectrum.peaks ?? .silent
             sampleDevice(at: now)
             settleDrawable(of: view)
         }
@@ -256,7 +332,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
 
         // The picture cannot have changed: skip the pass and leave the last frame on the layer.
         // Not a pause — the display link keeps its cadence, and the next change encodes at once.
-        if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncoded) { return }
+        if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncoded), Self.bytesEqual(chladni, lastEncodedChladni) { return }
 
         guard let drawable = view.currentDrawable,
               let pass = view.currentRenderPassDescriptor,
@@ -264,13 +340,16 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
               let buffer = queue.makeCommandBuffer() else { return }
         // Recorded after the guard: a frame without a drawable was not shown.
         lastEncoded = uniforms
+        lastEncodedChladni = chladni
         hasEncodedOnce = true
 
         if let pipeline, let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
             encoder.setRenderPipelineState(pipeline)
             var sent = uniforms
+            var plate = chladni
             encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
             encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
+            encoder.setFragmentBytes(&plate, length: MemoryLayout<ChladniUniforms>.stride, index: 1)
             encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
             encoder.endEncoding()
         } else {
@@ -291,9 +370,18 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     /// computation the window and the live stream share (`FieldMotion`, which the video export
     /// steps too). Under Reduce Motion or at the lowest detail the picture holds still.
     private func step(seconds: Double) {
-        let shown = motion.step(frame, after: seconds, still: reduceMotion || detail.isStill,
-                                patternScale: detail.patternScale)
+        let still = reduceMotion || detail.isStill
+        let shown = motion.step(frame, after: seconds, still: still, patternScale: detail.patternScale)
         uniforms = Uniforms(aspect: uniforms.aspect, shown: shown)
+        guard pattern == .chladni else {
+            chladni = ChladniUniforms()
+            return
+        }
+        // The plate hears the master's strongest partials (the tap's thread analyses them; this
+        // reads the last result) and cross-fades to the figure they choose (EchoelCore: tested).
+        let target = ChladniPlate.modes(frequencies: peaks.frequencies, amplitudes: peaks.amplitudes, count: peaks.count)
+        let plate = chladniMotion.step(towards: target, after: seconds, still: still)
+        chladni = ChladniUniforms(plate, grains: (Self.grainsPerSide * detail.patternScale).rounded())
     }
 
     /// Draws the next frame into `texture` — the live stream's picture (wave W14): the same
@@ -309,6 +397,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         if let store, let engine {
             frame = FieldFrame.current(store: store, engine: engine)
         }
+        peaks = listeningTo?.fieldSpectrum.peaks ?? .silent
         uniforms.aspect = texture.height > 0 ? Float(texture.width) / Float(texture.height) : 1
         step(seconds: seconds)
         guard let queue = commandQueue, let buffer = queue.makeCommandBuffer() else { return false }
@@ -321,8 +410,10 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             if let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
                 encoder.setRenderPipelineState(pipeline)
                 var sent = uniforms
+                var plate = chladni
                 encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
                 encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
+                encoder.setFragmentBytes(&plate, length: MemoryLayout<ChladniUniforms>.stride, index: 1)
                 encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
                 encoder.endEncoding()
             }
@@ -424,6 +515,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     struct Uniforms { float aspect; float beatPhase; float fieldPhase; float pulsePhase;
                       float beatLight; float centreLight; float levelLight; float coherence;
                       float breath; float toneHz; float density; float hasPulse; float hasCoherence; };
+    struct Chladni { float4 fromM; float4 fromN; float4 fromW; float4 toM; float4 toN; float4 toW;
+                     float active; float mix; float light; float grains; };
 
     // Wavelength (nm) -> linear sRGB through the CIE 1931 colour-matching functions (the
     // Wyman/Sloan/Shirley 2013 analytic fit) -> XYZ -> linear sRGB (D65).
@@ -506,7 +599,73 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         return o;
     }
 
-    fragment float4 field_fragment(VOut in [[stage_in]], constant Uniforms& u [[buffer(0)]]) {
+    // The key's tonic as light, warmed like daylight, fuller with coherence, and lifted to a
+    // luminance floor only as far as the gamut allows (never a hue rotation). Both patterns use it.
+    float3 fieldColour(constant Uniforms& u) {
+        float coh = clamp(u.coherence, 0.0, 1.0);
+        float3 col = toneColour(u.toneHz);
+        float l = dot(col, float3(0.2126, 0.7152, 0.0722));
+        float3 warm = float3(1.0, 0.92, 0.80);
+        col = mix(float3(l) * warm, col, 0.97);
+        col = mix(col, warm, 0.05);
+        col = mix(col, col * 1.15 + 0.05, coh);
+        float lum = dot(col, float3(0.2126, 0.7152, 0.0722));
+        float peak = max(max(col.r, max(col.g, col.b)), 1e-4);
+        float lift = max(min(0.35 / max(lum, 0.04), 1.0 / peak), 1.0);
+        return col * ((lum < 0.35) ? lift : 1.0);
+    }
+
+    // One square-plate mode on the unit square (EchoelCore ChladniPlate.shape): for m != n the
+    // degenerate pair superposed, for m == n the single product.
+    float plateShape(float m, float n, float2 p) {
+        float mx = cos(m * M_PI_F * p.x);
+        float ny = cos(n * M_PI_F * p.y);
+        if (m == n) return mx * ny;
+        float nx = cos(n * M_PI_F * p.x);
+        float my = cos(m * M_PI_F * p.y);
+        return 0.5 * (mx * ny - nx * my);
+    }
+    float plateDisplacement(float4 m, float4 n, float4 w, float2 p) {
+        float s = 0.0;
+        for (int i = 0; i < 4; i++) {
+            if (w[i] > 0.0) s += w[i] * plateShape(m[i], n[i], p);
+        }
+        return s;
+    }
+
+    // The Chladni plate: a square plate centred in the frame, one sand grain per cell of a
+    // grains x grains grid at a jittered place, present with the probability of sand where it
+    // lies (EchoelCore ChladniPlate.sand: 1 on a nodal line) — so the grains gather on the lines
+    // that do not move. Lit by the plate's flash-guarded light; the plate never goes dead black.
+    float4 chladniFragment(VOut in, constant Uniforms& u, constant Chladni& c) {
+        float2 xy = float2(in.uv.x * u.aspect, in.uv.y);
+        float side = min(u.aspect, 1.0) * 0.92;
+        float2 p = (xy - float2(0.5 * u.aspect, 0.5)) / side + 0.5;
+        float dither = (echoelHash(in.uv * 1000.0) - 0.5) / 255.0;
+        if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) {
+            return float4(float3(clamp(dither, 0.0, 1.0)), 1.0);
+        }
+        float3 col = fieldColour(u);
+        float g = max(c.grains, 16.0);
+        float2 cell = floor(p * g);
+        float2 jitter = 0.2 + 0.6 * float2(echoelHash(cell), echoelHash(cell + 17.31));
+        float2 grain = (cell + jitter) / g;
+        float a = plateDisplacement(c.fromM, c.fromN, c.fromW, grain);
+        float b = plateDisplacement(c.toM, c.toN, c.toW, grain);
+        float t = mix(a, b, clamp(c.mix, 0.0, 1.0)) / \(ChladniPlate.sandWidthLiteral);
+        float sand = exp(-t * t);
+        float present = step(echoelHash(cell + 41.7), sand);
+        float r = length(p * g - cell - jitter);
+        float speck = present * smoothstep(0.42, 0.22, r);
+        float ambient = \(FieldPulse.ambientLiteral);
+        float energy = clamp(c.light, 0.0, 1.0) * speck;
+        float3 outCol = col * (ambient + (1.0 - ambient) * energy) + dither;
+        return float4(clamp(outCol, 0.0, 1.0), 1.0);
+    }
+
+    fragment float4 field_fragment(VOut in [[stage_in]], constant Uniforms& u [[buffer(0)]],
+                                   constant Chladni& plate [[buffer(1)]]) {
+        if (plate.active > 0.5) return chladniFragment(in, u, plate);
         // Aspect-correct radial distance from the centre: circles stay circles on a tall phone.
         float2 uv = in.uv;
         uv.x *= u.aspect;
@@ -538,18 +697,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         float haloT = (d - haloRadius) / 0.010;
         float halo = exp(-haloT * haloT) * 0.22 * clamp(u.hasCoherence, 0.0, 1.0);
         float energy = clamp(field * vignette * (0.35 + 0.65 * clamp(u.levelLight, 0.0, 1.0)) + bloom + ring + halo, 0.0, 1.0);
-        // The colour: the key's tonic as light, warmed like daylight, fuller with coherence, and
-        // lifted to a luminance floor only as far as the gamut allows (never a hue rotation).
-        float3 col = toneColour(u.toneHz);
-        float l = dot(col, float3(0.2126, 0.7152, 0.0722));
-        float3 warm = float3(1.0, 0.92, 0.80);
-        col = mix(float3(l) * warm, col, 0.97);
-        col = mix(col, warm, 0.05);
-        col = mix(col, col * 1.15 + 0.05, coh);
-        float lum = dot(col, float3(0.2126, 0.7152, 0.0722));
-        float peak = max(max(col.r, max(col.g, col.b)), 1e-4);
-        float lift = max(min(0.35 / max(lum, 0.04), 1.0 / peak), 1.0);
-        col *= (lum < 0.35) ? lift : 1.0;
+        // The colour: the key's tonic as light (fieldColour, shared with the plate).
+        float3 col = fieldColour(u);
         float ambient = \(FieldPulse.ambientLiteral);
         float3 outCol = col * (ambient + (1.0 - ambient) * energy);
         outCol += (echoelHash(in.uv * 1000.0) - 0.5) / 255.0;

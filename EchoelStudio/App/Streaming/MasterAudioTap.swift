@@ -3,7 +3,7 @@ import Darwin
 import Foundation
 
 /// The live stream's ear on the master (wave W14): a tap on the engine's source node — the whole
-/// mix as the musician hears it, no microphone. `AudioEngine` installs it while a stream runs and
+/// mix as the musician hears it, no microphone. `AudioEngine` taps for it while a stream runs and
 /// again after every graph rebuild (`AudioEngine.setStreamTap`).
 ///
 /// AVFoundation delivers a tap on its own thread, not the render thread, so the render block is
@@ -51,17 +51,17 @@ final class MasterAudioTap: @unchecked Sendable {
         continuation = stream.continuation
     }
 
-    /// Installs the tap on bus 0 of `node`. False when no ring could be made for its format.
-    func install(on node: AVAudioNode) -> Bool {
-        let source = node.outputFormat(forBus: 0)
+    /// The tap block for a node of format `source`. `AudioEngine` installs ONE tap on the source
+    /// node and hands its blocks to this and to the Field's spectrum (`FieldSpectrum`) — a node
+    /// carries one tap per bus. Nil when no ring could be made for the format.
+    func receiver(for source: AVAudioFormat) -> (@Sendable (AVAudioPCMBuffer, AVAudioTime) -> Void)? {
         guard source.sampleRate > 0, source.channelCount > 0,
               let stereo = AVAudioFormat(standardFormatWithSampleRate: source.sampleRate, channels: 2),
-              let ring = Ring(format: stereo) else { return false }
+              let ring = Ring(format: stereo) else { return nil }
         let continuation = continuation
-        node.installTap(onBus: 0, bufferSize: 4_096, format: source) { @Sendable buffer, when in
+        return { @Sendable buffer, when in
             Self.copy(buffer, when: when, into: ring, continuation: continuation)
         }
-        return true
     }
 
     func finish() {
