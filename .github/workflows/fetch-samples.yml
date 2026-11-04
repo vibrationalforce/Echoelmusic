@@ -134,7 +134,10 @@ jobs:
           # Processing machen, angleichen, mastern"): DC/trim/tune/level/fades
           # per category — see scratchpads/tools/sample_processor.py. ffmpeg
           # stays as the fallback so one odd file can never sink the batch.
-          pip install -q numpy librosa soundfile
+          # Exact versions since 2026-11-04 (outside review: an unpinned install in a job that
+          # may write to the repo). Not yet hash-locked: librosa's dependency tree resolves to
+          # releases younger than the 14-day rule of scripts/requirements-pipeline.txt.
+          pip install -q "numpy==2.2.6" "librosa==0.11.0" "soundfile==0.13.1"
           REPORT=scratchpads/SAMPLES_PROCESSING_REPORT.jsonl
           : > "$REPORT"
           COUNT=0
