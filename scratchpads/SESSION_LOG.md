@@ -1929,3 +1929,12 @@ genau so anbieten, zeigt erst der nächste Lauf von `pr-check.yml`/`ci.yml`; sch
 Destination fehl, auf die vom Image gelistete Simulator-Version anpassen.
 Nächster Schritt: PR prüfen und mergen; der nächste TestFlight-Upload trägt dann das iOS-26-SDK
 (die Mail verschwindet mit dem ersten so gebauten Upload).
+
+## 2026-11-01 → 2026-11-04 — Dirigent: Knack-Fix, Wächter auf null, Tonsystem und Swing
+
+- 10029–10031 (Jam-Count-in, Instrument + Stereo, Atem/VoiceOver) · Go-Kriterien G1–G6 (`docs/dev/TESTFLIGHT_PUBLIC_BETA.md` §0) · §4b keine Waffen, §4c nicht beim Steuern · Web-Spike · W-MAP (root-CLAUDE.md als Karte) · VOX (Chor-Engine, Harmonie-Stile) · CUT (Video-Hits).
+- AUD: elf Knackstellen offline gefunden und je mit Test behoben, DDSP 3.455 % → 28 % eines Kerns, Session 48 kHz/512 → Build 10032 (VALID).
+- W-RED: 30 versteckte Rote im blockierenden Bündel → 0 (5.863 grün), neues Werkzeug `scripts/gh-xcresult-verdict.py`.
+- W13: Tonsystem und Kammerton in allen gestimmten Stimmen, Swing sample-genau → Build 10033.
+- Läuft: W13b (Tempo-Rampen, dann Taktwechsel), Audit A (Code + simulierter Tester). Audit B (Historie) fand die Gedächtnislücken, die dieser Eintrag schließt.
+- doctor: `set -eo pipefail` wird erkannt (Selbsttest `pipefail_forms`); die maskierten Alt-App-Workflows bleiben founder-gated.

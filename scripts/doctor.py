@@ -528,6 +528,15 @@ def _steps(lines: list[str]) -> list[tuple[int, int, str]]:
     return out
 
 
+PIPEFAIL_SET = re.compile(r"^\s*set\s+(?:-[a-zA-Z]*o\s+pipefail\b|-o\s+pipefail\b|.*\s-o\s+pipefail\b)", re.M)
+
+
+def _has_pipefail(text: str) -> bool:
+    """True when a `set` line turns on pipefail: `set -o pipefail`, `set -eo pipefail`,
+    `set -euo pipefail`, `set -e -o pipefail`. A comment that merely names it is not one."""
+    return bool(PIPEFAIL_SET.search(text))
+
+
 def _command_span(block: list[str], at: int) -> range:
     """The full extent of a shell command starting at `at`, following `\\` continuations.
 
@@ -601,7 +610,12 @@ def section_a() -> Section:
             # workflows, including the blocking compile gate, of the exact defect they guard
             # against. That is the cry-wolf failure in its most damaging form: the finding is
             # loudest where the engineering was best.
-            pipefail = ("set -o pipefail" in text
+            #
+            # ⛔ THE FIRST FORM MATCHED ONLY THE LITERAL `set -o pipefail` (2026-11-04): `set -eo
+            # pipefail` and `set -euo pipefail` restore it just as well, and `studio.yml` — the
+            # Studio gate — uses the combined form, so the doctor named the one honest step there
+            # as masked. `_has_pipefail` is the one definition, pinned by `selftest_pipefail_forms`.
+            pipefail = (_has_pipefail(text)
                         or "PIPESTATUS" in text
                         or re.search(r"^\s*shell:\s*bash\s*$", text, re.M))
             for k, ln in enumerate(block):
@@ -2001,6 +2015,16 @@ def selftest_comment_is_not_a_call() -> int:
     return 1 if bad else 0
 
 
+
+def selftest_pipefail_forms() -> int:
+    """Pin 2026-11-04: every spelling of `set … pipefail` restores the pipe's status."""
+    yes = ["set -o pipefail", "  set -eo pipefail   # comment", "set -euo pipefail", "set -e -o pipefail"]
+    no = ["# set -o pipefail is missing here", "echo set -o pipefail", "set -e"]
+    bad = [t for t in yes if not _has_pipefail(t)] + [t for t in no if _has_pipefail(t)]
+    print(("❌" if bad else "✅") + " selftest pipefail_forms" + (f": misread {bad}" if bad else ""))
+    return 1 if bad else 0
+
+
 def selftest_debug_branch_is_not_a_door() -> int:
     """Pin #1048: a call inside `#if DEBUG` is not a door.
 
@@ -2272,7 +2296,8 @@ def main() -> int:
 
     if args.selftest:
         return (selftest_negated_needle() | selftest_absence_loop_header()
-                | selftest_comment_is_not_a_call() | selftest_debug_branch_is_not_a_door())
+                | selftest_comment_is_not_a_call() | selftest_debug_branch_is_not_a_door()
+                | selftest_pipefail_forms())
 
     runners = {"A": section_a, "B": section_b, "C": section_c, "D": section_d, "E": section_e,
                "F": section_f}
