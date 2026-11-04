@@ -21,6 +21,12 @@ struct EffectsView: View {
                     if let inserts {
                         chain(inserts)
                         addMenu(count: inserts.count)
+                        if owner == .master {
+                            // A push, not a sheet: the page lives inside this one (Law 7).
+                            NavigationLink("Mix Analysis…") { MixAnalysisView() }
+                                .buttonStyle(ToolButtonStyle())
+                                .accessibilityHint("Measures the mix and suggests a master chain")
+                        }
                         if let id = selected, let insert = inserts.first(where: { $0.id == id }) {
                             if let standard = StandardEffect(component: insert.plugin) {
                                 StandardEffectPanel(owner: owner, insert: id, effect: standard)

@@ -130,6 +130,39 @@ public final class StandardEffectUnit: AUAudioUnit {
 
     public override var canProcessInPlace: Bool { true }
 
+    /// The base state (the parameter tree by address) plus the same values by identifier
+    /// (`StandardEffectSettings`). A state Echoel wrote without loading the unit — the master
+    /// suggestion's — carries only the identifiers; a state with both plays the identifiers.
+    public override var fullState: [String: Any]? {
+        get {
+            var state = super.fullState ?? [:]
+            let values = render.kernel.parameters.reduce(into: [String: Float]()) { $0[$1.identifier] = render.kernel.parameter($1.address) }
+            if let data = StandardEffectSettings.state(values, for: effect),
+               let list = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
+                state[StandardEffectSettings.valuesKey] = list[StandardEffectSettings.valuesKey]
+            }
+            return state
+        }
+        set {
+            // The base restore only gets a state that has its snapshot: one written by Echoel alone
+            // names no unit and holds no blob.
+            if let newValue, newValue[InstrumentState.baseSnapshotKey] != nil { super.fullState = newValue }
+            guard let newValue else { return }
+            for setting in StandardEffectSettings.values(in: newValue, for: effect) {
+                if let parameter = tree?.parameter(withAddress: AUParameterAddress(setting.address)) {
+                    parameter.value = setting.value
+                }
+                render.kernel.setParameter(setting.address, setting.value)
+            }
+        }
+    }
+
+    /// The document's state is the full state (some hosts keep the two apart).
+    public override var fullStateForDocument: [String: Any]? {
+        get { fullState }
+        set { fullState = newValue }
+    }
+
     /// The pitch correction plays its output a little behind its input (`PitchCorrector`); a host
     /// that compensates delay (Logic, AUM) lines the track up with this. The other effects have none.
     public override var latency: TimeInterval {
