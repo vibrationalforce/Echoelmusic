@@ -25,7 +25,7 @@ final class StarterProjectTests: XCTestCase {
       "name": "New Song",
       "tempo": 120,
       "timeSignature": { "numerator": 4, "denominator": 4 },
-      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "master": { "volumeDB": -6, "pan": 0, "isMuted": false, "isSoloed": false },
       "scenes": [ { "id": "5A7A0000-0000-4000-8000-000000000002", "name": "Scene 1" } ],
       "tracks": [
         {
@@ -54,7 +54,7 @@ final class StarterProjectTests: XCTestCase {
       "name": "New Song",
       "tempo": 120,
       "timeSignature": { "numerator": 4, "denominator": 4 },
-      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "master": { "volumeDB": -6, "pan": 0, "isMuted": false, "isSoloed": false },
       "scenes": [ { "id": "5A7A0000-0000-4000-8000-000000000007", "name": "Scene 1" } ],
       "tracks": [
         {

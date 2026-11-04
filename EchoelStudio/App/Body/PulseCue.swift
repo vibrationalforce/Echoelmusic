@@ -31,6 +31,11 @@ enum PulseCue: Equatable, Sendable {
     /// A clean contact that has produced nothing for this long is a stall, not patience.
     static let stalledAfterSeconds: Double = 45
 
+    /// Said with every stall (team SAFE 2026-11-04): camera pulse reads light through skin, and it
+    /// is known to lock less readily on darker skin and on cold fingers — the fact about the method,
+    /// with the source that does not depend on it.
+    static let alternative = "Pulse lock can take longer with some skin tones or cold fingers — a Bluetooth heart-rate strap is the reliable alternative."
+
     /// The sentence for a line that may wrap.
     var fullHint: String {
         switch self {
@@ -43,9 +48,9 @@ enum PulseCue: Equatable, Sendable {
         case .pressGently: "Press gently and hold still."
         case .finding: "Hold still while your pulse is found."
         case .stalled(let rhythmless):
-            rhythmless
-                ? "The signal is not steady enough to read. Lift your finger and place it again."
-                : "Still nothing to read. Try another finger, or warm your hand first."
+            (rhythmless
+                ? "The signal is not steady enough to read. Lift your finger and place it again. "
+                : "Still nothing to read. Try another finger, or warm your hand first. ") + Self.alternative
         }
     }
 

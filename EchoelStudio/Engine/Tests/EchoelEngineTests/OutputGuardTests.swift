@@ -15,6 +15,9 @@ final class OutputGuardTests: XCTestCase {
     /// The Four Tracks starter with a dense bar on every track, played hard.
     private func denseSong() throws -> Project {
         var project = try StarterProject.fourTracks.project()
+        // Measured at unity on the master, as the header says; a new song starts lower
+        // (`StarterProject.masterVolumeDB`), which this guard must not lean on.
+        try Command.setVolume(.master, db: 0).apply(to: &project)
         let quarter = MusicalTime.ticksPerQuarter, bar = MusicalTime.ticksPerBar(.common)
         let tracks = project.tracks.filter { $0.kind == .instrument }.map(\.id)
         var parts: [[Note]] = [[], [], [], []]

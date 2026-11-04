@@ -95,6 +95,7 @@ struct StudioView: View {
             TransportBar()
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("Transport")
+            ListeningNote()
             Divider().overlay(Theme.Color.border)
             ZStack(alignment: .bottomTrailing) {
                 surfaceView
@@ -648,6 +649,34 @@ private struct TransportCueLine: View {
                 .font(Theme.Font.label)
                 .foregroundStyle(Theme.Color.textSecondary)
                 .padding(.bottom, Theme.Space.xs)
+        }
+    }
+}
+
+/// A one-time note under the transport about listening level (team SAFE 2026-11-04): inline, not a
+/// modal (Law 7), shown until the musician taps OK, then never again on this device. New songs start
+/// with the master six decibels down (`StarterProject.masterVolumeDB`); the note says where to raise it.
+private struct ListeningNote: View {
+    static let seenKey = "safety.listeningNoteSeen"
+    @AppStorage(ListeningNote.seenKey) private var seen = false
+
+    var body: some View {
+        if !seen {
+            HStack(alignment: .top, spacing: Theme.Space.s) {
+                Image(systemName: "headphones").accessibilityHidden(true)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                Text("Listen at a moderate level, especially on headphones: long, loud listening can damage your hearing. A new song starts with the master 6 dB down; raise it on the Mixer.")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button("OK") { seen = true }
+                    .font(Theme.Font.label)
+                    .frame(minHeight: Theme.Size.touch)
+                    .accessibilityLabel("OK, Hide the Listening Note")
+            }
+            .padding(.horizontal, Theme.Space.l)
+            .padding(.vertical, Theme.Space.xs)
+            .background(Theme.Color.surface)
         }
     }
 }
