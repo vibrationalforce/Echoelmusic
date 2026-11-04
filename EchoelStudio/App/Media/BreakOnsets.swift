@@ -11,7 +11,8 @@ enum BreakOnsets {
     /// Where sounds begin in the audio file at `url`, in seconds of the file, rising; none when it
     /// cannot be read.
     static func onsets(of url: URL) -> [Double] {
-        guard let mono = try? SampleFile.readMono(url, maximumSeconds: AudioFileImport.maximumSeconds) else { return [] }
+        guard let mono = try? SampleFile.readMono(url, maximumSeconds: AudioFileImport.maximumSeconds,
+                                                  maximumFrames: AudioFileImport.maximumFrames) else { return [] }
         var detector = OnsetDetector(sampleRate: mono.sampleRate)
         detector.process(mono.samples)
         return detector.onsets
