@@ -127,6 +127,7 @@ struct FieldPatternMenu: View {
                     }
                 }
                 .pickerStyle(.menu)
+                externalDisplay
             } label: {
                 Image(systemName: "square.grid.3x3")
             }
@@ -137,6 +138,21 @@ struct FieldPatternMenu: View {
                                                                        : FieldMeter(stored: meterName).title)
         }
         #endif
+    }
+
+    /// The Field on a projector or second screen (REC-1): on while one is connected unless
+    /// switched off here; the corner pin is set on the phone while the picture is out there.
+    @ViewBuilder private var externalDisplay: some View {
+        let stage = ExternalFieldStage.shared
+        Section("External Display") {
+            Toggle(isOn: Binding(get: { stage.isEnabled }, set: { stage.isEnabled = $0 })) {
+                Label("Field on External Display", systemImage: "rectangle.on.rectangle")
+            }
+            Text(stage.isConnected ? "A display is connected." : "No external display connected.")
+            if !stage.cornerPin.isIdentity {
+                Button("Reset Corner Pin", systemImage: "arrow.counterclockwise") { stage.cornerPin = .none }
+            }
+        }
     }
 }
 

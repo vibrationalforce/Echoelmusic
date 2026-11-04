@@ -1,6 +1,9 @@
 import EchoelCore
 import EchoelEngine
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// The Field (wave W3): the picture that moves with the music and the body. On a device with Metal
 /// the GPU draws it (`MetalFieldView`, the earlier app's proven renderer); anywhere else the Canvas
@@ -19,21 +22,40 @@ struct FieldView: View {
     @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
     @AppStorage(FieldPattern.blendMixStorageKey) private var mixPercent = FieldPattern.standardMixPercent
     @AppStorage(FieldMeter.storageKey) private var meterName = FieldMeter.off.rawValue
+    /// True for the Field on an external display (`ExternalFieldRoot`); every other Field yields
+    /// to it while it shows, so one renderer draws at a time.
+    let onStage: Bool
+
+    init(onStage: Bool = false) {
+        self.onStage = onStage
+    }
 
     var body: some View {
         let meter = FieldMeter(stored: meterName)
-        if meter != .off {
-            FieldMeterView(meter: meter, reduceMotion: reduceMotion)
+        if !onStage, ExternalFieldStage.shared.isShowing {
+            ExternalFieldNotice()
+        } else if meter != .off {
+            FieldMeterView(meter: meter, reduceMotion: motionReduced)
         } else {
             picture
         }
+    }
+
+    /// The system's Reduce Motion. The external display's window is built by UIKit, so there the
+    /// setting is also read straight from UIKit; either saying "reduce" reduces.
+    private var motionReduced: Bool {
+        #if canImport(UIKit)
+        reduceMotion || (onStage && UIAccessibility.isReduceMotionEnabled)
+        #else
+        reduceMotion
+        #endif
     }
 
     @ViewBuilder
     private var picture: some View {
         #if canImport(MetalKit) && canImport(UIKit)
         if MetalField.isAvailable {
-            MetalFieldView(reduceMotion: reduceMotion, pattern: FieldPattern(stored: patternName),
+            MetalFieldView(reduceMotion: motionReduced, pattern: FieldPattern(stored: patternName),
                            partner: FieldPattern.blend(stored: partnerName),
                            mix: Double(Swift.min(Swift.max(mixPercent, 0), 100)) / 100)
                 .background(Theme.Color.background)

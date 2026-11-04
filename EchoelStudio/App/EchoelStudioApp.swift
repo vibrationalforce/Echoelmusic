@@ -2,6 +2,9 @@ import EchoelCore
 import EchoelEngine
 import EchoelHost
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @main
 struct EchoelStudioApp: App {
@@ -21,6 +24,11 @@ struct EchoelStudioApp: App {
     @State private var strap: HeartRateStrap
     @State private var camera: CameraPulseSource
     @Environment(\.scenePhase) private var scenePhase
+    #if canImport(UIKit)
+    /// Only for the external display's scene (REC-1, `ExternalFieldSceneDelegate`); the studio's
+    /// own window stays SwiftUI's.
+    @UIApplicationDelegateAdaptor(StudioAppDelegate.self) private var appDelegate
+    #endif
 
     init() {
         // First, so a launch that dies anywhere below still names its build (NEUPLANUNG §6).
@@ -45,6 +53,8 @@ struct EchoelStudioApp: App {
         StudioIntentBridge.shared.store = store
         StudioIntentBridge.shared.engine = engine
         StudioIntentBridge.shared.documents = documents
+        // The external display's Field draws from the same store, engine and strap (REC-1).
+        ExternalFieldStage.shared.attach(store: store, engine: engine, strap: strap)
         _recording = State(initialValue: RecordController(engine: engine, documents: documents, store: store))
         let writer = ParameterWriter(store: store, engine: engine)
         _writer = State(initialValue: writer)
