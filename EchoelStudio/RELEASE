@@ -1,18 +1,20 @@
-11.0.0, twenty-seventh upload — arpeggiator, velocity, Field looks and meters
+11.0.0 — your own samples as a wavetable, ten engines, 23 effects, and safer by default
 
-What is new since 10035. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10037. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Arpeggiator per track on the Sound page: rate 1/4 to 1/32 and triplets, up, down, up-down,
-  down-up, as played, random; 1-4 octaves, gate, latch. It plays only the notes you hold or the
-  clip carries, follows meter changes and tempo ramps, and sounds the same live and in the export.
-- Velocity of a selected note can be dragged or typed; one drag is one undo step.
-- The Field gets four more patterns — Dish, Water, Aurora, Depth — driven by the same sound
-  analysis as the Chladni plate, a cross-blend of two looks, and Spectrum and Scope views.
-- About lists OpenSSL 3.3.2, which ships inside the SRT library, with its full license.
-- A timing test of the choir no longer fails on a slow shared CI machine (debug margin).
+- Wavetable engine: "Wavetable from File..." turns a recording into a band-limited wavetable;
+  Character scans it (modulatable). Pluck (plucked string) engine; Morph has eight shapes;
+  303 slide and accent; presets Reese Bass and 808 Glide.
+- Five new effects: Formant Filter, Transient Designer, Mid/Side, Multiband Compressor,
+  Dynamic EQ (also as Audio Units, free).
+- A region's gain glides when changed during playback.
+- SRT streaming is removed (RTMP and RTMPS stay); no OpenSSL ships any more.
+- The assistant says "On-device AI (Apple Foundation Models)". A one-time headphone note; new
+  songs start with the master at -6 dB. A pulse that does not lock names skin tone, cold
+  fingers and the strap. Jam guests wait for the host's "Let In". Song files are checked
+  harder before they open.
 
-Previous: 11.0.0 (10035) — loudness fixes, magnet and quantize, region fades, gain and warp;
-10034 — tempo ramps, meter changes, Chladni plate, hex keys. Earlier: git history of this file.
+Previous: 11.0.0 (10037) — arpeggiator, velocity, Field looks and meters. Earlier: git history.
 group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
 of earlier songs has not been seen on a device yet.
 
@@ -22,10 +24,10 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Synth track, Sound page: arpeggiator on, 1/16, up-down, 2 octaves. Hold a chord while the song
-   plays and while it is stopped. In time, no clicks?
-2. Select a note and drag its velocity: does it change, and is one drag one undo step?
-3. Field menu: Dish, Water, Aurora, Depth one after another with a held tone. Does the picture
-   follow the pitch and go calm in silence?
-4. "Blend With" another look and drag Blend fast back and forth. Nothing flickers?
-5. Show Spectrum, then Scope: does a held tone stand still in the scope?
+1. Sound page: engine Wavetable, "Wavetable from File..." with a voice or synth loop; move
+   Character while playing. Does it move through the sound without clicks?
+2. Preset 808 Glide: play overlapping notes. Does the pitch glide?
+3. Put Formant Filter, Transient Designer, Mid/Side, Multiband and Dynamic EQ on a track one by
+   one and move their controls while playing. Each audible, no clicks?
+4. Jam on two phones: does the guest wait until the host taps "Let In"?
+5. Camera pulse with a cold finger or in poor light: does the hint name the strap?
