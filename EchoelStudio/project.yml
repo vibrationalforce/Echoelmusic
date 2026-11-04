@@ -110,6 +110,10 @@ targets:
         INFOPLIST_KEY_NSMicrophoneUsageDescription: "Echoel records your microphone or audio interface onto the audio track you arm."
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Echoel uses your approximate location once to draw the sky above you in the Sky view. It stays on this device."
         INFOPLIST_KEY_NSMotionUsageDescription: "Echoel uses the phone's orientation to turn the Sky view with the direction you point the phone."
+        # Apple Health (REC-1): read heart rate only, when the musician chooses Apple Health as the
+        # body source. Nothing is written to Health (so no NSHealthUpdateUsageDescription) and the
+        # value never leaves the device. The entitlement is in Support/App/EchoelStudio.entitlements.
+        INFOPLIST_KEY_NSHealthShareUsageDescription: "Echoel reads your heart rate from Apple Health, for example from your Apple Watch, when you choose Apple Health as a body source. It uses it only to modulate sound and picture on this device; it never writes to Health and never sends the readings anywhere."
         # Network MIDI (CoreMIDI's RTP-MIDI session): the prompt shows the first time it is
         # turned on. NSBonjourServices is an array, which the generated plist cannot carry, so
         # it comes from the small Info.plist below and the two are merged. So do the song type

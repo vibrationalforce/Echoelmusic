@@ -10,6 +10,7 @@ struct ModulateMenu: View {
     @Environment(ProjectStore.self) private var store
     @Environment(HeartRateStrap.self) private var strap
     @Environment(CameraPulseSource.self) private var camera
+    @Environment(HealthHeartRate.self) private var health
     let owner: ParameterAddress.Owner
 
     /// The sources a route can be made from today, with the words the menu uses: a body source's
@@ -41,9 +42,9 @@ struct ModulateMenu: View {
         let project = store.project
         let routable = targets(in: project)
         let routes = project.modRoutes.filter { routable.contains($0.target) }
-        let measuring = strap.measuring.union(camera.measuring)
+        let measuring = strap.measuring.union(camera.measuring).union(health.measuring)
         Menu("Modulate", systemImage: "waveform.path.ecg") {
-            Text(Self.measuringLine(measuring, sourceOn: strap.isOn || camera.isOn))
+            Text(Self.measuringLine(measuring, sourceOn: strap.isOn || camera.isOn || health.isOn))
             ForEach(routable, id: \.self) { target in
                 if let descriptor = project.descriptor(for: target) {
                     Menu(descriptor.title) {

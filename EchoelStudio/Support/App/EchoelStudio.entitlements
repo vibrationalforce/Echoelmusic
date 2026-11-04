@@ -20,5 +20,11 @@
 		<string>group.com.echoelmusic.shared</string>
 		<string>group.com.echoelmusic</string>
 	</array>
+	<!-- Apple Health (REC-1, 2026-11-04): READ heart rate only, after the musician chooses Apple
+	     Health as the body source (HealthHeartRate). The earlier app on the same App ID
+	     (com.echoelmusic.app) carried this capability, so the profile should grant it; if signing
+	     fails on it, studio-testflight.yml prints the profile's entitlements. -->
+	<key>com.apple.developer.healthkit</key>
+	<true/>
 </dict>
 </plist>

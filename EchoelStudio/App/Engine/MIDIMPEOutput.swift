@@ -263,8 +263,9 @@ final class MPEPump: Sendable {
             }
             if !current.endpoints.isEmpty, let modulation = current.modulation {
                 var expression: [MPEZone.Message] = []
-                if let source = current.pressure { expression += current.zone.setPressure(modulation.value(source)) }
-                if let source = current.slide { expression += current.zone.setSlide(modulation.value(source)) }
+                // Only a value that may leave the device: an Apple Health reading never goes out (REC-1).
+                if let source = current.pressure { expression += current.zone.setPressure(modulation.shareableValue(source)) }
+                if let source = current.slide { expression += current.zone.setSlide(modulation.shareableValue(source)) }
                 if !expression.isEmpty { out.append(Batch(endpoints: current.endpoints, time: 0, messages: expression)) }
             }
             return (out, current.port)

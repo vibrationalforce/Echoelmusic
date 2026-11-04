@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The body-source chooser in the Song menu (wave W1): Off, the chest strap, or the rear camera.
+/// The body-source chooser in the Song menu (wave W1): Off, the chest strap, the rear camera, or
+/// Apple Health (REC-1, what an Apple Watch measured).
 /// One source at a time — choosing one stops the other, so the lens and the strap never both feed
 /// the same modulation cells (one producer per source). Off is its own explicit entry, so turning
 /// the body off is a choice the musician can see, not the absence of one.
@@ -10,17 +11,20 @@ import SwiftUI
 struct BodySourceMenu: View {
     @Environment(HeartRateStrap.self) private var strap
     @Environment(CameraPulseSource.self) private var camera
+    @Environment(HealthHeartRate.self) private var health
 
     var body: some View {
         Menu("Body Source", systemImage: "heart") {
             Button {
                 strap.stop()
                 camera.stop()
+                health.stop()
             } label: {
-                choice("Off", chosen: !strap.isOn && !camera.isOn)
+                choice("Off", chosen: !strap.isOn && !camera.isOn && !health.isOn)
             }
             Button {
                 camera.stop()
+                health.stop()
                 strap.start()
             } label: {
                 choice("Heart Rate Strap", chosen: strap.isOn)
@@ -29,20 +33,33 @@ struct BodySourceMenu: View {
             // never leave the device.
             Button {
                 strap.stop()
+                health.stop()
                 camera.start()
             } label: {
                 choice("Camera (fingertip on the rear lens)", chosen: camera.isOn)
+            }
+            // Apple Health: read only, never written, never sent off the device. A Watch reading is
+            // seconds late, so it modulates slowly and never sets the beat — the caption says so.
+            Button {
+                strap.stop()
+                camera.stop()
+                health.start()
+            } label: {
+                choice("Apple Health (Apple Watch)", chosen: health.isOn,
+                       caption: "Arrives 4–5 s late: slow modulation only, never the beat. Read only, stays on this iPhone.")
             }
         }
     }
 
     @ViewBuilder
-    private func choice(_ title: String, chosen: Bool) -> some View {
+    private func choice(_ title: String, chosen: Bool, caption: String? = nil) -> some View {
         if chosen {
             Label(title, systemImage: "checkmark")
         } else {
             Text(title)
         }
+        // A menu row shows a second text as its subtitle.
+        if let caption { Text(caption) }
     }
 }
 

@@ -7,6 +7,7 @@ import SwiftUI
 struct PulseReading: View {
     @Environment(HeartRateStrap.self) private var strap
     @Environment(CameraPulseSource.self) private var camera
+    @Environment(HealthHeartRate.self) private var health
 
     var body: some View {
         if strap.isOn {
@@ -14,6 +15,8 @@ struct PulseReading: View {
         } else if camera.isOn {
             reading(beatsPerMinute: camera.beatsPerMinute, words: Self.words(for: camera.status, cue: camera.cue),
                     label: "Camera pulse")
+        } else if health.isOn {
+            reading(beatsPerMinute: health.beatsPerMinute, words: Self.words(for: health.status), label: "Apple Health pulse")
         }
     }
 
@@ -44,6 +47,16 @@ struct PulseReading: View {
         case .connecting: "Connecting"
         case .connected: "No pulse"
         case .lost: "Strap lost"
+        }
+    }
+
+    /// Apple Health: a stale reading reads as not measured, never as a number.
+    static func words(for status: HealthHeartRate.Status) -> String {
+        switch status {
+        case .off: "Off"
+        case .unavailable: "Health unavailable"
+        case .asking: "Asking for Health"
+        case .waiting, .measuring: "No recent reading"
         }
     }
 
