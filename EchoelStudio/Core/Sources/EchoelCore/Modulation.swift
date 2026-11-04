@@ -2,7 +2,9 @@ import Foundation
 
 /// Where a modulation's value comes from. The names are the G-A contract's proposed sources
 /// (`.claude/skills/g-a-body-modulation/references/CONTRACT.md`); more LFOs, macros and MIDI
-/// controllers get their own names before anything is written to a song.
+/// controllers get their own names before anything is written to a song. A new source goes at the
+/// END: the engine finds a source's live value by its place in `allCases`, and a song stores the
+/// name (`StoredNamesTests`).
 public enum ModulationSource: String, Codable, Sendable, CaseIterable {
     case heartRate = "body.heartRate"
     case hrv = "body.hrv"
@@ -11,6 +13,12 @@ public enum ModulationSource: String, Codable, Sendable, CaseIterable {
     case lfo1 = "lfo.1"
     case macro1 = "macro.1"
     case midiCC1 = "midi.cc.1"
+    /// The iPhone itself (Recovery 9, `PhoneMotion`): sideways tilt, forward tilt, turning, and
+    /// how much it is moved. Added inside format 4, 2026-11-04.
+    case motionTiltX = "body.motion.tiltX"
+    case motionTiltY = "body.motion.tiltY"
+    case motionRotation = "body.motion.rotation"
+    case motionEnergy = "body.motion.energy"
 }
 
 /// One route: a source moves one parameter by `depth` (−1 … 1) through a curve. Wave W2. Stored

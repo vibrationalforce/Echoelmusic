@@ -555,6 +555,31 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with routes from the phone's own motion (Recovery 9, 2026-11-04): four source names
+    /// added at the end inside format 4. An earlier format-4 build refuses this song, as it refuses
+    /// any source it does not know (`docs/FORMAT.md`).
+    private let formatFourMotion = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Tilted",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "scenes": [],
+      "tracks": [],
+      "modRoutes": [
+        { "id": "40D00000-0000-4000-8000-000000000011", "source": "body.motion.tiltX", "target": "master/mixer.pan",
+          "depth": 1, "curve": "linear", "polarity": "bipolar", "enabled": true },
+        { "id": "40D00000-0000-4000-8000-000000000012", "source": "body.motion.tiltY", "target": "master/mixer.volume",
+          "depth": 0.5, "curve": "linear", "polarity": "bipolar", "enabled": true },
+        { "id": "40D00000-0000-4000-8000-000000000013", "source": "body.motion.rotation", "target": "master/mixer.pan",
+          "depth": -0.25, "curve": "square", "polarity": "bipolar", "enabled": false },
+        { "id": "40D00000-0000-4000-8000-000000000014", "source": "body.motion.energy", "target": "master/mixer.volume",
+          "depth": -0.5, "curve": "linear", "polarity": "unipolar", "enabled": true }
+      ]
+    }
+    """.utf8)
+
     /// Format 4 with a take folder (Recovery 4, 2026-11-04): an optional track field added inside
     /// format 4, so an earlier format-4 build opens the file and plays both takes as plain regions.
     private let formatFourTakes = Data("""
@@ -630,7 +655,7 @@ final class FormatGoldenTests: XCTestCase {
     func testEveryGoldenFileSurvivesARoundTrip() throws {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
                      formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes,
-                     formatFourTexture, formatFourBake] {
+                     formatFourTexture, formatFourBake, formatFourMotion] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -675,6 +700,19 @@ final class FormatGoldenTests: XCTestCase {
         for data in [earliest, formatTwo, formatTwoMedia] {
             XCTAssertEqual(try ProjectCodec.decode(data).modRoutes, [])
         }
+    }
+
+    /// Recovery 9: a song opens with its motion routes and writes the four names back unchanged.
+    func testASongOpensWithItsMotionRoutes() throws {
+        let project = try ProjectCodec.decode(formatFourMotion)
+        XCTAssertEqual(project.modRoutes.map(\.source), [.motionTiltX, .motionTiltY, .motionRotation, .motionEnergy])
+        XCTAssertEqual(project.modRoutes.map(\.target), [.masterPan, .masterVolume, .masterPan, .masterVolume])
+        XCTAssertEqual(project.modRoutes.map(\.enabled), [true, true, false, true])
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let routes = try XCTUnwrap(root["modRoutes"] as? [[String: Any]])
+        XCTAssertEqual(routes.compactMap { $0["source"] as? String },
+                       ["body.motion.tiltX", "body.motion.tiltY", "body.motion.rotation", "body.motion.energy"])
+        XCTAssertEqual(root["formatVersion"] as? Int, 4, "added inside format 4, no new number")
     }
 
     /// F08 and F09: format 3 without routes, and an older file that carries some, are refused.

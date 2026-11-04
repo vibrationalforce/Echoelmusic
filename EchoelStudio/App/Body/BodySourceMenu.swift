@@ -12,6 +12,7 @@ struct BodySourceMenu: View {
     @Environment(HeartRateStrap.self) private var strap
     @Environment(CameraPulseSource.self) private var camera
     @Environment(HealthHeartRate.self) private var health
+    @Environment(PhoneMotionSource.self) private var phoneMotion
 
     var body: some View {
         Menu("Body Source", systemImage: "heart") {
@@ -19,8 +20,9 @@ struct BodySourceMenu: View {
                 strap.stop()
                 camera.stop()
                 health.stop()
+                phoneMotion.stop()
             } label: {
-                choice("Off", chosen: !strap.isOn && !camera.isOn && !health.isOn)
+                choice("Off", chosen: !strap.isOn && !camera.isOn && !health.isOn && !phoneMotion.isOn)
             }
             Button {
                 camera.stop()
@@ -47,6 +49,16 @@ struct BodySourceMenu: View {
             } label: {
                 choice("Apple Health (Apple Watch)", chosen: health.isOn,
                        caption: "Arrives 4–5 s late: slow modulation only, never the beat. Read only, stays on this iPhone.")
+            }
+            // The phone itself, beside whichever pulse source is chosen: it feeds other sources
+            // (tilt, turning, movement), so it is a switch of its own rather than a fifth choice.
+            Divider()
+            Button {
+                if phoneMotion.isOn { phoneMotion.stop() } else { phoneMotion.start() }
+            } label: {
+                choice("Phone Motion", chosen: phoneMotion.isOn,
+                       caption: phoneMotion.status == .unavailable ? "This device has no motion sensors."
+                           : "Tilt, turning and movement of this iPhone, beside the pulse source.")
             }
         }
     }

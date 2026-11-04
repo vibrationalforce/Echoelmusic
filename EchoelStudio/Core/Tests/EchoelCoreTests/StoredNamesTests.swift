@@ -65,7 +65,9 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(ArpOrder.allCases.map(\.rawValue), ["up", "down", "upDown", "downUp", "asPlayed", "random"])
         // A modulation route stores its source, curve and polarity by name (W2).
         XCTAssertEqual(ModulationSource.allCases.map(\.rawValue),
-                       ["body.heartRate", "body.hrv", "body.coherence", "body.breath", "lfo.1", "macro.1", "midi.cc.1"])
+                       ["body.heartRate", "body.hrv", "body.coherence", "body.breath", "lfo.1", "macro.1", "midi.cc.1",
+                        // The phone's own motion (Recovery 9), added at the end inside format 4.
+                        "body.motion.tiltX", "body.motion.tiltY", "body.motion.rotation", "body.motion.energy"])
         for curve in ["linear", "square"] { XCTAssertNotNil(ModulationRoute.Curve(rawValue: curve), curve) }
         for polarity in ["unipolar", "bipolar"] { XCTAssertNotNil(ModulationRoute.Polarity(rawValue: polarity), polarity) }
         for device in ["synth", "drums", "sampler", "plugin"] {
