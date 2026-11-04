@@ -13,6 +13,31 @@ import Foundation
 public enum SynthEngine: String, CaseIterable, Codable, Sendable {
     // A song stores the index of the choice: a new engine goes at the end.
     case classic, supersaw, fm, sub, morph, mallet, ddsp, choir
+
+    /// A gain inside the voice, so the same patch sounds about as loud on every engine. Without it
+    /// a preset jumped by up to 16 LU when only its engine changed ("Sub Bass": FM −26.4, Sub
+    /// −10.1 LUFS), and the choir presets clipped a six-note chord on the classic, FM, sub and
+    /// morph engines at +1.6 … +3.7 dBFS (audit 2026-11-04). Measured on the reference patch —
+    /// the Init sound with the filter open (cutoff 18 kHz, no envelope, no resonance), a six-note
+    /// chord held for two seconds, averaged over Character 0, 0.5 and 1 — each engine is brought
+    /// to −17 LUFS, the level at which no built-in preset clips that chord on any engine: classic
+    /// −12.8, supersaw −13.3, FM −11.0, sub −13.6, morph −12.7, DDSP −13.0, choir −18.0 before.
+    /// The mallet (−23.5) rings down instead of holding, so its integrated loudness undersells
+    /// it; it is raised by +2 dB, which brings its strike's peak to the others' and not further.
+    /// The trim lives in the voice, never in the song: a song stores the patch as it always did.
+    /// A filter set low still hears a bright engine quieter than a dark one; that is the filter.
+    public var loudnessTrim: Float {
+        switch self {
+        case .classic: 0.617   // −4.2 dB
+        case .supersaw: 0.653  // −3.7 dB
+        case .fm: 0.501        // −6.0 dB
+        case .sub: 0.676       // −3.4 dB
+        case .morph: 0.610     // −4.3 dB
+        case .mallet: 1.259    // +2.0 dB
+        case .ddsp: 0.631      // −4.0 dB
+        case .choir: 1.122     // +1.0 dB
+        }
+    }
 }
 
 /// One mode of a struck object: a sine whose amplitude falls by `damping` each sample.

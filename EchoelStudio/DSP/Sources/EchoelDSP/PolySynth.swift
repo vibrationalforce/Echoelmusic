@@ -101,7 +101,7 @@ public struct SynthVoice: Sendable {
     init(patch: SynthPatch, sampleRate: Float) {
         cutoffOctaves = Self.octaves(patch.cutoff)
         resonance = Self.clampedResonance(patch.resonance)
-        level = Self.clampedLevel(patch.level)
+        level = Self.voiceLevel(patch)
         character = Self.clampedCharacter(patch.character)
         cutoffPole = Self.pole(Self.cutoffGlide, sampleRate)
         resonancePole = Self.pole(Self.resonanceGlide, sampleRate)
@@ -124,6 +124,8 @@ public struct SynthVoice: Sendable {
 
     static func octaves(_ hz: Float) -> Float { log2f(hz.isFinite ? Swift.max(hz, 1) : 1_000) }
     static func clampedResonance(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 0.95) : 0.3 }
+    /// The level a voice plays at: the patch's, times its engine's loudness trim.
+    static func voiceLevel(_ patch: SynthPatch) -> Float { clampedLevel(patch.level) * patch.engine.loudnessTrim }
     static func clampedLevel(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 1) : 0 }
     static func clampedCharacter(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 1) : 0.5 }
 
@@ -147,7 +149,7 @@ public struct SynthVoice: Sendable {
             // A fresh note starts where the patch is; only a sounding note glides.
             cutoffOctaves = Self.octaves(patch.cutoff)
             resonance = Self.clampedResonance(patch.resonance)
-            level = Self.clampedLevel(patch.level)
+            level = Self.voiceLevel(patch)
             character = Self.clampedCharacter(patch.character)
             filter.setResonance(resonance)
             ladder.setResonance(resonance)
@@ -199,7 +201,7 @@ public struct SynthVoice: Sendable {
         let amount = patch.filterEnvelopeAmount.isFinite ? Swift.min(Swift.max(patch.filterEnvelopeAmount, 0), 8) : 0
         let targetOctaves = Self.octaves(patch.cutoff)
         let targetResonance = Self.clampedResonance(patch.resonance)
-        let targetLevel = Self.clampedLevel(patch.level)
+        let targetLevel = Self.voiceLevel(patch)
         let targetCharacter = Self.clampedCharacter(patch.character)
         let usesLadder = patch.filterModel == .ladder
         for i in buffer.indices {

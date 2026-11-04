@@ -287,7 +287,7 @@ final class PolySynthTests: XCTestCase {
             }
             outputs.append(out)
         }
-        XCTAssertGreaterThan(outputs[0].map { Swift.abs($0) }.max() ?? 0, 0.1, "the note sounds")
+        XCTAssertGreaterThan(outputs[0].map { Swift.abs($0) }.max() ?? 0, 0.05, "the note sounds (level 0.25, trim −4.2 dB)")
         for (index, other) in outputs.enumerated().dropFirst() {
             let differs = other.indices.first { other[$0] != outputs[0][$0] }
             XCTAssertNil(differs, "buffer size \([64, 256, 1_000, 4_096][index]) differs from 64 at sample \(differs ?? -1)")
