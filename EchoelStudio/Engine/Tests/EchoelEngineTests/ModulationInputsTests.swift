@@ -21,6 +21,26 @@ final class ModulationInputsTests: XCTestCase {
         XCTAssertNil(inputs.value(.breath))
     }
 
+    /// REC-1: a value from Apple Health moves sound on the device but is never handed to MIDI out;
+    /// the next writer brings its own provenance.
+    func testAPrivateValueIsReadButNeverShared() {
+        let inputs = ModulationInputs()
+        inputs.set(.heartRate, 0.4)
+        XCTAssertEqual(inputs.shareableValue(.heartRate), 0.4)
+        inputs.set(.heartRate, 0.5, mayLeaveDevice: false)
+        XCTAssertEqual(inputs.value(.heartRate), 0.5, "it still modulates on the device")
+        XCTAssertNil(inputs.shareableValue(.heartRate), "it never leaves")
+        inputs.set(.heartRate, 0, mayLeaveDevice: false)
+        XCTAssertEqual(inputs.value(.heartRate), 0, "a private zero is still zero")
+        XCTAssertNil(inputs.shareableValue(.heartRate), "and still private")
+        inputs.set(.heartRate, nil, mayLeaveDevice: false)
+        XCTAssertNil(inputs.value(.heartRate))
+        XCTAssertNil(inputs.shareableValue(.heartRate))
+        inputs.set(.heartRate, 0.6)
+        XCTAssertEqual(inputs.shareableValue(.heartRate), 0.6, "a strap value after it is shareable again")
+        XCTAssertNil(inputs.shareableValue(.hrv), "absent stays absent")
+    }
+
     /// G-A M09: a value out of the domain is absent, not clamped into the strongest swing.
     func testAValueOutsideZeroToOneIsAbsent() {
         let inputs = ModulationInputs()

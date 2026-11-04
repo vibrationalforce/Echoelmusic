@@ -251,9 +251,12 @@ struct InstrumentSurface: View {
 private struct InstrumentPulse: View {
     @Environment(HeartRateStrap.self) private var strap
     @Environment(CameraPulseSource.self) private var camera
+    @Environment(HealthHeartRate.self) private var health
 
     var body: some View {
-        let rate: Int? = strap.isOn ? strap.beatsPerMinute : (camera.isOn ? camera.beatsPerMinute : nil)
+        let rate: Int? = strap.isOn ? strap.beatsPerMinute
+            : (camera.isOn ? camera.beatsPerMinute : (health.isOn ? health.beatsPerMinute : nil))
+        let measuring = strap.measuring.union(camera.measuring).union(health.measuring)
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
             HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s) {
                 Image(systemName: "heart.fill")
@@ -269,7 +272,7 @@ private struct InstrumentPulse: View {
             .accessibilityLabel("Pulse")
             .accessibilityValue(rate.map { "\($0) beats per minute" } ?? "Not measured")
             NoteText(sourceLine(measured: rate != nil))
-            NoteText(ModulateMenu.measuringLine(strap.measuring.union(camera.measuring), sourceOn: strap.isOn || camera.isOn))
+            NoteText(ModulateMenu.measuringLine(measuring, sourceOn: strap.isOn || camera.isOn || health.isOn))
             NoteText("Pulse, HRV, coherence and breath are for self-observation, not a medical diagnosis. Do not play the Instrument while driving or steering a boat, or under the influence of alcohol or drugs.")
         }
     }
@@ -280,6 +283,10 @@ private struct InstrumentPulse: View {
         }
         if camera.isOn {
             return measured ? "Camera: pulse locked." : (CameraPulseCueLine.line(for: camera.status, cue: camera.cue) ?? "Camera: pulse locked.")
+        }
+        if health.isOn {
+            return measured ? "Apple Health: a recent reading, for slow modulation only."
+                : "Apple Health: " + PulseReading.words(for: health.status) + "."
         }
         return "Choose a body source: a fingertip on the rear camera and flash, or a heart rate strap."
     }

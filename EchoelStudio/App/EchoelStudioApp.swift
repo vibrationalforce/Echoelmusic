@@ -23,6 +23,8 @@ struct EchoelStudioApp: App {
     /// (wave W1); the chooser keeps one on at a time.
     @State private var strap: HeartRateStrap
     @State private var camera: CameraPulseSource
+    /// Apple Health's heart rate (REC-1), off until chosen there too; read only, never sent.
+    @State private var health: HealthHeartRate
     @Environment(\.scenePhase) private var scenePhase
     #if canImport(UIKit)
     /// Only for the external display's scene (REC-1, `ExternalFieldSceneDelegate`); the studio's
@@ -48,6 +50,9 @@ struct EchoelStudioApp: App {
         let camera = CameraPulseSource()
         camera.output = engine.modulation
         _camera = State(initialValue: camera)
+        let health = HealthHeartRate()
+        health.output = engine.modulation
+        _health = State(initialValue: health)
         _documents = State(initialValue: documents)
         // Siri, Shortcuts and Spotlight reach the open song and the transport through these (PRO-W1).
         StudioIntentBridge.shared.store = store
@@ -102,6 +107,7 @@ struct EchoelStudioApp: App {
                 .environment(comparisons)
                 .environment(strap)
                 .environment(camera)
+                .environment(health)
                 .preferredColorScheme(.dark)
                 // The system's own controls — a sheet's Done, a menu's checkmark, a segmented
                 // picker, an alert — take the bio-green accent instead of the system blue, so

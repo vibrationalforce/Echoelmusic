@@ -9,7 +9,9 @@ import Synchronization
 /// No locks, no allocation after `init`; any thread may write, the render thread reads.
 public final class ModulationInputs: @unchecked Sendable {
     private final class Cell: @unchecked Sendable {
-        /// The value's bit pattern; NaN means absent.
+        /// The value's bit pattern; NaN means absent. A value that must stay on the device (Apple
+        /// Health, REC-1, App Store 5.1.3) is stored negated (sign bit set, `-0.0` for zero): value and
+        /// provenance live in ONE atomic, so no reader can pair a private value with a shareable flag.
         let bits = Atomic<UInt64>(Double.nan.bitPattern)
     }
 
@@ -21,9 +23,12 @@ public final class ModulationInputs: @unchecked Sendable {
 
     /// The source's newest measurement, or nil when it stopped being measured. A value outside
     /// 0 … 1 or not finite is stored as absent rather than clamped into a full swing.
-    public func set(_ source: ModulationSource, _ value: Double?) {
+    /// `mayLeaveDevice` is the value's provenance: false for a value that must stay on this
+    /// device (Apple Health); it travels with the value, so the next writer sets its own.
+    public func set(_ source: ModulationSource, _ value: Double?, mayLeaveDevice: Bool = true) {
         guard let index = Self.index(source) else { return }
-        let stored = value.flatMap { $0.isFinite && (0...1).contains($0) ? $0 : nil } ?? .nan
+        let stored = value.flatMap { $0.isFinite && (0...1).contains($0) ? $0 : nil }
+            .map { mayLeaveDevice ? Swift.abs($0) : -Swift.abs($0) } ?? .nan
         cells[index].bits.store(stored.bitPattern, ordering: .relaxed)
     }
 
@@ -33,11 +38,20 @@ public final class ModulationInputs: @unchecked Sendable {
         return value(at: index)
     }
 
+    /// The source's value for anything that sends it off the device (MIDI out): nil while it is
+    /// absent, and nil for a value that must stay on the device. Render-safe.
+    public func shareableValue(_ source: ModulationSource) -> Double? {
+        guard let index = Self.index(source), index < cells.count else { return nil }
+        let reading = Double(bitPattern: cells[index].bits.load(ordering: .relaxed))
+        return reading.isNaN || reading.sign == .minus ? nil : reading
+    }
+
     /// Render-safe, by the source's position in `ModulationSource.allCases`.
     public func value(at index: Int) -> Double? {
         guard index >= 0, index < cells.count else { return nil }
         let reading = Double(bitPattern: cells[index].bits.load(ordering: .relaxed))
-        return reading.isNaN ? nil : reading
+        if reading.isNaN { return nil }
+        return reading.sign == .minus ? -reading : reading
     }
 
     /// Every source absent again: a stopped sensor, a song switch.
