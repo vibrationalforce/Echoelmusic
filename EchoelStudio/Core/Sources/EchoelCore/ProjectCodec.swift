@@ -11,7 +11,15 @@ public enum ProjectCodec {
         case invalidFormatVersion(Int)
         /// The file breaks a rule every command enforces (`Project.validate`).
         case invalidContent(CommandError)
+        /// Larger than any song document Echoel writes (`maximumDocumentBytes`): refused before it is
+        /// parsed, so a crafted or damaged file cannot take the memory a parse of it would need.
+        case tooLarge(bytes: Int)
     }
+
+    /// The most bytes a song document may have. Media lives beside it in the package, never in it,
+    /// so a real document is kilobytes to a few megabytes; this leaves a wide margin for long songs
+    /// full of notes and automation (team SAFE 2026-11-04).
+    public static let maximumDocumentBytes = 64 * 1024 * 1024
 
     public static func encode(_ project: Project) throws -> Data {
         let encoder = JSONEncoder()
@@ -20,6 +28,7 @@ public enum ProjectCodec {
     }
 
     public static func decode(_ data: Data) throws -> Project {
+        guard data.count <= maximumDocumentBytes else { throw DecodeError.tooLarge(bytes: data.count) }
         struct Header: Decodable { let formatVersion: Int? }
         let header = try JSONDecoder().decode(Header.self, from: data)
         guard let version = header.formatVersion else { throw DecodeError.missingFormatVersion }
