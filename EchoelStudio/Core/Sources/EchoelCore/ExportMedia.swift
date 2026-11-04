@@ -30,7 +30,7 @@ public enum ExportMedia {
     public static func arrangementMedia(of project: Project) -> Set<MediaID> {
         var ids = Set<MediaID>()
         for track in project.tracks {
-            for region in track.regions { ids.insert(region.media) }
+            for region in track.playedRegions(in: project) { ids.insert(region.media) }
             for placement in track.placements {
                 if let audio = track.clips.first(where: { $0.id == placement.clip })?.audio { ids.insert(audio.media) }
             }

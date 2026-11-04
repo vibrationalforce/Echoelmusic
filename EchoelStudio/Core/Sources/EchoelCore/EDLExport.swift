@@ -86,7 +86,7 @@ public enum EDLExport {
                 channel = audioNumber == 1 ? "A" : "A\(audioNumber)"
             case .instrument, .returnTrack: continue
             }
-            for region in track.regions {
+            for region in track.playedRegions(in: project) {
                 guard let file = project.mediaFile(region.media), file.sampleRate > 0, file.sampleRate.isFinite,
                       let stop = Arranging.end(of: region, in: project),
                       let recordIn = frames(map.seconds(at: region.start)),

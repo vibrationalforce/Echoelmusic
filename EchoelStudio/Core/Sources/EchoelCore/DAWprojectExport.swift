@@ -18,7 +18,10 @@ import Foundation
 ///   a region; the song's markers.
 /// - Not carried, because the format has no place a DAW would read for them: Echoel's own
 ///   instruments and effects (no plug-in state outside Echoel), automation of Echoel parameters,
-///   controllers and pitch bends inside clips, region gain, video tracks, session scenes.
+///   controllers and pitch bends inside clips, region gain, video tracks, session scenes, and the
+///   shape of a fade (the format has only its length).
+/// - A folder of takes is exported as what it plays (`Track.playedRegions`): the comp's pieces,
+///   overlapping by the crossfade at each cut, the outgoing piece falling and the incoming rising.
 ///
 /// Times are in beats (quarter notes) from the song's start. Nothing here touches a file.
 public enum DAWprojectExport {
@@ -138,7 +141,7 @@ public enum DAWprojectExport {
         var out: [(start: Tick, xml: XML)] = []
         let map = project.tempoMap
         if track.kind == .audio {
-            for region in track.regions {
+            for region in track.playedRegions(in: project) {
                 guard let file = project.mediaFile(region.media), let path = mediaPaths[file.id],
                       let stop = Arranging.end(of: region, in: project), stop > region.start else { continue }
                 let firstSecond = Double(region.offset) / file.sampleRate
