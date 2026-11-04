@@ -24887,14 +24887,14 @@
         }
       }
     },
-    "Makes the change Echoel proposed. Echoel's Undo takes it back." : {
+    "Makes the change Echoel proposed. Echoel's Undo reverses it." : {
       "comment" : "GSIDMMW C2a: VoiceOver hint of Apply (AgentReportBanner).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Makes the change Echoel proposed. Echoel's Undo takes it back."
+            "value" : "Makes the change Echoel proposed. Echoel's Undo reverses it."
           }
         }
       }
@@ -25227,14 +25227,14 @@
         }
       }
     },
-    "Arrangement shows the piece on its timeline. Session launches its scenes live, on the bar." : {
+    "Arrangement shows the piece on its timeline. Scenes launches the piece's scenes live, on the bar." : {
       "comment" : "Arrange plate (P1): VoiceOver hint of the Arrangement · Session switch.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Arrangement shows the piece on its timeline. Session launches its scenes live, on the bar."
+            "value" : "Arrangement shows the piece on its timeline. Scenes launches the piece's scenes live, on the bar."
           }
         }
       }

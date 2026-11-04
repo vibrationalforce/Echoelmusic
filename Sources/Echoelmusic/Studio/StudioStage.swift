@@ -74,7 +74,7 @@ public enum ArrangeMode: String, CaseIterable, Identifiable, Sendable {
     public var label: String {
         switch self {
         case .arrangement: return String(localized: "Arrangement")
-        case .session:     return String(localized: "Session")
+        case .session:     return String(localized: "Scenes")
         }
     }
 
@@ -86,7 +86,7 @@ public enum ArrangeMode: String, CaseIterable, Identifiable, Sendable {
     public func showsScenes(focused: Bool) -> Bool { self == .session && !focused }
 
     /// Spoken (#482: a control names what it does).
-    public static let spokenHint = String(localized: "Arrangement shows the piece on its timeline. Session launches its scenes live, on the bar.")
+    public static let spokenHint = String(localized: "Arrangement shows the piece on its timeline. Scenes launches the piece's scenes live, on the bar.")
 
     /// Under the switch in Session: a scene is a bar where parts start, so scenes are MADE in
     /// Arrangement. Also the words of an empty Session — the launcher draws nothing without one.
