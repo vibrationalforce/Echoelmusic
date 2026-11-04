@@ -1025,7 +1025,11 @@ final class DocumentController {
     /// At `loudness` Off the file is written as the render hands it over, as it always was. With a
     /// target the render goes to a 32-bit float file beside it first — a mix past full scale is
     /// then lowered, not clipped — and is brought to the target from there (`MixLoudness`).
-    func exportWAV(plugins: PluginHost, loudness: ExportLoudness = .exportDefault) async -> URL? {
+    ///
+    /// With `headphoneSpatial`, the file is the Spatial Headphone Mix — the mix as Headphone Spatial
+    /// monitoring plays it (`OfflineRender.render(headphoneSpatial:)`) — named apart from the stereo one.
+    func exportWAV(plugins: PluginHost, loudness: ExportLoudness = .exportDefault,
+                   headphoneSpatial: Bool = false) async -> URL? {
         guard !isExporting else { return nil }
         isExporting = true
         defer {
@@ -1046,7 +1050,7 @@ final class DocumentController {
         let buffers = samples
         let unread = Self.unreadMedia(in: project, buffers: buffers, notLoaded: unfitMedia)
         let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
-        let name = ProjectLibrary.safeFileName(for: songName)
+        let name = ProjectLibrary.safeFileName(for: headphoneSpatial ? "\(songName) (Headphone Spatial)" : songName)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
         // With a target, the render's own file sits beside the export until it is brought there.
@@ -1067,7 +1071,8 @@ final class DocumentController {
                 do {
                     frames = try OfflineRender.render(project, sampleRate: rate, samples: buffers, units: offline.units,
                                                  effects: offline.chains.mapValues { $0 as [any HostedProcessor] },
-                                                 masterEffects: offline.masterChain) { left, right, count in
+                                                 masterEffects: offline.masterChain,
+                                                 headphoneSpatial: headphoneSpatial) { left, right, count in
                         try writer.append(left: left, right: right, count: count)
                         meter.process(left: left, right: right, count: count)
                     }.frameCount

@@ -500,6 +500,7 @@ Bulk-deletion commits cited below:
   - `ImmersiveStageView` — doorless on purpose.
 - **Scope / Class:** YES / **CURRENT** (control half) + **REUSE** (render half)
 - **Next safe slice:** ⛔ none — binaural monitoring SHIPS as Apple HRTF via `AVAudioEnvironmentNode` (Restructure S3c, `AudioEngine.swift`, default off, device item G6 open). `BinauralPanner` stays a pure core for a non-Apple render path (EchoelRender); building it as monitoring would be a second truth.
+- **Echoel Studio, Recovery 5 (2026-11-04):** the cue model of `BinauralPanner` ported as `EchoelStudio/DSP/Sources/EchoelDSP/HeadphoneSpatializer.swift` (fractional-delay arrival time, head-shadow shelf, elevation tilt, distance level and air; ADM azimuth convention), played by `EngineCore` as the "Headphone Spatial Monitor" (Song menu, Play and Sync; off by default) and as "Export Spatial Headphone Mix (WAV)"; the position is each track's pan, as ADM-OSC sends it. Ambisonics and VBAP stay unported.
 
 ### H3 · AirPods head tracking
 - **Impl:** `HeadTrackingManager` (`CMHeadphoneMotionManager`), 2025-11 → 03-03. Zero hits today.

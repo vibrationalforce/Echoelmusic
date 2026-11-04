@@ -87,6 +87,10 @@ final class AudioEngine {
     @ObservationIgnored private var tables: [WavetableSource: WavetableBank] = [:]
     @ObservationIgnored private var cutting: Set<WavetableSource> = []
     @ObservationIgnored private var clickEnabled = true
+    /// Headphone Spatial monitoring (Recovery 5): every track heard at its pan's place around the
+    /// listener, for headphones. Off at every launch; it changes what is heard, never the song or
+    /// the stereo export (`EngineCore.setHeadphoneSpatial`).
+    private(set) var headphoneSpatial = false
     @ObservationIgnored private var configurationObserver: NSObjectProtocol?
     @ObservationIgnored private var interruptionObserver: NSObjectProtocol?
     @ObservationIgnored private var resetObserver: NSObjectProtocol?
@@ -792,6 +796,7 @@ final class AudioEngine {
                 defer { if let resumeTick { seek(toTick: resumeTick) } }
                 current = EngineCore(sampleRate: sampleRate)
                 current.setClickEnabled(clickEnabled)
+                current.setHeadphoneSpatial(headphoneSpatial)
                 // Nothing over −1 dBFS reaches the device (`EngineCore.guards`); exports stay as mixed.
                 current.setOutputGuard(true)
                 current.setLaunchQuantum(self.session.quantum)
@@ -1238,6 +1243,11 @@ final class AudioEngine {
     func setClickEnabled(_ enabled: Bool) {
         clickEnabled = enabled
         core?.setClickEnabled(enabled)
+    }
+
+    func setHeadphoneSpatial(_ on: Bool) {
+        headphoneSpatial = on
+        core?.setHeadphoneSpatial(on)
     }
 
     /// The output rate the engine runs at, once it does.

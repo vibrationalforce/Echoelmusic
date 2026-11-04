@@ -45,16 +45,21 @@ public enum OfflineRender {
     /// For a stem, `isolating` names the track or return heard (`EngineSnapshot.init`), and
     /// `frameCount` fixes the length — the mix's, so every file of an export lines up — with no
     /// ring-out and silence where the source plays nothing.
+    ///
+    /// `headphoneSpatial` renders the mix as Headphone Spatial monitoring plays it
+    /// (`EngineCore.setHeadphoneSpatial`); off, the export is the stereo mix it always was.
     public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
                               ringOutSeconds: Double = OfflineRender.maximumRingOutSeconds,
                               samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
                               effects: [TrackID: [any HostedProcessor]] = [:], masterEffects: [any HostedProcessor] = [],
-                              isolating: TrackID? = nil, frameCount: Int? = nil) -> Result {
+                              isolating: TrackID? = nil, frameCount: Int? = nil,
+                              headphoneSpatial: Bool = false) -> Result {
         var left: [Float] = [], right: [Float] = []
         let summary = render(project, sampleRate: sampleRate, tailSeconds: tailSeconds, ringOutSeconds: ringOutSeconds,
                              samples: samples,
                              units: units, effects: effects, masterEffects: masterEffects,
-                             isolating: isolating, frameCount: frameCount) { l, r, count in
+                             isolating: isolating, frameCount: frameCount,
+                             headphoneSpatial: headphoneSpatial) { l, r, count in
             left.append(contentsOf: UnsafeBufferPointer(start: l, count: count))
             right.append(contentsOf: UnsafeBufferPointer(start: r, count: count))
         }
@@ -107,12 +112,15 @@ public enum OfflineRender {
                               samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
                               effects: [TrackID: [any HostedProcessor]] = [:], masterEffects: [any HostedProcessor] = [],
                               isolating: TrackID? = nil, frameCount: Int? = nil,
+                              headphoneSpatial: Bool = false,
                               blockFrames: Int = 16_384,
                               into write: (UnsafePointer<Float>, UnsafePointer<Float>, Int) throws -> Void) rethrows -> Summary {
         let plan = PlaybackPlan(compiling: project)
         let rate = renderRate(sampleRate)
         let core = EngineCore(sampleRate: rate)
         core.setClickEnabled(false)
+        // The Spatial Headphone Mix: what Headphone Spatial monitoring plays, from the first sample.
+        core.setHeadphoneSpatial(headphoneSpatial)
         var slots = SlotAssigner(capacity: core.slotCapacity)
         slots.update(for: project)
         // Every warped region's stretch and every synth's wavetable, ready before the first block:
