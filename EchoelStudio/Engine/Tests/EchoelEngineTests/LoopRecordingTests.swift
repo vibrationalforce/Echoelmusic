@@ -5,11 +5,14 @@ import XCTest
 @testable import EchoelEngine
 
 /// Loop record: a take that runs through the loop's wraps becomes one take per pass in the track's
-/// take folder, the newest sounding. One bar at 120 BPM is two seconds, 96 000 frames at 48 kHz.
+/// take folder, the newest sounding. One bar at 120 BPM is two seconds, 96 000 frames at 48 kHz; the
+/// loop the musician records over is four bars, 384 000 frames.
 final class LoopRecordingTests: XCTestCase {
     private let rate = 48_000.0
     private let bar: Tick = 3_840
     private let barFrames = 96_000
+    private let loopFrames = 384_000
+    private var loop: Range<Tick> { 0..<(4 * bar) }
     private var time: TimeConversion { TimeConversion(bpm: 120, sampleRate: rate) }
     private var meter: MeterMap { Project(tempo: 120).meterMap }
 
@@ -36,11 +39,11 @@ final class LoopRecordingTests: XCTestCase {
         slots.update(for: project)
         core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project, slots: slots.slots,
                                     sampleRate: rate, generation: 1, samples: [:]))
-        core.setLoop(0..<bar)
+        core.setLoop(loop)
         core.setReportsLoopWraps(true)
         core.play()
         var left = [Float](repeating: 0, count: 256), right = [Float](repeating: 0, count: 256)
-        let blocks = (barFrames * 7 / 2) / 256
+        let blocks = (loopFrames * 7 / 2) / 256
         for _ in 0..<blocks {
             left.withUnsafeMutableBufferPointer { l in
                 right.withUnsafeMutableBufferPointer { r in
@@ -50,19 +53,19 @@ final class LoopRecordingTests: XCTestCase {
             }
         }
         XCTAssertEqual(core.playedFrames, Int64(blocks * 256), "the played frames run on through every wrap")
-        XCTAssertLessThan(core.positionSample, Int64(barFrames), "the playhead stays inside the loop")
-        XCTAssertEqual(core.takeLoopWraps(), [96_000, 192_000, 288_000], "each wrap on its exact frame")
+        XCTAssertLessThan(core.positionSample, Int64(loopFrames), "the playhead stays inside the loop")
+        XCTAssertEqual(core.takeLoopWraps(), [384_000, 768_000, 1_152_000], "each wrap on its exact frame")
         core.setReportsLoopWraps(false)
     }
 
     // MARK: - Audio
 
     func testThreePassesAreThreeTakesOfOneFileInOneFolderTheNewestSounding() throws {
-        let frames = 3 * barFrames
+        let frames = 3 * loopFrames
         let passes = LoopRecording.audioPasses(frameCount: frames, startSample: 0, startPlayed: 0, latency: 0,
-                                               wraps: [96_000, 192_000], loop: 0..<bar, time: time, meter: meter)
-        XCTAssertEqual(passes.map(\.offset), [0, 96_000, 192_000], "one file, three offsets")
-        XCTAssertEqual(passes.map(\.length), [96_000, 96_000, 96_000])
+                                               wraps: [384_000, 768_000], loop: loop, time: time, meter: meter)
+        XCTAssertEqual(passes.map(\.offset), [0, 384_000, 768_000], "one file, three offsets")
+        XCTAssertEqual(passes.map(\.length), [384_000, 384_000, 384_000])
         XCTAssertEqual(passes.map(\.start), [0, 0, 0], "each pass on the loop's start")
 
         var (project, track, media) = try audioSong(frameCount: frames)
@@ -73,57 +76,90 @@ final class LoopRecordingTests: XCTestCase {
         XCTAssertEqual(held.takeGroups.count, 1, "one folder")
         let group = try XCTUnwrap(held.takeGroups.first)
         XCTAssertEqual(group.takes.count, 3)
-        let newest = try XCTUnwrap(held.regions.first { $0.offset == 192_000 })
+        let newest = try XCTUnwrap(held.regions.first { $0.offset == 768_000 })
         XCTAssertEqual(group.takes.last, newest.id.rawValue, "the newest pass is the bottom lane")
-        XCTAssertEqual(group.comp, [CompSegment(start: 0, end: bar, take: newest.id.rawValue)], "the newest sounds")
+        XCTAssertEqual(group.comp, [CompSegment(start: 0, end: 4 * bar, take: newest.id.rawValue)], "the newest sounds")
+    }
+
+    func testANewSongRecordsOneRegionAsBefore() throws {
+        // A new song loops one bar (`Arranging.songLoop`); even had it wrapped, the take is one region.
+        let fresh = Project(tempo: 120)
+        let oneBar = Arranging.songLoop(songEnd: 0, meter: fresh.meterMap)
+        XCTAssertEqual(oneBar, 0..<bar)
+        XCTAssertFalse(LoopRecording.recordsPasses(over: oneBar, meter: fresh.meterMap))
+        let frames = 3 * barFrames
+        let passes = LoopRecording.audioPasses(frameCount: frames, startSample: 0, startPlayed: 0, latency: 0,
+                                               wraps: [96_000, 192_000], loop: oneBar, time: time, meter: meter)
+        XCTAssertEqual(passes, [LoopRecording.AudioPass(start: 0, offset: 0, length: frames)])
+        var (project, track, media) = try audioSong(frameCount: frames)
+        try apply(LoopRecording.audioCommands(passes, media: media, track: track), to: &project)
+        XCTAssertEqual(project.track(track)?.regions.count, 1, "one region")
+        XCTAssertEqual(project.track(track)?.takeGroups.count, 0, "no folder")
+    }
+
+    func testANewSongsMIDITakeOverdubsIntoOneClipAsBefore() {
+        let events = [note(60, at: 24_000, sample: 24_000, on: true), note(60, at: 30_000, sample: 30_000, on: false),
+                      note(62, at: 96_000 + 48_000, sample: 48_000, on: true), note(62, at: 96_000 + 60_000, sample: 60_000, on: false)]
+        let passes = LoopRecording.midiPasses(events, from: .init(sample: 0, played: 0),
+                                              to: .init(sample: 90_000, played: 186_000), wraps: [96_000],
+                                              loop: 0..<bar, latency: 0, time: time, meter: meter)
+        XCTAssertEqual(passes.count, 1, "both passes in one clip, on the same bar")
+        XCTAssertEqual(passes.first?.notes.map(\.pitch), [60, 62])
+    }
+
+    func testAFourBarLoopRecordsPassesAndTwoBarsIsTheThreshold() {
+        XCTAssertTrue(LoopRecording.recordsPasses(over: loop, meter: meter))
+        XCTAssertTrue(LoopRecording.recordsPasses(over: 0..<(2 * bar), meter: meter))
+        XCTAssertFalse(LoopRecording.recordsPasses(over: 0..<(2 * bar - 1), meter: meter))
+        XCTAssertFalse(LoopRecording.recordsPasses(over: nil, meter: meter))
     }
 
     func testTheLatencyMovesEveryCutByTheSameFrames() {
-        let passes = LoopRecording.audioPasses(frameCount: 3 * barFrames + 480, startSample: 0, startPlayed: 0,
-                                               latency: 480, wraps: [96_000, 192_000], loop: 0..<bar, time: time,
+        let passes = LoopRecording.audioPasses(frameCount: 3 * loopFrames + 480, startSample: 0, startPlayed: 0,
+                                               latency: 480, wraps: [384_000, 768_000], loop: loop, time: time,
                                                meter: meter)
-        XCTAssertEqual(passes.map(\.offset), [480, 96_480, 192_480], "file frame wrap + latency was heard on bar 1")
-        XCTAssertEqual(passes.map(\.length), [96_000, 96_000, 96_000])
+        XCTAssertEqual(passes.map(\.offset), [480, 384_480, 768_480], "file frame wrap + latency was heard on bar 1")
+        XCTAssertEqual(passes.map(\.length), [384_000, 384_000, 384_000])
     }
 
     func testAPassBegunMidLoopStartsWhereRecordWasPressed() {
         // Record pressed on beat 3 (48 000 frames in), the played clock already at 500 000.
-        let passes = LoopRecording.audioPasses(frameCount: 48_000 + barFrames, startSample: 48_000, startPlayed: 500_000,
-                                               latency: 0, wraps: [100_000, 548_000], loop: 0..<bar, time: time,
-                                               meter: meter)
+        let passes = LoopRecording.audioPasses(frameCount: 336_000 + loopFrames, startSample: 48_000,
+                                               startPlayed: 500_000, latency: 0, wraps: [100_000, 836_000], loop: loop,
+                                               time: time, meter: meter)
         XCTAssertEqual(passes.map(\.start), [1_920, 0], "a wrap before the take is not one of its passes")
-        XCTAssertEqual(passes.map(\.offset), [0, 48_000])
-        XCTAssertEqual(passes.map(\.length), [48_000, 96_000])
+        XCTAssertEqual(passes.map(\.offset), [0, 336_000])
+        XCTAssertEqual(passes.map(\.length), [336_000, 384_000])
     }
 
     func testAShortLastPassIsDropped() {
         // Stop 1 000 frames after the loop came round: far less than a quarter bar (24 000).
-        let passes = LoopRecording.audioPasses(frameCount: 2 * barFrames + 1_000, startSample: 0, startPlayed: 0,
-                                               latency: 0, wraps: [96_000, 192_000], loop: 0..<bar, time: time,
+        let passes = LoopRecording.audioPasses(frameCount: 2 * loopFrames + 1_000, startSample: 0, startPlayed: 0,
+                                               latency: 0, wraps: [384_000, 768_000], loop: loop, time: time,
                                                meter: meter)
-        XCTAssertEqual(passes.map(\.offset), [0, 96_000], "the 1 000-frame pass is no take")
-        let kept = LoopRecording.audioPasses(frameCount: 2 * barFrames + 30_000, startSample: 0, startPlayed: 0,
-                                             latency: 0, wraps: [96_000, 192_000], loop: 0..<bar, time: time,
+        XCTAssertEqual(passes.map(\.offset), [0, 384_000], "the 1 000-frame pass is no take")
+        let kept = LoopRecording.audioPasses(frameCount: 2 * loopFrames + 30_000, startSample: 0, startPlayed: 0,
+                                             latency: 0, wraps: [384_000, 768_000], loop: loop, time: time,
                                              meter: meter)
-        XCTAssertEqual(kept.map(\.length), [96_000, 96_000, 30_000], "past a quarter bar it stays")
+        XCTAssertEqual(kept.map(\.length), [384_000, 384_000, 30_000], "past a quarter bar it stays")
     }
 
     func testATakeThatNeverWrappedIsOneRegionAsBefore() {
         let passes = LoopRecording.audioPasses(frameCount: 1_000, startSample: 24_000, startPlayed: 24_000, latency: 480,
-                                               wraps: [], loop: 0..<bar, time: time, meter: meter)
+                                               wraps: [], loop: loop, time: time, meter: meter)
         let placed = RecordingPlacement.place(startSample: 24_000, latency: 480, time: time)
         XCTAssertEqual(passes, [LoopRecording.AudioPass(start: placed.start, offset: placed.offset, length: 1_000 - placed.offset)],
                        "however short, a plain take is kept")
     }
 
     func testTheWholeLoopRecordIsOneUndoStep() async throws {
-        let frames = 3 * barFrames
+        let frames = 3 * loopFrames
         let (project, track, media) = try audioSong(frameCount: 0 + frames)
         var empty = project
         empty.media.removeAll()
         let start = empty
         let passes = LoopRecording.audioPasses(frameCount: frames, startSample: 0, startPlayed: 0, latency: 0,
-                                               wraps: [96_000, 192_000], loop: 0..<bar, time: time, meter: meter)
+                                               wraps: [384_000, 768_000], loop: loop, time: time, meter: meter)
         let commands = [Command.addMedia(media)] + LoopRecording.audioCommands(passes, media: media, track: track)
         try await MainActor.run {
             let store = ProjectStore(project: start)
@@ -136,19 +172,19 @@ final class LoopRecordingTests: XCTestCase {
     }
 
     func testLiveIsTheExportAndTheNewestPassIsHeard() throws {
-        let frames = 3 * barFrames
-        let values = (0..<frames).map { (i: Int) -> Float in Float(i / 96_000 + 1) * 0.1 }
+        let frames = 3 * loopFrames
+        let values = (0..<frames).map { (i: Int) -> Float in Float(i / 384_000 + 1) * 0.1 }
         let buffer = try XCTUnwrap(SampleBuffer(samples: values, sampleRate: rate))
         let passes = LoopRecording.audioPasses(frameCount: frames, startSample: 0, startPlayed: 0, latency: 0,
-                                               wraps: [96_000, 192_000], loop: 0..<bar, time: time, meter: meter)
+                                               wraps: [384_000, 768_000], loop: loop, time: time, meter: meter)
         var (project, track, media) = try audioSong(frameCount: frames)
         try apply(LoopRecording.audioCommands(passes, media: media, track: track), to: &project)
         let samples = [media.id: buffer]
         let export = OfflineRender.render(project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0, samples: samples,
-                                          frameCount: barFrames)
+                                          frameCount: loopFrames)
         XCTAssertEqual(export.left[48_000], 0.3 * Float(0.5).squareRoot(), accuracy: 1e-5, "the third pass sounds")
         for block in [64, 256, 4_096] {
-            XCTAssertEqual(live(project, samples, frames: barFrames, block: block), export.left,
+            XCTAssertEqual(live(project, samples, frames: loopFrames, block: block), export.left,
                            "block \(block): live is the export, sample for sample")
         }
     }
@@ -187,13 +223,13 @@ final class LoopRecordingTests: XCTestCase {
         // Three passes from bar 1; in each, one note on beat 2 (24 000 frames in), a pitch per pass.
         var events: [LoopRecording.Event] = []
         for pass in 0..<3 {
-            let base = Int64(pass * barFrames)
+            let base = Int64(pass * loopFrames)
             events.append(note(UInt8(60 + pass), at: base + 24_000, sample: 24_000, on: true))
             events.append(note(UInt8(60 + pass), at: base + 36_000, sample: 36_000, on: false))
         }
         let passes = LoopRecording.midiPasses(events, from: .init(sample: 0, played: 0),
-                                              to: .init(sample: 95_000, played: 287_000), wraps: [96_000, 192_000],
-                                              loop: 0..<bar, latency: 0, time: time, meter: meter)
+                                              to: .init(sample: 383_000, played: 1_151_000), wraps: [384_000, 768_000],
+                                              loop: loop, latency: 0, time: time, meter: meter)
         XCTAssertEqual(passes.map { $0.notes.map(\.pitch) }, [[60], [61], [62]], "each note in its own pass")
         XCTAssertEqual(passes.map(\.start), [0, 0, 0])
         XCTAssertEqual(passes.first?.notes.first?.start, 960, "on beat 2 of the loop")
@@ -213,22 +249,23 @@ final class LoopRecordingTests: XCTestCase {
 
     func testAMIDINotePlayedJustAfterTheWrapButHeardBeforeItStaysInTheEarlierPass() throws {
         // Played 100 frames after the wrap, heard 480 frames earlier: the end of pass one.
-        let events = [note(64, at: 96_100, sample: 100, on: true), note(64, at: 96_200, sample: 200, on: false),
-                      note(65, at: 100_000, sample: 4_000, on: true), note(65, at: 110_000, sample: 14_000, on: false)]
+        let events = [note(64, at: 384_100, sample: 100, on: true), note(64, at: 384_200, sample: 200, on: false),
+                      note(65, at: 388_000, sample: 4_000, on: true), note(65, at: 398_000, sample: 14_000, on: false)]
         let passes = LoopRecording.midiPasses(events, from: .init(sample: 0, played: 0),
-                                              to: .init(sample: 60_000, played: 156_000), wraps: [96_000],
-                                              loop: 0..<bar, latency: 480, time: time, meter: meter)
+                                              to: .init(sample: 60_000, played: 444_000), wraps: [384_000],
+                                              loop: loop, latency: 480, time: time, meter: meter)
         XCTAssertEqual(passes.map { $0.notes.map(\.pitch) }, [[64], [65]])
         let first = try XCTUnwrap(passes.first?.notes.first)
-        XCTAssertEqual(first.start, time.tick(atSample: 96_000 - 380), "where it was heard, before the wrap")
+        XCTAssertEqual((passes.first?.start ?? 0) + first.start, time.tick(atSample: 384_000 - 380),
+                       "where it was heard, before the wrap (clip start plus note start)")
     }
 
     func testAShortLastMIDIPassIsDropped() {
         let events = [note(60, at: 24_000, sample: 24_000, on: true), note(60, at: 30_000, sample: 30_000, on: false),
-                      note(61, at: 96_100, sample: 100, on: true)]
+                      note(61, at: 384_100, sample: 100, on: true)]
         let passes = LoopRecording.midiPasses(events, from: .init(sample: 0, played: 0),
-                                              to: .init(sample: 1_000, played: 97_000), wraps: [96_000],
-                                              loop: 0..<bar, latency: 0, time: time, meter: meter)
+                                              to: .init(sample: 1_000, played: 385_000), wraps: [384_000],
+                                              loop: loop, latency: 0, time: time, meter: meter)
         XCTAssertEqual(passes.map { $0.notes.map(\.pitch) }, [[60]], "Stop just after the wrap keeps no pass")
     }
 
@@ -236,7 +273,7 @@ final class LoopRecordingTests: XCTestCase {
         let events = [note(60, at: 124_000, sample: 124_000, on: true), note(60, at: 130_000, sample: 130_000, on: false)]
         let passes = LoopRecording.midiPasses(events, from: .init(sample: 120_000, played: 0),
                                               to: .init(sample: 131_000, played: 11_000), wraps: [],
-                                              loop: 0..<(4 * bar), latency: 0, time: time, meter: meter)
+                                              loop: loop, latency: 0, time: time, meter: meter)
         XCTAssertEqual(passes.count, 1)
         XCTAssertEqual(passes.first?.start, bar, "placed on the bar the note began in")
     }

@@ -196,6 +196,8 @@ final class AudioEngine {
     private static let loopsSongKey = "loopsSong"
     /// The range the last published song loops over: from bar 1 to the end of its last bar.
     @ObservationIgnored private var songLoop: Range<Tick>?
+    /// The meter that loop was measured in.
+    @ObservationIgnored private var songMeter = Project().meterMap
 
     func setLoopsSong(_ on: Bool) {
         loopsSong = on
@@ -203,8 +205,23 @@ final class AudioEngine {
         applyLoop()
     }
 
+    /// The loop runs while it is on — except under an audio take when it is shorter than a loop
+    /// record takes (`LoopRecording.minimumBars`): one file cannot be placed twice, so that take
+    /// runs freely, as every audio take did before loop record.
+    private var loopRuns: Bool {
+        loopsSong && (take == nil || LoopRecording.recordsPasses(over: songLoop, meter: songMeter))
+    }
+
+    /// Whether a take started now is cut into passes of the loop.
+    var recordsLoopPasses: Bool {
+        loopsSong && LoopRecording.recordsPasses(over: songLoop, meter: songMeter)
+    }
+
+    /// How often the loop has wrapped (`EngineCore.wrapCount`), for the record status line.
+    var loopWrapCount: Int64 { core?.wrapCount ?? 0 }
+
     private func applyLoop() {
-        core?.setLoop(loopsSong ? songLoop : nil)
+        core?.setLoop(loopRuns ? songLoop : nil)
     }
 
     /// Bar 1 to the end of the last bar a clip or an audio region reaches, in the bars of the
@@ -930,9 +947,11 @@ final class AudioEngine {
         // The loop the take runs over, and its wraps from here on: each pass is cut from the one
         // file after the stop (Loop record).
         core.setReportsLoopWraps(true)
-        take = (url, writer, recorder, core.sampleRate, Swift.max(0, latency), tempoMap, core, activeLoop)
+        take = (url, writer, recorder, core.sampleRate, Swift.max(0, latency), tempoMap, core,
+                recordsLoopPasses ? activeLoop : nil)
         takeLife.begin()
         recorder.arm(channel: channel)
+        applyLoop()
         drainTask = Task.detached(priority: .userInitiated) {
             while !Task.isCancelled {
                 try? await writer.drain()
@@ -947,6 +966,7 @@ final class AudioEngine {
         // Never the engine's recorder: after a rebuild that is a different one, or none.
         guard let current = take, takeLife.stop() else { return nil }
         take = nil
+        applyLoop()
         defer { takeLife.finished() }
         let recorder = current.recorder
         recorder.disarm()
@@ -1085,7 +1105,7 @@ final class AudioEngine {
     /// time signature); nil while the loop is off. A jam's guest comes in on
     /// the bar of its own loop that matches the host's (`JamStart.songTick`).
     var activeLoop: Range<Tick>? {
-        loopsSong ? songLoop : nil
+        loopRuns ? songLoop : nil
     }
 
     /// The decoded audio files sampler tracks play. Republishes the current project with them.
@@ -1360,6 +1380,7 @@ final class AudioEngine {
         core.publish(snapshot)
         let songEnd = Swift.max(plan.songEnd, snapshot.time.tick(atSample: snapshot.audioEnd))
         songLoop = Self.loopRange(songEnd: songEnd, meter: snapshot.meter)
+        songMeter = snapshot.meter
         applyLoop()
     }
 
