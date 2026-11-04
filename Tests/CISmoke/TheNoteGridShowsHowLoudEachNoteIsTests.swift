@@ -113,7 +113,12 @@ final class TheNoteGridShowsHowLoudEachNoteIsTests: XCTestCase {
         let modifiers = String(body[chain.lowerBound..<chainEnd.lowerBound])
         XCTAssertTrue(modifiers.contains(".background(EchoelTheme.surface)"),
                       "counterweight: the grid is drawn over `surface` — the colour the shade is mixed and measured against")
-        XCTAssertFalse(modifiers.contains(".opacity("), "the grid's view is faded — every note, the pick included")
+        // W-RED (2026-11-01): a VIEW modifier `.opacity(` starts its own line; EP-3's armed frame
+        // strokes in `EchoelTheme.text.opacity(0.5)`, a colour, and fades no note.
+        let viewFade = modifiers.split(separator: "\n").contains {
+            $0.trimmingCharacters(in: .whitespaces).hasPrefix(".opacity(")
+        }
+        XCTAssertFalse(viewFade, "the grid's view is faded — every note, the pick included")
     }
 
     // MARK: helpers

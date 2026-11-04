@@ -73,7 +73,11 @@ final class TheNoteEditorSaysWhenATrackHasNoVoiceTests: XCTestCase {
                       "the editor asks the inspector's one rule — never a second capacity check")
         XCTAssertTrue(editor.contains("voiceCapacity: voiceCapacity))"))
         XCTAssertTrue(editor.contains("let voiceCapacity: Int"), "a number handed in, required (#431)")
-        XCTAssertFalse(editor.contains("player."), "the editor reads no transport (M1's ban, kept)")
+        // W-RED (2026-11-01): Production N1 lets the editor SOUND a note through the player's one
+        // audition call — an action, not a transport read. That one call is named; any other
+        // `player.` is still the ban.
+        XCTAssertFalse(editor.replacingOccurrences(of: "player.auditionNote(", with: "").contains("player."),
+                       "the editor reads no transport (M1's ban, kept)")
         // DAW shell S4a: the editor is the Notes page of the track's detail, so the detail mounts it.
         let inspector = try source(Self.inspectorPath)
         XCTAssertTrue(inspector.contains("PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)"),

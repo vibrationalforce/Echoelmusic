@@ -111,8 +111,11 @@ final class TheNoteGridShowsWhereTheSongIsTests: XCTestCase {
         XCTAssertTrue(mount.contains("lengthTicks: region.lengthTicks,"))
         XCTAssertTrue(mount.contains("stepWidth: stepWidth)"), "the grid's own column width — one width for notes and line (since S9b the zoomed `stepWidth`, #416)")
         XCTAssertEqual(code.components(separatedBy: "PartNotePlayheadView(").count - 1, 1, "mounted once")
+        // W-RED (2026-11-01): `player.auditionNote(` (Production N1) sounds a note — it reads no
+        // position, so it is taken out before the ban is asked.
+        let reads = code.replacingOccurrences(of: "player.auditionNote(", with: "")
         for banned in ["currentTick", "player."] {
-            XCTAssertFalse(code.contains(banned), "the note editor reads `\(banned)` — the position belongs to the leaf's own file")
+            XCTAssertFalse(reads.contains(banned), "the note editor reads `\(banned)` — the position belongs to the leaf's own file")
         }
         XCTAssertTrue(code.contains("let rect = CGRect(x: CGFloat(note.startStep) * stepW + 1,"),
                       "counterweight: the canvas places a note at `startStep × stepW` — the unit the playhead uses")
