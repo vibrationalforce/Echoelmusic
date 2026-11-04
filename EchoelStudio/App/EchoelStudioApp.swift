@@ -14,6 +14,8 @@ struct EchoelStudioApp: App {
     @State private var writer: ParameterWriter
     @State private var launchpad: LaunchpadController
     @State private var agent: AgentSession
+    /// The A/B comparisons of the open song's devices, for the session only (PRO-W1).
+    @State private var comparisons = DeviceABStore()
     /// The chest strap and the rear camera, off until the musician chooses one in the Song menu
     /// (wave W1); the chooser keeps one on at a time.
     @State private var strap: HeartRateStrap
@@ -83,6 +85,7 @@ struct EchoelStudioApp: App {
                 .environment(midi)
                 .environment(writer)
                 .environment(agent)
+                .environment(comparisons)
                 .environment(strap)
                 .environment(camera)
                 .preferredColorScheme(.dark)

@@ -56,6 +56,7 @@ extension Command {
         case addScene, removeScene, renameScene, setSlot
         case setInstrumentWavetable
         case addMarker, renameMarker, moveMarker, removeMarker
+        case setInstrumentSound
     }
 
     public var kind: Kind {
@@ -143,6 +144,7 @@ extension Command {
         case .renameMarker: .renameMarker
         case .moveMarker: .moveMarker
         case .removeMarker: .removeMarker
+        case .setInstrumentSound: .setInstrumentSound
         }
     }
 }
@@ -558,6 +560,11 @@ public enum CommandCatalog {
                                summary: "Puts a clip into a track's slot in a scene, or empties the slot.",
                                parameters: [P("track", .trackID, "The track."), P("scene", .sceneID, "The scene."),
                                             P("clip", .clipID, "The clip; omit to empty the slot.", optional: true)])
+        case .setInstrumentSound:
+            return CommandSpec(name: "instrument.sound", title: "Compare Sound",
+                               summary: "Sets a built-in instrument's whole sound at once: its preset name and every stored parameter value, as an A/B comparison takes it back.",
+                               parameters: [P("track", .trackID, "The instrument track."), P("preset", .string, "The preset name."),
+                                            P("values", .string, "Every stored value by parameter key.")])
         case .addMarker:
             return CommandSpec(name: "marker.add", title: "Add Marker",
                                summary: "Puts a named marker on the timeline. One marker per position; exported as MIDI markers and WAV cue points.",
