@@ -162,9 +162,32 @@ final class TheSongIsSeenOnOneScaleTests: XCTestCase {
         XCTAssertTrue(canvas.contains("selection.selectRegion(block.id, in: document)"),
                       "a tap selects through the ONE selection owner")
         XCTAssertTrue(canvas.contains("ArrangePlayheadView(songTicks: songTicks)"))
+        // W-RED (2026-11-01): Ultraplan-A4's cross-track drop selects the part on its NEW track and
+        // names that track — it reads the store's document once, in the release handler, AFTER the
+        // one commit. That handler is checked for exactly that and taken out of the ban below;
+        // the canvas's body still reads no store.
+        var scanned = canvas
+        let crossDrop = "rows crossed: Int, order: [UUID], clip: Clip?) {"
+        if let head = canvas.range(of: crossDrop) {
+            var depth = 1
+            var index = head.upperBound
+            while index < canvas.endIndex, depth > 0 {
+                if canvas[index] == "{" { depth += 1 } else if canvas[index] == "}" { depth -= 1 }
+                index = canvas.index(after: index)
+            }
+            let handler = String(canvas[head.upperBound..<index])
+            if let commit = handler.range(of: "TrackParts.move(part, toStartTick: tick, toLane: target, timeline: timeline)"),
+               let firstRead = handler.range(of: "timeline.") {
+                XCTAssertLessThan(commit.lowerBound, firstRead.lowerBound, "the drop reads the store only after its one commit")
+            }
+            XCTAssertEqual(handler.components(separatedBy: "timeline.").count,
+                           handler.components(separatedBy: "timeline.document").count,
+                           "the cross-track drop reads the store's document and nothing else of it")
+            scanned = String(canvas[..<head.lowerBound]) + String(canvas[index...])
+        }
         for banned in ["currentTick", "player", "timeline.", "TimelineRegion(", "TimelineDocument(",
                        "Timer", "DragGesture", "TimelineView("] {
-            XCTAssertFalse(canvas.contains(banned), """
+            XCTAssertFalse(scanned.contains(banned), """
                 ArrangeCanvasView contains `\(banned)`. The canvas is a cold picture of the \
                 document, the selection and the clip grid (its note sketches): no position read (the hot-state law), no read of \
                 the `TimelineStore` (it holds it only to COMMIT a drop), no clock, and no drag of its own \
