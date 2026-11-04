@@ -968,6 +968,18 @@ struct SongMenu: View {
                 // would have no length.
                 .disabled(documents.isExporting || !store.project.arrangementHasSound)
                 wavLoudnessMenu
+                // The mix as Headphone Spatial monitoring plays it, sample for sample (Recovery 5).
+                Button("Export Spatial Headphone Mix (WAV)…", systemImage: "headphones") {
+                    Task {
+                        let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
+                        if let url = await documents.exportWAV(plugins: engine.plugins, loudness: .off,
+                                                               headphoneSpatial: true) {
+                            if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
+                            router.share(url)
+                        }
+                    }
+                }
+                .disabled(documents.isExporting || !store.project.arrangementHasSound)
                 // One file per track and return the mix hears, for another DAW.
                 Button("Export Stems…", systemImage: "square.stack.3d.up") {
                     Task {
@@ -1028,6 +1040,11 @@ struct SongMenu: View {
                 .disabled(documents.isExporting)
             }
             Section("Play and Sync") {
+                // Every track at its pan's place around you, for headphones (Recovery 5). Only what
+                // you hear: the song and the stereo export stay as they are.
+                Toggle(isOn: Binding(get: { engine.headphoneSpatial }, set: { engine.setHeadphoneSpatial($0) })) {
+                    Label("Headphone Spatial Monitor", systemImage: "headphones")
+                }
                 Menu("Send MIDI Clock", systemImage: "metronome") {
                     ForEach(engine.clock.destinations) { destination in
                         Button { engine.clock.toggle(destination) } label: {

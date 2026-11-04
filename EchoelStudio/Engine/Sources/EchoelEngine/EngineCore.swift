@@ -195,6 +195,28 @@ public final class EngineCore: @unchecked Sendable {
     private let guards: [Limiter]
     /// The guard's ceiling: the earlier app's −1 dB trim after its limiter.
     public static let outputCeilingDB = -1.0
+    /// Headphone Spatial monitoring (Recovery 5): every instrument and audio track that plays into
+    /// the master pair is heard as a sound object around the listener (`HeadphoneSpatializer`), at
+    /// the place its pan names — the place ADM-OSC sends for it (`ADMObject.track`) — instead of
+    /// through the pan law. Off until the app's switch, or an export that asks for it, turns it on.
+    /// Return tracks and tracks on their own output pair stay stereo; the sends carry the dry
+    /// signal as always.
+    private let spatialFlag = Atomic<Bool>(false)
+    /// Render thread: the switch as this chunk reads it.
+    private var spatialOn = false
+    /// One spatializer per mix point that sends (instrument slots, then smoothed audio tracks),
+    /// made in `init`.
+    private let spatializers: [HeadphoneSpatializer]
+    /// Per such point, how far it is heard spatialized, 0 … 1: switching moves it over
+    /// `spatialFadeFrames`, sample by sample, so neither turning it on nor off clicks.
+    private let spatialMix: UnsafeMutablePointer<Float>
+    private let spatialFadeFrames: Float
+    /// One point's two ears, before they join the mix.
+    private let spatialLeft: UnsafeMutablePointer<Float>
+    private let spatialRight: UnsafeMutablePointer<Float>
+    /// Until the first chunk, the switch takes effect at once — a render that starts with it on
+    /// does not fade in from the stereo mix, so a live start and an export are the same.
+    private var hasRendered = false
     private var playhead: Int64 = 0
     /// Render thread: frames rendered while playing (`playedFrames`).
     private var playedCount: Int64 = 0
@@ -371,6 +393,15 @@ public final class EngineCore: @unchecked Sendable {
         arps = LiveArpeggiators(slots: self.slotCapacity)
         let ceiling = Limiter.Settings(gain: 0, ceiling: Self.outputCeilingDB, release: 0.06)
         guards = (0..<Swift.max(1, Track.outputChannelLimit / 2)).map { _ in Limiter(sampleRate: rate, settings: ceiling) }
+        let spatialPoints = self.slotCapacity + Self.smoothedAudioTracks
+        spatializers = (0..<spatialPoints).map { _ in HeadphoneSpatializer(sampleRate: rate) }
+        spatialMix = .allocate(capacity: spatialPoints)
+        spatialMix.initialize(repeating: 0, count: spatialPoints)
+        spatialFadeFrames = Float(Swift.max(1, (rate * 0.01).rounded()))
+        spatialLeft = .allocate(capacity: Self.maximumFrames)
+        spatialLeft.initialize(repeating: 0, count: Self.maximumFrames)
+        spatialRight = .allocate(capacity: Self.maximumFrames)
+        spatialRight.initialize(repeating: 0, count: Self.maximumFrames)
     }
 
     deinit {
@@ -418,6 +449,9 @@ public final class EngineCore: @unchecked Sendable {
         clickLeft.deallocate()
         clickRight.deallocate()
         outputs.deallocate()
+        spatialMix.deallocate()
+        spatialLeft.deallocate()
+        spatialRight.deallocate()
     }
 
     // MARK: - Main thread
@@ -528,6 +562,9 @@ public final class EngineCore: @unchecked Sendable {
     /// Main thread: whether the output's guard limits what leaves the engine (see `guards`). The
     /// app's live engine turns it on; an export's or a bake's leaves it off.
     public func setOutputGuard(_ on: Bool) { guardFlag.store(on, ordering: .relaxed) }
+
+    /// Headphone Spatial monitoring on or off (`spatialFlag`); it crossfades over 10 ms.
+    public func setHeadphoneSpatial(_ on: Bool) { spatialFlag.store(on, ordering: .relaxed) }
 
     /// Whether the output's guard is on.
     public var guardsOutput: Bool { guardFlag.load(ordering: .relaxed) }
@@ -696,6 +733,11 @@ public final class EngineCore: @unchecked Sendable {
 
         remapped = false
         takePendingSnapshot()
+        spatialOn = spatialFlag.load(ordering: .relaxed)
+        if !hasRendered {
+            hasRendered = true
+            if spatialOn { spatialMix.update(repeating: 1, count: slotCapacity + Self.smoothedAudioTracks) }
+        }
 
         // Where the song was heard last block: a stop fades the audio tracks out from here,
         // although Stop has already sent the playhead home.
@@ -1634,7 +1676,7 @@ public final class EngineCore: @unchecked Sendable {
                 mixTo = mixFrom
             }
             mix(l, r, into: left, right, frames: frames, curve: lane.mix, fixed: (lane.gainLeft, lane.gainRight),
-                memory: memory(point: lane.slot), meter: lane.slot)
+                memory: memory(point: lane.slot), meter: lane.slot, spatial: left == outputs[0] ? lane.slot : -1)
             send(lane.sends, from: lane.slot, frames: frames, left: l, right: r)
             (mixFrom, mixTo) = held
             l.update(repeating: 0, count: frames)
@@ -1647,6 +1689,8 @@ public final class EngineCore: @unchecked Sendable {
         gainMemory[point * 2] = .nan
         gainMemory[point * 2 + 1] = .nan
         guard point < sendingPoints else { return }
+        // A new owner's object starts at its own place, not gliding from the last one's.
+        spatializers[point].reset()
         for bus in 0..<Self.returnCapacity {
             let index = (point * Self.returnCapacity + bus) * 2
             sendMemory[index] = .nan
@@ -1681,7 +1725,12 @@ public final class EngineCore: @unchecked Sendable {
     private func mix<Curve: GainCurve>(_ sourceLeft: UnsafeMutablePointer<Float>, _ sourceRight: UnsafeMutablePointer<Float>,
                                        into left: UnsafeMutablePointer<Float>, _ right: UnsafeMutablePointer<Float>,
                                        frames: Int, curve: Curve?, fixed: (Float, Float),
-                                       memory: UnsafeMutablePointer<Float>?, meter: Int = -1) {
+                                       memory: UnsafeMutablePointer<Float>?, meter: Int = -1, spatial: Int = -1) {
+        if spatial >= 0, spatial < sendingPoints, spatialOn || spatialMix[spatial] > 0 {
+            mixSpatial(sourceLeft, sourceRight, into: left, right, frames: frames, curve: curve, fixed: fixed,
+                       memory: memory, meter: meter, point: spatial)
+            return
+        }
         var previous: (Float, Float)?
         if let memory, memory[0].isFinite, memory[1].isFinite { previous = (memory[0], memory[1]) }
         let startGains = previous
@@ -1716,6 +1765,101 @@ public final class EngineCore: @unchecked Sendable {
             meters.record(meter, left: MeterBank.peak(sourceLeft, frames: frames) * gainLeft,
                           right: MeterBank.peak(sourceRight, frames: frames) * gainRight, fall: meterFall)
         }
+    }
+
+    /// `mix` for a point heard through its spatializer (Headphone Spatial): the same gains, the
+    /// same 64-frame segments and the same memory, but the pan becomes the object's place — the
+    /// source is placed by its spatializer and joins both sides at the gains' constant-power
+    /// level — and while the switch moves, the stereo and the spatial signal crossfade.
+    private func mixSpatial<Curve: GainCurve>(_ sourceLeft: UnsafeMutablePointer<Float>, _ sourceRight: UnsafeMutablePointer<Float>,
+                                              into left: UnsafeMutablePointer<Float>, _ right: UnsafeMutablePointer<Float>,
+                                              frames: Int, curve: Curve?, fixed: (Float, Float),
+                                              memory: UnsafeMutablePointer<Float>?, meter: Int, point: Int) {
+        // Heard from nothing: what the line held from the last time on is not heard again.
+        if spatialMix[point] == 0 { spatializers[point].reset() }
+        var previous: (Float, Float)?
+        if let memory, memory[0].isFinite, memory[1].isFinite { previous = (memory[0], memory[1]) }
+        let startGains = previous
+        var last = fixed
+        if let curve, mixFrom != mixTo {
+            var start = 0
+            while start < frames {
+                let end = Swift.min(start + Self.gainSegment, frames)
+                let to = curve.gains(at: tick(at: end, of: frames))
+                let from = previous ?? curve.gains(at: tick(at: start, of: frames))
+                addSpatial(sourceLeft + start, sourceRight + start, into: left + start, right + start,
+                           frames: end - start, from: from, to: to, point: point)
+                previous = to
+                start = end
+            }
+            last = previous ?? fixed
+        } else {
+            let target = curve?.gains(at: mixFrom) ?? fixed
+            addSpatial(sourceLeft, sourceRight, into: left, right, frames: frames, from: previous ?? target, to: target,
+                       point: point)
+            last = target
+        }
+        if let memory {
+            memory[0] = last.0
+            memory[1] = last.1
+        }
+        if meter >= 0 {
+            let gainLeft = Swift.max(Swift.abs(last.0), Swift.abs(startGains?.0 ?? last.0))
+            let gainRight = Swift.max(Swift.abs(last.1), Swift.abs(startGains?.1 ?? last.1))
+            meters.record(meter, left: MeterBank.peak(sourceLeft, frames: frames) * gainLeft,
+                          right: MeterBank.peak(sourceRight, frames: frames) * gainRight, fall: meterFall)
+        }
+    }
+
+    /// One segment of `mixSpatial`: the object placed where the end gains' pan puts it, added at
+    /// their level, crossfaded with the stereo mix while `spatialMix` moves.
+    private func addSpatial(_ sourceLeft: UnsafeMutablePointer<Float>, _ sourceRight: UnsafeMutablePointer<Float>,
+                            into left: UnsafeMutablePointer<Float>, _ right: UnsafeMutablePointer<Float>,
+                            frames: Int, from: (Float, Float), to: (Float, Float), point: Int) {
+        guard frames > 0 else { return }
+        let unit = spatializers[point]
+        // Silent gains say nothing about the place; the object stays where it was.
+        if to.0 != 0 || to.1 != 0 {
+            unit.setPosition(.pan(Self.pan(of: to)))
+        } else if from.0 != 0 || from.1 != 0 {
+            unit.setPosition(.pan(Self.pan(of: from)))
+        }
+        unit.process(left: sourceLeft, right: sourceRight, outLeft: spatialLeft, outRight: spatialRight, frames: frames)
+        let level0 = Self.centre(from), level1 = Self.centre(to)
+        let goal: Float = spatialOn ? 1 : 0
+        var wet = spatialMix[point]
+        let move = 1 / spatialFadeFrames
+        let step = 1 / Float(frames)
+        for i in 0..<frames {
+            let t = Float(i) * step
+            let level = level0 + (level1 - level0) * t
+            if wet == 1, goal == 1 {
+                left[i] += spatialLeft[i] * level
+                right[i] += spatialRight[i] * level
+                continue
+            }
+            wet = goal > wet ? Swift.min(goal, wet + move) : Swift.max(goal, wet - move)
+            let dryLeft = from.0 + (to.0 - from.0) * t, dryRight = from.1 + (to.1 - from.1) * t
+            left[i] += sourceLeft[i] * dryLeft * (1 - wet) + spatialLeft[i] * level * wet
+            right[i] += sourceRight[i] * dryRight * (1 - wet) + spatialRight[i] * level * wet
+        }
+        spatialMix[point] = wet
+    }
+
+    /// The pan (−1 … 1) a pair of constant-power gains plays at; the master's balance moves it too.
+    static func pan(of gains: (Float, Float)) -> Double {
+        let left = Double(Swift.max(0, gains.0.isFinite ? gains.0 : 0))
+        let right = Double(Swift.max(0, gains.1.isFinite ? gains.1 : 0))
+        guard left > 0 || right > 0 else { return 0 }
+        // To a millionth: a centred pair whose sine and cosine differ in their last bit is centred.
+        let pan = (Foundation.atan2(right, left) / (Double.pi / 4) - 1) * 1_000_000
+        return Swift.min(1, Swift.max(-1, pan.rounded() / 1_000_000))
+    }
+
+    /// The level a centred source plays at in each side for the same constant-power gains.
+    static func centre(_ gains: (Float, Float)) -> Float {
+        let level = ((gains.0 * gains.0 + gains.1 * gains.1) * 0.5).squareRoot()
+        return level.isFinite ? level : 0
     }
 
     /// The song position `offset` frames into the chunk being mixed.
@@ -1987,7 +2131,8 @@ public final class EngineCore: @unchecked Sendable {
                 mixTo = mixFrom
             }
             mix(audioLeft, audioRight, into: left, right, frames: frames, curve: lane.mix,
-                fixed: (lane.gainLeft, lane.gainRight), memory: memory(point: point), meter: point)
+                fixed: (lane.gainLeft, lane.gainRight), memory: memory(point: point), meter: point,
+                spatial: left == outputs[0] ? point : -1)
             send(lane.sends, from: point, frames: frames, left: audioLeft, right: audioRight)
             (mixFrom, mixTo) = held
         }
