@@ -69,6 +69,15 @@ enum Theme {
             "Blue", "Indigo", "Violet", "Magenta", "Pink", "Gray",
         ]
 
+        /// The hex keyboard's 12 pitch-class fills: muted, dark enough for `text` on them, and
+        /// ordered around the circle of fifths, so the board's fifth neighbours (up and to the
+        /// right) are neighbouring hues and a key's region reads as one family. Every cell also
+        /// carries its name: colour is never the only cue.
+        static func pitchClass(_ index: Int) -> SwiftUI.Color {
+            let fifths = (((index % 12) + 12) % 12 * 7) % 12
+            return SwiftUI.Color(hue: Double(fifths) / 12, saturation: 0.34, brightness: 0.44)
+        }
+
         static func track(_ index: Int) -> SwiftUI.Color {
             tracks[wrapped(index)]
         }
