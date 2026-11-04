@@ -72,7 +72,7 @@ final class StoredNamesTests: XCTestCase {
         // position — so a standard effect's id is never changed; a new effect adds its own at the end.
         XCTAssertEqual(StandardEffect.allCases.map(\.component.subtype),
                        ["eEQ5", "eCmp", "eDly", "eRvb", "eCho", "ePhs", "eFlg", "eLim", "eSat", "eTrm", "eBit", "eTap",
-                        "eWid", "eRng", "eFsh", "eTun", "eHrm", "eGrn", "eFmt", "eTrn", "eMSd", "eMbc"].map(PluginComponent.code),
+                        "eWid", "eRng", "eFsh", "eTun", "eHrm", "eGrn", "eFmt", "eTrn", "eMSd", "eMbc", "eDEQ"].map(PluginComponent.code),
                        "never change a standard effect's id; a new effect goes at the end")
     }
 

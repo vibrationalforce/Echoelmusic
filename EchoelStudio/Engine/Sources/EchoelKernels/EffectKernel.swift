@@ -86,6 +86,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let transientDesigner: TransientDesigner?
     private let midSide: MidSide?
     private let multiband: MultibandCompressor?
+    private let dynamicEQ: DynamicEQ?
     /// The correction's targets, worked out once here so a change of key on the render thread
     /// only looks them up: each scale's pitch classes above C, and each tone system's cents for
     /// every root (`tuning × 12 + root`).
@@ -130,6 +131,7 @@ public final class EffectKernel: @unchecked Sendable {
         transientDesigner = effect == .transientDesigner ? TransientDesigner(sampleRate: self.sampleRate) : nil
         midSide = effect == .midSide ? MidSide(sampleRate: self.sampleRate) : nil
         multiband = effect == .multibandCompressor ? MultibandCompressor(sampleRate: self.sampleRate) : nil
+        dynamicEQ = effect == .dynamicEQ ? DynamicEQ(sampleRate: self.sampleRate) : nil
         scaleMasks = effect == .pitchCorrection
             ? Scale.allCases.map { PitchCorrector.Settings.mask(root: 0, steps: $0.intervals) } : []
         toneSystemCents = effect == .pitchCorrection ? Self.toneSystemCents() : []
@@ -216,6 +218,7 @@ public final class EffectKernel: @unchecked Sendable {
         transientDesigner?.reset()
         midSide?.reset()
         multiband?.reset()
+        dynamicEQ?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -301,6 +304,7 @@ public final class EffectKernel: @unchecked Sendable {
             guard let multiband else { return }
             multiband.process(left: left, right: right, frames: frames)
             reductionBits.store(multiband.reduction.bitPattern, ordering: .relaxed)
+        case .dynamicEQ: dynamicEQ?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -433,6 +437,12 @@ public final class EffectKernel: @unchecked Sendable {
                                                  lowRatio: value(3), midRatio: value(5), highRatio: value(7),
                                                  attack: value(8), release: value(9), makeup: value(10))
             if s != multiband.settings { multiband.settings = s }
+        case .dynamicEQ:
+            guard let dynamicEQ else { return }
+            let s = DynamicEQ.Settings(low: DynamicEQ.Band(frequency: value(0), q: value(1), threshold: value(2), range: value(3)),
+                                       high: DynamicEQ.Band(frequency: value(4), q: value(5), threshold: value(6), range: value(7)),
+                                       attack: value(8), release: value(9))
+            if s != dynamicEQ.settings { dynamicEQ.settings = s }
         }
     }
 
@@ -610,6 +620,17 @@ public final class EffectKernel: @unchecked Sendable {
             add("attack", "Attack", 0.0001...0.2, 0.01, .seconds)
             add("release", "Release", 0.01...2, 0.15, .seconds)
             add("makeup", "Makeup", 0...24, 0, .decibels)
+        case .dynamicEQ:
+            add("lowFrequency", "Band 1 Freq", 20...20_000, 250, .hertz)
+            add("lowQ", "Band 1 Q", 0.3...8, 1, .ratio)
+            add("lowThreshold", "Band 1 Threshold", -60...0, -24, .decibels)
+            add("lowRange", "Band 1 Range", -18...18, -6, .decibels)
+            add("highFrequency", "Band 2 Freq", 20...20_000, 3_000, .hertz)
+            add("highQ", "Band 2 Q", 0.3...8, 1, .ratio)
+            add("highThreshold", "Band 2 Threshold", -60...0, -24, .decibels)
+            add("highRange", "Band 2 Range", -18...18, -6, .decibels)
+            add("attack", "Attack", 0.0001...0.2, 0.005, .seconds)
+            add("release", "Release", 0.01...2, 0.15, .seconds)
         }
         return list
     }

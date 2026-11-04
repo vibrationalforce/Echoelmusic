@@ -435,7 +435,9 @@ public enum AgentTools {
                                                  "transientshaper": .transientDesigner,
                                                  "midside": .midSide, "ms": .midSide, "mseq": .midSide,
                                                  "multibandcompressor": .multibandCompressor, "multiband": .multibandCompressor,
-                                                 "multibandcomp": .multibandCompressor]
+                                                 "multibandcomp": .multibandCompressor,
+                                                 "dynamiceq": .dynamicEQ, "dynamicequalizer": .dynamicEQ,
+                                                 "dyneq": .dynamicEQ, "deesser": .dynamicEQ]
         guard let effect = aliases[key] else {
             throw AgentError.invalid("There is no effect \"\(name)\". Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).")
         }

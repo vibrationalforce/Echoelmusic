@@ -45,6 +45,8 @@ final class EffectKernelTests: XCTestCase {
             .midSide: ["width", "midGain", "sideGain", "tilt", "monoBelow"],
             .multibandCompressor: ["lowCrossover", "highCrossover", "lowThreshold", "lowRatio", "midThreshold", "midRatio",
                                    "highThreshold", "highRatio", "attack", "release", "makeup"],
+            .dynamicEQ: ["lowFrequency", "lowQ", "lowThreshold", "lowRange", "highFrequency", "highQ", "highThreshold",
+                         "highRange", "attack", "release"],
         ]
         for (effect, identifiers) in expected {
             XCTAssertEqual(EffectKernel.parameters(for: effect).map(\.identifier), identifiers, effect.rawValue)
@@ -58,7 +60,8 @@ final class EffectKernelTests: XCTestCase {
             return Float(0.4 * sin(2 * Double.pi * 180 * t) + 0.2 * sin(2 * Double.pi * 2_700 * t))
         }
         let turned: [(StandardEffect, Int, Float)] = [(.formantFilter, 0, 3), (.transientDesigner, 2, -12),
-                                                      (.midSide, 1, -12), (.multibandCompressor, 10, 12)]
+                                                      (.midSide, 1, -12), (.multibandCompressor, 10, 12),
+                                                      (.dynamicEQ, 7, -18)]
         for (effect, address, value) in turned {
             let plain = process(EffectKernel(effect: effect, sampleRate: rate), tone)
             let kernel = EffectKernel(effect: effect, sampleRate: rate)

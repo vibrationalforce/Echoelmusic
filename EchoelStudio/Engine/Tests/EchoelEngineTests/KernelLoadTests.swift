@@ -99,7 +99,7 @@ final class KernelLoadTests: XCTestCase {
     func testTheNewEffectsCostNoMoreThanAFewCompressors() {
         let compressor = cost(of: .compressor)
         XCTAssertGreaterThan(compressor, 0)
-        for effect in [StandardEffect.formantFilter, .transientDesigner, .midSide, .multibandCompressor] {
+        for effect in [StandardEffect.formantFilter, .transientDesigner, .midSide, .multibandCompressor, .dynamicEQ] {
             let share = cost(of: effect) / compressor
             XCTAssertLessThan(share, 16, "\(effect.rawValue) at \(share) compressors' cost")
         }
