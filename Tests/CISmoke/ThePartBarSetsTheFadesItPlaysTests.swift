@@ -293,9 +293,12 @@ final class ThePartBarSetsTheFadesItPlaysTests: XCTestCase {
         }
 
         let callers = try sourceFiles { $0.contains(".setRegionFades(") }
-        XCTAssertEqual(callers, [Self.bar], """
-            `setRegionFades` is called from \(callers). The part bar is its one door; a second surface \
-            writing a part's fades is a second editor of one value.
+        // W-RED (2026-11-01): AE-5's level strip pulls the same fades through the same writer
+        // (`TheWaveCarriesTheFadesAndTheLevelTests`); the doors are a named set, a third is red.
+        XCTAssertEqual(callers, ["Sources/Echoelmusic/Studio/AudioPartLevelStrip.swift", Self.bar].sorted(), """
+            `setRegionFades` is called from \(callers). The part bar's fields and the audio editor's \
+            level strip (AE-5) are its two doors; a third surface writing a part's fades is a second \
+            editor of one value.
             """)
     }
 

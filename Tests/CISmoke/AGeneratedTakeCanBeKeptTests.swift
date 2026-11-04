@@ -168,8 +168,17 @@ final class AGeneratedTakeCanBeKeptTests: XCTestCase {
         let text = try String(contentsOf: root.appendingPathComponent("Sources/Echoelmusic/Core/TimelineStore.swift"),
                               encoding: .utf8)
         let code = SourceText.codeOnly(text)
-        XCTAssertEqual(code.components(separatedBy: "pushUndo(.keptTake(").count - 1, 1,
-                       "one place records a kept take: `keepComposerTake`")
+        // W-RED (2026-11-01): AI-6a added `releaseKeptTake` — the agent's take-back, which records
+        // the `.keptTake` step that brings both back (`TheAgentActsThroughTheButtonsPathsTests`
+        // claim 8). Two recorders, each inside its own verb; a third is red.
+        XCTAssertEqual(code.components(separatedBy: "pushUndo(.keptTake(").count - 1, 2,
+                       "two places record a kept take: `keepComposerTake` and `releaseKeptTake`")
+        for verb in ["public func keepComposerTake(regionID: UUID, clips: ClipStore) -> TimelineRegion? {",
+                     "public func releaseKeptTake(regionID: UUID, keptID: UUID, slot: Int, clips: ClipStore) -> Bool {"] {
+            let inside = try member(verb, in: code)
+            XCTAssertEqual(inside.components(separatedBy: "pushUndo(.keptTake(").count - 1, 1,
+                           "`\(verb.prefix(40))…` records its kept-take step exactly once, inside itself")
+        }
         guard let verb = code.range(of: "public func keepComposerTake(regionID: UUID, clips: ClipStore) -> TimelineRegion? {"),
               let push = code.range(of: "pushUndo(.keptTake(") else {
             return XCTFail("ANCHOR MISSING: the verb or its step (#454)")
@@ -264,7 +273,7 @@ final class AGeneratedTakeCanBeKeptTests: XCTestCase {
             XCTAssertFalse(leaf.contains(hot), "`\(hot)` in the Edit a copy leaf — it reads nothing that moves with the song")
         }
 
-        var calls = 0
+        var callers: [String: Int] = [:]
         let sources = root.appendingPathComponent("Sources/Echoelmusic")
         guard let walker = FileManager.default.enumerator(atPath: sources.path) else {
             return XCTFail("cannot enumerate Sources/Echoelmusic — a scan that saw nothing is not a pass")
@@ -273,10 +282,14 @@ final class AGeneratedTakeCanBeKeptTests: XCTestCase {
         for case let relative as String in walker where relative.hasSuffix(".swift") {
             seen += 1
             guard let file = try? String(contentsOf: sources.appendingPathComponent(relative), encoding: .utf8) else { continue }
-            calls += SourceText.codeOnly(file).components(separatedBy: ".keepComposerTake(").count - 1
+            let n = SourceText.codeOnly(file).components(separatedBy: ".keepComposerTake(").count - 1
+            if n > 0 { callers[relative] = n }
         }
         XCTAssertGreaterThan(seen, 200, "the walk saw \(seen) files — the wrong directory")
-        XCTAssertEqual(calls, 1, "one door keeps a take: the part bar's Edit a copy")
+        // W-RED (2026-11-01): AI-6a's agent keeps a take through the same verb, after asking the
+        // same refusal (`EchoelCommandExecutor.keep`). One verb, two named doors; a third is red.
+        XCTAssertEqual(callers, ["Studio/SelectedPartBar.swift": 1, "EchoelAI/EchoelCommandExecutor.swift": 1],
+                       "one verb keeps a take, from the part bar's Edit a copy and the agent's `keep` only")
     }
 
     // MARK: rig

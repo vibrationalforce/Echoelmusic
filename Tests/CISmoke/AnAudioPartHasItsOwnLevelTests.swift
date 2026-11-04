@@ -150,10 +150,14 @@ final class AnAudioPartHasItsOwnLevelTests: XCTestCase {
 
     func testThePartBarIsTheOneCallerOfTheRegionGainWriter() throws {
         let callers = try sourceFiles { $0.contains(".setRegionGain(") }
-        XCTAssertEqual(callers, [Self.bar], """
-            `setRegionGain` is called from \(callers). The part bar is its one door; a second \
-            surface writing a part's level is a second editor of one value, and the one whose \
-            undo the person did not expect.
+        // W-RED (2026-11-01): AE-5 (founder 2026-10-08, the audio editor's level strip) is the HAND
+        // on the same fact through the same writer (`TheWaveCarriesTheFadesAndTheLevelTests`), so the
+        // doors are named as a set — a third caller is still red here.
+        XCTAssertEqual(callers, ["Sources/Echoelmusic/Studio/AudioPartLevelStrip.swift", Self.bar].sorted(), """
+            `setRegionGain` is called from \(callers). The part bar (the numbers) and the audio \
+            editor's level strip (the hand, AE-5) are its two doors; a third surface writing a \
+            part's level is a second editor of one value, and the one whose undo the person did \
+            not expect.
             """)
     }
 
