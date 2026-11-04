@@ -46,6 +46,16 @@ final class FieldExportTests: XCTestCase {
     }
 
     /// At 120 BPM in 4/4 a beat is half a second and a bar two.
+    /// The film's bar phase counts the bars of the meter: two bars of 4/4 at 120 BPM take 4 s, a
+    /// bar of 7/8 then 1.75 s — its bar line at 5.75 s is a phase of 0, and half way 0.5.
+    func testTheFramesBarPhaseFollowsTheMeter() throws {
+        var project = Project(tempo: 120)
+        try Command.setTimeSignatureChange(at: 2 * MusicalTime.ticksPerBar(.common), TimeSignature(7, 8)).apply(to: &project)
+        XCTAssertEqual(FieldExport.frames(of: project, fromSeconds: 4.875, count: 1, levels: [])[0].barPhase, 0.5, accuracy: 1e-9)
+        XCTAssertEqual(FieldExport.frames(of: project, fromSeconds: 5.75, count: 1, levels: [])[0].barPhase, 0, accuracy: 1e-9,
+                       "the 7/8 bar line, where 4/4 would be at three quarters of a bar")
+    }
+
     func testTheFramesFollowTheSongsTempoMap() {
         let project = Project(tempo: 120, timeSignature: .common, context: MusicalContext(root: 9))
         let frames = FieldExport.frames(of: project, fromSeconds: 0, count: 61, levels: [0.5])

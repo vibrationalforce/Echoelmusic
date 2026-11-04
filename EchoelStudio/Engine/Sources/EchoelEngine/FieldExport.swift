@@ -95,14 +95,14 @@ public enum FieldExport {
     public static func frames(of project: Project, fromSeconds: Double, count: Int, levels: [Double]) -> [FieldFrame] {
         let start = fromSeconds.isFinite ? Swift.max(0, fromSeconds) : 0
         let map = project.tempoMap
-        let signature = project.timeSignature
+        let meter = project.meterMap
         let context = project.context
         var frames: [FieldFrame] = []
         frames.reserveCapacity(Swift.max(0, count))
         for index in 0..<Swift.max(0, count) {
             let seconds = start + Double(index) / Double(framesPerSecond)
             let level = index < levels.count ? levels[index] : 0
-            frames.append(FieldFrame.at(tick: map.position(atSeconds: seconds), signature: signature, context: context,
+            frames.append(FieldFrame.at(tick: map.position(atSeconds: seconds), meter: meter, context: context,
                                         level: level, pulse: nil, hrv: nil, coherence: nil, isPlaying: true,
                                         breath: nil))
         }
