@@ -125,11 +125,11 @@ final class ParameterRowStacksAtAccessibilitySizesTests: XCTestCase {
         // Window the stacking branch by the closing brace at the branch's OWN indentation. A
         // line count or a "next N lines" rule is wrong the first time anyone adds a line.
         guard let start = lines.firstIndex(where: { $0.contains("} else if stacksLabel {") }) else {
-            throw XCTSkip("no `else if stacksLabel` branch to window — the tests above report that")
+            throw failedAnchor("no `else if stacksLabel` branch to window — the tests above report that")
         }
         let indent = String(repeating: " ", count: lines[start].prefix(while: { $0 == " " }).count)
         guard let end = lines[(start + 1)...].firstIndex(where: { $0 == indent + "} else {" }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 no `} else {` closes the stacking branch at its own indentation — the window \
                 would be wrong, and a wrong window is worse than no assertion
                 """)

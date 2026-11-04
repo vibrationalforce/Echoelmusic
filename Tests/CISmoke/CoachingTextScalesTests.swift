@@ -255,7 +255,7 @@ final class CoachingTextScalesTests: XCTestCase {
     /// this helper needs a real brace scanner, not a wider regex.
     private func window(_ source: [String], from declaration: String) throws -> ArraySlice<String> {
         guard let start = source.firstIndex(where: { $0.contains(declaration) }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` is gone from BioStripView — if the banner was restructured \
                 this test should be rewritten with it, not left to pass vacuously
                 """)
@@ -265,7 +265,7 @@ final class CoachingTextScalesTests: XCTestCase {
         guard let end = source[start...].dropFirst().firstIndex(where: {
             $0.hasPrefix(closer) && $0.trimmingCharacters(in: .whitespaces) == "}"
         }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` in BioStripView has no closing brace at its own indentation — \
                 the file was reformatted or the member was restructured, and reading on would \
                 inspect the wrong lines. Rewrite this guard with the new shape rather than \
