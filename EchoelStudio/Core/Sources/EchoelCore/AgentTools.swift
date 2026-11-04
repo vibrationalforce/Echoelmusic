@@ -428,7 +428,14 @@ public enum AgentTools {
                                                  "harmonizer": .harmonizer, "harmoniser": .harmonizer,
                                                  "harmony": .harmonizer, "harmonies": .harmonizer,
                                                  "granular": .granular, "grain": .granular, "grains": .granular,
-                                                 "echoelgrain": .granular]
+                                                 "echoelgrain": .granular,
+                                                 "formantfilter": .formantFilter, "formant": .formantFilter,
+                                                 "vowel": .formantFilter, "vowelfilter": .formantFilter,
+                                                 "transientdesigner": .transientDesigner, "transient": .transientDesigner,
+                                                 "transientshaper": .transientDesigner,
+                                                 "midside": .midSide, "ms": .midSide, "mseq": .midSide,
+                                                 "multibandcompressor": .multibandCompressor, "multiband": .multibandCompressor,
+                                                 "multibandcomp": .multibandCompressor]
         guard let effect = aliases[key] else {
             throw AgentError.invalid("There is no effect \"\(name)\". Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).")
         }

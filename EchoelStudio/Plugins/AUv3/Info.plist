@@ -459,6 +459,86 @@
 				</dict>
 				<dict>
 					<key>name</key>
+					<string>Echoel: Formant Filter</string>
+					<key>description</key>
+					<string>Formant Filter from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xFmt</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Transient Designer</string>
+					<key>description</key>
+					<string>Transient Designer from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xTrn</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Mid/Side</string>
+					<key>description</key>
+					<string>Mid/Side from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xMSd</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Multiband Compressor</string>
+					<key>description</key>
+					<string>Multiband Compressor from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xMbc</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
 					<string>Echoel: Synth (earlier sessions)</string>
 					<key>description</key>
 					<string>Opens sessions saved with the earlier Echoelmusic instrument; plays Echoel Synth from Echoel</string>

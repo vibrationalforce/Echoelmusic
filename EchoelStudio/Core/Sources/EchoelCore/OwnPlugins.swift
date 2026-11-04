@@ -77,7 +77,7 @@ public enum DrumNoteMap {
 public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
     // A new effect goes at the end: a saved insert names its component, never this order.
     case equalizer, compressor, delay, reverb, chorus, phaser, flanger, limiter, saturation, tremolo, bitcrusher, tape, stereoWidth, ringModulator, frequencyShifter,
-        pitchCorrection, harmonizer, granular
+        pitchCorrection, harmonizer, granular, formantFilter, transientDesigner, midSide, multibandCompressor
 
     public var id: String { rawValue }
 
@@ -101,6 +101,10 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .pitchCorrection: "Pitch Correction"
         case .harmonizer: "Harmonizer"
         case .granular: "Granular"
+        case .formantFilter: "Formant Filter"
+        case .transientDesigner: "Transient Designer"
+        case .midSide: "Mid/Side"
+        case .multibandCompressor: "Multiband Compressor"
         }
     }
 
@@ -124,6 +128,10 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .pitchCorrection: "eTun"
         case .harmonizer: "eHrm"
         case .granular: "eGrn"
+        case .formantFilter: "eFmt"
+        case .transientDesigner: "eTrn"
+        case .midSide: "eMSd"
+        case .multibandCompressor: "eMbc"
         }
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",
@@ -153,6 +161,10 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .pitchCorrection: "xTun"
         case .harmonizer: "xHrm"
         case .granular: "xGrn"
+        case .formantFilter: "xFmt"
+        case .transientDesigner: "xTrn"
+        case .midSide: "xMSd"
+        case .multibandCompressor: "xMbc"
         }
         // The host shows "Echoel: EQ" — manufacturer, then this name, as `Plugins/AUv3/Info.plist`
         // registers it. The app's own copy (`component`) keeps its stored name: a song saves it.

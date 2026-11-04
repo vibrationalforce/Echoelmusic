@@ -21,7 +21,9 @@ struct StandardEffectPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
-            if effect == .compressor || effect == .limiter { ReductionMeter(slot: .insert(insert)) }
+            if effect == .compressor || effect == .limiter || effect == .multibandCompressor {
+                ReductionMeter(slot: .insert(insert))
+            }
             if effect == .pitchCorrection { songKeyButton }
             if effect == .harmonizer, let style = shownParameters.first, style.identifier == "style" {
                 HarmonyStyleNote(address: insertAddress(of: style), parameter: style)
