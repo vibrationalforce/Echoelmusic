@@ -417,8 +417,12 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         XCTAssertFalse(history.contains("button(\"Undo\"") || history.contains("button(\"Redo\""), "a bare title literal is spelled verbatim by `Text(title)`")
         XCTAssertEqual(history.components(separatedBy: "label: String(localized: \"").count - 1, 2, "both spoken labels are wrapped")
         let record = try codeOnly("Sources/Echoelmusic/Studio/RecordTakeControls.swift")
-        let ternary = "recording ? String(localized: \"Stop recording\") : String(localized: \"Record\")"
-        XCTAssertEqual(record.components(separatedBy: ternary).count - 1, 2, "the drawn word and the spoken label of the Record button both go through the catalog")
+        // W-RED (2026-11-01): the count-in put "Counting in" between the two words (and a line break
+        // into the ternary), so each WORD is counted wrapped, not one spelling of the whole ternary.
+        for word in ["Stop recording", "Record"] {
+            XCTAssertEqual(record.components(separatedBy: "String(localized: \"\(word)\")").count - 1, 2,
+                           "the drawn word and the spoken label of the Record button both send \"\(word)\" through the catalog")
+        }
         XCTAssertFalse(record.contains("recording ? \"Stop recording\" : \"Record\""), "the bare ternary yields a String, which Text() spells verbatim")
         try assertCatalogued(["Undo", "Redo", "Record", "Stop recording", "Arm for recording",
                           "Undo the last change to the piece's parts, notes, automation, mix or a relinked file",
