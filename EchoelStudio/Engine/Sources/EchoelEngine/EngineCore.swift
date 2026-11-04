@@ -239,6 +239,12 @@ public final class EngineCore: @unchecked Sendable {
     private var callHostTime: UInt64 = 0
     private var chunkStart = 0
 
+    /// Per slot, the keys played live into a track that arpeggiates and its phrase (EDIT-2).
+    private let arps: LiveArpeggiators
+    /// While stopped, the arpeggiator's own clock: ticks at the song's tempo where the playhead
+    /// stands, at the start of the chunk being rendered.
+    private var freeTick: Double = 0
+
     // Main thread only.
     private var published: [SnapshotBox] = []
 
@@ -319,6 +325,7 @@ public final class EngineCore: @unchecked Sendable {
         outputs = .allocate(capacity: Track.outputChannelLimit)
         outputs.initialize(repeating: monoRight, count: Track.outputChannelLimit)
         metronome = Metronome(sampleRate: Float(rate))
+        arps = LiveArpeggiators(slots: self.slotCapacity)
         let ceiling = Limiter.Settings(gain: 0, ceiling: Self.outputCeilingDB, release: 0.06)
         guards = (0..<Swift.max(1, Track.outputChannelLimit / 2)).map { _ in Limiter(sampleRate: rate, settings: ceiling) }
     }
@@ -676,6 +683,8 @@ public final class EngineCore: @unchecked Sendable {
         // A region read on across a tempo change goes back to the grid when the playhead jumps or
         // the transport starts; the stopping block still fades out what it was playing.
         if seek >= 0 || (playing && !wasPlaying) { releaseHeldRegions() }
+        // A start, a stop or a jump: every live arpeggio finds the grid of the clock that runs now.
+        if transportMoved { reanchorArps() }
         if stopping { releaseAllNotes() }
         if !wasPlaying, playing {
             // Paused, nothing was heard: the start fades nothing out (A10 review, E).
@@ -698,7 +707,7 @@ public final class EngineCore: @unchecked Sendable {
             mixFrom = held
             mixTo = held
             if let snapshot = current?.snapshot { follow(snapshot, playing: false, changed: transportMoved) }
-            renderVoices(0..<frames)
+            renderStopped(frames: frames)
             renderUnits(frames: frames)
             mixLanes(frames: frames)
             if let snapshot = current?.snapshot {
@@ -725,6 +734,7 @@ public final class EngineCore: @unchecked Sendable {
         let blockEnd = playhead + Int64(frames)
         let meter = snapshot.meter
         var rendered = 0
+        anchorArps(snapshot, playing: true)
         follow(snapshot, playing: true, changed: transportMoved)
 
         while true {
@@ -743,6 +753,9 @@ public final class EngineCore: @unchecked Sendable {
                         let event = clip.events[session.cursor]
                         due.offer(snapshot.time.sample(at: session.base + event.tick, nudge: event.nudge), index, .session)
                     }
+                }
+                if lane.arpeggio != nil, let sample = arpDue(lane.slot, snapshot) {
+                    due.offer(sample, index, .arp)
                 }
                 let cursor = cursors[lane.slot]
                 if !session.overrides, cursor < lane.events.count {
@@ -779,6 +792,9 @@ public final class EngineCore: @unchecked Sendable {
                 sessions[lane.slot] = session
             case .launch:
                 fire(snapshot.lanes[due.lane], offset: offset)
+            case .arp:
+                let lane = snapshot.lanes[due.lane]
+                stepArp(lane, at: Swift.max(due.sample, playhead), offset: offset) { snapshot.time.sample(at: $0) }
             case .automation:
                 let tick = snapshot.time.position(atSample: due.sample)
                 applyPatchAutomation(snapshot, at: tick)
@@ -1151,6 +1167,18 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         patchesReset = true
+        // Each slot's arpeggiator follows its track's: switched off, it lets go of its keys.
+        for slot in 0..<slotCapacity {
+            var settings: ArpSettings?
+            var owner: EngineSnapshot.Lane?
+            for lane in snapshot.lanes where lane.slot == slot {
+                settings = lane.arpeggio
+                owner = lane
+                break
+            }
+            let stop = arps.configure(slot, settings)
+            if stop >= 0, let owner { play(PlaybackPlan.NoteEvent(tick: 0, pitch: UInt8(stop), kind: .noteOff), on: owner, offset: 0) }
+        }
         // Only a track whose notes changed lets go of what it holds: a deleted note must not
         // hang, but a fader, a pan or a send must not cut a held chord.
         for lane in snapshot.lanes where revisions[lane.slot] != lane.eventsRevision {
@@ -1258,13 +1286,27 @@ public final class EngineCore: @unchecked Sendable {
             let status = UInt8((event >> 16) & 0xFF), pitch = UInt8((event >> 8) & 0x7F), value = UInt8(event & 0x7F)
             guard slot < slotCapacity else { continue }
             let kind = status & 0xF0
-            if slot == noteOutSlot.load(ordering: .relaxed), kind == 0x80 || kind == 0x90 || kind == 0xB0 || kind == 0xE0 {
+            let arpeggiated = arps.isOn(slot) && (kind == 0x80 || kind == 0x90)
+            if slot == noteOutSlot.load(ordering: .relaxed), !arpeggiated, kind == 0x80 || kind == 0x90 || kind == 0xB0 || kind == 0xE0 {
                 sendNote(kind, pitch, value)
             }
             // A note played after Stop is new sound, not a tail: its lane's mix follows the playhead
             // again instead of the gains where the song stopped (review 2026-10-23) — that lane
             // only, so the other lanes' and the returns' tails keep theirs.
             if kind == 0x90 && value > 0, stoppedAt != nil { liveSinceStop[slot] = true }
+            // A track that arpeggiates takes its keys into the phrase; the steps play the instrument
+            // (and the note out) at their samples. All notes off ends the phrase and passes on.
+            if arps.isOn(slot) {
+                if kind == 0x90 && value > 0 {
+                    arps.press(slot, pitch: pitch, velocity: value)
+                    continue
+                }
+                if kind == 0x80 || (kind == 0x90 && value == 0) {
+                    arps.release(slot, pitch: pitch)
+                    continue
+                }
+                if kind == 0xB0, pitch == 123 || pitch == 120 { stopArpNote(slot, arps.clear(slot), offset: 0) }
+            }
             guard devices[slot] == .plugin else {
                 playLive(slot, kind: kind, pitch, value)
                 continue
@@ -1895,6 +1937,125 @@ public final class EngineCore: @unchecked Sendable {
         }
     }
 
+    // MARK: - Live arpeggio (EDIT-2)
+
+    /// The samples per tick of the stopped clock: the song's tempo where the playhead stands.
+    private func freeSamplesPerTick(_ snapshot: EngineSnapshot) -> Double {
+        let spt = snapshot.time.samplesPerTick(at: snapshot.time.tick(atSample: playhead))
+        return spt.isFinite && spt > 0 ? spt : 25
+    }
+
+    /// Every phrase that waits for the grid finds it: the song's next step while playing, at once
+    /// on the stopped clock.
+    private func anchorArps(_ snapshot: EngineSnapshot, playing: Bool) {
+        // The stopped clock starts over with the first phrase, so its steps fall a whole step apart from the key.
+        if !playing, !(0..<arps.count).contains(where: { arps[$0].next != nil }) { freeTick = 0 }
+        for slot in 0..<arps.count where arps[slot].needsAnchor {
+            guard let settings = arps[slot].settings else { continue }
+            var state = arps[slot]
+            if playing {
+                let tick = Tick(snapshot.time.position(atSample: playhead).rounded(.up))
+                state.next = ArpGrid.start(atOrAfter: Swift.max(tick, 0), step: settings.step, meter: snapshot.meter)
+            } else {
+                state.next = Tick(freeTick.rounded(.up))
+            }
+            state.needsAnchor = false
+            arps[slot] = state
+        }
+    }
+
+    /// The song sample of a slot's next arpeggio event — its sounding step's end or its next step —
+    /// while playing; nil for none.
+    private func arpDue(_ slot: Int, _ snapshot: EngineSnapshot) -> Int64? {
+        let state = arps[slot]
+        var due: Int64?
+        if state.sounding >= 0 { due = snapshot.time.sample(at: state.off) }
+        if let next = state.next, state.count > 0 {
+            let sample = snapshot.time.sample(at: next)
+            due = due.map { Swift.min($0, sample) } ?? sample
+        }
+        return due
+    }
+
+    /// The slot's due arpeggio event at `sample`: the sounding step ends, or the next step plays
+    /// one held key. `sampleOf` turns a tick of the running clock into a sample of that clock.
+    private func stepArp(_ lane: EngineSnapshot.Lane, at sample: Int64, offset: Int, sampleOf: (Tick) -> Int64) {
+        let slot = lane.slot
+        var state = arps[slot]
+        guard let settings = state.settings else { return }
+        let offDue = state.sounding >= 0 && sampleOf(state.off) <= sample
+        let stepDue = (state.next.map { sampleOf($0) <= sample } ?? false) && state.count > 0
+        if offDue || (stepDue && state.sounding >= 0) {
+            play(PlaybackPlan.NoteEvent(tick: 0, pitch: UInt8(clamping: state.sounding), kind: .noteOff), on: lane, offset: offset)
+            state.sounding = -1
+            arps[slot] = state
+        }
+        guard stepDue, let start = state.next, let note = arps.pick(slot) else { return }
+        let end = arpStepEnd(start, settings)
+        play(PlaybackPlan.NoteEvent(tick: 0, pitch: note.pitch, kind: .noteOn(velocity: note.velocity)), on: lane, offset: offset)
+        state = arps[slot]
+        state.sounding = Int(note.pitch)
+        state.off = start + ArpGrid.noteLength(from: start, to: end, gate: settings.gate)
+        state.step += 1
+        state.next = end
+        arps[slot] = state
+    }
+
+    /// Where a step ends: on the song's grid while playing, one step later on the stopped clock.
+    private func arpStepEnd(_ start: Tick, _ settings: ArpSettings) -> Tick {
+        guard wasPlaying, let snapshot = current?.snapshot else { return start + settings.step }
+        return ArpGrid.end(ofStepAt: start, step: settings.step, meter: snapshot.meter)
+    }
+
+    private func stopArpNote(_ slot: Int, _ pitch: Int, offset: Int) {
+        guard pitch >= 0, let lane = current?.snapshot.lanes.first(where: { $0.slot == slot }) else { return }
+        play(PlaybackPlan.NoteEvent(tick: 0, pitch: UInt8(clamping: pitch), kind: .noteOff), on: lane, offset: offset)
+    }
+
+    /// A start, a stop or a jump: what sounds stops and every phrase finds the new clock's grid.
+    private func reanchorArps() {
+        for slot in 0..<arps.count where arps[slot].sounding >= 0 {
+            stopArpNote(slot, arps[slot].sounding, offset: 0)
+            arps[slot].sounding = -1
+        }
+        arps.reanchorAll()
+        freeTick = 0
+    }
+
+    /// A stopped chunk: the voices render, split at every live arpeggio step on the stopped clock.
+    private func renderStopped(frames: Int) {
+        guard let snapshot = current?.snapshot, snapshot.lanes.contains(where: { $0.arpeggio != nil }) else {
+            renderVoices(0..<frames)
+            return
+        }
+        anchorArps(snapshot, playing: false)
+        let spt = freeSamplesPerTick(snapshot)
+        let origin = freeTick
+        let sampleOf = { (tick: Tick) -> Int64 in Int64(((Double(tick) - origin) * spt).rounded(.up)) }
+        var rendered = 0
+        while true {
+            var best: Int64 = .max
+            var at = -1
+            for (index, lane) in snapshot.lanes.enumerated() where lane.arpeggio != nil {
+                let state = arps[lane.slot]
+                var due: Int64 = .max
+                if state.sounding >= 0 { due = sampleOf(state.off) }
+                if let next = state.next, state.count > 0 { due = Swift.min(due, sampleOf(next)) }
+                if due < best {
+                    best = due
+                    at = index
+                }
+            }
+            guard at >= 0, best < Int64(frames) else { break }
+            let offset = Swift.min(Swift.max(Int(best), rendered), frames)
+            renderVoices(rendered..<offset)
+            rendered = offset
+            stepArp(snapshot.lanes[at], at: best, offset: offset, sampleOf: sampleOf)
+        }
+        renderVoices(rendered..<frames)
+        freeTick += Double(frames) / spt
+    }
+
     private func renderVoices(_ range: Range<Int>) {
         guard !range.isEmpty else { return }
         if let snapshot = current?.snapshot {
@@ -1915,7 +2076,7 @@ public final class EngineCore: @unchecked Sendable {
 /// first lane does.
 private struct Due {
     /// Automation comes first at a sample, so a note there already hears the new value.
-    enum Kind: Int { case beat, arrangement, session, launch, automation }
+    enum Kind: Int { case beat, arrangement, session, arp, launch, automation }
 
     var sample: Int64
     var lane = -1

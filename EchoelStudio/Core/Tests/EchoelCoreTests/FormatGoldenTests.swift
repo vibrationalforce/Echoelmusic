@@ -375,6 +375,43 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with a track's optional arpeggiator (EDIT-2, 2026-11-04): added inside format 4, so
+    /// an earlier format-4 build opens the file and plays the notes as written. The second track
+    /// names a rate and an order of a later build: kept, played as a sixteenth, up.
+    private let formatFourArpeggio = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Arp",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-00000000000C",
+          "name": "Keys",
+          "kind": "instrument",
+          "colorIndex": 0,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "arpeggio": { "on": true, "rate": "eighthTriplet", "order": "upDown", "octaves": 2, "gate": 0.75,
+                        "latch": true, "seed": 7 }
+        },
+        {
+          "id": "7A000000-0000-4000-8000-00000000000D",
+          "name": "Later",
+          "kind": "instrument",
+          "colorIndex": 1,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "arpeggio": { "on": false, "rate": "fiveTuplet", "order": "spiral", "octaves": 1, "gate": 0.5,
+                        "latch": false, "seed": 1 }
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     private let pad = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000004") ?? UUID())
     private let room = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000005") ?? UUID())
 
@@ -407,7 +444,7 @@ final class FormatGoldenTests: XCTestCase {
 
     func testEveryGoldenFileSurvivesARoundTrip() throws {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
-                     formatFourRegionEdits] {
+                     formatFourRegionEdits, formatFourArpeggio] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -688,6 +725,31 @@ final class FormatGoldenTests: XCTestCase {
             for track in try ProjectCodec.decode(data).tracks {
                 XCTAssertTrue(track.regions.allSatisfy { $0.fadeIn == nil && $0.fadeOut == nil && $0.gainDB == nil
                     && $0.nativeBPM == nil && $0.followsTempo == nil }, "an older region plays plain")
+            }
+        }
+    }
+
+    func testATrackOpensWithItsArpeggiator() throws {
+        let project = try ProjectCodec.decode(formatFourArpeggio)
+        let arp = try XCTUnwrap(project.tracks.first?.arpeggio)
+        XCTAssertEqual(arp, Arpeggio(isOn: true, rate: .eighthTriplet, order: .upDown, octaves: 2, gate: 0.75, latch: true, seed: 7))
+        let later = try XCTUnwrap(project.tracks.last?.arpeggio)
+        XCTAssertEqual(later.rate, .sixteenth, "a rate of a later build plays as a sixteenth")
+        XCTAssertEqual(later.order, .up, "an order of a later build plays up")
+        XCTAssertEqual(later.unrecognizedRate, "fiveTuplet")
+        XCTAssertEqual(later.unrecognizedOrder, "spiral")
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let tracks = try XCTUnwrap(root["tracks"] as? [[String: Any]])
+        let stored = try XCTUnwrap(tracks.last?["arpeggio"] as? [String: Any])
+        XCTAssertEqual(Set(stored.keys), ["on", "rate", "order", "octaves", "gate", "latch", "seed"])
+        XCTAssertEqual(stored["rate"] as? String, "fiveTuplet", "the later name is saved back unchanged")
+        XCTAssertEqual(stored["order"] as? String, "spiral")
+        for data in [earliest, current, formatTwo, formatTwoMedia, formatThree, formatFour, formatFourRegionEdits] {
+            let older = try ProjectCodec.decode(data)
+            XCTAssertTrue(older.tracks.allSatisfy { $0.arpeggio == nil }, "an older song plays its notes as written")
+            let written = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(older)) as? [String: Any])
+            for track in try XCTUnwrap(written["tracks"] as? [[String: Any]]) {
+                XCTAssertNil(track["arpeggio"], "a track without an arpeggiator writes no key")
             }
         }
     }

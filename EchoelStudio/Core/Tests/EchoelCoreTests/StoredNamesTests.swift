@@ -37,6 +37,10 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(TempoCurve.allCases.map(\.rawValue), ["step", "linear"])
         // A region stores its fade curves by name; absent is linear (AUD-2).
         XCTAssertEqual(FadeCurve.allCases.map(\.rawValue), ["linear", "equalPower", "exponential", "sCurve"])
+        // A track's arpeggiator stores its rate and order by name; absent is no arpeggiator (EDIT-2).
+        XCTAssertEqual(ArpRate.allCases.map(\.rawValue), ["quarter", "eighth", "sixteenth", "thirtySecond", "quarterTriplet",
+                                                         "eighthTriplet", "sixteenthTriplet", "thirtySecondTriplet"])
+        XCTAssertEqual(ArpOrder.allCases.map(\.rawValue), ["up", "down", "upDown", "downUp", "asPlayed", "random"])
         // A modulation route stores its source, curve and polarity by name (W2).
         XCTAssertEqual(ModulationSource.allCases.map(\.rawValue),
                        ["body.heartRate", "body.hrv", "body.coherence", "body.breath", "lfo.1", "macro.1", "midi.cc.1"])

@@ -45,6 +45,9 @@ public struct EngineSnapshot: Sendable {
         public let patchLanes: [PatchAutomation]
         /// Values of the track's built-in instrument that routes move (W2).
         public var patchRoutes: [PatchModulation] = []
+        /// The track's arpeggiator while it is on: the engine plays the keys played live through
+        /// it. The clip notes are already arpeggiated in `events` and `clips` (`PlaybackPlan`).
+        public var arpeggio: ArpSettings? = nil
     }
 
     /// A value of a built-in instrument that routes move, compiled for the render thread: its row,
@@ -389,7 +392,7 @@ public struct EngineSnapshot: Sendable {
                 device.parameters.map { (parameter: InstrumentParameter) -> Float in Float(track.instrument.value(parameter)) }
             }
             let device = track.instrument.device
-            return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
+            var lane = Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
                         values: values, device: device,
                         builtInIndex: InstrumentDevice.builtIn.firstIndex(of: device) ?? -1,
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil,
@@ -397,6 +400,8 @@ public struct EngineSnapshot: Sendable {
                         inserts: inserts(events.track), sends: sends(track, audible), output: output,
                         clips: events.clips, eventsRevision: revisions[events.track] ?? generation,
                         mix: outward ? moving(track, output < 0) : nil, patchLanes: patchLanes, patchRoutes: patchRoutes)
+            lane.arpeggio = track.playingArpeggio.map(ArpSettings.init)
+            return lane
         }
         lanes = compiled
         automatesPatches = compiled.contains { !$0.patchLanes.isEmpty }

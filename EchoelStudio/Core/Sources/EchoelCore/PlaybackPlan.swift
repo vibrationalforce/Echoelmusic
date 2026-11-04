@@ -57,19 +57,26 @@ public struct PlaybackPlan: Equatable, Sendable {
         let tracks: [TrackSource]
         /// The song's swing moves every event, so a new amount compiles again.
         let swing: Double
+        /// The bars the arpeggiator's steps count in; nil while no track arpeggiates, so a change of
+        /// signature compiles again only where it moves a step.
+        let meter: MeterMap?
 
         struct TrackSource: Equatable, Sendable {
             let id: TrackID
             let clips: [Clip]
             let placements: [Placement]
+            let arpeggio: Arpeggio?
         }
 
         public init(_ project: Project) {
             tempoMap = project.tempoMap
             swing = project.context.swing
             tracks = project.tracks.compactMap { track in
-                track.kind == .instrument ? TrackSource(id: track.id, clips: track.clips, placements: track.placements) : nil
+                track.kind == .instrument
+                    ? TrackSource(id: track.id, clips: track.clips, placements: track.placements, arpeggio: track.playingArpeggio)
+                    : nil
             }
+            meter = project.tracks.contains { $0.playingArpeggio != nil } ? project.meterMap : nil
         }
     }
 
@@ -79,11 +86,17 @@ public struct PlaybackPlan: Equatable, Sendable {
         var end: Tick = 0
         tracks = project.tracks.compactMap { track in
             guard track.kind == .instrument else { return nil }
-            let intervals = Self.noteIntervals(of: track)
+            let arp = track.playingArpeggio
+            var intervals = Self.noteIntervals(of: track)
+            // The arpeggiator plays the held notes one after another (EDIT-2); the export compiles
+            // this same plan, so it plays the same steps.
+            if let arp { intervals = Self.arpeggiate(intervals, arp, meter: project.meterMap) }
             end = intervals.reduce(end) { Swift.max($0, swing.lastTick(of: $1.end)) }
             return TrackEvents(track: track.id,
                                events: swing.apply(to: Self.events(from: intervals, controls: Self.controls(of: track))),
-                               clips: track.clips.map { Self.loop($0, swing: swing) })
+                               clips: track.clips.map { clip in
+                                   Self.loop(clip, swing: swing, arpeggio: arp, meter: arp == nil ? nil : project.clipMeter(clip.id))
+                               })
         }
         songEnd = end
     }
@@ -107,6 +120,8 @@ public struct PlaybackPlan: Equatable, Sendable {
         var end: Tick
         var pitch: Int
         var velocity: Int
+        /// Where the placement playing this note ends: a latched arpeggio holds its keys no further.
+        var limit: Tick = .max
     }
 
     /// Every note of every placement in song time. A note is cut at its clip's end, as in
@@ -119,7 +134,8 @@ public struct PlaybackPlan: Equatable, Sendable {
                 let end = Swift.min(note.start + note.length, clip.length)
                 intervals.append(Interval(start: placement.start + note.start,
                                           end: placement.start + end,
-                                          pitch: note.pitch, velocity: note.velocity))
+                                          pitch: note.pitch, velocity: note.velocity,
+                                          limit: placement.start + clip.length))
             }
         }
         return resolvingOverlaps(intervals)
@@ -169,16 +185,19 @@ public struct PlaybackPlan: Equatable, Sendable {
 
     /// A clip's notes in clip time, each cut at the clip's end so the loop never carries a note
     /// into its next pass. A clip that bends or holds the pedal starts every pass from rest.
-    static func loop(_ clip: Clip, swing: Swing = Swing(0)) -> ClipEvents {
-        let intervals = clip.notes.compactMap { note -> Interval? in
+    static func loop(_ clip: Clip, swing: Swing = Swing(0), arpeggio: Arpeggio? = nil, meter: MeterMap? = nil) -> ClipEvents {
+        var intervals = clip.notes.compactMap { note -> Interval? in
             guard note.start < clip.length else { return nil }
             return Interval(start: note.start, end: Swift.min(note.start + note.length, clip.length),
-                            pitch: note.pitch, velocity: note.velocity)
+                            pitch: note.pitch, velocity: note.velocity, limit: clip.length)
         }
+        intervals = resolvingOverlaps(intervals)
+        // A launched clip arpeggiates in its own time; every pass starts its phrase again.
+        if let arpeggio, let meter { intervals = arpeggiate(intervals, arpeggio, meter: meter, cap: clip.length) }
         let changes = rests(of: clip).map { Control(tick: 0, kind: $0) }
             + clip.controls.filter { $0.start < clip.length }.map { Control(tick: $0.start, kind: event($0.kind, $0.value)) }
         return ClipEvents(clip: clip.id, length: clip.length,
-                          events: swing.apply(to: events(from: resolvingOverlaps(intervals), controls: changes)))
+                          events: swing.apply(to: events(from: intervals, controls: changes)))
     }
 
     /// One pitch can sound only once on a monophonic MIDI key. Where two notes of the same
@@ -223,6 +242,13 @@ public struct PlaybackPlan: Equatable, Sendable {
             if a.element.kind.rank == 1 { return a.offset < b.offset }
             return a.element.pitch < b.element.pitch
         }.map(\.element)
+    }
+}
+
+extension PlaybackPlan.NoteEvent {
+    /// An event the engine makes itself — a live arpeggio's step — to play through the same path.
+    public init(tick: Tick, pitch: UInt8, kind: Kind) {
+        self.init(tick: tick, pitch: pitch, kind: kind, nudge: 0)
     }
 }
 

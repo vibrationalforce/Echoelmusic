@@ -45,6 +45,8 @@ struct SoundPanel: View {
                     PluginInterfaceSection(slot: .instrument(track.id))
                         .id(track.instrument.plugin)
                 }
+                // A MIDI effect on whatever plays the track — a built-in instrument or a plugin.
+                ArpeggiatorSection(track: track)
                 pluginMenu
             }
             .padding(Theme.Space.l)

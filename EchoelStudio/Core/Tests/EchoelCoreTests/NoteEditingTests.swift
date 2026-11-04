@@ -238,4 +238,38 @@ final class NoteEditingTests: XCTestCase {
         XCTAssertEqual(said(20, bars: 2), "step 21, bar 2, beat 2")
         XCTAssertEqual(said(0, bars: 2), "step 1, bar 1, beat 1")
     }
+
+    /// The note editor's velocity field (EDIT-2): every step of one drag is one undo step, the next
+    /// drag another, and a velocity outside 1…127 is refused at the door.
+    func testAVelocityDragIsOneUndoStep() async throws {
+        try await MainActor.run {
+            let store = ProjectStore()
+            let track = TrackID(), clip = ClipID()
+            let note = Note(pitch: 60, velocity: 100, start: 0, length: 240)
+            try store.perform(.addTrack(id: track, name: "Keys", kind: .instrument, index: nil))
+            try store.perform(.createClip(track: track, id: clip, name: "C", length: 3_840))
+            try store.perform(.addNotes(clip, [note]))
+            let key = "note.velocity.\(note.id)"
+            for velocity in [104, 110, 120] {
+                var louder = note
+                louder.velocity = velocity
+                try store.perform(.updateNotes(clip, [louder]), coalescingKey: key)
+            }
+            store.endGesture()
+            var softer = note
+            softer.velocity = 40
+            try store.perform(.updateNotes(clip, [softer]), coalescingKey: key)
+            store.endGesture()
+            let velocity = { store.project.tracks.first?.clips.first?.notes.first?.velocity }
+            XCTAssertEqual(velocity(), 40)
+            store.undo()
+            XCTAssertEqual(velocity(), 120, "the second drag undoes alone")
+            store.undo()
+            XCTAssertEqual(velocity(), 100, "the first drag undoes in one step")
+            var silent = note
+            silent.velocity = 0
+            XCTAssertThrowsError(try store.perform(.updateNotes(clip, [silent])))
+            XCTAssertEqual(velocity(), 100)
+        }
+    }
 }

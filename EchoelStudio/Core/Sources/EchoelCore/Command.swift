@@ -63,6 +63,8 @@ public enum Command: Codable, Equatable, Sendable {
     case setInput(TrackID, channel: Int?)
     /// When an audio track plays its input through its strip.
     case setMonitor(TrackID, MonitorMode)
+    /// An instrument track's arpeggiator: its settings (switched on or off), or nil to remove it.
+    case setArpeggio(TrackID, Arpeggio?)
 
     // MIDI
     /// Makes `control` move `target`, replacing whatever it moved before.
@@ -601,6 +603,14 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "track", reason: "only audio tracks have an input")
             }
             project.tracks[t].monitor = mode
+
+        case let .setArpeggio(id, arpeggio):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].kind == .instrument else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only an instrument track arpeggiates")
+            }
+            if let problem = arpeggio?.problem { throw CommandError.invalidValue(parameter: "arpeggio", reason: problem) }
+            project.tracks[t].arpeggio = arpeggio
 
         case let .mapMIDI(control, target):
             guard control.isValid else {

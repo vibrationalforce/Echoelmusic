@@ -128,6 +128,10 @@ extension Project {
                 throw Self.invalid("input", "only an audio track records, from input 0…\(Track.inputChannelLimit - 1)")
             }
             if track.monitor != .auto, track.kind != .audio { throw Self.invalid("monitor", "only an audio track has an input") }
+            if let arpeggio = track.arpeggio {
+                guard track.kind == .instrument else { throw Self.invalid("arpeggio", "only an instrument track arpeggiates") }
+                if let problem = arpeggio.problem { throw Self.invalid("arpeggio", problem) }
+            }
             for send in track.sends {
                 guard track.kind != .returnTrack,
                       tracks.first(where: { $0.id == send.target })?.kind == .returnTrack,

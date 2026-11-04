@@ -43,7 +43,7 @@ extension Command {
         case addInsert, removeInsert, moveInsert, setInsertBypass, setInsertState
         case addMasterInsert, removeMasterInsert, moveMasterInsert, setMasterInsertBypass, setMasterInsertState
         case addMedia, removeMedia
-        case setVolume, setPan, setMute, setSolo, setSend, setOutput, setInput, setMonitor
+        case setVolume, setPan, setMute, setSolo, setSend, setOutput, setInput, setMonitor, setArpeggio
         case mapMIDI, unmapMIDI, setAutomation
         case setModRoute, removeModRoute
         case createClip, createAudioClip, deleteClip, renameClip, setClipLength
@@ -102,6 +102,7 @@ extension Command {
         case .setOutput: .setOutput
         case .setInput: .setInput
         case .setMonitor: .setMonitor
+        case .setArpeggio: .setArpeggio
         case .mapMIDI: .mapMIDI
         case .unmapMIDI: .unmapMIDI
         case .setAutomation: .setAutomation
@@ -352,6 +353,17 @@ public enum CommandCatalog {
                                summary: "Chooses when an audio track plays its input through its channel strip.",
                                parameters: [P("track", .trackID, "The audio track."),
                                             P("mode", .string, "auto (while armed), in (always) or off. A track is heard only through wired headphones, an audio interface or a line output, never the device's own speaker, Bluetooth, AirPlay or HDMI; the device's own microphone only through wired headphones or an interface.")])
+        case .setArpeggio:
+            return CommandSpec(name: "track.arpeggio", title: "Arpeggiator",
+                               summary: "Switches an instrument track's arpeggiator on or off and sets it: the notes the track holds — its clips and the keys played into it — play one after another on the song's grid. It never adds a note the player did not hold.",
+                               parameters: [P("track", .trackID, "The instrument track."),
+                                            P("on", .boolean, "true plays the notes arpeggiated; omit every setting to remove the arpeggiator.", optional: true),
+                                            P("rate", .string, "quarter, eighth, sixteenth, thirtySecond, or one of them with Triplet.", optional: true),
+                                            P("order", .string, "up, down, upDown, downUp, asPlayed or random.", optional: true),
+                                            P("octaves", .integer, "1…4.", optional: true),
+                                            P("gate", .number, "Share of each step a note sounds, 0.05…1.", optional: true),
+                                            P("latch", .boolean, "Keys stay held until the next chord.", optional: true),
+                                            P("seed", .integer, "The random order's seed.", optional: true)])
         case .mapMIDI:
             return CommandSpec(name: "midi.map", title: "Learn MIDI",
                                summary: "Makes a controller knob or fader move a parameter across its whole range.",

@@ -225,6 +225,14 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     /// The stored name of a monitoring mode this build does not know, if that is what the track holds.
     public var unrecognizedMonitor: String? { MonitorMode(rawValue: monitorName) == nil ? monitorName : nil }
     private var monitorName = MonitorMode.auto.rawValue
+    /// The track's arpeggiator (EDIT-2, optional inside format 4): absent, the track plays its
+    /// notes as written. Only an instrument track has one.
+    public var arpeggio: Arpeggio?
+    /// The arpeggiator while it is switched on, nil otherwise.
+    public var playingArpeggio: Arpeggio? {
+        guard kind == .instrument, let arpeggio, arpeggio.isOn else { return nil }
+        return arpeggio
+    }
 
     /// How many tracks of a kind one song may hold: the engine has exactly this many instrument
     /// voices, smoothed audio channels and return buses, and a track past them would play
@@ -272,6 +280,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
 
     private enum CodingKeys: String, CodingKey {
         case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts, sends, output, input
+        case arpeggio
         case monitorName = "monitor"
     }
 
@@ -293,6 +302,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         output = try c.decodeIfPresent(Int.self, forKey: .output)
         input = try c.decodeIfPresent(Int.self, forKey: .input)
         monitorName = try c.decodeIfPresent(String.self, forKey: .monitorName) ?? MonitorMode.auto.rawValue
+        arpeggio = try c.decodeIfPresent(Arpeggio.self, forKey: .arpeggio)
     }
 
     public func clipIndex(_ id: ClipID) -> Int? {
