@@ -199,7 +199,9 @@ final class TheFirstTakeRunsTheClockTests: XCTestCase {
         XCTAssertFalse(RecordTake.State.armFirst.offersATake)
         let caption = RecordTake.caption(.firstTake, gridSize: 8)
         XCTAssertTrue(caption.contains("first part"), "the hint says what the take becomes")
-        XCTAssertTrue(caption.contains("Stop ends the take"), "and how it ends — there is no song end to end it")
+        // W-RED (2026-11-01): the caption says "the recording" since the glossary struck "take"
+        // (TheChromeSpeaksOneWordPerThingTests, ratchet 4's word).
+        XCTAssertTrue(caption.contains("Stop ends the recording"), "and how it ends — there is no song end to end it")
         XCTAssertNil(RecordTake.shownReason(.firstTake, gridSize: 8), "the button's word says it; no second sentence")
         XCTAssertNotNil(RecordTake.shownReason(.armFirst, gridSize: 8), """
             Over an EMPTY piece the way to the first take — arm a track — must be said: the bar's \
