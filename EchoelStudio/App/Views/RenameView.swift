@@ -7,6 +7,8 @@ enum RenameTarget: Hashable {
     case track(TrackID)
     case clip(ClipID)
     case scene(SceneID)
+    /// The marker at a tick of the timeline.
+    case marker(Tick)
 }
 
 /// Renames a track, a clip or a scene through its command — one undo step. The button holds back
@@ -41,6 +43,7 @@ struct RenameView: View {
         case .track(let id): return project.track(id)?.name
         case .clip(let id): return project.clip(id)?.name
         case .scene(let id): return project.scenes.first { $0.id == id }?.name
+        case .marker(let tick): return project.marker(at: tick)?.name
         }
     }
 
@@ -49,6 +52,7 @@ struct RenameView: View {
         case .track: "Rename Track"
         case .clip: "Rename Clip"
         case .scene: "Rename Scene"
+        case .marker: "Rename Marker"
         }
     }
 
@@ -106,6 +110,7 @@ struct RenameView: View {
         case .track(let id): command = .renameTrack(id, name: trimmed)
         case .clip(let id): command = .renameClip(id, name: trimmed)
         case .scene(let id): command = .renameScene(id, name: trimmed)
+        case .marker(let tick): command = .renameMarker(at: tick, name: trimmed)
         }
         try? store.perform(command)
         dismiss()

@@ -1072,7 +1072,8 @@ final class DocumentController {
                         meter.process(left: left, right: right, count: count)
                     }.frameCount
                     guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
-                    try writer.finish()
+                    // The song's markers ride along as cue points (PRO-W1).
+                    try writer.finish(cues: WAVFile.cues(for: project, sampleRate: rate))
                 } catch {
                     try? FileManager.default.removeItem(at: renderFile)
                     throw error
@@ -1081,7 +1082,8 @@ final class DocumentController {
                 guard loudness.changesMix else { return (MixLoudness.Report(measured), frames) }
                 defer { try? FileManager.default.removeItem(at: renderFile) }
                 guard frames > 0 else { return (MixLoudness.Report(measured), 0) }
-                let report = try MixLoudness.write(renderFile, measured: measured, loudness: loudness, to: url)
+                let report = try MixLoudness.write(renderFile, measured: measured, loudness: loudness, to: url,
+                                                   cues: WAVFile.cues(for: project, sampleRate: rate))
                 return (report, frames)
             }
         }.value
@@ -1245,7 +1247,8 @@ final class DocumentController {
             try writer.append(left: left, right: right, count: count)
         }
         guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
-        try writer.finish()
+        // Every stem carries the song's markers as cue points, so they line up in any DAW (PRO-W1).
+        try writer.finish(cues: WAVFile.cues(for: project, sampleRate: sampleRate))
     }
 
     /// What a song's open decoded: the buffers, the files past the budget or the free memory, and

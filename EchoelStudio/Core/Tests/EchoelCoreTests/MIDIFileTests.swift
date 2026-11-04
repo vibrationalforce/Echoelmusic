@@ -97,6 +97,17 @@ final class MIDIFileTests: XCTestCase {
         XCTAssertEqual(tempos.map(\.1), [500_000, 666_667])
     }
 
+    func testTheSongsMarkersAreMarkerEventsInTheConductor() throws {
+        var project = try song()
+        try Command.addMarker(at: 4 * bar, name: "Chorus").apply(to: &project)
+        try Command.addMarker(at: 0, name: "Intro").apply(to: &project)
+        let conductor = try read(MIDIFile.data(for: project)).tracks[0]
+        let markers = conductor.meta(0x06)
+        XCTAssertEqual(markers.map(\.tick), [0, Int(4 * bar)])
+        XCTAssertEqual(markers.map { String(decoding: $0.payload, as: UTF8.self) }, ["Intro", "Chorus"])
+        XCTAssertTrue(try read(MIDIFile.data(for: try song())).tracks[0].meta(0x06).isEmpty, "no markers, no events")
+    }
+
     /// A ramp is written as a tempo step on every sixteenth; each sixteenth then lasts as long in
     /// the file as in the song, so the file's clock meets the song's on every step.
     func testARampIsWrittenAsStepsThatKeepTheSongsTime() throws {
