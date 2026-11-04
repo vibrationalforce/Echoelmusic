@@ -60,7 +60,7 @@ public struct SynthVoice: Sendable {
     public private(set) var startOrder: UInt64 = 0
 
     var oscillator = Oscillator()
-    var source = EngineSource()
+    var source: EngineSource
     var filter: SVFilter
     var ladder: LadderFilter
     var ampEnvelope: Envelope
@@ -85,6 +85,7 @@ public struct SynthVoice: Sendable {
     private let resonancePole: Float
     private let levelPole: Float
     private let characterPole: Float
+    private let sampleRate: Float
 
     /// Glide time constants, in seconds. Short enough to follow a fast ride, long enough that a
     /// step of one MIDI value — or of one automation update — is never heard as a step.
@@ -103,6 +104,8 @@ public struct SynthVoice: Sendable {
         resonance = Self.clampedResonance(patch.resonance)
         level = Self.voiceLevel(patch)
         character = Self.clampedCharacter(patch.character)
+        source = EngineSource(sampleRate: sampleRate)
+        self.sampleRate = sampleRate
         cutoffPole = Self.pole(Self.cutoffGlide, sampleRate)
         resonancePole = Self.pole(Self.resonanceGlide, sampleRate)
         levelPole = Self.pole(Self.levelGlide, sampleRate)
@@ -156,7 +159,7 @@ public struct SynthVoice: Sendable {
         }
         // Every key strikes, a repeated one too: a mallet rings again on top of its tail, and the
         // DDSP's noise takes a sequence of its own from the note counter.
-        source.strike(character: patch.character, order: order, pitch: pitch, sampleRate: sampleRate)
+        source.strike(character: patch.character, order: order, pitch: pitch, sampleRate: sampleRate, dt: increment)
         controlCountdown = 0
         ampEnvelope.gateOn()
         filterEnvelope.gateOn()
@@ -204,6 +207,8 @@ public struct SynthVoice: Sendable {
         let targetLevel = Self.voiceLevel(patch)
         let targetCharacter = Self.clampedCharacter(patch.character)
         let usesLadder = patch.filterModel == .ladder
+        if patch.engine == .pluck { source.setPluckRing(decaySeconds: patch.ampEnvelope.decay, sustain: patch.ampEnvelope.sustain,
+                                                             sampleRate: sampleRate) }
         for i in buffer.indices {
             cutoffOctaves = targetOctaves + (cutoffOctaves - targetOctaves) * cutoffPole
             resonance = targetResonance + (resonance - targetResonance) * resonancePole
@@ -290,7 +295,9 @@ public struct PolySynth: Sendable {
         bendPole = expf(-1 / (Self.bendGlide * rate))
         vibratoPole = expf(-1 / (Self.vibratoGlide * rate))
         pitchCurve = Array(repeating: 1, count: Self.curveLength)
-        voices = Array(repeating: SynthVoice(patch: patch, sampleRate: rate), count: Swift.max(1, voiceCount))
+        // One voice each, never `Array(repeating:)`: a voice's plucked string owns its delay line,
+        // and copies of one voice would share it.
+        voices = (0..<Swift.max(1, voiceCount)).map { _ in SynthVoice(patch: patch, sampleRate: rate) }
     }
 
     public var activeVoiceCount: Int { voices.reduce(0) { $0 + ($1.isActive ? 1 : 0) } }

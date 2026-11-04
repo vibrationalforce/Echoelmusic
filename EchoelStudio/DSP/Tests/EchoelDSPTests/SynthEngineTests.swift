@@ -137,6 +137,54 @@ final class SynthEngineTests: XCTestCase {
         XCTAssertLessThan(choir, classic * 6, "choir \(choir) s, classic \(classic) s")
     }
 
+    /// A plucked string (A6): it sounds its note — a period of noise in a loop one period long —
+    /// and the same note plucks the same string again.
+    func testThePluckSoundsItsNoteAndIsTheSameEveryTime() {
+        let out = tone(.pluck, character: 0.5, frames: 24_000)
+        XCTAssertEqual(out, tone(.pluck, character: 0.5, frames: 24_000), "seeded by the note counter")
+        let tail = Array(out[4_800..<24_000])
+        let fundamental = magnitude(tail, hertz: 220)
+        XCTAssertGreaterThan(fundamental, magnitude(tail, hertz: 207.65) * 5, "in tune, not a semitone down")
+        XCTAssertGreaterThan(fundamental, magnitude(tail, hertz: 233.08) * 5, "in tune, not a semitone up")
+        XCTAssertGreaterThan(fundamental, 0.01)
+    }
+
+    /// Character is the pick: bright lets the noise's top through and damps the loop less.
+    func testThePluckIsBrighterAtHigherCharacter() {
+        let dark = Array(tone(.pluck, character: 0, frames: 9_600)[2_400...])
+        let bright = Array(tone(.pluck, character: 1, frames: 9_600)[2_400...])
+        let high = { (x: [Float]) -> Float in
+            [1_760, 1_980, 2_200, 2_640].reduce(Float(0)) { $0 + self.magnitude(x, hertz: $1) } / self.rms(x)
+        }
+        XCTAssertGreaterThan(high(bright), high(dark) * 2)
+    }
+
+    /// Decay and Sustain are how long the string rings: a short one has died where a long one rings.
+    func testThePluckRingsAsLongAsDecayAndSustainSay() {
+        func ring(decay: Float, sustain: Float) -> Float {
+            var patch = SynthPatch(cutoff: 18_000, resonance: 0, filterEnvelopeAmount: 0,
+                                   ampEnvelope: .init(attack: 0.001, decay: 10, sustain: 1, release: 0.2), level: 1)
+            patch.engine = .pluck
+            var synth = PolySynth(patch: patch, sampleRate: rate)
+            var string = patch
+            string.ampEnvelope = .init(attack: 0.001, decay: decay, sustain: sustain, release: 0.2)
+            // The ring follows the patch; the amp envelope of `patch` holds the level open.
+            synth.setPatch(string)
+            synth.noteOn(pitch: 57, velocity: 127)
+            var buffer = [Float](repeating: 0, count: 48_000)
+            var start = 0
+            while start < buffer.count {
+                let end = Swift.min(start + 256, buffer.count)
+                buffer[start..<end].withUnsafeMutableBufferPointer { synth.render(into: $0) }
+                start = end
+            }
+            return rms(Array(buffer[38_400...])) / Swift.max(rms(Array(buffer[0..<4_800])), 1e-9)
+        }
+        let short = ring(decay: 0.02, sustain: 0), long = ring(decay: 1, sustain: 1)
+        XCTAssertLessThan(short, 0.01, "a short string has died after a second")
+        XCTAssertGreaterThan(long, 0.2, "a long one still rings")
+    }
+
     func testTheSubAddsTheOctaveBelow() {
         for (a, b) in zip(tone(.sub, character: 0), tone(.classic, character: 0)) {
             XCTAssertEqual(a, b, accuracy: 1e-5, "no sub, the oscillator alone")

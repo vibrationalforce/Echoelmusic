@@ -52,13 +52,17 @@ final class EngineLoudnessTests: XCTestCase {
             loudness[engine] = sumLoudness / 3
             peaks[engine] = sumPeak / 3
         }
-        let held = SynthEngine.allCases.filter { $0 != .mallet }.compactMap { loudness[$0] }.sorted()
+        // The mallet and the plucked string ring down instead of holding: measured by their peak.
+        let ringing: Set<SynthEngine> = [.mallet, .pluck]
+        let held = SynthEngine.allCases.filter { !ringing.contains($0) }.compactMap { loudness[$0] }.sorted()
         let middle = held[held.count / 2]
-        for engine in SynthEngine.allCases where engine != .mallet {
+        for engine in SynthEngine.allCases where !ringing.contains(engine) {
             XCTAssertEqual(loudness[engine] ?? 0, middle, accuracy: 3, "\(engine) against the others' \(middle) LUFS")
         }
-        let heldPeaks = SynthEngine.allCases.filter { $0 != .mallet }.compactMap { peaks[$0] }.sorted()
-        XCTAssertEqual(peaks[.mallet] ?? 0, heldPeaks[heldPeaks.count / 2], accuracy: 3, "the mallet's strike")
+        let heldPeaks = SynthEngine.allCases.filter { !ringing.contains($0) }.compactMap { peaks[$0] }.sorted()
+        for engine in ringing {
+            XCTAssertEqual(peaks[engine] ?? 0, heldPeaks[heldPeaks.count / 2], accuracy: 3, "the \(engine)'s strike")
+        }
     }
 
     /// A six-note chord of a choir preset stays under full scale on every engine.

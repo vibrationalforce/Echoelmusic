@@ -4,15 +4,19 @@ import Foundation
 /// the classic oscillator, a seven-saw supersaw, two-operator FM, the oscillator with a sine
 /// an octave below, a morph through four shapes (A7), a struck object — six decaying modes
 /// (A5) — the harmonic-plus-noise model of the earlier app's `EchoelDDSP` (W5,
-/// `DDSPSource`), or a small choir singing a vowel (VOX, `ChoirSource`). `character` (0 … 1) is
+/// `DDSPSource`), a small choir singing a vowel (VOX, `ChoirSource`), or a plucked string (A6,
+/// `PluckSource`). `character` (0 … 1) is
 /// each engine's one control — the supersaw's detune, the FM index, the sub's level, the morph's
 /// position, the mallet's material from wood to metal, the DDSP's brightness, harmonicity and
-/// noise together (dark and breathy to bright and pure), the choir's vowel from oo to ee; the
-/// classic oscillator ignores it. Ported from the earlier app's `EchoelPolySynth` engines
+/// noise together (dark and breathy to bright and pure), the choir's vowel from oo to ee, the
+/// pluck's brightness; the classic oscillator ignores it. Ported from the earlier app's `EchoelPolySynth` engines
 /// as one value type a voice owns; nothing here allocates.
 public enum SynthEngine: String, CaseIterable, Codable, Sendable {
     // A song stores the index of the choice: a new engine goes at the end.
     case classic, supersaw, fm, sub, morph, mallet, ddsp, choir
+    /// A plucked string, Karplus-Strong (A6): `character` its brightness, the patch's Decay how
+    /// long it rings (`PluckSource`).
+    case pluck
 
     /// A gain inside the voice, so the same patch sounds about as loud on every engine. Without it
     /// a preset jumped by up to 16 LU when only its engine changed ("Sub Bass": FM −26.4, Sub
@@ -24,6 +28,7 @@ public enum SynthEngine: String, CaseIterable, Codable, Sendable {
     /// −12.8, supersaw −13.3, FM −11.0, sub −13.6, morph −12.7, DDSP −13.0, choir −18.0 before.
     /// The mallet (−23.5) rings down instead of holding, so its integrated loudness undersells
     /// it; it is raised by +2 dB, which brings its strike's peak to the others' and not further.
+    /// The plucked string (A6) rings down too and is matched the same way, by its pluck's peak.
     /// The trim lives in the voice, never in the song: a song stores the patch as it always did.
     /// A filter set low still hears a bright engine quieter than a dark one; that is the filter.
     public var loudnessTrim: Float {
@@ -36,6 +41,10 @@ public enum SynthEngine: String, CaseIterable, Codable, Sendable {
         case .mallet: 1.259    // +2.0 dB
         case .ddsp: 0.631      // −4.0 dB
         case .choir: 1.122     // +1.0 dB
+        // Rings down like the mallet, and its noise burst is its peak: raised until that peak
+        // stands where the mallet's strike does (−5.8 dBFS on the reference chord, 2026-11-04;
+        // −10.8 before), not further — its integrated −24.9 LUFS then is a string dying away.
+        case .pluck: 1.778     // +5.0 dB
         }
     }
 }
@@ -111,6 +120,12 @@ struct EngineSource: Sendable {
     private var ddsp = DDSPSource()
     /// The choir's three singers and its vocal tract.
     private var choir = ChoirSource()
+    /// The plucked string's loop; its delay line is allocated here, once.
+    private var pluck: PluckSource
+
+    init(sampleRate: Float) {
+        pluck = PluckSource(sampleRate: sampleRate)
+    }
 
     mutating func reset() {
         s0.reset(phase: 0.11); s1.reset(phase: 0.37); s2.reset(phase: 0.59)
@@ -123,12 +138,18 @@ struct EngineSource: Sendable {
         k3 = MalletMode(); k4 = MalletMode(); k5 = MalletMode()
         ddsp.reset()
         choir.reset()
+        pluck.reset()
+    }
+
+    /// How long the plucked string rings, from the patch's Decay and Sustain. Before each render.
+    mutating func setPluckRing(decaySeconds: Float, sustain: Float, sampleRate: Float) {
+        pluck.ringSamples = PluckSource.ringSeconds(decay: decaySeconds, sustain: sustain) * sampleRate
     }
 
     /// A key struck this voice: the mallet's modes sound again, the DDSP's noise starts a
     /// sequence of its own for this note (`order` is the synth's note counter), and the choir takes
     /// the note's register and the rate it sings at. The other engines have nothing to strike.
-    mutating func strike(character: Float, order: UInt64, pitch: UInt8, sampleRate: Float) {
+    mutating func strike(character: Float, order: UInt64, pitch: UInt8, sampleRate: Float, dt: Float) {
         let c = character.isFinite ? Swift.min(Swift.max(character, 0), 1) : 0.5
         let w = MalletMode.woodRatios, m = MalletMode.metalRatios
         k0.strike(index: 0, wood: w.0, metal: m.0, material: c)
@@ -139,6 +160,7 @@ struct EngineSource: Sendable {
         k5.strike(index: 5, wood: w.5, metal: m.5, material: c)
         ddsp.reseed(order)
         choir.strike(pitch: pitch, sampleRate: sampleRate, order: order)
+        pluck.strike(order: order, dt: dt)
     }
 
     /// One sample. `main` is the voice's own oscillator; `dt` its increment this sample.
@@ -194,6 +216,8 @@ struct EngineSource: Sendable {
             return ddsp.next(character: c, dt: dt)
         case .choir:
             return choir.next(character: c, dt: dt)
+        case .pluck:
+            return pluck.next(character: c, dt: dt)
         }
     }
 }
