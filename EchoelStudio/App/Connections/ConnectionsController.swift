@@ -350,7 +350,7 @@ final class ConnectionsController {
         let body = bodyReading()
         // The body reaches a frame only shared AND from a source that may leave the device.
         let bodyMayLeave = consent.sharesBody && (body.map { BioEgressPolicy.allowsEgress($0.source) } ?? false)
-        let frame = FieldFrame.at(tick: Double(playhead), signature: project.timeSignature, context: project.context,
+        let frame = FieldFrame.at(tick: Double(playhead), meter: engine.playedMeterMap(of: project), context: project.context,
                                   level: level, pulse: nil, hrv: nil,
                                   coherence: bodyMayLeave ? body?.coherence : nil, isPlaying: engine.isPlaying)
 

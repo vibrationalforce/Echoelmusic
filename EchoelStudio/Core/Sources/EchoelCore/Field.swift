@@ -48,10 +48,20 @@ public struct FieldFrame: Equatable, Sendable {
     public static func at(tick: Double, signature: TimeSignature, context: MusicalContext, level: Double,
                           pulse: Double?, hrv: Double?, coherence: Double?, isPlaying: Bool,
                           breath: Double? = nil) -> FieldFrame {
-        let beat = Double(MusicalTime.ticksPerBeat(signature)), bar = Double(MusicalTime.ticksPerBar(signature))
-        let position = isPlaying && tick.isFinite ? Swift.max(0, tick) : 0
-        return FieldFrame(beatPhase: beat > 0 ? position.truncatingRemainder(dividingBy: beat) / beat : 0,
-                          barPhase: bar > 0 ? position.truncatingRemainder(dividingBy: bar) / bar : 0,
+        at(tick: tick, meter: MeterMap(signature: signature), context: context, level: level,
+           pulse: pulse, hrv: hrv, coherence: coherence, isPlaying: isPlaying, breath: breath)
+    }
+
+    /// The frame at `tick` of a song counting the bars of `meter`: the beat and bar phase are
+    /// those of the bar the tick is in, whatever its signature.
+    public static func at(tick: Double, meter: MeterMap, context: MusicalContext, level: Double,
+                          pulse: Double?, hrv: Double?, coherence: Double?, isPlaying: Bool,
+                          breath: Double? = nil) -> FieldFrame {
+        let position = isPlaying && tick.isFinite ? Swift.min(Swift.max(0, tick), Double(MusicalTime.maximumTick)) : 0
+        let whole = Tick(position.rounded(.down))
+        let beat = Double(meter.ticksPerBeat(at: whole)), bar = Double(meter.ticksPerBar(at: whole))
+        return FieldFrame(beatPhase: beat > 0 ? (position - Double(meter.beatStart(at: whole))) / beat : 0,
+                          barPhase: bar > 0 ? (position - Double(meter.barStart(at: whole))) / bar : 0,
                           keyHue: keyHue(root: context.root), tonicHz: tonicHz(of: context), level: level,
                           pulse: pulse, hrv: hrv, coherence: coherence, breath: breath, isPlaying: isPlaying)
     }

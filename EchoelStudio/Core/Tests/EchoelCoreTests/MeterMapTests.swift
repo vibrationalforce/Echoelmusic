@@ -130,6 +130,51 @@ final class MeterMapTests: XCTestCase {
         XCTAssertEqual(imported.length, 2 * bar44 + bar78 + 3 * quarter, "the clip ends on the next 3/4 bar line")
     }
 
+    /// A clip counts the song's bars from where it is first placed; a session-only clip, the
+    /// first bar's. VoiceOver says its notes and steps in those bars.
+    func testAClipCountsTheBarsWhereItIsPlaced() throws {
+        var project = Project()
+        let keys = TrackID(), clip = ClipID(), loose = ClipID()
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        try Command.setTimeSignatureChange(at: 2 * bar44, TimeSignature(7, 8)).apply(to: &project)
+        try Command.createClip(track: keys, id: clip, name: "C", length: 2 * bar44).apply(to: &project)
+        try Command.createClip(track: keys, id: loose, name: "L", length: bar44).apply(to: &project)
+        try Command.placeClip(track: keys, id: PlacementID(), clip: clip, start: 3 * bar44).apply(to: &project)
+        try Command.placeClip(track: keys, id: PlacementID(), clip: clip, start: bar44).apply(to: &project)
+
+        let meter = project.clipMeter(clip)
+        XCTAssertEqual(meter.segments.map(\.startTick), [0, bar44], "from bar 2: one bar of 4/4, then 7/8")
+        XCTAssertEqual(meter.signature(at: bar44), TimeSignature(7, 8))
+        XCTAssertTrue(project.clipMeter(loose).isConstant)
+        XCTAssertEqual(project.meterMap.starting(at: 0), project.meterMap)
+
+        XCTAssertEqual(NoteEditing.spokenPosition(bar44 + bar78 + 480, meter: meter, grid: 240), "bar 3, beat 2", "an eighth-note beat of 7/8")
+        XCTAssertEqual(NoteEditing.spokenPosition(1_440, meter: meter, grid: 240), "bar 1, beat 2, plus 2 sixteenths")
+        XCTAssertEqual(NoteEditing.spokenPosition(1_440, meter: MeterMap(signature: .common), grid: 240),
+                       NoteEditing.spokenPosition(1_440, signature: .common, grid: 240))
+        XCTAssertEqual(NoteEditing.spokenStep(18, step: 240, meter: meter, clipLength: 2 * bar44), "step 19, bar 2, beat 2")
+        XCTAssertEqual(NoteEditing.spokenStep(5, step: 240, meter: MeterMap(signature: .common), clipLength: 2 * bar44),
+                       NoteEditing.spokenStep(5, step: 240, signature: .common, clipLength: 2 * bar44))
+    }
+
+    /// The Field's bar phase runs once per bar of the meter playing: a 7/8 bar is half way through
+    /// at its fourth eighth note and a quarter, and wraps on its own bar line.
+    func testTheFieldsBarPhaseFollowsTheMeter() {
+        let map = meter
+        func frame(_ tick: Tick) -> FieldFrame {
+            FieldFrame.at(tick: Double(tick), meter: map, context: MusicalContext(), level: 0,
+                          pulse: nil, hrv: nil, coherence: nil, isPlaying: true)
+        }
+        XCTAssertEqual(frame(2 * bar44 + bar78 / 2).barPhase, 0.5, accuracy: 1e-12)
+        XCTAssertEqual(frame(2 * bar44 + bar78).barPhase, 0, accuracy: 1e-12, "a 7/8 bar line")
+        XCTAssertEqual(frame(2 * bar44 + 240).beatPhase, 0.5, accuracy: 1e-12, "an eighth-note beat")
+        for tick in stride(from: Tick(0), to: 2 * bar44, by: 97) {
+            let old = FieldFrame.at(tick: Double(tick), signature: .common, context: MusicalContext(), level: 0,
+                                    pulse: nil, hrv: nil, coherence: nil, isPlaying: true)
+            XCTAssertEqual(frame(tick), old, "before the change, the frame of one signature")
+        }
+    }
+
     // MARK: - Format
 
     func testASongWithoutChangesIsStoredExactlyAsBefore() throws {

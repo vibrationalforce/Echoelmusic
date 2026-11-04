@@ -148,7 +148,12 @@ public enum NoteEditing {
     /// it is struck — "bar 1, beat 3, one sixteenth long, velocity 100" — never in ticks
     /// (accessibility audit 2026-11-01, M4).
     public static func spokenDetails(of note: Note, signature: TimeSignature, grid: Tick) -> String {
-        "\(spokenPosition(note.start, signature: signature, grid: grid)), "
+        spokenDetails(of: note, meter: MeterMap(signature: signature), grid: grid)
+    }
+
+    /// The same in the bars of a clip's meter (`Project.clipMeter`).
+    public static func spokenDetails(of note: Note, meter: MeterMap, grid: Tick) -> String {
+        "\(spokenPosition(note.start, meter: meter, grid: grid)), "
             + "\(spokenLength(note.length, grid: grid)) long, velocity \(note.velocity)"
     }
 
@@ -157,14 +162,17 @@ public enum NoteEditing {
     /// A position off the grid (a recorded note) is said as the nearest grid line: "about bar 2,
     /// beat 3".
     public static func spokenPosition(_ tick: Tick, signature: TimeSignature, grid: Tick) -> String {
-        let bar = MusicalTime.ticksPerBar(signature)
-        let beat = MusicalTime.ticksPerBeat(signature)
+        spokenPosition(tick, meter: MeterMap(signature: signature), grid: grid)
+    }
+
+    /// The same in the bars of a clip's meter, whatever their lengths.
+    public static func spokenPosition(_ tick: Tick, meter: MeterMap, grid: Tick) -> String {
         let position = Swift.max(0, tick)
-        guard bar > 0, beat > 0 else { return "tick \(position)" }
         let onGrid = grid <= 0 || position % grid == 0
         let said = onGrid ? position : (position + grid / 2) / grid * grid
-        let inBar = said % bar
-        var spoken = "bar \(said / bar + 1), beat \(inBar / beat + 1)"
+        let beat = meter.ticksPerBeat(at: said)
+        let inBar = said - meter.barStart(at: said)
+        var spoken = "bar \(meter.bar(at: said) + 1), beat \(inBar / beat + 1)"
         let past = inBar % beat
         if past > 0 { spoken += ", plus " + (amount(past, grid: grid) ?? "\(past) ticks") }
         return onGrid ? spoken : "about " + spoken
@@ -183,12 +191,14 @@ public enum NoteEditing {
     /// it falls in — "step 5, beat 2" — and the bar when the clip has more than one (accessibility
     /// audit 2026-11-01, M1).
     public static func spokenStep(_ index: Int, step: Tick, signature: TimeSignature, clipLength: Tick) -> String {
-        let bar = MusicalTime.ticksPerBar(signature)
-        let beat = MusicalTime.ticksPerBeat(signature)
+        spokenStep(index, step: step, meter: MeterMap(signature: signature), clipLength: clipLength)
+    }
+
+    /// The same in the bars of a clip's meter.
+    public static func spokenStep(_ index: Int, step: Tick, meter: MeterMap, clipLength: Tick) -> String {
         let start = Tick(Swift.max(0, index)) * Swift.max(0, step)
-        guard bar > 0, beat > 0 else { return "step \(index + 1)" }
-        let place = clipLength > bar ? "bar \(start / bar + 1), " : ""
-        return "step \(index + 1), \(place)beat \(start % bar / beat + 1)"
+        let place = clipLength > meter.ticksPerBar(at: 0) ? "bar \(meter.bar(at: start) + 1), " : ""
+        return "step \(index + 1), \(place)beat \((start - meter.barStart(at: start)) / meter.ticksPerBeat(at: start) + 1)"
     }
 
     private typealias NoteValue = (ticks: Tick, one: String, many: String)

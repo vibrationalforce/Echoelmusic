@@ -63,6 +63,15 @@ public struct MeterMap: Equatable, Sendable {
                        beatTicks: Swift.max(MusicalTime.ticksPerBeat(valid), 1))
     }
 
+    /// The meter as heard from `tick` on, with `tick` as 0: the signature playing there, then each
+    /// later change, shifted. What a clip placed at `tick` counts in its own time.
+    public func starting(at tick: Tick) -> MeterMap {
+        let first = segments[index(atTick: tick)]
+        let later = segments.filter { $0.startTick > tick }
+            .map { TimeSignatureChange(tick: $0.startTick - tick, signature: $0.signature) }
+        return MeterMap(signature: first.signature, changes: later)
+    }
+
     /// Whether the song keeps one time signature throughout.
     public var isConstant: Bool { segments.count == 1 }
 
@@ -137,4 +146,14 @@ public struct MeterMap: Equatable, Sendable {
 extension Project {
     /// The bars this project counts.
     public var meterMap: MeterMap { MeterMap(signature: timeSignature, changes: timeSignatureChanges) }
+
+    /// The bars a clip counts in its own time: the song's meter from the clip's earliest
+    /// placement in the arrangement. A clip that only plays in the session has no place in the
+    /// song, so it counts the first bar's signature, as every launch quantum of one bar did
+    /// before a song could change its meter.
+    public func clipMeter(_ clip: ClipID) -> MeterMap {
+        let starts = tracks.flatMap { $0.placements.filter { $0.clip == clip }.map(\.start) }
+        guard let first = starts.min() else { return MeterMap(signature: timeSignature) }
+        return meterMap.starting(at: first)
+    }
 }

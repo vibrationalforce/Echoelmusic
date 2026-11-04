@@ -200,14 +200,17 @@ struct SessionCell: View {
 
     /// An audio clip's loop, in whole bars.
     private func loopMenu(_ clip: Clip) -> some View {
-        let bar = MusicalTime.ticksPerBar(store.project.timeSignature)
+        // Bars of the clip's own meter: the song's from where the clip is placed, else the first
+        // bar's signature (a session-only clip has no place in the song).
+        let meter = store.project.clipMeter(clip.id)
         return Menu("Loop", systemImage: "repeat") {
             ForEach([1, 2, 4, 8, 16], id: \.self) { bars in
+                let length = Swift.max(Arranging.ticks(movingBars: Int64(bars), from: 0, meter: meter), 1)
                 Button {
-                    try? store.perform(.setClipLength(clip.id, length: Tick(bars) * bar))
+                    try? store.perform(.setClipLength(clip.id, length: length))
                 } label: {
                     let title = bars == 1 ? "1 Bar" : "\(bars) Bars"
-                    if clip.length == Tick(bars) * bar { Label(title, systemImage: "checkmark") } else { Text(title) }
+                    if clip.length == length { Label(title, systemImage: "checkmark") } else { Text(title) }
                 }
             }
         }
