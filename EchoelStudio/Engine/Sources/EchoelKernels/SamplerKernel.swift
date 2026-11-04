@@ -171,6 +171,11 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
     /// Render thread. All sound off (CC 120).
     public func reset() { sampler.reset() }
 
+    /// Render thread. The tuning the next notes start in (`EngineInstrumentKernel.retune`).
+    public func retune(_ temperament: Temperament) {
+        if temperament != sampler.temperament { sampler.setTemperament(temperament) }
+    }
+
     /// Render thread, for the app's engine: plays `buffer` from now on (nil: no sample). The caller
     /// owns the buffer's lifetime and keeps it alive until it knows rendering moved on — the engine
     /// already does that for its snapshot. Never mix this with `load` on one kernel: `load` keeps

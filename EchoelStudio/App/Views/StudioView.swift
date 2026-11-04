@@ -1075,8 +1075,11 @@ struct SongMenu: View {
                 ForEach(Scale.allCases, id: \.self) { Text($0.title).tag($0) }
             }
             .pickerStyle(.menu)
-            // The tone system and concert pitch every tuned voice plays in; a song stores the
-            // system's index and the pitch in hertz.
+            // The tone system and concert pitch every built-in tuned voice plays in (synth with all
+            // its engines, the Body voice and the choir among them; the sampler's keymapped pitch)
+            // and the pitch corrector corrects to. The drum kit is not retuned (a drum note names a
+            // drum); a plugin of another maker and MIDI out receive notes, not the tuning. A song
+            // stores the system's index and the pitch in hertz.
             Picker("Tone System", selection: Binding(get: { context.tuning }, set: { id in
                 pick(.tuning, Double(TuningSystem.library.firstIndex { $0.id == id } ?? 0))
             })) {

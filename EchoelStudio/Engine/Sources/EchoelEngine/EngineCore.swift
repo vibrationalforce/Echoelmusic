@@ -1117,6 +1117,12 @@ public final class EngineCore: @unchecked Sendable {
             }
             sampleTargets[slot]?.assign(sample)
         }
+        // Every built-in kernel plays the song's tuning from its next note on: a value compare when
+        // nothing changed, sixteen floats when it did. The drum kit takes it and ignores it.
+        let temperament = snapshot.temperament
+        for slot in 0..<slotCapacity {
+            for index in 0..<builtInCount { kernel(slot, index)?.retune(temperament) }
+        }
         // A track that changes instrument starts the new one silent and cuts the old one.
         for lane in snapshot.lanes where devices[lane.slot] != lane.device {
             resetBuiltIns(lane.slot)
