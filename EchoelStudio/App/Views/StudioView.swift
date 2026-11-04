@@ -856,7 +856,7 @@ struct SongMenu: View {
     @Environment(ParameterWriter.self) private var writer
     @Environment(JamSession.self) private var jam: JamSession?
     /// What Export WAV brings the mix to (CUT): kept on this device, never in the song; Off at first.
-    @AppStorage(SongMenu.wavLoudnessKey) private var wavLoudness = ExportLoudness.off
+    @AppStorage(SongMenu.wavLoudnessKey) private var wavLoudness = ExportLoudness.exportDefault
 
     nonisolated static let wavLoudnessKey = "export.wav.loudness"
 
@@ -1033,8 +1033,8 @@ struct SongMenu: View {
         .onAppear { documents.refresh() }
     }
 
-    /// The loudness Export WAV brings the mix to: Off, the mix as it plays, or a target with the
-    /// true peak at or under −1 dBTP. The status line then says the mix before and the file after.
+    /// The loudness Export WAV brings the mix to: Off, the mix as it plays; a target with the true
+    /// peak at or under −1 dBTP; or Peak, the default, the mix lowered only where it peaks above. The status line then says the mix before and the file after.
     private var wavLoudnessMenu: some View {
         Menu("WAV Loudness: \(wavLoudness.title)", systemImage: "speaker.wave.2") {
             ForEach(ExportLoudness.allCases, id: \.self) { choice in

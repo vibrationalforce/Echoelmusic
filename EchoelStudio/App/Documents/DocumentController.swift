@@ -1025,7 +1025,7 @@ final class DocumentController {
     /// At `loudness` Off the file is written as the render hands it over, as it always was. With a
     /// target the render goes to a 32-bit float file beside it first — a mix past full scale is
     /// then lowered, not clipped — and is brought to the target from there (`MixLoudness`).
-    func exportWAV(plugins: PluginHost, loudness: ExportLoudness = .off) async -> URL? {
+    func exportWAV(plugins: PluginHost, loudness: ExportLoudness = .exportDefault) async -> URL? {
         guard !isExporting else { return nil }
         isExporting = true
         defer {
@@ -1050,8 +1050,8 @@ final class DocumentController {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
         // With a target, the render's own file sits beside the export until it is brought there.
-        let renderFile = loudness.target == nil ? url : folder.appendingPathComponent(UUID().uuidString).appendingPathExtension("wav")
-        let depth: WAVFile.BitDepth = loudness.target == nil ? .twentyFour : .float32
+        let renderFile = !loudness.changesMix ? url : folder.appendingPathComponent(UUID().uuidString).appendingPathExtension("wav")
+        let depth: WAVFile.BitDepth = !loudness.changesMix ? .twentyFour : .float32
         // Block by block into the file: a long song never sits in memory whole.
         // Measured on the way, as the file receives it (BS.1770 / EBU R 128).
         let result: Result<(report: MixLoudness.Report, frames: Int), Error> = await Task.detached(priority: .userInitiated) {
@@ -1078,7 +1078,7 @@ final class DocumentController {
                     throw error
                 }
                 let measured = LoudnessNormalizer.Measurement(meter)
-                guard loudness.target != nil else { return (MixLoudness.Report(measured), frames) }
+                guard loudness.changesMix else { return (MixLoudness.Report(measured), frames) }
                 defer { try? FileManager.default.removeItem(at: renderFile) }
                 guard frames > 0 else { return (MixLoudness.Report(measured), 0) }
                 let report = try MixLoudness.write(renderFile, measured: measured, loudness: loudness, to: url)
@@ -1107,7 +1107,7 @@ final class DocumentController {
             // The loudness of an earlier export must not stand under this failure as its result.
             lastExportIsNews = false
             // The float file a target renders to holds three hours where the 24-bit file holds four.
-            let tooLong = loudness.target == nil
+            let tooLong = !loudness.changesMix
                 ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz). Shorten the arrangement and export again."
                 : "The song is too long to bring to a loudness (about three hours at 48 kHz). Set WAV Loudness to Off, or shorten the arrangement, and export again."
             lastError = error is PluginRenderFailed
