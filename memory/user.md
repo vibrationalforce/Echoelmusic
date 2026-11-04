@@ -34,9 +34,6 @@
 
 ## Future Ideas (Parking Lot)
 - **Multikopfkugelige Vibrations-Interdentalbuerstchen** — Zahnpflege-Hardware mit Sonic-Feedback. Vibrations-Expertise aus Installationen uebertragen. Den Schweden (TePe) einen draufsetzen.
-- **Tauchfliege** — Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic. Für Echoelmusic gestoppt seit 2026-10-22; am
-  2026-11-04 in ein privates Repo verschoben. Gemeint ist in Echoelmusic nur die BESTEHENDE
-  vibrierende Installation (Wasser-Pontons + vibrierendes Sofa) für inklusive Musikwahrnehmung.
 - **VAPORWAVE PALACE** — der NAME der Vibrations-Installations-Linie (Founder 2026-09-11) und der
   Dachbegriff, unter dem die Liege steht. **Mission, wörtlich: „Ein inklusiver Ansatz
   um Musik für Menschen mit Einschränkungen erfahrbarer zu machen."** ⚠️ Das ist ZUGÄNGLICHKEIT,

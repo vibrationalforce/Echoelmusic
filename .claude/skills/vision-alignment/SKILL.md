@@ -13,7 +13,7 @@ allowed-tools:
 
 # Vision Alignment — make the full vision implementable and respected
 
-**Principle:** Echoelmusic (DMMW workstation + optional bio) is the open-standards control brain. The existing vibrating water installation is a modular subscriber, not a new codebase. Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic. Every step must advance serious environmental protection, peace through transparency/inclusion, and accessibility — while the product itself generates revenue and respect through quality and honesty.
+**Principle:** Echoelmusic (DMMW workstation + optional bio) is the open-standards control brain. The existing vibrating water installation is a modular subscriber, not a new codebase. Every step must advance serious environmental protection, peace through transparency/inclusion, and accessibility — while the product itself generates revenue and respect through quality and honesty.
 
 ## When to activate (Claude should load this willingly)
 

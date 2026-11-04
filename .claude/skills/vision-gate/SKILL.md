@@ -54,7 +54,7 @@ then logged so we never re-litigate and never drift.
 
 - Banned overclaim is an automatic REJECT for any product/copy use: quantum AI, super-AI/
   AGI, wellness/healing/Solfeggio/chakra, "16K", BLAB/Vibrational Force/legacy soundscape.
-- Far-future founder ideas (auto-driving, dive-flying, "revolutionize humanity") = NORTH
+- Far-future founder ideas (auto-driving, "revolutionize humanity") = NORTH
   STAR: keep parked in `memory/vision.md`, never leak into product copy.
 - Most external dev/agent/web tooling is PIPELINE or WATCH — it rarely becomes a feature.
   The two patterns that already are our standard: skill-architecture + markdown memory.
