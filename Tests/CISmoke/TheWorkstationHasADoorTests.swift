@@ -518,6 +518,15 @@ final class TheWorkstationHasADoorTests: XCTestCase {
                     the exemption below is stale; two means a second reader.
                     """)
                 src = src.replacingOccurrences(of: level, with: "")
+                // W-RED (2026-11-01): P1's Arrangement/Session choice is the second excused line —
+                // a VIEW choice in the same defaults root, one writer (`arrangeModePicker`), cold.
+                // Exactly once; any further `@AppStorage` is still red below.
+                let mode = "@AppStorage(\"studio.arrangeMode\")"
+                XCTAssertEqual(src.components(separatedBy: mode).count - 1, 1, """
+                    \(path) reads the Arrange plate's mode through `\(mode)` exactly once. Zero means \
+                    this exemption is stale; two means a second reader.
+                    """)
+                src = src.replacingOccurrences(of: mode, with: "")
             }
             for forbidden in ["AppGroupStore", "UserDefaults", "@AppStorage", "@SceneStorage",
                               "JSONEncoder", "JSONDecoder", "FileManager"] {
