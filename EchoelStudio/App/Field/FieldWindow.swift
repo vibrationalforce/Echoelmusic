@@ -1,3 +1,4 @@
+import EchoelCore
 import SwiftUI
 
 /// The Field as a small window over the other views (wave W3): the picture stays in sight while
@@ -61,10 +62,13 @@ struct FieldSurface: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             FieldView()
-            Button(action: expand) { Image(systemName: "arrow.up.left.and.arrow.down.right") }
-                .buttonStyle(ToolButtonStyle())
-                .accessibilityLabel("Full Screen")
-                .padding(Theme.Space.m)
+            HStack(spacing: Theme.Space.s) {
+                FieldPatternMenu()
+                Button(action: expand) { Image(systemName: "arrow.up.left.and.arrow.down.right") }
+                    .buttonStyle(ToolButtonStyle())
+                    .accessibilityLabel("Full Screen")
+            }
+            .padding(Theme.Space.m)
         }
     }
 }
@@ -78,10 +82,40 @@ struct FieldFullscreen: View {
         ZStack(alignment: .topTrailing) {
             Theme.Color.background.ignoresSafeArea()
             FieldView().ignoresSafeArea()
-            Button(action: close) { Image(systemName: "arrow.down.right.and.arrow.up.left") }
-                .buttonStyle(ToolButtonStyle())
-                .accessibilityLabel("Leave Full Screen")
-                .padding(Theme.Space.m)
+            HStack(spacing: Theme.Space.s) {
+                FieldPatternMenu()
+                Button(action: close) { Image(systemName: "arrow.down.right.and.arrow.up.left") }
+                    .buttonStyle(ToolButtonStyle())
+                    .accessibilityLabel("Leave Full Screen")
+            }
+            .padding(Theme.Space.m)
         }
+    }
+}
+
+/// The Field's picture: a menu of the patterns, beside the full-screen button. A named choice, so
+/// a picker (never a number); kept on this device, so it changes no song and needs no command.
+/// Shown only where the GPU draws the Field — the Canvas draws the rings alone.
+struct FieldPatternMenu: View {
+    @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
+
+    var body: some View {
+        #if canImport(MetalKit) && canImport(UIKit)
+        if MetalField.isAvailable {
+            Menu {
+                Picker("Pattern", selection: $patternName) {
+                    ForEach(FieldPattern.allCases, id: \.rawValue) { pattern in
+                        Text(pattern.title).tag(pattern.rawValue)
+                    }
+                }
+            } label: {
+                Image(systemName: "square.grid.3x3")
+            }
+            .menuStyle(.button)
+            .buttonStyle(ToolButtonStyle())
+            .accessibilityLabel("Pattern")
+            .accessibilityValue(FieldPattern(stored: patternName).title)
+        }
+        #endif
     }
 }

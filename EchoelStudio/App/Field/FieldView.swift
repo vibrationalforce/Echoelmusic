@@ -8,13 +8,18 @@ import SwiftUI
 /// `FieldFrame.current(store:engine:)` from the engine's playhead — one timebase, no second clock —
 /// and every brightness passes the `FlashLimit`, so neither flashes more than three times a second.
 /// Calm by design: nothing on screen that the song or the body does not carry.
+///
+/// The picture is the musician's choice (`FieldPattern`, kept on this device): the rings, or the
+/// Chladni plate, whose figure the master's partials choose. The plate needs the GPU; the Canvas
+/// draws the rings.
 struct FieldView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
 
     var body: some View {
         #if canImport(MetalKit) && canImport(UIKit)
         if MetalField.isAvailable {
-            MetalFieldView(reduceMotion: reduceMotion)
+            MetalFieldView(reduceMotion: reduceMotion, pattern: FieldPattern(stored: patternName))
                 .background(Theme.Color.background)
                 .accessibilityHidden(true)
                 .overlay { FieldSpokenValue().allowsHitTesting(false) }

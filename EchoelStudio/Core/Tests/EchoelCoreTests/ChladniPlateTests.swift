@@ -59,6 +59,7 @@ final class ChladniPlateTests: XCTestCase {
         XCTAssertEqual(ChladniPlate.sand(ChladniPlate.displacement(x: 0.3, y: 0.3, modes: modes)), 1, accuracy: 1e-12)
         XCTAssertLessThan(ChladniPlate.sand(ChladniPlate.displacement(x: 0, y: 1, modes: modes)), 1e-6)
         XCTAssertEqual(ChladniPlate.sand(.nan), 0)
+        XCTAssertEqual(Double(ChladniPlate.sandWidthLiteral), ChladniPlate.sandWidth, "the shader draws the same width")
     }
 
     func testTheSameSoundIsTheSameFigure() {

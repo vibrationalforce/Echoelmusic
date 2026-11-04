@@ -109,6 +109,10 @@ final class AudioEngine {
     /// the source node — the whole mix, before the interface — and again after every rebuild.
     @ObservationIgnored private var streamTap: MasterAudioTap?
     @ObservationIgnored private var tappedNode: AVAudioNode?
+    /// The Field's ear on the master for the Chladni plate, while a plate is drawn. It shares the
+    /// stream's tap: a node carries one tap per bus, so ONE tap feeds both ears.
+    let fieldSpectrum = FieldSpectrum()
+    @ObservationIgnored private var spectrumListeners = Set<ObjectIdentifier>()
 
     func setStreamTap(_ tap: MasterAudioTap?) {
         removeStreamTap()
@@ -116,14 +120,37 @@ final class AudioEngine {
         installStreamTap()
     }
 
-    private func installStreamTap() {
-        guard let tap = streamTap, let node = sourceNode, tappedNode == nil else { return }
-        step("graph: install stream tap")
-        if tap.install(on: node) {
-            tappedNode = node
+    /// A Field renderer that draws the Chladni plate asks for the spectrum while it does, and lets
+    /// go when it stops or goes away; the tap stays on while anyone listens.
+    func listenForSpectrum(_ listening: Bool, by listener: ObjectIdentifier) {
+        let before = !spectrumListeners.isEmpty
+        if listening {
+            spectrumListeners.insert(listener)
         } else {
+            spectrumListeners.remove(listener)
+        }
+        guard before != !spectrumListeners.isEmpty else { return }
+        if !listening { fieldSpectrum.reset() }
+        removeStreamTap()
+        installStreamTap()
+    }
+
+    private func installStreamTap() {
+        let listening = !spectrumListeners.isEmpty
+        guard streamTap != nil || listening, let node = sourceNode, tappedNode == nil else { return }
+        step("graph: install stream tap")
+        let format = node.outputFormat(forBus: 0)
+        let stream = streamTap?.receiver(for: format)
+        if streamTap != nil, stream == nil {
             DiagnosticLog.app.note("graph: stream tap refused the format")
         }
+        let spectrum = listening ? fieldSpectrum : nil
+        guard stream != nil || spectrum != nil else { return }
+        node.installTap(onBus: 0, bufferSize: 4_096, format: format) { @Sendable buffer, when in
+            stream?(buffer, when)
+            spectrum?.receive(buffer)
+        }
+        tappedNode = node
     }
 
     private func removeStreamTap() {

@@ -87,6 +87,8 @@ public enum ChladniPlate {
     public static let count = 4
     /// The displacement under which sand still gathers, as a share of the plate's peak.
     public static let sandWidth = 0.08
+    /// `sandWidth` as the Metal shader writes it.
+    public static let sandWidthLiteral = "0.08"
     /// The sound's level at which the plate starts to show (−54 dBFS) and is fully lit (−6 dBFS).
     public static let quietDecibels = -54.0
     public static let fullDecibels = -6.0
