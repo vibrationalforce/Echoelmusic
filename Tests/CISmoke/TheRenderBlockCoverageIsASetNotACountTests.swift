@@ -120,11 +120,11 @@ final class TheRenderBlockCoverageIsASetNotACountTests: XCTestCase {
         let head = "── COVERAGE"
         let hits = doc.components(separatedBy: head).count - 1
         guard hits == 1, let start = doc.range(of: head) else {
-            throw XCTSkip("anchor `\(head)` occurs \(hits)× — re-anchor before trusting a zero (#408)")
+            throw failedAnchor("anchor `\(head)` occurs \(hits)× — re-anchor before trusting a zero (#408)")
         }
         let rest = doc[start.upperBound...]
         guard let end = rest.range(of: "THE INVARIANT IS EXACTLY THIS") else {
-            throw XCTSkip("the COVERAGE block's closing anchor moved — re-anchor (#454)")
+            throw failedAnchor("the COVERAGE block's closing anchor moved — re-anchor (#454)")
         }
         return String(rest[..<end.lowerBound])
     }

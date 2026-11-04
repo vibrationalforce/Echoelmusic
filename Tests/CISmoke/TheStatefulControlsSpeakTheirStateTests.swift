@@ -86,7 +86,7 @@ final class TheStatefulControlsSpeakTheirStateTests: XCTestCase {
             (#408).
             """)
         guard let si = s.first, let ei = e.first, si < ei else {
-            throw XCTSkip("the \(start) → \(end) span is gone — reported by the anchors above")
+            throw failedAnchor("the \(start) → \(end) span is gone — reported by the anchors above")
         }
         return lines[si ... ei]
     }
@@ -167,7 +167,7 @@ final class TheStatefulControlsSpeakTheirStateTests: XCTestCase {
         let endHits = lines.indices.filter { lines[$0].contains("Button { onShape(text) } label: {") }
         XCTAssertEqual(endHits.count, 1, "re-anchor: the field's sibling button is no longer unique (#408)")
         guard let s = startHits.first, let e = endHits.first, s < e else {
-            throw XCTSkip("field → sibling span gone — reported by the anchors above")
+            throw failedAnchor("field → sibling span gone — reported by the anchors above")
         }
         let w = lines[s ... e]
         XCTAssertTrue(w.contains { $0.contains(".accessibilityLabel(\"Describe it\")") }, """

@@ -324,7 +324,7 @@ final class TheStallRemedyReachesTheScreenTests: XCTestCase {
     /// helper and the reasoning at length.
     private func window(_ source: [String], from declaration: String) throws -> [String] {
         guard let start = source.firstIndex(where: { $0.contains(declaration) }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` is gone from BioStripView — if the status line was \
                 restructured this guard should be rewritten with it, not left to pass vacuously
                 """)
@@ -334,7 +334,7 @@ final class TheStallRemedyReachesTheScreenTests: XCTestCase {
         guard let end = source[start...].dropFirst().firstIndex(where: {
             $0.hasPrefix(closer) && $0.trimmingCharacters(in: .whitespaces) == "}"
         }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` has no closing brace at its own indentation — the file was \
                 reformatted or the member restructured, and reading on would inspect the wrong \
                 lines
