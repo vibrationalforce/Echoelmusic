@@ -988,6 +988,16 @@ struct SongMenu: View {
                     }
                 }
                 .disabled(documents.isExporting || !store.project.tracks.contains { !$0.regions.isEmpty })
+                // The same regions as an OpenTimelineIO bundle (.otioz) with the files inside, the
+                // timeline Resolve reads with its tracks, clips and markers (PRO-W2).
+                Menu("Export for Resolve (OTIO)", systemImage: "film.stack") {
+                    ForEach(OTIOExport.FrameRate.allCases, id: \.self) { rate in
+                        Button(rate.title) {
+                            Task { if let url = await documents.exportOTIO(rate: rate) { router.share(url) } }
+                        }
+                    }
+                }
+                .disabled(documents.isExporting || !store.project.tracks.contains { !$0.regions.isEmpty })
                 // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
                 Button("Export Video…", systemImage: "film") { router.sheet = .exportVideo }
                     .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)

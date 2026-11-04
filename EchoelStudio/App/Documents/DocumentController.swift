@@ -1618,6 +1618,68 @@ final class DocumentController {
         }
     }
 
+    /// The arrangement as an OpenTimelineIO bundle for DaVinci Resolve (`OTIOExport`, PRO-W2):
+    /// `<song>.otioz` with the timeline and a copy of every file a region plays under `media/`.
+    /// A bundle past 4 GiB, which a classic ZIP cannot hold, becomes a folder of the same parts
+    /// (`<song>.otio` beside `media/`) — Resolve reads that too. Returns the bundle or folder for
+    /// the share sheet. Nothing in the song changes.
+    func exportOTIO(rate: OTIOExport.FrameRate) async -> URL? {
+        guard !isExporting else { return nil }
+        isExporting = true
+        defer { isExporting = false }
+        let project = store.project
+        let songName = openSongName
+        let name = ProjectLibrary.safeFileName(for: songName)
+        let exports = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        let names = ExportMedia.names(for: project, using: ExportMedia.arrangementMedia(of: project),
+                                      folder: OTIOExport.bundleMediaFolder)
+        let json = OTIOExport.json(for: project, title: songName, rate: rate, mediaURLs: names)
+        let media: [(source: URL, name: String)] = project.media.compactMap { file in
+            guard let inside = names[file.id], let source = mediaURL(file) else { return nil }
+            return (source, inside)
+        }
+        let bundle = exports.appendingPathComponent(name).appendingPathExtension("otioz")
+        let folder = exports.appendingPathComponent(name + " OTIO", isDirectory: true)
+        let result: Result<URL, Error> = await Task.detached(priority: .userInitiated) {
+            Result {
+                let files = FileManager.default
+                try files.createDirectory(at: exports, withIntermediateDirectories: true)
+                let present = media.filter { files.fileExists(atPath: $0.source.path) }
+                var parts = [
+                    ExportBundleWriter.Part(name: OTIOExport.bundleVersionFile,
+                                            source: .data(Data(OTIOExport.bundleVersion.utf8))),
+                    ExportBundleWriter.Part(name: OTIOExport.bundleContentFile, source: .data(Data(json.utf8))),
+                ]
+                parts += present.map { ExportBundleWriter.Part(name: $0.name, source: .file($0.source)) }
+                do {
+                    try ExportBundleWriter.write(parts, to: bundle)
+                    return bundle
+                } catch ZipArchive.Failure.tooLarge {
+                    if files.fileExists(atPath: folder.path) { try files.removeItem(at: folder) }
+                    let mediaFolder = folder.appendingPathComponent(OTIOExport.bundleMediaFolder, isDirectory: true)
+                    try files.createDirectory(at: mediaFolder, withIntermediateDirectories: true)
+                    try Data(json.utf8).write(to: folder.appendingPathComponent(name).appendingPathExtension("otio"),
+                                              options: .atomic)
+                    for item in present {
+                        try files.copyItem(at: item.source, to: folder.appendingPathComponent(item.name))
+                    }
+                    return folder
+                }
+            }
+        }.value
+        switch result {
+        case .success(let url):
+            lastError = nil
+            return url
+        case .failure(let error):
+            log.error("OTIO export failed — \(error.localizedDescription, privacy: .private)")
+            try? FileManager.default.removeItem(at: bundle)
+            try? FileManager.default.removeItem(at: folder)
+            lastError = "Could not export the timeline for Resolve. Try again."
+            return nil
+        }
+    }
+
     /// Reads a Standard MIDI File (a copy the picker handed over) and adds its tracks to the song
     /// as instrument tracks — one undo step. A file the reader refuses says why on the status line.
     func importMIDI(_ source: URL) {
