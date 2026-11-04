@@ -79,7 +79,8 @@ public enum RegionWarp {
         var seen = Set<Key>()
         var result: [(Key, AudioRegion, SampleBuffer)] = []
         for track in project.tracks where track.kind == .audio {
-            for region in track.regions {
+            // The pieces a comp plays, each its own stretch (Recovery 4).
+            for region in track.playedRegions(in: project) {
                 guard let buffer = samples[region.media], let key = key(of: region, in: project, buffer: buffer),
                       seen.insert(key).inserted else { continue }
                 result.append((key, region, buffer))
@@ -105,7 +106,7 @@ extension RegionWarp {
         let map = project.tempoMap
         var end: Int64 = 0
         for track in project.tracks where track.kind == .audio {
-            for region in track.regions where region.warpBPM != nil && samples[region.media] != nil {
+            for region in track.playedRegions(in: project) where region.warpBPM != nil && samples[region.media] != nil {
                 guard let stop = project.position(of: region, atFileFrames: Double(region.length)) else { continue }
                 let seconds = map.seconds(atPosition: stop)
                 guard seconds.isFinite, seconds > 0 else { continue }

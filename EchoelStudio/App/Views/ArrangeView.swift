@@ -66,6 +66,7 @@ struct ArrangeView: View {
                             .background(Theme.Color.surface)
                             .contextMenu { trackMenu(track, showsHits: !hits.isEmpty) }
                             .accessibilityHidden(true)
+                        ForEach(TakeLanes.rows(of: track)) { row in TakeLaneName(row: row) }
                         ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
                             AutomationName(lane: lane)
                         }
@@ -86,6 +87,10 @@ struct ArrangeView: View {
                             ArrangeLane(track: track, project: project, pointsPerBar: pointsPerBar,
                                         open: open, importAudio: importAudio, files: files, hits: hits)
                                 .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
+                            ForEach(TakeLanes.rows(of: track)) { row in
+                                TakeLane(track: track, project: project, row: row, pointsPerBar: pointsPerBar)
+                                    .frame(width: laneWidth, height: TakeLanes.rowHeight)
+                            }
                             ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
                                 AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
                                     .frame(width: laneWidth, height: Theme.Size.trackRowHeight)

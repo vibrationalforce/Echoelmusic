@@ -491,6 +491,48 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with a take folder (Recovery 4, 2026-11-04): an optional track field added inside
+    /// format 4, so an earlier format-4 build opens the file and plays both takes as plain regions.
+    private let formatFourTakes = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Comped",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "media": [
+        { "id": "3ED10000-0000-4000-8000-000000000007", "name": "Take 1",
+          "path": "Media/3ED10000-0000-4000-8000-000000000007.wav", "frameCount": 96000, "sampleRate": 48000 },
+        { "id": "3ED10000-0000-4000-8000-000000000008", "name": "Take 2",
+          "path": "Media/3ED10000-0000-4000-8000-000000000008.wav", "frameCount": 96000, "sampleRate": 48000 }
+      ],
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-00000000000D",
+          "name": "Vocal",
+          "kind": "audio",
+          "colorIndex": 2,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "regions": [
+            { "id": "4E610000-0000-4000-8000-000000000007", "media": "3ED10000-0000-4000-8000-000000000007",
+              "start": 0, "offset": 0, "length": 96000 },
+            { "id": "4E610000-0000-4000-8000-000000000008", "media": "3ED10000-0000-4000-8000-000000000008",
+              "start": 0, "offset": 0, "length": 96000 }
+          ],
+          "takeGroups": [
+            { "id": "7A6E0000-0000-4000-8000-000000000001",
+              "takes": [ "4E610000-0000-4000-8000-000000000007", "4E610000-0000-4000-8000-000000000008" ],
+              "comp": [ { "start": 0, "end": 1920, "take": "4E610000-0000-4000-8000-000000000007" },
+                        { "start": 1920, "end": 3840, "take": "4E610000-0000-4000-8000-000000000008" } ] }
+          ]
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     private let pad = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000004") ?? UUID())
     private let room = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000005") ?? UUID())
 
@@ -523,7 +565,7 @@ final class FormatGoldenTests: XCTestCase {
 
     func testEveryGoldenFileSurvivesARoundTrip() throws {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
-                     formatFourRegionEdits, formatFourArpeggio, formatFourMarkers] {
+                     formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -901,6 +943,37 @@ final class FormatGoldenTests: XCTestCase {
             let broken = text.replacingOccurrences(of: from, with: to)
             XCTAssertNotEqual(broken, text, "the replacement must land")
             XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), "\(to)")
+        }
+    }
+
+    func testATrackOpensWithItsTakeFolderAndAnOlderOneWithNone() throws {
+        let project = try ProjectCodec.decode(formatFourTakes)
+        let folder = try XCTUnwrap(project.tracks.first?.takeGroups.first)
+        let a = try XCTUnwrap(UUID(uuidString: "4E610000-0000-4000-8000-000000000007"))
+        let b = try XCTUnwrap(UUID(uuidString: "4E610000-0000-4000-8000-000000000008"))
+        XCTAssertEqual(folder.takes, [a, b])
+        XCTAssertEqual(folder.comp, [CompSegment(start: 0, end: 1_920, take: a), CompSegment(start: 1_920, end: 3_840, take: b)])
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let track = try XCTUnwrap((root["tracks"] as? [[String: Any]])?.first)
+        let stored = try XCTUnwrap((track["takeGroups"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(stored.keys), ["id", "takes", "comp"])
+        XCTAssertEqual(Set(try XCTUnwrap((stored["comp"] as? [[String: Any]])?.first).keys), ["start", "end", "take"])
+        for data in [earliest, current, formatTwo, formatTwoMedia, formatThree, formatFour, formatFourRegionEdits] {
+            let older = try ProjectCodec.decode(data)
+            XCTAssertTrue(older.tracks.allSatisfy { $0.takeGroups.isEmpty }, "an older song has no take folders")
+            let written = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(older)) as? [String: Any])
+            for stored in try XCTUnwrap(written["tracks"] as? [[String: Any]]) {
+                XCTAssertNil(stored["takeGroups"], "a track without takes writes no key")
+            }
+        }
+        // A comp naming a take of no folder, or stretches that overlap, refuse the song.
+        let text = String(decoding: formatFourTakes, as: UTF8.self)
+        for (from, to) in [("\"start\": 1920, \"end\": 3840, \"take\": \"4E610000-0000-4000-8000-000000000008\"",
+                            "\"start\": 1920, \"end\": 3840, \"take\": \"4E610000-0000-4000-8000-0000000000FF\""),
+                           ("\"start\": 1920, \"end\": 3840", "\"start\": 1000, \"end\": 3840")] {
+            let broken = text.replacingOccurrences(of: from, with: to)
+            XCTAssertNotEqual(broken, text, "the replacement must land")
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), to)
         }
     }
 

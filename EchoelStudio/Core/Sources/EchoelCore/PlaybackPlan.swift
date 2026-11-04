@@ -1,3 +1,5 @@
+import Foundation
+
 /// What the engine plays: the arrangement flattened into sorted note events per track.
 ///
 /// Compiled on the main thread whenever the project changes, then handed to the render
@@ -66,6 +68,8 @@ public struct PlaybackPlan: Equatable, Sendable {
             let clips: [Clip]
             let placements: [Placement]
             let arpeggio: Arpeggio?
+            /// The comp chooses which takes' notes play (Recovery 4).
+            let takes: [TakeGroup]
         }
 
         public init(_ project: Project) {
@@ -73,7 +77,8 @@ public struct PlaybackPlan: Equatable, Sendable {
             swing = project.context.swing
             tracks = project.tracks.compactMap { track in
                 track.kind == .instrument
-                    ? TrackSource(id: track.id, clips: track.clips, placements: track.placements, arpeggio: track.playingArpeggio)
+                    ? TrackSource(id: track.id, clips: track.clips, placements: track.placements, arpeggio: track.playingArpeggio,
+                                takes: track.takeGroups)
                     : nil
             }
             meter = project.tracks.contains { $0.playingArpeggio != nil } ? project.meterMap : nil
@@ -126,19 +131,44 @@ public struct PlaybackPlan: Equatable, Sendable {
 
     /// Every note of every placement in song time. A note is cut at its clip's end, as in
     /// any DAW: a placement plays one clip length and no further.
+    ///
+    /// A placement that is a take of a folder plays only where the comp chooses it (Recovery 4): a
+    /// note that starts inside a stretch of its take sounds, ended at the stretch's end; the rest
+    /// of the take is silent.
     static func noteIntervals(of track: Track) -> [Interval] {
+        let windows = takeWindows(of: track)
         var intervals: [Interval] = []
         for placement in track.placements {
             guard let clip = track.clips.first(where: { $0.id == placement.clip }) else { continue }
+            let chosen = windows[placement.id.rawValue]
             for note in clip.notes where note.start < clip.length {
                 let end = Swift.min(note.start + note.length, clip.length)
-                intervals.append(Interval(start: placement.start + note.start,
-                                          end: placement.start + end,
-                                          pitch: note.pitch, velocity: note.velocity,
-                                          limit: placement.start + clip.length))
+                var interval = Interval(start: placement.start + note.start, end: placement.start + end,
+                                        pitch: note.pitch, velocity: note.velocity,
+                                        limit: placement.start + clip.length)
+                if let chosen {
+                    guard let window = chosen.first(where: { $0.contains(interval.start) }) else { continue }
+                    interval.end = Swift.min(interval.end, window.upperBound)
+                    interval.limit = Swift.min(interval.limit, window.upperBound)
+                }
+                intervals.append(interval)
             }
         }
         return resolvingOverlaps(intervals)
+    }
+
+    /// For each placement that is a take of a folder that plays, the stretches its comp chooses it
+    /// for; a placement outside every folder is absent and plays whole.
+    static func takeWindows(of track: Track) -> [UUID: [Range<Tick>]] {
+        guard track.kind == .instrument else { return [:] }
+        var windows: [UUID: [Range<Tick>]] = [:]
+        for group in track.playingTakeGroups {
+            for take in group.takes { windows[take] = [] }
+            for segment in group.comp where segment.start < segment.end {
+                windows[segment.take, default: []].append(segment.start..<segment.end)
+            }
+        }
+        return windows
     }
 
     struct Control {
@@ -153,9 +183,13 @@ public struct PlaybackPlan: Equatable, Sendable {
     static func controls(of track: Track) -> [Control] {
         var returns: [Control] = []
         var changes: [Control] = []
+        let windows = takeWindows(of: track)
         for placement in track.placements {
             guard let clip = track.clips.first(where: { $0.id == placement.clip }), !clip.controls.isEmpty else { continue }
+            let chosen = windows[placement.id.rawValue]
             for control in clip.controls where control.start < clip.length {
+                // A take's bends and pedals move only where the comp chooses it.
+                if let chosen, !chosen.contains(where: { $0.contains(placement.start + control.start) }) { continue }
                 changes.append(Control(tick: placement.start + control.start, kind: event(control.kind, control.value)))
             }
             for rest in rests(of: clip) {

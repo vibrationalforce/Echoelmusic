@@ -149,6 +149,7 @@ extension Project {
                     throw Self.invalid("inserts", "an effect's state is larger than \(PluginComponent.maximumStateBytes) bytes")
                 }
             }
+            try Self.validateTakeGroups(of: track)
             for region in track.regions {
                 guard regionIDs.insert(region.id).inserted else { throw CommandError.duplicateID(region.id.description) }
                 guard let file = mediaFile(region.media) else { throw CommandError.unknownMedia(region.media) }

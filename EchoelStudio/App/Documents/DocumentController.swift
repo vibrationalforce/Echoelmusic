@@ -2254,6 +2254,9 @@ final class DocumentController {
             commands.append(.trimRegion(track: track, region, offset: placement.offset,
                                         length: frameCount - placement.offset))
         }
+        // A take over earlier audio joins it as a lane of a take folder and sounds over its span
+        // (Recovery 4); what was there stays, to be comped. Over nothing it stays a plain region.
+        commands.append(.foldTake(track: track, take: region.rawValue, group: TakeGroupID()))
         // A take is never refused, but one that takes the song past its memory budget is said, by
         // the files the song plays that the next open would leave silent (R9) — which, not how
         // many: a take can push one out while a leftover drops back in (second night review).
