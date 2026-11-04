@@ -28,6 +28,8 @@ final class LiveRouter: Sendable {
     /// the engine had reached, and the message.
     struct Captured: Sendable {
         let sample: Int64
+        /// `EngineCore.playedFrames` then: which pass of the loop it was played in (Loop record).
+        let played: Int64
         let status: UInt8
         let data1: UInt8
         let data2: UInt8
@@ -92,14 +94,15 @@ final class LiveRouter: Sendable {
                 guard kind == 0xB0 || kind == 0xE0 else { return }
             }
             let sample = core.positionSample
+            let played = core.playedFrames
             capture.withLock { events in
                 guard events != nil else { return }
                 if isNote {
                     for note in decided.notes {
-                        events?.append(Captured(sample: sample, status: note.status, data1: note.pitch, data2: note.velocity))
+                        events?.append(Captured(sample: sample, played: played, status: note.status, data1: note.pitch, data2: note.velocity))
                     }
                 } else {
-                    events?.append(Captured(sample: sample, status: status, data1: data1, data2: data2))
+                    events?.append(Captured(sample: sample, played: played, status: status, data1: data1, data2: data2))
                 }
             }
         }
@@ -112,13 +115,14 @@ final class LiveRouter: Sendable {
         target.withLock { (state: inout Target) in
             let core = state.core
             let sample = core?.positionSample ?? 0
+            let played = core?.playedFrames ?? 0
             while let output = state.keys.releaseNext(source: source) {
                 guard let core else { continue }
                 for note in output { core.playLive(slot: note.slot, status: note.status, note.pitch, note.velocity) }
                 capture.withLock { events in
                     guard events != nil else { return }
                     for note in output {
-                        events?.append(Captured(sample: sample, status: note.status, data1: note.pitch, data2: note.velocity))
+                        events?.append(Captured(sample: sample, played: played, status: note.status, data1: note.pitch, data2: note.velocity))
                     }
                 }
             }

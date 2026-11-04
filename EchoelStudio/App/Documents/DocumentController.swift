@@ -2374,10 +2374,18 @@ final class DocumentController {
             return
         }
         let time = TimeConversion(tempoMap: tempoMap, sampleRate: take.sampleRate)
-        let placement = RecordingPlacement.place(startSample: take.startSample, latency: take.latency, time: time)
-        guard frameCount > placement.offset else {
+        // One region, as every take was — or, when the song looped while it recorded, one region
+        // per pass of the loop, all cut from this one file at their own offsets (Loop record).
+        var passes = LoopRecording.audioPasses(frameCount: frameCount, startSample: take.startSample,
+                                               startPlayed: take.startPlayed, latency: take.latency,
+                                               wraps: take.wraps, loop: take.loop, time: time,
+                                               meter: store.project.meterMap)
+        guard !passes.isEmpty else {
             try? FileManager.default.removeItem(at: source)
             return
+        }
+        if passes.count > 1, let loop = take.loop, let held = store.project.track(track) {
+            passes = LoopRecording.newest(passes, room: LoopRecording.room(on: held, in: store.project, over: loop))
         }
         if let buffer { samples[target.id] = buffer }
         // A take is one input channel (`TakeWriter`), so a decode keeps one.
@@ -2386,23 +2394,17 @@ final class DocumentController {
         let number = store.project.media.filter { $0.name.hasPrefix("Take ") }.count + 1
         let file = MediaFile(id: target.id, name: "Take \(number)", path: target.path,
                              frameCount: frameCount, sampleRate: sampleRate)
-        let region = RegionID()
-        var commands: [Command] = [
-            .addMedia(file),
-            .placeAudio(track: track, id: region, media: file.id, start: placement.start),
-        ]
-        if placement.offset > 0 {
-            commands.append(.trimRegion(track: track, region, offset: placement.offset,
-                                        length: frameCount - placement.offset))
-        }
         // A take over earlier audio joins it as a lane of a take folder and sounds over its span
         // (Recovery 4); what was there stays, to be comped. Over nothing it stays a plain region.
-        commands.append(.foldTake(track: track, take: region.rawValue, group: TakeGroupID()))
+        // Every pass of a loop folds the same way, oldest first, so the newest sounds — and the
+        // whole loop record is ONE undo step, as a take always was: one Record, one Stop, one
+        // file; an undo per pass would leave the file in the song after the last pass went.
+        let commands: [Command] = [.addMedia(file)] + LoopRecording.audioCommands(passes, media: file, track: track)
         // A take is never refused, but one that takes the song past its memory budget is said, by
         // the files the song plays that the next open would leave silent (R9) — which, not how
         // many: a take can push one out while a leftover drops back in (second night review).
         let before = store.project
-        perform(commands, title: "Record Take")
+        perform(commands, title: passes.count > 1 ? "Loop Record" : "Record Take")
         let committed = store.project.media.contains { $0.id == file.id }
         dropBufferUnlessHeld(file.id)
         if let strandedIn {

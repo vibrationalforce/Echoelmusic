@@ -40,9 +40,18 @@ public final class EngineCore: @unchecked Sendable {
     /// thread never reads a start from one range and an end from another.
     private let loopRange = Atomic<UInt64>(0)
     private let pending = Atomic<UnsafeMutableRawPointer?>(nil)
+    /// Whether the render thread writes each loop wrap into `loopWraps` (Loop record): on only while
+    /// a take records, so the ring never fills while nothing reads it.
+    private let wrapFlag = Atomic<Bool>(false)
     // Render → main.
     private let acknowledged = Atomic<UInt64>(0)
     private let position = Atomic<Int64>(0)
+    /// Frames rendered while playing since the core was made: a clock that never jumps — not at a
+    /// seek, not at the loop's wrap — so a take's frames and its passes can be counted on it.
+    private let played = Atomic<Int64>(0)
+    /// Render → main, while `setReportsLoopWraps(true)`: `playedFrames` at each wrap of the loop, the
+    /// moment the playhead went back to the loop's start.
+    private let loopWraps = SPSCRing<Int64>(capacity: 4_096, filler: 0)
     /// Where the song stood at the end of the last rendered buffer, written under a sequence
     /// counter (odd while writing) so the main thread reads the four values consistently.
     private let anchorSequence = Atomic<UInt64>(0)
@@ -187,6 +196,8 @@ public final class EngineCore: @unchecked Sendable {
     /// The guard's ceiling: the earlier app's −1 dB trim after its limiter.
     public static let outputCeilingDB = -1.0
     private var playhead: Int64 = 0
+    /// Render thread: frames rendered while playing (`playedFrames`).
+    private var playedCount: Int64 = 0
     /// Render thread: where the next chunk starts when the last one ended on the loop's end; −1
     /// for none.
     private var loopSeek: Int64 = -1
@@ -559,6 +570,24 @@ public final class EngineCore: @unchecked Sendable {
     /// The playhead in samples, for a small leaf view — never for a view body that hosts menus.
     public var positionSample: Int64 { position.load(ordering: .relaxed) }
 
+    /// Frames rendered while playing since the core was made. Never goes back: a seek and the
+    /// loop's wrap move the playhead, not this. Any thread.
+    public var playedFrames: Int64 { played.load(ordering: .acquiring) }
+
+    /// Main thread: from now on each wrap of the loop is reported (`takeLoopWraps`), or no longer.
+    /// Switched on, the wraps reported earlier are dropped, so a take hears only its own.
+    public func setReportsLoopWraps(_ on: Bool) {
+        if on { while loopWraps.pop() != nil {} }
+        wrapFlag.store(on, ordering: .releasing)
+    }
+
+    /// Main thread: `playedFrames` at each wrap of the loop since the last call, oldest first.
+    public func takeLoopWraps() -> [Int64] {
+        var wraps: [Int64] = []
+        while let wrap = loopWraps.pop() { wraps.append(wrap) }
+        return wraps
+    }
+
     /// Render calls finished since this core was made, one per call whatever its size, for the
     /// diagnostic log: a count that stands still while the engine is said to run means no buffers
     /// arrive. Each call moves the anchor's sequence twice, so half of it counts the calls; nothing
@@ -675,7 +704,11 @@ public final class EngineCore: @unchecked Sendable {
         let jump = jumpRequest.exchange(0, ordering: .relaxed)
         if seek < 0, jump != 0 { seek = Swift.max(0, playhead + jump) }
         // The loop's wrap, decided where the last chunk ended; a seek asked meanwhile wins.
-        if seek < 0, loopSeek >= 0 { seek = loopSeek }
+        if seek < 0, loopSeek >= 0 {
+            seek = loopSeek
+            // A full ring drops the wrap: the passes after it stay in the one before (Loop record).
+            if wrapFlag.load(ordering: .relaxed) { loopWraps.push(playedCount) }
+        }
         loopSeek = -1
         if seek >= 0 {
             playhead = seek
@@ -854,6 +887,8 @@ public final class EngineCore: @unchecked Sendable {
         mixReturns(frames: frames)
         playhead = blockEnd
         position.store(playhead, ordering: .relaxed)
+        playedCount += Int64(frames)
+        played.store(playedCount, ordering: .releasing)
         return frames
     }
 
