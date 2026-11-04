@@ -205,6 +205,38 @@ final class InstrumentPathTests: XCTestCase {
         }
     }
 
+    /// The kit's sound the song stores (EchoelTools A11) plays as the kit configured directly —
+    /// live at any block size and in the export alike.
+    func testTheSongsDrumSoundPlaysLiveAndInTheExport() throws {
+        var t = try tune([Note(pitch: 36, velocity: 100, start: 0, length: 240),
+                          Note(pitch: 45, velocity: 110, start: 480, length: 240),
+                          Note(pitch: 46, velocity: 80, start: 960, length: 960),
+                          Note(pitch: 42, velocity: 100, start: 1_200, length: 120)], device: .drums)
+        for (key, value) in [("drums.kick.tune", -5.0), ("drums.kick.decay", 2), ("drums.kickGlide", 3),
+                             ("drums.hatModel", 1), ("drums.tomModel", 1), ("drums.lowTom.level", 0.6),
+                             ("drums.openHat.decay", 0.5)] {
+            try Command.setInstrumentParameter(t.track, key: key, value: value).apply(to: &t.project)
+        }
+        var kit = DrumKit(sampleRate: Float(rate))
+        kit.setSound(DrumKit.PieceSound(tune: -5, decay: 2), for: .kick)
+        kit.setKickGlide(3)
+        kit.setHatModel(.metal)
+        kit.setTomModel(.modal)
+        kit.setSound(DrumKit.PieceSound(level: 0.6), for: .lowTom)
+        kit.setSound(DrumKit.PieceSound(decay: 0.5), for: .openHat)
+        let expected = try reference(&kit, t, frames: 72_000)
+        var plainKit = DrumKit(sampleRate: Float(rate))
+        XCTAssertNotEqual(try reference(&plainKit, t, frames: 72_000), expected, "the sound is heard")
+        for block in [64, 256, 4_096] {
+            let core = engine()
+            publish(t, to: core)
+            core.play()
+            assertSame(render(core, frames: 72_000, block: block), expected, "drum sound, block \(block)")
+        }
+        let export = OfflineRender.render(t.project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0, frameCount: 72_000)
+        assertSame(export.left, expected, "the export plays the kit's sound")
+    }
+
     /// The song's swing plays: every second sixteenth falls late by the stored amount, on its own
     /// sample, at every block size, and the export is the same samples. At 0.37 the closed hat on
     /// tick 240 sounds at 240 + 0.37 × 80 = 269.6 ticks — 6,740 samples at 120 BPM, 48 kHz, a
@@ -286,6 +318,52 @@ final class InstrumentPathTests: XCTestCase {
             core.play()
             assertSame(render(core, frames: 72_000, block: block), expected, "sampler, block \(block)")
         }
+    }
+
+    /// A sampler's file cut into pads by Slice to Pads, with the pattern it played written as a
+    /// clip: each note plays its slice as the sampler cut directly plays it — live at any block size
+    /// and in the export alike — and at another song tempo the pattern follows it (EchoelTools A11).
+    func testASlicedBreakPlaysItsPatternLiveAndInTheExportAndFollowsTheTempo() throws {
+        var t = try tune([], device: .sampler)
+        let loop: [Float] = (0..<48_000).map { (index: Int) -> Float in
+            let within = Double(index % 12_000) / 48_000
+            return Float(sin(2 * Double.pi * 180 * within) * Foundation.exp(-within * 12))
+        }
+        try load(loop, into: &t)
+        let file = try XCTUnwrap(t.project.media.first)
+        let starts = BreakSlicing.starts(onsets: [0.25, 0.5, 0.75], frameCount: file.frameCount, sampleRate: file.sampleRate)
+        XCTAssertEqual(starts, [0, 12_000, 24_000, 36_000])
+        for command in BreakSlicing.commands(track: t.track, file: file, starts: starts, writePattern: true, at: bar) {
+            try command.apply(to: &t.project)
+        }
+        let buffer = try XCTUnwrap(t.samples.values.first)
+        var sampler = Sampler(sampleRate: Float(rate))
+        sampler.setSample(buffer)
+        sampler.setSlices(SampleSlices(starts: starts, frameCount: buffer.frameCount))
+        // The clip starts on bar 2: two seconds at 120 BPM.
+        let frames = 2 * 48_000 + 72_000
+        let expected = try reference(&sampler, t, frames: frames)
+        XCTAssertEqual(peak(Array(expected[..<(2 * 48_000)])), 0, "nothing before the clip")
+        XCTAssertGreaterThan(peak(Array(expected[(2 * 48_000)...])), 0.01, "the pattern plays the pads")
+        for block in [64, 256, 4_096] {
+            let core = engine()
+            publish(t, to: core)
+            core.play()
+            assertSame(render(core, frames: frames, block: block), expected, "sliced break, block \(block)")
+        }
+        let export = OfflineRender.render(t.project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0,
+                                          samples: t.samples, frameCount: frames)
+        assertSame(export.left, expected, "the export plays the pads as playback does")
+
+        // At 150 BPM the second pad starts 0.2 s after the first instead of 0.25 s: the break follows.
+        var fast = t
+        try Command.setTempo(bpm: 150).apply(to: &fast.project)
+        let plan = PlaybackPlan(compiling: fast.project)
+        let ons = try XCTUnwrap(plan.tracks.first).events.filter { if case .noteOn = $0.kind { true } else { false } }
+        let time = TimeConversion(tempoMap: fast.project.tempoMap, sampleRate: rate)
+        let samplesAt = ons.map { time.sample(at: $0.tick, nudge: $0.nudge) }
+        XCTAssertEqual(ons.map(\.pitch), [36, 37, 38, 39])
+        XCTAssertEqual(samplesAt[1] - samplesAt[0], 9_600)
     }
 
     // MARK: - What each instrument hears

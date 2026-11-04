@@ -285,6 +285,61 @@ public struct SamplerVoiceHandle: Equatable, Sendable {
     let order: UInt64
 }
 
+/// A sample cut into pads (the break slicer): up to 16 slices, each from its start frame to the
+/// next one's (the last to the sample's end), played by consecutive notes from `firstNote` (36,
+/// the first pad of a drum map). A sliced sampler plays a slice at the sample's own speed — no key
+/// transposes it — and a note outside the slices plays nothing. A value type of fixed size: it
+/// reaches the render thread without allocating. `count` 0 is the plain sampler.
+public struct SampleSlices: Equatable, Sendable {
+    public static let capacity = 16
+    public static let none = SampleSlices()
+    public static let defaultFirstNote: UInt8 = 36
+
+    public private(set) var count = 0
+    public private(set) var firstNote = SampleSlices.defaultFirstNote
+    /// Frames of the sample, per slice: where it starts and where it stops (exclusive).
+    public private(set) var starts = SIMD16<Int32>(repeating: 0)
+    public private(set) var stops = SIMD16<Int32>(repeating: 0)
+    /// Per slice: its tune in semitones (0 its own pitch) and whether it plays backwards (≠ 0).
+    public private(set) var tunes = SIMD16<Float>(repeating: 0)
+    public private(set) var reversed = SIMD16<Int32>(repeating: 0)
+
+    public init() {}
+
+    /// Slices at `starts` (frames of a sample `frameCount` long). A start that is negative, not
+    /// past the one before it or not inside the sample is dropped; at most `capacity` are kept.
+    /// `tunes` and `reversed` go with the starts by position; missing ones play plain. Builds no
+    /// array of its own but reads the ones given: call it off the render thread.
+    public init(starts: [Int], frameCount: Int, tunes: [Float] = [], reversed: [Bool] = [],
+                firstNote: UInt8 = SampleSlices.defaultFirstNote) {
+        self.firstNote = Swift.min(firstNote, 127)
+        guard frameCount > 0 else { return }
+        let end = Int32(clamping: frameCount)
+        var kept = 0
+        var last = -1
+        for (index, start) in starts.enumerated() where kept < Self.capacity {
+            guard start > last, start >= 0, start < frameCount else { continue }
+            self.starts[kept] = Int32(clamping: start)
+            if kept > 0 { stops[kept - 1] = Int32(clamping: start) }
+            let tune = index < tunes.count ? tunes[index] : 0
+            self.tunes[kept] = tune.isFinite ? Swift.min(Swift.max(tune, -24), 24) : 0
+            self.reversed[kept] = index < reversed.count && reversed[index] ? 1 : 0
+            last = start
+            kept += 1
+        }
+        if kept > 0 { stops[kept - 1] = end }
+        count = kept
+        // No note above 127 can play a slice.
+        count = Swift.min(count, 128 - Int(self.firstNote))
+    }
+
+    /// The slice `pitch` plays, or nil. Render-safe.
+    public func slice(for pitch: UInt8) -> Int? {
+        let index = Int(pitch) - Int(firstNote)
+        return index >= 0 && index < count ? index : nil
+    }
+}
+
 public struct SamplerPatch: Equatable, Sendable {
     public var envelope: Envelope.Settings
     /// Play to the end of the sample regardless of note-off — the drum-pad behaviour.
@@ -314,6 +369,8 @@ public struct Sampler: Sendable {
     /// Where each pitch class sounds (`Temperament`); the sample's root is taken as recorded in
     /// twelve equal steps at A = 440 Hz. Standard until the engine sets the song's.
     public private(set) var temperament = Temperament.standard
+    /// The pads the sample is cut into; `.none` plays it across the keys.
+    public private(set) var slices = SampleSlices.none
     private var sample: SampleBuffer?
     private var voices: [SamplerVoice]
     private let sampleRate: Float
@@ -348,6 +405,12 @@ public struct Sampler: Sendable {
         for i in voices.indices { voices[i].silence() }
     }
 
+    /// The pads from the next note on; a sounding slice plays on to its own end. Render-safe.
+    public mutating func setSlices(_ slices: SampleSlices) {
+        guard slices != self.slices else { return }
+        self.slices = slices
+    }
+
     /// The tuning the next notes start in; a sounding note keeps its speed. Render-safe.
     public mutating func setTemperament(_ temperament: Temperament) {
         self.temperament = temperament
@@ -369,12 +432,24 @@ public struct Sampler: Sendable {
     /// velocity 0).
     public mutating func startNote(pitch: UInt8, velocity: UInt8) -> SamplerVoiceHandle? {
         guard let sample, velocity > 0 else { return nil }
+        var increment = sample.sampleRate / Double(sampleRate)
+        var from = 0, to = Int.max, backwards = false
+        if slices.count > 0 {
+            guard let pad = slices.slice(for: pitch) else { return nil }
+            from = Swift.min(Int(slices.starts[pad]), sample.frameCount)
+            to = Swift.min(Int(slices.stops[pad]), sample.frameCount)
+            guard to - from > 1 else { return nil }
+            let tune = slices.tunes[pad]
+            if tune != 0 { increment *= Double(exp2f(tune / 12)) }
+            backwards = slices.reversed[pad] != 0
+        } else {
+            increment *= temperament.ratio(of: Int(Swift.min(pitch, 127)), from: Int(sample.rootPitch))
+        }
         if activeVoiceCount == 0 { levelNow = Self.playable(patch.level) }
         nextOrder &+= 1
         let index = voiceIndex(for: pitch)
-        let increment = sample.sampleRate / Double(sampleRate)
-            * temperament.ratio(of: Int(Swift.min(pitch, 127)), from: Int(sample.rootPitch))
-        voices[index].start(pitch: pitch, velocity: velocity, increment: increment, order: nextOrder)
+        voices[index].start(pitch: pitch, velocity: velocity, increment: increment, order: nextOrder,
+                            from: from, to: to, backwards: backwards)
         return SamplerVoiceHandle(index: index, order: nextOrder)
     }
 
@@ -460,6 +535,13 @@ struct SamplerVoice: Sendable {
     private var fadePosition: Double = 0
     private var fadeIncrement: Double = 0
     private var fadeGain: Float = 0
+    /// The stretch of the sample the note plays — the whole sample, or one slice — as the last
+    /// frame it may read, and the frame a backwards note mirrors its reads around (−1: forwards).
+    /// The stolen note's own, while it fades.
+    private var last = Int.max
+    private var mirror: Double = -1
+    private var fadeLast = Int.max
+    private var fadeMirror: Double = -1
     /// 2.7 ms at 48 kHz: long enough not to click, short enough not to be heard as a delay.
     static let stealFadeFrames = 128
     /// Output frames over which a voice that reaches its sample's end fades to 0, as an audio
@@ -473,19 +555,27 @@ struct SamplerVoice: Sendable {
 
     var isActive: Bool { envelope.isActive || fadeLeft > 0 }
 
-    mutating func start(pitch: UInt8, velocity: UInt8, increment: Double, order: UInt64) {
+    /// Starts a note on frames `from` up to (not including) `to` of the sample — all of it by
+    /// default — forwards, or from its end backwards.
+    mutating func start(pitch: UInt8, velocity: UInt8, increment: Double, order: UInt64,
+                        from: Int = 0, to: Int = .max, backwards: Bool = false) {
         let stolen = envelope.isActive
         if stolen {
             fadeLeft = Self.stealFadeFrames
             fadePosition = position
             fadeIncrement = self.increment
             fadeGain = gain * envelope.level
+            fadeLast = last
+            fadeMirror = mirror
         }
+        let start = Swift.max(0, from)
+        last = to == .max ? .max : to - 1
+        mirror = backwards && to != .max ? Double(start + to - 1) : -1
         self.pitch = pitch
         isHeld = true
         startOrder = order
         self.increment = increment.isFinite && increment > 0 ? increment : 1
-        position = 0
+        position = Double(start)
         let v = Float(Swift.min(velocity, 127)) / 127
         gain = v * v
         envelope.kill()
@@ -503,26 +593,36 @@ struct SamplerVoice: Sendable {
         envelope.kill()
     }
 
+    /// The sample at `position`, linearly interpolated, read forwards — or, with a `mirror` of 0
+    /// or more, at `mirror − position`: the same stretch backwards.
+    @inline(__always)
+    private static func read(_ sample: SampleBuffer, _ position: Double, mirror: Double, last: Int) -> Float {
+        let at = mirror >= 0 ? Swift.max(0, mirror - position) : position
+        let index = Int(at)
+        let a = sample.mono(index)
+        let b = index < last ? sample.mono(index + 1) : a
+        return a + (b - a) * Float(at - Double(index))
+    }
+
     /// Frame `i` of `buffer` plays at `level + step × i`.
     @inline(__always)
     mutating func render(into buffer: UnsafeMutableBufferPointer<Float>, sample: SampleBuffer, level: Float, step: Float) {
-        let last = sample.frameCount - 1
+        let last = Swift.min(self.last, sample.frameCount - 1)
         var first = buffer.startIndex
         if fadeLeft > 0 {
+            let fadeLast = Swift.min(self.fadeLast, sample.frameCount - 1)
             let fadeEndScale = 1 / (Double(Self.endFadeFrames) * fadeIncrement)
             let end = Swift.min(first + fadeLeft, buffer.endIndex)
             while first < end {
                 let index = Int(fadePosition)
-                guard index < last || (index == last && fadePosition == Double(last)) else {
+                guard index < fadeLast || (index == fadeLast && fadePosition == Double(fadeLast)) else {
                     fadeLeft = 0
                     break
                 }
-                let a = sample.mono(index)
-                let b = index < last ? sample.mono(index + 1) : a
-                let t = Float(fadePosition - Double(index))
+                let value = Self.read(sample, fadePosition, mirror: fadeMirror, last: fadeLast)
                 let ramp = Float(fadeLeft) / Float(Self.stealFadeFrames)
-                    * Float(Swift.min(1, (Double(last) - fadePosition) * fadeEndScale))
-                buffer[first] += (a + (b - a) * t) * fadeGain * ramp * (level + step * Float(first - buffer.startIndex))
+                    * Float(Swift.min(1, (Double(fadeLast) - fadePosition) * fadeEndScale))
+                buffer[first] += value * fadeGain * ramp * (level + step * Float(first - buffer.startIndex))
                 fadePosition += fadeIncrement
                 fadeLeft -= 1
                 first += 1
@@ -539,11 +639,9 @@ struct SamplerVoice: Sendable {
                 silence()
                 return
             }
-            let a = sample.mono(index)
-            let b = index < last ? sample.mono(index + 1) : a
-            let t = Float(position - Double(index))
+            let value = Self.read(sample, position, mirror: mirror, last: last)
             let toEnd = Float(Swift.min(1, (Double(last) - position) * endScale))
-            buffer[i] += (a + (b - a) * t) * envelope.next() * gain * toEnd * (level + step * Float(i - buffer.startIndex))
+            buffer[i] += value * envelope.next() * gain * toEnd * (level + step * Float(i - buffer.startIndex))
             position += increment
             if !envelope.isActive { return }
         }

@@ -40,6 +40,25 @@ final class SamplerKernelTests: XCTestCase {
         XCTAssertEqual(peak(render(kernel, frames: 960)), 0, "taking the sample away stops every voice")
     }
 
+    /// A sliced sample is played by pads: note 36 plays the first slice whatever the root key, a
+    /// key outside the pads plays nothing, and clearing the slices plays the keys again.
+    func testASlicedSampleIsPlayedByPadsAndTheRootKeyMovesNothing() throws {
+        let kernel = SamplerKernel(sampleRate: 48_000)
+        let ramp = try XCTUnwrap(SampleBuffer(samples: (0..<48_000).map { Float($0) / 48_000 }, sampleRate: 48_000))
+        kernel.assign(ramp)
+        kernel.assign(slices: SampleSlices(starts: [0, 24_000], frameCount: ramp.frameCount))
+        kernel.setParameter(try address("sampler_root"), 72)
+        kernel.receive(status: 0x90, 37, 127)
+        let pad = render(kernel, frames: 4_800)
+        XCTAssertEqual(pad[2_400], 0.55 * 0.8, accuracy: 0.01, "the second pad from frame 24 000, at the file's speed and the level 0.8")
+        kernel.reset()
+        kernel.receive(status: 0x90, 60, 127)
+        XCTAssertEqual(peak(render(kernel, frames: 480)), 0, "no pad on 60")
+        kernel.assign(slices: .none)
+        kernel.receive(status: 0x90, 72, 127)
+        XCTAssertGreaterThan(peak(render(kernel, frames: 4_800)), 0.01, "unsliced, the root key plays it")
+    }
+
     func testTheRootKeyDecidesWhichNotePlaysTheSampleAtItsOwnSpeed() throws {
         // A sample one second long: at its own speed it lasts a second, an octave up half that.
         let kernel = SamplerKernel(sampleRate: 48_000)

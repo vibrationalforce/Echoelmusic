@@ -128,12 +128,22 @@ tracks overlap, the top track shows, and within a track the part that starts lat
 
 **Instrument:** `device` (`synth` · `drums` · `sampler` · `plugin`; a name a reader does not know
 is kept as written and that track stays silent — the song still opens), `preset`, `values` (parameter
-key → number, e.g. `synth.cutoff`: the synth's `synth.*`, the drums' `drums.level` (0 … 1, absent plays 1), the sampler's
+key → number, e.g. `synth.cutoff`: the synth's `synth.*`, the drums' `drums.level` (0 … 1, absent plays 1) and, from 2026-11-04, the kit's sound —
+`drums.kickGlide` (0 … 4, how far the kick's pitch falls; 1 the kit's own drop), `drums.hatModel` (0 noise,
+1 metal), `drums.tomModel` (0 sine, 1 modal) and per piece `drums.<piece>.tune` (semitones, −24 … 24),
+`drums.<piece>.decay` (a factor on the piece's length, 0.1 … 4) and `drums.<piece>.level` (0 … 1) for the
+pieces `kick` · `snare` · `clap` · `lowTom` · `highTom` · `closedHat` · `openHat` · `crash`; absent plays the kit
+as it always sounded — the sampler's
 `sampler.root` (0 … 127, the key that plays the sample at its own speed), `sampler.attack`,
 `sampler.release` (seconds), `sampler.level` (0 … 1) and `sampler.mode` (0 gate, 1 one-shot); a key
 absent plays its default, and every device's values are kept whichever device plays), optional
 `sample` (a media id), `plugin` (a plugin component) and `pluginState` (the plugin's own saved
-state, base64, at most 8 MiB), and — added inside format 4, 2026-11-04 — `wavetable`
+state, base64, at most 8 MiB), and — added inside format 4, 2026-11-04 — `slices` (the break
+slicer: the sampler's file cut into pads, 1 … 16 objects `{start, tune?, reverse?}` — `start` a frame
+of the file, rising and inside it; `tune` semitones −24 … 24, absent 0; `reverse` absent false. Slice
+*n* (from 0) plays on note 36 + *n* from its start to the next one's, the last to the file's end, at the
+file's own speed — the root key moves nothing. Absent plays the file across the keys; never written
+empty; a list that does not rise, starts past the file or names no file refuses the song) and `wavetable`
 (`{media, frames}`: the audio file the synth's Wavetable engine is cut from and the number of
 single cycles, 2 … 64, spread across it; absent plays the built-in shapes; a file the song lacks
 or a count outside the range refuses the song). How a file becomes cycles (a pitch estimate,

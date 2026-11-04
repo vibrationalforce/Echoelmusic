@@ -129,7 +129,9 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
             commitParameters()
             // The same key again ends its own earlier voice first, never another key's.
             if let earlier = held[key] { sampler.noteOff(earlier) }
-            let pitch = UInt8(Swift.min(Swift.max(Int(data1 & 0x7F) + transpose, 0), 127))
+            // A sliced sample is played by pads: the note names the slice, the root key moves nothing.
+            let shift = sampler.slices.count > 0 ? 0 : transpose
+            let pitch = UInt8(Swift.min(Swift.max(Int(data1 & 0x7F) + shift, 0), 127))
             held[key] = sampler.startNote(pitch: pitch, velocity: data2 & 0x7F)
         case 0x80, 0x90:
             if let voice = held[key] { sampler.noteOff(voice) }
@@ -182,6 +184,12 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
     /// its own list of buffers and would not know about this one.
     public func assign(_ buffer: SampleBuffer?) {
         sampler.setSample(buffer)
+    }
+
+    /// Render thread, for the app's engine: the pads the sample is cut into (`.none`: played across
+    /// the keys), from the next note on. A value of fixed size: nothing to keep alive.
+    public func assign(slices: SampleSlices) {
+        sampler.setSlices(slices)
     }
 
     private func takeNewSample() {

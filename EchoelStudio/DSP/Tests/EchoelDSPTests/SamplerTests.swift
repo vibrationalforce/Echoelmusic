@@ -192,6 +192,68 @@ final class SamplerTests: XCTestCase {
         XCTAssertEqual(out[600], 0, "half the sample length is the whole note")
     }
 
+    // MARK: - Slices (the break slicer, EchoelTools A11)
+
+    func testTheSlicesAreBuiltFromRisingStartsInsideTheSample() {
+        let slices = SampleSlices(starts: [0, 100, 100, 50, 400, 1_200], frameCount: 1_000)
+        XCTAssertEqual(slices.count, 3, "a start not past the one before, or past the end, is dropped")
+        XCTAssertEqual([slices.starts[0], slices.starts[1], slices.starts[2]], [0, 100, 400])
+        XCTAssertEqual([slices.stops[0], slices.stops[1], slices.stops[2]], [100, 400, 1_000])
+        XCTAssertEqual(slices.slice(for: 36), 0)
+        XCTAssertEqual(slices.slice(for: 38), 2)
+        XCTAssertNil(slices.slice(for: 39))
+        XCTAssertNil(slices.slice(for: 35))
+        XCTAssertEqual(SampleSlices(starts: Array(0..<40), frameCount: 1_000).count, SampleSlices.capacity)
+        XCTAssertEqual(SampleSlices(starts: [0, 1], frameCount: 0).count, 0)
+        XCTAssertEqual(SampleSlices(starts: [0, 1, 2], frameCount: 10, firstNote: 126).count, 2, "no note past 127")
+        let odd = SampleSlices(starts: [0], frameCount: 10, tunes: [.nan], reversed: [true])
+        XCTAssertEqual(odd.tunes[0], 0)
+        XCTAssertEqual(odd.reversed[0], 1)
+    }
+
+    /// Each pad plays its slice at the sample's own speed from its start to the next one's, and
+    /// fades at its end; a note outside the pads plays nothing.
+    func testEachPadPlaysItsSliceAndNothingElse() throws {
+        let buffer = try XCTUnwrap(ramp(1_000))
+        var sampler = Sampler(patch: flat(), sampleRate: rate)
+        sampler.setSample(buffer)
+        sampler.setSlices(SampleSlices(starts: [0, 400, 700], frameCount: 1_000))
+        sampler.noteOn(pitch: 37, velocity: 127)
+        let out = render(&sampler, frames: 1_000)
+        XCTAssertEqual(out[100], 0.5, accuracy: 0.01, "slice 2 starts at frame 400 of the ramp")
+        XCTAssertEqual(out[350], 0, "and stops before 700")
+        let tail = Array(out[200..<320])
+        let steepest = zip(tail.dropFirst(), tail).map { Swift.abs($0.0 - $0.1) }.max() ?? 1
+        XCTAssertLessThan(steepest, 0.02, "the slice's end fades")
+        XCTAssertEqual(sampler.activeVoiceCount, 0)
+        sampler.noteOn(pitch: 60, velocity: 127)
+        sampler.noteOn(pitch: 39, velocity: 127)
+        XCTAssertEqual(sampler.activeVoiceCount, 0, "no pad, no sound")
+        sampler.noteOn(pitch: 38, velocity: 127)
+        let last = render(&sampler, frames: 400)
+        XCTAssertEqual(last[100], 0.8, accuracy: 0.01, "the last slice plays to the sample's end")
+        sampler.setSlices(.none)
+        sampler.noteOn(pitch: 60, velocity: 127)
+        XCTAssertEqual(render(&sampler, frames: 600)[500], 0.5, accuracy: 0.01, "unsliced, the keys play it again")
+    }
+
+    func testAPadPlaysItsSliceTunedOrBackwards() throws {
+        let buffer = try XCTUnwrap(ramp(1_000))
+        var sampler = Sampler(patch: flat(), sampleRate: rate)
+        sampler.setSample(buffer)
+        sampler.setSlices(SampleSlices(starts: [0, 400], frameCount: 1_000, tunes: [12, 0], reversed: [false, true]))
+        sampler.noteOn(pitch: 36, velocity: 127)
+        let up = render(&sampler, frames: 400)
+        XCTAssertEqual(up[100], 0.2, accuracy: 0.01, "an octave up reads twice as fast")
+        XCTAssertEqual(up[250], 0, "and is done in half the time")
+        sampler.noteOn(pitch: 37, velocity: 127)
+        let back = render(&sampler, frames: 700)
+        XCTAssertEqual(back[100], 0.899, accuracy: 0.01, "backwards from the slice's end")
+        XCTAssertEqual(back[500], 0.499, accuracy: 0.01)
+        XCTAssertEqual(back[650], 0, "done at the slice's start")
+        XCTAssertTrue(back.allSatisfy(\.isFinite))
+    }
+
     /// The song's tuning reaches a keymapped sample: a class raised by a whole octave (the limit)
     /// plays its root note twice as fast, and the default leaves the root as recorded.
     func testTheTemperamentPitchesTheKeymappedSample() throws {

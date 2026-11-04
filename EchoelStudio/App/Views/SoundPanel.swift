@@ -13,7 +13,7 @@ struct SoundPanel: View {
     @Environment(ParameterWriter.self) private var writer
     /// The choice picked during an automation pass: it goes into the lane, not the track, so the
     /// picker would otherwise go on showing the track's value and ignore a tap on it. One for the
-    /// page: each built-in device has at most one choice row (the waveform, the sampler's mode).
+    /// page: a pass writes one choice at a time (the synth's engine, the kit's hats …).
     @State private var passPick: Int?
     let track: Track
 
@@ -36,6 +36,8 @@ struct SoundPanel: View {
                     Text(DrumNoteMap.line)
                         .font(Theme.Font.caption)
                         .foregroundStyle(Theme.Color.textSecondary)
+                    choicePicker(.drumsHatModel)
+                    choicePicker(.drumsTomModel)
                     deviceFields(.drums)
                 case .sampler:
                     samplerControls
@@ -177,10 +179,16 @@ struct SoundPanel: View {
         choicePicker(.samplerMode)
         deviceFields(.sampler)
 
-        let root = Int(track.instrument.value(.samplerRoot).rounded())
-        Text("Plays the sample at its own pitch on \(NoteEditing.name(of: root)) (MIDI \(root)); other notes transpose it.")
-            .font(Theme.Font.caption)
-            .foregroundStyle(Theme.Color.textSecondary)
+        if track.instrument.slices == nil {
+            let root = Int(track.instrument.value(.samplerRoot).rounded())
+            Text("Plays the sample at its own pitch on \(NoteEditing.name(of: root)) (MIDI \(root)); other notes transpose it.")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+        }
+        // The break slicer: the loaded file cut into pads.
+        if let loaded {
+            SliceSection(track: track, file: loaded)
+        }
     }
 
     /// A built-in instrument's numbers, one field each; its choices have their own picker.
