@@ -2257,6 +2257,124 @@ final class DocumentController {
         dropBufferUnlessHeld(target.id)
     }
 
+    /// Pitch & Texture (W3): the region's stretch of its ORIGINAL file — the file it was baked from
+    /// when it is baked already — through pitch correction toward the song's key, a granular
+    /// texture or both (`PitchTextureBake`), rendered off the main thread into a new file in the
+    /// song's Media folder; then one command (`bakeRegion`) records the file and points the region
+    /// at it. The original stays in the song, so Revert and Undo bring it back. Returns true when
+    /// the region plays the bake. `cancellation` stops the render; nothing changes then.
+    func bakePitchTexture(region regionID: RegionID, on trackID: TrackID, pitch: RegionBaking.PitchCorrection?,
+                          texture: RegionBaking.GrainTexture?, cancellation: BakeCancellation) async -> Bool {
+        guard !isExporting, pitch != nil || texture != nil else { return false }
+        guard let track = store.project.track(trackID), let region = track.regions.first(where: { $0.id == regionID }),
+              let source = store.project.mediaFile(region.original.media), source.kind == .audio else { return false }
+        isExporting = true
+        exportProgress = "Baking pitch and texture…"
+        defer {
+            isExporting = false
+            exportProgress = nil
+            followRenamedSong()
+        }
+        let song = songsOpened
+        let start = region.original.offset, length = region.length
+        let bake = RegionBaking(source: source.id, sourceOffset: start, pitchCorrection: pitch, texture: texture)
+        guard let buffer = await originalBuffer(source), song == songsOpened else {
+            if song == songsOpened { lastError = "\(source.name) could not be read, so there is nothing to bake." }
+            return false
+        }
+        guard let target = newTakeTarget(fileExtension: "wav") else { return false }
+        let context = store.project.context, rate = source.sampleRate, url = target.url
+        let result: Result<(count: Int, channels: Int, buffer: SampleBuffer?), Error> = await Task.detached(priority: .userInitiated) {
+            Result {
+                guard let stretch = PitchTextureBake.excerpt(of: buffer, offset: start, length: length),
+                      let baked = PitchTextureBake.render(stretch, sampleRate: rate, bake: bake, context: context,
+                                                          isCancelled: { cancellation.isCancelled }) else {
+                    throw CancellationError()
+                }
+                try PitchTextureBake.write(baked, to: url, sampleRate: rate)
+                let played = baked.right.map { SampleBuffer(left: baked.left, right: $0, sampleRate: rate) }
+                    ?? SampleBuffer(samples: baked.left, sampleRate: rate)
+                return (baked.frameCount, baked.right == nil ? 1 : 2, played)
+            }
+        }.value
+        guard song == songsOpened, case .success(let baked) = result else {
+            try? FileManager.default.removeItem(at: url)
+            takeAbandoned(target)
+            if song == songsOpened, case .failure(let error) = result, !(error is CancellationError) {
+                log.error("pitch and texture bake failed — \(String(describing: error), privacy: .public)")
+                lastError = "Could not bake the region. Nothing was changed."
+            }
+            return false
+        }
+        defer { takeLanded(target.id) }
+        mediaChannels[target.id] = baked.channels
+        if let played = baked.buffer {
+            samples[target.id] = played
+            mediaRevision += 1
+        }
+        let file = MediaFile(id: target.id, name: Names.derived(source.name, suffix: "(baked)"), path: target.path,
+                             frameCount: baked.count, sampleRate: rate)
+        do {
+            try store.perform(.bakeRegion(track: trackID, regionID, media: file, bake: bake))
+            lastError = nil
+        } catch {
+            log.error("pitch and texture bake rejected — \(String(describing: error), privacy: .public)")
+            lastError = "Could not place the baked region. Its file stays in the song's Media folder."
+            dropBufferUnlessHeld(target.id)
+            return false
+        }
+        return true
+    }
+
+    /// The first `PitchTextureBake.previewSeconds` of what `bakePitchTexture` would make, in memory,
+    /// for the page's Preview; nil when cancelled or unreadable. Nothing in the song changes.
+    func pitchTexturePreview(region regionID: RegionID, on trackID: TrackID, pitch: RegionBaking.PitchCorrection?,
+                             texture: RegionBaking.GrainTexture?, cancellation: BakeCancellation) async -> SampleBuffer? {
+        guard pitch != nil || texture != nil, let track = store.project.track(trackID),
+              let region = track.regions.first(where: { $0.id == regionID }),
+              let source = store.project.mediaFile(region.original.media), source.kind == .audio,
+              let buffer = await originalBuffer(source) else { return nil }
+        let start = region.original.offset, rate = source.sampleRate, context = store.project.context
+        let length = Swift.min(region.length, Int(PitchTextureBake.previewSeconds * rate))
+        let bake = RegionBaking(source: source.id, sourceOffset: start, pitchCorrection: pitch, texture: texture)
+        return await Task.detached(priority: .userInitiated) { () -> SampleBuffer? in
+            guard let stretch = PitchTextureBake.excerpt(of: buffer, offset: start, length: length),
+                  let baked = PitchTextureBake.render(stretch, sampleRate: rate, bake: bake, context: context,
+                                                      isCancelled: { cancellation.isCancelled }) else { return nil }
+            return baked.right.map { SampleBuffer(left: baked.left, right: $0, sampleRate: rate) }
+                ?? SampleBuffer(samples: baked.left, sampleRate: rate)
+        }.value
+    }
+
+    /// Revert: the baked region plays its original again, at the same stretch — one undo step. The
+    /// original is decoded first when the song does not hold it in memory, so it sounds at once.
+    func revertBake(region regionID: RegionID, on trackID: TrackID) async {
+        guard let region = store.project.track(trackID)?.regions.first(where: { $0.id == regionID }), region.bake != nil,
+              let source = store.project.mediaFile(region.original.media) else { return }
+        let song = songsOpened
+        if samples[source.id] == nil, let buffer = await originalBuffer(source), song == songsOpened {
+            samples[source.id] = buffer
+            mediaRevision += 1
+        }
+        guard song == songsOpened else { return }
+        do {
+            try store.perform(.revertRegionBake(track: trackID, regionID))
+            lastError = nil
+        } catch {
+            log.error("revert rejected — \(String(describing: error), privacy: .public)")
+            lastError = "The original file no longer holds this region, so it cannot be reverted."
+        }
+    }
+
+    /// `file` as the song holds it in memory, or decoded from the package off the main thread.
+    private func originalBuffer(_ file: MediaFile) async -> SampleBuffer? {
+        if let held = samples[file.id] { return held }
+        guard let url = mediaURL(file) else { return nil }
+        return await Task.detached(priority: .userInitiated) { () -> SampleBuffer? in
+            try? AudioFileImport.decode(url, maximumSeconds: .infinity, maximumFrames: .max)
+        }.value
+    }
+
     /// Where the next take is written: a fresh file in the open song's Media folder.
     struct TakeTarget: Sendable {
         let id: MediaID
@@ -2883,4 +3001,23 @@ private struct EarlierImportRun: Sendable {
     var paused = false
     /// The import is finished: nothing is left to bring over, or it was given up.
     var finished = false
+}
+
+/// The Stop of a bake or a preview running off the main thread: set on the main actor, read by the
+/// render between blocks. Never on the render thread, so a lock is fine.
+final class BakeCancellation: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stopped = false
+
+    func cancel() {
+        lock.lock()
+        stopped = true
+        lock.unlock()
+    }
+
+    var isCancelled: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return stopped
+    }
 }

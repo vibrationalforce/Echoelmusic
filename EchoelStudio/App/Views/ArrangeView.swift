@@ -777,6 +777,7 @@ private struct RegionBlock: View {
         if file.kind == .audio {
             Button("Fades, Gain & Warp…", systemImage: "slider.horizontal.below.rectangle") { editFades() }
             Button("Convert to MIDI…", systemImage: "pianokeys") { router.sheet = .convertToMIDI(track.id, region.id) }
+            Button("Pitch & Texture…", systemImage: "tuningfork") { editPitchTexture() }
         }
         Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
         Button("Split at Playhead", systemImage: "scissors") { split() }
@@ -800,6 +801,12 @@ private struct RegionBlock: View {
         router.sheet = .regionEdit(track.id, region.id)
     }
 
+    /// Pitch correction and a granular texture, baked offline into a new file (W3).
+    private func editPitchTexture() {
+        guard file.kind == .audio else { return }
+        router.sheet = .regionBake(track.id, region.id)
+    }
+
     /// An audio region on a track with an effect switched on, and no export or bake under way.
     private var canBake: Bool {
         file.kind == .audio && track.inserts.contains(where: { !$0.isBypassed }) && !documents.isExporting
@@ -821,6 +828,7 @@ private struct RegionBlock: View {
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
             .accessibilityAction(named: "Place at Next Hit") { placeAtNextHit() }
             .accessibilityAction(named: "Fades, Gain and Warp") { editFades() }
+            .accessibilityAction(named: "Pitch and Texture") { editPitchTexture() }
             .accessibilityAction(named: "Duplicate") { duplicate() }
             .accessibilityAction(named: "Split at Playhead") { split() }
             .accessibilityAction(named: "Consolidate") { consolidate() }

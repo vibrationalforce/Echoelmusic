@@ -200,6 +200,21 @@ build played it, and an earlier build that meets them ignores them:
   the region follows the song's tempo, its pitch unchanged, stretched from `nativeBPM`. Echoel sets
   warp on audio regions only. `nativeBPM` is kept while warp is off, so switching it back on finds it.
 
+- `bake` — the region plays a file Echoel rendered from another file of the song (W3, added
+  2026-11-04): `{source, sourceOffset, pitchCorrection?, texture?}`. `source` is the media id of
+  the original audio file, `sourceOffset` the frame of it the rendered file's first frame came
+  from; the two files run frame for frame at one sample rate, so the region at `offset` plays what
+  the original plays at `sourceOffset + offset`, and reverting points the region back there.
+  `pitchCorrection` is `{strength, retune}` — 0 … 1 of the correction toward the nearest note of
+  the song's key and scale in its tone system, and the seconds it takes to arrive, 0 … 0.5;
+  `texture` is a granular texture, `{size, density, scatter, pitch, seed}` — grain length in
+  seconds 0.01 … 0.5, density 0 … 1, how far around its moment a grain reads in seconds 0 … 0.5,
+  transposition in semitones −24 … 24, and the random sequence 0 … 4294967295. At least one of the
+  two; with both, the correction comes first. The settings are kept so the bake can be opened and
+  rendered again; the sound is in the rendered file, never recomputed on open. A bake naming a
+  file the song lacks, a value outside its range, or an original that cannot hold the region's
+  stretch refuses the song. An earlier format-4 build ignores the key and plays the rendered file.
+
 **Take folder:** `{id, takes, comp}` in a track's `takeGroups` — added inside format 4 (Recovery 4,
 2026-11-04); Echoel writes the key only when the track has a folder, so a track without one is
 stored exactly as before, and an earlier format-4 build opens the song and plays every take as an

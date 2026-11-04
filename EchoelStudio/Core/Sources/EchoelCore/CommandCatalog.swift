@@ -54,6 +54,7 @@ extension Command {
         case placeVideo, splitRegion
         case splitPlacement, consolidatePlacements, consolidateRegions
         case setRegionFades, setRegionGain, setRegionWarp
+        case bakeRegion, revertRegionBake
         case addScene, removeScene, renameScene, setSlot
         case setInstrumentWavetable
         case addMarker, renameMarker, moveMarker, removeMarker
@@ -139,6 +140,8 @@ extension Command {
         case .setRegionFades: .setRegionFades
         case .setRegionGain: .setRegionGain
         case .setRegionWarp: .setRegionWarp
+        case .bakeRegion: .bakeRegion
+        case .revertRegionBake: .revertRegionBake
         case .addScene: .addScene
         case .removeScene: .removeScene
         case .renameScene: .renameScene
@@ -529,6 +532,16 @@ public enum CommandCatalog {
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
                                             P("nativeBPM", .number, "The tempo the file was played at."),
                                             P("followsTempo", .boolean, "True: the region follows the song's tempo.")])
+        case .bakeRegion:
+            return CommandSpec(name: "audio.bake", title: "Pitch & Texture",
+                               summary: "Points an audio region at a file the app rendered from its original with pitch correction, a granular texture or both; the original stays in the song. Written by the app, not typed.",
+                               parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
+                                            P("media", .string, "The rendered file: id, name, path inside Media/, frame count, sample rate."),
+                                            P("bake", .string, "The original, its first frame and the settings.")])
+        case .revertRegionBake:
+            return CommandSpec(name: "audio.revertBake", title: "Revert to Original",
+                               summary: "Points a baked audio region back at its original file, at the same stretch.",
+                               parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region.")])
         case .removeRegion:
             return CommandSpec(name: "audio.remove", title: "Delete Region",
                                summary: "Removes an audio or video region from the timeline; the file stays in the song.",

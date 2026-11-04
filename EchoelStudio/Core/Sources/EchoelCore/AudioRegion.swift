@@ -32,6 +32,9 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
     public var nativeBPM: Double?
     /// The region follows the song's tempo (needs `nativeBPM`); nil is false.
     public var followsTempo: Bool?
+    /// The bake that made the file it plays (W3, `RegionBaking`); nil for a region that plays its
+    /// file as imported or recorded.
+    public var bake: RegionBaking?
 
     public static let gainRange: ClosedRange<Double> = -60...24
     public static let nativeBPMRange: ClosedRange<Double> = 20...999
@@ -83,7 +86,7 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
     private enum CodingKeys: String, CodingKey {
         case id, media, start, offset, length, fadeIn, fadeOut
         case fadeInCurveName = "fadeInCurve", fadeOutCurveName = "fadeOutCurve"
-        case gainDB, nativeBPM, followsTempo
+        case gainDB, nativeBPM, followsTempo, bake
     }
 }
 

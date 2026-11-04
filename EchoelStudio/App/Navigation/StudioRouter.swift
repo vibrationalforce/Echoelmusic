@@ -49,6 +49,8 @@ enum StudioSheet: Identifiable, Hashable {
     case regionEdit(TrackID, RegionID)
     /// One audio region's melody as a MIDI clip at the same place (A2M).
     case convertToMIDI(TrackID, RegionID)
+    /// One audio region's pitch correction and granular texture, baked offline (W3).
+    case regionBake(TrackID, RegionID)
     /// The sample and media browser: the song's, the library's and imported files, to hear and place (Recovery 7).
     case browser
 

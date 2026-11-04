@@ -49,6 +49,16 @@ final class StoredNamesTests: XCTestCase {
         } else {
             XCTFail("a take folder encodes")
         }
+        // A region's bake stores its fields by these names (W3); it names its original by id.
+        let bake = RegionBaking(source: MediaID(), sourceOffset: 0, pitchCorrection: .init(), texture: .init())
+        if let data = try? JSONEncoder().encode(bake),
+           let stored = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            XCTAssertEqual(Set(stored.keys), ["source", "sourceOffset", "pitchCorrection", "texture"])
+            XCTAssertEqual(Set((stored["pitchCorrection"] as? [String: Any] ?? [:]).keys), ["strength", "retune"])
+            XCTAssertEqual(Set((stored["texture"] as? [String: Any] ?? [:]).keys), ["size", "density", "scatter", "pitch", "seed"])
+        } else {
+            XCTFail("a bake encodes")
+        }
         // A track's arpeggiator stores its rate and order by name; absent is no arpeggiator (EDIT-2).
         XCTAssertEqual(ArpRate.allCases.map(\.rawValue), ["quarter", "eighth", "sixteenth", "thirtySecond", "quarterTriplet",
                                                          "eighthTriplet", "sixteenthTriplet", "thirtySecondTriplet"])
