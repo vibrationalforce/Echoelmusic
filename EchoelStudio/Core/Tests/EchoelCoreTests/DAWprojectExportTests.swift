@@ -48,8 +48,24 @@ final class DAWprojectExportTests: XCTestCase {
     }
 
     func testTheProjectIsTheGoldenXML() throws {
-        let text = try xml()
-        XCTAssertEqual(text, Self.golden)
+        // Times inside a tempo ramp go through `log1p`/`expm1`, whose last bit differs between the
+        // C libraries of macOS and Linux; the golden is compared with every number at 12 places.
+        XCTAssertEqual(Self.rounded(try xml()), Self.rounded(Self.golden))
+        XCTAssertNotEqual(Self.rounded("x=\"1.0000000004\""), Self.rounded("x=\"1.0000000001\""), "a real difference still shows")
+    }
+
+    /// `text` with every quoted decimal number written with 12 places after the point.
+    private static func rounded(_ text: String) -> String {
+        var out = ""
+        for (index, piece) in text.components(separatedBy: "\"").enumerated() {
+            if index > 0 { out += "\"" }
+            if index % 2 == 1, piece.contains("."), let value = Double(piece) {
+                out += String(format: "%.12f", value)
+            } else {
+                out += piece
+            }
+        }
+        return out
     }
 
     func testItParsesAsXMLWithTheElementsTheFormatNames() throws {
