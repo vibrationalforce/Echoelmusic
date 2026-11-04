@@ -1476,6 +1476,64 @@ final class DocumentController {
         }
     }
 
+    /// The arrangement as a CMX 3600 edit decision list for DaVinci Resolve and any editor
+    /// (`EDLExport`, PRO-W1): a folder named after the song with the `.edl` and a copy of every audio
+    /// and video file a region plays, each under its name in the song, so the editor relinks the
+    /// clips by name. Returns the folder for the share sheet. Nothing in the song changes.
+    func exportEDL(rate: EDLExport.FrameRate) async -> URL? {
+        guard !isExporting else { return nil }
+        isExporting = true
+        defer { isExporting = false }
+        let project = store.project
+        let songName = openSongName
+        let name = ProjectLibrary.safeFileName(for: songName)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+            .appendingPathComponent(name + " EDL", isDirectory: true)
+        let used = Set(project.tracks.flatMap { $0.regions.map(\.media) })
+        // Each file a region plays, under its own name in the song, once; a second file of the same
+        // name gets a number.
+        var copies: [(source: URL, name: String, id: MediaID)] = []
+        var taken = Set<String>()
+        for file in project.media where used.contains(file.id) {
+            guard let source = mediaURL(file) else { continue }
+            let ext = source.pathExtension
+            let stem = ProjectLibrary.safeFileName(for: file.name)
+            var candidate = ext.isEmpty ? stem : "\(stem).\(ext)"
+            var number = 2
+            while taken.contains(candidate.lowercased()) {
+                candidate = ext.isEmpty ? "\(stem) \(number)" : "\(stem) \(number).\(ext)"
+                number += 1
+            }
+            taken.insert(candidate.lowercased())
+            copies.append((source, candidate, file.id))
+        }
+        let fileNames = Dictionary(uniqueKeysWithValues: copies.map { ($0.id, $0.name) })
+        let text = EDLExport.text(for: project, title: songName, rate: rate, fileNames: fileNames)
+        let listName = name
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            Result {
+                let files = FileManager.default
+                if files.fileExists(atPath: folder.path) { try files.removeItem(at: folder) }
+                try files.createDirectory(at: folder, withIntermediateDirectories: true)
+                try Data(text.utf8).write(to: folder.appendingPathComponent(listName).appendingPathExtension("edl"),
+                                          options: .atomic)
+                for copy in copies where files.fileExists(atPath: copy.source.path) {
+                    try files.copyItem(at: copy.source, to: folder.appendingPathComponent(copy.name))
+                }
+            }
+        }.value
+        switch result {
+        case .success:
+            lastError = nil
+            return folder
+        case .failure(let error):
+            log.error("EDL export failed — \(error.localizedDescription, privacy: .private)")
+            try? FileManager.default.removeItem(at: folder)
+            lastError = "Could not export the edit decision list. Try again."
+            return nil
+        }
+    }
+
     /// Reads a Standard MIDI File (a copy the picker handed over) and adds its tracks to the song
     /// as instrument tracks — one undo step. A file the reader refuses says why on the status line.
     func importMIDI(_ source: URL) {
