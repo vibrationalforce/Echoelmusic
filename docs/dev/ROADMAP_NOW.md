@@ -42,11 +42,11 @@ In dieser Ordnung, jede Zeile erst am Gerät, bevor die nächste anfängt:
 
 ## Nicht diese App
 
-- Tauchfliege als Fahrzeug, Personenbeförderung, Airbus als Partner. Die Übergabe vom 5. Oktober ist eine Konzeptprüfung mit 37 offenen Befunden. Höchstens später ein OSC- oder MIDI-Signal an eine Anlage, die jemand anders zertifiziert.
+- Fahrzeuge und Personenbeförderung. Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.
 - Neuralink und jede Gedankensteuerung. Keine Schnittstelle im Repo, kein Medizinprodukt.
 - Wellness, Therapie, Diagnose, Heilfrequenzen.
 - Eine zweite Navigation, ein Dashboard, ein „Session“-Knopf neben Play.
 
 ## Die eine offene Entscheidung
 
-Ist das nächste Jahr das fertige iPhone-Instrument auf der heutigen Hülle, oder der Umbau auf Stück / Medien / Ausgabe? Plattformen, Tauchfliege und Implantat warten auf diese Antwort. Bis sie da ist, gilt die Spalte „Jetzt“ und die heutige Hülle.
+Ist das nächste Jahr das fertige iPhone-Instrument auf der heutigen Hülle, oder der Umbau auf Stück / Medien / Ausgabe? Plattformen und Implantat warten auf diese Antwort. Bis sie da ist, gilt die Spalte „Jetzt“ und die heutige Hülle.
