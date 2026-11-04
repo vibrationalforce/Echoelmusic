@@ -547,7 +547,7 @@ final class TheLightingLookIsACanonicalParameterTests: XCTestCase {
                                   "ANCHOR MISSING: the lighting binding is gone (#454).")
         let chars = Array(code[start.upperBound...])
         guard let open = chars.firstIndex(of: "{") else {
-            throw XCTSkip("the lighting binding has no closure body to read")
+            throw failedAnchor("the lighting binding has no closure body to read")
         }
         var depth = 0
         for i in open..<chars.count {
@@ -557,7 +557,7 @@ final class TheLightingLookIsACanonicalParameterTests: XCTestCase {
                 if depth == 0 { return String(chars[open...i]) }
             }
         }
-        throw XCTSkip("the lighting binding's closure is unbalanced in the stripped text")
+        throw failedAnchor("the lighting binding's closure is unbalanced in the stripped text")
     }
 
     /// Occurrences of a literal in the CODE of every Swift file under `Sources/` (comments

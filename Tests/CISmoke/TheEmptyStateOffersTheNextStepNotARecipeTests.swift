@@ -141,11 +141,11 @@ final class TheEmptyStateOffersTheNextStepNotARecipeTests: XCTestCase {
     /// The member's text from its declaration to the next top-level `private` member.
     private func member(_ declaration: String, in code: String) throws -> String {
         guard let start = code.range(of: declaration) else {
-            throw XCTSkip("ANCHOR MISSING: `\(declaration)` — the member moved; re-anchor, do not let the scan pass on nothing")
+            throw failedAnchor("ANCHOR MISSING: `\(declaration)` — the member moved; re-anchor, do not let the scan pass on nothing")
         }
         let rest = code[start.upperBound...]
         guard let end = rest.range(of: "\n    private ") else {
-            throw XCTSkip("ANCHOR MISSING: the member after `\(declaration)`")
+            throw failedAnchor("ANCHOR MISSING: the member after `\(declaration)`")
         }
         return String(rest[..<end.lowerBound])
     }

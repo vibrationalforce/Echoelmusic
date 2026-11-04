@@ -484,7 +484,7 @@ final class TheHeaderShowsTheLoopTests: XCTestCase {
     private func topBar() throws -> [String] {
         let lines = try codeLines(Self.workspace)
         guard let start = lines.firstIndex(where: { $0.contains(Self.topBarDeclaration) }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(Self.topBarDeclaration)` is gone from \(Self.workspace) — if the header was \
                 restructured this file should be rewritten with it, not left to pass vacuously
                 """)
@@ -494,7 +494,7 @@ final class TheHeaderShowsTheLoopTests: XCTestCase {
         guard let end = lines[(start + 1)...].firstIndex(where: {
             $0.hasPrefix(closer) && $0.trimmingCharacters(in: .whitespaces) == "}"
         }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `topBar` has no closing brace at its own indentation — the file was reformatted \
                 or the member restructured, and reading on would inspect the wrong lines
                 """)
