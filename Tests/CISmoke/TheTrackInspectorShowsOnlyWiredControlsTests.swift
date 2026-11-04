@@ -248,7 +248,9 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
             let member = code[hit.upperBound...].prefix { $0.isLetter || $0.isNumber || $0 == "_" }
             if !member.isEmpty { reached.insert(String(member)) }
         }
-        XCTAssertEqual(reached, ["controls", "flipMute", "flipSolo", "muteHint", "soloHint", "tapStep"],
+        // W-RED (2026-11-01): D1 (2026-10-16) — "Add MIDI Track" asks `TrackMix.role` whether the
+        // new track has a rack voice and says so; a pure READ of the one rule, writing nothing.
+        XCTAssertEqual(reached, ["controls", "flipMute", "flipSolo", "muteHint", "role", "soloHint", "tapStep"],
                        "the Workstation reaches TrackMix for \(reached.sorted()) — the header owns "
                        + "Mute/Solo only; level, pan, name and removal belong to the inspector")
         let inspectorConstructions = try filesMatching { code, _ in
