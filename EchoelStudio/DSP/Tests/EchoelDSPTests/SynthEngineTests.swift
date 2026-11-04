@@ -130,10 +130,20 @@ final class SynthEngineTests: XCTestCase {
     /// second of sound, debug: 0.28 s against 0.13 s on Linux (2026-11-01, ratio 2.0 … 2.7), 0.73 …
     /// 0.89 s against 0.16 … 0.19 s on the macOS runner (2026-11-04, ratio 3.7 … 4.6 — the factor 4
     /// that stood here failed there on unchanged choir code, AUD).
+    /// ⛔ The absolute bound of 1 s in a DEBUG build failed a third time on 2026-11-04 (1.087 s, best
+    /// of three, run 41886337358) on unchanged choir code: the shared macOS runner's debug timing is
+    /// the noise, not the choir. The absolute bound is now realtime with a debug margin (1.5 s in
+    /// debug, 1 s optimised); the RATIO to classic stays the regression guard, because both sides of
+    /// it share the runner's noise.
     func testAFullChoirChordStaysWithinTheBudget() {
         let choir = (0..<3).map { (_: Int) -> Double in chordSeconds(.choir) }.min() ?? 0
         let classic = (0..<3).map { (_: Int) -> Double in chordSeconds(.classic) }.min() ?? 0
-        XCTAssertLessThan(choir, 1, "375 blocks of 128 frames: one second of sound in under a second")
+        #if DEBUG
+        let realtimeBudget = 1.5
+        #else
+        let realtimeBudget = 1.0
+        #endif
+        XCTAssertLessThan(choir, realtimeBudget, "375 blocks of 128 frames: one second of sound within \(realtimeBudget) s")
         XCTAssertLessThan(choir, classic * 6, "choir \(choir) s, classic \(classic) s")
     }
 

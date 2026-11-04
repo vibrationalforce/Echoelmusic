@@ -1,19 +1,18 @@
-11.0.0, twenty-fifth upload — tempo ramps, changing time signatures, the Chladni plate and hex keys
+11.0.0, twenty-seventh upload — arpeggiator, velocity, Field looks and meters
 
-What is new since 10033. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10035. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Tempo ramps: each tempo change on the Song page is Step or Ramp; a ramp glides to the new tempo
-  and reaches it exactly on its bar, live, in the export and in the MIDI file alike.
-- Time signature changes (e.g. 4/4, then 7/8): click accent, ruler, grid, snapping, loop, MIDI
-  file, hosted units, the clip editor, Session loop lengths and the Field's bar pulse follow them.
-- The Field has a second pattern, Chladni Plate: the strongest partials of the sound choose the
-  plate's modes and sand gathers on the still lines; changes cross-fade, never flash. Both Field
-  shaders are now compiled on the CI GPU before a build can ship.
-- The Instrument page plays on hex keys too (harmonic table: right a major third, up-right a
-  fifth), coloured and named per note, in the song's tone system.
+- Arpeggiator per track on the Sound page: rate 1/4 to 1/32 and triplets, up, down, up-down,
+  down-up, as played, random; 1-4 octaves, gate, latch. It plays only the notes you hold or the
+  clip carries, follows meter changes and tempo ramps, and sounds the same live and in the export.
+- Velocity of a selected note can be dragged or typed; one drag is one undo step.
+- The Field gets four more patterns — Dish, Water, Aurora, Depth — driven by the same sound
+  analysis as the Chladni plate, a cross-blend of two looks, and Spectrum and Scope views.
+- About lists OpenSSL 3.3.2, which ships inside the SRT library, with its full license.
+- A timing test of the choir no longer fails on a slow shared CI machine (debug margin).
 
-Previous: 11.0.0 (10033), twenty-fourth upload — tone system and swing. 10032 and earlier: see
-git history of this file.
+Previous: 11.0.0 (10035) — loudness fixes, magnet and quantize, region fades, gain and warp;
+10034 — tempo ramps, meter changes, Chladni plate, hex keys. Earlier: git history of this file.
 group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
 of earlier songs has not been seen on a device yet.
 
@@ -23,11 +22,10 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Song page: set a tempo change to Ramp and play over it. Does the click speed up evenly?
-2. Add a time signature change to 7/8 at a bar and play: do the accent and the Arrange ruler sit
-   on the new bar lines?
-3. Field: Pattern → Chladni Plate, hold a synth note, then a higher one. Does sand gather on lines,
-   finer for the higher note, with soft changes and no flicker?
-4. Instrument page: tap the hexagon in the key bar and play a triad (a cell, its right neighbour,
-   the one up-right). Does it sound clean with several fingers, and are the colours calm?
-5. Rings pattern still looks as before, and nothing turned grey?
+1. Synth track, Sound page: arpeggiator on, 1/16, up-down, 2 octaves. Hold a chord while the song
+   plays and while it is stopped. In time, no clicks?
+2. Select a note and drag its velocity: does it change, and is one drag one undo step?
+3. Field menu: Dish, Water, Aurora, Depth one after another with a held tone. Does the picture
+   follow the pitch and go calm in silence?
+4. "Blend With" another look and drag Blend fast back and forth. Nothing flickers?
+5. Show Spectrum, then Scope: does a held tone stand still in the scope?
