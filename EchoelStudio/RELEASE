@@ -1,20 +1,22 @@
-11.0.0 — your own samples as a wavetable, ten engines, 23 effects, and safer by default
+11.0.0 — drums and breaks, mix analysis, comping, Siri, Resolve export, the stage display
 
-What is new since 10037. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10040. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Wavetable engine: "Wavetable from File..." turns a recording into a band-limited wavetable;
-  Character scans it (modulatable). Pluck (plucked string) engine; Morph has eight shapes;
-  303 slide and accent; presets Reese Bass and 808 Glide.
-- Five new effects: Formant Filter, Transient Designer, Mid/Side, Multiband Compressor,
-  Dynamic EQ (also as Audio Units, free).
-- A region's gain glides when changed during playback.
-- SRT streaming is removed (RTMP and RTMPS stay); no OpenSSL ships any more.
-- The assistant says "On-device AI (Apple Foundation Models)". A one-time headphone note; new
-  songs start with the master at -6 dB. A pulse that does not lock names skin tone, cold
-  fingers and the strap. Jam guests wait for the host's "Let In". Song files are checked
-  harder before they open.
+- Drums: tune, decay and level per piece, kick glide, 808 metal hats, modal toms. "Slice to
+  Pads" cuts a break onto sampler pads and can write its pattern as a MIDI clip.
+- Mix Analysis (Master effects): loudness, true peak, octave bands, tilt, stereo and masking,
+  and a suggested master chain (EQ, Multiband, M/S, Limiter) with the reason for each value;
+  one undo step. Tone profiles Balanced, Warm, Bright, Transparent.
+- Comping: recording over a take folds it into take lanes; tap or swipe picks which take
+  sounds, with short crossfades at each cut.
+- Siri, Shortcuts and Spotlight (App Intents), markers, A/B compare, EDL and OpenTimelineIO
+  export for DaVinci Resolve.
+- The Field on an external display (cable or AirPlay) with corner pin. Apple Health (Apple
+  Watch) as a slow body source, read only, never sent anywhere.
+- Sample and media browser (search, filter, preview).
 
-Previous: 11.0.0 (10037) — arpeggiator, velocity, Field looks and meters. Earlier: git history.
+Previous: 11.0.0 (10040) — wavetable from your own samples, five effects, SRT removed.
+Earlier: git history.
 group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
 of earlier songs has not been seen on a device yet.
 
@@ -24,10 +26,13 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Sound page: engine Wavetable, "Wavetable from File..." with a voice or synth loop; move
-   Character while playing. Does it move through the sound without clicks?
-2. Preset 808 Glide: play overlapping notes. Does the pitch glide?
-3. Put Formant Filter, Transient Designer, Mid/Side, Multiband and Dynamic EQ on a track one by
-   one and move their controls while playing. Each audible, no clicks?
-4. Jam on two phones: does the guest wait until the host taps "Let In"?
-5. Camera pulse with a cold finger or in poor light: does the hint name the strap?
+1. Sampler: load a drum break, "Slice to Pads" with the pattern clip. Does the break play in
+   song tempo and follow a tempo change?
+2. Master effects, "Mix Analysis...", Streaming, then Apply while playing. Does it sound closer
+   to the target without clicks?
+3. Record twice over the same bars. Do take lanes appear, and does tapping a lane switch the
+   take without a click?
+4. Connect a projector or AirPlay. Does the Field appear only there, and do the corner pin
+   fields move the corners?
+5. With a song open, say "Hey Siri, play Echoel Studio" (or run Play from Shortcuts). Does
+   the song start, and does "Stop Echoel Studio" stop it?
