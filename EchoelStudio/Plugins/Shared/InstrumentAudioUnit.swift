@@ -265,9 +265,14 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
                     // Two-byte messages too: channel pressure and program change (audit 2026-11-04).
                     let midi = current.pointee.MIDI
                     state.kernel.receive(midi: Int(midi.length), midi.data.0, midi.data.1, midi.data.2)
-                case .parameter, .parameterRamp:
+                case .parameter:
                     let parameter = current.pointee.parameter
                     state.kernel.setParameter(Int(parameter.parameterAddress), parameter.value)
+                case .parameterRamp:
+                    // The ramp runs over its frames, as the host asked, where the kernel can glide.
+                    let parameter = current.pointee.parameter
+                    state.kernel.rampParameter(Int(parameter.parameterAddress), to: parameter.value,
+                                               frames: Int(parameter.rampDurationSampleFrames))
                 default:
                     break
                 }

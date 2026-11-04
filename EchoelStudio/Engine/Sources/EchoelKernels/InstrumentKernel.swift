@@ -45,11 +45,16 @@ public protocol InstrumentKernel: AnyObject, Sendable {
     func setParameter(_ address: Int, _ value: Float)
     func parameter(_ address: Int) -> Float
     func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8)
+    /// Render thread: a host's parameter ramp — `address` reaches `value` over the next `frames`
+    /// frames. A kernel that cannot glide takes the value at once (the default).
+    func rampParameter(_ address: Int, to value: Float, frames: Int)
     /// Overwrites `frames` of `left` and `right`; `gain` scales the output (the demo lock).
     func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, gain: Float)
 }
 
 extension InstrumentKernel {
+    public func rampParameter(_ address: Int, to value: Float, frames: Int) { setParameter(address, value) }
+
     /// Render thread: one MIDI 1.0 channel message as a host delivers it, `length` bytes. Channel
     /// pressure and program change are two bytes long; they used to be dropped with every message
     /// shorter than three, and a system message (status 0xF0 and up) is not a channel message.
