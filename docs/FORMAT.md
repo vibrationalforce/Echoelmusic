@@ -161,6 +161,10 @@ track stays silent and names it.
 
 **Insert:** `{id, plugin, state, isBypassed}` — an effect (a plugin component of an effect type)
 on a track or the master, in signal order; `state` optional, as `pluginState`. At most 8 in one place.
+For Echoel's own standard effects the state is a property list that may carry, since 2026-11-04,
+`echoel.values`: an array of `[identifier, number]` pairs in parameter order (the identifiers of
+`EffectKernel.parameters`, never renamed). The master suggestion writes only these; a state with
+both these and the unit's own snapshot plays these. A state without them opens as before.
 
 **Media file:** `{id, name, path, frameCount, sampleRate}` plus, for a video only, `kind`:
 `"video"` (absent is an audio file; a kind a reader does not know refuses the song) — `path`

@@ -1235,6 +1235,90 @@ final class DocumentController {
         return folder
     }
 
+    /// What the Mix Analysis measured: the mix as the master's effects receive it, each stem's
+    /// octave bands, and where two stems share their strongest octave.
+    struct MixReport: Sendable {
+        let mix: MixAnalysis
+        let stemNames: [String]
+        let hints: [MaskingHint]
+        /// Plugins that could not load; the analysis was made without them.
+        let missing: [String]
+        /// Which song it measured (`songsOpened`), so a result never lands on another song.
+        let song: Int
+    }
+
+    /// Measures the open song offline (`MixAnalyzer`): the mix WITHOUT the master's effects — a
+    /// suggestion replaces them — and every stem on its own, at the mix's length. Nothing is
+    /// written to disk. Nil when another song opened meanwhile, an export runs, or nothing plays.
+    func analyzeMix(plugins: PluginHost) async -> MixReport? {
+        guard !isExporting else { return nil }
+        isExporting = true
+        defer {
+            isExporting = false
+            exportProgress = nil
+        }
+        let rate = 48_000.0
+        let song = songsOpened
+        await mediaLoaded(for: song)
+        guard song == songsOpened else { return nil }
+        plugins.store(into: store)
+        let project = store.project
+        let buffers = samples
+        let stems = OfflineRender.stems(of: project, samples: buffers)
+        guard !stems.isEmpty else { return nil }
+        exportProgress = "Measuring the mix…"
+        let mixUnits = await plugins.offlineUnits(for: project, sampleRate: rate)
+        guard song == songsOpened else { return nil }
+        let measured: (analysis: MixAnalysis, frames: Int) = await Task.detached(priority: .userInitiated) {
+            var analyzer = MixAnalyzer(sampleRate: rate)
+            let frames = OfflineRender.render(project, sampleRate: rate, samples: buffers, units: mixUnits.units,
+                                              effects: mixUnits.chains.mapValues { $0 as [any HostedProcessor] }) { left, right, count in
+                analyzer.process(left: left, right: right, count: count)
+            }.frameCount
+            return (analyzer.analysis, frames)
+        }.value
+        guard song == songsOpened, measured.frames > 0 else { return nil }
+        var missing = mixUnits.missing
+        var levels: [[Double]] = []
+        for (index, stem) in stems.enumerated() {
+            exportProgress = "Measuring stem \(index + 1) of \(stems.count)…"
+            let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
+            guard song == songsOpened else { return nil }
+            for plugin in offline.missing where !missing.contains(plugin) { missing.append(plugin) }
+            let frames = measured.frames
+            let bands: [Double] = await Task.detached(priority: .userInitiated) {
+                var analyzer = MixAnalyzer(sampleRate: rate, bandsOnly: true)
+                _ = OfflineRender.render(project, sampleRate: rate, samples: buffers, units: offline.units,
+                                         effects: offline.chains.mapValues { $0 as [any HostedProcessor] },
+                                         isolating: stem.track, frameCount: frames) { left, right, count in
+                    analyzer.process(left: left, right: right, count: count)
+                }
+                return analyzer.analysis.bandLevels
+            }.value
+            levels.append(bands)
+        }
+        guard song == songsOpened else { return nil }
+        return MixReport(mix: measured.analysis, stemNames: stems.map { project.track($0.track)?.name ?? $0.name },
+                         hints: MaskingHint.find(stems: levels), missing: missing, song: song)
+    }
+
+    /// Puts `suggestion` on the master in place of its effects, as ONE undo step — only on the
+    /// song it was measured on. False when the song changed or the store refused it.
+    @discardableResult
+    func apply(_ suggestion: MasterSuggestion, measuredOn song: Int) -> Bool {
+        guard song == songsOpened else {
+            lastError = "The suggestion was measured on another song. Analyse this one first."
+            return false
+        }
+        do {
+            try store.perform(suggestion.commands(for: store.project), title: MasterSuggestion.actionTitle)
+            return true
+        } catch {
+            lastError = "Could not apply the master suggestion: \(error.localizedDescription)"
+            return false
+        }
+    }
+
     /// One stem into `url`, block by block, at `frameCount` frames. Off the main thread; a file
     /// that fails half-written is left for the caller, which removes the whole folder.
     private nonisolated static func writeStem(_ project: Project, isolating track: TrackID, frameCount: Int,
