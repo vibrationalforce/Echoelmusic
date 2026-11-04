@@ -81,6 +81,8 @@ public final class EngineCore: @unchecked Sendable {
     private let builtInCount: Int
     /// Per slot, its kernel that takes a sample, found once in `init`.
     private let sampleTargets: UnsafeMutablePointer<(any SampleAssigningKernel)?>
+    /// Per slot, its kernel that takes a wavetable (the synth), found once in `init`.
+    private let tableTargets: UnsafeMutablePointer<(any WavetableAssigningKernel)?>
     private let devices: UnsafeMutablePointer<InstrumentDevice>
     /// Per slot, its device's place in `InstrumentDevice.builtIn` (−1: a plugin or an instrument
     /// from a later build), set together with `devices`.
@@ -270,14 +272,18 @@ public final class EngineCore: @unchecked Sendable {
         builtInCount = builtIn.count
         kernels = .allocate(capacity: self.slotCapacity * builtIn.count)
         sampleTargets = .allocate(capacity: self.slotCapacity)
+        tableTargets = .allocate(capacity: self.slotCapacity)
         for slot in 0..<self.slotCapacity {
             var target: (any SampleAssigningKernel)?
+            var table: (any WavetableAssigningKernel)?
             for (index, device) in builtIn.enumerated() {
                 let made = BuiltInKernels.kernel(for: device, sampleRate: rate, maximumFrames: Self.maximumFrames)
                 if target == nil, let taking = made as? any SampleAssigningKernel { target = taking }
+                if table == nil, let taking = made as? any WavetableAssigningKernel { table = taking }
                 (kernels + slot * builtIn.count + index).initialize(to: made)
             }
             (sampleTargets + slot).initialize(to: target)
+            (tableTargets + slot).initialize(to: table)
         }
         devices = .allocate(capacity: self.slotCapacity)
         devices.initialize(repeating: .synth, count: self.slotCapacity)
@@ -361,6 +367,8 @@ public final class EngineCore: @unchecked Sendable {
         kernels.deallocate()
         sampleTargets.deinitialize(count: slotCapacity)
         sampleTargets.deallocate()
+        tableTargets.deinitialize(count: slotCapacity)
+        tableTargets.deallocate()
         devices.deallocate()
         deviceIndices.deallocate()
         owners.deinitialize(count: slotCapacity)
@@ -1176,6 +1184,16 @@ public final class EngineCore: @unchecked Sendable {
                 break
             }
             sampleTargets[slot]?.assign(sample)
+        }
+        // And every synth at this snapshot's wavetable or the factory shapes, before the
+        // acknowledgement for the same reason: the previous snapshot holds the bank let go of.
+        for slot in 0..<slotCapacity {
+            var table: WavetableBank?
+            for lane in snapshot.lanes where lane.slot == slot {
+                table = lane.wavetable
+                break
+            }
+            tableTargets[slot]?.assignWavetable(table)
         }
         // Every built-in kernel plays the song's tuning from its next note on: a value compare when
         // nothing changed, sixteen floats when it did. The drum kit takes it and ignores it.

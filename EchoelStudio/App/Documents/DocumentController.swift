@@ -1292,6 +1292,7 @@ final class DocumentController {
             var media = track.regions.map(\.media)
             media += track.clips.filter { placed.contains($0.id) }.compactMap { $0.audio?.media }
             if track.instrument.device == .sampler, let sample = track.instrument.sample { media.append(sample) }
+            if let table = track.instrument.heardWavetable { media.append(table) }
             return media
         })
         var unheard = UnheardAudio()
@@ -1496,6 +1497,18 @@ final class DocumentController {
     func importAudio(_ source: URL, onto track: TrackID) async {
         guard let imported = await importMedia(source, placing: { file in
             [.addMedia(file), .setInstrumentDevice(track, .sampler), .setInstrumentSample(track, file.id)]
+        }) else { return }
+        perform(imported.commands, title: "Import \(imported.file.name)")
+        dropBufferUnlessHeld(imported.file.id)
+    }
+
+    /// Copies an audio file into the song and cuts the synth's wavetable from it — the track's
+    /// synth on its Wavetable engine — one undo step.
+    func importWavetable(_ source: URL, onto track: TrackID) async {
+        guard let imported = await importMedia(source, placing: { file in
+            [.addMedia(file), .setInstrumentDevice(track, .synth),
+             .setInstrumentWavetable(track, WavetableSource(media: file.id, frames: WavetableSource.frames(for: file))),
+             .setInstrumentParameter(track, key: SynthParameter.engine.key.rawValue, value: Double(WavetableSource.engineIndex))]
         }) else { return }
         perform(imported.commands, title: "Import \(imported.file.name)")
         dropBufferUnlessHeld(imported.file.id)

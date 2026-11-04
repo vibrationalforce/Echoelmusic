@@ -115,11 +115,12 @@ public enum OfflineRender {
         core.setClickEnabled(false)
         var slots = SlotAssigner(capacity: core.slotCapacity)
         slots.update(for: project)
-        // Every warped region's stretch, ready before the first block: the export plays what the
-        // song plays once its stretches are in (AUD-2).
+        // Every warped region's stretch and every synth's wavetable, ready before the first block:
+        // the export plays what the song plays once its stretches and tables are in (AUD-2).
         let snapshot = EngineSnapshot(plan: plan, project: project, slots: slots.slots, sampleRate: rate, generation: 1,
                                       samples: samples, units: units, effects: effects, masterEffects: masterEffects,
-                                      isolating: isolating, warped: RegionWarp.prepare(project, samples: samples))
+                                      isolating: isolating, warped: RegionWarp.prepare(project, samples: samples),
+                                      wavetables: Wavetables.prepare(project, samples: samples))
         guard frameCount != nil || plan.songEnd > 0 || snapshot.audioEnd > 0 else {
             return Summary(frameCount: 0, sampleRate: rate, peak: 0)
         }

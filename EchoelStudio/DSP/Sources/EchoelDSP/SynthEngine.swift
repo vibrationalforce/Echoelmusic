@@ -17,6 +17,9 @@ public enum SynthEngine: String, CaseIterable, Codable, Sendable {
     /// A plucked string, Karplus-Strong (A6): `character` its brightness, the patch's Decay how
     /// long it rings (`PluckSource`).
     case pluck
+    /// A wavetable (the user's own sample cut into cycles, or the factory shapes): `character` the
+    /// position across its cycles (`WavetableBank`).
+    case wavetable
 
     /// A gain inside the voice, so the same patch sounds about as loud on every engine. Without it
     /// a preset jumped by up to 16 LU when only its engine changed ("Sub Bass": FM −26.4, Sub
@@ -45,6 +48,8 @@ public enum SynthEngine: String, CaseIterable, Codable, Sendable {
         // stands where the mallet's strike does (−5.8 dBFS on the reference chord, 2026-11-04;
         // −10.8 before), not further — its integrated −24.9 LUFS then is a string dying away.
         case .pluck: 1.778     // +5.0 dB
+        // Measured like the held engines, on the factory shapes (−13.9 LUFS before, 2026-11-04).
+        case .wavetable: 0.708 // −3.0 dB
         }
     }
 }
@@ -190,6 +195,8 @@ struct EngineSource: Sendable {
     private var choir = ChoirSource()
     /// The plucked string's loop; its delay line is allocated here, once.
     private var pluck: PluckSource
+    /// Where the wavetable engine is in its cycle, 0 ..< 1.
+    private var tablePhase: Float = 0
 
     init(sampleRate: Float) {
         pluck = PluckSource(sampleRate: sampleRate)
@@ -207,6 +214,7 @@ struct EngineSource: Sendable {
         ddsp.reset()
         choir.reset()
         pluck.reset()
+        tablePhase = 0
     }
 
     /// How long the plucked string rings, from the patch's Decay and Sustain. Before each render.
@@ -233,7 +241,8 @@ struct EngineSource: Sendable {
 
     /// One sample. `main` is the voice's own oscillator; `dt` its increment this sample.
     @inline(__always)
-    mutating func next(_ engine: SynthEngine, character: Float, main: inout Oscillator, dt: Float) -> Float {
+    mutating func next(_ engine: SynthEngine, character: Float, main: inout Oscillator, dt: Float,
+                       table: WavetableView) -> Float {
         guard dt.isFinite, dt > 0, dt < 0.5 else { return 0 }
         let c = character.isFinite ? Swift.min(Swift.max(character, 0), 1) : 0.5
         switch engine {
@@ -287,6 +296,11 @@ struct EngineSource: Sendable {
             return choir.next(character: c, dt: dt)
         case .pluck:
             return pluck.next(character: c, dt: dt)
+        case .wavetable:
+            let out = table.sample(position: c, phase: tablePhase, dt: dt)
+            tablePhase += dt
+            if tablePhase >= 1 { tablePhase -= 1 }
+            return out
         }
     }
 }

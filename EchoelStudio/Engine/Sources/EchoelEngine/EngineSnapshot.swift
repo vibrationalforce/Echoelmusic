@@ -28,6 +28,9 @@ public struct EngineSnapshot: Sendable {
         public let sample: SampleBuffer?
         /// The loaded Audio Unit a plugin lane plays, held like the sample.
         public let unit: (any HostedInstrument)?
+        /// The wavetable the synth plays, cut from the track's file (`Wavetables`), held like the
+        /// sample; nil plays the factory shapes.
+        public var wavetable: WavetableBank? = nil
         /// The track's insert effects, in order, held like the unit.
         public let inserts: [any HostedProcessor]
         public let sends: [SendTap]
@@ -276,7 +279,8 @@ public struct EngineSnapshot: Sendable {
                 effects: [TrackID: [any HostedProcessor]] = [:], outputChannels: Int = 2,
                 revisions: [TrackID: UInt64] = [:], monitoring: [TrackID: Int] = [:],
                 masterEffects: [any HostedProcessor] = [], isolating: TrackID? = nil,
-                modulation: ModulationInputs? = nil, warped: [RegionWarp.Key: SampleBuffer] = [:]) {
+                modulation: ModulationInputs? = nil, warped: [RegionWarp.Key: SampleBuffer] = [:],
+                wavetables: [WavetableSource: WavetableBank] = [:]) {
         /// Whether a track's own output reaches the mix in this render.
         let heard = { (track: TrackID) in isolating == nil || isolating == track }
         let inserts = { (track: TrackID) in (effects[track] ?? []).filter { $0.sampleRate == sampleRate } }
@@ -401,6 +405,8 @@ public struct EngineSnapshot: Sendable {
                         clips: events.clips, eventsRevision: revisions[events.track] ?? generation,
                         mix: outward ? moving(track, output < 0) : nil, patchLanes: patchLanes, patchRoutes: patchRoutes)
             lane.arpeggio = track.playingArpeggio.map(ArpSettings.init)
+            // Whatever engine plays: switching to the wavetable mid-song finds its table there.
+            if device == .synth { lane.wavetable = track.instrument.wavetable.flatMap { wavetables[$0] } }
             return lane
         }
         lanes = compiled

@@ -82,6 +82,10 @@ final class AudioEngine {
     /// thread (`RegionWarp`), and the ones being made (AUD-2).
     @ObservationIgnored private var warped: [RegionWarp.Key: SampleBuffer] = [:]
     @ObservationIgnored private var warping: Set<RegionWarp.Key> = []
+    /// Every synth's wavetable the song cuts from its files, made off the main actor and off the
+    /// render thread (`Wavetables`), and the ones being made.
+    @ObservationIgnored private var tables: [WavetableSource: WavetableBank] = [:]
+    @ObservationIgnored private var cutting: Set<WavetableSource> = []
     @ObservationIgnored private var clickEnabled = true
     @ObservationIgnored private var configurationObserver: NSObjectProtocol?
     @ObservationIgnored private var interruptionObserver: NSObjectProtocol?
@@ -1309,7 +1313,8 @@ final class AudioEngine {
                                       effects: plugins.chains.mapValues { $0 as [any HostedProcessor] },
                                       outputChannels: outputChannels, revisions: revisions.update(for: plan),
                                       monitoring: monitoring(in: project), masterEffects: plugins.masterChain,
-                                      modulation: modulation, warped: stretches(for: project))
+                                      modulation: modulation, warped: stretches(for: project),
+                                      wavetables: wavetables(for: project))
         meterIndices = core.meterIndices(for: snapshot)
         core.publish(snapshot)
         let songEnd = Swift.max(plan.songEnd, snapshot.time.tick(atSample: snapshot.audioEnd))
@@ -1333,6 +1338,30 @@ final class AudioEngine {
             }
         }
         return warped
+    }
+
+    /// The wavetables the song's synths need that are ready, starting the ones that are not: each
+    /// is cut in a detached task, and the song is sent again when it is in. Until then the synth
+    /// plays the factory shapes. Tables no synth needs any more go.
+    private func wavetables(for project: Project) -> [WavetableSource: WavetableBank] {
+        let pending = Wavetables.pending(in: project, samples: samples)
+        let needed = Set(pending.map(\.0))
+        tables = tables.filter { needed.contains($0.key) }
+        for (source, buffer) in pending where tables[source] == nil && !cutting.contains(source) {
+            cutting.insert(source)
+            Task.detached(priority: .userInitiated) { [weak self] in
+                let bank = Wavetables.build(source, from: buffer)
+                await self?.storeTable(bank, for: source)
+            }
+        }
+        return tables
+    }
+
+    private func storeTable(_ bank: WavetableBank?, for source: WavetableSource) {
+        cutting.remove(source)
+        guard let bank else { return }
+        tables[source] = bank
+        if bridgeTask == nil, let heard { send(heard) }
     }
 
     private func storeStretch(_ stretched: SampleBuffer?, for key: RegionWarp.Key) {

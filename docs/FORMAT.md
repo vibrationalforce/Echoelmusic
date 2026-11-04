@@ -125,7 +125,15 @@ key → number, e.g. `synth.cutoff`: the synth's `synth.*`, the drums' `drums.le
 `sampler.release` (seconds), `sampler.level` (0 … 1) and `sampler.mode` (0 gate, 1 one-shot); a key
 absent plays its default, and every device's values are kept whichever device plays), optional
 `sample` (a media id), `plugin` (a plugin component) and `pluginState` (the plugin's own saved
-state, base64, at most 8 MiB).
+state, base64, at most 8 MiB), and — added inside format 4, 2026-11-04 — `wavetable`
+(`{media, frames}`: the audio file the synth's Wavetable engine is cut from and the number of
+single cycles, 2 … 64, spread across it; absent plays the built-in shapes; a file the song lacks
+or a count outside the range refuses the song). How a file becomes cycles (a pitch estimate,
+zero crossings, band limits) is the player's and is not stored; the count is, so a position
+finds the same cycle in every build. `synth.engine` stores the index of the synth's engine:
+0 Classic, 1 Supersaw, 2 FM, 3 Sub, 4 Morph, 5 Mallet, 6 DDSP, 7 Choir, 8 Pluck, 9 Wavetable — a
+new engine goes at the end; a build that predates an engine reads its index as out of range and
+refuses the song, as for any value outside a parameter's range.
 
 **Plugin component:** `{type, subtype, manufacturer, name, manufacturerName}` — an Audio Unit by
 the three codes the system finds it by, each the four ASCII characters as one big-endian integer
