@@ -124,7 +124,7 @@ final class RandomizeIsUndoableTests: XCTestCase {
         // "shaping" while the guard stayed green. A skip on ambiguity says so instead.
         let labels = source.filter { $0.contains(".accessibilityLabel(") && $0.contains("Undo") }
         guard labels.count == 1, let label = labels.first else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 Expected exactly one accessibility label mentioning "Undo" in EchoelStudioView, \
                 found \(labels.count). This guard reads the sound-panel arrow by that \
                 description alone; with none it has nothing to check, and with several it cannot \
@@ -155,7 +155,7 @@ final class RandomizeIsUndoableTests: XCTestCase {
     /// contains none.
     private func window(_ source: [String], from declaration: String) throws -> ArraySlice<String> {
         guard let start = source.firstIndex(where: { $0.contains(declaration) }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` is gone from EchoelStudioView — if the Sound panel was \
                 restructured this test should be rewritten with it, not left to pass vacuously
                 """)
@@ -165,7 +165,7 @@ final class RandomizeIsUndoableTests: XCTestCase {
         guard let end = source[start...].dropFirst().firstIndex(where: {
             $0.hasPrefix(closer) && $0.trimmingCharacters(in: .whitespaces) == "}"
         }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` has no closing brace at its own indentation — the file was \
                 reformatted or the member restructured, and reading on would inspect the wrong \
                 lines. Rewrite this guard with the new shape rather than letting it report on a \

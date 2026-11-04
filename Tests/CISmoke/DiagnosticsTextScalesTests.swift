@@ -151,7 +151,7 @@ final class DiagnosticsTextScalesTests: XCTestCase {
     /// The single text-style font spelling at a site, trimmed — for comparing the two sites.
     private func fontSpelling(_ lines: [String], where site: String) throws -> String {
         guard let line = lines.first(where: { $0.contains(".font(.system(.") }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 no text-style font found in \(site) — the other tests in this file report that \
                 properly; comparing the two sites would only add a confusing second failure
                 """)
@@ -176,7 +176,7 @@ final class DiagnosticsTextScalesTests: XCTestCase {
     private func window(_ source: [String], from declaration: String,
                         file: String) throws -> ArraySlice<String> {
         guard let start = source.firstIndex(where: { $0.contains(declaration) }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` is gone from \(file) — if the diagnostics sheet was \
                 restructured this test should be rewritten with it, not left to pass vacuously
                 """)
@@ -186,7 +186,7 @@ final class DiagnosticsTextScalesTests: XCTestCase {
         guard let end = source[start...].dropFirst().firstIndex(where: {
             $0.hasPrefix(closer) && $0.trimmingCharacters(in: .whitespaces) == "}"
         }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` in \(file) has no closing brace at its own indentation — the \
                 file was reformatted or the member restructured, and reading on would inspect \
                 the wrong lines

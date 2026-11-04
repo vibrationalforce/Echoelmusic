@@ -271,7 +271,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         let data = try Data(contentsOf: url)
         guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let strings = object["strings"] as? [String: Any] else {
-            throw XCTSkip("Localizable.xcstrings is not the JSON shape this guard reads — re-anchor (#454)")
+            throw failedAnchor("Localizable.xcstrings is not the JSON shape this guard reads — re-anchor (#454)")
         }
         return strings
     }
@@ -443,7 +443,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         let code = try codeOnly("Sources/Echoelmusic/Bio/PulseCue.swift")
         guard let start = code.range(of: "public var fullHint: String {"),
               let end = code.range(of: "public var isActionable: Bool {", range: start.upperBound..<code.endIndex) else {
-            throw XCTSkip("PulseCue.fullHint / isActionable anchors moved — re-anchor (#454)")
+            throw failedAnchor("PulseCue.fullHint / isActionable anchors moved — re-anchor (#454)")
         }
         let switches = String(code[start.lowerBound..<end.lowerBound])
         // `: "` also opens every `String(localized: "…")`, so that one label is excluded by lookbehind
@@ -3690,7 +3690,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             throw XCTSkip("docs/dev/GLOSSARY.md has no `| piece |` row — re-anchor (#454)")
         }
         let cells = row.split(separator: "|").map { $0.trimmingCharacters(in: .whitespaces) }
-        guard cells.count >= 2 else { throw XCTSkip("glossary row shape changed (#454)") }
+        guard cells.count >= 2 else { throw failedAnchor("glossary row shape changed (#454)") }
         let word = cells[0].lowercased()
         XCTAssertEqual(word, "piece", "the glossary's first column is the English chrome word")
         let strings = try catalogStrings()
