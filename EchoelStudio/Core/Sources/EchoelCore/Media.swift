@@ -193,7 +193,11 @@ extension Project {
         let samples: [MediaID] = tracks.compactMap { (track: Track) -> MediaID? in
             track.instrument.device == .sampler ? track.instrument.sample : nil
         }
-        return played + samples
+        // The file a synth's wavetable is cut from, while that engine plays.
+        let tables: [MediaID] = tracks.compactMap { (track: Track) -> MediaID? in
+            track.kind == .instrument ? track.instrument.heardWavetable : nil
+        }
+        return played + samples + tables
     }
 
     /// Of the decoded files in `loaded`, the ones nothing in the song plays — a sample kept for a

@@ -31,6 +31,8 @@ public enum Command: Codable, Equatable, Sendable {
     case loadInstrumentPreset(TrackID, name: String)
     case setInstrumentDevice(TrackID, InstrumentDevice)
     case setInstrumentSample(TrackID, MediaID?)
+    /// The audio file the synth's wavetable engine is cut from, or nil for the factory shapes.
+    case setInstrumentWavetable(TrackID, WavetableSource?)
     case setInstrumentPlugin(TrackID, PluginComponent?)
     case setPluginState(TrackID, Data?)
 
@@ -383,6 +385,23 @@ extension Command {
             }
             project.tracks[t].instrument.sample = media
 
+        case let .setInstrumentWavetable(id, source):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].kind == .instrument else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
+            }
+            if let source {
+                guard let file = project.mediaFile(source.media) else { throw CommandError.unknownMedia(source.media) }
+                guard file.kind == .audio else {
+                    throw CommandError.invalidValue(parameter: "media", reason: "a wavetable is cut from an audio file, not a video")
+                }
+                guard WavetableSource.frameRange.contains(source.frames) else {
+                    throw CommandError.invalidValue(parameter: "frames",
+                                                    reason: "must be within \(WavetableSource.frameRange.lowerBound)…\(WavetableSource.frameRange.upperBound)")
+                }
+            }
+            project.tracks[t].instrument.wavetable = source
+
         case let .setInstrumentPlugin(id, component):
             let t = try project.requireTrack(id)
             guard project.tracks[t].kind == .instrument else {
@@ -521,6 +540,7 @@ extension Command {
             // Nothing may point at a file the song no longer has.
             for t in project.tracks.indices {
                 if project.tracks[t].instrument.sample == id { project.tracks[t].instrument.sample = nil }
+                if project.tracks[t].instrument.wavetable?.media == id { project.tracks[t].instrument.wavetable = nil }
                 project.tracks[t].regions.removeAll { $0.media == id }
                 let gone = Set(project.tracks[t].clips.filter { $0.audio?.media == id }.map(\.id))
                 project.tracks[t].clips.removeAll { gone.contains($0.id) }

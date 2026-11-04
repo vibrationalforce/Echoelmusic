@@ -54,6 +54,7 @@ extension Command {
         case splitPlacement, consolidatePlacements, consolidateRegions
         case setRegionFades, setRegionGain, setRegionWarp
         case addScene, removeScene, renameScene, setSlot
+        case setInstrumentWavetable
     }
 
     public var kind: Kind {
@@ -80,6 +81,7 @@ extension Command {
         case .loadInstrumentPreset: .loadInstrumentPreset
         case .setInstrumentDevice: .setInstrumentDevice
         case .setInstrumentSample: .setInstrumentSample
+        case .setInstrumentWavetable: .setInstrumentWavetable
         case .setInstrumentPlugin: .setInstrumentPlugin
         case .setPluginState: .setPluginState
         case .addInsert: .addInsert
@@ -248,6 +250,12 @@ public enum CommandCatalog {
                                summary: "Sets the audio file the sampler of an instrument track plays, or clears it.",
                                parameters: [P("track", .trackID, "An instrument track."),
                                             P("media", .mediaID, "A file in the song's media, or null to clear.")])
+        case .setInstrumentWavetable:
+            return CommandSpec(name: "instrument.wavetable", title: "Choose Wavetable",
+                               summary: "Sets the audio file the synth's Wavetable engine is cut from, and into how many cycles, or clears it to play the built-in shapes.",
+                               parameters: [P("track", .trackID, "An instrument track."),
+                                            P("media", .mediaID, "A file in the song's media, or null to clear."),
+                                            P("frames", .integer, "Cycles to cut, 2 … 64.", optional: true)])
         case .setInstrumentPlugin:
             return CommandSpec(name: "instrument.plugin", title: "Choose Plugin",
                                summary: "Plays an instrument track through an installed Audio Unit instrument, or clears it and returns to the synth.",

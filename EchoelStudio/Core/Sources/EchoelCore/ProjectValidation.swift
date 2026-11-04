@@ -232,6 +232,13 @@ extension Project {
             guard let file = mediaFile(sample) else { throw CommandError.unknownMedia(sample) }
             guard file.kind == .audio else { throw Self.invalid("instrument", "a sampler plays an audio file") }
         }
+        if let wavetable = instrument.wavetable {
+            guard let file = mediaFile(wavetable.media) else { throw CommandError.unknownMedia(wavetable.media) }
+            guard file.kind == .audio else { throw Self.invalid("instrument", "a wavetable is cut from an audio file") }
+            guard WavetableSource.frameRange.contains(wavetable.frames) else {
+                throw Self.invalid("instrument", "a wavetable's cycles are outside \(WavetableSource.frameRange)")
+            }
+        }
         if instrument.device == .plugin, instrument.plugin == nil { throw Self.invalid("instrument", "plays a plugin it does not name") }
         if let state = instrument.pluginState, state.count > PluginComponent.maximumStateBytes {
             throw Self.invalid("pluginState", "larger than \(PluginComponent.maximumStateBytes) bytes")

@@ -412,6 +412,37 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with a synth that cuts its wavetable from a file of the song (2026-11-04): an
+    /// optional instrument field added inside format 4, so an earlier format-4 build opens the file
+    /// and its synth plays the engine it knows.
+    private let formatFourWavetable = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Table",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "media": [
+        { "id": "3ED10000-0000-4000-8000-000000000006", "name": "Voice",
+          "path": "Media/3ED10000-0000-4000-8000-000000000006.wav", "frameCount": 96000, "sampleRate": 48000 }
+      ],
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-00000000000E",
+          "name": "Table",
+          "kind": "instrument",
+          "colorIndex": 3,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "instrument": { "device": "synth", "preset": "Init", "values": { "synth.engine": 9, "synth.character": 0.4 },
+                          "wavetable": { "media": "3ED10000-0000-4000-8000-000000000006", "frames": 24 } }
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     private let pad = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000004") ?? UUID())
     private let room = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000005") ?? UUID())
 
@@ -752,6 +783,32 @@ final class FormatGoldenTests: XCTestCase {
                 XCTAssertNil(track["arpeggio"], "a track without an arpeggiator writes no key")
             }
         }
+    }
+
+    func testASynthOpensWithItsWavetable() throws {
+        let project = try ProjectCodec.decode(formatFourWavetable)
+        let instrument = try XCTUnwrap(project.tracks.first?.instrument)
+        let media = try XCTUnwrap(project.media.first?.id)
+        XCTAssertEqual(instrument.wavetable, WavetableSource(media: media, frames: 24))
+        XCTAssertEqual(instrument.heardWavetable, media)
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let stored = try XCTUnwrap((root["tracks"] as? [[String: Any]])?.first?["instrument"] as? [String: Any])
+        XCTAssertEqual(Set(stored.keys), ["device", "preset", "values", "wavetable"])
+        for data in [earliest, current, formatTwo, formatTwoMedia, formatThree, formatFour] {
+            for track in try ProjectCodec.decode(data).tracks {
+                XCTAssertNil(track.instrument.wavetable, "an older synth plays the shapes it knows")
+            }
+        }
+        // A wavetable naming a file the song lacks, or too many cycles, refuses the song.
+        let missing = String(decoding: formatFourWavetable, as: UTF8.self)
+            .replacingOccurrences(of: "\"media\": \"3ED10000-0000-4000-8000-000000000006\", \"frames\"",
+                                  with: "\"media\": \"3ED10000-0000-4000-8000-0000000000FF\", \"frames\"")
+        XCTAssertNotEqual(Data(missing.utf8), formatFourWavetable, "the replacement must land")
+        XCTAssertThrowsError(try ProjectCodec.decode(Data(missing.utf8)))
+        let many = String(decoding: formatFourWavetable, as: UTF8.self).replacingOccurrences(of: "\"frames\": 24", with: "\"frames\": 65")
+        XCTAssertNotEqual(Data(many.utf8), formatFourWavetable, "the replacement must land")
+        XCTAssertThrowsError(try ProjectCodec.decode(Data(many.utf8)))
     }
 
     func testAnOlderSongOpensWithNoVideo() throws {

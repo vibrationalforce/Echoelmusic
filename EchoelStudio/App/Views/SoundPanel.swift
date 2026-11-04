@@ -18,6 +18,9 @@ struct SoundPanel: View {
     let track: Track
 
     @State private var isPickingFile = false
+    /// What the one file picker fills: the sampler's sample, or the synth's wavetable. Both go
+    /// through the same presentation, the sheet's only one of its own.
+    @State private var pickingWavetable = false
 
     @ScaledMetric(relativeTo: .body) private var columnWidth: CGFloat = 150
 
@@ -62,7 +65,11 @@ struct SoundPanel: View {
         .fileImporter(isPresented: $isPickingFile, allowedContentTypes: [.audio]) { result in
             guard case .success(let url) = result else { return }
             let target = track.id
-            Task { await documents.importAudio(url, onto: target) }
+            if pickingWavetable {
+                Task { await documents.importWavetable(url, onto: target) }
+            } else {
+                Task { await documents.importAudio(url, onto: target) }
+            }
         }
     }
 
@@ -135,6 +142,7 @@ struct SoundPanel: View {
 
         HStack(spacing: Theme.Space.s) {
             Button {
+                pickingWavetable = false
                 isPickingFile = true
             } label: {
                 Label(documents.isImporting ? "Importing…" : "Import Audio File…", systemImage: "square.and.arrow.down")
@@ -204,7 +212,10 @@ struct SoundPanel: View {
         }
         .accessibilityLabel("Preset \(track.instrument.preset)\(track.instrument.isEditedFromPreset ? ", edited" : "")")
 
-        choicePicker(.engine)
+        choicePicker(.engine, style: .menu)
+        if Int(track.instrument.value(.engine).rounded()) == WavetableSource.engineIndex {
+            wavetableControls
+        }
         choicePicker(.waveform)
         choicePicker(.filter)
 
@@ -216,10 +227,64 @@ struct SoundPanel: View {
         }
     }
 
+    /// The file the Wavetable engine is cut from: its name, a new file, one of the song's, or the
+    /// built-in shapes. Character scans the cycles.
+    @ViewBuilder private var wavetableControls: some View {
+        let source = track.instrument.wavetable
+        let loaded = source.flatMap { store.project.mediaFile($0.media) }
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            Text(loaded?.name ?? "Built-in Shapes")
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.Color.text)
+                .lineLimit(2)
+            Text(source.map { "\($0.frames) cycles cut from the file. Character moves through them." }
+                 ?? "Eight shapes from sine to formant. Character moves through them.")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+        }
+        .accessibilityElement(children: .combine)
+        wavetableButtons(selected: source?.media)
+    }
+
+    private func wavetableButtons(selected: MediaID?) -> some View {
+        HStack(spacing: Theme.Space.s) {
+            Button {
+                pickingWavetable = true
+                isPickingFile = true
+            } label: {
+                Label(documents.isImporting ? "Importing…" : "Wavetable from File…", systemImage: "square.and.arrow.down")
+                    .font(Theme.Font.label)
+                    .frame(minHeight: Theme.Size.touch)
+            }
+            .disabled(documents.isImporting)
+            Menu {
+                Button {
+                    try? store.perform(.setInstrumentWavetable(track.id, nil))
+                } label: {
+                    if selected == nil { Label("Built-in Shapes", systemImage: "checkmark") } else { Text("Built-in Shapes") }
+                }
+                ForEach(store.project.media.filter { $0.kind == .audio }) { file in
+                    Button {
+                        try? store.perform(.setInstrumentWavetable(track.id,
+                                                                   WavetableSource(media: file.id, frames: WavetableSource.frames(for: file))))
+                    } label: {
+                        if file.id == selected { Label(file.name, systemImage: "checkmark") } else { Text(file.name) }
+                    }
+                }
+            } label: {
+                Label("Song Files", systemImage: "waveform")
+                    .font(Theme.Font.label)
+                    .frame(minHeight: Theme.Size.touch)
+            }
+        }
+    }
+
     /// A named choice of the instrument (the synth's waveform, the sampler's gate or one-shot).
     /// Through the writer like every other control, so a choice made while automation writing is
     /// armed and the song plays lands in its lane instead of being overridden by it.
-    private func choicePicker(_ parameter: InstrumentParameter) -> some View {
+    private enum ChoiceStyle { case segmented, menu }
+
+    private func choicePicker(_ parameter: InstrumentParameter, style: ChoiceStyle = .segmented) -> some View {
         let address = ParameterAddress(.track(track.id), parameter.key)
         let current = Int(track.instrument.value(parameter).rounded())
         let writing = writer.isWriting && engine.isPlaying
@@ -233,7 +298,21 @@ struct SoundPanel: View {
         )) {
             ForEach(parameter.choices.indices, id: \.self) { Text(parameter.choices[$0]).tag($0) }
         }
-        .pickerStyle(.segmented)
+        .modifier(ChoiceStyleModifier(menu: style == .menu))
         .accessibilityLabel(parameter.title)
+    }
+}
+
+/// Ten engines do not fit a segmented row on a phone: the engine is a menu, the short choices stay
+/// segmented.
+private struct ChoiceStyleModifier: ViewModifier {
+    let menu: Bool
+
+    func body(content: Content) -> some View {
+        if menu {
+            content.pickerStyle(.menu)
+        } else {
+            content.pickerStyle(.segmented)
+        }
     }
 }

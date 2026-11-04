@@ -132,7 +132,15 @@ key → number, e.g. `synth.cutoff`: the synth's `synth.*`, the drums' `drums.le
 `sampler.release` (seconds), `sampler.level` (0 … 1) and `sampler.mode` (0 gate, 1 one-shot); a key
 absent plays its default, and every device's values are kept whichever device plays), optional
 `sample` (a media id), `plugin` (a plugin component) and `pluginState` (the plugin's own saved
-state, base64, at most 8 MiB).
+state, base64, at most 8 MiB), and — added inside format 4, 2026-11-04 — `wavetable`
+(`{media, frames}`: the audio file the synth's Wavetable engine is cut from and the number of
+single cycles, 2 … 64, spread across it; absent plays the built-in shapes; a file the song lacks
+or a count outside the range refuses the song). How a file becomes cycles (a pitch estimate,
+zero crossings, band limits) is the player's and is not stored; the count is, so a position
+finds the same cycle in every build. `synth.engine` stores the index of the synth's engine:
+0 Classic, 1 Supersaw, 2 FM, 3 Sub, 4 Morph, 5 Mallet, 6 DDSP, 7 Choir, 8 Pluck, 9 Wavetable — a
+new engine goes at the end; a build that predates an engine reads its index as out of range and
+refuses the song, as for any value outside a parameter's range.
 
 **Plugin component:** `{type, subtype, manufacturer, name, manufacturerName}` — an Audio Unit by
 the three codes the system finds it by, each the four ASCII characters as one big-endian integer
@@ -152,7 +160,23 @@ video's counts its length in units of `sampleRate` per second, so a region cuts 
 **Audio region:** `{id, media, start, offset, length}` on an audio track's timeline — or, of a
 video file, on a video track's — `start` in ticks, `offset` and `length` in the file's units,
 inside it. Cutting a region never changes its file. The file plays at its own speed, so
-a tempo change moves where a region starts, never how it sounds.
+a tempo change moves where a region starts, never how it sounds — unless it follows the tempo
+(warp, below).
+
+Optional, added inside format 4 (AUD-2, 2026-11-04); absent, the region plays as every earlier
+build played it, and an earlier build that meets them ignores them:
+
+- `fadeIn`, `fadeOut` — frames of the file (integers ≥ 0) the region rises over from its start
+  and falls over to its end; absent or 0 is none. Together they fit inside `length`; a file whose
+  fades are longer than their region is refused.
+- `fadeInCurve`, `fadeOutCurve` — how each fade moves: `linear` (absent), `equalPower`,
+  `exponential`, `sCurve`. A curve name a reader does not know is kept, saved back unchanged and
+  plays `linear`.
+- `gainDB` — the region's own level in decibels, −60 … +24, before the track's fader; absent is
+  0 dB. Echoel writes it only when it is not 0.
+- `nativeBPM` (20 … 999) and `followsTempo` (true or false, absent false) — warp: with both set,
+  the region follows the song's tempo, its pitch unchanged, stretched from `nativeBPM`. Echoel sets
+  warp on audio regions only. `nativeBPM` is kept while warp is off, so switching it back on finds it.
 
 **Clip:** `id`, `name`, `length` (ticks; the loop length), `notes` — required; optional `audio`
 (`{media, offset, length}` in frames: an audio loop, on an audio track, with no notes or controls,

@@ -184,6 +184,12 @@ public final class SynthKernel: @unchecked Sendable {
         if next != synth.patch { synth.setPatch(next) }
     }
 
+    /// Render thread: the cycles the wavetable engine plays from now on (nil: the factory shapes).
+    /// The caller keeps the bank alive until it knows rendering moved on.
+    public func assignWavetable(_ bank: WavetableBank?) {
+        synth.setWavetable(bank)
+    }
+
     /// Render thread. The tuning the next notes start in (`EngineInstrumentKernel.retune`).
     public func retune(_ temperament: Temperament) {
         if temperament != synth.temperament { synth.setTemperament(temperament) }

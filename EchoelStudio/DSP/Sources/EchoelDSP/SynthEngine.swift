@@ -2,17 +2,24 @@ import Foundation
 
 /// What makes a synth voice's raw tone before its filter and envelopes (EchoelTools A1, A4, A8):
 /// the classic oscillator, a seven-saw supersaw, two-operator FM, the oscillator with a sine
-/// an octave below, a morph through four shapes (A7), a struck object — six decaying modes
+/// an octave below, a morph through eight shapes (A7), a struck object — six decaying modes
 /// (A5) — the harmonic-plus-noise model of the earlier app's `EchoelDDSP` (W5,
-/// `DDSPSource`), or a small choir singing a vowel (VOX, `ChoirSource`). `character` (0 … 1) is
+/// `DDSPSource`), a small choir singing a vowel (VOX, `ChoirSource`), or a plucked string (A6,
+/// `PluckSource`). `character` (0 … 1) is
 /// each engine's one control — the supersaw's detune, the FM index, the sub's level, the morph's
 /// position, the mallet's material from wood to metal, the DDSP's brightness, harmonicity and
-/// noise together (dark and breathy to bright and pure), the choir's vowel from oo to ee; the
-/// classic oscillator ignores it. Ported from the earlier app's `EchoelPolySynth` engines
+/// noise together (dark and breathy to bright and pure), the choir's vowel from oo to ee, the
+/// pluck's brightness; the classic oscillator ignores it. Ported from the earlier app's `EchoelPolySynth` engines
 /// as one value type a voice owns; nothing here allocates.
 public enum SynthEngine: String, CaseIterable, Codable, Sendable {
     // A song stores the index of the choice: a new engine goes at the end.
     case classic, supersaw, fm, sub, morph, mallet, ddsp, choir
+    /// A plucked string, Karplus-Strong (A6): `character` its brightness, the patch's Decay how
+    /// long it rings (`PluckSource`).
+    case pluck
+    /// A wavetable (the user's own sample cut into cycles, or the factory shapes): `character` the
+    /// position across its cycles (`WavetableBank`).
+    case wavetable
 
     /// A gain inside the voice, so the same patch sounds about as loud on every engine. Without it
     /// a preset jumped by up to 16 LU when only its engine changed ("Sub Bass": FM −26.4, Sub
@@ -24,6 +31,7 @@ public enum SynthEngine: String, CaseIterable, Codable, Sendable {
     /// −12.8, supersaw −13.3, FM −11.0, sub −13.6, morph −12.7, DDSP −13.0, choir −18.0 before.
     /// The mallet (−23.5) rings down instead of holding, so its integrated loudness undersells
     /// it; it is raised by +2 dB, which brings its strike's peak to the others' and not further.
+    /// The plucked string (A6) rings down too and is matched the same way, by its pluck's peak.
     /// The trim lives in the voice, never in the song: a song stores the patch as it always did.
     /// A filter set low still hears a bright engine quieter than a dark one; that is the filter.
     public var loudnessTrim: Float {
@@ -36,7 +44,81 @@ public enum SynthEngine: String, CaseIterable, Codable, Sendable {
         case .mallet: 1.259    // +2.0 dB
         case .ddsp: 0.631      // −4.0 dB
         case .choir: 1.122     // +1.0 dB
+        // Rings down like the mallet, and its noise burst is its peak: raised until that peak
+        // stands where the mallet's strike does (−5.8 dBFS on the reference chord, 2026-11-04;
+        // −10.8 before), not further — its integrated −24.9 LUFS then is a string dying away.
+        case .pluck: 1.778     // +5.0 dB
+        // Measured like the held engines, on the factory shapes (−13.9 LUFS before, 2026-11-04).
+        case .wavetable: 0.708 // −3.0 dB
         }
+    }
+}
+
+/// The morph's eight shapes (A7), in order: sine, folded sine, triangle, ramp (a triangle leaning
+/// toward the saw), saw, a 12.5 % pulse, a 25 % pulse, square. The four new shapes are drawn from
+/// the shared phase — the pulses band-limited with PolyBLEP like the square, the folded sine and
+/// the ramp continuous, so their harmonics fall as a triangle's do.
+enum MorphShapes {
+    /// Where each shape stands on Character. 0, ⅓, ⅔ and 1 are the earlier morph's four.
+    static let positions: (Float, Float, Float, Float, Float, Float, Float, Float) =
+        (0, 1.0 / 6, 1.0 / 3, 0.5, 2.0 / 3, 7.0 / 9, 8.0 / 9, 1)
+    /// How far the ramp's peak leans toward the saw's (0.5 is the triangle, 1 the saw).
+    static let rampPeak: Float = 0.75
+    static let narrowPulse: Float = 0.125
+    static let widePulse: Float = 0.25
+
+    @inline(__always)
+    static func value(at c: Float, phase t: Float, dt: Float,
+                      sine: Float, triangle: Float, saw: Float, square: Float) -> Float {
+        let p = positions
+        if c < p.1 { return sine + (folded(t) - sine) * ((c - p.0) / (p.1 - p.0)) }
+        if c < p.2 {
+            let f = folded(t)
+            return f + (triangle - f) * ((c - p.1) / (p.2 - p.1))
+        }
+        if c < p.3 { return triangle + (ramp(t) - triangle) * ((c - p.2) / (p.3 - p.2)) }
+        if c < p.4 {
+            let r = ramp(t)
+            return r + (saw - r) * ((c - p.3) / (p.4 - p.3))
+        }
+        if c < p.5 { return saw + (pulse(t, dt, narrowPulse) - saw) * ((c - p.4) / (p.5 - p.4)) }
+        if c < p.6 {
+            let n = pulse(t, dt, narrowPulse)
+            return n + (pulse(t, dt, widePulse) - n) * ((c - p.5) / (p.6 - p.5))
+        }
+        if c < p.7 {
+            let w = pulse(t, dt, widePulse)
+            return w + (square - w) * ((c - p.6) / (p.7 - p.6))
+        }
+        return square
+    }
+
+    /// A sine driven past full scale and folded back: odd harmonics, softly.
+    @inline(__always)
+    static func folded(_ t: Float) -> Float {
+        let x = 1.6 * sinf(2 * Float.pi * t)
+        if x > 1 { return 2 - x }
+        if x < -1 { return -2 - x }
+        return x
+    }
+
+    /// A triangle whose peak leans toward the end of the cycle; it starts at −1 as the triangle
+    /// and the saw do.
+    @inline(__always)
+    static func ramp(_ t: Float) -> Float {
+        let w = rampPeak
+        return t < w ? -1 + 2 * t / w : 1 - 2 * (t - w) / (1 - w)
+    }
+
+    /// A pulse `width` of the cycle high, without its offset, at peak 1.
+    @inline(__always)
+    static func pulse(_ t: Float, _ dt: Float, _ width: Float) -> Float {
+        var out: Float = t < width ? 1 : -1
+        out += Oscillator.polyBLEP(t, dt)
+        var fall = t - width
+        if fall < 0 { fall += 1 }
+        out -= Oscillator.polyBLEP(fall, dt)
+        return (out - (2 * width - 1)) / (2 - 2 * width)
     }
 }
 
@@ -111,6 +193,14 @@ struct EngineSource: Sendable {
     private var ddsp = DDSPSource()
     /// The choir's three singers and its vocal tract.
     private var choir = ChoirSource()
+    /// The plucked string's loop; its delay line is allocated here, once.
+    private var pluck: PluckSource
+    /// Where the wavetable engine is in its cycle, 0 ..< 1.
+    private var tablePhase: Float = 0
+
+    init(sampleRate: Float) {
+        pluck = PluckSource(sampleRate: sampleRate)
+    }
 
     mutating func reset() {
         s0.reset(phase: 0.11); s1.reset(phase: 0.37); s2.reset(phase: 0.59)
@@ -123,12 +213,19 @@ struct EngineSource: Sendable {
         k3 = MalletMode(); k4 = MalletMode(); k5 = MalletMode()
         ddsp.reset()
         choir.reset()
+        pluck.reset()
+        tablePhase = 0
+    }
+
+    /// How long the plucked string rings, from the patch's Decay and Sustain. Before each render.
+    mutating func setPluckRing(decaySeconds: Float, sustain: Float, sampleRate: Float) {
+        pluck.ringSamples = PluckSource.ringSeconds(decay: decaySeconds, sustain: sustain) * sampleRate
     }
 
     /// A key struck this voice: the mallet's modes sound again, the DDSP's noise starts a
     /// sequence of its own for this note (`order` is the synth's note counter), and the choir takes
     /// the note's register and the rate it sings at. The other engines have nothing to strike.
-    mutating func strike(character: Float, order: UInt64, pitch: UInt8, sampleRate: Float) {
+    mutating func strike(character: Float, order: UInt64, pitch: UInt8, sampleRate: Float, dt: Float) {
         let c = character.isFinite ? Swift.min(Swift.max(character, 0), 1) : 0.5
         let w = MalletMode.woodRatios, m = MalletMode.metalRatios
         k0.strike(index: 0, wood: w.0, metal: m.0, material: c)
@@ -139,11 +236,13 @@ struct EngineSource: Sendable {
         k5.strike(index: 5, wood: w.5, metal: m.5, material: c)
         ddsp.reseed(order)
         choir.strike(pitch: pitch, sampleRate: sampleRate, order: order)
+        pluck.strike(order: order, dt: dt)
     }
 
     /// One sample. `main` is the voice's own oscillator; `dt` its increment this sample.
     @inline(__always)
-    mutating func next(_ engine: SynthEngine, character: Float, main: inout Oscillator, dt: Float) -> Float {
+    mutating func next(_ engine: SynthEngine, character: Float, main: inout Oscillator, dt: Float,
+                       table: WavetableView) -> Float {
         guard dt.isFinite, dt > 0, dt < 0.5 else { return 0 }
         let c = character.isFinite ? Swift.min(Swift.max(character, 0), 1) : 0.5
         switch engine {
@@ -176,14 +275,15 @@ struct EngineSource: Sendable {
             if subPhase >= 1 { subPhase -= 1 }
             return (top + c * below) / (1 + c * 0.5)
         case .morph:
-            // Sine at 0, triangle at ⅓, saw at ⅔, square at 1; between two, a crossfade. All four
-            // advance every sample so the next crossfade starts in phase.
+            // Eight shapes (A7) at `MorphShapes.positions`; between two, a crossfade. The first
+            // four of the earlier morph — sine 0, triangle ⅓, saw ⅔, square 1 — stand where they
+            // stood, so a song's morph at one of them sounds as it did; the four new shapes sit
+            // between them. All shapes share one phase and advance every sample, so the next
+            // crossfade starts in phase.
+            let t = m0.phase
             let a = m0.next(increment: dt), b = m1.next(increment: dt)
             let d = m2.next(increment: dt), e = m3.next(increment: dt)
-            let position = c * 3
-            if position < 1 { return a + (b - a) * position }
-            if position < 2 { return b + (d - b) * (position - 1) }
-            return d + (e - d) * (position - 2)
+            return MorphShapes.value(at: c, phase: t, dt: dt, sine: a, triangle: b, saw: d, square: e)
         case .mallet:
             // The material was set at the strike; character between strikes does not retune a
             // bar that is already ringing.
@@ -194,6 +294,13 @@ struct EngineSource: Sendable {
             return ddsp.next(character: c, dt: dt)
         case .choir:
             return choir.next(character: c, dt: dt)
+        case .pluck:
+            return pluck.next(character: c, dt: dt)
+        case .wavetable:
+            let out = table.sample(position: c, phase: tablePhase, dt: dt)
+            tablePhase += dt
+            if tablePhase >= 1 { tablePhase -= 1 }
+            return out
         }
     }
 }

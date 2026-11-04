@@ -90,6 +90,13 @@ public protocol EngineInstrumentKernel: InstrumentKernel {
     func retune(_ temperament: Temperament)
 }
 
+/// A built-in kernel the engine hands a wavetable on the render thread (the synth).
+public protocol WavetableAssigningKernel: EngineInstrumentKernel {
+    /// Render thread: plays `bank` on the wavetable engine from now on (nil: the factory shapes).
+    /// The caller keeps the bank alive until it knows rendering moved on.
+    func assignWavetable(_ bank: WavetableBank?)
+}
+
 /// A built-in kernel the engine hands a sample on the render thread (the sampler). The Audio Unit
 /// loads through `SampleLoadingKernel` instead; never mix the two on one kernel.
 public protocol SampleAssigningKernel: EngineInstrumentKernel {
@@ -105,6 +112,7 @@ extension SynthKernel: InstrumentKernel {
 }
 
 extension SynthKernel: EngineInstrumentKernel {}
+extension SynthKernel: WavetableAssigningKernel {}
 extension DrumKernel: EngineInstrumentKernel {
     /// The kit is not retuned, on purpose: a General MIDI drum note names a drum (36 kick, 38
     /// snare), not a pitch, so a tone system has nothing to move here.

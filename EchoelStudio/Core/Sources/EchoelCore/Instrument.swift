@@ -14,6 +14,9 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
     public private(set) var unrecognizedDevice: String?
     /// The sample the sampler device plays; nil until one is chosen.
     public var sample: MediaID?
+    /// The file the synth's wavetable engine is cut from, and into how many cycles; nil plays the
+    /// factory shapes. Optional, added inside format 4 (2026-11-04).
+    public var wavetable: WavetableSource?
     public var preset: String
     public var values: [String: Double]
     /// The Audio Unit the plugin device plays, kept when the track switches to a built-in
@@ -23,16 +26,18 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
     public var pluginState: Data?
 
     public init(device: InstrumentDevice = .synth, sample: MediaID? = nil, preset: String = InstrumentPreset.initial.name,
-                values: [String: Double] = [:], plugin: PluginComponent? = nil, pluginState: Data? = nil) {
+                values: [String: Double] = [:], plugin: PluginComponent? = nil, pluginState: Data? = nil,
+                wavetable: WavetableSource? = nil) {
         self.device = device
         self.sample = sample
+        self.wavetable = wavetable
         self.preset = preset
         self.values = values
         self.plugin = plugin
         self.pluginState = pluginState
     }
 
-    private enum CodingKeys: String, CodingKey { case device, sample, preset, values, plugin, pluginState }
+    private enum CodingKeys: String, CodingKey { case device, sample, wavetable, preset, values, plugin, pluginState }
 
     /// Songs written before devices existed are synth tracks. A device from a later build opens
     /// as `.unrecognized`: the track plays nothing here and keeps its instrument for that build,
@@ -47,6 +52,7 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
             unrecognizedDevice = name
         }
         sample = try c.decodeIfPresent(MediaID.self, forKey: .sample)
+        wavetable = try c.decodeIfPresent(WavetableSource.self, forKey: .wavetable)
         preset = try c.decode(String.self, forKey: .preset)
         values = try c.decode([String: Double].self, forKey: .values)
         plugin = try c.decodeIfPresent(PluginComponent.self, forKey: .plugin)
@@ -57,10 +63,18 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(unrecognizedDevice ?? device.rawValue, forKey: .device)
         try c.encodeIfPresent(sample, forKey: .sample)
+        try c.encodeIfPresent(wavetable, forKey: .wavetable)
         try c.encode(preset, forKey: .preset)
         try c.encode(values, forKey: .values)
         try c.encodeIfPresent(plugin, forKey: .plugin)
         try c.encodeIfPresent(pluginState, forKey: .pluginState)
+    }
+
+    /// The wavetable's file while the synth plays its wavetable engine: what is heard. Nil otherwise.
+    public var heardWavetable: MediaID? {
+        guard device == .synth, let wavetable,
+              Int(value(.engine).rounded()) == WavetableSource.engineIndex else { return nil }
+        return wavetable.media
     }
 
     /// The value the track plays: the stored one, or the row's song default.
@@ -77,6 +91,32 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
         let preset = InstrumentSettings(values: loaded.values)
         return SynthParameter.all.contains { value($0) != preset.value($0) }
     }
+}
+
+/// Where the synth's wavetable engine takes its cycles from: an audio file of the song, cut into
+/// `frames` single cycles spread across it. The frame count is stored, so a song's Position finds
+/// the same cycle in every build. The cutting itself (pitch, zero crossings, band limits) is the
+/// engine's, deterministic, and never stored.
+public struct WavetableSource: Codable, Equatable, Hashable, Sendable {
+    public var media: MediaID
+    public var frames: Int
+
+    /// The most cycles a table holds (`WavetableBank.maximumFrames` in EchoelDSP).
+    public static let frameRange: ClosedRange<Int> = 2...64
+
+    public init(media: MediaID, frames: Int) {
+        self.media = media
+        self.frames = frames
+    }
+
+    /// The cycles a file is cut into when it is chosen: one per 2048 frames of the file, at least 2
+    /// and at most 64 — a short sound gives a short table, a long one sweeps through its whole length.
+    public static func frames(for file: MediaFile) -> Int {
+        Swift.min(Swift.max(file.frameCount / 2_048, frameRange.lowerBound), frameRange.upperBound)
+    }
+
+    /// The `synth.engine` index of the wavetable engine: the media is heard only while it plays.
+    public static let engineIndex = 9
 }
 
 /// The built-in instruments. Stored by name in the song; never rename a case.
@@ -149,8 +189,9 @@ public struct SynthParameter: Sendable, Equatable {
             case .release: SynthParameter("synth.release", "Release", .seconds, 0.001...10, 0.25, .exponential)
             case .level: SynthParameter("synth.level", "Level", .amount, 0...1, 0.25, .linear)
             // The engine stores the index of its choice: a new engine goes at the end.
-            case .engine: SynthParameter("synth.engine", "Engine", .choice, 0...7, 0, .stepped,
-                                         choices: ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP", "Choir"])
+            case .engine: SynthParameter("synth.engine", "Engine", .choice, 0...9, 0, .stepped,
+                                         choices: ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet", "DDSP", "Choir",
+                                                   "Pluck", "Wavetable"])
             case .character: SynthParameter("synth.character", "Character", .amount, 0...1, 0.5, .linear)
             case .filter: SynthParameter("synth.filter", "Filter", .choice, 0...1, 0, .stepped, choices: ["Clean", "Ladder"])
             // The vibrato with the modulation wheel at rest (W12): what a route moves with the pulse.

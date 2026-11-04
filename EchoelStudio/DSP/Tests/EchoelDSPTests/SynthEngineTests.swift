@@ -137,6 +137,92 @@ final class SynthEngineTests: XCTestCase {
         XCTAssertLessThan(choir, classic * 6, "choir \(choir) s, classic \(classic) s")
     }
 
+    /// The morph's eight shapes (A7): the earlier four stand where they stood — a song's morph at
+    /// sine, triangle, saw or square sounds as it did — and the eight are eight different tones.
+    func testTheMorphKeepsItsFourShapesAndHasEight() {
+        let earlier: [(Float, Oscillator.Waveform)] = [(0, .sine), (1.0 / 3, .triangle), (2.0 / 3, .saw), (1, .square)]
+        for (character, waveform) in earlier {
+            let morph = tone(.morph, character: character), shape = tone(.classic, character: 0, waveform: waveform)
+            let worst = zip(morph, shape).map { abs($0 - $1) }.max() ?? 1
+            XCTAssertLessThan(worst, 1e-4, "\(waveform) at \(character)")
+        }
+        let p = MorphShapes.positions
+        let nodes: [Float] = [p.0, p.1, p.2, p.3, p.4, p.5, p.6, p.7]
+        let tones = nodes.map { tone(.morph, character: $0, frames: 4_800) }
+        for i in tones.indices {
+            XCTAssertTrue(tones[i].allSatisfy(\.isFinite))
+            XCTAssertGreaterThan(rms(tones[i]), 0.1, "shape \(i)")
+            XCTAssertLessThan(tones[i].map { abs($0) }.max() ?? 2, 1.3, "shape \(i) stays near full scale")
+            for j in tones.indices where j > i {
+                let apart = zip(tones[i], tones[j]).map { abs($0 - $1) }.max() ?? 0
+                XCTAssertGreaterThan(apart, 0.05, "shapes \(i) and \(j) differ")
+            }
+        }
+        // Between two shapes, neither: the crossfade.
+        let between = tone(.morph, character: (p.5 + p.6) / 2, frames: 4_800)
+        XCTAssertGreaterThan(zip(between, tones[5]).map { abs($0 - $1) }.max() ?? 0, 0.05)
+        XCTAssertGreaterThan(zip(between, tones[6]).map { abs($0 - $1) }.max() ?? 0, 0.05)
+    }
+
+    /// The new shapes carry no offset: a pulse without its DC, a fold and a ramp centred.
+    func testTheNewMorphShapesAreCentred() {
+        let p = MorphShapes.positions
+        for character in [p.1, p.3, p.5, p.6] {
+            // Whole cycles of A3 at 48 kHz: 220 Hz is 218.18 samples a cycle; 11 cycles ≈ 2400.
+            let out = Array(tone(.morph, character: character, frames: 26_400)[2_400..<26_400])
+            let mean = out.reduce(0, +) / Float(out.count)
+            XCTAssertEqual(mean, 0, accuracy: 0.02, "shape at \(character)")
+        }
+    }
+
+    /// A plucked string (A6): it sounds its note — a period of noise in a loop one period long —
+    /// and the same note plucks the same string again.
+    func testThePluckSoundsItsNoteAndIsTheSameEveryTime() {
+        let out = tone(.pluck, character: 0.5, frames: 24_000)
+        XCTAssertEqual(out, tone(.pluck, character: 0.5, frames: 24_000), "seeded by the note counter")
+        let tail = Array(out[4_800..<24_000])
+        let fundamental = magnitude(tail, hertz: 220)
+        XCTAssertGreaterThan(fundamental, magnitude(tail, hertz: 207.65) * 5, "in tune, not a semitone down")
+        XCTAssertGreaterThan(fundamental, magnitude(tail, hertz: 233.08) * 5, "in tune, not a semitone up")
+        XCTAssertGreaterThan(fundamental, 0.01)
+    }
+
+    /// Character is the pick: bright lets the noise's top through and damps the loop less.
+    func testThePluckIsBrighterAtHigherCharacter() {
+        let dark = Array(tone(.pluck, character: 0, frames: 9_600)[2_400...])
+        let bright = Array(tone(.pluck, character: 1, frames: 9_600)[2_400...])
+        let high = { (x: [Float]) -> Float in
+            [1_760, 1_980, 2_200, 2_640].reduce(Float(0)) { $0 + self.magnitude(x, hertz: $1) } / self.rms(x)
+        }
+        XCTAssertGreaterThan(high(bright), high(dark) * 2)
+    }
+
+    /// Decay and Sustain are how long the string rings: a short one has died where a long one rings.
+    func testThePluckRingsAsLongAsDecayAndSustainSay() {
+        func ring(decay: Float, sustain: Float) -> Float {
+            var patch = SynthPatch(cutoff: 18_000, resonance: 0, filterEnvelopeAmount: 0,
+                                   ampEnvelope: .init(attack: 0.001, decay: 10, sustain: 1, release: 0.2), level: 1)
+            patch.engine = .pluck
+            var synth = PolySynth(patch: patch, sampleRate: rate)
+            var string = patch
+            string.ampEnvelope = .init(attack: 0.001, decay: decay, sustain: sustain, release: 0.2)
+            // The ring follows the patch; the amp envelope of `patch` holds the level open.
+            synth.setPatch(string)
+            synth.noteOn(pitch: 57, velocity: 127)
+            var buffer = [Float](repeating: 0, count: 48_000)
+            var start = 0
+            while start < buffer.count {
+                let end = Swift.min(start + 256, buffer.count)
+                buffer[start..<end].withUnsafeMutableBufferPointer { synth.render(into: $0) }
+                start = end
+            }
+            return rms(Array(buffer[38_400...])) / Swift.max(rms(Array(buffer[0..<4_800])), 1e-9)
+        }
+        let short = ring(decay: 0.02, sustain: 0), long = ring(decay: 1, sustain: 1)
+        XCTAssertLessThan(short, 0.01, "a short string has died after a second")
+        XCTAssertGreaterThan(long, 0.2, "a long one still rings")
+    }
+
     func testTheSubAddsTheOctaveBelow() {
         for (a, b) in zip(tone(.sub, character: 0), tone(.classic, character: 0)) {
             XCTAssertEqual(a, b, accuracy: 1e-5, "no sub, the oscillator alone")
