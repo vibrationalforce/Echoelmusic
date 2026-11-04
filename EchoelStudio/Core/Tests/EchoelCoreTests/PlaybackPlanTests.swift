@@ -197,7 +197,6 @@ final class PlaybackPlanTests: XCTestCase {
             .setInstrumentParameter(song.keys, key: SynthParameter.level.key.rawValue, value: 0.5),
             .setTimeSignature(TimeSignature(3, 4)),
             .setKeyRoot(2),
-            .setSwing(0.3),
             .mapMIDI(MIDIControl(channel: 0, number: 7), .volume(song.keys)),
             .setAutomation(.volume(song.keys), points: [AutomationPoint(tick: 0, value: -6),
                                                         AutomationPoint(tick: bar, value: 0)]),
@@ -238,6 +237,53 @@ final class PlaybackPlanTests: XCTestCase {
             XCTAssertNotEqual(PlaybackPlan.Source(changed), source, "\(command)")
             XCTAssertNotEqual(PlaybackPlan(compiling: changed), plan, "\(command)")
         }
+    }
+
+    /// Swing moves what plays, so a new amount compiles again; a note on the eighth stays put.
+    func testSwingChangesTheSourceAndMovesOnlyTheOffbeatSixteenths() throws {
+        var (project, _) = try makeProject(notes: [Note(pitch: 60, start: 0, length: 240),
+                                                   Note(pitch: 62, start: 240, length: 240),
+                                                   Note(pitch: 64, start: 480, length: 120)],
+                                           placementsAt: [0])
+        let straight = PlaybackPlan(compiling: project)
+        let source = PlaybackPlan.Source(project)
+        try Command.setSwing(1).apply(to: &project)
+        XCTAssertNotEqual(PlaybackPlan.Source(project), source)
+        let swung = PlaybackPlan(compiling: project)
+        XCTAssertNotEqual(swung, straight)
+        XCTAssertEqual(events(swung), ["0 on 60 v100", "320 off 60", "320 on 62 v100", "480 off 62",
+                                       "480 on 64 v100", "640 off 64"])
+        XCTAssertTrue(swung.tracks.flatMap(\.events).allSatisfy { $0.nudge == 0 }, "full swing lands on whole ticks")
+        XCTAssertEqual(swung.songEnd, 640)
+    }
+
+    /// Between the grid points every tick moves in proportion; what is finer than a tick is the
+    /// nudge, and the order never changes.
+    func testSwingIsMonotonicAndKeepsTheFractionOfATick() {
+        let swing = Swing(0.5)
+        XCTAssertEqual(swing.position(of: 0), 0)
+        XCTAssertEqual(swing.position(of: 240), 280, accuracy: 1e-9, "half swing: a sixth of a sixteenth late")
+        XCTAssertEqual(swing.position(of: 480), 480)
+        XCTAssertEqual(swing.position(of: -240), -200, accuracy: 1e-9, "the grid continues before zero")
+        XCTAssertEqual(Swing(.nan).position(of: 240), 240)
+        XCTAssertEqual(Swing(7).amount, 1)
+        var last = -Double.infinity
+        for tick in Tick(0)...Tick(1_920) {
+            let position = swing.position(of: tick)
+            XCTAssertGreaterThanOrEqual(position, last)
+            last = position
+        }
+        let (whole, nudge) = Swing(0.3).split(1)
+        XCTAssertEqual(Double(whole) + nudge, Swing(0.3).position(of: 1), accuracy: 1e-12)
+        XCTAssertTrue((0..<1).contains(nudge))
+    }
+
+    /// A nudge is the fraction of a tick, on the sample it falls on; without one, as before.
+    func testAnEventsNudgeFallsOnItsOwnSample() {
+        let time = TimeConversion(bpm: 120, sampleRate: 48_000)
+        XCTAssertEqual(time.sample(at: 960, nudge: 0), time.sample(at: 960))
+        XCTAssertEqual(time.sample(at: 960, nudge: 0.5), 24_012, "half a tick of 25 samples")
+        XCTAssertEqual(time.sample(at: 960, nudge: .nan), time.sample(at: 960))
     }
 
     func testFirstIndexFindsThePlayheadPosition() {

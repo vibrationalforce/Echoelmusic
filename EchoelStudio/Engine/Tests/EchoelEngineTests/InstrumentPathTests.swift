@@ -98,7 +98,7 @@ final class InstrumentPathTests: XCTestCase {
         var out = [Float](repeating: 0, count: frames)
         var at = 0
         for event in events {
-            let sample = Int(time.sample(at: event.tick))
+            let sample = Int(time.sample(at: event.tick, nudge: event.nudge))
             guard sample < frames else { break }
             if sample > at {
                 let from = at
@@ -203,6 +203,36 @@ final class InstrumentPathTests: XCTestCase {
             core.play()
             assertSame(render(core, frames: 72_000, block: block), expected, "drums, block \(block)")
         }
+    }
+
+    /// The song's swing plays: every second sixteenth falls late by the stored amount, on its own
+    /// sample, at every block size, and the export is the same samples. At 0.37 the closed hat on
+    /// tick 240 sounds at 240 + 0.37 × 80 = 269.6 ticks — 6,740 samples at 120 BPM, 48 kHz, a
+    /// position no whole tick holds; the kick on the eighth stays on 0 and the snare on 480.
+    func testTheSwingDelaysEverySecondSixteenthToItsOwnSample() throws {
+        var t = try tune([Note(pitch: 36, velocity: 100, start: 0, length: 240),
+                          Note(pitch: 42, velocity: 100, start: 240, length: 120),
+                          Note(pitch: 38, velocity: 90, start: 480, length: 240),
+                          Note(pitch: 42, velocity: 100, start: 720, length: 120)], device: .drums)
+        try Command.setSwing(0.37).apply(to: &t.project)
+        let plan = PlaybackPlan(compiling: t.project)
+        let time = TimeConversion(tempoMap: t.project.tempoMap, sampleRate: rate)
+        let ons = try XCTUnwrap(plan.tracks.first).events.filter { if case .noteOn = $0.kind { true } else { false } }
+        XCTAssertEqual(ons.map { time.sample(at: $0.tick, nudge: $0.nudge) }, [0, 6_740, 12_000, 18_740])
+        var kit = DrumKit(sampleRate: Float(rate))
+        let expected = try reference(&kit, t, frames: 48_000)
+        var straightKit = DrumKit(sampleRate: Float(rate))
+        var straight = t
+        try Command.setSwing(0).apply(to: &straight.project)
+        XCTAssertNotEqual(try reference(&straightKit, straight, frames: 48_000), expected, "the swing is heard")
+        for block in [64, 256, 4_096] {
+            let core = engine()
+            publish(t, to: core)
+            core.play()
+            assertSame(render(core, frames: 48_000, block: block), expected, "swung drums, block \(block)")
+        }
+        let export = OfflineRender.render(t.project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0, frameCount: 48_000)
+        assertSame(export.left, expected, "the export swings as playback does")
     }
 
     func testTheSamplerSoundsExactlyLikeItsSamplerPlayedDirectly() throws {

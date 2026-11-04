@@ -40,6 +40,10 @@ public struct PlaybackPlan: Equatable, Sendable {
         public var tick: Tick
         public var pitch: UInt8
         public var kind: Kind
+        /// How far past `tick` the event sounds, in ticks, 0 ≤ nudge < 1: the part of the song's
+        /// swing finer than one tick, so a swung note lands on its own sample rather than on the
+        /// nearest tick (`TimeConversion.sample(at:nudge:)`). Zero without swing.
+        public var nudge: Double = 0
     }
 
     /// Everything `init(compiling:)` reads, and nothing else: the tempo map and each instrument
@@ -51,6 +55,8 @@ public struct PlaybackPlan: Equatable, Sendable {
     public struct Source: Equatable, Sendable {
         let tempoMap: TempoMap
         let tracks: [TrackSource]
+        /// The song's swing moves every event, so a new amount compiles again.
+        let swing: Double
 
         struct TrackSource: Equatable, Sendable {
             let id: TrackID
@@ -60,6 +66,7 @@ public struct PlaybackPlan: Equatable, Sendable {
 
         public init(_ project: Project) {
             tempoMap = project.tempoMap
+            swing = project.context.swing
             tracks = project.tracks.compactMap { track in
                 track.kind == .instrument ? TrackSource(id: track.id, clips: track.clips, placements: track.placements) : nil
             }
@@ -68,13 +75,15 @@ public struct PlaybackPlan: Equatable, Sendable {
 
     public init(compiling project: Project) {
         tempoMap = project.tempoMap
+        let swing = Swing(project.context.swing)
         var end: Tick = 0
         tracks = project.tracks.compactMap { track in
             guard track.kind == .instrument else { return nil }
             let intervals = Self.noteIntervals(of: track)
-            end = intervals.reduce(end) { Swift.max($0, $1.end) }
-            return TrackEvents(track: track.id, events: Self.events(from: intervals, controls: Self.controls(of: track)),
-                               clips: track.clips.map(Self.loop))
+            end = intervals.reduce(end) { Swift.max($0, swing.lastTick(of: $1.end)) }
+            return TrackEvents(track: track.id,
+                               events: swing.apply(to: Self.events(from: intervals, controls: Self.controls(of: track))),
+                               clips: track.clips.map { Self.loop($0, swing: swing) })
         }
         songEnd = end
     }
@@ -160,7 +169,7 @@ public struct PlaybackPlan: Equatable, Sendable {
 
     /// A clip's notes in clip time, each cut at the clip's end so the loop never carries a note
     /// into its next pass. A clip that bends or holds the pedal starts every pass from rest.
-    static func loop(_ clip: Clip) -> ClipEvents {
+    static func loop(_ clip: Clip, swing: Swing = Swing(0)) -> ClipEvents {
         let intervals = clip.notes.compactMap { note -> Interval? in
             guard note.start < clip.length else { return nil }
             return Interval(start: note.start, end: Swift.min(note.start + note.length, clip.length),
@@ -169,7 +178,7 @@ public struct PlaybackPlan: Equatable, Sendable {
         let changes = rests(of: clip).map { Control(tick: 0, kind: $0) }
             + clip.controls.filter { $0.start < clip.length }.map { Control(tick: $0.start, kind: event($0.kind, $0.value)) }
         return ClipEvents(clip: clip.id, length: clip.length,
-                          events: events(from: resolvingOverlaps(intervals), controls: changes))
+                          events: swing.apply(to: events(from: resolvingOverlaps(intervals), controls: changes)))
     }
 
     /// One pitch can sound only once on a monophonic MIDI key. Where two notes of the same
@@ -270,6 +279,15 @@ public struct TimeConversion: Equatable, Sendable {
         tempoMap.position(atSeconds: Double(sample) / sampleRate)
     }
 
+    /// The sample on which an event at `tick` plus `nudge` (0 ≤ nudge < 1) falls, rounded down
+    /// like `sample(at:)`, which it is exactly when `nudge` is 0. A tempo changes only on a whole
+    /// tick, so the fraction lies in the tempo of `tick`. Arithmetic only: render-safe.
+    public func sample(at tick: Tick, nudge: Double) -> Int64 {
+        guard nudge > 0, nudge < 1 else { return sample(at: tick) }
+        let seconds = tempoMap.seconds(at: tick) + nudge * 60 / (tempoMap.bpm(at: tick) * Double(MusicalTime.ticksPerQuarter))
+        return MusicalTime.integer((seconds * sampleRate).rounded(.down))
+    }
+
     /// The sample nearest a fractional tick.
     public func sample(atPosition position: Double) -> Int64 {
         let seconds = tempoMap.seconds(atPosition: position)
@@ -280,5 +298,68 @@ public struct TimeConversion: Equatable, Sendable {
     /// The tick that is sounding at `sample`, rounded down.
     public func tick(atSample sample: Int64) -> Tick {
         tempoMap.tick(atSeconds: Double(sample) / sampleRate)
+    }
+}
+
+/// The song's swing as the plan plays it (`MusicalContext.swing`): every second sixteenth note
+/// falls late, by up to a third of a sixteenth — at 1 the pair of sixteenths sounds as a triplet,
+/// 2 : 1. The grid is the eighth note from the start of the song (a session clip: from its own
+/// start), whatever the time signature. Everything between moves in proportion, so a note's length
+/// and the order of events stay as they were: the first sixteenth of a pair stretches by what the
+/// second one loses. A note on an eighth does not move.
+///
+/// Applied when the plan is compiled — the export and the live engine compile the same plan, so
+/// they swing alike. The part finer than one tick goes into `NoteEvent.nudge`, so a swung note
+/// lands on its own sample.
+public struct Swing: Equatable, Sendable {
+    /// 0 straight … 1 triplet; a value that is not a number counts as straight.
+    public let amount: Double
+
+    /// The eighth note: one pair of sixteenths.
+    public static let pairTicks: Tick = MusicalTime.ticksPerQuarter / 2
+
+    public init(_ amount: Double) {
+        self.amount = amount.isFinite ? Swift.min(Swift.max(amount, 0), 1) : 0
+    }
+
+    /// Where `tick` sounds, in fractional ticks.
+    public func position(of tick: Tick) -> Double {
+        guard amount > 0 else { return Double(tick) }
+        let pair = Self.pairTicks
+        let into = ((tick % pair) + pair) % pair
+        let start = Double(tick - into)
+        let half = Double(pair / 2)
+        // The off-beat sixteenth moves from half way to two thirds of the pair.
+        let offbeat = half + amount * half / 3
+        let within = Double(into)
+        let moved = within <= half ? within * offbeat / half
+            : offbeat + (within - half) * (Double(pair) - offbeat) / half
+        return start + moved
+    }
+
+    /// The whole tick and the fraction an event at `tick` sounds on.
+    func split(_ tick: Tick) -> (tick: Tick, nudge: Double) {
+        let position = position(of: tick)
+        let whole = position.rounded(.down)
+        let fraction = position - whole
+        // A product that should be whole (320 at full swing) is not left a hair short of it.
+        if fraction > 1 - 1e-9 { return (Tick(whole) + 1, 0) }
+        return (Tick(whole), fraction < 1e-9 ? 0 : fraction)
+    }
+
+    /// The first whole tick at or after where `tick` sounds: a song's end.
+    func lastTick(of tick: Tick) -> Tick {
+        let (whole, nudge) = split(tick)
+        return nudge > 0 ? whole + 1 : whole
+    }
+
+    /// Sorted events, swung. The map never reverses two events, so they stay sorted.
+    func apply(to events: [PlaybackPlan.NoteEvent]) -> [PlaybackPlan.NoteEvent] {
+        guard amount > 0 else { return events }
+        return events.map { event in
+            var swung = event
+            (swung.tick, swung.nudge) = split(event.tick)
+            return swung
+        }
     }
 }
