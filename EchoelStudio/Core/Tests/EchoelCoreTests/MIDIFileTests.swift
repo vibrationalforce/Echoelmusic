@@ -97,6 +97,27 @@ final class MIDIFileTests: XCTestCase {
         XCTAssertEqual(tempos.map(\.1), [500_000, 666_667])
     }
 
+    /// A ramp is written as a tempo step on every sixteenth; each sixteenth then lasts as long in
+    /// the file as in the song, so the file's clock meets the song's on every step.
+    func testARampIsWrittenAsStepsThatKeepTheSongsTime() throws {
+        var project = Project(tempo: 100)
+        project.tempoChanges = [TempoChange(tick: 2 * bar, bpm: 160, curve: .linear), TempoChange(tick: 3 * bar, bpm: 80)]
+        let conductor = try read(MIDIFile.data(for: project)).tracks[0]
+        let tempos = conductor.meta(0x51).map { ($0.tick, Int($0.payload[0]) << 16 | Int($0.payload[1]) << 8 | Int($0.payload[2])) }
+        XCTAssertEqual(tempos.map(\.0), Array(stride(from: 0, to: Int(2 * bar), by: 240)) + [Int(2 * bar), Int(3 * bar)])
+        XCTAssertEqual(tempos.last?.1, 750_000)
+        XCTAssertEqual(tempos[tempos.count - 2].1, 375_000, "the ramp arrives at 160")
+        // Walk the file's clock and compare it with the song's on every step.
+        let map = project.tempoMap
+        var seconds = 0.0
+        for (index, step) in tempos.enumerated() where index + 1 < tempos.count {
+            seconds += Double(tempos[index + 1].0 - step.0) * Double(step.1) / 1e6 / 960
+            XCTAssertEqual(seconds, map.seconds(at: Tick(tempos[index + 1].0)), accuracy: 1e-5)
+        }
+        let rising = tempos.dropLast(2).map(\.1)
+        XCTAssertEqual(rising, rising.sorted(by: >), "an accelerando: every step shorter per quarter than the one before")
+    }
+
     func testNotesLandWhereTheArrangementPlaysThem() throws {
         let tracks = try read(MIDIFile.data(for: try song())).tracks
         XCTAssertEqual(tracks[1].meta(0x03).first?.payload, Array("Keys".utf8))
