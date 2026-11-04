@@ -70,6 +70,10 @@ public enum Arranging {
     /// tempo map from its start. Nil when the song no longer has its file.
     public static func end(of region: AudioRegion, in project: Project) -> Tick? {
         guard let file = project.mediaFile(region.media), file.sampleRate > 0, file.sampleRate.isFinite else { return nil }
+        if region.warpBPM != nil {
+            // A warped region's file time is beats (AUD-2).
+            return project.position(of: region, atFileFrames: Double(region.length)).map { MusicalTime.integer($0.rounded(.down)) }
+        }
         let map = project.tempoMap
         return map.tick(atSeconds: map.seconds(at: region.start) + Double(region.length) / file.sampleRate)
     }
@@ -171,7 +175,10 @@ public enum Arranging {
         // The nearest line of the magnet in the bar the edge is in.
         func snapped(_ tick: Tick) -> Tick { snap.nearest(tick, meter: meter) }
         func frames(from: Tick, to: Tick) -> Int {
-            Int(((map.seconds(at: to) - map.seconds(at: from)) * file.sampleRate).rounded())
+            if region.warpBPM != nil, let a = project.fileFrames(of: region, at: from), let b = project.fileFrames(of: region, at: to) {
+                return Int((b - a).rounded())
+            }
+            return Int(((map.seconds(at: to) - map.seconds(at: from)) * file.sampleRate).rounded())
         }
         switch edge {
         case .end:
@@ -186,7 +193,11 @@ public enum Arranging {
             if offset < 0 {
                 // The file begins later than the drag: the region starts on its first frame.
                 offset = 0
-                target = map.tick(atSeconds: map.seconds(at: region.start) - Double(region.offset) / file.sampleRate)
+                if region.warpBPM != nil, let first = project.position(of: region, atFileFrames: -Double(region.offset)) {
+                    target = MusicalTime.integer(first.rounded(.down))
+                } else {
+                    target = map.tick(atSeconds: map.seconds(at: region.start) - Double(region.offset) / file.sampleRate)
+                }
             }
             let endFrame = region.offset + region.length
             guard target != region.start, offset < endFrame else { return nil }

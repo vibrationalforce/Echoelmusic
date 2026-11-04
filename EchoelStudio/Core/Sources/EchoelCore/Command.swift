@@ -124,6 +124,9 @@ public enum Command: Codable, Equatable, Sendable {
     case setRegionFades(track: TrackID, RegionID, fadeIn: Int, fadeOut: Int, fadeInCurve: FadeCurve, fadeOutCurve: FadeCurve)
     /// A region's own level in dB, before the track's fader (`AudioRegion.gainRange`).
     case setRegionGain(track: TrackID, RegionID, gainDB: Double)
+    /// Whether a region follows the song's tempo, and the tempo its file was played at
+    /// (`AudioRegion.nativeBPMRange`). Following, it keeps its pitch and spans its beats.
+    case setRegionWarp(track: TrackID, RegionID, nativeBPM: Double, followsTempo: Bool)
 
     // Session
     case addScene(id: SceneID, name: String, index: Int?)
@@ -857,11 +860,10 @@ extension Command {
                 throw CommandError.duplicateID(newID.description)
             }
             let region = project.tracks[t].regions[r]
-            guard let file = project.mediaFile(region.media) else { throw CommandError.unknownMedia(region.media) }
+            guard project.mediaFile(region.media) != nil else { throw CommandError.unknownMedia(region.media) }
             // The cut falls where `tick` sounds: the file time from the region's start to it, over the
             // song's tempo map. Nothing of the file is lost — the two parts play what the one did.
-            let map = project.tempoMap
-            let elapsed = (map.seconds(at: tick) - map.seconds(at: region.start)) * file.sampleRate
+            let elapsed = project.fileFrames(of: region, at: tick) ?? .nan
             guard elapsed.isFinite, tick > region.start, elapsed.rounded() >= 1,
                   elapsed.rounded() < Double(region.length) else {
                 throw CommandError.invalidValue(parameter: "at", reason: "must fall inside the region")
@@ -957,6 +959,25 @@ extension Command {
                                                 reason: "must be within \(AudioRegion.gainRange.lowerBound)…\(AudioRegion.gainRange.upperBound) dB")
             }
             project.tracks[t].regions[r].gainDB = gainDB == 0 ? nil : gainDB
+
+        case let .setRegionWarp(trackID, id, nativeBPM, followsTempo):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .audio else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only audio regions follow the tempo")
+            }
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            guard nativeBPM.isFinite, AudioRegion.nativeBPMRange.contains(nativeBPM) else {
+                throw CommandError.invalidValue(parameter: "nativeBPM",
+                                                reason: "must be within \(AudioRegion.nativeBPMRange.lowerBound)…\(AudioRegion.nativeBPMRange.upperBound) BPM")
+            }
+            var region = project.tracks[t].regions[r]
+            region.nativeBPM = nativeBPM
+            region.followsTempo = followsTempo ? true : nil
+            // Within the song: a region that would end past the last tick does not warp.
+            guard let stop = Arranging.end(of: region, in: project), stop <= MusicalTime.maximumTick else {
+                throw CommandError.invalidValue(parameter: "nativeBPM", reason: "the region would end past the song's last bar")
+            }
+            project.tracks[t].regions[r] = region
 
         case let .addScene(id, name, index):
             guard project.sceneIndex(id) == nil else { throw CommandError.duplicateID(id.description) }

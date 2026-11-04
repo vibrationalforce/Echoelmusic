@@ -1,0 +1,82 @@
+import Foundation
+import XCTest
+@testable import EchoelCore
+
+/// AUD-2 warp: a region that follows the song's tempo spans its native beats.
+final class RegionWarpTests: XCTestCase {
+    /// One second at 48 kHz.
+    private let file = MediaFile(name: "Loop", path: "Media/loop.wav", frameCount: 48_000, sampleRate: 48_000)
+
+    private func song(tempo: Double) throws -> (Project, TrackID, RegionID) {
+        var p = Project(tempo: tempo)
+        let audio = TrackID(), region = RegionID()
+        try Command.addTrack(id: audio, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+        try Command.addMedia(file).apply(to: &p)
+        try Command.placeAudio(track: audio, id: region, media: file.id, start: 960).apply(to: &p)
+        return (p, audio, region)
+    }
+
+    func testAWarpedRegionSpansItsNativeBeatsAtAnySongTempo() throws {
+        for tempo in [60.0, 120, 150] {
+            var (p, audio, region) = try song(tempo: tempo)
+            let plain = try XCTUnwrap(Arranging.end(of: try XCTUnwrap(p.track(audio)?.regions.first), in: p))
+            XCTAssertEqual(Double(plain), 960 + 960 * tempo / 60, accuracy: 1, "at the file's speed: one second of the song")
+            try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: true).apply(to: &p)
+            let warped = try XCTUnwrap(p.track(audio)?.regions.first)
+            XCTAssertEqual(Arranging.end(of: warped, in: p), 960 + 1_920, "one second at 120 BPM is two beats")
+            // Off again keeps the native tempo for next time.
+            try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: false).apply(to: &p)
+            XCTAssertEqual(p.track(audio)?.regions.first?.nativeBPM, 120)
+            XCTAssertNil(p.track(audio)?.regions.first?.warpBPM)
+        }
+    }
+
+    func testWarpIsValidatedAndOneUndoStep() async throws {
+        let (p, audio, region) = try song(tempo: 90)
+        var bad = p
+        for bpm in [Double.nan, 0, 19.9, 1_000] {
+            XCTAssertThrowsError(try Command.setRegionWarp(track: audio, region, nativeBPM: bpm, followsTempo: true).apply(to: &bad), "\(bpm)")
+        }
+        XCTAssertEqual(bad, p)
+        try await MainActor.run {
+            let store = ProjectStore(project: p)
+            try store.perform(.setRegionWarp(track: audio, region, nativeBPM: 100, followsTempo: true))
+            XCTAssertEqual(store.project.track(audio)?.regions.first?.warpBPM, 100)
+            store.undo()
+            XCTAssertEqual(store.project, p)
+        }
+    }
+
+    func testSplitTrimAndDuplicateCountAWarpedRegionInBeats() throws {
+        var (p, audio, region) = try song(tempo: 60)
+        try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: true).apply(to: &p)
+        // One beat in: half the file, whatever the song's tempo.
+        let tail = RegionID()
+        try Command.splitRegion(track: audio, region, at: 960 + 960, newID: tail).apply(to: &p)
+        let parts = try XCTUnwrap(p.track(audio)?.regions)
+        XCTAssertEqual(parts.map(\.length), [24_000, 24_000])
+        XCTAssertEqual(parts.map(\.warpBPM), [120, 120])
+        XCTAssertEqual(Arranging.end(of: parts[1], in: p), 960 + 1_920)
+
+        // Extending the head's end by a beat takes a beat of the file: 24 000 frames at 120 BPM.
+        let track = try XCTUnwrap(p.track(audio))
+        let longer = try XCTUnwrap(Arranging.trimmed(parts[0], edge: .end, byTicks: 960, in: track, project: p))
+        var trimmed = p
+        for command in longer { try command.apply(to: &trimmed) }
+        XCTAssertEqual(trimmed.track(audio)?.regions.first?.length, 48_000)
+
+        let copies = try XCTUnwrap(Arranging.duplicated(parts[1], in: track, project: p))
+        for command in copies { try command.apply(to: &p) }
+        let copy = try XCTUnwrap(p.track(audio)?.regions.last)
+        XCTAssertEqual(copy.start, 960 + 1_920)
+        XCTAssertEqual(copy.warpBPM, 120)
+    }
+
+    func testAnEarlierBuildsSongPlaysPlain() throws {
+        let (p, audio, _) = try song(tempo: 120)
+        let region = try XCTUnwrap(p.track(audio)?.regions.first)
+        XCTAssertNil(region.warpBPM)
+        XCTAssertNil(region.nativeBPM)
+        XCTAssertTrue(CommandCatalog.all.map(\.name).contains("audio.warp"))
+    }
+}

@@ -80,8 +80,10 @@ public enum OfflineRender {
         slots.update(for: project)
         let snapshot = EngineSnapshot(plan: plan, project: project, slots: slots.slots, sampleRate: rate, generation: 1,
                                       samples: samples)
-        guard plan.songEnd > 0 || snapshot.audioEnd > 0 else { return 0 }
-        return fixedFrames(plan: plan, audioEnd: snapshot.audioEnd, rate: rate, tailSeconds: tailSeconds)
+        // A warped region's end without its stretch: the length is known before anything renders.
+        let audioEnd = Swift.max(snapshot.audioEnd, RegionWarp.end(of: project, samples: samples, sampleRate: rate))
+        guard plan.songEnd > 0 || audioEnd > 0 else { return 0 }
+        return fixedFrames(plan: plan, audioEnd: audioEnd, rate: rate, tailSeconds: tailSeconds)
     }
 
     private static func renderRate(_ sampleRate: Double) -> Double {
@@ -113,9 +115,11 @@ public enum OfflineRender {
         core.setClickEnabled(false)
         var slots = SlotAssigner(capacity: core.slotCapacity)
         slots.update(for: project)
+        // Every warped region's stretch, ready before the first block: the export plays what the
+        // song plays once its stretches are in (AUD-2).
         let snapshot = EngineSnapshot(plan: plan, project: project, slots: slots.slots, sampleRate: rate, generation: 1,
                                       samples: samples, units: units, effects: effects, masterEffects: masterEffects,
-                                      isolating: isolating)
+                                      isolating: isolating, warped: RegionWarp.prepare(project, samples: samples))
         guard frameCount != nil || plan.songEnd > 0 || snapshot.audioEnd > 0 else {
             return Summary(frameCount: 0, sampleRate: rate, peak: 0)
         }
@@ -202,7 +206,7 @@ extension OfflineRender {
         for lane in snapshot.lanes where lane.events.contains(where: Self.isNoteOn) {
             playing[lane.track] = lane.sends
         }
-        for lane in snapshot.audioLanes where !lane.regions.isEmpty {
+        for lane in snapshot.audioLanes where !lane.regions.isEmpty || RegionWarp.plays(lane.track, in: project, samples: samples) {
             playing[lane.track] = lane.sends
         }
         let heard = { (left: Float, right: Float, mix: EngineSnapshot.MovingMix?) -> Bool in

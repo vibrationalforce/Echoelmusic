@@ -128,6 +128,34 @@ extension Arranging {
                                             fadeInCurve: region.fadeInCurve, fadeOutCurve: region.fadeOutCurve))
         }
         if let gain = region.gainDB, gain != 0 { commands.append(.setRegionGain(track: track.id, copy, gainDB: gain)) }
+        if let native = region.nativeBPM, native.isFinite, AudioRegion.nativeBPMRange.contains(native) {
+            commands.append(.setRegionWarp(track: track.id, copy, nativeBPM: native, followsTempo: region.followsTempo == true))
+        }
         return commands
+    }
+}
+
+extension Project {
+    /// Fractional file frames of `region` from its start to `tick` (negative before it): over the
+    /// song's tempo map for a region at the file's own speed, over its native tempo for a warped one,
+    /// whose file time is beats. Nil when the song no longer has its file.
+    public func fileFrames(of region: AudioRegion, at tick: Tick) -> Double? {
+        guard let file = mediaFile(region.media), file.sampleRate > 0, file.sampleRate.isFinite else { return nil }
+        if let native = region.warpBPM {
+            return Double(tick - region.start) / Double(MusicalTime.ticksPerQuarter) * 60 / native * file.sampleRate
+        }
+        let map = tempoMap
+        return (map.seconds(at: tick) - map.seconds(at: region.start)) * file.sampleRate
+    }
+
+    /// The song position, in fractional ticks, where file frame `frames` after the region's
+    /// `offset` sounds — the inverse of `fileFrames(of:at:)`.
+    public func position(of region: AudioRegion, atFileFrames frames: Double) -> Double? {
+        guard let file = mediaFile(region.media), file.sampleRate > 0, file.sampleRate.isFinite, frames.isFinite else { return nil }
+        if let native = region.warpBPM {
+            return Double(region.start) + frames / file.sampleRate * native / 60 * Double(MusicalTime.ticksPerQuarter)
+        }
+        let map = tempoMap
+        return map.position(atSeconds: map.seconds(at: region.start) + frames / file.sampleRate)
     }
 }

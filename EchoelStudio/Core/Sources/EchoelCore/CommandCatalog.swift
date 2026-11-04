@@ -52,7 +52,7 @@ extension Command {
         case placeAudio, moveRegion, trimRegion, removeRegion
         case placeVideo, splitRegion
         case splitPlacement, consolidatePlacements, consolidateRegions
-        case setRegionFades, setRegionGain
+        case setRegionFades, setRegionGain, setRegionWarp
         case addScene, removeScene, renameScene, setSlot
     }
 
@@ -130,6 +130,7 @@ extension Command {
         case .consolidateRegions: .consolidateRegions
         case .setRegionFades: .setRegionFades
         case .setRegionGain: .setRegionGain
+        case .setRegionWarp: .setRegionWarp
         case .addScene: .addScene
         case .removeScene: .removeScene
         case .renameScene: .renameScene
@@ -484,6 +485,12 @@ public enum CommandCatalog {
                                summary: "Sets an audio region's own level in dB, before the track's fader, from -60 to +24.",
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
                                             P("gainDB", .number, "The level in dB; 0 plays the file as it is.")])
+        case .setRegionWarp:
+            return CommandSpec(name: "audio.warp", title: "Set Region Warp",
+                               summary: "Sets whether an audio region follows the song's tempo, keeping its pitch, and the tempo its file was played at (20 to 999 BPM).",
+                               parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
+                                            P("nativeBPM", .number, "The tempo the file was played at."),
+                                            P("followsTempo", .boolean, "True: the region follows the song's tempo.")])
         case .removeRegion:
             return CommandSpec(name: "audio.remove", title: "Delete Region",
                                summary: "Removes an audio or video region from the timeline; the file stays in the song.",

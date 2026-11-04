@@ -78,6 +78,10 @@ final class AudioEngine {
     @ObservationIgnored private var bridgeTask: Task<Void, Never>?
     @ObservationIgnored private var project: Project?
     @ObservationIgnored private var samples: [MediaID: SampleBuffer] = [:]
+    /// Every warped region's stretch the song needs, made off the main actor and off the render
+    /// thread (`RegionWarp`), and the ones being made (AUD-2).
+    @ObservationIgnored private var warped: [RegionWarp.Key: SampleBuffer] = [:]
+    @ObservationIgnored private var warping: Set<RegionWarp.Key> = []
     @ObservationIgnored private var clickEnabled = true
     @ObservationIgnored private var configurationObserver: NSObjectProtocol?
     @ObservationIgnored private var interruptionObserver: NSObjectProtocol?
@@ -1305,12 +1309,37 @@ final class AudioEngine {
                                       effects: plugins.chains.mapValues { $0 as [any HostedProcessor] },
                                       outputChannels: outputChannels, revisions: revisions.update(for: plan),
                                       monitoring: monitoring(in: project), masterEffects: plugins.masterChain,
-                                      modulation: modulation)
+                                      modulation: modulation, warped: stretches(for: project))
         meterIndices = core.meterIndices(for: snapshot)
         core.publish(snapshot)
         let songEnd = Swift.max(plan.songEnd, snapshot.time.tick(atSample: snapshot.audioEnd))
         songLoop = Self.loopRange(songEnd: songEnd, meter: snapshot.meter)
         applyLoop()
+    }
+
+    /// The stretches the song's warped regions need that are ready, starting the ones that are not:
+    /// each is made in a detached task, and the song is sent again when it is in. Until then the
+    /// region is silent — never heard at the wrong speed. Stretches no region needs any more go.
+    private func stretches(for project: Project) -> [RegionWarp.Key: SampleBuffer] {
+        let pending = RegionWarp.pending(in: project, samples: samples)
+        let needed = Set(pending.map(\.0))
+        warped = warped.filter { needed.contains($0.key) }
+        for (key, region, buffer) in pending where warped[key] == nil && !warping.contains(key) {
+            warping.insert(key)
+            let song = project
+            Task.detached(priority: .userInitiated) { [weak self] in
+                let stretched = RegionWarp.render(region, in: song, buffer: buffer)
+                await self?.storeStretch(stretched, for: key)
+            }
+        }
+        return warped
+    }
+
+    private func storeStretch(_ stretched: SampleBuffer?, for key: RegionWarp.Key) {
+        warping.remove(key)
+        guard let stretched else { return }
+        warped[key] = stretched
+        if bridgeTask == nil, let heard { send(heard) }
     }
 
     /// A track's peak meter, or the master's for nil. For a small leaf view that polls it.
