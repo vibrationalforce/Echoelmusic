@@ -1,26 +1,20 @@
-11.0.0, twenty-second upload — the Body Voice breathes, and the main paths work with VoiceOver
+11.0.0, twenty-third upload — the sound no longer clicks (exception build: crackle fix)
 
-What is new since 10030. Each line is code that the Echoel Studio run builds and, where a test
-target reaches it, tests; nothing here is device-verified yet.
-- Breath, read from the timing of your heartbeats (camera or strap): "Breath" joins Modulate,
-  and the Body Voice swells as you breathe in (Breath → Level). It joins after about a minute
-  of slow, deep breathing and stays at "measuring" otherwise — a breath is never invented.
-  The Field moves with it too. Breath never touches the tempo.
-- Bake Effects writes 32-bit float files: a baked effect louder than full scale sounds the same
-  after the song is closed and opened again. Export WAV and stems stay 24 bit.
-- VoiceOver: in the piano roll, Add Note writes a note, notes are spoken by bar and beat, and
-  each note can move by an octave or a bar or get longer or shorter. The drum grid has a Lanes
-  rotor and names the beat of each step. The number pad takes the focus and gives it back.
-  Errors, an export's start and end and a lost Jam host are spoken. A double tap on a fader,
-  pan or value field opens the number pad; Reset is its own action. Pan reads "Center" or
-  "20 percent left".
-- Large text: track names move above their buttons whenever they would get too little room,
-  also on small phones; mixer strips and effect columns grow with the text; a long press shows
-  the transport, key and bar buttons large.
-- Piano roll zoom from 100 to 250 %, kept on this device. Empty drum steps are easier to see.
+What is new since 10031. Each line is code that the Echoel Studio run builds and tests; nothing
+here is device-verified yet — the ear on the phone decides.
+- The audio session asks for 48 kHz and a 512-frame buffer (10.7 ms), the values the earlier app
+  used on devices; a refused request is written to the diagnostic log.
+- Audio regions no longer click when Play starts inside a region, on a seek, on pause and play,
+  or while Flow glides the tempo.
+- Effect parameters and the synth's Character glide instead of stepping; throwing a parameter of
+  any effect no longer clicks.
+- The Harmonizer fades voices and style changes instead of switching them.
+- The DDSP engine renders in time (it took far more than a core before; now about a quarter of
+  one at 16 voices).
+- A live output guard holds the master below -1 dBFS; exports are untouched.
 
-Previous: 11.0.0 (10030), twenty-first upload — the Instrument page, and audio in stereo. 10029
-and earlier: see git history of this file.
+Previous: 11.0.0 (10031), twenty-second upload — breath, float bakes, VoiceOver and large text.
+10030 and earlier: see git history of this file.
 group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
 of earlier songs has not been seen on a device yet.
 
@@ -30,17 +24,12 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. A fingertip on the rear camera, open Instrument, Body Source: the camera, Body Voice on, play
-   the keys and breathe slowly and deeply, about six times a minute. After about a minute does
-   "Breath" join the measuring line, and does the sound swell as you breathe in and fall as you
-   breathe out?
-2. Press Play on a song and set the tempo lock to Flow: the tempo field reads FLOW and the tempo
-   moves slowly toward your pulse, bar by bar. Switch to Fixed: it stays where it got to, and
-   Undo takes that back.
-3. Import a stereo file with a sound only on the left: left stays left. Bake a region through
-   Chorus and the EQ with High Mid Gain all the way up, close the song and open it again: the
-   bake is still wide and not harshly clipped.
-4. VoiceOver on: in an empty MIDI clip, Add Note is spoken back with its bar and beat; in a drum
-   grid, the Lanes rotor jumps to Snare. Then the largest text size: track names, the mixer and
-   the effect fields read without cut-off words.
-5. After trying Instrument: should Echoel open on Instrument instead of Tracks?
+1. Play a song with an audio track and press Play in the middle of a region, then seek while it
+   plays, then pause and play again. Any click?
+2. Turn on the Harmonizer on a played line and switch its style while a voice sounds.
+   Any click?
+3. Play the synth with Character moving and throw an effect parameter (Chorus, EQ, Delay) fast.
+   Any click or crackle?
+4. Switch the synth to the DDSP engine and hold a chord of many notes. Does it play clean, with no
+   dropouts?
+5. Plug headphones in and out while playing. Does the sound carry on without a crack?
