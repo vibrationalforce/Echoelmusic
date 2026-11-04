@@ -234,11 +234,11 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         if pattern != primary {
             pattern = primary
             chladniMotion = ChladniMotion()
-            DiagnosticLog.app.note("field: pattern \(primary.rawValue)")
+            DiagnosticLog.app.note("field: pattern", [("look", primary.shaderIndex)])
         }
         if partner != next {
             partner = next
-            DiagnosticLog.app.note("field: blend \(next?.rawValue ?? "none")")
+            DiagnosticLog.app.note("field: blend", [("look", next?.shaderIndex ?? -1)])
         }
         mixShare = mix.isFinite ? Swift.min(Swift.max(mix, 0), 1) : 0
         let listens = primary.listensToSound || (next?.listensToSound ?? false)
