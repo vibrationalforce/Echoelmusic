@@ -52,6 +52,18 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
     private static let hostPath = "Sources/Echoelmusic/Audio/HostedInstrumentHost.swift"
     private static let enginePath = "Sources/Echoelmusic/Audio/AudioEngine.swift"
 
+    /// The text from `head` to the brace that closes its first `{`.
+    private func braced(of head: String, in code: String) -> String? {
+        guard let r = code.range(of: head), let open = code[r.upperBound...].firstIndex(of: "{") else { return nil }
+        var depth = 1
+        var index = code.index(after: open)
+        while index < code.endIndex, depth > 0 {
+            if code[index] == "{" { depth += 1 } else if code[index] == "}" { depth -= 1 }
+            index = code.index(after: index)
+        }
+        return depth == 0 ? String(code[r.lowerBound..<index]) : nil
+    }
+
     private func body(of head: String, in code: String, length: Int = 1200) -> String? {
         guard let r = code.range(of: head) else { return nil }
         return String(code[r.lowerBound...].prefix(length))
@@ -153,7 +165,9 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
 
     func testAFailedUnitKeepsTheBuiltInVoiceAndNotesKeepTheirSentNumber() throws {
         let code = SourceText.codeOnly(try source(Self.hostPath))
-        guard let set = body(of: "func setInstrument(", in: code, length: 600),
+        // W-RED (2026-11-01): the BRACE-MATCHED body (#408) — H4d/H4e put two settings branches in
+        // front of the check, so the old 600-character window ended before it.
+        guard let set = braced(of: "func setInstrument(", in: code),
               let skip = set.range(of: "if let component, failed[slot] == component { return }"),
               let unload = set.range(of: "unload(slot)") else {
             return XCTFail("ANCHOR MISSING: the failed-component check or the unload in setInstrument")
