@@ -1,198 +1,97 @@
-# Echoel — Vision (North Star, tiered)
+# Echoelmusic — Kompass (memory/vision.md, seit 2026-11-04)
 
-> ⭐ **Einstieg seit 2026-10-19: `docs/dev/ECHOEL_VISION_2026-10-19.md`.** Das Produkt ist Echoel Studio,
-> eine Musik-Workstation für iPhone und iPad; Körpersignale, Bild, Licht und Raum kommen als Module
-> dazu (NEUPLANUNG P4–P7). Gesundheit ist dort eine Forschungslinie außerhalb des Produkts (§6),
-> ohne jede Behauptung. Diese Datei bleibt der Filter für fremde Ideen; ihre Tiers beschreiben die
-> eingefrorene Alt-App und das Ziel, nicht den Studio-Build.
+Stand: gemessen an `origin/main` = `ce2305911` (2026-11-04 18:18). Jede Zeile hier ist am Repo geprüft;
+wo Quellen sich widersprechen, steht **WIDERSPRUCH** und beide Quellen. Aufgelöst wird nichts still —
+die Liste steht in `scratchpads/COMPASS_CONTRADICTIONS_2026-11-04.md`. Zahlen sind Daten: vor dem Zitieren neu messen.
 
-**Update 2026-10-28 (Vision Alignment):** Homogene Gesamtvision — implementierbar und respektiert.
+## a) Was Echoelmusic IST
 
-- **Software-Kern:** Echoelmusic / Echoel Studio als offener Steuerbus (OSC, MIDI, Art-Net/sACN, ADM-OSC). Bio optional. DMMW-Scope.
-- **Nah-Hardware:** Bestehende vibrierende Wasser-Installation (VAPORWAVE PALACE: Pontons/Platte + Exciter + Liege) als Abonnent für sinnlichen Zugang und Inklusion.
-- ⛔ **GESTOPPT (Founder 22.10. „Tauchfliege raus“, 24.10. „keine Installation im Plan“; markiert 31.10.):** nicht als aktuelles Ziel lesen, nicht in Echoelmusic-Texte, Pitches oder Anträge. Wortlaut der Vision, nur zur Nachvollziehbarkeit: **Mittel-Hardware:** Tauchfliege als modularer bio-inspirierter hybrider amphibischer Abonnent (Luft↔Wasser, Plastron-inspirierte Oberflächen, effiziente Antriebe). Für Mobilität, marine Beobachtung oder immersive Kunst. Anbindung nur über offene Standards — keine App-Umbauten.
-- **Werte-Schicht (immer aktiv):** Ernsthafter Umweltschutz und Nachhaltigkeit (niedriger Fußabdruck, reparierbar, optionales Monitoring), Frieden durch Transparenz und Offenheit, Inklusion als Zugang und Teilhabe (nicht Therapie). Reichtum und Ansehen entstehen aus hochwertiger, ehrlicher Umsetzung des Produkts plus konsistenter Werte-Praxis.
+**Eine professionelle Musik- und Medien-Workstation für iPhone und iPad (Echoel Studio), in der Körper,
+Bild, Licht und Raum als zusätzliche, abschaltbare Quellen und Ziele mitspielen.**
+- Marke **Echoel** · App **Echoel Studio** (`EchoelStudio/`, TestFlight 11.0.0) · Projekt/Repo/Domain **Echoelmusic** (`CLAUDE.md` „Identität").
+- Fokus seit 2026-10-15: professionelle Medienproduktion; Biofeedback ist eine optionale Modulationsquelle, nicht die Identität (`FOUNDER_PRODUCT_LAW.md` §1).
+- Ziel: die volle DMMW — „Own the complete creative workflow, integrate the complete professional ecosystem"; Spezialinfrastruktur (Codecs, NDI, Dante, Plugin-SDKs) wird integriert, nie nachgebaut (§1).
+- 1.0 enthält alles, was in der Alt-App auf einem Gerät lief, portiert statt kopiert (`decisions.csv` 2026-10-25, Z. 1332/1333; Produktgesetz §5).
+- Die Alt-App (`Sources/`, 10.79.515) ist eingefroren und nur noch Port-Quelle (`ECHOEL_VISION_2026-10-19.md` §4).
+- Founder-Leitbild aus dem Chat (2026-11-01 14:29): Stabilität, ultraniedrige Latenz, kernige Visuals und Videoqualität „ganz nah am Instrument" — ohne die Gesamtvision zu verlieren.
 
-Durable knowledge. Read at session start with the rest of `memory/`. This is the
-**optimized Echoel vision** — the filter every external idea is measured against
-(see `memory/inspiration_intake.md` + `.claude/skills/vision-gate/` and the new `.claude/skills/vision-alignment/`).
+## b) Was es BRAUCHT — Säulen nach Rang, mit Ist-Stand
 
-> **Echoel is a bio-reactive instrument — your body plays it, and its output is
-> multidimensional (sound, image, light, space).** Over open standards, no SDK
-> lock-in; the bio-reactive object *source*, not a renderer. *Create From Within.*
+Legende: **G+V** = gebaut und auf Gerät verifiziert · **G** = gebaut, CI-grün, *nicht* gerätegeprüft · **T** = teilweise · **F** = fehlt.
+Auf einem Gerät ist für Studio **nichts** verifiziert (`EchoelStudio/RELEASE`, `TESTFLIGHT_PUBLIC_BETA.md` §0).
 
-⭐ **2026-09-24 — THE SENTENCE ABOVE IS NO LONGER THE PRODUCT BOUNDARY.** Founder law, canonical
-in `docs/dev/FOUNDER_PRODUCT_LAW.md`: Echoelmusic is a full professional **distributed
-multidimensional multimedia workstation (DMMW)** — *own the complete creative workflow, integrate
-the complete professional ecosystem* (never rebuild codecs, Dante, NDI, CDNs, plugin SDKs).
-**CURRENT PRODUCT LAW SUPERSEDES HISTORICAL PRODUCT CUTS**: every „CUT, not roadmap“ below records
-a revoked IMPLEMENTATION and its engineering warning, not a scope ban. The bio-reactive sentence
-stays true of what SHIPS today and stays the differentiator; bio is not the outer boundary. Scope
-is not a claim — public copy still follows `ContentPipeline/CLAIMS.md`. Per-capability history and
-recovery class: `docs/dev/HISTORY_ARCHIVE.md`. The paragraph below is kept as the 2026-07-25 record.
+| # | Säule | Stand | Beleg (Pfad unter `EchoelStudio/`) |
+|---|---|---|---|
+| 1 | Stabiler, knackfreier, latenzarmer Klangkern | **G** (AUD: elf Knackstellen behoben, 48 kHz/512) | `App/Engine/AudioEngine.swift`, `Engine/` · `decisions.csv` Z. 1366/1369 |
+| 2 | DAW-Kern: Spuren, Arrange, Session, Mix, Automation, Undo, Export WAV/Stems/MIDI | **G** | `App/Views/ArrangeView.swift`, `App/Documents/DocumentController.swift` |
+| 3 | Noten- und Clip-Bearbeitung: Piano Roll, Quantize/Humanize, Magnet Bar…1/128 + Triolen, Split | **G** | `App/Views/ClipEditorView.swift:362`, `Core/Sources/EchoelCore/Snapping.swift` |
+| 4 | Zeit: Tempo-Rampen, Taktwechsel, Tonsysteme + Kammerton, Swing (W13) | **G** (Build 10034-Liste) | `Core/Sources/EchoelCore/MusicalContext.swift`, RELEASE |
+| 5 | Instrumente: 8 Synth-Engines (classic, supersaw, fm, sub, morph, mallet, ddsp, choir), Drums, Sampler, Instrument-Seite mit Hex-Tasten | **G** | `DSP/Sources/EchoelDSP/SynthEngine.swift:15`, `App/Instrument/` |
+| 6 | 18 eingebaute Effekte inkl. Pitch Correction, Harmonizer, Granular | **G** | `Core/Sources/EchoelCore/OwnPlugins.swift:79` |
+| 7 | Plugins: eigene AUv3 (21 Units + `echl`), fremde AU auf Spuren hosten, Einmalkauf | **G**, kein Host-Gerätetest, Kauf nicht im Verkauf | `Plugins/AUv3/Info.plist`, `App/Engine/PluginHost.swift`, CLAIMS Nachträge 1/3/4 |
+| 8 | MIDI/Live: In/Out, Clock, Learn, Launchpad, **MPE-Ausgang**, Network MIDI, Jam | **G** | `App/Engine/MIDIMPEOutput.swift`, `App/Jam/JamLink.swift` |
+| 9 | Bild/Licht/Raum/Stream: Field (Metal, Chladni), OSC/ADM-OSC/Art-Net/sACN, Go Live (RTMP/SRT), Videospuren, Video-Take, Video-Export, Sky | **G** | `App/Field/`, `App/Connections/`, `App/Streaming/`, `App/Media/VideoTakeRecorder.swift` |
+| 10 | Körper (optional): BLE-Gurt, Kamera-Puls, Atem aus RSA, Body Voice, Modulation | **G** | `App/Body/`, `Core/Sources/EchoelCore/Modulation.swift` |
+| 11 | Assistent auf dem Gerät (nur mit Apple Intelligence) | **G**, nie auf Gerät gelaufen | `App/Agent/AgentSession.swift` |
+| 12 | Barrierefreiheit (8-Punkte-Abnahme vor 1.0) | **T** (VoiceOver, große Schrift im Code; Abnahme offen) | `ECHOEL_VISION` §6e · **WIDERSPRUCH** Reduce Motion, s. C6 |
+| 13 | Web-Fenster (gleicher Swift-Kern als Wasm) | **F** (nur Spike) | `docs/dev/WEB_SPIKE_2026-11-01.md`, `decisions.csv` Z. 1358 |
+| 14 | Weitere Apple-Plattformen (Mac, Watch, Vision, TV) | **F** (`TARGETED_DEVICE_FAMILY "1,2"`) | `EchoelStudio/project.yml:90` · GM16/GM36 |
 
-⛔ **The sentence above is the RATIFIED one** (PRODUCT_DEFINITION.md, founder-delegated
-2026-07-25). The variant that stood here — "sound, space, light, **vibration**", no
-*image* — predated it and diverged from the canon in the one file the vision-gate skill
-scores against: it dropped the VISUAL, which is a ship-gate check, and promoted haptics
-into the sentence. Vibration/haptics stay real as an output-stage subscriber (sub-bass
-voice + Core Haptics), listed below — not in the one sentence. Caught by the 2026-08-28
-brand audit; if the canon sentence ever changes, it changes THERE first and here second.
+Gemessen fehlend gegenüber den Wünschen des Founders (Chat 2026-11-04 16:31: „ARP, synth Engines, Video, Audio, Midi, MPE, OSC, Clip Editing, cut, warp, quantize, stepless, magnet"):
+**Arpeggiator F** (Alt-App hatte einen, Studio null Treffer) · **Warp T** (Feld im Format, `Core/…/AudioRegion.swift:78`; keine Tür in `App/` gefunden) · **Stereo-Aufnahme F** (`decisions.csv` Z. 1349) · **Gesicht/Bewegung als Quelle F** (Z. 1333 bestellt, Produktgesetz §2 verlangt Einwilligung + Datenschutz-Design) · **Velocity-Editor F** (nur Humanize, `ClipEditorView.swift:372`).
 
-Echoel — Physical Computing · Biofeedback · Multimedial & Multidimensional.
-iPhone-first. On-device, private, free. The body is the controller.
+## c) Was es NIE ist — rote Linien
 
----
+- **Nie Wellness, Meditation, Entspannung, Schlaf, Fokus, Therapie, Medizin.** Nie Heilfrequenzen, Solfeggio, Chakren, 432 Hz „healing", Binaural/Entrainment, 40 Hz, Organ-/Gewebe-/Knochenheilung, Bewusstseinszustände, Frieden/Weltfrieden/Einheit/Heilung als Wirkung (`CLAUDE.md` „Sprache", Produktgesetz §4, `HISTORY_ARCHIVE.md` §N, `ECHOEL_VISION` §6/§7). Körperwerte = Selbstbeobachtung, keine Diagnose. Blitzrate ≤ 3 Hz.
+- **Keine Waffen, keine Überwachung, kein Targeting, keine Körperdaten als Druckmittel** (Produktgesetz §4b, 2026-11-01). Doppelnutzbares (Kamera, Netz, Ort, Licht) bleibt am eigenen Gerät, aus bis eingeschaltet.
+- **Nicht beim Steuern** von Auto, Boot oder Maschine, auch nicht mit Autopilot; kein Navigations-/Sicherheitsprojekt, kein eigener Browser (§4c).
+- **Kein „Eeole"/„Eeolee"** in Echoelmusic-Texten (App, Website, Store, Pitches, Anträge) — getrennte Marke (§4c, `CLAUDE.md`).
+- **„KI/AI" nur, wo ein echtes Modell läuft;** nie „Superintelligenz" nach außen (Produktgesetz §1, Wächter TheCopyMakesNoHealthClaimTests).
+- **„MPE" nur als „MPE-Ausgang"** — MPE-Eingang gibt es nicht (CLAIMS Nachtrag 6).
+- **„pitch correction", nie „Autotune"** (Marke); nie Voice Cloning / AI-Voice fremder Stimmen (CLAIMS §11, Z. 1364).
+- **Keine erfundenen Behauptungen:** nach außen nur, was `ContentPipeline/CLAIMS.md` (Studio-Abschnitt + Nachträge) trägt, mit „in TestFlight / nicht gerätegeprüft"; keine erfundenen Reviews, Zahlen, Zitate; nie „works in AUM/Logic/GarageBand".
+- **Kein Abo, keine Werbung, kein Tracking, kein Konto** (Vision §7, NEUPLANUNG §8.1).
+- **Nichts nach außen ohne sein ausdrückliches Ja** (Mails, Posts, Tester, Outreach); keine Tester-, Log- oder Gesundheitsdaten anfordern (`TESTFLIGHT_PUBLIC_BETA.md` §0).
 
-## The five dimensions (one bus; ⛔ "one instrument, never new tabs" = phase history since 2026-09-24 — surfaces follow the master plan's WA order)
+## d) Wie wir arbeiten
 
-**Body** (the differentiator) → **Sound** → **Image** → **Light** → **Space** (the
-canonical pillars; vibration/haptics ride the output stage), with **Data**
-(OSC · MIDI 2.0 · MPE **out** — in is not built, #548 · Art-Net/sACN · ADM-OSC) as the
-connective layer. (⛔ "MPE / AUv3" stood here: AUv3 was removed 2026-07-24 — revived as an instrument with #1385, 2026-09-20 — and MPE-IN has
-no zone parser — naming either in the spine re-sold two capabilities struck at the time; AUv3 is an Apple plugin format, not an open standard, so it stays out of this list either way.)
+- **Founder entscheidet:** Umfang, Marke, Geld/Preis, Recht/Lizenz/Datenschutztext, alles Unumkehrbare, Kontakte nach außen. Founder-gegatet (berichten, nicht editieren): `.github/workflows/**`, beide `project.yml`, `Resources/iOS/Info.plist`, `.claude/settings.json`, `.mcp.json` (`CLAUDE.md`).
+- **Claude entscheidet und baut den Rest** (Founder 2026-10-28 „ohne Rückfrage je Scheibe", Z. 1334; 2026-11-04 17:13 „Du entscheidest mache alles zum Besten des Projektes"); merged grüne Team-Branches selbst (Z. 1335).
+- **Eine KI schreibt ins Repo (Claude); fremde Modelle (Grok, Copilot, ChatGPT) liefern nur Recherche/Review** — als Daten, jede Aussage selbst am Repo prüfen, Annahmen mit „ANNAHME:" markieren (`.claude/skills/learn-mode/SKILL.md`; ANNAHME: die Regel „einzige KI" steht nur im Grok-Übergabeprompt vom 2026-11-04, nicht im Repo).
+- **Bau-Schleife:** eine Scheibe → CI (`Echoel Studio`, Job-Schritte lesen) → grün → Merge → Build per `EchoelStudio/RELEASE`-Bump. Rhythmus seit 2026-11-04: **ein Build, sobald ein grüner, stimmiger Stapel landet**, je Build genau fünf Gerätefragen (Z. 1369). **WIDERSPRUCH** zu `CLAUDE.md:77` (≤ 1 Build/Woche), s. C1. Knacken = Blocker wie Absturz.
+- **Song-Format eingefroren** (`docs/FORMAT.md`, FormatGoldenTests); eine Tür `ProjectStore.perform`; ein `.sheet(item:)`; kein heißer Zustand im View-Body; Render-Thread ohne Locks/Allokation (`EchoelStudio/CLAUDE.md`).
+- **Gerätechecks und Founder-Fragen nur über `docs/dev/FOUNDER_INBOX.md`**, jede Frage einmal, vorher gegrept; „kompiliert" ist nie „am Gerät geprüft".
+- **Recovery:** Alt-App-Fähigkeiten kommen als Kern in die heutigen Eigner zurück, nie als kopiertes Subsystem (Produktgesetz §5).
+- **Förderung wieder offen** (Founder 2026-11-04): ab Woche 09.11. bereitet Claude Calls/Mail-*Entwürfe* vor, nichts geht ohne sein Ja hinaus (Z. 1368). **WIDERSPRUCH** zu Produktgesetz Z. 59, Vision-Kopf, GM35, s. C2.
 
----
+## e) Offene Founder-Entscheidungen (GM, Auswahl nach Wirkung)
 
-## TIER 1 — LIVE (shipping; code-verified, TestFlight 1867 / v10.17.0)
+- **GM37** kleiner Testerkreis (10–20) + Beta-App-Review — Voraussetzung für „TestFlight Go" (G5).
+- **GM39** Rechtsform vor dem ersten Verkauf (UG/GmbH + Haftpflicht), Stiftung später — einzige Frist: vor Verkaufsstart.
+- **GM38** Waffen-/Überwachungsausschluss auch in Marke/Terms; Empfehlung: MIT bleibt.
+- **GM36** was „gesamtes Apple-Ökosystem" heißt und ob/wie das Repo privat wird.
+- **GM40** Planeten-Kammertöne (Cousto, „Earth year" …) im Song-Menü öffentlich? Empfehlung: raus.
+- **GM41** Datenschutzseite um Video-Takes ergänzen. Empfehlung: ja.
+- **GM30** frühere Engines zurück (MIDI-Prozessor, Preis, Reihenfolge) · **GM23** Ableton Link · **GM16** Plattform-Reihenfolge.
+- **GM2/GM4/GM22** Bild speichert sich mit dem Song / reagiert auf Musik · **GM10/GM11** Körper-Adjektive, Cloud-Anbieter · **GM12** dSYMs/MetricKit · **GM14** Arbeitskopie nach Absturz.
+- **GM19** Entrainment-Labels in der Alt-App · **GM9** „EchoelAI"-Wort · **GM21/GM28** Store-Text (s. C9) · **GM31–GM34** Strategie, Booking, One Clock, Werte.
+- Gerätechecks 10027–10034 (fünf je Build, RELEASE). Status je Zeile: `grep -n '^| GM' docs/dev/FOUNDER_INBOX.md`.
 
-- **Body as controller** — HR/HRV/breath/coherence via HealthKit + universal BLE
-  (any 0x180D) + camera rPPG (locks on device) + Demo → 10 Hz bus snapshot.
-- **Bio-generative music** — in-key melody/rhythm/tempo, seeded/reproducible. **16 genres are
-  OFFERED** in the picker (`MusicStyle.offered`) out of 33 declared in the taxonomy
-  (`MusicStyle`) — the 2026-07-24 curation set 8, #254 took it to 16 on 2026-07-30. Source of
-  truth: `Sources/Echoelmusic/Sequencer/MusicStyle.swift`; count it, do not read it.
-  ⛔ This said "8 … out of 25 … and 8 is the number the App Store text claims" — all three
-  wrong, and the third was made wrong BY #428, which recounted the store text without
-  touching the sentence that cites it. ("12 genres" here was never true of either number.)
-- **Synthesis & export** — DDSP harmonic-plus-noise + polyphonic pad/lead + sub-bass, FX
-  chain, LUFS WAV, MIDI export. (`EchoelCellular` has ZERO production consumers and
-  `EchoelModalBank`'s only caller was the deleted drum voice — neither makes a sound today.)
-- **Light** — native Art-Net + sACN, zero-dependency UDP (strongest non-audio dimension).
-- **Space** — ADM-OSC immersive object out (`/adm/obj/{n}/*`) → L-ISA / d&b / FletcherMachine.
-- **Vibration / LFE** — dedicated pushable sub-bass voice + Core Haptics infra.
-- **Visual** — Metal GPU bio-renderer (HR→pulse ≤2 Hz WCAG, coherence→hue, breath→spread).
-- **Open spine** — OSC, MIDI 2.0 (mono in: notes + pitch-bend; **MPE OUT** since #713 —
-  MPE IN is not built, #548), RTP-MIDI. **Apple**: Widgets shipped (WidgetKit).
-  **AUv3 removed 2026-07-24 (#122/#123)** — ⛔ „Echoel is neither a plugin nor a host" held until 2026-09-20: #1385 revived the AUv3 INSTRUMENT (`EchoelmusicAUv3`, loads in AUM #1386). Echoel is a plugin again; it is still not a host.
+## f) Wo die Wahrheit steht
 
-## TIER 2 — ROADMAP (planned; partially wired or authorized, not built)
+- Scope und rote Linien → `docs/dev/FOUNDER_PRODUCT_LAW.md`
+- Einstieg, Zeitachse, Gesundheits-Grenze, Geschäft → `docs/dev/ECHOEL_VISION_2026-10-19.md`
+- Bau-Reihenfolge Studio → `docs/dev/NEUPLANUNG_2026-10-18.md` §5 (+ `scratchpads/PLAN_ONE_POINT_ZERO_COMPLETE_2026-10-25.md`)
+- Was nach außen gesagt werden darf → `ContentPipeline/CLAIMS.md` (Studio-Abschnitt + Nachträge 1–6)
+- Was es früher gab, ob es zurückkommt, DO-NOT-RESTORE → `docs/dev/HISTORY_ARCHIVE.md` (§N)
+- Studio-Gesetz und Layout → `EchoelStudio/CLAUDE.md` · Repo-Karte → `CLAUDE.md` · Alt-App-Gesetz → `Sources/CLAUDE.md`
+- Ist-Stand Studio → der Code unter `EchoelStudio/` (nicht `FEATURE_STATUS.md`, die nur die Alt-App kennt) · Prüfliste → `EchoelStudio/RELEASE`
+- Go-Kriterien G1–G6 → `docs/dev/TESTFLIGHT_PUBLIC_BETA.md` §0
+- Founder-Fragen und Gerätechecks → `docs/dev/FOUNDER_INBOX.md`
+- Entscheidungen → `decisions.csv` (maschinenlesbar) · `memory/decisions.md` (Begründung)
+- Song-Format → `docs/FORMAT.md` · Web-Messung → `docs/dev/WEB_SPIKE_2026-11-01.md`
 
-- ⛔ **Live RTMP/SRT broadcast — CUT, not roadmap** [⭐ 2026-09-24: scope verdict superseded — broadcast is a DMMW domain again, via a proven RTMP/SRT library, never a hand-rolled client; `docs/dev/HISTORY_ARCHIVE.md`] (Editor ≠ Workstation, 2026-07-25;
-  "broadcast" struck from the identity line 2026-07-31). HaishinKit stays unlinked.
-  Honest tier per `inspiration_intake.md`: WATCH. Re-entry needs a founder ask, not a plan.
-- ⛔ **AUDIOVISUAL VOCODER — CUT, not roadmap** (#1301/#1302, founder 2026-09-12, wörtlich
-  „Face und Audio Input komplett entfernen“). It stood here as the **flagship** with
-  „wiring next“ — and that is the most expensive sentence shape this file can carry: the
-  hook `cat`s `vision.md` at EVERY session start, so a deleted type was being named as the
-  next thing to build, to every future session, for four days. `VocoderCore` and
-  `FeedbackGuard` are gone as FILES; the vocoder's INPUT half (the microphone) no longer
-  exists, so there is nothing to vocode. `BioModulation` survives, still unwired, and is
-  listed as such in CLAUDE.md — it was never the vocoder. Re-entry needs a founder ask, like
-  RTMP above it, not a plan. The bio→sound+visual+light claim itself is UNAFFECTED and
-  shipping: that is the output stage, driven by the BODY, which is what the product is.
-  **⛔ The 2026-06-20 "full all-in-one professional production environment" pivot that stood
-  here is ITSELF SUPERSEDED (2026-07-24, #121; decisions.csv rows 84/101/102/190/191).** The
-  canonical boundary WAS `docs/dev/PRODUCT_DEFINITION.md` (2026-07-25 → 09-24, superseded by
-  `docs/dev/FOUNDER_PRODUCT_LAW.md`): **Editor ≠ Workstation** — the
-  instrument plus its multidimensional output stage (sound · visual · light · space). DAW,
-  AUv3 host, video/NLE and broadcast were dismantled on purpose.
-  `scratchpads/PLAN_PRO_PRODUCTION_SUITE.md` plans a product that no longer exists — history
-  only, do not plan from it.
-- **Echoel AS an AUv3** — deferred, NO code (target deleted 2026-07-24). Hosting third-party
-  AU is decided OUT (#190).
-- **Multichannel / 360° immersive sound, head-tracked binaural, Atmos authoring.**
-- **CoreML / RAVE neural latent layer** — gated on an on-device latency prototype.
-- **macOS / visionOS / tvOS / App Clip surfaces.**
+## g) Geschichte dieser Datei
 
-## TIER 3 — NORTH STAR (concept, honestly far-future; NEVER product copy)
-
-- **Multidimensional interactive installation worlds / immersive media art** — the
-  animating identity; depends on the whole roadmap stack first.
-- ⛔ ~~Realtime live broadcast as a brand pillar~~ — struck 2026-07-31 with the identity
-  line; Cinema/Theater/Performance are served by the OUTPUT stage (light/space/visual),
-  not by streaming. Kept only so the strike is findable here too.
-- **Auto-driving assistant** — parking lot, speculative (`user.md`). No code, no copy.
-- **Hardware line (founder 2026-09-11, corrects this entry):** the founder stated plainly
-  that **dive-flying is the hardware he actually wants to develop**, with a nearer first
-  step: an **ergonomic memory-foam lounger ("cloud") fitted with bass shakers**, water as a
-  vibrating element. ⛔ This line previously read *"Dive-flying (Tauchfliegen) — parking lot,
-  North Star. **Unrelated to app**"* and `user.md` said only "Details TBD" — both were wrong
-  as a record of INTENT, not merely stale. Still NORTH STAR for the APP (no code, no product
-  copy, no roadmap slot) and still never a health/therapy claim — but it is a declared
-  direction of the founder's own practice, not a whim to be parked and forgotten.
-  **The architectural consequence is the opposite of what it looks like:** hardware needs NO
-  app rebuild. The bus principle *"adding a medium = adding a subscriber"* (from the historical
-  `PRODUCT_DEFINITION.md`; its "never a new surface" half is superseded by the 2026-09-24 UI law —
-  surfaces are replaceable, capabilities survive) still holds for OUTPUT hardware, and the output stage already speaks open standards (OSC, ADM-OSC,
-  Art-Net, sACN, MIDI/UMP). A sounding lounger attaches as ONE MORE SUBSCRIBER. Any proposal
-  that rebuilds the engine "for the hardware" (C++ core, second bus, CMake) has it backwards —
-  see the 2026-09-11 entries in `inspiration_intake.md`.
-- **Biofeedback + self-observation "revolutionizing humanity"** — emotional north star
-  behind *Create From Within*. Expressed ONLY as self-observation, NEVER as a
-  health/medical/therapy claim (FDA general-wellness red line).
-
-## BANNED (overclaim — the founder asked, the project refused)
-
-Quantum AI · Super-AI / AGI · wellness/healing/Solfeggio/chakra · "16K" ·
-"BLAB" / Vibrational Force / legacy soundscape branding. **The code is the truth;
-if the website disagrees, the code wins.**
-
----
-
-## Founder principles (the constitution)
-
-1. **Stable-first / build-green is the only gate.** Ralph Wiggum: one change/cycle,
-   no batching, CI-verified before trusting it.
-2. **Open standards, near-zero dependencies, no SDK lock-in.**
-3. **Biofeedback is science, not wellness.** Show the number, never promise the benefit.
-4. **Brand purity / no overclaim.** Code is truth.
-5. **Accessibility-first.** VoiceOver, WCAG ≤3 Hz flash by construction, Atkinson font,
-   the "felt"/haptic dimension validated with the Deaf community.
-6. **One paradigm: fan out from the bio core.** Every surface is a pillar off the same
-   bus. Anti-pattern: breadth-first oscillation (history shows 5 oscillations, 0 breadth).
-7. **Audio-thread sanctity.** No malloc/locks/GCD in the render path.
-8. **Honesty over cheerleading.** Green CI ≠ works on device.
-9. **Haltung, nicht Wirkung (Founder 2026-10-11).** Wörtlich: *„World UNITY Friedensabkommen über
-   sanften und lächelnden Handel. Alles werden involviert und lernen zu verzeihen. Oberstes Gebot
-   Transparenz und Volkswirtschaftliche Ökonomie wie sie alle gerne hätten. Vermeide BigPlayer
-   Monopolistische Einseitigkeit ohne Regenwälder, Tiere und Menschen zu zerteilen. Vermeide das
-   dringenst. Wir starten mit Airbus bei den Tauchfliegen und enden mit Echoelmusic als neue
-   Musikschule, die Vegane Musikbetriebene Brötchen backt.“* Gelesen durch den Vision-Gate
-   (`wf_7ab06b71-143`, Stand `5bc17bc6b`): WERTE dafür, WIE gebaut und gehandelt wird — Transparenz
-   (MIT, keine Server, kein Tracking, jede Zahl neben ihrem Befehl), kein Lock-in (`dependencies: []`,
-   offene Protokolle und Formate), sanfter Handel (v1.0 kostenlos, keine Kauf-UI), alle inbegriffen
-   (hören · sehen · fühlen, 3-Hz-Decke, Simulation ohne Sensor), „verzeihen“ = Korrektur ohne Schuld
-   (die ⛔-Vermerke) — plus EINE Richtung: Musik durch den Körper lernen (`LearnLibrary`; Tier-1-Scheibe
-   „From pulse to piece“). ⛔ NIE als WIRKUNG in Kopie: Frieden, Einheit, Verzeihen, Heilung (Prinzip 3,
-   BANNED, CLAIMS §2, App-Store 2.3, der Master-Prompt des Founders vom 2026-10-07). Keine Öko-/Vegan-
-   Behauptung über die App (keine Lieferkette; ehrlich ist „akku- und wärmebewusst“). Vollständige
-   Lesung, Haltungs-Text, Scheibe und rote Linien: `memory/inspiration_intake.md`, Abschnitt
-   „2026-10-11 — Founder: „World UNITY““.
-
----
-
-## Standing vision↔code gaps to keep honest (review each cycle)
-
-1. **(RESOLVED 2026-07-31)** "Live Broadcast" — the gate answered: CUT (Editor ≠
-   Workstation) and struck from the identity line. WATCH tier; no longer an oscillation.
-2. **CLAUDE.md "v10 Target" diagram describes an app never built** (Beat/Record/Video/
-   Share tabs); the as-built is one `EchoelStudioView`. Same file contradicts itself.
-3. **(RESOLVED 2026-06-18, then DRIFTED AGAIN — re-resolved #1340, 2026-09-16)** FEATURE_MATRIX
-   reconciled to code (MetalBioView LIVE, 23 genres, sACN unicast live). ⛔ The clause „new
-   vocoder/biomod cores flagged not-yet-wired“ is void with the cores (#1302). ⭐ **A register
-   does not stay reconciled** — four days after the founder deletions it again claimed a live
-   microphone, one line below its own tombstone. „Resolved“ is a date on this row, not a state.
-4. ⛔ **Bus topic `bioFrames` — REMOVED 2026-09-24, it had no consumer** (`bioEvents` IS drained — sole consumer `OSCSender.drainAndSendEvents`, OSC egress only; ⛔ both stood here as undrained, audit 2026-08-28); bio flows over the
-   snapshot (per-RR heartbeat events have no synth sink). Lock-free design partly aspirational.
-5. **North-Star concepts have no written bridge** to the roadmap — auto-driving stays
-   parked. ⚠️ For the HARDWARE line this gap is now a real cost, not a deliberate
-   silence (founder 2026-09-11): with no written statement of what Echoel contributes
-   to a physical device and what it does not, every outside proposal defaults to
-   rebuilding the app around the hardware. Naming the boundary is the repair —
-   Echoel = the bio + sound layer speaking open standards; transducers, water,
-   structure and certification are a SEPARATE project that talks to it over OSC/DMX.
-   Neither half leaks into product copy.
-
-_Last synthesized: 2026-06-18. Re-audit when the brand promise and the
-shipping reality drift further than one cycle apart._
+- ⛔ Die frühere Fassung (Bio-Instrument der Alt-App, bis 2026-11-04) liegt wörtlich in `memory/vision_bis_2026-11-04.md` und wird nicht mehr beim Start geladen. Ihre Kernlehre bleibt: AUDIOVISUAL VOCODER — CUT, not roadmap (mit #1302/#1305 in der Alt-App gelöscht; Stimme kommt in Studio als eigene Engines und Effekte, nie als Mikrofon-Vocoder der Alt-App zurück).
+- Founder-Auftrag 2026-11-04: „frische das Gedächtnis im Repo so auf, dass du ein für alles mal Bescheid weißt, was Echoelmusic sein soll, was es braucht und was nicht."
