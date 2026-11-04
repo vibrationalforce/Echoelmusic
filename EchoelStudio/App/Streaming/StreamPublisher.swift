@@ -4,11 +4,10 @@ import EchoelCore
 import Foundation
 import HaishinKit
 import RTMPHaishinKit
-import SRTHaishinKit
 import VideoToolbox
 
 /// The one file that speaks a streaming protocol (wave W14): HaishinKit (BSD-3,
-/// github.com/HaishinKit/HaishinKit.swift) carries RTMP, RTMPS and SRT, encodes H.264 and AAC on
+/// github.com/HaishinKit/HaishinKit.swift) carries RTMP and RTMPS, encodes H.264 and AAC on
 /// the device's hardware and reconnects a dropped TCP link a few times by itself. Echoel adds no
 /// protocol code of its own — the product law: integrate, never rebuild the specialist part.
 ///
@@ -53,7 +52,6 @@ actor StreamPublisher {
     func open(_ target: StreamTarget, url: URL) async throws {
         if !registered {
             await SessionBuilderFactory.shared.register(RTMPSessionFactory())
-            await SessionBuilderFactory.shared.register(SRTSessionFactory())
             registered = true
         }
         await close(target.id)
@@ -158,7 +156,7 @@ actor StreamPublisher {
         case RTMPStream.Error.requestFailed(let response):
             "The server refused the stream (\(response.status?.code ?? "no reason")). Check the stream key."
         case SessionBuilderFactory.Error.notFound, SessionBuilderFactory.Error.illegalArgument:
-            "The address is not an RTMP, RTMPS or SRT address."
+            "The address is not an RTMP or RTMPS address."
         default:
             "Could not connect (\(error.localizedDescription)). Check the network and the server address."
         }
@@ -168,7 +166,7 @@ actor StreamPublisher {
 enum StreamPublisherError: LocalizedError {
     case unsupported
 
-    var errorDescription: String? { "The address is not an RTMP, RTMPS or SRT address." }
+    var errorDescription: String? { "The address is not an RTMP or RTMPS address." }
 }
 
 /// HaishinKit's own adaptive strategy (the video rate steps down when the network cannot carry it

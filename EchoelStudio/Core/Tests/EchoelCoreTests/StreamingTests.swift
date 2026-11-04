@@ -6,7 +6,7 @@ final class StreamingTests: XCTestCase {
     /// Every preset names a transport, and where it names a server, that server speaks it and
     /// takes a key to become a full address.
     func testEveryPresetWithAServerBuildsAnAddressInItsOwnTransport() throws {
-        for platform in StreamPlatform.allCases {
+        for platform in StreamPlatform.offered {
             XCTAssertFalse(platform.title.isEmpty)
             XCTAssertFalse(platform.whereToFind.isEmpty)
             guard let server = platform.defaultServer else { continue }
@@ -35,38 +35,36 @@ final class StreamingTests: XCTestCase {
         XCTAssertEqual(url.query, "s_bl=1&s_ps=1")
     }
 
-    func testTheSRTKeyBecomesTheStreamID() throws {
-        let plain = StreamTarget(platform: .customSRT, server: "srt://relay.local:8890")
-        XCTAssertEqual(try plain.publishURL(key: "publish:stage").absoluteString,
-                       "srt://relay.local:8890?streamid=publish:stage")
-        let withQuery = StreamTarget(platform: .customSRT, server: "srt://relay.local:8890?latency=200000")
-        XCTAssertEqual(try withQuery.publishURL(key: "stage").absoluteString,
-                       "srt://relay.local:8890?latency=200000&streamid=stage")
-        XCTAssertEqual(try plain.publishURL(key: "").absoluteString, "srt://relay.local:8890",
-                       "a custom SRT address may carry everything itself")
+    /// SRT was removed from Studio v1 (2026-11-04: its library brought OpenSSL). A destination an
+    /// earlier build stored as Custom SRT still decodes — the device's list survives — but it is
+    /// never offered again and refuses to connect with a reason that names the way out.
+    func testAStoredSRTDestinationDecodesAndIsRefusedAsRemoved() throws {
+        let stored = Data(#"""
+            {"id":"6F1B0C8A-1D2E-4F3A-9B8C-7D6E5F4A3B2C","name":"Relay","platform":"customSRT",
+             "server":"srt://relay.local:8890","format":"landscape",
+             "quality":{"videoKbps":4500,"audioKbps":128},"isEnabled":true}
+            """#.utf8)
+        let target = try JSONDecoder().decode(StreamTarget.self, from: stored)
+        XCTAssertEqual(target.platform, .customSRT)
+        XCTAssertThrowsError(try target.publishURL(key: "stage")) { error in
+            XCTAssertEqual(error as? StreamTarget.AddressError, .srtRemoved)
+        }
+        XCTAssertThrowsError(try target.publishURL(key: "")) { error in
+            XCTAssertEqual(error as? StreamTarget.AddressError, .srtRemoved, "with or without a key")
+        }
+        XCTAssertFalse(StreamPlatform.offered.contains(.customSRT), "a new destination is never SRT")
+        XCTAssertEqual(StreamPlatform.offered.count, StreamPlatform.allCases.count - 1)
+        XCTAssertTrue(StreamTarget.AddressError.srtRemoved.explanation.contains("RTMP"),
+                      "the refusal names the transport that still works")
     }
 
-    /// libsrt would encrypt with its own code; the app declares no non-exempt encryption, so an
-    /// SRT address that asks for it is refused before anything connects — in any spelling.
-    func testAnSRTAddressThatAsksForEncryptionIsRefused() {
-        func refusal(_ server: String, key: String = "stage") -> StreamTarget.AddressError? {
-            do {
-                _ = try StreamTarget(platform: .customSRT, server: server).publishURL(key: key)
-                return nil
-            } catch let failure as StreamTarget.AddressError {
-                return failure
-            } catch {
-                return nil
+    /// An srt:// address typed into an RTMP destination says SRT is gone, not just "wrong scheme".
+    func testAnSRTAddressOnAnRTMPDestinationIsRefusedAsRemoved() {
+        for server in ["srt://example.com:9000", "SRT://example.com:9000?streamid=x"] {
+            XCTAssertThrowsError(try StreamTarget(platform: .customRTMP, server: server).publishURL(key: "k")) { error in
+                XCTAssertEqual(error as? StreamTarget.AddressError, .srtRemoved, server)
             }
         }
-        XCTAssertEqual(refusal("srt://relay.local:8890?passphrase=0123456789abc"), .srtEncryption)
-        XCTAssertEqual(refusal("srt://relay.local:8890?latency=200000&pbkeylen=16"), .srtEncryption)
-        XCTAssertEqual(refusal("srt://relay.local:8890?PassPhrase=0123456789abc"), .srtEncryption, "a name in any case")
-        XCTAssertEqual(refusal("srt://relay.local:8890?pass%70hrase=0123456789abc"), .srtEncryption, "a name percent-encoded")
-        XCTAssertEqual(refusal("srt://relay.local:8890?passphrase"), .srtEncryption, "a name without a value")
-        XCTAssertEqual(refusal("srt://relay.local:8890?passphrase=x", key: ""), .srtEncryption, "with or without a key")
-        XCTAssertNil(refusal("srt://relay.local:8890?latency=200000"), "other options stay allowed")
-        XCTAssertNil(refusal("srt://relay.local:8890", key: "passphrase"), "a key that merely says the word is a stream id")
     }
 
     func testABadAddressSaysWhatToChange() {
@@ -84,19 +82,18 @@ final class StreamingTests: XCTestCase {
                        "Instagram hands out its server per live, so the preset has none")
         XCTAssertEqual(refusal(StreamTarget(platform: .customRTMP, server: "https://example.com/live"), key: "k"),
                        .wrongScheme("https"))
-        XCTAssertEqual(refusal(StreamTarget(platform: .customRTMP, server: "srt://example.com:9000"), key: "k"),
-                       .wrongScheme("srt"), "SRT goes through the SRT preset")
+        XCTAssertEqual(refusal(StreamTarget(platform: .customRTMP, server: "ftp://example.com/live"), key: "k"),
+                       .wrongScheme("ftp"))
         XCTAssertEqual(refusal(StreamTarget(platform: .customSRT, server: "rtmp://example.com/live"), key: "k"),
-                       .wrongScheme("rtmp"))
+                       .srtRemoved, "a stored SRT destination is refused whatever its server says")
         XCTAssertEqual(refusal(StreamTarget(platform: .customRTMP, server: "rtmp:///live"), key: "k"), .noHost)
         XCTAssertEqual(refusal(StreamTarget(platform: .youtube), key: "   "), .noKey)
         XCTAssertEqual(refusal(StreamTarget(platform: .youtube), key: "two words"), .badKey)
         XCTAssertEqual(refusal(StreamTarget(platform: .youtube), key: "a#b"), .badKey)
-        XCTAssertEqual(refusal(StreamTarget(platform: .customSRT, server: "srt://h:1"), key: "a&b"), .badKey)
         XCTAssertEqual(refusal(StreamTarget(platform: .customRTMP, server: "rtmp://h/live"), key: ""), .noStreamName,
                        "an app without a stream name is refused before connecting")
         for each in [StreamTarget.AddressError.noServer, .notAnAddress, .wrongScheme(""), .noHost, .noKey, .badKey,
-                     .noStreamName, .srtEncryption] {
+                     .noStreamName, .srtRemoved] {
             XCTAssertFalse(each.explanation.isEmpty)
         }
     }

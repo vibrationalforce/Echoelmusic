@@ -70,7 +70,7 @@ struct StreamingView: View {
                 }
             }
             Menu {
-                ForEach(StreamPlatform.allCases, id: \.self) { platform in
+                ForEach(StreamPlatform.offered, id: \.self) { platform in
                     Button(platform.title) { editing = streaming.add(platform) }
                 }
             } label: {
