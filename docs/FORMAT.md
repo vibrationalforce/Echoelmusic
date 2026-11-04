@@ -118,7 +118,7 @@ absent = `sixteenth`), `order` (`up` `down` `upDown` `downUp` `asPlayed` `random
 `octaves` 1 … 4, `gate` 0.05 … 1 (the share of a step a note sounds, 1 legato), `latch` (bool),
 `seed` 0 … 4294967295 (the random order's sequence); a rate or order a reader does not know is kept
 by name and plays as `sixteenth` or `up`. It re-times the notes the track plays and never writes
-one). What a track holds follows
+one), `takeGroups` (take folders, below). What a track holds follows
 its kind: an instrument track has MIDI clips and no regions; an audio track has audio clips (in
 session slots only) and regions of audio files; a return track has effects only — no clips,
 placements, slots or regions; a video track has regions of video files only — no clips,
@@ -192,6 +192,24 @@ build played it, and an earlier build that meets them ignores them:
 - `nativeBPM` (20 … 999) and `followsTempo` (true or false, absent false) — warp: with both set,
   the region follows the song's tempo, its pitch unchanged, stretched from `nativeBPM`. Echoel sets
   warp on audio regions only. `nativeBPM` is kept while warp is off, so switching it back on finds it.
+
+**Take folder:** `{id, takes, comp}` in a track's `takeGroups` — added inside format 4 (Recovery 4,
+2026-11-04); Echoel writes the key only when the track has a folder, so a track without one is
+stored exactly as before, and an earlier format-4 build opens the song and plays every take as an
+ordinary region or clip. Only an audio track (its takes are regions) and an instrument track (its
+takes are placements) have folders. `takes` lists 2 … 64 ids of the track's regions or placements,
+oldest first — the lanes from top to bottom; a take is in one folder only. `comp` is
+`[{start, end, take}]`: stretches of the timeline in ticks, rising, never overlapping,
+`start` < `end`, each naming one of the folder's `takes`, at most 4 096. Over a stretch only its
+take sounds; where no stretch lies the folder is silent. The takes are never changed by a comp: a
+region keeps its file, offset and length, a placement its clip. At a cut between two stretches the
+outgoing take falls and the incoming one rises with equal power over 5 ms either side of the cut
+(unless both are pieces of one file that a split left side by side); where a stretch meets silence
+inside a take it rises or falls over the same span; a take's own edges keep its own fades. On an
+instrument track a note sounds when it starts inside a stretch of its take, ended at the
+stretch's end, and so do its bends and controllers. How the crossfade is drawn is the player's
+and is not stored. A folder naming a take the track lacks, a take in two folders, or stretches
+that overlap or name another folder's take refuse the song.
 
 **Clip:** `id`, `name`, `length` (ticks; the loop length), `notes` — required; optional `audio`
 (`{media, offset, length}` in frames: an audio loop, on an audio track, with no notes or controls,

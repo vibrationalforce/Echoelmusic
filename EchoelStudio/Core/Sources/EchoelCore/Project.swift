@@ -241,6 +241,9 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     /// The track's arpeggiator (EDIT-2, optional inside format 4): absent, the track plays its
     /// notes as written. Only an instrument track has one.
     public var arpeggio: Arpeggio?
+    /// Take folders (Recovery 4, optional inside format 4): absent — nil — while the track has
+    /// none, so a track without takes is stored exactly as before. Read through `takeGroups`.
+    var storedTakeGroups: [TakeGroup]?
     /// The arpeggiator while it is switched on, nil otherwise.
     public var playingArpeggio: Arpeggio? {
         guard kind == .instrument, let arpeggio, arpeggio.isOn else { return nil }
@@ -295,6 +298,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts, sends, output, input
         case arpeggio
         case monitorName = "monitor"
+        case storedTakeGroups = "takeGroups"
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -316,6 +320,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         input = try c.decodeIfPresent(Int.self, forKey: .input)
         monitorName = try c.decodeIfPresent(String.self, forKey: .monitorName) ?? MonitorMode.auto.rawValue
         arpeggio = try c.decodeIfPresent(Arpeggio.self, forKey: .arpeggio)
+        let groups = try c.decodeIfPresent([TakeGroup].self, forKey: .storedTakeGroups) ?? []
+        storedTakeGroups = groups.isEmpty ? nil : groups
     }
 
     public func clipIndex(_ id: ClipID) -> Int? {

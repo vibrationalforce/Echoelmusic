@@ -143,6 +143,16 @@ public enum Command: Codable, Equatable, Sendable {
     /// (`AudioRegion.nativeBPMRange`). Following, it keeps its pitch and spans its beats.
     case setRegionWarp(track: TrackID, RegionID, nativeBPM: Double, followsTempo: Bool)
 
+    // Takes (Recovery 4)
+    /// Folds take `take` — a region of an audio track, a placement of an instrument track — with
+    /// the takes it overlaps: into the folder one of them is in, else into a new folder `group`.
+    /// The take sounds over its whole span from then on. Nothing to fold with changes nothing.
+    case foldTake(track: TrackID, take: UUID, group: TakeGroupID)
+    /// The comp of folder `group`: take `take` sounds from `start` to `end` (ticks).
+    case compTake(track: TrackID, group: TakeGroupID, take: UUID, start: Tick, end: Tick)
+    /// Unfolds folder `group`: its takes stay as plain regions or placements and all sound.
+    case removeTakeGroup(track: TrackID, TakeGroupID)
+
     // Session
     case addScene(id: SceneID, name: String, index: Int?)
     case removeScene(SceneID)
@@ -203,8 +213,14 @@ public enum Names {
 }
 
 extension Command {
-    /// Applies the command to `project`, or throws and leaves it untouched.
+    /// Applies the command to `project`, or throws and leaves it untouched. A take that went with
+    /// the change — a deleted region, placement or track — leaves its folder (`pruneTakeGroups`).
     public func apply(to project: inout Project) throws {
+        try applyChange(to: &project)
+        project.pruneTakeGroups()
+    }
+
+    private func applyChange(to project: inout Project) throws {
         switch self {
         case .renameProject(let name):
             project.name = try Names.validated(name, parameter: "name")
@@ -913,6 +929,7 @@ extension Command {
             track.placements.sort { $0.start < $1.start }
             track.clips.insert(contentsOf: [head, tail], at: c + 1)
             track.removeClipIfUnused(clip.id)
+            track.splitTake(id.rawValue, at: cut, into: placementID.rawValue)
             project.tracks[t] = track
 
         case let .consolidatePlacements(trackID, ids, clipID):
@@ -1003,6 +1020,7 @@ extension Command {
             Self.holdFades(&tail)
             project.tracks[t].regions.append(tail)
             project.tracks[t].regions.sort { $0.start < $1.start }
+            project.tracks[t].splitTake(id.rawValue, at: tick, into: newID.rawValue)
 
         case let .moveRegion(trackID, id, start):
             let t = try project.requireTrack(trackID)
@@ -1129,6 +1147,19 @@ extension Command {
             if let clipID {
                 project.tracks[t].slots.append(SlotAssignment(scene: sceneID, clip: clipID))
             }
+
+        case let .foldTake(trackID, take, group):
+            try project.foldTake(take, on: trackID, newGroup: group)
+
+        case let .compTake(trackID, group, take, start, end):
+            try project.compTake(take, in: group, on: trackID, from: start, to: end)
+
+        case let .removeTakeGroup(trackID, group):
+            let t = try project.requireTrack(trackID)
+            guard let g = project.tracks[t].takeGroupIndex(group) else {
+                throw CommandError.invalidValue(parameter: "group", reason: "no such take folder on the track")
+            }
+            project.tracks[t].takeGroups.remove(at: g)
         }
     }
 

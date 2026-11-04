@@ -1,4 +1,5 @@
 import EchoelCore
+import Foundation
 import Observation
 
 /// Arming and recording. One audio track is armed at a time; arming opens the input,
@@ -206,10 +207,14 @@ final class RecordController {
         guard let clip = take.clip(endingAt: tick(engine.positionSample), meter: meter) else { return }
         let id = ClipID()
         let number = (store.project.track(track)?.clips.filter { $0.name.hasPrefix("Take ") }.count ?? 0) + 1
+        // A take over earlier ones joins them as a lane of their take folder and sounds over its
+        // span (Recovery 4); the earlier takes stay, to be comped. Over nothing it stays a clip.
+        let placement = PlacementID()
         try? store.perform([.createClip(track: track, id: id, name: "Take \(number)", length: clip.length),
                             .addNotes(id, clip.notes),
                             .setControls(id, clip.controls),
-                            .placeClip(track: track, id: PlacementID(), clip: id, start: clip.start)],
+                            .placeClip(track: track, id: placement, clip: id, start: clip.start),
+                            .foldTake(track: track, take: placement.rawValue, group: TakeGroupID())],
                            title: "Record MIDI")
     }
 

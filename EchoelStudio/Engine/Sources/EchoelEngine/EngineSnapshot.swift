@@ -358,7 +358,8 @@ public struct EngineSnapshot: Sendable {
             let outward = audible && heard(track.id)
             let (output, into) = route(track)
             let (left, right) = outward ? Self.gains(track: track.mixer, master: into) : (0, 0)
-            let regions = track.regions.compactMap { region in
+            // What the comp of the track's take folders chooses, crossfaded at its cuts (Recovery 4).
+            let regions = track.playedRegions(in: project).compactMap { region in
                 Self.resolve(region, samples: samples, time: conversion, sampleRate: sampleRate,
                              project: project, warped: warped)
             }

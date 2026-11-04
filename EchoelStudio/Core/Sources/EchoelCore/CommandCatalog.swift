@@ -58,6 +58,7 @@ extension Command {
         case setInstrumentWavetable
         case addMarker, renameMarker, moveMarker, removeMarker
         case setInstrumentSound
+        case foldTake, compTake, removeTakeGroup
     }
 
     public var kind: Kind {
@@ -147,6 +148,9 @@ extension Command {
         case .moveMarker: .moveMarker
         case .removeMarker: .removeMarker
         case .setInstrumentSound: .setInstrumentSound
+        case .foldTake: .foldTake
+        case .compTake: .compTake
+        case .removeTakeGroup: .removeTakeGroup
         }
     }
 }
@@ -590,6 +594,23 @@ public enum CommandCatalog {
             return CommandSpec(name: "marker.remove", title: "Delete Marker",
                                summary: "Removes the marker at a position.",
                                parameters: [P("tick", .ticks, "The marker's position in ticks.")])
+        case .foldTake:
+            return CommandSpec(name: "take.fold", title: "Fold Take",
+                               summary: "Stacks a take (an audio region, or a placed clip on an instrument track) with the takes it overlaps as lanes of one take folder; it sounds over its whole span. Nothing to fold with changes nothing.",
+                               parameters: [P("track", .trackID, "The audio or instrument track."),
+                                            P("take", .string, "The region's or placement's identifier."),
+                                            P("group", .string, "Identifier for a new folder, used when the take overlaps none.")])
+        case .compTake:
+            return CommandSpec(name: "take.comp", title: "Choose Take",
+                               summary: "Chooses which take of a folder sounds over a stretch of the timeline. The takes stay as recorded; at a cut between two takes they cross over in 10 ms.",
+                               parameters: [P("track", .trackID, "The track."), P("group", .string, "The take folder."),
+                                            P("take", .string, "The take that sounds there."),
+                                            P("start", .ticks, "Where the stretch begins, in ticks."),
+                                            P("end", .ticks, "Where it ends, in ticks, after start.")])
+        case .removeTakeGroup:
+            return CommandSpec(name: "take.unfold", title: "Unfold Takes",
+                               summary: "Dissolves a take folder: its takes stay on the track as plain regions or clips, and all of them sound.",
+                               parameters: [P("track", .trackID, "The track."), P("group", .string, "The take folder.")])
         }
     }
 }
