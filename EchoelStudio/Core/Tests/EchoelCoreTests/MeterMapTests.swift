@@ -92,6 +92,15 @@ final class MeterMapTests: XCTestCase {
         guard case let .setAutomation(_, points)? = automate.first else { return XCTFail("\(automate)") }
         XCTAssertEqual(points.map(\.tick), [2 * bar44, 2 * bar44 + 2 * bar78])
 
+        XCTAssertEqual(Arranging.ticks(movingBars: 1, from: bar44, meter: meter), bar44, "bar 2 to bar 3: a 4/4 bar")
+        XCTAssertEqual(Arranging.ticks(movingBars: 1, from: 2 * bar44, meter: meter), bar78, "bar 3 to bar 4: a 7/8 bar")
+        XCTAssertEqual(Arranging.ticks(movingBars: -1, from: 2 * bar44 + bar78, meter: meter), -bar78)
+        XCTAssertEqual(Arranging.ticks(movingBars: .max, from: 0, meter: meter), 0, "no overflow")
+        XCTAssertEqual(Arranging.songLoop(songEnd: 2 * bar44 + 1, meter: meter), 0..<(2 * bar44 + bar78))
+        XCTAssertEqual(Arranging.songLoop(songEnd: 0, meter: meter), 0..<bar44)
+        // The constant case is the loop the engine has always played.
+        XCTAssertEqual(Arranging.songLoop(songEnd: 5 * bar44 + 3, meter: MeterMap(signature: .common)), 0..<(6 * bar44))
+
         let range = try XCTUnwrap(VideoExportPlan.shortRange(in: project, startBar: 3, seconds: 0.1))
         XCTAssertEqual(range, (2 * bar44)...(2 * bar44 + bar78), "at least one bar of 7/8")
     }

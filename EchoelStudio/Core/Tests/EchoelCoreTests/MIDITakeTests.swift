@@ -27,6 +27,23 @@ final class MIDITakeTests: XCTestCase {
         XCTAssertEqual(clip.length, 3 * bar)
     }
 
+    /// On the song's meter the clip starts on the bar line before the first note and runs to the
+    /// bar line after the last, whatever the bars' lengths; on one signature it is the same clip.
+    func testATakeOnAMeterSpansTheBarsUnderIt() throws {
+        var take = MIDITake()
+        take.noteOn(pitch: 60, velocity: 100, at: bar + 100)
+        take.noteOff(pitch: 60, at: 2 * bar + 200)
+        let constant = try XCTUnwrap(take.clip(endingAt: 3 * bar, meter: MeterMap(signature: .common)))
+        let old = try XCTUnwrap(take.clip(endingAt: 3 * bar, bar: bar))
+        XCTAssertEqual(constant.start, old.start)
+        XCTAssertEqual(constant.length, old.length)
+        let seven = MusicalTime.ticksPerBar(TimeSignature(7, 8))
+        let meter = MeterMap(signature: .common, changes: [TimeSignatureChange(tick: 2 * bar, signature: TimeSignature(7, 8))])
+        let clip = try XCTUnwrap(take.clip(endingAt: 3 * bar, meter: meter))
+        XCTAssertEqual(clip.start, bar)
+        XCTAssertEqual(clip.length, bar + seven, "one 4/4 bar and one 7/8 bar")
+    }
+
     func testAKeyStillHeldEndsWhereTheTakeStops() throws {
         var take = MIDITake()
         take.noteOn(pitch: 64, velocity: 80, at: 0)

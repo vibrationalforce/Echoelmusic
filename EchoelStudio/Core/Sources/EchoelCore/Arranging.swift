@@ -30,6 +30,23 @@ public enum Arranging {
         barStart(tick, meter: MeterMap(signature: signature))
     }
 
+    /// The ticks from `tick` to the bar line `bars` bars after (before, when negative) the bar
+    /// it is in — a move by whole bars of the meter, whatever their lengths.
+    public static func ticks(movingBars bars: Int64, from tick: Tick, meter: MeterMap) -> Tick {
+        let (index, overflow) = meter.bar(at: tick).addingReportingOverflow(bars)
+        guard !overflow else { return 0 }
+        let target = meter.tick(ofBar: Swift.max(0, index))
+        return target == .max || target == .min ? 0 : target - tick
+    }
+
+    /// The song's loop: bar 1 to the bar line at or after `songEnd`, at least one bar; nil before
+    /// the song starts.
+    public static func songLoop(songEnd: Tick, meter: MeterMap) -> Range<Tick>? {
+        guard songEnd >= 0 else { return nil }
+        let end = Swift.max(meter.nextBarLine(atOrAfter: songEnd), meter.ticksPerBar(at: 0))
+        return 0..<Swift.min(end, MusicalTime.maximumTick)
+    }
+
     /// The bar line of the song's meter at or before `tick`; never before bar 1.
     public static func barStart(_ tick: Tick, meter: MeterMap) -> Tick {
         meter.barStart(at: Swift.max(0, tick))
