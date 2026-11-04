@@ -618,8 +618,20 @@ def section_a() -> Section:
             pipefail = (_has_pipefail(text)
                         or "PIPESTATUS" in text
                         or re.search(r"^\s*shell:\s*bash\s*$", text, re.M))
+            # A step whose failure a LATER step turns red (`if: steps.<id>.outcome == 'failure'`
+            # plus `exit 1`) is reveal-only by design, not masked — the repair this section's own
+            # advice names (2026-11-04, full-tests.yml #208).
+            sid = re.search(r"^\s*id:\s*([A-Za-z0-9_-]+)\s*$", text, re.M)
+            gated_later = bool(sid) and re.search(
+                r"steps\." + re.escape(sid.group(1)) + r"\.outcome\s*==\s*'failure'[\s\S]{0,400}?exit 1",
+                "\n".join(lines[end:]))
+            # `test-without-building` runs tests that a separate step already built: a tolerated
+            # failure there is a TEST failure, which a reveal-only run may tolerate.
+            runs_tests_only = ("test-without-building" in text
+                               and not re.search(r"xcodebuild\b[^\n]*\b(?:build|build-for-testing|archive)\b", text))
             for k, ln in enumerate(block):
-                if "continue-on-error:" in ln and "true" in ln and not ln.lstrip().startswith("#"):
+                if ("continue-on-error:" in ln and "true" in ln and not ln.lstrip().startswith("#")
+                        and not gated_later and not runs_tests_only):
                     masked.append(f"{rel(wf)}:{start + k + 1}  step {name!r} tolerates a BUILD failure")
                 if "|| true" in ln and BUILD_CMD.search(ln + "\n" + "\n".join(block[max(0, k - 6):k])):
                     masked.append(f"{rel(wf)}:{start + k + 1}  step {name!r} ends its build in `|| true` "

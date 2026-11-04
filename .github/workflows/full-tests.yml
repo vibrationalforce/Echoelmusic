@@ -113,6 +113,14 @@ jobs:
           grep -E "failed|error:" full-test.log 2>/dev/null | head -30 || echo "(none captured)"
           echo "===ECHOEL_TEST_FAILURES_END==="
 
+      - name: A suite that does not build is red (#208)
+        # Test failures stay reveal-only; a BUILD failure never is. `outcome` (not
+        # `conclusion`, which continue-on-error forces to success) carries the real result.
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "::error title=Full suite::the 294-file suite does not build — see the Summary step"
+          exit 1
+
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4

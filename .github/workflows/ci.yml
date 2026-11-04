@@ -236,73 +236,10 @@ jobs:
         name: test-results-ios-${{ matrix.name }}
         path: TestResults
 
-  # Job 3: Performance & memory
-  performance-tests:
-    name: Performance & Memory Tests
-    runs-on: macos-26
-    needs: [build-test-ios]
-    continue-on-error: true
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: ${{ env.XCODE_VERSION }}
-
-    - name: Setup XcodeGen
-      uses: ./.github/actions/setup-xcodegen
-      with:
-        version: ${{ env.XCODEGEN_VERSION }}
-
-    - name: Generate Xcode Project
-      run: |
-        set +e
-        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
-        # project.yml carries CURRENT_PROJECT_VERSION as the literal placeholder
-        # ${BUILD_NUMBER:=1} and ONLY testflight.yml ever substituted it. Xcode expands
-        # an undefined ${...} reference to EMPTY, so every project this workflow
-        # generated had an empty CFBundleVersion. The simulator rejects that at INSTALL
-        # time ("bundleVersion must be set in placeholder attributes" for the widget
-        # appex) — invisible until the test job became able to fail at all (eb984a2).
-        sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml || true
-        echo "=== XcodeGen version ==="
-        xcodegen --version 2>&1 || echo "xcodegen not found!"
-        echo "=== project.yml options ==="
-        head -20 project.yml
-        echo "=== Generating project ==="
-        XCODEGEN_OUTPUT=$(xcodegen generate --spec project.yml 2>&1)
-        XCODEGEN_EXIT=$?
-        echo "$XCODEGEN_OUTPUT"
-        if [ $XCODEGEN_EXIT -ne 0 ]; then
-          ERROR_MSG=$(echo "$XCODEGEN_OUTPUT" | tr '\n' ' ' | head -c 500)
-          echo "::error title=XcodeGen Failed::$ERROR_MSG"
-          exit 1
-        fi
-
-    - name: Run Performance Tests
-      run: |
-        xcodebuild test \
-          -scheme Echoelmusic \
-          -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 17' \
-          -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testAdaptiveQualityAdjustment \
-          -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testMemoryOptimizationCaching \
-          CODE_SIGNING_ALLOWED=NO \
-          2>&1 | xcpretty || true
-      continue-on-error: true
-
-    - name: Memory Leak Detection
-      run: |
-        echo "🔍 Checking for memory leaks..."
-        xcodebuild test \
-          -scheme Echoelmusic \
-          -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 17' \
-          -enableAddressSanitizer YES \
-          CODE_SIGNING_ALLOWED=NO \
-          2>&1 | xcpretty || true
-      continue-on-error: true
+  # Job 3 (performance & memory) was REMOVED 2026-11-04 (founder: "Du entscheidest, mache alles
+  # zum Besten des Projektes"). It filtered on `ComprehensiveTestSuite`, a class that does not
+  # exist, and ended both steps in `|| true` under a non-blocking job — it measured nothing and
+  # reported green. Found by `scripts/doctor.py` section A and confirmed by an outside review.
 
   # Job 5: Security Scan
   security-scan:
@@ -371,15 +308,17 @@ jobs:
         xcodegen generate --spec project.yml
 
     - name: Build Release Archive
+      # Honest since 2026-11-04: the archive's own exit status reaches the runner (pipefail, no
+      # `|| true`, no continue-on-error). This job runs only on main and gates nothing.
       run: |
+        set -o pipefail
         xcodebuild archive \
           -scheme Echoelmusic \
           -destination 'generic/platform=iOS' \
           -configuration Release \
           -archivePath ./build/Echoelmusic.xcarchive \
           CODE_SIGNING_ALLOWED=NO \
-          2>&1 | xcpretty || true
-      continue-on-error: true
+          2>&1 | xcpretty
 
     - name: Upload Archive
       if: success()
@@ -414,7 +353,7 @@ jobs:
   notify:
     name: Send Notifications
     runs-on: ubuntu-latest
-    needs: [build-test-ios, performance-tests]
+    needs: [build-test-ios]
     if: always()
 
     steps:
@@ -422,7 +361,6 @@ jobs:
       run: |
         echo "📊 Build Summary:"
         echo "iOS Tests: ${{ needs.build-test-ios.result }}"
-        echo "Performance Tests: ${{ needs.performance-tests.result }}"
 
         # Check if any critical job failed (not just skipped)
         IOS_RESULT="${{ needs.build-test-ios.result }}"

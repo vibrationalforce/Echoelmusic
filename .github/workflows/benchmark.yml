@@ -53,6 +53,7 @@ jobs:
     - name: "Benchmark: Clean Build Time"
       id: build_time
       run: |
+        set -o pipefail   # 2026-11-04: a failed build must not be timed as a success
         echo "=== Clean Build Benchmark ==="
         START=$(date +%s)
 
