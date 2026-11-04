@@ -723,8 +723,7 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         let blockEnd = playhead + Int64(frames)
-        let beatTicks = MusicalTime.ticksPerBeat(snapshot.timeSignature)
-        let barTicks = MusicalTime.ticksPerBar(snapshot.timeSignature)
+        let meter = snapshot.meter
         var rendered = 0
         follow(snapshot, playing: true, changed: transportMoved)
 
@@ -759,8 +758,10 @@ public final class EngineCore: @unchecked Sendable {
 
             switch due.kind {
             case .beat:
-                metronome.trigger(accent: barTicks > 0 && nextBeat % barTicks == 0)
-                nextBeat += Swift.max(beatTicks, 1)
+                // A change falls on a bar line, which is a beat of both signatures: the beats
+                // count on across it in the new one's length.
+                metronome.trigger(accent: meter.isBarLine(nextBeat))
+                nextBeat += meter.ticksPerBeat(at: nextBeat)
             case .arrangement:
                 let lane = snapshot.lanes[due.lane]
                 play(lane.events[cursors[lane.slot]], on: lane, offset: offset)
@@ -980,7 +981,14 @@ public final class EngineCore: @unchecked Sendable {
     /// The first launch boundary at or after `tick` that has not yet been played.
     private func boundary(after tick: Tick, _ snapshot: EngineSnapshot) -> Tick {
         let stored = launchQuantum.load(ordering: .relaxed)
-        let quantum = stored < 0 ? MusicalTime.ticksPerBar(snapshot.timeSignature) : stored
+        guard stored < 0 else { return quantizedBoundary(after: tick, quantum: stored, snapshot) }
+        // One bar: the next bar line of the meter playing there.
+        var at = snapshot.meter.nextBarLine(atOrAfter: tick)
+        if snapshot.time.sample(at: at) < playhead { at = snapshot.meter.nextBarLine(atOrAfter: at + 1) }
+        return at
+    }
+
+    private func quantizedBoundary(after tick: Tick, quantum: Tick, _ snapshot: EngineSnapshot) -> Tick {
         guard quantum > 0 else { return tick }
         var at = ((tick + quantum - 1) / quantum) * quantum
         if snapshot.time.sample(at: at) < playhead { at += quantum }
@@ -1163,7 +1171,7 @@ public final class EngineCore: @unchecked Sendable {
     /// counters need counting again, which only a new time signature asks for.
     private func followTempo(from old: SnapshotBox, to snapshot: EngineSnapshot) -> Bool {
         let was = old.snapshot
-        let signatureChanged = was.timeSignature != snapshot.timeSignature
+        let signatureChanged = was.meter != snapshot.meter
         guard was.time != snapshot.time, playhead > 0 else {
             keepHeldRegions(from: was, to: snapshot)
             return signatureChanged
@@ -1300,9 +1308,8 @@ public final class EngineCore: @unchecked Sendable {
             cursors[lane.slot] = cursor
         }
         if !keeping || recountingBeats {
-            let beatTicks = Swift.max(MusicalTime.ticksPerBeat(snapshot.timeSignature), 1)
-            var beat = (tick / beatTicks) * beatTicks
-            if snapshot.time.sample(at: beat) < playhead { beat += beatTicks }
+            var beat = snapshot.meter.beatStart(at: tick)
+            if snapshot.time.sample(at: beat) < playhead { beat += snapshot.meter.ticksPerBeat(at: beat) }
             nextBeat = beat
         }
         automationNext = playhead
@@ -1384,11 +1391,10 @@ public final class EngineCore: @unchecked Sendable {
     /// otherwise runs at a tempo of its own and ignores Play and Stop (audit 2026-10-23). While
     /// stopped it is where Play starts.
     private func follow(_ snapshot: EngineSnapshot, playing: Bool, changed: Bool) {
-        let signature = snapshot.timeSignature
         let quarter = Double(MusicalTime.ticksPerQuarter)
-        let barTicks = Double(Swift.max(MusicalTime.ticksPerBar(signature), 1))
         let raw = snapshot.time.position(atSample: playhead)
         let position = raw.isFinite ? Swift.min(Swift.max(raw, 0), Double(MusicalTime.maximumTick)) : 0
+        let signature = snapshot.meter.signature(at: Tick(position))
         var toNextBeat = 0
         if playing {
             // The next whole beat in the unit the host's beat and tempo count — the quarter note
@@ -1399,7 +1405,7 @@ public final class EngineCore: @unchecked Sendable {
         let transport = HostTransport(isPlaying: playing, changed: changed, tempo: snapshot.time.tempoMap.bpm(at: Tick(position)),
                                       numerator: signature.numerator, denominator: signature.denominator,
                                       beat: position / quarter,
-                                      downbeat: (position / barTicks).rounded(.down) * barTicks / quarter,
+                                      downbeat: Double(snapshot.meter.barStart(at: Tick(position))) / quarter,
                                       samplesToNextBeat: toNextBeat, sample: Double(playhead))
         // And in which key: a harmonizer's choir styles sing in it (VOX). The effect takes only a change.
         let key = snapshot.key

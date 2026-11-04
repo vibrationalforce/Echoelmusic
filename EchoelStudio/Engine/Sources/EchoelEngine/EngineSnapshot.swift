@@ -226,7 +226,10 @@ public struct EngineSnapshot: Sendable {
     /// Rises with every published snapshot; the render thread re-seeks when it changes.
     public let generation: UInt64
     public let time: TimeConversion
+    /// The first bar's time signature.
     public let timeSignature: TimeSignature
+    /// Every bar's: where the click accents, a launch waits for, a host's downbeat falls.
+    public let meter: MeterMap
     /// The song's key without its names, handed to every insert at each chunk (VOX): a harmonizer
     /// sings its choir styles in it. Compiled here, so the render thread never reads the song.
     public let key: SongKey
@@ -275,6 +278,7 @@ public struct EngineSnapshot: Sendable {
         self.generation = generation
         time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
         timeSignature = project.timeSignature
+        meter = project.meterMap
         key = SongKey(project.context)
         temperament = Temperament(project.context)
         let anySolo = project.tracks.contains { $0.mixer.isSoloed }
