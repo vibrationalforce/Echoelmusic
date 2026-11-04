@@ -24,6 +24,9 @@ struct SettingField: View {
     /// typed or stepped, never dragged through thousands of intermediate values.
     var drags = true
     let commit: (Int) -> Void
+    /// Called when a change is complete — a drag lifts, a value is typed, a VoiceOver step or a
+    /// reset lands — so a caller that coalesces a drag's commits into one undo step can close it.
+    var ended: (() -> Void)?
     /// The drag in progress: the unrounded value it has reached and the translation last read.
     @State private var drag: (value: Double, translation: CGFloat)?
 
@@ -72,10 +75,13 @@ struct SettingField: View {
                     let landed = snapped(Int(next.rounded()))
                     if landed != value { commit(landed) }
                 }
-                .onEnded { _ in drag = nil },
+                .onEnded { _ in
+                    drag = nil
+                    ended?()
+                },
             including: drags ? .all : .subviews
         )
-        .onTapGesture(count: 2) { if let standard { commit(snapped(standard)) } }
+        .onTapGesture(count: 2) { if let standard { finish(snapped(standard)) } }
         .onTapGesture(perform: typeValue)
         .sensoryFeedback(.selection, trigger: value) { old, new in
             drag != nil && DragPrecision.reachesDetent(from: Double(old), to: Double(new),
@@ -86,7 +92,7 @@ struct SettingField: View {
         .accessibilityLabel(title)
         .accessibilityValue(spokenUnit.map { "\(value) \($0)" } ?? shown)
         .accessibilityAdjustableAction { direction in
-            commit(snapped(value + (direction == .increment ? step : -step)))
+            finish(snapped(value + (direction == .increment ? step : -step)))
         }
         // As `ParameterField`: VoiceOver's double-tap types the value, as a tap does, and never
         // falls through to the touch double-tap that returns it to the standard (W18); Reset is an
@@ -95,9 +101,15 @@ struct SettingField: View {
         .accessibilityAction(named: "Type a Value", typeValue)
         .accessibilityActions {
             if let standard {
-                Button("Reset") { commit(snapped(standard)) }
+                Button("Reset") { finish(snapped(standard)) }
             }
         }
+    }
+
+    /// One whole change: committed, then closed.
+    private func finish(_ landed: Int) {
+        commit(landed)
+        ended?()
     }
 
     private var shown: String { unit.isEmpty ? String(value) : "\(value) \(unit)" }
@@ -110,11 +122,13 @@ struct SettingField: View {
         let bounds = range
         let grid = step
         let deliver = commit
+        let close = ended
         pad.open(NumberPadRequest(owner: owner, title: title,
                                   format: NumberEntryFormat(scale: 1, decimals: 0, unit: unit),
                                   range: Double(bounds.lowerBound)...Double(bounds.upperBound),
                                   value: Double(value), standard: standard.map { Double(Self.snapped($0, step: grid, in: bounds)) }) { typed in
             deliver(Self.snapped(Int(typed.rounded()), step: grid, in: bounds))
+            close?()
         })
     }
 

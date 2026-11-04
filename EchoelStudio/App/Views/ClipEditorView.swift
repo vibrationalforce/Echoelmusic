@@ -248,6 +248,8 @@ struct PianoRoll: View {
             }
             .padding(Theme.Space.m)
         }
+        // Velocity typed in opens Echoel's number pad at the editor's bottom edge.
+        .numberPadHost()
     }
 
     /// The row a zoom keeps in view: the chosen note's, else the clip's middle pitch, else C5.
@@ -336,9 +338,10 @@ struct PianoRoll: View {
         clip.notes.count == 1 ? "1 note" : "\(clip.notes.count) notes"
     }
 
-    /// While a note is chosen: the one button that deletes it, in reach of the thumb.
+    /// While a note is chosen: its velocity and the one button that deletes it, in reach of the thumb.
     @ViewBuilder private var selectionBar: some View {
         if let id = selected, let note = clip.notes.first(where: { $0.id == id }) {
+            velocityField(note)
             Button("Delete Note", systemImage: "trash", role: .destructive) {
                 do {
                     try store.perform(.removeNotes(clip.id, [id]))
@@ -350,6 +353,19 @@ struct PianoRoll: View {
             }
             .buttonStyle(ToolButtonStyle())
         }
+    }
+
+    /// The chosen note's velocity in Echoel's value field: drag up or down, tap to type it, swipe
+    /// with VoiceOver. A drag is one undo step (its commits share a key, closed when it lifts).
+    private func velocityField(_ note: Note) -> some View {
+        SettingField(title: "Velocity", value: note.velocity, range: Note.velocityRange, standard: 100,
+                     commit: { velocity in
+                         var louder = note
+                         louder.velocity = velocity
+                         try? store.perform(.updateNotes(clip.id, [louder]), coalescingKey: "note.velocity.\(note.id)")
+                     },
+                     ended: { store.endGesture() })
+            .frame(width: 112)
     }
 
     /// The magnet Quantize uses: the chosen one, a sixteenth with it off.
