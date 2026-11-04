@@ -12,8 +12,13 @@ import Synchronization
 /// frees. A newer `play` replaces the take that sounds; `stop` fades it out over a few milliseconds
 /// instead of cutting it mid-waveform.
 public final class PreviewPlayer: @unchecked Sendable {
-    /// The level a file is heard at: −6 dB, so a loud file over a playing song stays under the song.
+    /// The level a file is heard at until the musician sets another: −6 dB, so a loud file over a
+    /// playing song stays under the song.
     public static let level: Float = 0.5
+    /// The listening level's range in decibels, its own and independent of the master fader.
+    public static let levelRange: ClosedRange<Double> = -40...0
+    /// The first output channel of the cue pair, 3/4, on an interface with at least four outputs.
+    public static let cueChannel = 2
     /// How long a start and a stop ramp, in seconds of the file: no click at either edge.
     public static let fadeSeconds: Double = 0.005
 
@@ -35,6 +40,10 @@ public final class PreviewPlayer: @unchecked Sendable {
     private let acknowledged = Atomic<UInt64>(0)
     /// The newest take the render thread has let go of: played to its end, stopped, or replaced.
     private let released = Atomic<UInt64>(0)
+    /// The listening level as a gain's bits, written on the main thread, read per block.
+    private let gainBits = Atomic<UInt32>(PreviewPlayer.level.bitPattern)
+    /// Whether listening goes to the cue pair instead of the main one.
+    private let cue = Atomic<Bool>(false)
 
     // MARK: Main thread
 
@@ -72,6 +81,33 @@ public final class PreviewPlayer: @unchecked Sendable {
         }
         prune()
         return take.number
+    }
+
+    /// Sets the listening level in decibels, clamped to `levelRange`; a value that is not a number
+    /// is ignored. The song's own level and the master never move.
+    public func setLevel(decibels: Double) {
+        guard decibels.isFinite else { return }
+        let clamped = Swift.min(Swift.max(decibels, Self.levelRange.lowerBound), Self.levelRange.upperBound)
+        gainBits.store(Float(pow(10, clamped / 20)).bitPattern, ordering: .relaxed)
+    }
+
+    /// The gain listening plays at now.
+    public var gain: Float { Float(bitPattern: gainBits.load(ordering: .relaxed)) }
+
+    /// Sends listening to the cue pair (outputs 3/4) — heard there only while the output has four
+    /// channels or more; on a stereo output it stays on the main pair.
+    public func setCueOutput(_ on: Bool) { cue.store(on, ordering: .relaxed) }
+
+    public var sendsToCue: Bool { cue.load(ordering: .relaxed) }
+
+    /// The first channel of the pair listening plays on, for an output of `channelCount` channels:
+    /// the cue pair when it is chosen and the output has it, else the main pair. Render-thread safe.
+    public func firstChannel(channelCount: Int) -> Int {
+        Self.firstChannel(cue: cue.load(ordering: .relaxed), channelCount: channelCount)
+    }
+
+    public static func firstChannel(cue: Bool, channelCount: Int) -> Int {
+        cue && channelCount >= cueChannel + 2 ? cueChannel : 0
     }
 
     /// Fades out what plays, and a take not yet started never starts.
@@ -131,7 +167,7 @@ public final class PreviewPlayer: @unchecked Sendable {
             stopping = true
             end = Swift.min(end, Double(elapsed) * step + fade)
         }
-        let envelope = RegionEnvelope(gain: Self.level)
+        let envelope = RegionEnvelope(gain: gain)
         buffer.add(intoLeft: left, right: right, count: frames, elapsed: elapsed, step: step,
                    offset: 0, length: end, fade: fade, envelope: envelope)
         elapsed += Int64(frames)

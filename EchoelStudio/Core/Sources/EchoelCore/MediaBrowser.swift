@@ -217,6 +217,22 @@ public enum MediaBrowser {
 
     // MARK: - Placing a file of the open song
 
+    /// The command that makes `rootKey` the sampler's root on `track`; none without a key. A key
+    /// outside 0 … 127 is left to the door, which refuses it.
+    public static func rootCommands(_ rootKey: Int?, on track: TrackID) -> [Command] {
+        guard let rootKey else { return [] }
+        return [.setInstrumentParameter(track, key: SynthParameter.samplerRoot.key.rawValue, value: Double(rootKey))]
+    }
+
+    /// A measured pitch as the browser shows it: "A3 +4 ct", or "A3" within a cent.
+    public static func pitchText(note: Int, cents: Double) -> String {
+        let name = NoteEditing.name(of: note)
+        guard cents.isFinite, abs(cents) < 100 else { return name }
+        let rounded = Int(cents.rounded())
+        guard rounded != 0 else { return name }
+        return "\(name) \(rounded > 0 ? "+" : "−")\(abs(rounded)) ct"
+    }
+
     /// Where a file can go.
     public enum Destination: Hashable, Sendable {
         /// An audio region on an audio track, starting at a tick.
@@ -258,9 +274,12 @@ public enum MediaBrowser {
 
     /// The commands that put the open song's file `media` at `destination` — the same commands the
     /// imports send, without the `addMedia`, since the file is in the song already. One undo step
-    /// when performed together. `newTrack` is the id a new video track takes.
+    /// when performed together. `newTrack` is the id a new video track takes. `rootKey`, for the
+    /// sampler only, is the key that plays the file at its own speed — the note the browser measured,
+    /// set when the musician chose it; it joins the same undo step.
     public static func commands(placing media: MediaID, on destination: Destination, in project: Project,
-                                region: RegionID = RegionID(), newTrack: TrackID = TrackID()) throws -> [Command] {
+                                region: RegionID = RegionID(), newTrack: TrackID = TrackID(),
+                                rootKey: Int? = nil) throws -> [Command] {
         guard let file = project.mediaFile(media) else { throw PlacementError.notInSong }
         func track(_ id: TrackID, _ kind: TrackKind) throws {
             guard project.track(id)?.kind == kind else { throw PlacementError.noSuchTrack }
@@ -273,7 +292,7 @@ public enum MediaBrowser {
         case .sampler(let id):
             guard file.kind == .audio else { throw PlacementError.wrongKind }
             try track(id, .instrument)
-            return [.setInstrumentDevice(id, .sampler), .setInstrumentSample(id, media)]
+            return [.setInstrumentDevice(id, .sampler), .setInstrumentSample(id, media)] + rootCommands(rootKey, on: id)
         case .wavetable(let id):
             guard file.kind == .audio else { throw PlacementError.wrongKind }
             try track(id, .instrument)

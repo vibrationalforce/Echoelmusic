@@ -238,6 +238,13 @@ enum WavetableAnalysis {
     /// the cumulative-mean-normalized difference function, its first dip under the threshold,
     /// refined between samples by a parabola. Nil where the sound has no clear period or is silent.
     static func period(of x: [Float], around centre: Int, sampleRate: Double) -> Double? {
+        estimate(of: x, around: centre, sampleRate: sampleRate)?.period
+    }
+
+    /// `period`, and how far from periodic the sound is there: YIN's normalized difference at the
+    /// period, 0 for a perfectly repeating wave, towards 1 for noise. The one estimate both the
+    /// wavetable's cycles and a sample's root note (`SamplePitch`) are measured by.
+    static func estimate(of x: [Float], around centre: Int, sampleRate: Double) -> (period: Double, aperiodicity: Float)? {
         guard sampleRate > 0, sampleRate.isFinite else { return nil }
         let shortest = Swift.max(2, Int(sampleRate / highestHertz))
         let longest = Int(sampleRate / lowestHertz)
@@ -270,7 +277,7 @@ enum WavetableAnalysis {
                 let a = normalized[tau - 1], b = normalized[tau], c = normalized[tau + 1]
                 let bend = a - 2 * b + c
                 let shift = bend > 0 ? Double(0.5 * (a - c) / bend) : 0
-                return Double(tau) + Swift.min(Swift.max(shift, -1), 1)
+                return (Double(tau) + Swift.min(Swift.max(shift, -1), 1), Swift.max(0, b))
             }
             tau += 1
         }
