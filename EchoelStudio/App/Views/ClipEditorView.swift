@@ -12,7 +12,8 @@ struct ClipEditorView: View {
     let trackID: TrackID
     /// The clip to edit; nil edits the track's first clip.
     var clipID: ClipID?
-    @State private var grid: NoteEditing.Grid = .sixteenth
+    /// The one magnet, shared with the arrangement and kept on this device (`SnapGrid`).
+    @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
     @State private var page: Page = .notes
     /// The piano roll's zoom, kept on this device, never in the song: at the base a note is
     /// 17 pt high, under a fingertip (accessibility audit 2026-11-01, M5).
@@ -27,6 +28,18 @@ struct ClipEditorView: View {
     private var zoomIndex: Int {
         let levels = PianoRoll.zoomLevels
         return levels.indices.min { abs(levels[$0] - zoom) < abs(levels[$1] - zoom) } ?? 0
+    }
+
+    /// The magnet's step in this clip's own meter; 0 with it off.
+    private func grid(for clip: Clip) -> Tick {
+        snap.editorStep(meter: store.project.clipMeter(clip.id))
+    }
+
+    /// The step grid's cell: the magnet's step from a thirty-second triplet up to a quarter, else
+    /// a sixteenth — a drum row needs cells, and 128 to a bar would not fit a finger.
+    private func drumStep(for clip: Clip) -> Tick {
+        let step = grid(for: clip)
+        return (80...MusicalTime.ticksPerQuarter).contains(step) ? step : NoteEditing.freeNoteLength
     }
 
     private func editedClip(_ track: Track) -> Clip? {
@@ -64,10 +77,10 @@ struct ClipEditorView: View {
                 if let track, page == .sound {
                     SoundPanel(track: track)
                 } else if let track, let clip = editedClip(track), track.instrument.device == .drums {
-                    StepGridView(clip: clip, color: Theme.Color.track(track.colorIndex), step: grid.rawValue)
+                    StepGridView(clip: clip, color: Theme.Color.track(track.colorIndex), step: drumStep(for: clip))
                 } else if let track, let clip = editedClip(track) {
-                    PianoRoll(clip: clip, color: Theme.Color.track(track.colorIndex), grid: grid.rawValue,
-                              zoom: PianoRoll.zoomLevels[zoomIndex])
+                    PianoRoll(clip: clip, color: Theme.Color.track(track.colorIndex), grid: grid(for: clip),
+                              snap: snap, zoom: PianoRoll.zoomLevels[zoomIndex])
                 } else if let track {
                     emptyState(track)
                 } else {
@@ -100,11 +113,14 @@ struct ClipEditorView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     if page == .notes {
-                        Picker("Grid", selection: $grid) {
-                            ForEach(NoteEditing.Grid.allCases, id: \.self) { Text($0.title).tag($0) }
+                        Picker("Snap", selection: $snap) {
+                            ForEach(SnapGrid.allCases, id: \.self) { choice in
+                                Text(choice.title).tag(choice).accessibilityLabel(choice.spokenTitle)
+                            }
                         }
                         .pickerStyle(.menu)
-                        .accessibilityLabel("Grid")
+                        .accessibilityLabel("Snap")
+                        .accessibilityValue(snap.spokenTitle)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -177,7 +193,10 @@ struct PianoRoll: View {
     @Environment(ProjectStore.self) private var store
     let clip: Clip
     let color: Color
+    /// The magnet's step in ticks; 0 with it off (stepless).
     let grid: Tick
+    /// The magnet itself, for Quantize.
+    var snap: SnapGrid = .standard
     /// One of `zoomLevels`: rows grow by it, columns half as fast, so bigger notes do not cost the
     /// whole bar (accessibility audit 2026-11-01, M5).
     var zoom: Double = 1
@@ -195,6 +214,12 @@ struct PianoRoll: View {
     /// single tap never deletes (a slip took a note away, CI audit 2026-10-31): a tap chooses, a
     /// double tap or Delete Note removes.
     @State private var selected: NoteID?
+    /// Quantize's swing, kept on this device: 0, 0.25, 0.5 or 0.75.
+    @AppStorage(PianoRoll.swingKey) private var swing = 0.0
+
+    nonisolated static let swingKey = "pianoRoll.quantizeSwing"
+    /// The steps Quantize and VoiceOver count in: the magnet's, or a sixteenth with it off.
+    private var step: Tick { grid > 0 ? grid : NoteEditing.freeNoteLength }
 
     private var rowHeight: CGFloat { baseRowHeight * CGFloat(zoom) }
     private var pointsPerSixteenth: CGFloat { Self.basePointsPerSixteenth * CGFloat(1 + zoom) / 2 }
@@ -216,7 +241,13 @@ struct PianoRoll: View {
             // A zoom keeps the notes in view instead of leaving the same points on screen.
             .onChange(of: zoom) { proxy.scrollTo(anchorPitch, anchor: .center) }
         }
-        .overlay(alignment: .bottomTrailing) { selectionBar }
+        .overlay(alignment: .bottomTrailing) {
+            HStack(spacing: Theme.Space.s) {
+                timingMenu
+                selectionBar
+            }
+            .padding(Theme.Space.m)
+        }
     }
 
     /// The row a zoom keeps in view: the chosen note's, else the clip's middle pitch, else C5.
@@ -318,7 +349,70 @@ struct PianoRoll: View {
                 selected = nil
             }
             .buttonStyle(ToolButtonStyle())
-            .padding(Theme.Space.m)
+        }
+    }
+
+    /// The magnet Quantize uses: the chosen one, a sixteenth with it off.
+    private var quantizeSnap: SnapGrid { snap == .off ? .sixteenth : snap }
+
+    /// Quantize and Humanize, on the chosen note or, with none chosen, on every note of the clip.
+    /// Each is one undo step; Humanize draws a new seed each time and redo replays its notes.
+    private var timingMenu: some View {
+        Menu {
+            Section("Quantize to \(quantizeSnap.title)") {
+                ForEach([1.0, 0.75, 0.5, 0.25], id: \.self) { strength in
+                    Button("Quantize \(Int(strength * 100)) %") { quantize(strength: strength) }
+                }
+                Picker("Swing", selection: $swing) {
+                    ForEach([0.0, 0.25, 0.5, 0.75], id: \.self) { Text("\(Int($0 * 100)) %").tag($0) }
+                }
+                .pickerStyle(.menu)
+            }
+            Section("Humanize") {
+                Button("Humanize Light") { humanize(timing: 10, velocity: 6) }
+                Button("Humanize Medium") { humanize(timing: 30, velocity: 12) }
+                Button("Humanize Strong") { humanize(timing: 60, velocity: 24) }
+            }
+        } label: {
+            Label("Timing", systemImage: "metronome")
+        }
+        .menuStyle(.button)
+        .buttonStyle(ToolButtonStyle())
+        .accessibilityLabel("Timing")
+        .accessibilityHint(selected == nil ? "Quantize or humanize every note." : "Quantize or humanize the chosen note.")
+    }
+
+    private var chosen: Set<NoteID> {
+        guard let id = selected, clip.notes.contains(where: { $0.id == id }) else { return [] }
+        return [id]
+    }
+
+    private var scope: String { chosen.isEmpty ? "All notes" : "The note" }
+
+    private func quantize(strength: Double) {
+        let meter = store.project.clipMeter(clip.id)
+        guard let command = NoteTiming.quantized(clip, chosen: chosen, snap: quantizeSnap, meter: meter,
+                                                 strength: strength, swing: swing) else {
+            return announce("\(scope) already on the grid.")
+        }
+        do {
+            try store.perform([command], title: "Quantize")
+            announce("\(scope) quantized to \(quantizeSnap.spokenTitle).")
+        } catch {
+            announce("The notes could not be quantized.", urgent: true)
+        }
+    }
+
+    private func humanize(timing: Tick, velocity: Int) {
+        let seed = UInt64.random(in: .min ... .max)
+        guard let command = NoteTiming.humanized(clip, chosen: chosen, timing: timing, velocity: velocity, seed: seed) else {
+            return announce("No notes to humanize.")
+        }
+        do {
+            try store.perform([command], title: "Humanize")
+            announce("\(scope) humanized.")
+        } catch {
+            announce("The notes could not be humanized.", urgent: true)
         }
     }
 
@@ -339,7 +433,8 @@ struct PianoRoll: View {
         }
         do {
             try store.perform(command)
-            let place = NoteEditing.spokenPosition(note.start, meter: store.project.clipMeter(clip.id), grid: grid)
+            let place = NoteEditing.spokenPosition(note.start, meter: store.project.clipMeter(clip.id),
+                                                   grid: NoteEditing.spokenStep(for: grid))
             announce("Added \(NoteEditing.name(of: note.pitch)), \(place).")
         } catch {
             announce("The note could not be added.", urgent: true)
@@ -364,13 +459,15 @@ struct PianoRoll: View {
         // Bar and beat lines of the clip's own meter: the song's from where the clip is placed.
         let meter = store.project.clipMeter(clip.id)
         var tick: Tick = 0
-        let step = Swift.max(grid, 1)
+        // The magnet's lines (a sixteenth's with it off), thinned to at least 4 pt apart.
+        var lineStep = Swift.max(step, 1)
+        while CGFloat(lineStep) * pointsPerTick < 4 { lineStep *= 2 }
         while tick <= clip.length {
             let x = CGFloat(tick) * pointsPerTick
             let color = meter.isBarLine(tick) ? Theme.Color.textTertiary
                 : (meter.beatStart(at: tick) == tick ? Theme.Color.border : Theme.Color.surfaceRaised)
             context.fill(Path(CGRect(x: x, y: 0, width: 1, height: size.height)), with: .color(color))
-            tick += step
+            tick += lineStep
         }
     }
 }
@@ -437,14 +534,14 @@ struct NoteBlock: View {
             .accessibilityElement()
             .accessibilityLabel("\(NoteEditing.name(of: note.pitch)) Note")
             .accessibilityAddTraits(isSelected ? .isSelected : [])
-            .accessibilityValue(NoteEditing.spokenDetails(of: note, meter: meter, grid: grid))
+            .accessibilityValue(NoteEditing.spokenDetails(of: note, meter: meter, grid: NoteEditing.spokenStep(for: grid)))
             .accessibilityAction { choose() }
             .accessibilityAction(named: "Up a Semitone") { nudge(semitones: 1) }
             .accessibilityAction(named: "Down a Semitone") { nudge(semitones: -1) }
             .accessibilityAction(named: "Up an Octave") { nudge(semitones: 12) }
             .accessibilityAction(named: "Down an Octave") { nudge(semitones: -12) }
-            .accessibilityAction(named: "Later by One Step") { nudge(ticks: grid) }
-            .accessibilityAction(named: "Earlier by One Step") { nudge(ticks: -grid) }
+            .accessibilityAction(named: "Later by One Step") { nudge(ticks: step) }
+            .accessibilityAction(named: "Earlier by One Step") { nudge(ticks: -step) }
             .accessibilityAction(named: "Later by One Bar") { nudge(ticks: bar) }
             .accessibilityAction(named: "Earlier by One Bar") { nudge(ticks: -bar) }
             .accessibilityAction(named: "Longer by One Step") { resize(steps: 1) }
@@ -453,6 +550,9 @@ struct NoteBlock: View {
     }
 
     private var name: String { NoteEditing.name(of: note.pitch) }
+
+    /// A step of the note's actions: the magnet's, or a sixteenth with it off.
+    private var step: Tick { grid > 0 ? grid : NoteEditing.freeNoteLength }
 
     /// One bar of the meter where the note starts.
     private var bar: Tick { meter.ticksPerBar(at: note.start) }
@@ -511,18 +611,18 @@ struct NoteBlock: View {
             return announce("The note could not be moved.", urgent: true)
         }
         announce(semitones != 0 ? NoteEditing.name(of: moved.pitch)
-                                : NoteEditing.spokenPosition(moved.start, meter: meter, grid: grid))
+                                : NoteEditing.spokenPosition(moved.start, meter: meter, grid: NoteEditing.spokenStep(for: grid)))
     }
 
     private func resize(steps: Int) {
-        guard let resized = NoteEditing.resized(note, bySteps: steps, grid: grid, in: clip) else {
+        guard let resized = NoteEditing.resized(note, bySteps: steps, grid: step, in: clip) else {
             announce(steps > 0 ? "End of the clip." : "Shortest length.")
             return
         }
         guard perform(.updateNotes(clip.id, [resized])) else {
             return announce("The note could not be resized.", urgent: true)
         }
-        announce("\(NoteEditing.spokenLength(resized.length, grid: grid)) long")
+        announce("\(NoteEditing.spokenLength(resized.length, grid: NoteEditing.spokenStep(for: grid))) long")
     }
 
     private func delete() {

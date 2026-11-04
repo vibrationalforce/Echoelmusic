@@ -4,7 +4,8 @@ import SwiftUI
 /// The song on a bar timeline: one lane per track, its clips and audio laid out where they
 /// play. Tap empty space to place the track's clip at that bar — or, on an audio track, to
 /// import a file there; tap a clip to edit its notes, drag a clip or audio region to move it
-/// by whole bars, hold for Duplicate, Split at Playhead, Consolidate and Delete. One drag is one
+/// onto the magnet (Snap, shared with the note editor: Off to the tick, Bar, Beat, 1/8 … 1/128,
+/// triplets), hold for Snap, Duplicate, Split at Playhead, Consolidate and Delete. One drag is one
 /// undo step, and so is each of those.
 /// A video part shows its hits (CUT): where the picture cuts and where a sound in its own audio
 /// begins. With Snap to Hits a dragged clip or audio region lands on a hit within reach instead of
@@ -17,6 +18,7 @@ struct ArrangeView: View {
     /// The video files' hits; they change only when a file's search ends.
     @Environment(VideoHits.self) private var videoHits: VideoHits?
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
+    @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
     /// Opens the note editor on this clip of this track.
     let open: (TrackID, ClipID) -> Void
     /// Asks for an audio file to place on a track at a tick — or, on a video track, a video.
@@ -113,6 +115,7 @@ struct ArrangeView: View {
     /// A track name's hold menu; a video track with hits also switches Snap to Hits.
     @ViewBuilder private func trackMenu(_ track: Track, showsHits: Bool) -> some View {
         Button("Rename Track…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
+        SnapPicker(snap: $snap)
         if track.kind == .video, showsHits {
             Toggle("Snap to Hits", systemImage: "scope", isOn: $snapsToHits)
         }
@@ -136,6 +139,35 @@ extension ArrangeView {
     static func hit(near tick: Tick, in hits: [Tick], ticksPerPoint: Double, snapping: Bool) -> Tick? {
         guard snapping, !hits.isEmpty, ticksPerPoint.isFinite, ticksPerPoint > 0 else { return nil }
         return Hits.nearest(to: tick, in: hits, tolerance: Tick((Double(hitReach) * ticksPerPoint).rounded()))
+    }
+}
+
+/// The one magnet as a hold-menu choice: Off (to the tick), Bar, Beat, 1/8 … 1/128 and the
+/// triplets — the same setting the note editor's Snap shows (`SnapGrid`).
+struct SnapPicker: View {
+    @Binding var snap: SnapGrid
+
+    var body: some View {
+        Picker(selection: $snap) {
+            ForEach(SnapGrid.allCases, id: \.self) { choice in
+                Text(choice.title).tag(choice).accessibilityLabel(choice.spokenTitle)
+            }
+        } label: {
+            Label("Snap \(snap.title)", systemImage: "square.grid.3x1.below.line.grid.1x2")
+        }
+        .pickerStyle(.menu)
+        .accessibilityLabel("Snap")
+        .accessibilityValue(snap.spokenTitle)
+    }
+}
+
+extension SnapGrid {
+    /// Where a block dragged from `start` by `translation` points shows while the finger is down:
+    /// on the magnet's line, so what lifts is what was seen.
+    func previewOffset(from start: Tick, translation: CGFloat, ticksPerPoint: Double, meter: MeterMap) -> CGFloat {
+        guard self != .off, ticksPerPoint.isFinite, ticksPerPoint > 0 else { return translation }
+        let target = nearest(start + Tick((Double(translation) * ticksPerPoint).rounded()), meter: meter)
+        return CGFloat(Double(target - start) / ticksPerPoint)
     }
 }
 
@@ -320,6 +352,7 @@ private struct PlacementBlock: View {
 
     @State private var dragX: CGFloat = 0
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
+    @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
     private var ticksPerPoint: Double { Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar) }
     private var startBar: Int { Int(clamping: meter.bar(at: placement.start)) + 1 }
@@ -366,18 +399,19 @@ private struct PlacementBlock: View {
     private func dragOffset(_ translation: CGFloat) -> CGFloat {
         let tick = placement.start + Tick((Double(translation) * ticksPerPoint).rounded())
         guard let hit = ArrangeView.hit(near: tick, in: hits, ticksPerPoint: ticksPerPoint, snapping: snapsToHits) else {
-            return translation
+            return snap.previewOffset(from: placement.start, translation: translation, ticksPerPoint: ticksPerPoint, meter: meter)
         }
         return CGFloat(Double(hit - placement.start) / ticksPerPoint)
     }
 
-    /// One undo step: onto the hit within reach, else to the nearest bar.
+    /// One undo step: onto the hit within reach, else onto the magnet's nearest line (to the tick
+    /// with it off).
     private func drop(movedBy translation: CGFloat) {
         let delta = Tick((Double(translation) * ticksPerPoint).rounded())
         if let hit = ArrangeView.hit(near: placement.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
                                      snapping: snapsToHits) {
             if let command = Hits.placed(placement, in: track, at: hit) { try? store.perform(command) }
-        } else if let command = Arranging.moved(placement, in: track, byTicks: delta, meter: meter) {
+        } else if let command = Arranging.moved(placement, in: track, byTicks: delta, meter: meter, snap: snap) {
             try? store.perform(command)
         }
     }
@@ -388,6 +422,7 @@ private struct PlacementBlock: View {
         if nextHit != nil {
             Button("Place at Next Hit", systemImage: "arrow.right.to.line") { placeAtNextHit() }
         }
+        SnapPicker(snap: $snap)
         if !hits.isEmpty {
             Toggle("Snap to Hits", systemImage: "scope", isOn: $snapsToHits)
         }
@@ -438,10 +473,13 @@ private struct PlacementBlock: View {
         try? store.perform([command], title: "Place at Next Hit")
     }
 
-    /// Cuts where the playhead stands now; nothing happens when it is outside the clip.
+    /// Cuts on the magnet's line nearest the playhead (at the playhead with it off); nothing
+    /// happens when that is outside the clip.
     private func splitAtPlayhead() {
         let tick = engine.playheadTick(in: store.project)
-        if let command = Arranging.split(placement, in: track, at: tick) { try? store.perform(command) }
+        if let command = Arranging.split(placement, in: track, at: tick, meter: meter, snap: snap) {
+            try? store.perform(command)
+        }
     }
 
     /// Joins the clip with the placements touching or overlapping it into one clip.
@@ -454,9 +492,9 @@ private struct PlacementBlock: View {
     }
 }
 
-/// A placed audio region: the file's name over its length. Drag moves it by whole bars, one
-/// undo step on release; drag an edge to trim it to the beat; hold for Duplicate, Split at
-/// Playhead Bar, Consolidate (pieces of one file only), Bake Effects and Delete. A video part
+/// A placed audio region: the file's name over its length. Drag moves it onto the magnet, one
+/// undo step on release; drag an edge to trim it onto the magnet; hold for Duplicate, Split at
+/// Playhead (on the magnet), Consolidate (pieces of one file only), Bake Effects and Delete. A video part
 /// shows its hits (CUT); an audio region lands on one within reach and moves to the next on Place
 /// at Next Hit.
 private struct RegionBlock: View {
@@ -479,6 +517,7 @@ private struct RegionBlock: View {
     @State private var trimLeft: CGFloat = 0
     @State private var trimRight: CGFloat = 0
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
+    @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
     private var ticksPerPoint: Double { Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar) }
     private var startBar: Int { Int(clamping: meter.bar(at: region.start)) + 1 }
@@ -557,7 +596,7 @@ private struct RegionBlock: View {
     private func dragOffset(_ translation: CGFloat) -> CGFloat {
         let tick = region.start + Tick((Double(translation) * ticksPerPoint).rounded())
         guard let hit = ArrangeView.hit(near: tick, in: hits, ticksPerPoint: ticksPerPoint, snapping: snapsHere) else {
-            return translation
+            return snap.previewOffset(from: region.start, translation: translation, ticksPerPoint: ticksPerPoint, meter: meter)
         }
         return CGFloat(Double(hit - region.start) / ticksPerPoint)
     }
@@ -568,7 +607,7 @@ private struct RegionBlock: View {
         if let hit = ArrangeView.hit(near: region.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
                                      snapping: snapsHere) {
             if let command = Hits.placed(region, in: track, at: hit) { try? store.perform(command) }
-        } else if let command = Arranging.moved(region, in: track, byTicks: delta, meter: meter) {
+        } else if let command = Arranging.moved(region, in: track, byTicks: delta, meter: meter, snap: snap) {
             try? store.perform(command)
         }
     }
@@ -584,11 +623,12 @@ private struct RegionBlock: View {
         if nextHit != nil {
             Button("Place at Next Hit", systemImage: "arrow.right.to.line") { placeAtNextHit() }
         }
+        SnapPicker(snap: $snap)
         if !hits.isEmpty {
             Toggle("Snap to Hits", systemImage: "scope", isOn: $snapsToHits)
         }
         Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
-        Button("Split at Playhead Bar", systemImage: "scissors") { split() }
+        Button("Split at Playhead", systemImage: "scissors") { split() }
         if Arranging.consolidated(region, in: track, project: store.project) != nil {
             Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
         }
@@ -625,7 +665,7 @@ private struct RegionBlock: View {
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
             .accessibilityAction(named: "Place at Next Hit") { placeAtNextHit() }
             .accessibilityAction(named: "Duplicate") { duplicate() }
-            .accessibilityAction(named: "Split at Playhead Bar") { split() }
+            .accessibilityAction(named: "Split at Playhead") { split() }
             .accessibilityAction(named: "Consolidate") { consolidate() }
             .accessibilityAction(named: "Bake Effects") { if canBake { bake() } }
             .accessibilityAction(named: "Delete") { remove() }
@@ -652,18 +692,20 @@ private struct RegionBlock: View {
                         trimLeft = 0
                         trimRight = 0
                         let delta = Tick((Double(value.translation.width) * ticksPerPoint).rounded())
-                        apply(edge, byTicks: delta)
+                        apply(edge, byTicks: delta, snap: snap)
                     }
             )
             .accessibilityHidden(true)
     }
 
+    /// VoiceOver's trims by one beat, on the beat whatever the magnet says.
     private func trim(_ edge: Arranging.Edge, beats: Tick) {
-        apply(edge, byTicks: beats * meter.ticksPerBeat(at: region.start))
+        apply(edge, byTicks: beats * meter.ticksPerBeat(at: region.start), snap: .beat)
     }
 
-    private func apply(_ edge: Arranging.Edge, byTicks delta: Tick) {
-        guard let commands = Arranging.trimmed(region, edge: edge, byTicks: delta, in: track, project: store.project) else { return }
+    private func apply(_ edge: Arranging.Edge, byTicks delta: Tick, snap: SnapGrid) {
+        guard let commands = Arranging.trimmed(region, edge: edge, byTicks: delta, in: track, project: store.project,
+                                               snap: snap) else { return }
         try? store.perform(commands, title: "Trim Region")
     }
 
@@ -678,11 +720,11 @@ private struct RegionBlock: View {
         try? store.perform(.removeRegion(track: track.id, region.id))
     }
 
-    /// A cut at the bar line nearest the playhead (C5): nothing of the file is lost, both parts
-    /// stay movable and trimmable, and one Undo joins them again.
+    /// A cut on the magnet's line nearest the playhead (C5; at the playhead with it off): nothing
+    /// of the file is lost, both parts stay movable and trimmable, and one Undo joins them again.
     private func split() {
         let project = store.project
-        let at = Arranging.nearestBar(engine.playheadTick(in: project), meter: project.meterMap)
+        let at = snap.nearest(engine.playheadTick(in: project), meter: project.meterMap)
         try? store.perform(.splitRegion(track: track.id, region.id, at: at, newID: RegionID()))
     }
 
