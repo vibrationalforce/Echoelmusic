@@ -2,7 +2,7 @@ import Foundation
 
 /// What makes a synth voice's raw tone before its filter and envelopes (EchoelTools A1, A4, A8):
 /// the classic oscillator, a seven-saw supersaw, two-operator FM, the oscillator with a sine
-/// an octave below, a morph through four shapes (A7), a struck object — six decaying modes
+/// an octave below, a morph through eight shapes (A7), a struck object — six decaying modes
 /// (A5) — the harmonic-plus-noise model of the earlier app's `EchoelDDSP` (W5,
 /// `DDSPSource`), a small choir singing a vowel (VOX, `ChoirSource`), or a plucked string (A6,
 /// `PluckSource`). `character` (0 … 1) is
@@ -46,6 +46,74 @@ public enum SynthEngine: String, CaseIterable, Codable, Sendable {
         // −10.8 before), not further — its integrated −24.9 LUFS then is a string dying away.
         case .pluck: 1.778     // +5.0 dB
         }
+    }
+}
+
+/// The morph's eight shapes (A7), in order: sine, folded sine, triangle, ramp (a triangle leaning
+/// toward the saw), saw, a 12.5 % pulse, a 25 % pulse, square. The four new shapes are drawn from
+/// the shared phase — the pulses band-limited with PolyBLEP like the square, the folded sine and
+/// the ramp continuous, so their harmonics fall as a triangle's do.
+enum MorphShapes {
+    /// Where each shape stands on Character. 0, ⅓, ⅔ and 1 are the earlier morph's four.
+    static let positions: (Float, Float, Float, Float, Float, Float, Float, Float) =
+        (0, 1.0 / 6, 1.0 / 3, 0.5, 2.0 / 3, 7.0 / 9, 8.0 / 9, 1)
+    /// How far the ramp's peak leans toward the saw's (0.5 is the triangle, 1 the saw).
+    static let rampPeak: Float = 0.75
+    static let narrowPulse: Float = 0.125
+    static let widePulse: Float = 0.25
+
+    @inline(__always)
+    static func value(at c: Float, phase t: Float, dt: Float,
+                      sine: Float, triangle: Float, saw: Float, square: Float) -> Float {
+        let p = positions
+        if c < p.1 { return sine + (folded(t) - sine) * ((c - p.0) / (p.1 - p.0)) }
+        if c < p.2 {
+            let f = folded(t)
+            return f + (triangle - f) * ((c - p.1) / (p.2 - p.1))
+        }
+        if c < p.3 { return triangle + (ramp(t) - triangle) * ((c - p.2) / (p.3 - p.2)) }
+        if c < p.4 {
+            let r = ramp(t)
+            return r + (saw - r) * ((c - p.3) / (p.4 - p.3))
+        }
+        if c < p.5 { return saw + (pulse(t, dt, narrowPulse) - saw) * ((c - p.4) / (p.5 - p.4)) }
+        if c < p.6 {
+            let n = pulse(t, dt, narrowPulse)
+            return n + (pulse(t, dt, widePulse) - n) * ((c - p.5) / (p.6 - p.5))
+        }
+        if c < p.7 {
+            let w = pulse(t, dt, widePulse)
+            return w + (square - w) * ((c - p.6) / (p.7 - p.6))
+        }
+        return square
+    }
+
+    /// A sine driven past full scale and folded back: odd harmonics, softly.
+    @inline(__always)
+    static func folded(_ t: Float) -> Float {
+        let x = 1.6 * sinf(2 * Float.pi * t)
+        if x > 1 { return 2 - x }
+        if x < -1 { return -2 - x }
+        return x
+    }
+
+    /// A triangle whose peak leans toward the end of the cycle; it starts at −1 as the triangle
+    /// and the saw do.
+    @inline(__always)
+    static func ramp(_ t: Float) -> Float {
+        let w = rampPeak
+        return t < w ? -1 + 2 * t / w : 1 - 2 * (t - w) / (1 - w)
+    }
+
+    /// A pulse `width` of the cycle high, without its offset, at peak 1.
+    @inline(__always)
+    static func pulse(_ t: Float, _ dt: Float, _ width: Float) -> Float {
+        var out: Float = t < width ? 1 : -1
+        out += Oscillator.polyBLEP(t, dt)
+        var fall = t - width
+        if fall < 0 { fall += 1 }
+        out -= Oscillator.polyBLEP(fall, dt)
+        return (out - (2 * width - 1)) / (2 - 2 * width)
     }
 }
 
@@ -198,14 +266,15 @@ struct EngineSource: Sendable {
             if subPhase >= 1 { subPhase -= 1 }
             return (top + c * below) / (1 + c * 0.5)
         case .morph:
-            // Sine at 0, triangle at ⅓, saw at ⅔, square at 1; between two, a crossfade. All four
-            // advance every sample so the next crossfade starts in phase.
+            // Eight shapes (A7) at `MorphShapes.positions`; between two, a crossfade. The first
+            // four of the earlier morph — sine 0, triangle ⅓, saw ⅔, square 1 — stand where they
+            // stood, so a song's morph at one of them sounds as it did; the four new shapes sit
+            // between them. All shapes share one phase and advance every sample, so the next
+            // crossfade starts in phase.
+            let t = m0.phase
             let a = m0.next(increment: dt), b = m1.next(increment: dt)
             let d = m2.next(increment: dt), e = m3.next(increment: dt)
-            let position = c * 3
-            if position < 1 { return a + (b - a) * position }
-            if position < 2 { return b + (d - b) * (position - 1) }
-            return d + (e - d) * (position - 2)
+            return MorphShapes.value(at: c, phase: t, dt: dt, sine: a, triangle: b, saw: d, square: e)
         case .mallet:
             // The material was set at the strike; character between strikes does not retune a
             // bar that is already ringing.
