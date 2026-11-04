@@ -155,7 +155,8 @@ final class TheRoutingCardOffersOnlyDestinationsThatExistTests: XCTestCase {
     private static func member(_ marker: String, in src: String) throws -> String {
         let hits = src.components(separatedBy: marker).count - 1
         guard hits == 1, let start = src.range(of: marker) else {
-            throw XCTSkip("anchor `\(marker)` occurs \(hits)× — re-anchor before trusting a zero (#408)")
+            XCTFail("anchor `\(marker)` occurs \(hits)× — re-anchor before trusting a zero (#408)")
+            throw AnchorMissing(reason: marker)
         }
         guard let open = src[start.upperBound...].firstIndex(of: "{") else { return "" }
         var depth = 0
@@ -174,10 +175,16 @@ final class TheRoutingCardOffersOnlyDestinationsThatExistTests: XCTestCase {
     /// is no longer part of the comment block.
     private static func verifyNote(in raw: String) throws -> String {
         let lines = raw.components(separatedBy: "\n")
-        let marked = lines.enumerated().filter { $0.element.contains("NEEDS-FOUNDER-VERIFY") }
+        // W-RED (2026-11-01): the file has a second, unrelated marker (the MIDI controller line,
+        // `PatchbayView.swift` ~1105), which turned this into a SKIP — a guard that asserted
+        // nothing. The routing note is the one whose marker line walks through the routing card.
+        let marked = lines.enumerated().filter {
+            $0.element.contains("NEEDS-FOUNDER-VERIFY") && $0.element.contains("Routing →")
+        }
         guard marked.count == 1, let first = marked.first else {
-            throw XCTSkip("NEEDS-FOUNDER-VERIFY occurs \(marked.count)× in this file — this "
-                          + "helper reads exactly one; re-anchor before trusting it (#408).")
+            XCTFail("the routing card's NEEDS-FOUNDER-VERIFY occurs \(marked.count)× in this file — "
+                    + "this helper reads exactly one; re-anchor before trusting it (#408).")
+            throw AnchorMissing(reason: "NEEDS-FOUNDER-VERIFY")
         }
         var collected: [String] = []
         var index = first.offset
@@ -188,6 +195,8 @@ final class TheRoutingCardOffersOnlyDestinationsThatExistTests: XCTestCase {
         }
         return collected.joined(separator: "\n")
     }
+
+    private struct AnchorMissing: Error { let reason: String }
 
     private func text(_ relativePath: String) throws -> String {
         let root = URL(fileURLWithPath: #filePath)
