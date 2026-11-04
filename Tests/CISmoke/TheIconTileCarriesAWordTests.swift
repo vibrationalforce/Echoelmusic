@@ -83,7 +83,12 @@ final class TheIconTileCarriesAWordTests: XCTestCase {
                 XCTFail("\(site.file): the tile titled \"\(word)\" has no `.accessibilityLabel(` at all — an icon-plus-word control still needs its spoken name"); continue
             }
             guard let label = site.nextAccessibilityLabel else { continue } // dynamic label — read by eye (header)
-            XCTAssertTrue(label.contains(word), """
+            // W-RED (2026-11-01): WCAG 2.5.3 is also met by naming the visible word as the control's
+            // Voice Control input label — the MIDI take door does exactly that on purpose
+            // (`TheMIDIDoorsNameWhatTheyWriteTests` claim 1); a spoken name that merely differs is red.
+            let answersToTheWord = site.tail.contains(".accessibilityInputLabels([String(localized: \"\(word)\")")
+                || site.tail.contains(".accessibilityInputLabels([\"\(word)\"")
+            XCTAssertTrue(label.contains(word) || answersToTheWord, """
                 \(site.file): the tile shows "\(word)" but VoiceOver says "\(label)". WCAG 2.5.3 — \
                 the visible word must be inside the spoken name, or a voice-control user cannot \
                 say what they see.
@@ -111,6 +116,8 @@ final class TheIconTileCarriesAWordTests: XCTestCase {
         let hasAccessibilityLabel: Bool
         /// Its literal, when it is a plain `"…"`; nil for a dynamic label.
         let nextAccessibilityLabel: String?
+        /// The comment-stripped text from the tile to the next construction (its modifiers).
+        let tail: String
     }
 
     /// Every `EchoelIconTile(` construction under `Sources/`, comment-stripped, with its
@@ -139,9 +146,11 @@ final class TheIconTileCarriesAWordTests: XCTestCase {
                 }
                 let arguments = String(code[hit.upperBound..<code.index(before: i)])
                 let next = code.range(of: needle, range: i..<code.endIndex)?.lowerBound ?? code.endIndex
-                let label = Self.firstLabel(in: String(code[i..<next]))
+                let tail = String(code[i..<next])
+                let label = Self.firstLabel(in: tail)
                 sites.append(Site(file: url.lastPathComponent, arguments: arguments,
-                                  hasAccessibilityLabel: label.found, nextAccessibilityLabel: label.literal))
+                                  hasAccessibilityLabel: label.found, nextAccessibilityLabel: label.literal,
+                                  tail: tail))
                 from = i
             }
         }
