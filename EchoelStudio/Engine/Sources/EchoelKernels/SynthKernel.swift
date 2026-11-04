@@ -27,6 +27,19 @@ public final class SynthKernel: @unchecked Sendable {
     private let base: SynthPatch
     private let count: Int
     private let ranges: [ClosedRange<Float>]
+    /// A host's parameter ramp, per address, run by the render thread (`rampParameter`): where it
+    /// goes, how far each frame moves it, the frames left, and the value it wrote last — a value
+    /// set since from another thread (the plugin's view) is newer than the ramp and ends it.
+    private let rampTarget: UnsafeMutablePointer<Float>
+    private let rampStep: UnsafeMutablePointer<Float>
+    private let rampFrames: UnsafeMutablePointer<Int>
+    private let rampWritten: UnsafeMutablePointer<Float>
+    /// Whether an address may glide: a choice (engine, waveform, filter) takes its value at once.
+    private let ramps: UnsafeMutablePointer<Bool>
+    private var activeRamps = 0
+    /// A running ramp moves the values in steps of this many frames (0.67 ms at 48 kHz): finer
+    /// than any control the voices read, coarse enough that the patch is not rebuilt per sample.
+    static let rampStepFrames = 32
 
     public init(sampleRate: Double, maximumFrames: Int = 4_096) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
@@ -42,6 +55,16 @@ public final class SynthKernel: @unchecked Sendable {
         synth = PolySynth(sampleRate: Float(rate))
         mono = .allocate(capacity: self.maximumFrames)
         mono.initialize(repeating: 0, count: self.maximumFrames)
+        rampTarget = .allocate(capacity: count)
+        rampTarget.initialize(repeating: 0, count: count)
+        rampStep = .allocate(capacity: count)
+        rampStep.initialize(repeating: 0, count: count)
+        rampFrames = .allocate(capacity: count)
+        rampFrames.initialize(repeating: 0, count: count)
+        rampWritten = .allocate(capacity: count)
+        rampWritten.initialize(repeating: 0, count: count)
+        ramps = .allocate(capacity: count)
+        for (i, parameter) in Self.patchParameters.enumerated() { ramps[i] = parameter.taper != .stepped }
     }
 
     deinit {
@@ -49,6 +72,11 @@ public final class SynthKernel: @unchecked Sendable {
         fields.deinitialize(count: count)
         fields.deallocate()
         mono.deallocate()
+        rampTarget.deallocate()
+        rampStep.deallocate()
+        rampFrames.deallocate()
+        rampWritten.deallocate()
+        ramps.deallocate()
     }
 
     /// Any thread. A value outside the parameter's range is clamped; one that is not finite is ignored.
@@ -64,6 +92,46 @@ public final class SynthKernel: @unchecked Sendable {
     }
 
     // MARK: - Render thread
+
+    /// Render thread: a host's parameter ramp (`AURenderEventParameterRamp`) — `address` moves from
+    /// where it is to `value` over `frames` frames of the following renders, in straight steps,
+    /// instead of jumping to its end at once (audit 2026-11-04). A choice takes its value at once,
+    /// and so does a ramp of no length.
+    public func rampParameter(_ address: Int, to value: Float, frames: Int) {
+        guard address >= 0, address < count, value.isFinite else { return }
+        guard frames > 0, ramps[address] else {
+            if rampFrames[address] > 0 { rampFrames[address] = 0; activeRamps -= 1 }
+            setParameter(address, value)
+            return
+        }
+        let range = ranges[address]
+        let goal = Swift.min(Swift.max(value, range.lowerBound), range.upperBound)
+        if rampFrames[address] == 0 { activeRamps += 1 }
+        rampTarget[address] = goal
+        rampStep[address] = (goal - values[address]) / Float(frames)
+        rampFrames[address] = frames
+        rampWritten[address] = values[address]
+    }
+
+    /// Moves every running ramp on by `frames`.
+    private func advanceRamps(by frames: Int) {
+        var moved = false
+        for i in 0..<count where rampFrames[i] > 0 {
+            if values[i] != rampWritten[i] {
+                // Set from elsewhere since the ramp began: that value stands.
+                rampFrames[i] = 0
+                activeRamps -= 1
+                continue
+            }
+            let step = Swift.min(frames, rampFrames[i])
+            rampFrames[i] -= step
+            values[i] = rampFrames[i] == 0 ? rampTarget[i] : values[i] + rampStep[i] * Float(step)
+            rampWritten[i] = values[i]
+            if rampFrames[i] == 0 { activeRamps -= 1 }
+            moved = true
+        }
+        if moved { version.add(1, ordering: .releasing) }
+    }
 
     /// One MIDI 1.0 channel message: note on/off, the pitch wheel, and the controllers the synth
     /// reads (`PolySynth.controller` — modulation, sustain, all sound off, reset, all notes off),
@@ -87,7 +155,13 @@ public final class SynthKernel: @unchecked Sendable {
         commitParameters()
         var done = 0
         while done < frames {
-            let n = Swift.min(frames - done, maximumFrames)
+            var n = Swift.min(frames - done, maximumFrames)
+            if activeRamps > 0 {
+                // A ramp's next step reaches the voices before these frames sound.
+                n = Swift.min(n, Self.rampStepFrames)
+                advanceRamps(by: n)
+                commitParameters()
+            }
             mono.update(repeating: 0, count: n)
             synth.render(into: UnsafeMutableBufferPointer(start: mono, count: n))
             for i in 0..<n {
@@ -123,6 +197,8 @@ public final class SynthKernel: @unchecked Sendable {
     /// sounds as on a fresh kernel. A host's CC 120 goes through `receive` and leaves the
     /// controllers alone.
     public func reset() {
+        for i in 0..<count { rampFrames[i] = 0 }
+        activeRamps = 0
         synth.reset()
         synth.resetControllers()
     }

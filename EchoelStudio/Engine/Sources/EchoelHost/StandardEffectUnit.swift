@@ -36,7 +36,14 @@ public final class StandardEffectUnit: AUAudioUnit {
         let unlocked = Atomic<Bool>(true)
         let bypassed = Atomic<Bool>(false)
         var demoFrame: Int64 = 0
-        init(kernel: EffectKernel) { self.kernel = kernel }
+        /// In another app's host (the extension's ids) the output ends in `OutputSafety`. In Echoel
+        /// the unit is an insert inside a float mix whose end has its own guard, so it does not
+        /// bend a hot track there.
+        let guardsOutput: Bool
+        init(kernel: EffectKernel, guardsOutput: Bool) {
+            self.kernel = kernel
+            self.guardsOutput = guardsOutput
+        }
     }
 
     public let effect: StandardEffect
@@ -57,7 +64,8 @@ public final class StandardEffectUnit: AUAudioUnit {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_InvalidProperty))
         }
         self.effect = effect
-        render = RenderState(kernel: EffectKernel(effect: effect, sampleRate: 48_000))
+        render = RenderState(kernel: EffectKernel(effect: effect, sampleRate: 48_000),
+                             guardsOutput: StandardEffect(component: component) == nil)
         try super.init(componentDescription: componentDescription, options: options)
         guard let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2) else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_FormatNotSupported))
@@ -204,6 +212,8 @@ public final class StandardEffectUnit: AUAudioUnit {
             }
             guard !bypassed else { return noErr }
             if done < frames { kernel.process(left: left + done, right: right + done, frames: frames - done) }
+            // A flanger at feedback −0.9 still rings above full scale (audit 2026-11-04).
+            if state.guardsOutput { OutputSafety.apply(left: left, right: right, frames: frames) }
             // The pull may have reported a silent input; a delay or reverb tail is not silent, so the
             // hint must not travel on to the host, which may skip a buffer it thinks is empty.
             flags.pointee.remove(.unitRenderAction_OutputIsSilence)

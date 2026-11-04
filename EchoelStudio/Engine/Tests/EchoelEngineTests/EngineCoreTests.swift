@@ -882,7 +882,7 @@ final class EngineCoreTests: XCTestCase {
         engine.play()
         let out = render(engine, frames: 110_000).left   // a bar is 96 000 samples
         let early = rms(out[4_800..<14_400]), late = rms(out[80_000..<90_000]), after = rms(out[100_000..<110_000])
-        XCTAssertGreaterThan(early, 0.01)
+        XCTAssertGreaterThan(early, 0.005, "sounding (the classic engine's trim is −4.2 dB)")
         XCTAssertLessThan(late, early * 0.5, "the level falls along the lane")
         XCTAssertEqual(after, 0, "and holds the lane's last value, silence")
     }

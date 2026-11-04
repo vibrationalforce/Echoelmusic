@@ -79,19 +79,27 @@ enum MixLoudness {
     }
 
     /// `first ..< last` of `file`, which measured `measured`, into `writer`: copied as it is at Off,
-    /// otherwise brought to the target under the true-peak ceiling. The writer is left open.
+    /// at Peak lowered under the true-peak ceiling by a gain, otherwise brought to the target under it. The writer is left open.
     static func write(_ file: AVAudioFile, from first: AVAudioFramePosition, to last: AVAudioFramePosition,
                       measured: LoudnessNormalizer.Measurement, loudness: ExportLoudness,
                       into writer: WAVWriter) throws -> Report {
+        let rate = file.processingFormat.sampleRate
+        let replay: LoudnessNormalizer.Replay = { block in
+            try forEachBlock(of: file, from: first, to: last, block)
+        }
+        if let gain = loudness.peakGain(forTruePeak: measured.truePeak) {
+            // Peak: a plain gain, down only, no limiter — the mix as it plays where it is under.
+            let settings = LoudnessNormalizer.Settings(gain: gain, limiterCeiling: nil)
+            let after = try LoudnessNormalizer.apply(settings, sampleRate: rate, replay: replay) { left, right, count in
+                try writer.append(left: left, right: right, count: count)
+            }
+            return Report(after: after, loudness: loudness, before: measured, settings: settings)
+        }
         guard let target = loudness.target else {
             try forEachBlock(of: file, from: first, to: last) { left, right, count in
                 try writer.append(left: left, right: right, count: count)
             }
             return Report(measured)
-        }
-        let rate = file.processingFormat.sampleRate
-        let replay: LoudnessNormalizer.Replay = { block in
-            try forEachBlock(of: file, from: first, to: last, block)
         }
         let settings = try LoudnessNormalizer.settings(target: target, ceiling: ExportLoudness.truePeakCeiling,
                                                        measured: measured, sampleRate: rate, replay: replay)

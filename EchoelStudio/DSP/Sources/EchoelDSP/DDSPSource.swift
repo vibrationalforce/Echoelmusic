@@ -12,7 +12,8 @@ import Foundation
 /// bright and pure — 1/n^0.5, no noise; 0.5 is the earlier engine's natural shape with a
 /// little air. Each partial's amplitude glides to its target (~4 ms) and the blend glides too
 /// (~2 ms), so a turned Character never steps. Partials from 85 % of Nyquist fade out over a
-/// smoothstep and are silent above it, instead of folding back.
+/// smoothstep and are silent above it, instead of folding back — and are not computed there at
+/// all (`audibleCount`).
 ///
 /// Render thread: nothing here allocates. The state is SIMD vectors inline in the struct; the
 /// sine is a quarter-wave polynomial (largest error 3.6e-6, measured against `sin`) instead of
@@ -158,6 +159,10 @@ struct DDSPSource: Sendable {
     /// The character `target` was built for; −1 until the first sample builds one.
     private var tableCharacter: Float = -1
     private var controlCountdown = 0
+    /// How many partials, from the first, the taper leaves above silence: a partial at or above
+    /// Nyquist is silent, so the loops in `sumPartials` stop where they begin. All sixty-four ran
+    /// for every note, and a note at 1 kHz needs 23 — the same sound at a fraction of the cost.
+    private var audibleCount = DDSPSource.partialCount
     /// xorshift32 state for the white noise; never zero.
     private var prng: UInt32 = 0x1234_5678
 
@@ -243,9 +248,10 @@ struct DDSPSource: Sendable {
     private mutating func sumPartials(dt: Float) -> Float {
         let glide = Self.amplitudeGlide
         let a = amplitudeLane, t = targetLane, w = taperLane, r = ratioLane, h = heardLane
+        let audible = audibleCount
         return withUnsafeMutablePointer(to: &partials) { (state: UnsafeMutablePointer<Partials>) -> Float in
             state.withMemoryRebound(to: Float.self, capacity: Self.laneCount) { (lanes: UnsafeMutablePointer<Float>) -> Float in
-                for i in 0..<Self.partialCount {
+                for i in 0..<audible {
                     var phase = lanes[i] + lanes[r + i] * dt
                     phase = phase - phase.rounded(.down)
                     lanes[i] = phase
@@ -254,7 +260,7 @@ struct DDSPSource: Sendable {
                     lanes[h + i] = Self.sine(phase) * (amplitude * lanes[w + i])
                 }
                 var sum: Float = -0.0
-                for i in 0..<Self.partialCount { sum += lanes[h + i] }
+                for i in 0..<audible { sum += lanes[h + i] }
                 return sum
             }
         }
@@ -264,15 +270,20 @@ struct DDSPSource: Sendable {
     @inline(__always)
     private mutating func updateTaper(dt: Float) {
         let w = taperLane, r = ratioLane
-        withUnsafeMutablePointer(to: &partials) { (state: UnsafeMutablePointer<Partials>) in
-            state.withMemoryRebound(to: Float.self, capacity: Self.laneCount) { (lanes: UnsafeMutablePointer<Float>) in
+        let audible = withUnsafeMutablePointer(to: &partials) { (state: UnsafeMutablePointer<Partials>) -> Int in
+            state.withMemoryRebound(to: Float.self, capacity: Self.laneCount) { (lanes: UnsafeMutablePointer<Float>) -> Int in
                 for i in 0..<Self.partialCount {
                     let position = (lanes[r + i] * dt - Self.taperStart) * Self.taperScale
                     let t = Swift.min(Swift.max(position, 0), 1)
                     lanes[w + i] = 1 - t * t * (3 - t * 2)
                 }
+                // The taper falls with the partial number, so the audible ones are the first ones.
+                var count = 0
+                while count < Self.partialCount, lanes[w + count] > 0 { count += 1 }
+                return count
             }
         }
+        audibleCount = audible
     }
 
     /// The amplitude of partial n is n^−p for the exponent `character` chooses, the set

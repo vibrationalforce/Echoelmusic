@@ -309,7 +309,8 @@ final class ClickHuntTests: XCTestCase {
         for source in [ModulationSource.breath, .coherence, .heartRate] {
             let moved = routeRender(song.project, source: source, values: [0.1, 0.9, 0.2, 0.8, 0, 1, 0.3])
             assertNoClicks(moved.stepped, "route from \(source)", detector: .forSine(hertz: 240, amplitude: 0.5))
-            XCTAssertGreaterThan(moved.difference, 0.005, "the route from \(source) is heard")
+            // 0.003: the classic engine plays 4.2 dB under its patch level since its loudness trim.
+            XCTAssertGreaterThan(moved.difference, 0.003, "the route from \(source) is heard")
         }
     }
 

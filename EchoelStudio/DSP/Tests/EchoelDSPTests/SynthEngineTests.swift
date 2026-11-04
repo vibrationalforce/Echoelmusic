@@ -20,7 +20,8 @@ final class SynthEngineTests: XCTestCase {
             buffer[start..<end].withUnsafeMutableBufferPointer { synth.render(into: $0) }
             start = end
         }
-        return buffer
+        // The engine's own tone: its loudness trim (a gain inside the voice) taken back out.
+        return buffer.map { $0 / engine.loudnessTrim }
     }
 
     private func rms(_ samples: [Float]) -> Float {
@@ -137,7 +138,9 @@ final class SynthEngineTests: XCTestCase {
     }
 
     func testTheSubAddsTheOctaveBelow() {
-        XCTAssertEqual(tone(.sub, character: 0), tone(.classic, character: 0), "no sub, the oscillator alone")
+        for (a, b) in zip(tone(.sub, character: 0), tone(.classic, character: 0)) {
+            XCTAssertEqual(a, b, accuracy: 1e-5, "no sub, the oscillator alone")
+        }
         XCTAssertGreaterThan(magnitude(tone(.sub, character: 1), hertz: 110),
                              magnitude(tone(.sub, character: 0), hertz: 110) + 0.05)
     }

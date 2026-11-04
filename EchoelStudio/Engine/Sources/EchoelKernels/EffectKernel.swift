@@ -488,7 +488,7 @@ public final class EffectKernel: @unchecked Sendable {
         case .flanger:
             add("rate", "Rate", 0.05...8, 0.25, .hertz)
             add("depth", "Depth", 0...1, 0.7, .amount)
-            add("feedback", "Feedback", -0.95...0.95, 0.5, .amount)
+            add("feedback", "Feedback", -Float(Flanger.maximumFeedback)...Float(Flanger.maximumFeedback), 0.5, .amount)
             add("mix", "Mix", 0...1, 0.5, .amount)
         case .limiter:
             add("gain", "Gain", 0...24, 0, .decibels)

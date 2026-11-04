@@ -262,11 +262,17 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
                 }
                 switch header.eventType {
                 case .MIDI:
+                    // Two-byte messages too: channel pressure and program change (audit 2026-11-04).
                     let midi = current.pointee.MIDI
-                    if midi.length >= 3 { state.kernel.receive(status: midi.data.0, midi.data.1, midi.data.2) }
-                case .parameter, .parameterRamp:
+                    state.kernel.receive(midi: Int(midi.length), midi.data.0, midi.data.1, midi.data.2)
+                case .parameter:
                     let parameter = current.pointee.parameter
                     state.kernel.setParameter(Int(parameter.parameterAddress), parameter.value)
+                case .parameterRamp:
+                    // The ramp runs over its frames, as the host asked, where the kernel can glide.
+                    let parameter = current.pointee.parameter
+                    state.kernel.rampParameter(Int(parameter.parameterAddress), to: parameter.value,
+                                               frames: Int(parameter.rampDurationSampleFrames))
                 default:
                     break
                 }
@@ -275,6 +281,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             if done < frames {
                 state.kernel.render(frames: frames - done, left: left + done, right: right + done, gain: 1)
             }
+            // Under full scale whatever the patch: a host may sum into a bus that cuts flat.
+            OutputSafety.apply(left: left, right: right, frames: frames)
             // Locked, the demo's silence fades in and out instead of switching (A9).
             if !state.unlocked.load(ordering: .relaxed) {
                 DemoGate.apply(left: left, right: right, frames: frames, fromFrame: demoFrom,
