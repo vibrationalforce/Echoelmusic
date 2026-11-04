@@ -60,8 +60,10 @@ public enum SynthEngine: String, CaseIterable, Codable, Sendable {
 /// the ramp continuous, so their harmonics fall as a triangle's do.
 enum MorphShapes {
     /// Where each shape stands on Character. 0, ⅓, ⅔ and 1 are the earlier morph's four.
-    static let positions: (Float, Float, Float, Float, Float, Float, Float, Float) =
+    /// Computed, not stored: the render thread reads it, and a stored static is initialised lazily.
+    static var positions: (Float, Float, Float, Float, Float, Float, Float, Float) {
         (0, 1.0 / 6, 1.0 / 3, 0.5, 2.0 / 3, 7.0 / 9, 8.0 / 9, 1)
+    }
     /// How far the ramp's peak leans toward the saw's (0.5 is the triangle, 1 the saw).
     static let rampPeak: Float = 0.75
     static let narrowPulse: Float = 0.125

@@ -34,6 +34,9 @@ final class KernelParameterContractTests: XCTestCase {
             entry("synth_filter", "Filter", .choice, 0...1, 0, ["Clean", "Ladder"]),
             // Appended 2026-11-01 (W12): the vibrato a route moves with the pulse.
             entry("synth_vibrato", "Vibrato", .amount, 0...1, 0),
+            // Appended 2026-11-04 (A2): the bass-line slide and accent.
+            entry("synth_slide", "Slide", .seconds, 0...2, 0),
+            entry("synth_accent", "Accent", .amount, 0...1, 0),
         ])
     }
 

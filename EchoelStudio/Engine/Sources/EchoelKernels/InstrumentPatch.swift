@@ -64,6 +64,8 @@ extension SynthParameter.Name {
         case .character: patch.character = v
         case .filter: patch.filterModel = Int(value.rounded()) == 1 ? .ladder : .stateVariable
         case .vibrato: patch.vibrato = v
+        case .slide: patch.slide = v
+        case .accent: patch.accent = v
         }
     }
 }
