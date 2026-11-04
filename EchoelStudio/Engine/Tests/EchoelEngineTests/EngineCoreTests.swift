@@ -503,6 +503,63 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(gaps[8], 12_000, "after the ramp, 240 BPM")
     }
 
+    /// One bar of 4/4, then 3/4: the click accents beats 1, 5, 8 and 11 — every bar line of the
+    /// meter — and keeps the quarter beat across the change.
+    func testTheClickAccentsTheBarLinesOfEachTimeSignature() throws {
+        var s = try song([[]])
+        try Command.setTimeSignatureChange(at: bar, TimeSignature(3, 4)).apply(to: &s.project)
+        let core = EngineCore(sampleRate: rate)
+        publish(s.project, to: core)
+        core.play()
+        let out = render(core, frames: 12 * 24_000).left
+        let energies = (0..<12).map { (beat: Int) -> Float in
+            out[(beat * 24_000)..<(beat * 24_000 + 1_440)].reduce(0) { $0 + $1 * $1 }
+        }
+        let accented: Set<Int> = [0, 4, 7, 10]
+        let quiet = energies.enumerated().filter { !accented.contains($0.offset) }.map(\.element)
+        XCTAssertTrue(quiet.allSatisfy { $0 > 0.1 }, "every beat clicks: \(energies)")
+        for beat in accented {
+            XCTAssertGreaterThan(energies[beat], quiet.max() ?? 0, "beat \(beat + 1) is a downbeat")
+        }
+        XCTAssertEqual(out[(24_000 + 1_440)..<47_990].reduce(0) { $0 + $1 * $1 }, 0, "silent between beats")
+    }
+
+    /// A clip launched in a 7/8 bar waits for that bar's line, not for 4/4's.
+    func testALaunchWaitsForTheBarLineOfTheMeterPlaying() throws {
+        var s = try song([[]])
+        try Command.setTimeSignatureChange(at: bar, TimeSignature(7, 8)).apply(to: &s.project)
+        let loop = ClipID()
+        try Command.createClip(track: s.tracks[0], id: loop, name: "L", length: bar).apply(to: &s.project)
+        try Command.addNotes(loop, [Note(pitch: 60, start: 0, length: 240)]).apply(to: &s.project)
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 96_000 + 4_800)        // into the first bar of 7/8
+        engine.launch(slot: 0, .launch(loop))
+        // 7/8 at 120 BPM: 3 360 ticks = 84 000 samples; the next bar line is at 180 000.
+        let wait = render(engine, frames: 90_000)
+        let start = try XCTUnwrap(firstSound(wait.left))
+        XCTAssertTrue((180_000 - 100_800...180_002 - 100_800).contains(start), "\(start + 100_800)")
+    }
+
+    /// A hosted unit is told the signature and downbeat of the bar it is in.
+    func testAHostedUnitIsToldTheBarOfTheMeterPlaying() throws {
+        var s = try song([[]])
+        try Command.setTimeSignatureChange(at: bar, TimeSignature(7, 8)).apply(to: &s.project)
+        let recorder = TransportRecorder(sampleRate: rate)
+        let engine = core()
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: s.project)
+        engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                      sampleRate: rate, generation: 1, masterEffects: [recorder]))
+        engine.play()
+        _ = render(engine, frames: 96_000 + 84_000 + 4_800)   // in the second bar of 7/8
+        let playing = try XCTUnwrap(recorder.last)
+        XCTAssertEqual(playing.numerator, 7)
+        XCTAssertEqual(playing.denominator, 8)
+        XCTAssertEqual(playing.downbeat, Double(bar + 3_360) / Double(MusicalTime.ticksPerQuarter), accuracy: 1e-9)
+    }
+
     /// A new snapshot while a ramp plays — a note added, the same map — leaves the playhead
     /// where it is; a ramp edited mid-way keeps the bar and beat, as a step change does.
     func testANewSnapshotInsideARampIsNotATempoJump() throws {

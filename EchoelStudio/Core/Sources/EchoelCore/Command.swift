@@ -11,6 +11,8 @@ public enum Command: Codable, Equatable, Sendable {
     case setTempoChange(at: Tick, bpm: Double)
     case removeTempoChange(at: Tick)
     case setTempoCurve(at: Tick, curve: TempoCurve)
+    case setTimeSignatureChange(at: Tick, TimeSignature)
+    case removeTimeSignatureChange(at: Tick)
     case setKeyRoot(Int)
     case setScale(Scale)
     case setTuning(id: String)
@@ -194,6 +196,8 @@ extension Command {
             guard signature.isValid else {
                 throw CommandError.invalidValue(parameter: "timeSignature", reason: "numerator 1…32, denominator a power of two up to 32")
             }
+            // The later changes stay on bar lines, or the new first bar is refused.
+            try Project.validateMeter(signature: signature, changes: project.timeSignatureChanges)
             project.timeSignature = signature
 
         case let .setTempoChange(tick, bpm):
@@ -214,6 +218,28 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "tick", reason: "no tempo change at \(tick)")
             }
             project.tempoChanges.removeAll { $0.tick == tick }
+
+        case let .setTimeSignatureChange(tick, signature):
+            guard tick > 0, tick <= MusicalTime.maximumTick else {
+                throw CommandError.invalidValue(parameter: "tick", reason: "must be within 1…\(MusicalTime.maximumTick); tick 0 is the song's time signature")
+            }
+            guard signature.isValid else {
+                throw CommandError.invalidValue(parameter: "timeSignature", reason: "numerator 1…32, denominator a power of two up to 32")
+            }
+            var changes = project.timeSignatureChanges.filter { $0.tick != tick }
+            changes.append(TimeSignatureChange(tick: tick, signature: signature))
+            changes.sort { $0.tick < $1.tick }
+            // On a bar line of the bars before it, and every later change still on one.
+            try Project.validateMeter(signature: project.timeSignature, changes: changes)
+            project.timeSignatureChanges = changes
+
+        case .removeTimeSignatureChange(let tick):
+            guard project.timeSignatureChanges.contains(where: { $0.tick == tick }) else {
+                throw CommandError.invalidValue(parameter: "tick", reason: "no time signature change at \(tick)")
+            }
+            let changes = project.timeSignatureChanges.filter { $0.tick != tick }
+            try Project.validateMeter(signature: project.timeSignature, changes: changes)
+            project.timeSignatureChanges = changes
 
         case let .setTempoCurve(tick, curve):
             guard let index = project.tempoChanges.firstIndex(where: { $0.tick == tick }) else {

@@ -1,7 +1,7 @@
 import Foundation
 
 /// A song as a Standard MIDI File (format 1), for any other DAW or notation program: a first
-/// track with the song name, its tempo map and time signature, then one track per instrument
+/// track with the song name, its tempo map and every time signature, then one track per instrument
 /// track with what the arrangement plays — the same notes the engine plays, overlaps resolved
 /// the same way. Muted tracks are written too, as every DAW does; the receiver decides. The song's
 /// swing is NOT applied: the file holds the notes as written, so a file read back into a song with
@@ -43,9 +43,11 @@ public enum MIDIFile {
 
     static func conductor(_ project: Project) -> [Event] {
         var events = [Event(tick: 0, bytes: meta(0x03, Array(project.name.utf8)))]
-        let signature = project.timeSignature
-        let power = UInt8(Swift.max(0, Int(Foundation.log2(Double(Swift.max(1, signature.denominator))).rounded())))
-        events.append(Event(tick: 0, bytes: meta(0x58, [UInt8(clamping: signature.numerator), power, 24, 8])))
+        for segment in project.meterMap.segments {
+            let signature = segment.signature
+            let power = UInt8(Swift.max(0, Int(Foundation.log2(Double(Swift.max(1, signature.denominator))).rounded())))
+            events.append(Event(tick: segment.startTick, bytes: meta(0x58, [UInt8(clamping: signature.numerator), power, 24, 8])))
+        }
         let map = project.tempoMap
         for (index, segment) in map.segments.enumerated() {
             guard segment.isRamp, index + 1 < map.segments.count else {

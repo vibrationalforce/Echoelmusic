@@ -62,6 +62,21 @@ public struct MIDITake: Sendable {
         return (start, length, notes, Self.controls(take.controls, from: start, length: length))
     }
 
+    /// The same on the bar lines of the song's meter: bars of whatever length lie under the take.
+    public func clip(endingAt end: Tick, meter: MeterMap) -> (start: Tick, length: Tick, notes: [Note], controls: [ControlChange])? {
+        var take = self
+        for pitch in take.open.keys.sorted() { take.noteOff(pitch: pitch, at: end) }
+        guard let first = take.notes.map(\.start).min() else { return nil }
+        let start = meter.barStart(at: first)
+        let last = take.notes.map { $0.start + $0.length }.max() ?? first
+        let length = Swift.min(Swift.max(meter.ticksPerBar(at: start), meter.nextBarLine(atOrAfter: last) - start),
+                               MusicalTime.maximumTick)
+        let notes = take.notes
+            .sorted { $0.start != $1.start ? $0.start < $1.start : $0.pitch < $1.pitch }
+            .map { Note(pitch: $0.pitch, velocity: $0.velocity, start: $0.start - start, length: $0.length) }
+        return (start, length, notes, Self.controls(take.controls, from: start, length: length))
+    }
+
     static func controls(_ played: [ControlChange], from start: Tick, length: Tick) -> [ControlChange] {
         let ordered = played.enumerated()
             .sorted { $0.element.start != $1.element.start ? $0.element.start < $1.element.start : $0.offset < $1.offset }

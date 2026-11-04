@@ -87,8 +87,7 @@ struct VideoExportView: View {
         .interactiveDismissDisabled(documents.isExporting)
         .onAppear {
             // The bar the playhead stands in: read once, never observed.
-            let bar = MusicalTime.ticksPerBar(store.project.timeSignature)
-            if bar > 0 { startBar = Int(engine.playheadTick(in: store.project) / bar) + 1 }
+            startBar = Int(clamping: store.project.meterMap.bar(at: Swift.max(0, engine.playheadTick(in: store.project)))) + 1
         }
     }
 
@@ -132,8 +131,8 @@ struct VideoExportView: View {
     }
 
     private func rangeText(_ range: ClosedRange<Tick>, seconds: Double) -> String {
-        let bar = Swift.max(1, MusicalTime.ticksPerBar(store.project.timeSignature))
-        let bars = (range.upperBound - range.lowerBound) / bar
+        let meter = store.project.meterMap
+        let bars = meter.bar(at: range.upperBound) - meter.bar(at: range.lowerBound)
         return "Bars \(startBar) to \(startBar + Int(bars) - 1), \(NumberText.string(seconds, decimals: 1, unit: "s"))."
     }
 

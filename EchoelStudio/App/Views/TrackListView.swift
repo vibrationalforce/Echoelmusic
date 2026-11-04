@@ -283,6 +283,6 @@ struct VideoTrackButtons: View {
     private var end: Tick {
         let project = store.project
         let last = track.regions.compactMap { Arranging.end(of: $0, in: project) }.max() ?? 0
-        return Arranging.barStart(last + MusicalTime.ticksPerBar(project.timeSignature) - 1, signature: project.timeSignature)
+        return project.meterMap.nextBarLine(atOrAfter: last)
     }
 }

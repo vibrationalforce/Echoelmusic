@@ -102,6 +102,11 @@ final class ClockFollowerTests: XCTestCase {
         XCTAssertEqual(flow.tempoMap.bpm(at: 1_920), 77, "also inside the song's own ramp")
         XCTAssertEqual(song.tempoChanges.first?.curve, .linear, "the song keeps its ramp underneath")
 
+        // A jam host's signature is the one meter; a MIDI clock carries none and keeps the song's.
+        try Command.setTimeSignatureChange(at: 3_840, TimeSignature(3, 4)).apply(to: &song)
+        XCTAssertTrue(ClockFollower.played(song, tempo: 90, signature: TimeSignature(5, 4)).meterMap.isConstant)
+        XCTAssertFalse(ClockFollower.played(song, tempo: 90).meterMap.isConstant)
+
         let unknown = ClockFollower.played(song, tempo: nil)
         XCTAssertEqual(unknown.tempo, 100, "until the clock's tempo is known, the song's own tempo")
         XCTAssertEqual(unknown.tempoChanges, [], "but never its changes, which would run it off the clock")

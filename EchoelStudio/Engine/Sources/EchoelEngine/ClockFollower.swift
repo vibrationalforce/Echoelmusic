@@ -145,7 +145,9 @@ extension ClockFollower {
             played.tempo = Swift.min(Swift.max(tempo, Tempo.range.lowerBound), Tempo.range.upperBound)
         }
         if let signature, signature.isValid {
+            // The host's meter is the one meter: none of the song's own changes either.
             played.timeSignature = signature
+            played.timeSignatureChanges = []
         }
         return played
     }
