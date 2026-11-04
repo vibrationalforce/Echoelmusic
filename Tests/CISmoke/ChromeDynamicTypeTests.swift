@@ -353,14 +353,14 @@ final class ChromeDynamicTypeTests: XCTestCase {
     private func topBarSource() throws -> [String] {
         let lines = try codeLines(Self.workspace)
         guard let start = lines.firstIndex(where: { $0.contains("private var topBar: some View {") }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `topBar` not found in \(Self.workspace) — skipping rather than reporting a green \
                 this file did not earn. If the header was renamed, re-point this helper.
                 """)
         }
         let rest = lines[(start + 1)...]
         guard let end = rest.firstIndex(where: { $0 == "    }" }) else {
-            throw XCTSkip("no member-indentation `}` closes `topBar` — the slice would be wrong")
+            throw failedAnchor("no member-indentation `}` closes `topBar` — the slice would be wrong")
         }
         return Array(lines[(start + 1)..<end])
     }

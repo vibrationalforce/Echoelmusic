@@ -137,7 +137,7 @@ final class ChipLabelGrowsWithTheTextTests: XCTestCase {
         guard let idx = studio.firstIndex(where: {
             $0.contains("private func chipTapTarget<Content: View>")
         }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `chipTapTarget` is gone from EchoelStudioView — if the chip strip was \
                 restructured this test should be rewritten with it, not left to pass vacuously
                 """)
@@ -167,7 +167,7 @@ final class ChipLabelGrowsWithTheTextTests: XCTestCase {
         let declaration = "private func menuChip(_ menu: StudioMenu)"
         let terminator = "accessibilityAddTraits(isActive"
         guard let start = studio.firstIndex(where: { $0.contains(declaration) }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `menuChip` is gone from EchoelStudioView — if the chip strip was restructured \
                 this test should be rewritten with it, not left to pass vacuously
                 """)

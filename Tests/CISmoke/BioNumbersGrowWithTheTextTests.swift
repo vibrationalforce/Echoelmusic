@@ -185,11 +185,11 @@ final class BioNumbersGrowWithTheTextTests: XCTestCase {
         // indentation. A line count or a "next N lines" rule would be wrong the first time
         // anyone adds a line — the brace at the branch's own indentation is the boundary.
         guard let start = lines.firstIndex(where: { $0.contains("dynamicTypeSize.isAccessibilitySize") }) else {
-            throw XCTSkip("no accessibility branch to window — the test above reports that")
+            throw failedAnchor("no accessibility branch to window — the test above reports that")
         }
         let indent = String(repeating: " ", count: lines[start].prefix(while: { $0 == " " }).count)
         guard let end = lines[(start + 1)...].firstIndex(where: { $0 == indent + "} else {" }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 no `} else {` closes the accessibility branch at its own indentation — the \
                 window would be wrong, and a wrong window is worse than no assertion
                 """)
