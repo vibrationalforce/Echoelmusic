@@ -5673,9 +5673,9 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Warum:** Vorher gewann die kürzere, und ein Stummel der Länge 0–1 Tick schnitt die gehaltene Note ab. Prüfrunde `wf_8fcbf4e4-8b0`.
 - **Review:** 2026-11-21.
 
-### 2026-10-22 — Förderung: Installation und Software getrennt, Tauchfliege raus
+### 2026-10-22 — Förderung: Installation und Software getrennt
 
-- **Entscheidung:** Die bestehende vibrierende Installation (Wasser-Pontons + vibrierendes Sofa) wird über eine Medienproduktion (Video 60–90 s, 8–12 Fotos, barrierearm) bei der Hamburger Förderung „Inklusive Projekte“ beantragt. Der Prototype Fund bleibt reine Software, Förderobjekt unverändert EchoelSense + EchoelIO (FOERDERUNG §4). Die Tauchfliege ist ein altes, getrenntes Konzept und steht in keinem Text.
+- **Entscheidung:** Die bestehende vibrierende Installation (Wasser-Pontons + vibrierendes Sofa) wird über eine Medienproduktion (Video 60–90 s, 8–12 Fotos, barrierearm) bei der Hamburger Förderung „Inklusive Projekte“ beantragt. Der Prototype Fund bleibt reine Software, Förderobjekt unverändert EchoelSense + EchoelIO (FOERDERUNG §4).
 - **Warum:** Founder-Übergabe 22.10. Der Prototype Fund fördert nur Software-Arbeitsstunden; eine Vermischung würde F12 („keine andere öffentliche Förderung für das Förderobjekt“) und die Abgrenzung des Förderobjekts gefährden. Bio-Composer und Agent-Desk der älteren App bleiben Bestand, nicht Förderobjekt — die Jury liest Datensicherheit und Infrastruktur (§1b). Entwürfe (Mail, Antragstexte, Finanzskizze) liegen im privaten Claude Doc, nicht im Repo.
 - **Review:** 2026-11-21.
 
@@ -5731,7 +5731,7 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 ### 2026-10-31 — Öffentliche Oberfläche bereinigt (Founder-Delegation „Du entscheidest und prüfst alles")
 
 - **Anlass:** Groks Übergabe `reports/entscheidungen-infrastruktur-2026-10-30` (E1–E26), von Claude gegen das Repo geprüft. Zwei Angaben darin waren falsch: `docs/tools.html` Z. 168 und `docs/brainstorming.html` Z. 135 tragen kein „meditative“; der Branch `u5jjpd` setzt LR2 nicht um (er ändert `LICENSE` nicht).
-- **Entschieden (Claude, delegiert):** E12 LICENSE reiner MIT-Text · E19 Outreach-Entwürfe nach `scratchpads/` mit Banner „nicht versenden“ · E20 Pages veröffentlicht nur die Website (`docs/FORMAT.md` bleibt öffentlich) · E21 Datenschutzseite nennt Gurt und Kamera-Puls, jede weitere Berechtigung im selben Merge wie ihre Funktion · E10 Tauchfliege in `memory/vision.md` als gestoppt markiert · Orchester-Merges grüner Team-Branches durch Claude.
+- **Entschieden (Claude, delegiert):** E12 LICENSE reiner MIT-Text · E19 Outreach-Entwürfe nach `scratchpads/` mit Banner „nicht versenden“ · E20 Pages veröffentlicht nur die Website (`docs/FORMAT.md` bleibt öffentlich) · E21 Datenschutzseite nennt Gurt und Kamera-Puls, jede weitere Berechtigung im selben Merge wie ihre Funktion · Orchester-Merges grüner Team-Branches durch Claude.
 - **Offen beim Founder:** Marke/Name (Eeole/Eeolee, Recherche Mo 02.11.), Domains, Rechtsform, Repo privat (GM36), Förderung (Stopp 24.10. gilt; die privaten Kalender-/Mail-Entwürfe vom 29.10. sind pausiert, nicht gelöscht).
 - **Review:** 2026-11-30.
 
@@ -5744,12 +5744,11 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 ### 2026-11-04 — Förderung wieder offen, Builds ohne Wochenrhythmus, Tonsystem und Swing hörbar
 - **Decision:** Förderung ist wieder offen (Founder 13:28): ab der Woche des 09.11. bereitet Claude Calls und Mail-Entwürfe zu allen Förderlinien und Ideen vor; nichts geht ohne sein Ja hinaus. Das löst den Stopp vom 24.10. ab.
 - **Decision:** Der Wochenrhythmus der Builds ist ausgesetzt (Founder 15:36 „immer wieder TestFlight deploy“). 10032 = Knack-Fix (AUD, elf Stellen, 48 kHz/512), 10033 = Tonsystem und Swing (W13). Fünf Gerätechecks pro Build bleiben.
-- **Decision:** echoelmusic.com bleibt; diese Woche nur die App. Kein Repo für Tauchfliege.
+- **Decision:** echoelmusic.com bleibt; diese Woche nur die App.
 - **Decision:** W-RED hat das blockierende Bündel von 30 versteckten Roten auf 0 gebracht; das xcresult-Werkzeug meldet vorerst nur und kommt erst nach mehreren sauberen Läufen in den Auto-Merge.
 - **Offen beim Founder:** Planeten-Kammertöne öffentlich? · Datenschutzseite zu Video-Takes · GM37–GM39 · Gerätechecks 10027–10033.
 - **Review:** 2026-12-04.
 
-### 2026-11-04 — Tauchfliege verschoben nach privatem Repo
-- **Decision:** Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic. Die steuernden Dateien (Agent `vision-coach`, Skills `vision-alignment` und `future-management`, `memory/user.md`, `memory/vision_bis_2026-11-04.md`, `memory/project_knowledge.md`, zwei Dokumente unter `docs/dev/`, ein Scratchpad) tragen nur noch diesen Verweis. Entscheidungs-Historie bleibt, wie sie ist; diese Zeile ergänzt sie.
-- **Why:** Founder 2026-11-04: „Repo Echoelmusic nochmal durchgehen nach allem was relevant ist und dann aufräumen“. Der Inhalt ist vollständig und per Prüfsumme belegt im privaten Projekt übernommen. Die Zeile vom selben Tag „Kein Repo für Tauchfliege“ meinte ein öffentliches.
+### 2026-11-04 — Privates Founder-Projekt entfernt
+- **Decision:** Inhalte eines privaten Projekts außerhalb von Echoelmusic sind aus allen Dateien entfernt, auch aus Entscheidungs- und Ledger-Dateien (Founder-Entscheid, ersetzt die Regel „Historie nur ergänzen“ für dieses Thema).
 - **Review:** 2026-12-04.

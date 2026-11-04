@@ -990,10 +990,10 @@ iPad als Instrumenten-Fläche bleibt founder-gated (`project.yml`, Sensor-Grund)
 
 ## Founder-Worte 2026-10-11 — „World UNITY" (gelesen durch den Vision-Gate; Stand `5bc17bc6b`)
 
-> „World UNITY Friedensabkommen über sanften und lächelnden Handel. Alles werden involviert und lernen zu verzeihen. Oberstes Gebot Transparenz und Volkswirtschaftliche Ökonomie wie sie alle gerne hätten. Vermeide BigPlayer Monopolistische Einseitigkeit ohne Regenwälder, Tiere und Menschen zu zerteilen. Vermeide das dringenst. Wir starten mit Airbus bei den Tauchfliegen und enden mit Echoelmusic als neue Musikschule, die Vegane Musikbetriebene Brötchen backt."
+> „World UNITY Friedensabkommen über sanften und lächelnden Handel. Alles werden involviert und lernen zu verzeihen. Oberstes Gebot Transparenz und Volkswirtschaftliche Ökonomie wie sie alle gerne hätten. Vermeide BigPlayer Monopolistische Einseitigkeit ohne Regenwälder, Tiere und Menschen zu zerteilen. Vermeide das dringenst. […] Echoelmusic als neue Musikschule, die Vegane Musikbetriebene Brötchen backt."
 > — Echoel (Michael Terbuyken), 2026-10-11, wörtlich.
 
-Lesart: das sind WERTE dafür, WIE Echoel gebaut und gehandelt wird, plus EINE Richtung („Echoelmusic als neue Musikschule" = Musik durch den Körper lernen). Airbus/Tauchfliegen und vegane Brötchen sind Stimme des Founders, keine Spezifikation — kein Code-Gegenstück, keines gesucht.
+Lesart: das sind WERTE dafür, WIE Echoel gebaut und gehandelt wird, plus EINE Richtung („Echoelmusic als neue Musikschule" = Musik durch den Körper lernen). Vegane Brötchen sind Stimme des Founders, keine Spezifikation — kein Code-Gegenstück, keines gesucht.
 
 ### Was davon schon Code ist (nachgemessen, kommentar-bereinigt)
 - **Transparenz:** MIT-Lizenz (`LICENSE:1`); Privacy-Seite „runs no servers and receives nothing" (`docs/privacy.html:116`); Store-Text „no accounts, no ads, no tracking" (`fastlane/metadata/en-US/description.txt:45`); kein HTTP-Client in der App: `git grep -n 'URLSession\|URLRequest' -- Sources | grep -v ': *//' | wc -l` → 0.
@@ -1697,7 +1697,7 @@ Dieselben drei Dokumente lagen am 2026-07-02 schon vor (Abschnitt „Founder leg
 
 **Gemessen:** Organuhr, Meridian, Trauma, Kurkumin, Supplement, Soultuning — null Treffer in `Sources/`, `EchoelStudio/` und `docs/*.html`. Der Forschungstext nennt keine einzige Quelle und nennt sich trotzdem „wissenschaftlich fundiert“; seine zwei messbaren Sätze sind Empfehlungen (Trauma-Modelle und Organuhr zuerst; Nutzen ganzheitlich kommunizieren), beide REJECT.
 
-**Neu gegenüber Juli ist die Frage, nicht der Inhalt:** damals „ist noch was Brauchbares bei?“, heute „eine Strategie, wie ich alles effektiv umsetze“ — Hardware (VR-Brille mit Raumklang und Knochenschall, EEG, Board), Tauchfliegen und der Businessplan. Das geht nicht in den Code, sondern in die Gesamtstrategie (Claude Doc, privat) mit Toren: Körper erst P6, EEG nur über ein fertiges Gerät mit Forschungspartner, keine eigene Brille, Board erst nach Elektro- und CE-Prüfung, Gastro und Food-Blog getrennt von der App-Marke, Tauchfliegen geparkt (Founder 22.10.).
+**Neu gegenüber Juli ist die Frage, nicht der Inhalt:** damals „ist noch was Brauchbares bei?“, heute „eine Strategie, wie ich alles effektiv umsetze“ — Hardware (VR-Brille mit Raumklang und Knochenschall, EEG, Board) und der Businessplan. Das geht nicht in den Code, sondern in die Gesamtstrategie (Claude Doc, privat) mit Toren: Körper erst P6, EEG nur über ein fertiges Gerät mit Forschungspartner, keine eigene Brille, Board erst nach Elektro- und CE-Prüfung, Gastro und Food-Blog getrennt von der App-Marke.
 
 **Lehre:** Ein Dokument, das ein Brainstorming „validiert“, das sein Autor selbst Gibberish nennt, ist eine Bestätigungsmaschine, keine Quelle — erkennbar daran, dass es keinen einzigen Fundort nennt. Die legitime Kernmotivation (Menschen über Körper-Feedback ins kreative Potenzial bringen, Musik fühl- und sichtbar machen) bleibt erhalten und lebt in EchoelSense (P6), der Installation (Vibration auf der Haut) und der Barrierefreiheits-Abnahme vor 1.0 — ohne ein einziges Gesundheitswort.
 

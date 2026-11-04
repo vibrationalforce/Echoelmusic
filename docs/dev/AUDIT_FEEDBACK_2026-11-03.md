@@ -22,7 +22,6 @@
 **Status:** Needs clarity
 
 - Current Apple pitches are solid but still soft on long-term vision.
-- Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.
 - Institutional emails (DPMA, BfN) are drafted but not yet finalized.
 - Small Business Program is already active (15%).
 

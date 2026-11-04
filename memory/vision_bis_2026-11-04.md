@@ -10,7 +10,6 @@
 
 - **Software-Kern:** Echoelmusic / Echoel Studio als offener Steuerbus (OSC, MIDI, Art-Net/sACN, ADM-OSC). Bio optional. DMMW-Scope.
 - **Nah-Hardware:** Bestehende vibrierende Wasser-Installation (VAPORWAVE PALACE: Pontons/Platte + Exciter + Liege) als Abonnent für sinnlichen Zugang und Inklusion.
-- ⛔ **Tauchfliege:** Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic. (Für Echoelmusic gestoppt 22./24.10., markiert 31.10.; am 2026-11-04 in ein privates Repo verschoben, die Beschreibung steht nur noch dort.)
 - **Werte-Schicht (immer aktiv):** Ernsthafter Umweltschutz und Nachhaltigkeit (niedriger Fußabdruck, reparierbar, optionales Monitoring), Frieden durch Transparenz und Offenheit, Inklusion als Zugang und Teilhabe (nicht Therapie). Reichtum und Ansehen entstehen aus hochwertiger, ehrlicher Umsetzung des Produkts plus konsistenter Werte-Praxis.
 
 Durable knowledge. Read at session start with the rest of `memory/`. This is the
@@ -113,12 +112,8 @@ no zone parser — naming either in the spine re-sold two capabilities struck at
   line; Cinema/Theater/Performance are served by the OUTPUT stage (light/space/visual),
   not by streaming. Kept only so the strike is findable here too.
 - **Auto-driving assistant** — parking lot, speculative (`user.md`). No code, no copy.
-- **Hardware line (founder 2026-09-11, corrects this entry):** the founder stated plainly
-  that **dive-flying is the hardware he actually wants to develop**, with a nearer first
-  step: an **ergonomic memory-foam lounger ("cloud") fitted with bass shakers**, water as a
-  vibrating element. ⛔ This line previously read *"Dive-flying (Tauchfliegen) — parking lot,
-  North Star. **Unrelated to app**"* and `user.md` said only "Details TBD" — both were wrong
-  as a record of INTENT, not merely stale. Still NORTH STAR for the APP (no code, no product
+- **Hardware line (founder 2026-09-11, corrects this entry):** the founder named an **ergonomic memory-foam lounger ("cloud") fitted with bass shakers**,
+  water as a vibrating element. Still NORTH STAR for the APP (no code, no product
   copy, no roadmap slot) and still never a health/therapy claim — but it is a declared
   direction of the founder's own practice, not a whim to be parked and forgotten.
   **The architectural consequence is the opposite of what it looks like:** hardware needs NO
@@ -157,7 +152,7 @@ if the website disagrees, the code wins.**
    sanften und lächelnden Handel. Alles werden involviert und lernen zu verzeihen. Oberstes Gebot
    Transparenz und Volkswirtschaftliche Ökonomie wie sie alle gerne hätten. Vermeide BigPlayer
    Monopolistische Einseitigkeit ohne Regenwälder, Tiere und Menschen zu zerteilen. Vermeide das
-   dringenst. Wir starten mit Airbus bei den Tauchfliegen und enden mit Echoelmusic als neue
+   dringenst. […] Echoelmusic als neue
    Musikschule, die Vegane Musikbetriebene Brötchen backt.“* Gelesen durch den Vision-Gate
    (`wf_7ab06b71-143`, Stand `5bc17bc6b`): WERTE dafür, WIE gebaut und gehandelt wird — Transparenz
    (MIT, keine Server, kein Tracking, jede Zahl neben ihrem Befehl), kein Lock-in (`dependencies: []`,

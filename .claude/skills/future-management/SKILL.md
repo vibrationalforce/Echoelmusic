@@ -50,7 +50,7 @@ Next step: [smallest reversible action]
 ## Domain Starting Points (expand in domain files or cards)
 
 - **Quantum Computing:** WATCH. Potential future acceleration of DSP or optimization. No near-term claim.
-- **Mobility:** not Echoelmusic scope. Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.
+- **Mobility:** not Echoelmusic scope.
 - **Digitalization & IoT:** ROADMAP. Expand open sensor networks for env monitoring, citizen science.
 - **Neuralink / BCI:** WATCH. Extreme bio-signal research. Strict science-only, optional modulation only.
 - **Traffic stress reduction:** WATCH. Haptic or bio-reactive calm systems. Mechanism, not effect.

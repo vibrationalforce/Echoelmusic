@@ -45,4 +45,4 @@ gilt es, bis die ältere Stelle nachgezogen ist. Zeilennummern sind Daten vom Me
 - **S1 Identität:** Produktgesetz 10-15 „Produktion zuerst, Bio optional" ↔ Chat 2026-11-01 14:29 „ganz nah am Instrument … Stabilität, Video, Visuals" ↔ Grok-Prompt „bio-reaktives Musikinstrument und Produktionsumgebung". Lesart im Kompass: Produktion ist der Kern, das *Qualitätsniveau* der Alt-App (Latenz, Bild) ist die Messlatte — ANNAHME, nicht vom Founder bestätigt.
 - **S2 Plattform:** Founder 2026-07-31 „gesamtes Apple-Ökosystem", Z. 1331 „zeitgleich" ↔ Studio baut nur `"1,2"` (iPhone/iPad); Watch/Mac/Vision haben kein Studio-Target (GM16/GM36).
 - **S3 Eine KI schreibt:** steht nur im Grok-Übergabeprompt, nicht im Repo; `learn-mode` deckt „fremde Modelle = Daten" ab, nicht „nur Claude committet".
-- **S4 Tauchfliege:** aufgelöst 2026-11-04 — Tauchfliege ist ein eigenes, privates Projekt von Michael; nicht Teil von Echoelmusic.
+- **S4:** entfällt (2026-11-04).
