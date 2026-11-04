@@ -1861,7 +1861,7 @@ public final class EngineCore: @unchecked Sendable {
                 region.buffer.add(intoLeft: segmentLeft + first, right: segmentRight + first, count: count,
                                   elapsed: playhead + Int64(first) - regionStart, step: region.step,
                                   offset: region.offset, length: region.length,
-                                  fade: Self.regionFadeFrames * region.step)
+                                  fade: Self.regionFadeFrames * region.step, envelope: region.envelope)
             }
         }
         for i in from..<to {

@@ -212,7 +212,12 @@ public enum Arranging {
         case .video: place = .placeVideo(track: track.id, id: copy, media: region.media, start: stop)
         default: return nil
         }
-        return [place, .trimRegion(track: track.id, copy, offset: region.offset, length: region.length)]
+        var commands = [place, .trimRegion(track: track.id, copy, offset: region.offset, length: region.length)]
+        // The copy fades and sounds as the region does (AUD-2).
+        if track.kind == .audio {
+            commands += Self.edits(of: region, onto: copy, in: track)
+        }
+        return commands
     }
 
     /// The command that cuts the placement at `tick` — the playhead, read when the musician asks.

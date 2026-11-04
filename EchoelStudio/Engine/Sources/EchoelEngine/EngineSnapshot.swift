@@ -221,6 +221,8 @@ public struct EngineSnapshot: Sendable {
         public let length: Double
         /// Buffer frames per output sample: the file plays at its own speed at any output rate.
         public let step: Double
+        /// The region's own level and fades, in buffer frames (AUD-2).
+        public var envelope: RegionEnvelope = .unity
     }
 
     /// Rises with every published snapshot; the render thread re-seeks when it changes.
@@ -442,8 +444,29 @@ public struct EngineSnapshot: Sendable {
         let step = buffer.sampleRate / sampleRate
         let start = time.sample(at: region.start)
         let end = start + Int64((Double(length) / step).rounded(.up))
-        return Region(startSample: start, endSample: end, buffer: buffer, offset: Double(region.offset),
-                      length: Double(length), step: step)
+        var resolved = Region(startSample: start, endSample: end, buffer: buffer, offset: Double(region.offset),
+                              length: Double(length), step: step)
+        resolved.envelope = envelope(of: region, playing: length)
+        return resolved
+    }
+
+    /// A region's level and fades as the buffer plays them: the fades held inside the frames that
+    /// play — a file shorter on disk than when it was measured shortens them too ("in wins").
+    static func envelope(of region: AudioRegion, playing length: Int) -> RegionEnvelope {
+        var held = region
+        held.length = length
+        let (rise, fall) = held.effectiveFades
+        return RegionEnvelope(gain: Float(region.linearGain), fadeIn: Double(rise), fadeOut: Double(fall),
+                              fadeInShape: shape(region.fadeInCurve), fadeOutShape: shape(region.fadeOutCurve))
+    }
+
+    static func shape(_ curve: FadeCurve) -> FadeShape {
+        switch curve {
+        case .linear: .linear
+        case .equalPower: .equalPower
+        case .exponential: .exponential
+        case .sCurve: .sCurve
+        }
     }
 
     /// Track fader × master fader; constant-power track pan, master pan as a balance. Every source
