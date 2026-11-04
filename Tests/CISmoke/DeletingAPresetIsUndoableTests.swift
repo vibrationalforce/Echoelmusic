@@ -82,7 +82,7 @@ final class DeletingAPresetIsUndoableTests: XCTestCase {
         let source = try codeLines(Self.studio)
         for s in Self.surfaces {
             guard let delete = source.firstIndex(where: { $0.contains(s.deleteCall) }) else {
-                throw XCTSkip("""
+                throw failedAnchor("""
                     `\(s.deleteCall)` is gone from EchoelStudioView — if the \(s.name) library \
                     was restructured this guard should be rewritten with it, not left to pass \
                     vacuously
@@ -150,7 +150,7 @@ final class DeletingAPresetIsUndoableTests: XCTestCase {
     /// one.
     private func window(_ source: [String], from declaration: String) throws -> ArraySlice<String> {
         guard let start = source.firstIndex(where: { $0.contains(declaration) }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` is gone from EchoelStudioView — the undo row was removed or \
                 rewritten, and this guard should be rewritten with it rather than left to pass \
                 vacuously
@@ -161,7 +161,7 @@ final class DeletingAPresetIsUndoableTests: XCTestCase {
         guard let end = source[start...].dropFirst().firstIndex(where: {
             $0.hasPrefix(closer) && $0.trimmingCharacters(in: .whitespaces) == "}"
         }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` has no closing brace at its own indentation — the file was \
                 reformatted or the row restructured, and reading on would inspect the wrong \
                 lines. Rewrite this guard with the new shape rather than letting it report on a \

@@ -132,7 +132,7 @@ final class LockCueDoesNotShoveTheControlsTests: XCTestCase {
         // lines from the cue's own text to the end of the member — it is the last branch, so
         // that slice is exactly the branch and nothing else.
         guard let cueLine = slot.firstIndex(where: { $0.contains(Self.cueText) }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 the cue text "\(Self.cueText)" is gone from `statusBanner` — if the wording \
                 changed, update `cueText` in the same commit; if the branch was removed, this \
                 guard should be rewritten with it rather than left to pass on an empty window
@@ -214,7 +214,7 @@ final class LockCueDoesNotShoveTheControlsTests: XCTestCase {
         let source = try codeLines(Self.strip)
         let slot = try window(source, from: Self.statusBannerDeclaration)
         guard let cueLine = slot.firstIndex(where: { $0.contains(Self.cueText) }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 the cue text "\(Self.cueText)" is gone from `statusBanner` — see the sibling \
                 test; this guard is rewritten with the branch, not left to pass vacuously
                 """)
@@ -286,7 +286,7 @@ final class LockCueDoesNotShoveTheControlsTests: XCTestCase {
     /// string literal spanning lines; if it grows one, this needs a real brace scanner.
     private func window(_ source: [String], from declaration: String) throws -> ArraySlice<String> {
         guard let start = source.firstIndex(where: { $0.contains(declaration) }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` is gone from BioStripView — if the status line was \
                 restructured this test should be rewritten with it, not left to pass vacuously
                 """)
@@ -296,7 +296,7 @@ final class LockCueDoesNotShoveTheControlsTests: XCTestCase {
         guard let end = source[start...].dropFirst().firstIndex(where: {
             $0.hasPrefix(closer) && $0.trimmingCharacters(in: .whitespaces) == "}"
         }) else {
-            throw XCTSkip("""
+            throw failedAnchor("""
                 `\(declaration)` in BioStripView has no closing brace at its own indentation \
                 — the file was reformatted or the member restructured, and reading on would \
                 inspect the wrong lines. Rewrite this guard with the new shape rather than \
