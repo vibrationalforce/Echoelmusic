@@ -163,11 +163,13 @@ final class LiveRouter: Sendable {
 /// Controller moves waiting for the main thread: the latest value per control, and at most one
 /// hop to the main actor in flight however fast a knob turns.
 final class ControlInbox: Sendable {
-    private let latest = Mutex<[MIDIControl: UInt8]>([:])
+    /// The latest value per control as 0 … 1: a 7-bit value over 127, a MIDI 2.0 controller at
+    /// its full 32 bits.
+    private let latest = Mutex<[MIDIControl: Double]>([:])
     private let scheduled = Atomic<Bool>(false)
 
     /// MIDI thread. True when the main thread must be asked to drain.
-    func post(_ control: MIDIControl, _ value: UInt8) -> Bool {
+    func post(_ control: MIDIControl, normalized value: Double) -> Bool {
         latest.withLock { $0[control] = value }
         return !scheduled.exchange(true, ordering: .acquiringAndReleasing)
     }
@@ -229,7 +231,7 @@ final class ControlInbox: Sendable {
     }
 
     /// Main thread.
-    func take() -> [MIDIControl: UInt8] {
+    func take() -> [MIDIControl: Double] {
         scheduled.store(false, ordering: .releasing)
         return latest.withLock { values in
             defer { values.removeAll(keepingCapacity: true) }
@@ -267,6 +269,28 @@ final class ClockInbox: Sendable {
             return messages
         }
     }
+}
+
+/// MIDI 2.0 messages the 7-bit engine has no counterpart for (`UMP.Message.midi1` is nil, or a
+/// note attribute): counted so none is dropped without a trace. At most one hop in flight.
+final class UnheardInbox: Sendable {
+    private let count = Atomic<Int>(0)
+    private let scheduled = Atomic<Bool>(false)
+
+    /// MIDI thread. True when the main thread must be asked to read the count.
+    func post() -> Bool {
+        _ = count.add(1, ordering: .relaxed)
+        return !scheduled.exchange(true, ordering: .acquiringAndReleasing)
+    }
+
+    /// Main thread.
+    func take() -> Int {
+        scheduled.store(false, ordering: .releasing)
+        return count.load(ordering: .relaxed)
+    }
+
+    /// Main thread.
+    func reset() { count.store(0, ordering: .relaxed) }
 }
 
 /// Messages from grid controllers (a Launchpad), waiting for the main thread. Their sources
@@ -324,6 +348,12 @@ final class MIDIInput {
     /// MIDI over the network (RTP-MIDI): a Mac's Audio MIDI Setup, another iPad, any rtpMIDI host
     /// on Windows. While on, the session is one more source and destination like a cable.
     private(set) var networkEnabled = false
+    /// MIDI 2.0 (UMP) in: the input port speaks the MIDI 2.0 protocol, so a MIDI 2.0 controller's
+    /// 16-bit velocities, 32-bit controllers and per-note bends arrive at full resolution. Off by
+    /// default; CoreMIDI translates a MIDI 1.0 source either way. Kept on this device.
+    private(set) var midi2Enabled = false
+    /// MIDI 2.0 messages since it was switched on that the engine cannot hear (see `UnheardInbox`).
+    private(set) var unheardCount = 0
 
     @ObservationIgnored private var client = MIDIClientRef()
     @ObservationIgnored private var port = MIDIPortRef()
@@ -334,6 +364,7 @@ final class MIDIInput {
     @ObservationIgnored private let inbox = ControlInbox()
     @ObservationIgnored private let clockInbox = ClockInbox()
     @ObservationIgnored private let gridInbox = GridInbox()
+    @ObservationIgnored private let unheardInbox = UnheardInbox()
     /// Called on the main thread for each press on a grid controller.
     @ObservationIgnored var onGridPress: ((Launchpad.Press) -> Void)?
     @ObservationIgnored private var follower = ClockFollower()
@@ -347,6 +378,7 @@ final class MIDIInput {
     @ObservationIgnored private let writer: ParameterWriter
     private static let followKey = "midi.clockIn.source"
     private static let networkKey = "midi.network"
+    private static let midi2Key = "midi.ump.in"
     @ObservationIgnored private let timebase: (numer: UInt32, denom: UInt32) = {
         var info = mach_timebase_info_data_t()
         mach_timebase_info(&info)
@@ -362,6 +394,7 @@ final class MIDIInput {
         self.store = store
         self.engine = engine
         self.writer = writer
+        midi2Enabled = UserDefaults.standard.bool(forKey: Self.midi2Key)
         if let stored = UserDefaults.standard.object(forKey: Self.followKey) as? Int {
             followedSource = MIDIUniqueID(truncatingIfNeeded: stored)
         }
@@ -524,7 +557,7 @@ final class MIDIInput {
                 guard let descriptor = store.project.descriptor(for: mapping.target) else { continue }
                 // One undo step per turn of the knob: the step closes when it rests. With
                 // automation write armed, the turn is written into the lane.
-                writer.set(mapping.target, to: descriptor.value(forNormalized: Double(value) / 127),
+                writer.set(mapping.target, to: descriptor.value(forNormalized: value),
                            coalescingKey: "midi.\(control.description)")
             }
         }
@@ -550,27 +583,7 @@ final class MIDIInput {
             Task { @MainActor [weak self] in self?.connectSources() }
         }
         guard status == noErr else { return fail("client", status) }
-        let router = self.router, inbox = self.inbox, clockInbox = self.clockInbox, gridInbox = self.gridInbox
-        let portStatus = MIDIInputPortCreateWithProtocol(client, "Echoel In" as CFString, ._1_0, &port) {
-            @Sendable [weak self] list, tag in
-            let followed = clockInbox.followed.load(ordering: .relaxed)
-            let fromFollowed = followed != 0 && Int(bitPattern: tag) == followed
-            if gridInbox.isGrid(Int(bitPattern: tag)) {
-                guard Self.receiveGrid(list, inbox: gridInbox) else { return }
-                Task { @MainActor in self?.drainGrid() }
-                return
-            }
-            let (controls, clock) = Self.receive(list, router: router, inbox: inbox,
-                                                 clock: fromFollowed ? clockInbox : nil,
-                                                 source: Self.liveSource(tag))
-            // One hop: two tasks would each send the captured `self` across actors.
-            guard controls || clock else { return }
-            Task { @MainActor in
-                if controls { self?.drainControls() }
-                if clock { self?.drainClock() }
-            }
-        }
-        guard portStatus == noErr else { return fail("port", portStatus) }
+        guard makePort() else { return }
         clockInbox.followed.store(followedSource.map(Self.tag) ?? 0, ordering: .relaxed)
         engine.followsExternalClock = followedSource != nil
         networkObserver = NotificationCenter.default.addObserver(
@@ -580,6 +593,62 @@ final class MIDIInput {
         }
         if UserDefaults.standard.bool(forKey: Self.networkKey) { setNetwork(true) }
         connectSources()
+    }
+
+    /// The input port, in the protocol the switch chose. True when it exists.
+    private func makePort() -> Bool {
+        let router = self.router, inbox = self.inbox, clockInbox = self.clockInbox, gridInbox = self.gridInbox
+        let unheard = self.unheardInbox
+        let midiProtocol: MIDIProtocolID = midi2Enabled ? ._2_0 : ._1_0
+        let portStatus = MIDIInputPortCreateWithProtocol(client, "Echoel In" as CFString, midiProtocol, &port) {
+            @Sendable [weak self] list, tag in
+            let followed = clockInbox.followed.load(ordering: .relaxed)
+            let fromFollowed = followed != 0 && Int(bitPattern: tag) == followed
+            if gridInbox.isGrid(Int(bitPattern: tag)) {
+                guard Self.receiveGrid(list, inbox: gridInbox) else { return }
+                Task { @MainActor in self?.drainGrid() }
+                return
+            }
+            let (controls, clock, unheardMoved) = Self.receive(list, router: router, inbox: inbox,
+                                                               clock: fromFollowed ? clockInbox : nil,
+                                                               unheard: unheard, source: Self.liveSource(tag))
+            // One hop: two tasks would each send the captured `self` across actors.
+            guard controls || clock || unheardMoved else { return }
+            Task { @MainActor in
+                if controls { self?.drainControls() }
+                if clock { self?.drainClock() }
+                if unheardMoved { self?.drainUnheard() }
+            }
+        }
+        guard portStatus == noErr else {
+            fail("port", portStatus)
+            return false
+        }
+        return true
+    }
+
+    /// Switches MIDI 2.0 (UMP) in on or off: the port is made again in the other protocol and
+    /// every source reconnected. The keys held on the old port end first, so nothing hangs.
+    func setMIDI2(_ on: Bool) {
+        guard on != midi2Enabled else { return }
+        midi2Enabled = on
+        UserDefaults.standard.set(on, forKey: Self.midi2Key)
+        unheardInbox.reset()
+        unheardCount = 0
+        log.info("midi: MIDI 2.0 in \(on ? "on" : "off", privacy: .public)")
+        guard client != 0 else { return }
+        for number in Set(connected.values) { router.releaseSource(number) }
+        connected = [:]
+        if port != 0 {
+            MIDIPortDispose(port)
+            port = MIDIPortRef()
+        }
+        guard makePort() else { return }
+        connectSources()
+    }
+
+    private func drainUnheard() {
+        unheardCount = unheardInbox.take()
     }
 
     /// Turns the network session on or off. Off by default: turning it on is what asks for
@@ -636,9 +705,20 @@ final class MIDIInput {
     nonisolated private static func receiveGrid(_ list: UnsafePointer<MIDIEventList>, inbox: GridInbox) -> Bool {
         var drain = false
         for packet in list.unsafeSequence() {
-            for word in MIDIEventPacket.WordCollection(packet) where word >> 28 == 0x2 {
-                let press = Launchpad.press(status: UInt8((word >> 16) & 0xFF), UInt8((word >> 8) & 0x7F), UInt8(word & 0x7F))
-                if let press, inbox.post(press) { drain = true }
+            let words = Array(MIDIEventPacket.WordCollection(packet))
+            var i = 0
+            while i < words.count {
+                let word = words[i], type = word >> 28
+                if type == 0x2 {
+                    let press = Launchpad.press(status: UInt8((word >> 16) & 0xFF), UInt8((word >> 8) & 0x7F), UInt8(word & 0x7F))
+                    if let press, inbox.post(press) { drain = true }
+                } else if type == 0x4, i + 1 < words.count, let message = UMP.Message(word, words[i + 1]) {
+                    // A grid on the MIDI 2.0 port: its presses scaled to the bytes it means.
+                    for byte in message.midi1 ?? [] {
+                        if let press = Launchpad.press(status: byte.status, byte.data1, byte.data2), inbox.post(press) { drain = true }
+                    }
+                }
+                i += UMP.wordCount(messageType: type)
             }
         }
         return drain
@@ -656,9 +736,26 @@ final class MIDIInput {
     }
 
     nonisolated private static func receive(_ list: UnsafePointer<MIDIEventList>, router: LiveRouter,
-                                            inbox: ControlInbox, clock: ClockInbox?, source: UInt8) -> (Bool, Bool) {
+                                            inbox: ControlInbox, clock: ClockInbox?, unheard: UnheardInbox,
+                                            source: UInt8) -> (Bool, Bool, Bool) {
         var drain = false
         var drainClock = false
+        var drainUnheard = false
+        /// One MIDI 1.0 channel message into the controls or the live instrument; `normalized` is
+        /// a controller's value at its full resolution.
+        func play(_ status: UInt8, _ data1: UInt8, _ data2: UInt8, normalized: Double) {
+            // All Sound Off, Reset All Controllers and All Notes Off are never learned.
+            if status & 0xF0 == 0xB0, data1 != 120, data1 != 121, data1 != 123 {
+                let control = MIDIControl(channel: status & 0x0F, number: data1)
+                if inbox.post(control, normalized: normalized) { drain = true }
+                // A controller the song does not map plays the live instrument — the mod
+                // wheel, expression, a filter knob — and a take records it. The sustain
+                // pedal always plays: it holds the live instrument's notes (S-16b).
+                if inbox.playsLive(control, value: data2) { router.receive(source: source, status: status, data1, data2) }
+            } else if inbox.playsLive(status: status, data1, data2) {
+                router.receive(source: source, status: status, data1, data2)
+            }
+        }
         for packet in list.unsafeSequence() {
             let words = Array(MIDIEventPacket.WordCollection(packet))
             var i = 0
@@ -677,22 +774,23 @@ final class MIDIInput {
                     }
                 } else if type == 0x2 {
                     let status = UInt8((word >> 16) & 0xFF), data1 = UInt8((word >> 8) & 0x7F), data2 = UInt8(word & 0x7F)
-                    // All Sound Off, Reset All Controllers and All Notes Off are never learned.
-                    if status & 0xF0 == 0xB0, data1 != 120, data1 != 121, data1 != 123 {
-                        let control = MIDIControl(channel: status & 0x0F, number: data1)
-                        if inbox.post(control, data2) { drain = true }
-                        // A controller the song does not map plays the live instrument — the mod
-                        // wheel, expression, a filter knob — and a take records it. The sustain
-                        // pedal always plays: it holds the live instrument's notes (S-16b).
-                        if inbox.playsLive(control, value: data2) { router.receive(source: source, status: status, data1, data2) }
-                    } else if inbox.playsLive(status: status, data1, data2) {
-                        router.receive(source: source, status: status, data1, data2)
+                    play(status, data1, data2, normalized: Double(data2) / 127)
+                } else if type == 0x4, i + 1 < words.count, let message = UMP.Message(word, words[i + 1]) {
+                    // MIDI 2.0 channel voice (the UMP switch): scaled to what the engine knows,
+                    // a controller's mapping at its full 32 bits; what has no MIDI 1.0 form is
+                    // counted, never dropped without a trace.
+                    if let bytes = message.midi1 {
+                        let normalized = message.normalizedControl
+                        for byte in bytes { play(byte.status, byte.data1, byte.data2, normalized: normalized ?? Double(byte.data2) / 127) }
+                        if message.hasUnheardAttribute, unheard.post() { drainUnheard = true }
+                    } else if unheard.post() {
+                        drainUnheard = true
                     }
                 }
-                // Message length by type: 0–2 one word, 3–4 two, 5 four; the rest one.
-                i += type == 3 || type == 4 ? 2 : type == 5 ? 4 : 1
+                // Message length by type (M2-104-UM): 0–2 one word, 3–4 two, 5 four, and so on.
+                i += UMP.wordCount(messageType: type)
             }
         }
-        return (drain, drainClock)
+        return (drain, drainClock, drainUnheard)
     }
 }

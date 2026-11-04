@@ -377,6 +377,7 @@ Bulk-deletion commits cited below:
   - MPE **out**: live and switchable (#713).
   - MPE input: no zones, so it is not real (#548). Bend, press and slide all sound (#939/#942).
   - MIDI 2.0: input parse; a second, default-off MIDI 2.0 output source (#1253).
+  - Studio (Recovery 6, 2026-11-04): MIDI 2.0 (UMP) in, switchable (`MIDIInput.setMIDI2`, default off), scaled to the engine's 7/14 bit with what has no MIDI 1.0 form counted; MPE out gains a default-off MIDI 2.0 source with per-note pitch bend (`MIDIMPEOutput.setMIDI2`). Pure core `Engine/Sources/EchoelEngine/UMP.swift`, tests `UMPTests`. No MIDI-CI, no Property Exchange.
 - **Scope / Class:** YES / **CURRENT** (out) + **REBUILD** (zones need a second consumer; `scratchpads/PLAN_MPE_ZONES_2026-09-01.md`, #548)
 - **Next safe slice:** the plan's first slice.
 
