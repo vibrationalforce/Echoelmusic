@@ -614,7 +614,7 @@ struct WorkspaceView: View {
                 }
             } label: {
                 EchoelLogoMark()
-                    .frame(width: 26, height: 26)
+                    .frame(width: 26, height: 26) // ADAPTIVE-EXEMPT: the logo mark is a drawn picture, not text; the 44-pt tap target around it is the control
                     .accessibilityHidden(true)
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())

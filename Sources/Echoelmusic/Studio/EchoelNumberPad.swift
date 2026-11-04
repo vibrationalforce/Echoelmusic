@@ -366,7 +366,7 @@ struct EchoelNumberPad: View {
             Label(String(localized: "Default ") + text, systemImage: "arrow.counterclockwise")
                 .font(EchoelTheme.font(13, .semibold))
                 .foregroundStyle(atDefault ? EchoelTheme.dim : EchoelTheme.text)
-                .padding(.horizontal, 10).frame(height: 32)
+                .padding(.horizontal, 10).frame(minHeight: 32)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                     .strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))
