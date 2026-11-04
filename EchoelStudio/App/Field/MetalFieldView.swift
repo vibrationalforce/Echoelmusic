@@ -31,6 +31,9 @@ struct MetalFieldView: UIViewRepresentable {
     let reduceMotion: Bool
     /// The picture the musician chose, handed down cold like Reduce Motion.
     var pattern: FieldPattern = .rings
+    /// The look blended over it (nil: none) and its share, 0 … 1 — cold too.
+    var partner: FieldPattern?
+    var mix: Double = 0
 
     func makeCoordinator() -> MetalFieldRenderer { MetalFieldRenderer() }
 
@@ -68,12 +71,12 @@ struct MetalFieldView: UIViewRepresentable {
         renderer.store = store
         renderer.engine = engine
         renderer.reduceMotion = reduceMotion
-        renderer.setPattern(pattern)
+        renderer.setLooks(primary: pattern, partner: partner, mix: mix)
     }
 
     /// The view goes: the renderer stops asking the engine for the spectrum.
     static func dismantleUIView(_ view: MTKView, coordinator: MetalFieldRenderer) {
-        coordinator.setPattern(.rings)
+        coordinator.setLooks(primary: .rings, partner: nil, mix: 0)
     }
 }
 
@@ -175,6 +178,34 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         }
     }
 
+    /// The looks' numbers, read by the shader at buffer 2 — mirrored by BYTE LAYOUT in the MSL
+    /// `Look` struct (eight `float`): changed in both places in one commit. All zero draws the
+    /// rings alone, which is what the video layer's pass binds.
+    private struct LookUniforms {
+        var primary: Float = 0
+        var partner: Float = 0
+        var blend: Float = 0
+        var phaseOffset: Float = 0
+        var soundHz: Float = 0
+        var dishK: Float = 0
+        var dishStrength: Float = 0
+        var dishHex: Float = 0
+
+        init() {}
+
+        /// One frame of `FieldLookMotion`.
+        init(_ shown: FieldLookMotion.Shown) {
+            primary = Float(shown.primary.shaderIndex)
+            partner = Float(shown.partner.shaderIndex)
+            blend = Float(shown.mix)
+            phaseOffset = Float(shown.phaseOffset)
+            soundHz = Float(shown.soundHz)
+            dishK = Float(shown.dishK)
+            dishStrength = Float(shown.dishStrength)
+            dishHex = Float(shown.dishHex)
+        }
+    }
+
     /// Sand grains along one side of the plate at full detail: 180 × 180 ≈ 32 000 grains, one per
     /// cell of the grid the shader lays over the plate. The detail level scales the side
     /// (`FieldDetail.patternScale`): about 16 000 grains at low, 8 000 at minimal.
@@ -184,26 +215,34 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     weak var engine: AudioEngine?
     var reduceMotion = false
     private(set) var pattern: FieldPattern = .rings
+    private var partner: FieldPattern?
+    private var mixShare = 0.0
     private weak var listeningTo: AudioEngine?
+    private var look = LookUniforms()
+    private var lastEncodedLook = LookUniforms()
+    private var lookMotion = FieldLookMotion()
     private var chladni = ChladniUniforms()
     private var lastEncodedChladni = ChladniUniforms()
     private var chladniMotion = ChladniMotion()
     /// The master's partials as last read on the main thread, for this frame's plate.
     private var peaks = SpectralPeaks.silent
 
-    /// Switches the picture; the Chladni plate listens to the master while it is drawn, and only then.
+    /// Switches the picture and its blend; every look but the rings listens to the master while it
+    /// is drawn, and only then.
     @MainActor
-    func setPattern(_ next: FieldPattern) {
-        if pattern != next {
-            pattern = next
+    func setLooks(primary: FieldPattern, partner next: FieldPattern?, mix: Double) {
+        if pattern != primary {
+            pattern = primary
             chladniMotion = ChladniMotion()
-            if next == .chladni {
-                DiagnosticLog.app.note("field: pattern chladni")
-            } else {
-                DiagnosticLog.app.note("field: pattern rings")
-            }
+            DiagnosticLog.app.note("field: pattern", [("look", primary.shaderIndex)])
         }
-        let wanted = next == .chladni ? engine : nil
+        if partner != next {
+            partner = next
+            DiagnosticLog.app.note("field: blend", [("look", next?.shaderIndex ?? -1)])
+        }
+        mixShare = mix.isFinite ? Swift.min(Swift.max(mix, 0), 1) : 0
+        let listens = primary.listensToSound || (next?.listensToSound ?? false)
+        let wanted = listens ? engine : nil
         if listeningTo !== wanted {
             listeningTo?.listenForSpectrum(false, by: ObjectIdentifier(self))
             wanted?.listenForSpectrum(true, by: ObjectIdentifier(self))
@@ -299,9 +338,11 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         encoder.setRenderPipelineState(pipeline)
         var sent = Uniforms(aspect: aspect, shown: shown)
         var plate = ChladniUniforms()
+        var looks = LookUniforms()
         encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
         encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
         encoder.setFragmentBytes(&plate, length: MemoryLayout<ChladniUniforms>.stride, index: 1)
+        encoder.setFragmentBytes(&looks, length: MemoryLayout<LookUniforms>.stride, index: 2)
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
         encoder.endEncoding()
         return true
@@ -332,7 +373,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
 
         // The picture cannot have changed: skip the pass and leave the last frame on the layer.
         // Not a pause — the display link keeps its cadence, and the next change encodes at once.
-        if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncoded), Self.bytesEqual(chladni, lastEncodedChladni) { return }
+        if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncoded), Self.bytesEqual(chladni, lastEncodedChladni),
+           Self.bytesEqual(look, lastEncodedLook) { return }
 
         guard let drawable = view.currentDrawable,
               let pass = view.currentRenderPassDescriptor,
@@ -341,15 +383,18 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         // Recorded after the guard: a frame without a drawable was not shown.
         lastEncoded = uniforms
         lastEncodedChladni = chladni
+        lastEncodedLook = look
         hasEncodedOnce = true
 
         if let pipeline, let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
             encoder.setRenderPipelineState(pipeline)
             var sent = uniforms
             var plate = chladni
+            var looks = look
             encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
             encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
             encoder.setFragmentBytes(&plate, length: MemoryLayout<ChladniUniforms>.stride, index: 1)
+            encoder.setFragmentBytes(&looks, length: MemoryLayout<LookUniforms>.stride, index: 2)
             encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
             encoder.endEncoding()
         } else {
@@ -373,7 +418,14 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         let still = reduceMotion || detail.isStill
         let shown = motion.step(frame, after: seconds, still: still, patternScale: detail.patternScale)
         uniforms = Uniforms(aspect: uniforms.aspect, shown: shown)
-        guard pattern == .chladni else {
+        // The looks hear the master's strongest partials — pitch and drive — and blend two looks,
+        // the share and the lattice's light flash-guarded (EchoelCore `FieldLookMotion`: tested).
+        let heard = FieldLookMotion.hearing(frequencies: peaks.frequencies, amplitudes: peaks.amplitudes, count: peaks.count)
+        let looks = lookMotion.step(primary: pattern, partner: partner, mix: mixShare, hertz: heard.hertz,
+                                    drive: heard.drive, tonicHz: frame.tonicHz, fieldPhase: shown.fieldPhase,
+                                    after: seconds, still: still, patternScale: detail.patternScale)
+        look = LookUniforms(looks)
+        guard looks.primary == .chladni || looks.partner == .chladni else {
             chladni = ChladniUniforms()
             return
         }
@@ -411,9 +463,11 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
                 encoder.setRenderPipelineState(pipeline)
                 var sent = uniforms
                 var plate = chladni
+                var looks = look
                 encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
                 encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
                 encoder.setFragmentBytes(&plate, length: MemoryLayout<ChladniUniforms>.stride, index: 1)
+                encoder.setFragmentBytes(&looks, length: MemoryLayout<LookUniforms>.stride, index: 2)
                 encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
                 encoder.endEncoding()
             }

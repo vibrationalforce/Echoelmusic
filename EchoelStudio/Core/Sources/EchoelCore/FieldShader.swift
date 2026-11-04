@@ -16,7 +16,7 @@ public enum FieldShader {
         public let fragmentFunction: String
     }
 
-    /// The Field window (W3): the rings and the Chladni plate, one fragment for both.
+    /// The Field window (W3): the rings, the Chladni plate and the four looks, one fragment for all.
     public static let field = Program(source: fieldSource, vertexFunction: "field_vertex",
                                       fragmentFunction: "field_fragment")
     /// The Field laid over a video frame (W15).
@@ -40,6 +40,11 @@ public enum FieldShader {
                       float breath; float toneHz; float density; float hasPulse; float hasCoherence; };
     struct Chladni { float4 fromM; float4 fromN; float4 fromW; float4 toM; float4 toN; float4 toW;
                      float active; float mix; float light; float grains; };
+    // The looks (FieldLookMotion): which two patterns (FieldPattern.shaderIndex), how much of the
+    // second, the blend's phase offset in turns, the heard pitch and the dish's solve. All zero
+    // draws the rings alone, as every pass bound before the looks existed.
+    struct Look { float primary; float partner; float blend; float phaseOffset;
+                  float soundHz; float dishK; float dishStrength; float dishHex; };
 
     // Wavelength (nm) -> linear sRGB through the CIE 1931 colour-matching functions (the
     // Wyman/Sloan/Shirley 2013 analytic fit) -> XYZ -> linear sRGB (D65).
@@ -160,13 +165,12 @@ public enum FieldShader {
     // grains x grains grid at a jittered place, present with the probability of sand where it
     // lies (EchoelCore ChladniPlate.sand: 1 on a nodal line) — so the grains gather on the lines
     // that do not move. Lit by the plate's flash-guarded light; the plate never goes dead black.
-    float4 chladniFragment(VOut in, constant Uniforms& u, constant Chladni& c) {
+    float3 chladniColour(VOut in, constant Uniforms& u, constant Chladni& c) {
         float2 xy = float2(in.uv.x * u.aspect, in.uv.y);
         float side = min(u.aspect, 1.0) * 0.92;
         float2 p = (xy - float2(0.5 * u.aspect, 0.5)) / side + 0.5;
-        float dither = (echoelHash(in.uv * 1000.0) - 0.5) / 255.0;
         if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) {
-            return float4(float3(clamp(dither, 0.0, 1.0)), 1.0);
+            return float3(0.0);
         }
         float3 col = fieldColour(u);
         float g = max(c.grains, 16.0);
@@ -182,13 +186,10 @@ public enum FieldShader {
         float speck = present * smoothstep(0.42, 0.22, r);
         float ambient = \(FieldPulse.ambientLiteral);
         float energy = clamp(c.light, 0.0, 1.0) * speck;
-        float3 outCol = col * (ambient + (1.0 - ambient) * energy) + dither;
-        return float4(clamp(outCol, 0.0, 1.0), 1.0);
+        return col * (ambient + (1.0 - ambient) * energy);
     }
 
-    fragment float4 field_fragment(VOut in [[stage_in]], constant Uniforms& u [[buffer(0)]],
-                                   constant Chladni& plate [[buffer(1)]]) {
-        if (plate.active > 0.5) return chladniFragment(in, u, plate);
+    float3 ringsColour(VOut in, constant Uniforms& u, float turns) {
         // Aspect-correct radial distance from the centre: circles stay circles on a tall phone.
         float2 uv = in.uv;
         uv.x *= u.aspect;
@@ -199,7 +200,7 @@ public enum FieldShader {
         float spread = 0.85 + 0.35 * clamp(u.breath, 0.0, 1.0);
         // The field moves with the song's bar (its phase is capped on the CPU); the vignette's
         // edge is always past the screen's corner, so the picture never closes to a black centre.
-        float phase = u.fieldPhase * 6.2831853;
+        float phase = turns * 6.2831853;
         float vEdge = 0.9 + 0.5 * spread;
         float vignette = smoothstep(vEdge, 0.0, d);
         float field = fieldRings(d, density, u.toneHz, phase, coh);
@@ -223,9 +224,107 @@ public enum FieldShader {
         // The colour: the key's tonic as light (fieldColour, shared with the plate).
         float3 col = fieldColour(u);
         float ambient = \(FieldPulse.ambientLiteral);
-        float3 outCol = col * (ambient + (1.0 - ambient) * energy);
-        outCol += (echoelHash(in.uv * 1000.0) - 0.5) / 255.0;
-        return float4(clamp(outCol, 0.0, 1.0), 1.0);
+        return col * (ambient + (1.0 - ambient) * energy);
+    }
+
+    // The earlier app's looks (EchoelCore FieldLook mirrors each on the CPU, where the flash law is
+    // measured). Each returns a scalar field 0 ... 1 on the aspect-correct coordinate p, +y up.
+    float fieldDish(float2 p, float k, float strength, float hex, float phase, float coh) {
+        float sq = 0.5 * (cos(p.x * k) + cos(p.y * k));
+        float d2 = -0.5 * p.x + 0.8660254 * p.y;
+        float d3 = -0.5 * p.x - 0.8660254 * p.y;
+        float hx = (cos(p.x * k) + cos(d2 * k) + cos(d3 * k)) * 0.3333;
+        float h = mix(sq, hx, hex);
+        float breathe = 0.85 + 0.15 * sin(phase * \(FieldLook.dishPhaseRate));
+        float lens = clamp(0.88 * strength * breathe, 0.0, 0.88);
+        float caustic = (1.0 - lens) / (1.0 - lens * h);
+        float net = pow(clamp(caustic, 0.0, 1.0), mix(1.5, 3.0, coh));
+        float mirror = 0.55 + 0.30 * exp(-dot(p, p) * 2.5);
+        return clamp(mix(mirror, net, clamp(strength, 0.0, 1.0)), 0.0, 1.0);
+    }
+    float fieldWater(float2 p, float toneHz, float phase, float coh, float breath) {
+        float t = phase * \(FieldLook.waterPhaseRate);
+        float scale = clamp(5.5 * pow(max(toneHz, 20.0) / \(FieldLook.anchorHz), 0.6666667), 3.0, 24.0);
+        float w = sin(p.x * scale + t) * cos(p.y * (scale * 0.818) - t * 0.7);
+        w += sin(length(p) * (scale * 1.545) - t * 1.1);
+        w += sin((p.x + p.y) * (scale * 0.727) + t * 0.5);
+        float net = clamp(0.5 + mix(0.12, 0.24, breath) * w, 0.0, 1.0);
+        return pow(net, mix(3.0, 6.0, coh));
+    }
+    float auroraChapman(float x) {
+        float e = exp(-clamp(x, -6.0, 40.0));
+        return exp(clamp(1.0 - x - e, -30.0, 0.0));
+    }
+    float fieldAurora(float2 p, float toneHz, float phase, float coh, float breath) {
+        float t = phase * \(FieldLook.auroraPhaseRate);
+        float wave = sin(p.x * 2.2 + t) * 0.35 + sin(p.x * 4.7 - t * 0.6) * 0.15;
+        float H = mix(0.30, 0.14, clamp(coh, 0.0, 1.0));
+        float curtain = auroraChapman((p.y - wave) / H);
+        float wave2 = sin(p.x * 3.1 - t * 0.8) * 0.30;
+        float curtain2 = auroraChapman((p.y + 0.4 - wave2) / (H * 1.35));
+        float rays = clamp(3.0 * max(toneHz, 20.0) / \(FieldLook.anchorHz), 2.0, 14.0);
+        float ray = 0.72 + 0.28 * cos(p.x * rays * 6.2831853);
+        float swell = 0.80 + 0.20 * clamp(breath, 0.0, 1.0);
+        return clamp((curtain + curtain2 * 0.6) * ray * swell, 0.0, 1.0);
+    }
+    float fieldDepth(float2 p, float phase, float coh, float breath, float k, float strength) {
+        float cxx = -0.5 * cos(p.x * k);
+        float cyy = -0.5 * cos(p.y * k);
+        float breathe = 0.85 + 0.15 * sin(phase * \(FieldLook.depthPhaseRate));
+        float sink = mix(0.8, 1.2, clamp(breath, 0.0, 1.0));
+        float phi = \(FieldLook.depthFocusNumber) * clamp(strength, 0.0, 1.0) * breathe * sink;
+        float cap = \(FieldLook.depthIntensityCeiling);
+        float3 ratio = float3(\(FieldLook.depthFocusRatios[0]), \(FieldLook.depthFocusRatios[1]), \(FieldLook.depthFocusRatios[2]));
+        float3 weight = float3(\(FieldLook.depthWeights[0]), \(FieldLook.depthWeights[1]), \(FieldLook.depthWeights[2]));
+        float lit = 0.0;
+        for (int i = 0; i < 3; i++) {
+            float f = phi * ratio[i];
+            float det = (1.0 + f * cxx) * (1.0 + f * cyy);
+            lit += weight[i] * min(1.0 / max(abs(det), 1.0 / cap), cap);
+        }
+        float net = clamp(lit / (weight.x + weight.y + weight.z) / \(FieldLook.depthFullBright), 0.0, 1.0);
+        return pow(net, mix(1.0, 1.6, coh));
+    }
+
+    // One of the four looks in the frame, lit like the rings: framed by the same vignette, brighter
+    // with the (flash-guarded) level, coloured by the key's tone.
+    float3 lookFieldColour(float look, VOut in, constant Uniforms& u, constant Look& l, float turns) {
+        float2 uv = in.uv;
+        uv.x *= u.aspect;
+        float d = distance(uv, float2(0.5 * u.aspect, 0.5));
+        float2 p = float2((in.uv.x - 0.5) * 2.0 * u.aspect, (in.uv.y - 0.5) * 2.0);
+        float coh = clamp(u.coherence, 0.0, 1.0);
+        float breath = clamp(u.breath, 0.0, 1.0);
+        float phase = turns * 6.2831853;
+        float field;
+        if (look < 2.5) field = fieldDish(p, l.dishK, l.dishStrength, l.dishHex, phase, coh);
+        else if (look < 3.5) field = fieldWater(p, l.soundHz, phase, coh, breath);
+        else if (look < 4.5) field = fieldAurora(p, l.soundHz, phase, coh, breath);
+        else field = fieldDepth(p, phase, coh, breath, l.dishK, l.dishStrength);
+        float spread = 0.85 + 0.35 * breath;
+        float vignette = smoothstep(0.9 + 0.5 * spread, 0.0, d);
+        float energy = clamp(field * vignette * (0.35 + 0.65 * clamp(u.levelLight, 0.0, 1.0)), 0.0, 1.0);
+        float ambient = \(FieldPulse.ambientLiteral);
+        return fieldColour(u) * (ambient + (1.0 - ambient) * energy);
+    }
+
+    float3 lookColour(float look, VOut in, constant Uniforms& u, constant Chladni& c, constant Look& l, float turns) {
+        if (look < 0.5) return ringsColour(in, u, turns);
+        if (look < 1.5) return chladniColour(in, u, c);
+        return lookFieldColour(look, in, u, l, turns);
+    }
+
+    // The Field: one look, or two blended (the second's share flash-guarded on the CPU).
+    fragment float4 field_fragment(VOut in [[stage_in]], constant Uniforms& u [[buffer(0)]],
+                                   constant Chladni& plate [[buffer(1)]], constant Look& look [[buffer(2)]]) {
+        float turns = fract(u.fieldPhase + look.phaseOffset);
+        float3 col = lookColour(look.primary, in, u, plate, look, turns);
+        float share = clamp(look.blend, 0.0, 1.0);
+        if (share > \(FieldLookMotion.blendThreshold) && abs(look.partner - look.primary) > 0.5) {
+            col = mix(col, lookColour(look.partner, in, u, plate, look, turns), share);
+        }
+        col += (echoelHash(in.uv * 1000.0) - 0.5) / 255.0;
+        return float4(clamp(col, 0.0, 1.0), 1.0);
     }
     """
 

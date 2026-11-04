@@ -2,9 +2,10 @@ import AVFoundation
 import EchoelDSP
 import Foundation
 
-/// The Field's ear on the master for the Chladni plate: the strongest partials of the mix as the
-/// musician hears it, no microphone. `AudioEngine` feeds it from the same tap on the source node as
-/// the live stream (`AudioEngine.listenForSpectrum`), only while a plate is drawn.
+/// The Field's ear on the master for the Chladni plate, the looks and the meters: the strongest
+/// partials of the mix as the musician hears it, its spectrum and its triggered waveform, no
+/// microphone. `AudioEngine` feeds it from the same tap on the source node as
+/// the live stream (`AudioEngine.listenForSpectrum`), only while a picture or a meter that listens is shown.
 ///
 /// AVFoundation delivers a tap on its own thread, never the render thread, so the render block is
 /// never touched. That thread sums the block to mono, pushes it into the analyzer and runs the
@@ -16,14 +17,37 @@ final class FieldSpectrum: @unchecked Sendable {
     private var mono: UnsafeMutablePointer<Float>
     private var monoCapacity = 0
     private var latest = SpectralPeaks.silent
+    /// The meters' last reading (`FieldMeter`): the spectrum's bands and the triggered trace.
+    private let bands: UnsafeMutablePointer<Double>
+    private let trace: UnsafeMutablePointer<Float>
+
+    /// Bands across 20 Hz … 20 kHz on the spectrum meter: a third of an octave each.
+    static let bandCount = 30
+    /// Samples the scope draws: about 10 ms at 48 kHz, two periods of a low A.
+    static let traceLength = 512
 
     init() {
         mono = .allocate(capacity: 1)
         monoCapacity = 1
+        bands = .allocate(capacity: Self.bandCount)
+        bands.initialize(repeating: 0, count: Self.bandCount)
+        trace = .allocate(capacity: Self.traceLength)
+        trace.initialize(repeating: 0, count: Self.traceLength)
     }
 
     deinit {
         mono.deallocate()
+        bands.deallocate()
+        trace.deallocate()
+    }
+
+    /// The meters' newest reading, copied out on the caller's thread (a meter's leaf, at most 30
+    /// times a second): the spectrum's bands 0 … 1 and the scope's trace −1 … 1.
+    func meterReading() -> (bands: [Double], trace: [Float]) {
+        lock.lock()
+        defer { lock.unlock() }
+        return (Array(UnsafeBufferPointer(start: bands, count: Self.bandCount)),
+                Array(UnsafeBufferPointer(start: trace, count: Self.traceLength)))
     }
 
     /// The newest partials; silence before the first block and after `reset`.
@@ -38,6 +62,8 @@ final class FieldSpectrum: @unchecked Sendable {
         lock.lock()
         analyzer?.reset()
         latest = .silent
+        bands.update(repeating: 0, count: Self.bandCount)
+        trace.update(repeating: 0, count: Self.traceLength)
         lock.unlock()
     }
 
@@ -62,5 +88,7 @@ final class FieldSpectrum: @unchecked Sendable {
         guard let analyzer else { return }
         analyzer.push(mono, count: frames)
         latest = analyzer.analyze()
+        analyzer.bandLevels(into: bands, count: Self.bandCount)
+        ScopeTrace.capture(mono, count: frames, into: trace, length: Self.traceLength)
     }
 }
