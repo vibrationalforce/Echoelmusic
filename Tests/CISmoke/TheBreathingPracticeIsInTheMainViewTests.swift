@@ -293,7 +293,22 @@ final class TheBreathingPracticeIsInTheMainViewTests: XCTestCase {
         things that drift, and the doorless full-screen guide renders the same constant. \
         Shortening the list is a founder decision about safety copy, not a layout tidy-up.
         """)
-        XCTAssertFalse(strip.contains("if !pacer.isRunning"), """
+        // W-RED (2026-11-01): the strip has a legitimate `if !pacer.isRunning { releaseRow }` (the
+        // release row), so the needle is no longer "the gate exists" but "a gated BLOCK holds the
+        // shared constant" — every `if !pacer.isRunning {` body, brace-matched (#408).
+        var gatedNotices = false
+        var from = strip.startIndex
+        while let gate = strip.range(of: "if !pacer.isRunning {", range: from..<strip.endIndex) {
+            var depth = 1
+            var index = gate.upperBound
+            while index < strip.endIndex, depth > 0 {
+                if strip[index] == "{" { depth += 1 } else if strip[index] == "}" { depth -= 1 }
+                index = strip.index(after: index)
+            }
+            if strip[gate.upperBound..<index].contains("BreathPacer.contraindications") { gatedNotices = true }
+            from = gate.upperBound
+        }
+        XCTAssertFalse(gatedNotices, """
         the contraindications are gated on `!pacer.isRunning` again. Two of the four lines \
         are DURING-session instructions and one of those is the only line naming an adverse \
         event ("stop if you feel dizzy"); hiding them at the moment they apply inverts their \
