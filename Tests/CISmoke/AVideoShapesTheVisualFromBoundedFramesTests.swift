@@ -142,7 +142,10 @@ final class AVideoShapesTheVisualFromBoundedFramesTests: XCTestCase {
             XCTAssertTrue((1.0...1.25).contains(cut),
                           "the cut is found at the first sample after 1 s, not at a keyframe elsewhere — got \(cut)")
         }
-        XCTAssertGreaterThan(seed.motionEnergy, 0)
+        // W-RED (2026-11-01): this asked for motion > 0 until the VV-4 review made a cut a transient,
+        // not motion — black, one cut, white: nothing MOVED (the run read exactly 0; the synthetic
+        // twin is `TheVideoMotionDoesNotDependOnLengthTests` claim 3).
+        XCTAssertEqual(seed.motionEnergy, 0, accuracy: 0.01, "a hard cut between two still pictures is not motion")
         XCTAssertFalse(seed.hasDominantColour, "grey frames have no colour")
         XCTAssertLessThanOrEqual(max(read.proxy.width, read.proxy.height), VideoSeedReader.maxFrameSide)
         XCTAssertFalse(read.hasAudioTrack, "the fixture has no sound")
