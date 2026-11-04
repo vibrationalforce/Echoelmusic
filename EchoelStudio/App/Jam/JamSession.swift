@@ -35,6 +35,8 @@ final class JamSession {
     private(set) var nearby: [JamPeer] = []
     /// Everyone in the jam as the list reads them, the host first.
     private(set) var members: [String] = []
+    /// While hosting: phones that asked to join and wait for the host to let them in or not.
+    private(set) var waiting: [JamPeer] = []
     /// While a guest follows: the host's tempo and time signature, which this phone plays.
     private(set) var followedTempo: Double?
     private(set) var followedSignature: TimeSignature?
@@ -82,7 +84,7 @@ final class JamSession {
 
     // MARK: - Host, look, join, leave
 
-    /// Hosts a jam: phones nearby can find this one and join it.
+    /// Hosts a jam: phones nearby can find this one and ask to join; the host lets each in (`letIn`).
     func host() {
         guard role == .off else { return }
         problem = nil
@@ -153,6 +155,7 @@ final class JamSession {
         role = .off
         nearby = []
         members = []
+        waiting = []
         guests = []
         DiagnosticLog.app.note("jam: leave")
     }
@@ -164,6 +167,13 @@ final class JamSession {
         })
         self.link = link
         return link
+    }
+
+    /// The host's answer to a phone that asked to join.
+    func letIn(_ peer: JamPeer, _ admit: Bool) {
+        guard role == .hosting, let link else { return }
+        link.answer(peer, admit: admit)
+        DiagnosticLog.app.note(admit ? "jam: let in" : "jam: turned away")
     }
 
     private func joinFailed(_ host: JamPeer) {
@@ -189,6 +199,9 @@ final class JamSession {
             guard role != .hosting else { return }
             leave()
             problem = "This jam runs a newer Echoel. Update Echoel on this phone to join it."
+        case .waiting(let peers):
+            let shown = role == .hosting ? peers : []
+            if waiting != shown { waiting = shown }
         case .refused(let error):
             DiagnosticLog.app.note("jam: refused", error: error)
             leave()
@@ -515,6 +528,8 @@ final class JamSession {
         loopTurn &+= 1
         switch role {
         case .hosting:
+            // Once a second: a request the asking phone has given up on is answered no.
+            if loopTurn % 8 == 0 { link?.expireRequests() }
             if countIn != nil {
                 holdCountIn()
             } else if loopTurn % 2 == 0 {

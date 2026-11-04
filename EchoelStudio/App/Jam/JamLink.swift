@@ -46,12 +46,14 @@ final class JamLink: NSObject, @unchecked Sendable {
         case newer(JamPeer)
         /// The system would not let this phone be found or look (local network access).
         case refused(any Error)
+        /// While hosting: the phones that asked to join and wait for the host's answer, in order.
+        case waiting([JamPeer])
     }
 
     /// A session holds eight phones, this one included.
     static let maximumGuests = 7
-    /// How long a host has to take this phone in.
-    static let joinTimeout: TimeInterval = 15
+    /// How long a host has to let this phone in — long enough to read a name and tap Let In.
+    static let joinTimeout: TimeInterval = 30
 
     private let me: MCPeerID
     private let session: MCSession
@@ -62,6 +64,10 @@ final class JamLink: NSObject, @unchecked Sendable {
     private var browser: MCNearbyServiceBrowser?
     private var nearby: [String: MCPeerID] = [:]
     private var hosting = false
+    /// Who asked to join and waits for the host (team SAFE 2026-11-04: nobody is taken in by
+    /// asking alone), and the answer MultipeerConnectivity waits for, per asking phone.
+    private var admission = JamAdmission(timeout: JamLink.joinTimeout, room: JamLink.maximumGuests)
+    private var answers: [String: (Bool, MCSession?) -> Void] = [:]
 
     /// `linkName`: `JamPeer.linkName`, which keeps it within what the link takes.
     init(linkName: String, onEvent: @escaping @Sendable (Event) -> Void) {
@@ -73,7 +79,7 @@ final class JamLink: NSObject, @unchecked Sendable {
         session.delegate = self
     }
 
-    /// Other phones can find this one and join it; each that asks is taken while there is room.
+    /// Other phones can find this one and ask to join it; the host lets each in (`answer`).
     func host() {
         let advertiser = MCNearbyServiceAdvertiser(peer: me, discoveryInfo: ["v": String(JamProtocol.version)],
                                                    serviceType: JamProtocol.serviceType)
@@ -145,7 +151,45 @@ final class JamLink: NSObject, @unchecked Sendable {
         }
         advertiser?.stopAdvertisingPeer()
         browser?.stopBrowsingForPeers()
+        for decline in takeAllAnswers() { decline(false, nil) }
         session.disconnect()
+    }
+
+    /// The host's answer to a phone that asked to join. A yes takes it in only while this phone
+    /// still hosts and the jam has room; a request that ran out or was answered already is ignored.
+    func answer(_ peer: JamPeer, admit: Bool) {
+        let (reply, letIn, waiting) = lock.withLock { () -> (((Bool, MCSession?) -> Void)?, Bool, [JamPeer]) in
+            let open = self.hosting && self.session.connectedPeers.count < Self.maximumGuests
+            let reply = self.admission.answer(peer.id) == nil ? nil : self.answers.removeValue(forKey: peer.id)
+            return (reply, admit && open, self.waitingPeers())
+        }
+        reply?(letIn, letIn ? session : nil)
+        onEvent(.waiting(waiting))
+    }
+
+    /// Answers no to every request the asking phone has given up on by now. Called by the host's loop.
+    func expireRequests() {
+        let (declines, waiting) = lock.withLock { () -> ([(Bool, MCSession?) -> Void], [JamPeer]?) in
+            let gone = self.admission.expire(at: JamTime.now())
+            guard !gone.isEmpty else { return ([], nil) }
+            return (gone.compactMap { self.answers.removeValue(forKey: $0.id) }, self.waitingPeers())
+        }
+        for decline in declines { decline(false, nil) }
+        if let waiting { onEvent(.waiting(waiting)) }
+    }
+
+    /// Under `lock`.
+    private func waitingPeers() -> [JamPeer] {
+        admission.pending.map { JamPeer(linkName: $0.id) }
+    }
+
+    private func takeAllAnswers() -> [(Bool, MCSession?) -> Void] {
+        lock.withLock { () -> [(Bool, MCSession?) -> Void] in
+            _ = self.admission.clear()
+            let all = Array(self.answers.values)
+            self.answers = [:]
+            return all
+        }
     }
 
     /// A ping is answered here, on the link's queue, before any hop to the main thread.
@@ -205,14 +249,31 @@ extension JamLink: MCSessionDelegate {
 }
 
 extension JamLink: MCNearbyServiceAdvertiserDelegate {
-    /// A host takes every phone that asks while it hosts and there is room: a jam carries only
-    /// timing — tempo, time signature, Play and Stop, where the bars begin — and names, never audio,
-    /// a song or a body value (v1), and the musician chose Host a Jam to let the room in.
+    /// A phone that asks to join waits for the host's answer (`answer`): the host sees its name
+    /// and lets it in or turns it away — nobody is in a jam by asking alone. Turned away at once:
+    /// a phone that asks while this one does not host, or when the jam has no room. A request the
+    /// host does not answer in `joinTimeout` is answered no (`expireRequests`).
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID,
                     withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        let open = lock.withLock { self.hosting }
-        let room = open && session.connectedPeers.count < Self.maximumGuests
-        invitationHandler(room, room ? session : nil)
+        let id = peerID.displayName
+        let free = Self.maximumGuests - session.connectedPeers.count
+        let now = JamTime.now()
+        let (declines, waiting) = lock.withLock { () -> ([(Bool, MCSession?) -> Void], [JamPeer]?) in
+            guard self.hosting else { return ([invitationHandler], nil) }
+            var declines: [(Bool, MCSession?) -> Void] = []
+            let outcome = self.admission.ask(id: id, name: JamPeer(linkName: id).name, at: now, free: free)
+            switch outcome {
+            case .waiting(let replaced):
+                if let replaced, let earlier = self.answers.removeValue(forKey: replaced.id) { declines.append(earlier) }
+                self.answers[id] = invitationHandler
+            case .declined(let replaced):
+                if let replaced, let earlier = self.answers.removeValue(forKey: replaced.id) { declines.append(earlier) }
+                declines.append(invitationHandler)
+            }
+            return (declines, self.waitingPeers())
+        }
+        for decline in declines { decline(false, nil) }
+        if let waiting { onEvent(.waiting(waiting)) }
     }
 
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {

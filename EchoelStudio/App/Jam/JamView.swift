@@ -29,6 +29,9 @@ struct JamView: View {
         .onChange(of: jam.role) { old, new in
             if let said = Self.spoken(from: old, to: new, problem: jam.problem) { Theme.Accessibility.announce(said) }
         }
+        .onChange(of: jam.waiting.count) { old, new in
+            if new > old { Theme.Accessibility.announce(Announcement("A phone asks to join the jam.", priority: .normal)) }
+        }
         .onChange(of: jam.problem) { _, problem in
             if let problem { Theme.Accessibility.announce(Announcement(problem, priority: .urgent)) }
         }
@@ -75,13 +78,43 @@ struct JamView: View {
 
     @ViewBuilder private var hostingSections: some View {
         EchoelSection("Hosting") {
-            ParagraphText("Phones nearby join from Song menu, Jam, Join a Jam. They play your tempo, time signature, Play and Stop. When you press Play, everyone starts together on the next bar; a phone that joins while you play comes in on your next bar.")
+            ParagraphText("Phones nearby ask to join from Song menu, Jam, Join a Jam; you let each one in. They play your tempo, time signature, Play and Stop. When you press Play, everyone starts together on the next bar; a phone that joins while you play comes in on your next bar.")
         }
+        askingSection
         playersSection
         EchoelSection(footer: "Everyone else plays on at the last tempo until they leave.") {
             Button("End Jam", role: .destructive) { jam.leave() }
                 .buttonStyle(EchoelRowButtonStyle())
         }
+    }
+
+    /// The phones that asked to join, each with Let In and Turn Away. Inline in the page — no
+    /// modal (Law 7). A phone nobody answers is turned away after `JamLink.joinTimeout` seconds.
+    @ViewBuilder private var askingSection: some View {
+        if !jam.waiting.isEmpty {
+            let labels = JamPeer.labels(jam.waiting.map(\.name))
+            EchoelSection("Asking to Join", footer: "Only let in phones you know are in the room.") {
+                ForEach(Array(jam.waiting.enumerated()), id: \.element.id) { index, peer in
+                    askingRow(peer, label: index < labels.count ? labels[index] : peer.name)
+                }
+            }
+        }
+    }
+
+    private func askingRow(_ peer: JamPeer, label: String) -> some View {
+        HStack(spacing: Theme.Space.s) {
+            Text(label)
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.Color.text)
+            Spacer(minLength: Theme.Space.s)
+            Button("Turn Away") { jam.letIn(peer, false) }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Turn Away \(label)")
+            Button("Let In") { jam.letIn(peer, true) }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Let In \(label)")
+        }
+        .frame(minHeight: Theme.Size.touch)
     }
 
     // MARK: - Looking and joining

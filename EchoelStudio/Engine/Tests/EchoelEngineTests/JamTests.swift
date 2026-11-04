@@ -590,4 +590,60 @@ final class JamTests: XCTestCase {
         XCTAssertGreaterThan(looks, 5_000, "measured over half a minute")
         XCTAssertLessThanOrEqual(worst, 0.010, "the bar lines of three phones, worst moment")
     }
+
+    // MARK: - Admission (the host lets each phone in)
+
+    /// Asking is not joining: a request waits, in order, until the host answers it.
+    func testARequestWaitsForTheHostsAnswer() {
+        var admission = JamAdmission(timeout: 30, room: 7)
+        XCTAssertEqual(admission.ask(id: "Anna#aaaaaa", name: "Anna", at: 10, free: 7), .waiting(replaced: nil))
+        XCTAssertEqual(admission.ask(id: "Theis#bbbbbb", name: "Theis", at: 11, free: 7), .waiting(replaced: nil))
+        XCTAssertEqual(admission.pending.map(\.id), ["Anna#aaaaaa", "Theis#bbbbbb"])
+        XCTAssertEqual(admission.answer("Anna#aaaaaa")?.name, "Anna")
+        XCTAssertNil(admission.answer("Anna#aaaaaa"), "an answered request is answered once")
+        XCTAssertNil(admission.answer("Nobody#cccccc"))
+        XCTAssertEqual(admission.pending.map(\.id), ["Theis#bbbbbb"])
+    }
+
+    /// A phone that asks again replaces its earlier request, which is to be answered no.
+    func testAskingAgainReplacesTheEarlierRequest() {
+        var admission = JamAdmission(timeout: 30, room: 7)
+        _ = admission.ask(id: "Anna#aaaaaa", name: "Anna", at: 10, free: 7)
+        let again = admission.ask(id: "Anna#aaaaaa", name: "Anna", at: 12, free: 7)
+        XCTAssertEqual(again, .waiting(replaced: JamAdmission.Request(id: "Anna#aaaaaa", name: "Anna", askedAt: 10)))
+        XCTAssertEqual(admission.pending.count, 1)
+        XCTAssertEqual(admission.pending.first?.askedAt, 12)
+    }
+
+    /// Never more waiting than the jam has room for, and nothing waits on a full jam.
+    func testNoMoreWaitThanTheJamHasRoom() {
+        var admission = JamAdmission(timeout: 30, room: 2)
+        XCTAssertEqual(admission.ask(id: "a#aaaaaa", name: "a", at: 1, free: 7), .waiting(replaced: nil))
+        XCTAssertEqual(admission.ask(id: "b#bbbbbb", name: "b", at: 1, free: 7), .waiting(replaced: nil))
+        XCTAssertEqual(admission.ask(id: "c#cccccc", name: "c", at: 1, free: 7), .declined(replaced: nil), "room 2")
+        var full = JamAdmission(timeout: 30, room: 7)
+        XCTAssertEqual(full.ask(id: "a#aaaaaa", name: "a", at: 1, free: 0), .declined(replaced: nil))
+        XCTAssertEqual(full.ask(id: "a#aaaaaa", name: "a", at: 1, free: -3), .declined(replaced: nil))
+        XCTAssertTrue(full.pending.isEmpty)
+    }
+
+    /// A request nobody answers runs out when the asking phone gives up; what the link sends is
+    /// never trusted to be well formed.
+    func testAnUnansweredRequestRunsOutAndAMalformedOneIsRefused() {
+        var admission = JamAdmission(timeout: 30, room: 7)
+        _ = admission.ask(id: "a#aaaaaa", name: "a", at: 0, free: 7)
+        _ = admission.ask(id: "b#bbbbbb", name: "b", at: 20, free: 7)
+        XCTAssertTrue(admission.expire(at: 29.9).isEmpty)
+        XCTAssertEqual(admission.expire(at: 30).map(\.id), ["a#aaaaaa"])
+        XCTAssertTrue(admission.expire(at: .nan).isEmpty)
+        XCTAssertEqual(admission.pending.map(\.id), ["b#bbbbbb"])
+        XCTAssertEqual(admission.clear().map(\.id), ["b#bbbbbb"], "the jam ends: everyone waiting is answered no")
+        XCTAssertTrue(admission.pending.isEmpty)
+
+        XCTAssertEqual(admission.ask(id: "", name: "", at: 1, free: 7), .declined(replaced: nil))
+        XCTAssertEqual(admission.ask(id: "x#xxxxxx", name: "x", at: .infinity, free: 7), .declined(replaced: nil))
+        var broken = JamAdmission(timeout: .nan, room: 7)
+        XCTAssertEqual(broken.ask(id: "x#xxxxxx", name: "x", at: 1, free: 7), .declined(replaced: nil),
+                       "no timeout, no waiting: nobody is let in by a request that cannot run out")
+    }
 }
