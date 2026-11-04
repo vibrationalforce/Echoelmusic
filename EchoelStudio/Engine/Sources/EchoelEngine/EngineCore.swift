@@ -52,6 +52,8 @@ public final class EngineCore: @unchecked Sendable {
     /// Render → main, while `setReportsLoopWraps(true)`: `playedFrames` at each wrap of the loop, the
     /// moment the playhead went back to the loop's start.
     private let loopWraps = SPSCRing<Int64>(capacity: 4_096, filler: 0)
+    /// Render → main: every wrap of the loop since the core was made, for a status line.
+    private let wraps = Atomic<Int64>(0)
     /// Where the song stood at the end of the last rendered buffer, written under a sequence
     /// counter (odd while writing) so the main thread reads the four values consistently.
     private let anchorSequence = Atomic<UInt64>(0)
@@ -574,6 +576,9 @@ public final class EngineCore: @unchecked Sendable {
     /// loop's wrap move the playhead, not this. Any thread.
     public var playedFrames: Int64 { played.load(ordering: .acquiring) }
 
+    /// How often the loop has wrapped since the core was made. Any thread.
+    public var wrapCount: Int64 { wraps.load(ordering: .relaxed) }
+
     /// Main thread: from now on each wrap of the loop is reported (`takeLoopWraps`), or no longer.
     /// Switched on, the wraps reported earlier are dropped, so a take hears only its own.
     public func setReportsLoopWraps(_ on: Bool) {
@@ -706,6 +711,7 @@ public final class EngineCore: @unchecked Sendable {
         // The loop's wrap, decided where the last chunk ended; a seek asked meanwhile wins.
         if seek < 0, loopSeek >= 0 {
             seek = loopSeek
+            wraps.add(1, ordering: .relaxed)
             // A full ring drops the wrap: the passes after it stay in the one before (Loop record).
             if wrapFlag.load(ordering: .relaxed) { loopWraps.push(playedCount) }
         }

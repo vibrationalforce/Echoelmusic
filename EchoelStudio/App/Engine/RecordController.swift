@@ -12,6 +12,10 @@ import Observation
 final class RecordController {
     private(set) var armedTrack: TrackID?
     private(set) var isRecording = false
+    /// The running take is cut into passes of the loop (Loop record), for the status line.
+    private(set) var isLoopRecording = false
+    /// The loop's wrap count when that take began.
+    @ObservationIgnored private var wrapsAtStart: Int64 = 0
 
     @ObservationIgnored private let engine: AudioEngine
     @ObservationIgnored private let documents: DocumentController
@@ -142,6 +146,7 @@ final class RecordController {
             engine.live.startCapture()
             midiTrack = track
             isRecording = true
+            beginLoopStatus()
             if !engine.isPlaying { engine.play() }
             return
         }
@@ -154,6 +159,7 @@ final class RecordController {
         }
         target = (track, file)
         isRecording = true
+        beginLoopStatus()
         if !engine.isPlaying { engine.play() }
     }
 
@@ -164,6 +170,7 @@ final class RecordController {
             return
         }
         isRecording = false
+        isLoopRecording = false
         let pending = target
         target = nil
         guard let take = await engine.endTake(), let pending else {
@@ -179,11 +186,24 @@ final class RecordController {
         await documents.commitTake(take, target: pending.file, onto: pending.track, tempoMap: take.tempoMap)
     }
 
+    /// The take that just began shows "Loop Record · take N" while it is cut into passes.
+    private func beginLoopStatus() {
+        isLoopRecording = engine.recordsLoopPasses
+        wrapsAtStart = engine.loopWrapCount
+    }
+
+    /// The pass the running loop record is in, from 1 — read by its leaf view, never by a body
+    /// that hosts menus (Law 6): it is not observed.
+    var loopTakeNumber: Int {
+        Int(Swift.max(0, engine.loopWrapCount - wrapsAtStart)) + 1
+    }
+
     /// Ends a running MIDI take at once and commits it. Synchronous, so it reads the rate and the
     /// position of the core the take was played on.
     private func endMIDITake() {
         guard isRecording, let track = midiTrack else { return }
         isRecording = false
+        isLoopRecording = false
         midiTrack = nil
         let events = engine.live.stopCapture()
         commitMIDI(events, loop: engine.endLoopCapture(), onto: track)

@@ -466,6 +466,8 @@ struct TransportBar: View {
             // What the fingertip on the camera should do (wave W1); its own leaf, so this strip
             // never observes the camera.
             TransportCueLine()
+            // "Loop Record · take N" while a take is cut into passes; its own leaf.
+            LoopRecordLine()
             // Hosting, following, or the host lost (W16); its own leaf too.
             JamStatusLine()
             messages
@@ -654,6 +656,25 @@ private struct TransportCueLine: View {
                 .font(Theme.Font.label)
                 .foregroundStyle(Theme.Color.textSecondary)
                 .padding(.bottom, Theme.Space.xs)
+        }
+    }
+}
+
+/// "Loop Record · take N" under the transport while a take records passes of the loop, so the
+/// musician sees takes come into being. Its own leaf (Law 6): the pass number is polled four times
+/// a second here and observed nowhere else.
+private struct LoopRecordLine: View {
+    @Environment(RecordController.self) private var recording
+
+    var body: some View {
+        if recording.isLoopRecording {
+            TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+                Text("Loop Record · take \(recording.loopTakeNumber)")
+                    .font(Theme.Font.label)
+                    .foregroundStyle(Theme.Color.record)
+                    .padding(.bottom, Theme.Space.xs)
+                    .accessibilityLabel("Loop Record, take \(recording.loopTakeNumber)")
+            }
         }
     }
 }

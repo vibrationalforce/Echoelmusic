@@ -11,6 +11,21 @@ import Foundation
 /// regions of that one file at different offsets — no new file, no gap in the writing. A MIDI take
 /// is cut into one clip per pass.
 public enum LoopRecording {
+    /// The shortest loop a take is cut into passes over. A song's loop is not set by the musician:
+    /// it runs from bar 1 to the end of the song's last bar (`Arranging.songLoop`), and a new, empty
+    /// song loops ONE bar. A take on that is a first recording, not a loop record — it runs freely
+    /// (an audio take suspends the loop, a MIDI take overdubs into one clip, as before). From two
+    /// bars on there is a part to record passes over.
+    public static let minimumBars = 2
+
+    /// Whether a take over `loop` is cut into passes: the loop spans `minimumBars` bars at least.
+    public static func recordsPasses(over loop: Range<Tick>?, meter: MeterMap) -> Bool {
+        guard let loop else { return false }
+        var end = loop.lowerBound
+        for _ in 0..<minimumBars { end += meter.ticksPerBar(at: Swift.max(0, end)) }
+        return loop.upperBound >= end
+    }
+
     /// A pass shorter than a quarter of a bar — Stop pressed just after the loop came round, or
     /// Record just before it did — is no take, and is dropped.
     public static func isTooShort(_ span: Range<Tick>, meter: MeterMap) -> Bool {
@@ -85,7 +100,7 @@ public enum LoopRecording {
                                    meter: MeterMap) -> [AudioPass] {
         let placement = RecordingPlacement.place(startSample: startSample, latency: latency, time: time)
         let later = wraps.filter { $0 > startPlayed }.sorted()
-        guard let loop, !later.isEmpty else {
+        guard let loop, recordsPasses(over: loop, meter: meter), !later.isEmpty else {
             guard frameCount > placement.offset else { return [] }
             return [AudioPass(start: placement.start, offset: placement.offset, length: frameCount - placement.offset)]
         }
@@ -164,7 +179,7 @@ public enum LoopRecording {
                                   meter: MeterMap) -> [MIDIPass] {
         let later = wraps.filter { $0 > start.played }.sorted()
         let span = loop ?? 0..<1
-        let looped = loop != nil && !later.isEmpty
+        let looped = recordsPasses(over: loop, meter: meter) && !later.isEmpty
         let passes = Passes(loop: span, wraps: looped ? later : [], time: time)
         func tick(_ sample: Int64) -> Tick { time.tick(atSample: Swift.max(0, sample)) }
         var takes: [Int: MIDITake] = [:]
