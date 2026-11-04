@@ -1,20 +1,16 @@
-11.0.0, twenty-third upload — the sound no longer clicks (exception build: crackle fix)
+11.0.0, twenty-fourth upload — the song's tone system and swing are heard
 
-What is new since 10031. Each line is code that the Echoel Studio run builds and tests; nothing
-here is device-verified yet — the ear on the phone decides.
-- The audio session asks for 48 kHz and a 512-frame buffer (10.7 ms), the values the earlier app
-  used on devices; a refused request is written to the diagnostic log.
-- Audio regions no longer click when Play starts inside a region, on a seek, on pause and play,
-  or while Flow glides the tempo.
-- Effect parameters and the synth's Character glide instead of stepping; throwing a parameter of
-  any effect no longer clicks.
-- The Harmonizer fades voices and style changes instead of switching them.
-- The DDSP engine renders in time (it took far more than a core before; now about a quarter of
-  one at 16 voices).
-- A live output guard holds the master below -1 dBFS; exports are untouched.
+What is new since 10032. Each line is code that the Echoel Studio run builds and tests; nothing
+here is device-verified yet.
+- Every tuned voice — the synth with all its engines (Body Voice and Choir among them) and the
+  sampler's keymapped pitch — plays the song's tone system and concert pitch. A note that is
+  already sounding keeps its pitch. Drums, hosted plugins and MIDI Out get notes, not a tuning.
+- Swing plays: every second sixteenth comes later by the song's swing amount, to the sample,
+  live and in the export alike. A song without swing renders exactly as before. The MIDI file
+  keeps the written notes.
 
-Previous: 11.0.0 (10031), twenty-second upload — breath, float bakes, VoiceOver and large text.
-10030 and earlier: see git history of this file.
+Previous: 11.0.0 (10032), twenty-third upload — the crackle fix. 10031 and earlier: see git
+history of this file.
 group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
 of earlier songs has not been seen on a device yet.
 
@@ -24,12 +20,9 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Play a song with an audio track and press Play in the middle of a region, then seek while it
-   plays, then pause and play again. Any click?
-2. Turn on the Harmonizer on a played line and switch its style while a voice sounds.
-   Any click?
-3. Play the synth with Character moving and throw an effect parameter (Chorus, EQ, Delay) fast.
-   Any click or crackle?
-4. Switch the synth to the DDSP engine and hold a chord of many notes. Does it play clean, with no
-   dropouts?
-5. Plug headphones in and out while playing. Does the sound carry on without a crack?
+1. Song menu: Tone System "Just intonation, major", Concert Pitch 442. Hold a C major chord on
+   the synth. Does the third sound calmer than in equal temperament?
+2. The same chord on Choir and on Body Voice: do they follow the tuning too?
+3. A beat with hi-hat sixteenths: swing 0, then 0.5. Does it groove audibly, without stumbling?
+4. Set the tone system back to equal temperament: does everything sound as before?
+5. Export WAV with swing 0.5 and play the file: does it groove exactly like the live playback?
