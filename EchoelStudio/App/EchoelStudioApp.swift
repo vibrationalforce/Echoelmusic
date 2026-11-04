@@ -41,6 +41,10 @@ struct EchoelStudioApp: App {
         camera.output = engine.modulation
         _camera = State(initialValue: camera)
         _documents = State(initialValue: documents)
+        // Siri, Shortcuts and Spotlight reach the open song and the transport through these (PRO-W1).
+        StudioIntentBridge.shared.store = store
+        StudioIntentBridge.shared.engine = engine
+        StudioIntentBridge.shared.documents = documents
         _recording = State(initialValue: RecordController(engine: engine, documents: documents, store: store))
         let writer = ParameterWriter(store: store, engine: engine)
         _writer = State(initialValue: writer)

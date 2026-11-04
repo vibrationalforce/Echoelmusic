@@ -1,0 +1,13 @@
+/* Siri and Shortcuts phrases in German (PRO-W1). Each key is a phrase of `StudioShortcuts`. */
+"Play ${applicationName}" = "${applicationName} abspielen";
+"Start ${applicationName}" = "${applicationName} starten";
+"Stop ${applicationName}" = "${applicationName} stoppen";
+"Set the tempo in ${applicationName}" = "Tempo in ${applicationName} einstellen";
+"Change the tempo in ${applicationName}" = "Tempo in ${applicationName} ändern";
+"Add a ${kind} track in ${applicationName}" = "${kind}-Spur in ${applicationName} hinzufügen";
+"New ${kind} track in ${applicationName}" = "Neue ${kind}-Spur in ${applicationName}";
+"Launch ${scene} in ${applicationName}" = "${scene} in ${applicationName} starten";
+"Launch a scene in ${applicationName}" = "Szene in ${applicationName} starten";
+"Set the key in ${applicationName}" = "Tonart in ${applicationName} einstellen";
+"Mute ${track} in ${applicationName}" = "${track} in ${applicationName} stummschalten";
+"Export stems in ${applicationName}" = "Stems in ${applicationName} exportieren";

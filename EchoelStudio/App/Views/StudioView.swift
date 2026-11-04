@@ -78,6 +78,8 @@ struct StudioView: View {
         .environment(videoHits)
         .background(Theme.Color.background)
         .onAppear {
+            // A stem export asked for by Siri or Shortcuts comes up in the share sheet (PRO-W1).
+            StudioIntentBridge.shared.share = { [weak router = self.router] url in router?.share(url) }
             engine.setSamples(documents.samples)
             engine.update(store.project)
             connections.attach(engine: engine, store: store, strap: strap)
