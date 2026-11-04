@@ -159,7 +159,8 @@ struct ClipEditorView: View {
 
     private func newClip(on track: Track) {
         let clip = ClipID()
-        let length = Self.newClipBars * MusicalTime.ticksPerBar(store.project.timeSignature)
+        // Four bars of the song's meter from bar 1, where the clip is placed.
+        let length = Swift.max(Arranging.ticks(movingBars: Self.newClipBars, from: 0, meter: store.project.meterMap), 1)
         try? store.perform([
             .createClip(track: track.id, id: clip, name: Names.derived(track.name, suffix: "Clip"), length: length),
             .placeClip(track: track.id, id: PlacementID(), clip: clip, start: 0),
@@ -266,11 +267,11 @@ struct PianoRoll: View {
     }
 
     private var noteGrid: some View {
-        let signature = store.project.timeSignature
+        let meter = store.project.clipMeter(clip.id)
         return ZStack(alignment: .topLeading) {
             gridCanvas
             ForEach(clip.notes) { note in
-                NoteBlock(note: note, clip: clip, color: color, grid: grid, signature: signature,
+                NoteBlock(note: note, clip: clip, color: color, grid: grid, meter: meter,
                           pointsPerTick: pointsPerTick, rowHeight: rowHeight,
                           isSelected: selected == note.id, select: { selected = note.id })
                     // VoiceOver reads the notes in time, a chord from its lowest note, after the grid.
@@ -338,7 +339,7 @@ struct PianoRoll: View {
         }
         do {
             try store.perform(command)
-            let place = NoteEditing.spokenPosition(note.start, signature: store.project.timeSignature, grid: grid)
+            let place = NoteEditing.spokenPosition(note.start, meter: store.project.clipMeter(clip.id), grid: grid)
             announce("Added \(NoteEditing.name(of: note.pitch)), \(place).")
         } catch {
             announce("The note could not be added.", urgent: true)
@@ -360,13 +361,14 @@ struct PianoRoll: View {
             let y = CGFloat(Note.pitchRange.upperBound - pitch + 1) * rowHeight
             context.fill(Path(CGRect(x: 0, y: y - 1, width: size.width, height: 1)), with: .color(Theme.Color.border))
         }
-        let bar = MusicalTime.ticksPerBar(store.project.timeSignature)
-        let beat = MusicalTime.ticksPerBeat(store.project.timeSignature)
+        // Bar and beat lines of the clip's own meter: the song's from where the clip is placed.
+        let meter = store.project.clipMeter(clip.id)
         var tick: Tick = 0
         let step = Swift.max(grid, 1)
         while tick <= clip.length {
             let x = CGFloat(tick) * pointsPerTick
-            let color = tick % bar == 0 ? Theme.Color.textTertiary : (tick % beat == 0 ? Theme.Color.border : Theme.Color.surfaceRaised)
+            let color = meter.isBarLine(tick) ? Theme.Color.textTertiary
+                : (meter.beatStart(at: tick) == tick ? Theme.Color.border : Theme.Color.surfaceRaised)
             context.fill(Path(CGRect(x: x, y: 0, width: 1, height: size.height)), with: .color(color))
             tick += step
         }
@@ -383,8 +385,8 @@ struct NoteBlock: View {
     let clip: Clip
     let color: Color
     let grid: Tick
-    /// The song's meter, for saying where the note is in bars and beats.
-    let signature: TimeSignature
+    /// The clip's meter (`Project.clipMeter`), for saying where the note is in bars and beats.
+    let meter: MeterMap
     let pointsPerTick: CGFloat
     let rowHeight: CGFloat
     var isSelected = false
@@ -435,7 +437,7 @@ struct NoteBlock: View {
             .accessibilityElement()
             .accessibilityLabel("\(NoteEditing.name(of: note.pitch)) Note")
             .accessibilityAddTraits(isSelected ? .isSelected : [])
-            .accessibilityValue(NoteEditing.spokenDetails(of: note, signature: signature, grid: grid))
+            .accessibilityValue(NoteEditing.spokenDetails(of: note, meter: meter, grid: grid))
             .accessibilityAction { choose() }
             .accessibilityAction(named: "Up a Semitone") { nudge(semitones: 1) }
             .accessibilityAction(named: "Down a Semitone") { nudge(semitones: -1) }
@@ -452,7 +454,8 @@ struct NoteBlock: View {
 
     private var name: String { NoteEditing.name(of: note.pitch) }
 
-    private var bar: Tick { MusicalTime.ticksPerBar(signature) }
+    /// One bar of the meter where the note starts.
+    private var bar: Tick { meter.ticksPerBar(at: note.start) }
 
     private var key: String { "note.drag.\(note.id.description)" }
 
@@ -508,7 +511,7 @@ struct NoteBlock: View {
             return announce("The note could not be moved.", urgent: true)
         }
         announce(semitones != 0 ? NoteEditing.name(of: moved.pitch)
-                                : NoteEditing.spokenPosition(moved.start, signature: signature, grid: grid))
+                                : NoteEditing.spokenPosition(moved.start, meter: meter, grid: grid))
     }
 
     private func resize(steps: Int) {

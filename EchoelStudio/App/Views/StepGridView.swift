@@ -30,14 +30,15 @@ struct StepGridView: View {
 
     var body: some View {
         let count = StepEditing.stepCount(of: clip, step: step)
-        let signature = store.project.timeSignature
+        // The bars of the clip's own meter: the song's from where the clip is placed.
+        let meter = store.project.clipMeter(clip.id)
         ScrollView(.vertical) {
             HStack(alignment: .top, spacing: Theme.Space.xs) {
                 laneNames
                 ScrollView(.horizontal) {
                     VStack(spacing: Theme.Space.xxs) {
                         ForEach(lanes) { lane in
-                            laneRow(lane, count: count, signature: signature)
+                            laneRow(lane, count: count, meter: meter)
                         }
                     }
                 }
@@ -71,17 +72,17 @@ struct StepGridView: View {
         }
     }
 
-    private func laneRow(_ lane: DrumLane, count: Int, signature: TimeSignature) -> some View {
+    private func laneRow(_ lane: DrumLane, count: Int, meter: MeterMap) -> some View {
         HStack(spacing: Theme.Space.xxs) {
             ForEach(0..<count, id: \.self) { index in
-                rotorMark(stepCell(lane, index, signature: signature), lane: lane, index: index)
+                rotorMark(stepCell(lane, index, meter: meter), lane: lane, index: index)
             }
         }
     }
 
-    private func stepCell(_ lane: DrumLane, _ index: Int, signature: TimeSignature) -> some View {
+    private func stepCell(_ lane: DrumLane, _ index: Int, meter: MeterMap) -> some View {
         let mark = state(lane, index)
-        let place = NoteEditing.spokenStep(index, step: step, signature: signature, clipLength: clip.length)
+        let place = NoteEditing.spokenStep(index, step: step, meter: meter, clipLength: clip.length)
         let accentAction = mark == .accent ? "Remove Accent" : "Accent"
         return StepCell(state: mark, color: color, downbeat: index % 4 == 0, size: cellSize)
             .onTapGesture { toggle(lane, index) }

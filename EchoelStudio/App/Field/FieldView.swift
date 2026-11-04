@@ -62,7 +62,7 @@ extension FieldFrame {
         let meter = engine.meterLevel(nil)
         let peak = Double(Swift.max(meter.left, meter.right))
         let inputs = engine.modulation
-        return FieldFrame.at(tick: Double(engine.playheadTick(in: project)), signature: project.timeSignature,
+        return FieldFrame.at(tick: Double(engine.playheadTick(in: project)), meter: engine.playedMeterMap(of: project),
                              context: project.context, level: peak.squareRoot(),
                              pulse: inputs.value(.heartRate), hrv: inputs.value(.hrv),
                              coherence: inputs.value(.coherence), isPlaying: engine.isPlaying,
