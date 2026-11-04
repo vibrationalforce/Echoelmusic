@@ -9,14 +9,49 @@ public enum FieldPattern: String, CaseIterable, Sendable {
     /// A square plate's standing waves, chosen by the partials of the master output, with sand
     /// gathering on the lines that do not move (`ChladniPlate`).
     case chladni
+    /// A dish of water on a speaker, lit from above: the sounding pitch sets the ripple lattice,
+    /// the loudness whether it appears at all (`FaradayDish`; silence is a mirror).
+    case dish
+    /// Sun on a pool floor: a caustic net whose spacing follows the sounding pitch (k ∝ f^⅔).
+    case water
+    /// A curtain of light: Chapman-profile bands, rays spaced by the sounding pitch, swelling with
+    /// the breath.
+    case aurora
+    /// The dish's ripples seen from under the water: the caustic network on the floor below.
+    case depth
 
     public static let storageKey = "field.pattern"
+    /// The pattern blended over the first one (`FieldLookMotion`); absent or unknown is none.
+    public static let blendStorageKey = "field.pattern.blend"
+    /// How much of the blended pattern shows, in percent 0 … 100.
+    public static let blendMixStorageKey = "field.pattern.mix"
+    /// The blend's share before the musician sets one: an even mix.
+    public static let standardMixPercent = 50
 
     public var title: String {
         switch self {
         case .rings: "Rings"
         case .chladni: "Chladni Plate"
+        case .dish: "Dish"
+        case .water: "Water"
+        case .aurora: "Aurora"
+        case .depth: "Depth"
         }
+    }
+
+    /// The pattern's number in the shader's `Look` struct (`FieldShader.field`): its place in
+    /// `allCases`, so the shader's branches follow the order the device stores.
+    public var shaderIndex: Double {
+        Double(FieldPattern.allCases.firstIndex(of: self) ?? 0)
+    }
+
+    /// Whether the picture listens to the master's partials: every pattern but the rings, which
+    /// move with the song's bar and the body alone.
+    public var listensToSound: Bool { self != .rings }
+
+    /// A stored blend partner read back; anything unknown or empty is no blend.
+    public static func blend(stored: String?) -> FieldPattern? {
+        stored.flatMap(FieldPattern.init(rawValue:))
     }
 
     /// The stored name read back; anything unknown is the rings.

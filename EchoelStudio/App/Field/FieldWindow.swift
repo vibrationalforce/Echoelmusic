@@ -69,6 +69,7 @@ struct FieldSurface: View {
                     .accessibilityLabel("Full Screen")
             }
             .padding(Theme.Space.m)
+            FieldBlendMix()
         }
     }
 }
@@ -89,6 +90,7 @@ struct FieldFullscreen: View {
                     .accessibilityLabel("Leave Full Screen")
             }
             .padding(Theme.Space.m)
+            FieldBlendMix()
         }
     }
 }
@@ -98,6 +100,7 @@ struct FieldFullscreen: View {
 /// Shown only where the GPU draws the Field — the Canvas draws the rings alone.
 struct FieldPatternMenu: View {
     @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
+    @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
 
     var body: some View {
         #if canImport(MetalKit) && canImport(UIKit)
@@ -108,6 +111,14 @@ struct FieldPatternMenu: View {
                         Text(pattern.title).tag(pattern.rawValue)
                     }
                 }
+                // A second look over the first; its share is the Blend field on the picture.
+                Picker("Blend With", selection: $partnerName) {
+                    Text("None").tag("")
+                    ForEach(FieldPattern.allCases, id: \.rawValue) { pattern in
+                        Text(pattern.title).tag(pattern.rawValue)
+                    }
+                }
+                .pickerStyle(.menu)
             } label: {
                 Image(systemName: "square.grid.3x3")
             }
@@ -115,6 +126,35 @@ struct FieldPatternMenu: View {
             .buttonStyle(ToolButtonStyle())
             .accessibilityLabel("Pattern")
             .accessibilityValue(FieldPattern(stored: patternName).title)
+        }
+        #endif
+    }
+}
+
+/// How much of the blended look shows, in Echoel's value field, at the picture's lower left —
+/// present only while a second look is chosen. A device setting, so no command and no song change;
+/// the renderer eases the share through the flash guard (`FieldLookMotion`), so a fast drag can
+/// never strobe the picture.
+struct FieldBlendMix: View {
+    @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
+    @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
+    @AppStorage(FieldPattern.blendMixStorageKey) private var mixPercent = FieldPattern.standardMixPercent
+
+    var body: some View {
+        #if canImport(MetalKit) && canImport(UIKit)
+        if MetalField.isAvailable, let partner = FieldPattern.blend(stored: partnerName),
+           partner != FieldPattern(stored: patternName) {
+            VStack {
+                Spacer(minLength: 0)
+                HStack {
+                    SettingField(title: "Blend · \(partner.title)", value: Swift.min(Swift.max(mixPercent, 0), 100),
+                                 range: 0...100, unit: "%", standard: FieldPattern.standardMixPercent,
+                                 spokenUnit: "percent") { mixPercent = $0 }
+                        .frame(width: 140)
+                    Spacer(minLength: 0)
+                }
+            }
+            .padding(Theme.Space.m)
         }
         #endif
     }

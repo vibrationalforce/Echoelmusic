@@ -9,17 +9,22 @@ import SwiftUI
 /// and every brightness passes the `FlashLimit`, so neither flashes more than three times a second.
 /// Calm by design: nothing on screen that the song or the body does not carry.
 ///
-/// The picture is the musician's choice (`FieldPattern`, kept on this device): the rings, or the
-/// Chladni plate, whose figure the master's partials choose. The plate needs the GPU; the Canvas
+/// The picture is the musician's choice (`FieldPattern`, kept on this device): the rings, the
+/// Chladni plate, whose figure the master's partials choose, or one of the earlier app's looks —
+/// Dish, Water, Aurora, Depth — and a second look blended over it. They need the GPU; the Canvas
 /// draws the rings.
 struct FieldView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
+    @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
+    @AppStorage(FieldPattern.blendMixStorageKey) private var mixPercent = FieldPattern.standardMixPercent
 
     var body: some View {
         #if canImport(MetalKit) && canImport(UIKit)
         if MetalField.isAvailable {
-            MetalFieldView(reduceMotion: reduceMotion, pattern: FieldPattern(stored: patternName))
+            MetalFieldView(reduceMotion: reduceMotion, pattern: FieldPattern(stored: patternName),
+                           partner: FieldPattern.blend(stored: partnerName),
+                           mix: Double(Swift.min(Swift.max(mixPercent, 0), 100)) / 100)
                 .background(Theme.Color.background)
                 .accessibilityHidden(true)
                 .overlay { FieldSpokenValue().allowsHitTesting(false) }
