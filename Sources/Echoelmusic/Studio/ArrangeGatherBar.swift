@@ -96,7 +96,7 @@ struct ArrangeGatherBar: View {
     private func action(_ title: String, enabled: Bool, _ perform: @escaping () -> Void) -> some View {
         Button(action: perform) {
             Text(title)
-                .font(EchoelTheme.font(13, .medium))
+                .font(EchoelTheme.font(13))
                 .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
                 .padding(.horizontal, 12)
                 .frame(minHeight: 44)

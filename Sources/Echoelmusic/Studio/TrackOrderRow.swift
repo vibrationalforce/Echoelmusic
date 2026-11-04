@@ -39,7 +39,7 @@ struct TrackOrderRow: View {
             timeline.moveLane(id: laneID, by: delta)
         } label: {
             Label(title, systemImage: symbol)
-                .font(EchoelTheme.font(13, .medium))
+                .font(EchoelTheme.font(13))
                 .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
                 .padding(.horizontal, 12)
                 .frame(minHeight: 44)
