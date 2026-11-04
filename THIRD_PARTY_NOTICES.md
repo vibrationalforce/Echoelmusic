@@ -63,6 +63,9 @@ _Last reviewed: 2026-09-12._
   - **Logboard** (pulled in by HaishinKit) — BSD-3-Clause.
   - **libsrt** (binary xcframework pulled in by SRTHaishinKit, Haivision SRT library, unmodified) —
     MPL-2.0; source: https://github.com/Haivision/srt
+  - **OpenSSL 3.3.2** (linked statically inside that libsrt binary — measured 2026-11-04 with
+    `strings libsrt.a`; the xcframework's build script merges libcrypto and libssl) — Apache-2.0;
+    shown in full in About → Acknowledgments since 2026-11-04. Its encryption is never switched on.
   - Their full licence texts and copyright lines must be shown in the in-app acknowledgments before
     a build with streaming reaches the App Store (action item below).
 - The earlier app (`Package.swift`, `Sources/`) links none: `dependencies: []`.
