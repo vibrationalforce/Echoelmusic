@@ -69,6 +69,12 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(HarmonyStyle.allCases.map(\.title),
                        ["Free", "Organum", "Organum at the Fourth", "Fauxbourdon", "Diatonic Thirds", "Ison"],
                        "a new style goes at the end")
+        // A saved insert names its effect's component — the subtype and the name, never the case's
+        // position — so a standard effect's id is never changed; a new effect adds its own at the end.
+        XCTAssertEqual(StandardEffect.allCases.map(\.component.subtype),
+                       ["eEQ5", "eCmp", "eDly", "eRvb", "eCho", "ePhs", "eFlg", "eLim", "eSat", "eTrm", "eBit", "eTap",
+                        "eWid", "eRng", "eFsh", "eTun", "eHrm", "eGrn", "eFmt", "eTrn", "eMSd", "eMbc", "eDEQ"].map(PluginComponent.code),
+                       "never change a standard effect's id; a new effect goes at the end")
     }
 
     /// A track stores the name of the preset it was loaded from, and the Sound page shows it. Only

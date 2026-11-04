@@ -82,6 +82,11 @@ public final class EffectKernel: @unchecked Sendable {
     private let pitchCorrector: PitchCorrector?
     private let harmonizer: Harmonizer?
     private let granulator: Granulator?
+    private let formantFilter: FormantFilter?
+    private let transientDesigner: TransientDesigner?
+    private let midSide: MidSide?
+    private let multiband: MultibandCompressor?
+    private let dynamicEQ: DynamicEQ?
     /// The correction's targets, worked out once here so a change of key on the render thread
     /// only looks them up: each scale's pitch classes above C, and each tone system's cents for
     /// every root (`tuning × 12 + root`).
@@ -122,6 +127,11 @@ public final class EffectKernel: @unchecked Sendable {
         pitchCorrector = effect == .pitchCorrection ? PitchCorrector(sampleRate: self.sampleRate) : nil
         harmonizer = effect == .harmonizer ? Harmonizer(sampleRate: self.sampleRate) : nil
         granulator = effect == .granular ? Granulator(sampleRate: self.sampleRate) : nil
+        formantFilter = effect == .formantFilter ? FormantFilter(sampleRate: self.sampleRate) : nil
+        transientDesigner = effect == .transientDesigner ? TransientDesigner(sampleRate: self.sampleRate) : nil
+        midSide = effect == .midSide ? MidSide(sampleRate: self.sampleRate) : nil
+        multiband = effect == .multibandCompressor ? MultibandCompressor(sampleRate: self.sampleRate) : nil
+        dynamicEQ = effect == .dynamicEQ ? DynamicEQ(sampleRate: self.sampleRate) : nil
         scaleMasks = effect == .pitchCorrection
             ? Scale.allCases.map { PitchCorrector.Settings.mask(root: 0, steps: $0.intervals) } : []
         toneSystemCents = effect == .pitchCorrection ? Self.toneSystemCents() : []
@@ -180,7 +190,8 @@ public final class EffectKernel: @unchecked Sendable {
     /// Every value, in address order, to carry into a new kernel.
     public var allValues: [Float] { parameters.indices.map(parameter) }
 
-    /// The compressor's or the limiter's gain reduction in dB (0 or less); 0 for the other effects.
+    /// The compressor's, the multiband's (its deepest band) or the limiter's gain reduction in dB
+    /// (0 or less); 0 for the other effects.
     public var gainReduction: Float { Float(bitPattern: reductionBits.load(ordering: .relaxed)) }
 
     /// Empties delay lines and tails.
@@ -203,6 +214,11 @@ public final class EffectKernel: @unchecked Sendable {
         pitchCorrector?.reset()
         harmonizer?.reset()
         granulator?.reset()
+        formantFilter?.reset()
+        transientDesigner?.reset()
+        midSide?.reset()
+        multiband?.reset()
+        dynamicEQ?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -281,6 +297,14 @@ public final class EffectKernel: @unchecked Sendable {
         case .pitchCorrection: pitchCorrector?.process(left: left, right: right, frames: frames)
         case .harmonizer: harmonizer?.process(left: left, right: right, frames: frames)
         case .granular: granulator?.process(left: left, right: right, frames: frames)
+        case .formantFilter: formantFilter?.process(left: left, right: right, frames: frames)
+        case .transientDesigner: transientDesigner?.process(left: left, right: right, frames: frames)
+        case .midSide: midSide?.process(left: left, right: right, frames: frames)
+        case .multibandCompressor:
+            guard let multiband else { return }
+            multiband.process(left: left, right: right, frames: frames)
+            reductionBits.store(multiband.reduction.bitPattern, ordering: .relaxed)
+        case .dynamicEQ: dynamicEQ?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -393,6 +417,32 @@ public final class EffectKernel: @unchecked Sendable {
             let s = Granulator.Settings(size: value(0), density: value(1), pitch: value(2), position: value(3),
                                         spray: value(4), spread: value(5), mix: value(6))
             if s != granulator.settings { granulator.settings = s }
+        case .formantFilter:
+            guard let formantFilter else { return }
+            let s = FormantFilter.Settings(vowel: value(0), resonance: value(1), mix: value(2))
+            if s != formantFilter.settings { formantFilter.settings = s }
+        case .transientDesigner:
+            guard let transientDesigner else { return }
+            let s = TransientDesigner.Settings(attack: value(0), sustain: value(1), output: value(2))
+            if s != transientDesigner.settings { transientDesigner.settings = s }
+        case .midSide:
+            guard let midSide else { return }
+            let s = MidSide.Settings(width: value(0), midGain: value(1), sideGain: value(2), tilt: value(3),
+                                     monoBelow: value(4))
+            if s != midSide.settings { midSide.settings = s }
+        case .multibandCompressor:
+            guard let multiband else { return }
+            let s = MultibandCompressor.Settings(lowCrossover: value(0), highCrossover: value(1),
+                                                 lowThreshold: value(2), midThreshold: value(4), highThreshold: value(6),
+                                                 lowRatio: value(3), midRatio: value(5), highRatio: value(7),
+                                                 attack: value(8), release: value(9), makeup: value(10))
+            if s != multiband.settings { multiband.settings = s }
+        case .dynamicEQ:
+            guard let dynamicEQ else { return }
+            let s = DynamicEQ.Settings(low: DynamicEQ.Band(frequency: value(0), q: value(1), threshold: value(2), range: value(3)),
+                                       high: DynamicEQ.Band(frequency: value(4), q: value(5), threshold: value(6), range: value(7)),
+                                       attack: value(8), release: value(9))
+            if s != dynamicEQ.settings { dynamicEQ.settings = s }
         }
     }
 
@@ -543,6 +593,44 @@ public final class EffectKernel: @unchecked Sendable {
             add("spray", "Spray", 0...0.5, 0.05, .seconds)
             add("spread", "Spread", 0...1, 0.5, .amount)
             add("mix", "Mix", 0...1, 0.5, .amount)
+        case .formantFilter:
+            // 0 "a" · 1 "e" · 2 "i" · 3 "o" · 4 "u", morphing in between: a number, so it sweeps.
+            add("vowel", "Vowel", 0...4, 0, .amount)
+            add("resonance", "Resonance", 0...1, 0.5, .amount)
+            add("mix", "Mix", 0...1, 1, .amount)
+        case .transientDesigner:
+            add("attack", "Attack", -24...24, 0, .decibels)
+            add("sustain", "Sustain", -24...24, 0, .decibels)
+            add("output", "Output", -24...12, 0, .decibels)
+        case .midSide:
+            add("width", "Width", 0...2, 1, .ratio)
+            add("midGain", "Mid Gain", -24...12, 0, .decibels)
+            add("sideGain", "Side Gain", -24...12, 0, .decibels)
+            add("tilt", "Side Tilt", -6...6, 0, .decibels)
+            add("monoBelow", "Mono Below", 20...500, 20, .hertz)
+        case .multibandCompressor:
+            add("lowCrossover", "Low Crossover", 50...1_000, 200, .hertz)
+            add("highCrossover", "High Crossover", 1_000...12_000, 2_500, .hertz)
+            add("lowThreshold", "Low Threshold", -60...0, -18, .decibels)
+            add("lowRatio", "Low Ratio", 1...20, 3, .ratio)
+            add("midThreshold", "Mid Threshold", -60...0, -18, .decibels)
+            add("midRatio", "Mid Ratio", 1...20, 2, .ratio)
+            add("highThreshold", "High Threshold", -60...0, -18, .decibels)
+            add("highRatio", "High Ratio", 1...20, 2, .ratio)
+            add("attack", "Attack", 0.0001...0.2, 0.01, .seconds)
+            add("release", "Release", 0.01...2, 0.15, .seconds)
+            add("makeup", "Makeup", 0...24, 0, .decibels)
+        case .dynamicEQ:
+            add("lowFrequency", "Band 1 Freq", 20...20_000, 250, .hertz)
+            add("lowQ", "Band 1 Q", 0.3...8, 1, .ratio)
+            add("lowThreshold", "Band 1 Threshold", -60...0, -24, .decibels)
+            add("lowRange", "Band 1 Range", -18...18, -6, .decibels)
+            add("highFrequency", "Band 2 Freq", 20...20_000, 3_000, .hertz)
+            add("highQ", "Band 2 Q", 0.3...8, 1, .ratio)
+            add("highThreshold", "Band 2 Threshold", -60...0, -24, .decibels)
+            add("highRange", "Band 2 Range", -18...18, -6, .decibels)
+            add("attack", "Attack", 0.0001...0.2, 0.005, .seconds)
+            add("release", "Release", 0.01...2, 0.15, .seconds)
         }
         return list
     }

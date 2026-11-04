@@ -36,6 +36,46 @@ final class EffectKernelTests: XCTestCase {
         }
     }
 
+    /// A saved insert stores its values by address, so a standard effect's parameters keep their
+    /// order: a new one goes at the end. The four effects of ECHOELTOOLS B9/B10, pinned as they shipped.
+    func testTheNewEffectsKeepTheirParameterOrder() {
+        let expected: [StandardEffect: [String]] = [
+            .formantFilter: ["vowel", "resonance", "mix"],
+            .transientDesigner: ["attack", "sustain", "output"],
+            .midSide: ["width", "midGain", "sideGain", "tilt", "monoBelow"],
+            .multibandCompressor: ["lowCrossover", "highCrossover", "lowThreshold", "lowRatio", "midThreshold", "midRatio",
+                                   "highThreshold", "highRatio", "attack", "release", "makeup"],
+            .dynamicEQ: ["lowFrequency", "lowQ", "lowThreshold", "lowRange", "highFrequency", "highQ", "highThreshold",
+                         "highRange", "attack", "release"],
+        ]
+        for (effect, identifiers) in expected {
+            XCTAssertEqual(EffectKernel.parameters(for: effect).map(\.identifier), identifiers, effect.rawValue)
+        }
+    }
+
+    /// Each new effect's parameters reach its sound: turned from its default, the output changes.
+    func testEveryNewEffectHearsItsParameters() {
+        let tone: [Float] = (0..<9_600).map { (index: Int) -> Float in
+            let t = Double(index) / 48_000
+            return Float(0.4 * sin(2 * Double.pi * 180 * t) + 0.2 * sin(2 * Double.pi * 2_700 * t))
+        }
+        let turned: [(StandardEffect, Int, Float)] = [(.formantFilter, 0, 3), (.transientDesigner, 2, -12),
+                                                      (.midSide, 1, -12), (.multibandCompressor, 10, 12),
+                                                      (.dynamicEQ, 7, -18)]
+        for (effect, address, value) in turned {
+            let plain = process(EffectKernel(effect: effect, sampleRate: rate), tone)
+            let kernel = EffectKernel(effect: effect, sampleRate: rate)
+            kernel.setParameter(address, value)
+            let moved = process(kernel, tone)
+            let difference = zip(plain.suffix(4_800), moved.suffix(4_800)).map { abs($0 - $1) }.max() ?? 0
+            XCTAssertGreaterThan(difference, 0.01, "\(effect.rawValue) address \(address)")
+        }
+        let multiband = EffectKernel(effect: .multibandCompressor, sampleRate: rate)
+        multiband.setParameter(2, -50)
+        _ = process(multiband, tone)
+        XCTAssertLessThan(multiband.gainReduction, -10, "the meter reads the multiband's deepest band")
+    }
+
     func testAParameterReachesTheSoundAtTheNextBlockAndCarriesToANewRate() {
         let eq = EffectKernel(effect: .equalizer, sampleRate: rate)
         let tone = (0..<4_800).map { Float(sin(2 * Double.pi * 3_000 * Double($0) / 48_000)) }

@@ -60,4 +60,48 @@ final class KernelLoadTests: XCTestCase {
         let high = cost(of: .ddsp, lowestKey: 90, keyStep: 2)
         XCTAssertLessThan(high, low * 0.5, "high \(high) s, low \(low) s")
     }
+
+    /// The best of three runs of `seconds` of a stereo tone through `effect` at its defaults, in seconds.
+    private func cost(of effect: StandardEffect, seconds: Double = 0.25) -> Double {
+        var best = Double.infinity
+        for _ in 0..<3 {
+            let kernel = EffectKernel(effect: effect, sampleRate: rate)
+            let left = UnsafeMutablePointer<Float>.allocate(capacity: 512)
+            let right = UnsafeMutablePointer<Float>.allocate(capacity: 512)
+            defer {
+                left.deallocate()
+                right.deallocate()
+            }
+            func fill() {
+                for i in 0..<512 {
+                    let x = Float(sin(Double(i) * 0.0288)) * 0.4
+                    left[i] = x
+                    right[i] = x * 0.8
+                }
+            }
+            let blocks = Int(seconds * rate) / 512
+            let start = DispatchTime.now().uptimeNanoseconds
+            for _ in 0..<blocks {
+                fill()
+                kernel.process(left: left, right: right, frames: 512)
+            }
+            best = Swift.min(best, Double(DispatchTime.now().uptimeNanoseconds - start) / 1e9)
+        }
+        return best
+    }
+
+    /// The four effects of ECHOELTOOLS B9/B10 (formant filter, transient designer, mid/side,
+    /// multiband) each cost at most a few compressors: the multiband is three of them plus fourteen
+    /// filter stages, the others are lighter. Measured 2026-11-04 (Linux, one x86-64 core), in
+    /// compressors' cost — debug: formant 3.1, transient 2.4, mid/side 1.4, multiband 8.4;
+    /// release: 1.3, 1.1, 0.8, 4.9. Compared with the compressor, not the clock, because CI runs a
+    /// debug build; the bound leaves twice the multiband's debug cost for a slower runner.
+    func testTheNewEffectsCostNoMoreThanAFewCompressors() {
+        let compressor = cost(of: .compressor)
+        XCTAssertGreaterThan(compressor, 0)
+        for effect in [StandardEffect.formantFilter, .transientDesigner, .midSide, .multibandCompressor, .dynamicEQ] {
+            let share = cost(of: effect) / compressor
+            XCTAssertLessThan(share, 16, "\(effect.rawValue) at \(share) compressors' cost")
+        }
+    }
 }
