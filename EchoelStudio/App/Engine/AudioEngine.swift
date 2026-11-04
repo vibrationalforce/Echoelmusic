@@ -106,6 +106,9 @@ final class AudioEngine {
     let mpe = MIDIMPEOutput()
     /// Which session clip each track plays, as the render thread reports it.
     let session = SessionState()
+    /// The media browser's listening (Recovery 7): one file over the song, added after the master in
+    /// the source node, never in an export.
+    let preview = PreviewPlayer()
     /// The live body and controller values a song's modulation routes read (W2); the strap writes
     /// its pulse here. Only the live engine reads them — an export passes none.
     let modulation = ModulationInputs()
@@ -800,7 +803,7 @@ final class AudioEngine {
                 if let project { publish(project) }
             }
 
-            let node = Self.makeSourceNode(format: format, core: current)
+            let node = Self.makeSourceNode(format: format, core: current, preview: preview)
             step("graph: attach source node", [("Hz", sampleRate), ("ch", Double(channels))])
             engine.attach(node)
             sourceNode = node
@@ -1397,7 +1400,8 @@ final class AudioEngine {
     /// Built outside the main actor and with an explicitly `@Sendable` block: a closure formed
     /// inside a `@MainActor` method inherits that isolation, and the render thread would trap
     /// on the isolation check before the first sample (the legacy app's builds 2613/2618).
-    nonisolated private static func makeSourceNode(format: AVAudioFormat, core: EngineCore) -> AVAudioSourceNode {
+    nonisolated private static func makeSourceNode(format: AVAudioFormat, core: EngineCore,
+                                                   preview: PreviewPlayer) -> AVAudioSourceNode {
         let pointers = ChannelPointers()
         return AVAudioSourceNode(format: format) { @Sendable _, timestamp, frameCount, bufferList in
             let hostTime = timestamp.pointee.mFlags.contains(.hostTimeValid) ? timestamp.pointee.mHostTime : 0
@@ -1426,6 +1430,8 @@ final class AudioEngine {
             } else {
                 core.render(frameCount: frames, channels: pointers.base, channelCount: count, hostTime: hostTime)
             }
+            // The browser's file on the first pair, after the song's own output guard.
+            preview.render(left: pointers.base[0], right: pointers.base[1], frames: frames, outputRate: core.sampleRate)
             return noErr
         }
     }

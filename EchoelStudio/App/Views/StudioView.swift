@@ -154,6 +154,7 @@ struct StudioView: View {
         case .connections: ConnectionsView()
         case .jam: JamView()
         case let .regionEdit(track, region): RegionEditView(trackID: track, regionID: region)
+        case .browser: MediaBrowserView()
         case let .importAudio(track, start):
             AudioFilePicker(pick: { url in
                 router.sheet = nil
@@ -938,6 +939,8 @@ struct SongMenu: View {
                     }
                 }
                 .disabled(documents.isExporting)
+                // Every sound, video and picture the device holds for Echoel, to hear and place (Recovery 7).
+                Button("Browser…", systemImage: "square.grid.2x2") { router.sheet = .browser }
                 // A Standard MIDI File as new instrument tracks; an empty song takes its tempo and meter.
                 Button("Import MIDI…", systemImage: "square.and.arrow.down") { router.sheet = .importMIDI }
                 keyAndScale

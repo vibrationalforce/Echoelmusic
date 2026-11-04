@@ -47,6 +47,8 @@ enum StudioSheet: Identifiable, Hashable {
     case jam
     /// One audio region's fades and gain (AUD-2).
     case regionEdit(TrackID, RegionID)
+    /// The sample and media browser: the song's, the library's and imported files, to hear and place (Recovery 7).
+    case browser
 
     var id: Self { self }
 }
