@@ -375,6 +375,43 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with a region's optional bake (W3, 2026-11-04): added inside format 4, so an earlier
+    /// format-4 build opens the file and plays the baked file as an ordinary region.
+    private let formatFourBake = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Tuned",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "media": [
+        { "id": "3ED10000-0000-4000-8000-000000000006", "name": "Voice",
+          "path": "Media/3ED10000-0000-4000-8000-000000000006.wav", "frameCount": 96000, "sampleRate": 48000 },
+        { "id": "3ED10000-0000-4000-8000-000000000007", "name": "Voice (tuned)",
+          "path": "Media/3ED10000-0000-4000-8000-000000000007.wav", "frameCount": 48000, "sampleRate": 48000 }
+      ],
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-00000000000F",
+          "name": "Voice",
+          "kind": "audio",
+          "colorIndex": 2,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "regions": [
+            { "id": "4E610000-0000-4000-8000-000000000007", "media": "3ED10000-0000-4000-8000-000000000007",
+              "start": 960, "offset": 0, "length": 48000,
+              "bake": { "source": "3ED10000-0000-4000-8000-000000000006", "sourceOffset": 12000,
+                        "pitchCorrection": { "strength": 0.8, "retune": 0.02 },
+                        "texture": { "size": 0.05, "density": 0.7, "scatter": 0.1, "pitch": 7, "seed": 99 } } }
+          ]
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     /// Format 4 with a track's optional arpeggiator (EDIT-2, 2026-11-04): added inside format 4, so
     /// an earlier format-4 build opens the file and plays the notes as written. The second track
     /// names a rate and an order of a later build: kept, played as a sixteenth, up.
@@ -593,7 +630,7 @@ final class FormatGoldenTests: XCTestCase {
     func testEveryGoldenFileSurvivesARoundTrip() throws {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
                      formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes,
-                     formatFourTexture] {
+                     formatFourTexture, formatFourBake] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -874,6 +911,29 @@ final class FormatGoldenTests: XCTestCase {
             for track in try ProjectCodec.decode(data).tracks {
                 XCTAssertTrue(track.regions.allSatisfy { $0.fadeIn == nil && $0.fadeOut == nil && $0.gainDB == nil
                     && $0.nativeBPM == nil && $0.followsTempo == nil }, "an older region plays plain")
+            }
+        }
+    }
+
+    func testARegionOpensWithItsBakeAndRevertsToItsOriginal() throws {
+        var project = try ProjectCodec.decode(formatFourBake)
+        let track = try XCTUnwrap(project.tracks.first)
+        let region = try XCTUnwrap(track.regions.first)
+        let bake = try XCTUnwrap(region.bake)
+        XCTAssertEqual(bake.sourceOffset, 12_000)
+        XCTAssertEqual(bake.pitchCorrection, RegionBaking.PitchCorrection(strength: 0.8, retune: 0.02))
+        XCTAssertEqual(bake.texture, RegionBaking.GrainTexture(size: 0.05, density: 0.7, scatter: 0.1, pitch: 7, seed: 99))
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let tracks = try XCTUnwrap(root["tracks"] as? [[String: Any]])
+        let stored = try XCTUnwrap((tracks.first?["regions"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(stored.keys), ["id", "media", "start", "offset", "length", "bake"])
+        try Command.revertRegionBake(track: track.id, region.id).apply(to: &project)
+        let reverted = try XCTUnwrap(project.tracks.first?.regions.first)
+        XCTAssertEqual(reverted.media, bake.source)
+        XCTAssertEqual(reverted.offset, 12_000)
+        for data in [formatTwoMedia, formatFour, formatFourRegionEdits] {
+            for track in try ProjectCodec.decode(data).tracks {
+                XCTAssertTrue(track.regions.allSatisfy { $0.bake == nil }, "an older region is not baked")
             }
         }
     }

@@ -142,6 +142,13 @@ public enum Command: Codable, Equatable, Sendable {
     /// Whether a region follows the song's tempo, and the tempo its file was played at
     /// (`AudioRegion.nativeBPMRange`). Following, it keeps its pitch and spans its beats.
     case setRegionWarp(track: TrackID, RegionID, nativeBPM: Double, followsTempo: Bool)
+    /// Records `media` — a file the app rendered from the region's original — and points the
+    /// region at it, `bake` naming the original and the settings (W3). The region keeps its place,
+    /// length, fades, gain and warp. A baked region is baked again from its original, never from
+    /// the baked file. One step: Undo plays the original again.
+    case bakeRegion(track: TrackID, RegionID, media: MediaFile, bake: RegionBaking)
+    /// Points a baked region back at its original, at the same stretch; the baked file stays in the song.
+    case revertRegionBake(track: TrackID, RegionID)
 
     // Takes (Recovery 4)
     /// Folds take `take` — a region of an audio track, a placement of an instrument track — with
@@ -649,6 +656,10 @@ extension Command {
                 }
                 if project.tracks[t].instrument.wavetable?.media == id { project.tracks[t].instrument.wavetable = nil }
                 project.tracks[t].regions.removeAll { $0.media == id }
+                // A region baked from this file keeps playing its baked file, without a way back.
+                for r in project.tracks[t].regions.indices where project.tracks[t].regions[r].bake?.source == id {
+                    project.tracks[t].regions[r].bake = nil
+                }
                 let gone = Set(project.tracks[t].clips.filter { $0.audio?.media == id }.map(\.id))
                 project.tracks[t].clips.removeAll { gone.contains($0.id) }
                 project.tracks[t].slots.removeAll { gone.contains($0.clip) }
@@ -1098,6 +1109,53 @@ extension Command {
                                                 reason: "must be within \(AudioRegion.gainRange.lowerBound)…\(AudioRegion.gainRange.upperBound) dB")
             }
             project.tracks[t].regions[r].gainDB = gainDB == 0 ? nil : gainDB
+
+        case let .bakeRegion(trackID, id, file, bake):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .audio else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only audio regions are baked")
+            }
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            guard bake.isValid else {
+                throw CommandError.invalidValue(parameter: "bake", reason: "needs an edit, each setting within its range")
+            }
+            var region = project.tracks[t].regions[r]
+            let original = region.original
+            guard bake.source == original.media else {
+                throw CommandError.invalidValue(parameter: "bake", reason: "a region is baked from the file it was made from")
+            }
+            guard let source = project.mediaFile(bake.source), source.kind == .audio else { throw CommandError.unknownMedia(bake.source) }
+            guard file.kind == .audio, file.sampleRate == source.sampleRate else {
+                throw CommandError.invalidValue(parameter: "media", reason: "a baked file is audio at its original's rate")
+            }
+            guard file.frameCount <= source.frameCount - Swift.min(bake.sourceOffset, source.frameCount) else {
+                throw CommandError.invalidValue(parameter: "media", reason: "a baked file is a stretch of its original")
+            }
+            let offset = original.offset - bake.sourceOffset
+            guard offset >= 0, region.length <= file.frameCount - offset else {
+                throw CommandError.invalidValue(parameter: "media", reason: "the baked file must hold the region's stretch")
+            }
+            try Command.addMedia(file).applyChange(to: &project)
+            region.media = file.id
+            region.offset = offset
+            region.bake = bake
+            project.tracks[t].regions[r] = region
+
+        case let .revertRegionBake(trackID, id):
+            let t = try project.requireTrack(trackID)
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            var region = project.tracks[t].regions[r]
+            guard region.bake != nil else {
+                throw CommandError.invalidValue(parameter: "region", reason: "the region is not baked")
+            }
+            guard project.bakeFits(region) else {
+                throw CommandError.invalidValue(parameter: "region", reason: "its original no longer holds the region's stretch")
+            }
+            let original = region.original
+            region.media = original.media
+            region.offset = original.offset
+            region.bake = nil
+            project.tracks[t].regions[r] = region
 
         case let .setRegionWarp(trackID, id, nativeBPM, followsTempo):
             let t = try project.requireTrack(trackID)
