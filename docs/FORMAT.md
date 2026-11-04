@@ -215,6 +215,21 @@ build played it, and an earlier build that meets them ignores them:
   file the song lacks, a value outside its range, or an original that cannot hold the region's
   stretch refuses the song. An earlier format-4 build ignores the key and plays the rendered file.
 
+- `grade` — a video part's colour correction (COLOR, added inside format 4, 2026-11-05):
+  `{exposure, contrast, saturation, temperature, tint, lift, gamma, gain}`, every key optional and
+  absent at its standard value — exposure in stops −3 … 3 (0), contrast 0 … 2 (1), saturation
+  0 … 2 (1), temperature −1 (blue) … 1 (amber) (0), tint −1 (green) … 1 (magenta) (0), and on the
+  picture's luma lift −0.5 … 0.5 (0), gamma 0.25 … 4 (1) and gain 0 … 2 (1). Only a video track's
+  regions carry it; Echoel writes it only when a value differs from its standard, and writes then
+  all eight. The file is never changed. The part shows its file, encoded sRGB 0 … 1 per channel,
+  through: the gains red `2^(e + t + n/2)`, green `2^(e − n)`, blue `2^(e − t + n/2)` in linear
+  light (`e` exposure, `t` temperature, `n` tint); contrast per channel around 0.46; saturation
+  scaling each channel's distance from the Rec. 709 luma; the luma `Y` brought to
+  `gain · (Y + lift · (1 − Y))^(1/gamma)` and the change added to every channel — each step held to
+  0 … 1. How the picture is drawn through it (a colour cube) is the player's. A value outside its
+  range, or a grade on an audio region, refuses the song. An earlier format-4 build ignores the key
+  and shows the file as it is.
+
 **Take folder:** `{id, takes, comp}` in a track's `takeGroups` — added inside format 4 (Recovery 4,
 2026-11-04); Echoel writes the key only when the track has a folder, so a track without one is
 stored exactly as before, and an earlier format-4 build opens the song and plays every take as an

@@ -47,6 +47,8 @@ enum StudioSheet: Identifiable, Hashable {
     case jam
     /// One audio region's fades and gain (AUD-2).
     case regionEdit(TrackID, RegionID)
+    /// One video part's colour correction (COLOR).
+    case regionColor(TrackID, RegionID)
     /// One audio region's melody as a MIDI clip at the same place (A2M).
     case convertToMIDI(TrackID, RegionID)
     /// One audio region's pitch correction and granular texture, baked offline (W3).

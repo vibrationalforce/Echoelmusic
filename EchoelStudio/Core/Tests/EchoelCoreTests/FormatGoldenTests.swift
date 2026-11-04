@@ -375,6 +375,44 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with a video part's optional colour correction (COLOR, 2026-11-05): added inside
+    /// format 4, so an earlier format-4 build opens the file and shows the part as its file is. The
+    /// second part names only two values; the others read as standard.
+    private let formatFourGrade = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Graded",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "media": [
+        { "id": "3ED10000-0000-4000-8000-000000000009", "name": "Take 2", "kind": "video",
+          "path": "Media/3ED10000-0000-4000-8000-000000000009.mov", "frameCount": 480000, "sampleRate": 48000 }
+      ],
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-000000000010",
+          "name": "Video 1",
+          "kind": "video",
+          "colorIndex": 7,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "regions": [
+            { "id": "4E610000-0000-4000-8000-000000000009", "media": "3ED10000-0000-4000-8000-000000000009",
+              "start": 0, "offset": 0, "length": 96000,
+              "grade": { "exposure": 0.5, "contrast": 1.2, "saturation": 0.9, "temperature": -0.25, "tint": 0.1,
+                         "lift": 0.02, "gamma": 1.1, "gain": 0.95 } },
+            { "id": "4E610000-0000-4000-8000-00000000000A", "media": "3ED10000-0000-4000-8000-000000000009",
+              "start": 7680, "offset": 192000, "length": 96000,
+              "grade": { "exposure": -1, "saturation": 1.5 } }
+          ]
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     /// Format 4 with a region's optional bake (W3, 2026-11-04): added inside format 4, so an earlier
     /// format-4 build opens the file and plays the baked file as an ordinary region.
     private let formatFourBake = Data("""
@@ -655,7 +693,7 @@ final class FormatGoldenTests: XCTestCase {
     func testEveryGoldenFileSurvivesARoundTrip() throws {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
                      formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes,
-                     formatFourTexture, formatFourBake, formatFourMotion] {
+                     formatFourTexture, formatFourBake, formatFourMotion, formatFourGrade] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -972,6 +1010,27 @@ final class FormatGoldenTests: XCTestCase {
         for data in [formatTwoMedia, formatFour, formatFourRegionEdits] {
             for track in try ProjectCodec.decode(data).tracks {
                 XCTAssertTrue(track.regions.allSatisfy { $0.bake == nil }, "an older region is not baked")
+            }
+        }
+    }
+
+    func testAVideoPartOpensWithItsColorCorrection() throws {
+        let project = try ProjectCodec.decode(formatFourGrade)
+        let parts = try XCTUnwrap(project.tracks.first?.regions)
+        XCTAssertEqual(parts.first?.grade, ColorGrade(exposure: 0.5, contrast: 1.2, saturation: 0.9, temperature: -0.25,
+                                                      tint: 0.1, lift: 0.02, gamma: 1.1, gain: 0.95))
+        XCTAssertEqual(parts.last?.grade, ColorGrade(exposure: -1, saturation: 1.5), "a value it leaves out is standard")
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let tracks = try XCTUnwrap(root["tracks"] as? [[String: Any]])
+        let stored = try XCTUnwrap((tracks.first?["regions"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(stored.keys), ["id", "media", "start", "offset", "length", "grade"])
+        // A value outside its range, or a correction on an audio part, refuses the song.
+        let outside = Data(String(decoding: formatFourGrade, as: UTF8.self)
+            .replacingOccurrences(of: "\"gamma\": 1.1", with: "\"gamma\": 9").utf8)
+        XCTAssertThrowsError(try ProjectCodec.decode(outside))
+        for data in [formatTwoMedia, formatFour, formatFourRegionEdits, formatFourBake] {
+            for track in try ProjectCodec.decode(data).tracks {
+                XCTAssertTrue(track.regions.allSatisfy { $0.grade == nil }, "an older part shows its file as it is")
             }
         }
     }

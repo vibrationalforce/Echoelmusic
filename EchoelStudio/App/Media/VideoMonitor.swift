@@ -31,8 +31,18 @@ final class VideoMonitor {
     /// The frames of the loaded file while `deliversFrames` is on.
     private(set) var output: AVPlayerItemVideoOutput?
     /// How the loaded file stands — its own orientation, which a frame of it does not carry — so a
-    /// picture drawn from its frames turns them upright as the player's layer does.
-    private(set) var orientation: CGAffineTransform = .identity
+    /// picture drawn from its frames turns them upright as the player's layer does. While the colour
+    /// correction draws the frames they arrive upright already, and nothing more is turned.
+    var orientation: CGAffineTransform { grading == .attached ? .identity : fileOrientation }
+    private var fileOrientation: CGAffineTransform = .identity
+
+    /// The colour correction of the part showing (COLOR), read by `ColorGradeCompositor` for every
+    /// frame — the export's drawing, so the window shows what the export writes.
+    private let grade = ColorGradeSource()
+    /// Whether the loaded file's frames go through the colour correction: only while a part of it
+    /// has one, so a song without one plays exactly as before.
+    private enum Grading { case off, loading, attached }
+    private var grading = Grading.off
 
     init() {
         player.isMuted = true
@@ -55,6 +65,7 @@ final class VideoMonitor {
     func stop() {
         loop?.cancel()
         loop = nil
+        grading = .off
         player.pause()
         detachOutput()
         player.replaceCurrentItem(with: nil)
@@ -81,10 +92,13 @@ final class VideoMonitor {
             let item = AVPlayerItem(url: url)
             attachOutput(to: item)
             player.replaceCurrentItem(with: item)
+            grading = .off
             loadOrientation(of: url)
+            updateGrade(project: project, shot: shot, url: url)
             seek(to: shot.fileSeconds, playing: playing)
             return
         }
+        updateGrade(project: project, shot: shot, url: url)
         guard !seeking else { return }
         let observed = player.currentTime().seconds
         guard playing else {
@@ -118,6 +132,7 @@ final class VideoMonitor {
         guard loaded != nil else { return }
         loaded = nil
         seeking = false
+        grading = .off
         player.pause()
         detachOutput()
         player.replaceCurrentItem(with: nil)
@@ -144,12 +159,81 @@ final class VideoMonitor {
 
     /// Reads the file's orientation off the main thread; a file loaded meanwhile keeps its own.
     private func loadOrientation(of url: URL) {
-        orientation = .identity
+        fileOrientation = .identity
         Task { @MainActor [weak self] in
             let transform = await VideoMonitor.preferredTransform(of: url)
             guard let self, self.loaded?.url == url else { return }
-            self.orientation = transform
+            self.fileOrientation = transform
         }
+    }
+
+    // MARK: - Colour correction (COLOR)
+
+    /// The grade of the part showing, and the drawing through it switched on while any part of the
+    /// loaded file has one — off again when none has.
+    private func updateGrade(project: Project, shot: VideoPlan.Shot, url: URL) {
+        let shown = project.track(shot.track).flatMap { track in track.regions.first { $0.id == shot.region } }?.grade
+        grade.grade = shown?.held ?? .neutral
+        let wanted = project.tracks.contains { track in
+            track.kind == .video && track.regions.contains { $0.media == shot.media && !($0.grade?.held.isNeutral ?? true) }
+        }
+        switch (wanted, grading) {
+        case (true, .off):
+            grading = .loading
+            let source = grade
+            Task { @MainActor [weak self] in
+                let composition = await VideoMonitor.gradingComposition(of: url, grade: source)
+                guard let self, self.loaded?.url == url, self.grading == .loading else { return }
+                guard let composition else {
+                    self.grading = .off
+                    return
+                }
+                self.player.currentItem?.videoComposition = composition
+                self.grading = .attached
+            }
+        case (false, .attached), (false, .loading):
+            player.currentItem?.videoComposition = nil
+            grading = .off
+        default:
+            break
+        }
+    }
+
+    /// What the window's drawing needs to know of a file's picture track, read off the main thread.
+    private struct PictureTrack: Sendable {
+        let id: CMPersistentTrackID
+        let natural: CGSize
+        let transform: CGAffineTransform
+        let endSeconds: Double
+        let framesPerSecond: Double
+    }
+
+    nonisolated private static func pictureTrack(of url: URL) async -> PictureTrack? {
+        let asset = AVURLAsset(url: url)
+        guard let track = try? await asset.loadTracks(withMediaType: .video).first,
+              let loaded = try? await track.load(.naturalSize, .preferredTransform, .timeRange, .nominalFrameRate) else {
+            return nil
+        }
+        let (natural, transform, range, rate) = loaded
+        return PictureTrack(id: track.trackID, natural: natural, transform: transform, endSeconds: CMTimeGetSeconds(CMTimeRangeGetEnd(range)),
+                            framesPerSecond: rate.isFinite && rate >= 1 ? Double(rate) : 30)
+    }
+
+    /// The file's picture, upright, through `ColorGradeCompositor` — the export's drawing.
+    private static func gradingComposition(of url: URL, grade: ColorGradeSource) async -> AVVideoComposition? {
+        guard let picture = await pictureTrack(of: url) else { return nil }
+        let upright = CGRect(origin: .zero, size: picture.natural).applying(picture.transform)
+        let size = CGSize(width: abs(upright.width).rounded(), height: abs(upright.height).rounded())
+        guard size.width >= 1, size.height >= 1 else { return nil }
+        let composition = AVMutableVideoComposition()
+        composition.customVideoCompositorClass = ColorGradeCompositor.self
+        composition.renderSize = size
+        composition.frameDuration = CMTime(seconds: 1 / picture.framesPerSecond, preferredTimescale: 60_000)
+        let placing = VideoExport.placement(natural: picture.natural, transform: picture.transform, in: size, fit: .fit)
+        let end = CMTime(seconds: picture.endSeconds.isFinite ? Swift.max(picture.endSeconds, 0) : 0, preferredTimescale: 60_000)
+        composition.instructions = [ColorGradeInstruction(timeRange: CMTimeRange(start: .zero, end: end),
+                                                          track: picture.id, placing: placing, grade: grade)]
+        return composition
     }
 
     nonisolated private static func preferredTransform(of url: URL) async -> CGAffineTransform {

@@ -2047,6 +2047,12 @@ final class DocumentController {
             if let file = project.mediaFile(segment.media), let url = mediaURL(file) { files[segment.media] = url }
         }
         let sources = files
+        // Each part's colour correction (COLOR), drawn as the video window shows it.
+        var grading: [RegionID: ColorGrade] = [:]
+        for track in project.tracks where track.kind == .video {
+            for region in track.regions { if let grade = region.grade { grading[region.id] = grade } }
+        }
+        let grades = grading
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(ProjectLibrary.safeFileName(for: songName)).appendingPathExtension("mp4")
         let result: Result<MixLoudness.Report?, Error> = await Task.detached(priority: .userInitiated) { () async -> Result<MixLoudness.Report?, Error> in
@@ -2062,7 +2068,7 @@ final class DocumentController {
                     VideoExport.FieldOverPicture(pass: $0, project: project, fromSeconds: span.from,
                                                  peaks: prepared?.peaks ?? [])
                 }
-                try await VideoExport.write(segments: segments, files: sources, mix: prepared?.url,
+                try await VideoExport.write(segments: segments, files: sources, grades: grades, mix: prepared?.url,
                                             duration: span.to - span.from, options: options, field: field, to: url)
                 return .success(prepared?.loudness)
             } catch {

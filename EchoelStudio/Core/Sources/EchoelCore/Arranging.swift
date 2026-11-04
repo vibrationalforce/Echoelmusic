@@ -228,6 +228,10 @@ public enum Arranging {
         if track.kind == .audio {
             commands += Self.edits(of: region, onto: copy, in: track)
         }
+        // The copy of a video part shows its colour correction (COLOR).
+        if track.kind == .video, let grade = region.grade {
+            commands.append(.setRegionGrade(track: track.id, copy, grade: grade))
+        }
         return commands
     }
 

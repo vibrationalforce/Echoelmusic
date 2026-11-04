@@ -172,6 +172,12 @@ extension Project {
                 if let bpm = region.nativeBPM, !(bpm.isFinite && AudioRegion.nativeBPMRange.contains(bpm)) {
                     throw Self.invalid("regions", "a region's native tempo is outside \(AudioRegion.nativeBPMRange) BPM")
                 }
+                // A colour correction (COLOR, optional inside format 4) belongs to a video part, every value in range.
+                if let grade = region.grade {
+                    guard track.kind == .video, grade.isValid else {
+                        throw Self.invalid("regions", "a colour correction off a video part, or a value outside its range")
+                    }
+                }
                 // A bake (W3, optional inside format 4) names an audio file that holds the region's stretch.
                 guard bakeFits(region) else {
                     throw Self.invalid("regions", "a region's bake names no original that holds its stretch, or a setting out of range")

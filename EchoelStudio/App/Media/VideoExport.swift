@@ -110,15 +110,19 @@ enum VideoExport {
         /// How the part is placed (its own orientation, then fill or fit) and the file's size;
         /// nil for black.
         let placing: (transform: CGAffineTransform, natural: CGSize)?
+        /// The part's colour correction (COLOR); nil for black and for a part shown as it is.
+        var grade: ColorGrade?
     }
 
     /// Lays `segments` (seconds of the export) from `files` into one picture track, the `mix` under
     /// it, and writes an MP4 to `url`. Each part is scaled into the frame by `options.fit`; gaps
     /// and the time past the last part are black. `duration` is how long the export runs at least.
     /// With `options.fieldLayer` showing, `field` draws the Field over every frame (W15) through
-    /// `FieldLayerCompositor`; Off, the built-in compositor writes the picture as it always did.
-    static func write(segments: [VideoPlan.Segment], files: [MediaID: URL], mix: URL?, duration: Double,
-                      options: Options, field: FieldOverPicture?, to url: URL) async throws {
+    /// `FieldLayerCompositor`; Off, the built-in compositor writes the picture as it always did —
+    /// unless a part has a colour correction in `grades` (COLOR): then every frame is drawn by
+    /// `ColorGradeCompositor`, the drawing the video window shows it with.
+    static func write(segments: [VideoPlan.Segment], files: [MediaID: URL], grades: [RegionID: ColorGrade] = [:],
+                      mix: URL?, duration: Double, options: Options, field: FieldOverPicture?, to url: URL) async throws {
         let timescale: CMTimeScale = 48_000
         func moment(_ seconds: Double) -> CMTime { CMTime(seconds: seconds, preferredTimescale: timescale) }
         let composition = AVMutableComposition()
@@ -153,7 +157,8 @@ enum VideoExport {
             }
             black(until: at)
             shots.append(Shot(range: CMTimeRange(start: at, duration: length),
-                              placing: (placement(natural: natural, transform: transform, in: frame, fit: options.fit), natural)))
+                              placing: (placement(natural: natural, transform: transform, in: frame, fit: options.fit), natural),
+                              grade: grades[segment.region].flatMap { $0.held.isNeutral ? nil : $0.held }))
             cursor = CMTimeAdd(at, length)
         }
         guard !shots.isEmpty else { throw ExportError.noPicture }
@@ -193,7 +198,14 @@ enum VideoExport {
                                         sourceHeight: Double($0.natural.height))
                 }
                 return FieldLayerInstruction(timeRange: shot.range, track: placed == nil ? nil : picture.trackID,
-                                             placement: placed, film: film)
+                                             placement: placed, film: film, grade: placed == nil ? nil : shot.grade)
+            }
+        } else if shots.contains(where: { $0.grade != nil }) {
+            video.customVideoCompositorClass = ColorGradeCompositor.self
+            video.instructions = shots.map { shot in
+                ColorGradeInstruction(timeRange: shot.range, track: shot.placing == nil ? nil : picture.trackID,
+                                      placing: shot.placing?.transform ?? .identity,
+                                      grade: ColorGradeSource(shot.grade ?? .neutral))
             }
         } else {
             video.instructions = shots.map { shot in

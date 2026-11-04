@@ -142,6 +142,10 @@ public enum Command: Codable, Equatable, Sendable {
     /// Whether a region follows the song's tempo, and the tempo its file was played at
     /// (`AudioRegion.nativeBPMRange`). Following, it keeps its pitch and spans its beats.
     case setRegionWarp(track: TrackID, RegionID, nativeBPM: Double, followsTempo: Bool)
+    /// A video part's colour correction (COLOR): exposure, contrast, saturation, temperature, tint
+    /// and lift, gamma and gain on the luma, each within its `ColorGrade` range. The file is never
+    /// changed; the standard grade removes the correction.
+    case setRegionGrade(track: TrackID, RegionID, grade: ColorGrade)
     /// Records `media` — a file the app rendered from the region's original — and points the
     /// region at it, `bake` naming the original and the settings (W3). The region keeps its place,
     /// length, fades, gain and warp. A baked region is baked again from its original, never from
@@ -1109,6 +1113,17 @@ extension Command {
                                                 reason: "must be within \(AudioRegion.gainRange.lowerBound)…\(AudioRegion.gainRange.upperBound) dB")
             }
             project.tracks[t].regions[r].gainDB = gainDB == 0 ? nil : gainDB
+
+        case let .setRegionGrade(trackID, id, grade):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .video else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only video parts have a colour correction")
+            }
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            guard grade.isValid else {
+                throw CommandError.invalidValue(parameter: "grade", reason: "every value must be a number within its range")
+            }
+            project.tracks[t].regions[r].grade = grade.isNeutral ? nil : grade
 
         case let .bakeRegion(trackID, id, file, bake):
             let t = try project.requireTrack(trackID)

@@ -1,4 +1,5 @@
 import EchoelCore
+import Foundation
 import SwiftUI
 
 /// A whole number that belongs to this device, not to the song — a port, a universe, a DMX
@@ -14,6 +15,9 @@ struct SettingField: View {
     let range: ClosedRange<Int>
     /// Shown after the number with a space ("kbit/s"); empty for a plain count.
     var unit = ""
+    /// Decimal places the whole-number value is shown with: 2 shows 150 as 1.50 (a colour
+    /// correction's exposure in hundredths of a stop). 0 shows it as it is.
+    var decimals = 0
     /// The grid the value lands on (100 for a bit rate, 1 for a port).
     var step = 1
     /// What double-tap and the pad's Default key return to; nil when there is none.
@@ -90,7 +94,7 @@ struct SettingField: View {
         }
         .accessibilityElement()
         .accessibilityLabel(title)
-        .accessibilityValue(spokenUnit.map { "\(value) \($0)" } ?? shown)
+        .accessibilityValue(spokenUnit.map { "\(number) \($0)" } ?? shown)
         .accessibilityAdjustableAction { direction in
             finish(snapped(value + (direction == .increment ? step : -step)))
         }
@@ -112,7 +116,14 @@ struct SettingField: View {
         ended?()
     }
 
-    private var shown: String { unit.isEmpty ? String(value) : "\(value) \(unit)" }
+    private var number: String {
+        guard decimals > 0 else { return String(value) }
+        return String(format: "%.\(decimals)f", Double(value) / divisor)
+    }
+
+    private var divisor: Double { Foundation.pow(10, Double(Swift.min(decimals, 6))) }
+
+    private var shown: String { unit.isEmpty ? number : "\(number) \(unit)" }
 
     private var owner: String { "setting.\(title)" }
 
@@ -124,7 +135,7 @@ struct SettingField: View {
         let deliver = commit
         let close = ended
         pad.open(NumberPadRequest(owner: owner, title: title,
-                                  format: NumberEntryFormat(scale: 1, decimals: 0, unit: unit),
+                                  format: NumberEntryFormat(scale: 1 / divisor, decimals: decimals, unit: unit),
                                   range: Double(bounds.lowerBound)...Double(bounds.upperBound),
                                   value: Double(value), standard: standard.map { Double(Self.snapped($0, step: grid, in: bounds)) }) { typed in
             deliver(Self.snapped(Int(typed.rounded()), step: grid, in: bounds))

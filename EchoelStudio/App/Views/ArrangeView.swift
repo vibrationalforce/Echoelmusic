@@ -779,6 +779,9 @@ private struct RegionBlock: View {
             Button("Convert to MIDI…", systemImage: "pianokeys") { router.sheet = .convertToMIDI(track.id, region.id) }
             Button("Pitch & Texture…", systemImage: "tuningfork") { editPitchTexture() }
         }
+        if file.kind == .video {
+            Button("Color…", systemImage: "camera.filters") { router.sheet = .regionColor(track.id, region.id) }
+        }
         Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
         Button("Split at Playhead", systemImage: "scissors") { split() }
         if Arranging.consolidated(region, in: track, project: store.project) != nil {

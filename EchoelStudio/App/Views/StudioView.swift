@@ -154,6 +154,7 @@ struct StudioView: View {
         case .connections: ConnectionsView()
         case .jam: JamView()
         case let .regionEdit(track, region): RegionEditView(trackID: track, regionID: region)
+        case let .regionColor(track, region): RegionColorView(trackID: track, regionID: region)
         case let .convertToMIDI(track, region): ConvertToMIDIView(trackID: track, regionID: region)
         case let .regionBake(track, region): RegionBakeView(trackID: track, regionID: region)
         case .browser: MediaBrowserView()

@@ -54,6 +54,7 @@ extension Command {
         case placeVideo, splitRegion
         case splitPlacement, consolidatePlacements, consolidateRegions
         case setRegionFades, setRegionGain, setRegionWarp
+        case setRegionGrade
         case bakeRegion, revertRegionBake
         case addScene, removeScene, renameScene, setSlot
         case setInstrumentWavetable
@@ -140,6 +141,7 @@ extension Command {
         case .setRegionFades: .setRegionFades
         case .setRegionGain: .setRegionGain
         case .setRegionWarp: .setRegionWarp
+        case .setRegionGrade: .setRegionGrade
         case .bakeRegion: .bakeRegion
         case .revertRegionBake: .revertRegionBake
         case .addScene: .addScene
@@ -532,6 +534,11 @@ public enum CommandCatalog {
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
                                             P("nativeBPM", .number, "The tempo the file was played at."),
                                             P("followsTempo", .boolean, "True: the region follows the song's tempo.")])
+        case .setRegionGrade:
+            return CommandSpec(name: "video.color", title: "Color",
+                               summary: "Sets a video part's colour correction: exposure (EV, -3 to 3), contrast (0 to 2), saturation (0 to 2), temperature and tint (-1 to 1), and lift (-0.5 to 0.5), gamma (0.25 to 4) and gain (0 to 2) on the luma. The standard values show the file as it is.",
+                               parameters: [P("track", .trackID, "The video track."), P("region", .regionID, "The video part."),
+                                            P("grade", .string, "exposure, contrast, saturation, temperature, tint, lift, gamma, gain.")])
         case .bakeRegion:
             return CommandSpec(name: "audio.bake", title: "Pitch & Texture",
                                summary: "Points an audio region at a file the app rendered from its original with pitch correction, a granular texture or both; the original stays in the song. Written by the app, not typed.",

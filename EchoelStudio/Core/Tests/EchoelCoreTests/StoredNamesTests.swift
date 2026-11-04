@@ -59,6 +59,13 @@ final class StoredNamesTests: XCTestCase {
         } else {
             XCTFail("a bake encodes")
         }
+        // A video part's colour correction stores its values by these names (COLOR).
+        if let data = try? JSONEncoder().encode(ColorGrade(exposure: 1)),
+           let stored = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            XCTAssertEqual(Set(stored.keys), ["exposure", "contrast", "saturation", "temperature", "tint", "lift", "gamma", "gain"])
+        } else {
+            XCTFail("a colour correction encodes")
+        }
         // A track's arpeggiator stores its rate and order by name; absent is no arpeggiator (EDIT-2).
         XCTAssertEqual(ArpRate.allCases.map(\.rawValue), ["quarter", "eighth", "sixteenth", "thirtySecond", "quarterTriplet",
                                                          "eighthTriplet", "sixteenthTriplet", "thirtySecondTriplet"])
