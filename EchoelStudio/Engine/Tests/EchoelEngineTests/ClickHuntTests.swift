@@ -187,6 +187,24 @@ final class ClickHuntTests: XCTestCase {
         }
     }
 
+    /// A start at a region's first frame is no start inside it: the region rises by its own edge
+    /// fade and plays as it is from there. So an export or a bake of a region at the song's start
+    /// stays the region — the start's fade is for a start inside a sounding region only.
+    func testAStartAtARegionsFirstFrameLeavesTheRegionAsItIs() throws {
+        let song = try audioSong(try sineBuffer(seconds: 1, stereo: false))
+        let core = core()
+        publish(song.project, to: core, samples: song.samples)
+        core.play()
+        let out = render(core, frames: 2_048)
+        let centre = Float(0.5.squareRoot())
+        var worst: Float = 0
+        for i in Int(EngineCore.regionFadeFrames)..<2_048 {
+            let file = Float(0.5 * sin(2 * Double.pi * 220 * Double(i) / 48_000))
+            worst = Swift.max(worst, Swift.abs(out.left[i] - file * centre))
+        }
+        XCTAssertLessThan(worst, 1e-5, "after its own edge, the region as it is")
+    }
+
     func testASeekWhilePlayingDoesNotClick() throws {
         let song = try audioSong(try sineBuffer(seconds: 4, stereo: true))
         let core = core()
@@ -385,6 +403,30 @@ final class ClickHuntTests: XCTestCase {
         }
         let settled = zip(after.left[256...], expected[256...]).map { Swift.abs($0 - $1) }.max() ?? 1
         XCTAssertLessThan(settled, 1e-4, "back on the grid after the seek")
+    }
+
+    /// The sampler on a sine: notes, a repeated key, overlapping notes, more notes than voices,
+    /// notes held past the sample's end, and the same as one-shots.
+    func testTheSamplerPlaysWithoutAClick() throws {
+        let tone = (0..<24_000).map { (i: Int) -> Float in Float(0.4 * sin(2 * Double.pi * 261.63 * Double(i) / 48_000)) }
+        let buffer = try XCTUnwrap(SampleBuffer(samples: tone, sampleRate: rate))
+        let sixteenth = quarter / 4
+        var notes: [Note] = []
+        for k in 0..<20 {
+            notes.append(Note(pitch: 60 + (k % 5), velocity: 100, start: Tick(k) * sixteenth, length: 3 * sixteenth))
+        }
+        notes.append(Note(pitch: 60, velocity: 100, start: bar, length: 2 * bar))
+        for mode in [0.0, 1.0] {
+            var song = try instrumentSong(notes, device: .sampler,
+                                          settings: [(.samplerRoot, 60), (.samplerMode, mode)], tempo: 240)
+            let media = MediaFile(name: "Tone", path: "Media/tone.wav", frameCount: buffer.frameCount, sampleRate: rate)
+            try Command.addMedia(media).apply(to: &song.project)
+            try Command.setInstrumentSample(song.track, media.id).apply(to: &song.project)
+            let core = core()
+            publish(song.project, to: core, samples: [media.id: buffer])
+            core.play()
+            assertNoClicks(render(core, frames: 3 * 48_000), "sampler, mode \(mode)")
+        }
     }
 
     func testTheKitPlaysAPatternWithoutAClick() throws {

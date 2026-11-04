@@ -27,6 +27,47 @@ final class HarmonizerTests: XCTestCase {
         1_200 * Foundation.log2(found / expected)
     }
 
+    /// A voice switched on, a style changed, an interval changed while the voice sounds: the
+    /// harmonies fade out and in again over a few milliseconds, the dry sound goes on, and nothing
+    /// moves faster than the sound itself does. Before, a voice entered mid-waveform — Free to
+    /// Organum stepped by the whole level (click hunt, 2026-11-01).
+    func testAChangeOfVoicesFadesInsteadOfStepping() {
+        let changes: [(Harmonizer.Settings, Harmonizer.Settings)] = [
+            (.init(first: 7, level: 1), .init(first: 7, second: -12, level: 1)),
+            (.init(first: 7, level: 1), .init(first: nil, level: 1, voicing: .ison(root: 9, reference: 440))),
+            (.init(first: 7, level: 1), .init(first: -5, level: 1)),
+        ]
+        for (index, change) in changes.enumerated() {
+            let harmonizer = Harmonizer(sampleRate: rate, settings: change.0)
+            let input = tone(220, seconds: 1)
+            var first = Array(input[..<24_037]), second = Array(input[24_037...])
+            first.withUnsafeMutableBufferPointer { a in
+                guard let x = a.baseAddress else { return }
+                var copy = Array(a)
+                copy.withUnsafeMutableBufferPointer { b in
+                    guard let y = b.baseAddress else { return }
+                    harmonizer.process(left: x, right: y, frames: a.count)
+                }
+            }
+            harmonizer.settings = change.1
+            second.withUnsafeMutableBufferPointer { a in
+                guard let x = a.baseAddress else { return }
+                var copy = Array(a)
+                copy.withUnsafeMutableBufferPointer { b in
+                    guard let y = b.baseAddress else { return }
+                    harmonizer.process(left: x, right: y, frames: a.count)
+                }
+            }
+            let heard = first + second
+            // The second difference: a step's spike, where a tone barely bends.
+            func sharpest(_ range: Range<Int>) -> Float {
+                range.map { Swift.abs(heard[$0] - 2 * heard[$0 - 1] + heard[$0 - 2]) }.max() ?? 0
+            }
+            let steady = Swift.max(sharpest(12_000..<24_000), sharpest(30_000..<47_000))
+            XCTAssertLessThanOrEqual(sharpest(24_030..<24_600), steady * 1.5, "change \(index)")
+        }
+    }
+
     func testWithEveryVoiceOffTheSoundPassesUnchanged() {
         let input = tone(220)
         let (l, r) = run(Harmonizer(sampleRate: rate, settings: .init(first: nil)), input)

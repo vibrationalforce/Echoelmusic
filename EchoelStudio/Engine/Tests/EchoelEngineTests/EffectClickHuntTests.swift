@@ -68,6 +68,27 @@ final class EffectClickHuntTests: XCTestCase {
         XCTAssertEqual(found, [], found.joined(separator: "\n"))
     }
 
+    /// The harmonizer's styles (VOX): each one sung over a held voice, and a style changed while
+    /// the voice sounds — a named choice changes at once, so its voices must enter without a click.
+    func testEveryHarmonyStyleAndAChangeOfStyleSingWithoutAClick() throws {
+        let kernel = EffectKernel(effect: .harmonizer, sampleRate: rate)
+        let style = try XCTUnwrap(kernel.parameters.first { $0.identifier == "style" })
+        let level = try XCTUnwrap(kernel.parameters.first { $0.identifier == "level" })
+        var found: [String] = []
+        for index in 0..<style.choices.count {
+            let held = EffectKernel(effect: .harmonizer, sampleRate: rate)
+            held.setParameter(level.address, 1)
+            held.setParameter(style.address, Float(index))
+            let next = (index + 1) % style.choices.count
+            let out = play(held, frames: 48_000, changeAt: 94) { held.setParameter(style.address, Float(next)) }
+            let clicks = ClickDetector().clicks(in: out.left).filter { $0.index > 4_800 }
+            if let first = clicks.first {
+                found.append("\(style.choices[index]) → \(style.choices[next]): \(clicks.count) — \(first)")
+            }
+        }
+        XCTAssertEqual(found, [], found.joined(separator: "\n"))
+    }
+
     /// Each effect at its defaults plays the tone through without a click of its own.
     func testEveryEffectPlaysAToneThroughWithoutAClick() {
         var found: [String] = []

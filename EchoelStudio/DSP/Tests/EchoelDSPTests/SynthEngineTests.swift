@@ -124,12 +124,16 @@ final class SynthEngineTests: XCTestCase {
     }
 
     /// The choir's budget per 128-frame block: a full chord of sixteen voices renders faster than it
-    /// plays even in a debug build, and costs at most four times the classic oscillator's (measured
-    /// 2026-11-01: 0.28 s against 0.13 s for the second, debug, on Linux).
+    /// plays even in a debug build, and costs at most six times the classic oscillator's. Each is the
+    /// best of three runs, so one slow run of a shared machine does not decide. Measured for the
+    /// second of sound, debug: 0.28 s against 0.13 s on Linux (2026-11-01, ratio 2.0 … 2.7), 0.73 …
+    /// 0.89 s against 0.16 … 0.19 s on the macOS runner (2026-11-04, ratio 3.7 … 4.6 — the factor 4
+    /// that stood here failed there on unchanged choir code, AUD).
     func testAFullChoirChordStaysWithinTheBudget() {
-        let choir = chordSeconds(.choir), classic = chordSeconds(.classic)
+        let choir = (0..<3).map { (_: Int) -> Double in chordSeconds(.choir) }.min() ?? 0
+        let classic = (0..<3).map { (_: Int) -> Double in chordSeconds(.classic) }.min() ?? 0
         XCTAssertLessThan(choir, 1, "375 blocks of 128 frames: one second of sound in under a second")
-        XCTAssertLessThan(choir, classic * 4, "choir \(choir) s, classic \(classic) s")
+        XCTAssertLessThan(choir, classic * 6, "choir \(choir) s, classic \(classic) s")
     }
 
     func testTheSubAddsTheOctaveBelow() {
