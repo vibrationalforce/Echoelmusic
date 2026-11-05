@@ -1,23 +1,17 @@
-11.0.0 — headphone spatial, pitch and texture, loop record, MIDI 2.0, light cues, colour
+11.0.0 — ADM BWF export, Learn, MIDI Time Code
 
-What is new since 10045. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10050. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Headphone Spatial Monitor (Song menu, Play and Sync): each track sounds where its pan puts it,
-  for headphones; "Export Spatial Headphone Mix (WAV)". Off by default, the normal export is
-  unchanged.
-- Pitch & Texture on an audio region: pitch correction toward the song's key (up to 2
-  semitones, formants not preserved) and a granular texture, baked to a new file;
-  "Revert to Original".
-- Loop record: with a loop of 2 bars or more, every pass becomes a take in the take lanes.
-- MIDI 2.0 (UMP) in and out, each off by default (Song menu, Connect).
-- Phone Motion as a body source: tilt, turning and movement as modulation sources.
-- Light show (Connections): fixture profiles, patch with conflict check, cue list with fades,
-  GO and Blackout, over Art-Net/sACN, flashes held to 3 per second.
-- Color on a video part: exposure, contrast, saturation, temperature, tint, lift/gamma/gain,
-  "Auto Enhance" and "Match Color".
+- "Export ADM BWF (immersive)...": every track to the master becomes a mono object at its pan
+  position (pan automation moves it), returns and own-output tracks form a stereo bed; BW64 with
+  chna and axml, 24-bit, 48 kHz. Read and rendered without warnings by the EBU ADM renderer
+  (ear 2.1.0) offline; not tried in a DAW yet.
+- Learn (Song menu, App, "Learn..."): eleven short chapters with the real menu paths, search.
+- Timecode (MTC) under Connect: send at 24, 25, 29.97 drop-frame or 30 fps from a virtual source
+  "Echoel Timecode" (start 01:00:00:00), or chase an incoming MTC. Off by default.
 
-Previous: 11.0.0 (10045) — drums and breaks, mix analysis, comping, Siri, Resolve export.
-Earlier: git history.
+Previous: 11.0.0 (10050) — headphone spatial, pitch and texture, loop record, MIDI 2.0, light
+cues, colour. Earlier: git history.
 group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
 of earlier songs has not been seen on a device yet.
 
@@ -27,11 +21,11 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Headphones on, Headphone Spatial Monitor on, pan a track hard left then hard right while
-   playing. Does it move outside your head, without clicks?
-2. A slightly out-of-tune vocal or lead region, "Pitch & Texture...", strength 100 %, Bake.
-   Does it land on the note without audible artefacts? Does "Revert to Original" bring it back?
-3. A song with 4 bars of content, loop on, record three passes. Do three takes appear, and
-   does the newest one sound?
-4. Phone Motion on, route Tilt Left/Right to a filter. Does the sound follow the phone smoothly?
-5. A video part, "Color...", "Auto Enhance", then export. Does the export look like the preview?
+1. Export ADM BWF from a song with three panned tracks and open it in a DAW with ADM import
+   (Reaper with EAR, Nuendo, Fairlight). Are the objects where the pans were?
+2. Song menu, App, "Learn...": search "slice", open the chapter. Do the menu paths match the app?
+3. Timecode (MTC) on at 25 fps, QLab or Reaper listening to "Echoel Timecode". Does it count
+   from 01:00:00:00 and jump on locate and stop?
+4. Chase an MTC from QLab or Reaper. Does the song start, follow a jump and stop within a
+   moment of the sender?
+5. Open a song made before this build (with takes, cues, colour). Does everything come back?
