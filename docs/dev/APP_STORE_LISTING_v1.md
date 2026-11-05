@@ -2,9 +2,8 @@
 
 Source of truth for what goes into App Store Connect for the v1.0 submission.
 Grounded in `docs/dev/FEATURE_MATRIX.md` (claim only LIVE) and the brand
-guardrails (`.claude/skills/echoel-marketing/SKILL.md`). Business model v2:
-the instrument is FREE, no purchase UI in v1.0 — the "Echoel Live" yearly
-subscription arrives in v1.1 and is deliberately NOT mentioned anywhere here.
+guardrails (`.claude/skills/echoel-marketing/SKILL.md`). The instrument is FREE,
+with no purchase UI in v1.0.
 
 Primary locale: **en-US** (brand rule: American English). German (de-DE)
 localization = post-launch follow-up.
@@ -169,8 +168,7 @@ immersive visuals, OSC/ADM-OSC, Art-Net/sACN — free, private, no account.
 
 ## Price
 
-Free. **No IAP configured for v1.0.** (Echoel Live sub = v1.1; do NOT create
-the old non-consumable — superseded 2026-07-10B.)
+Free. **No IAP configured for v1.0.**
 
 ---
 

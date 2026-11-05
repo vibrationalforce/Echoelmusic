@@ -10,8 +10,7 @@
 
 **Status (historical):** was CANONICAL from 2026-07-25 until 2026-09-24. Supersedes `DMMW_ARCHITECTURE.md`
 (the "Digital Multidimensional Multimedia Workstation" goal, 2026-06-21).
-Founder delegated this call in full ("Du entscheidest… etwas das einfach zu
-begreifen, zu vermarkten und zu pflegen ist"); decided via Grand Council
+Founder delegated this call in full; decided via Grand Council
 2026-07-25 and logged in `decisions.csv`.
 
 ---
@@ -51,7 +50,7 @@ over time?**
 | Generative bio engine (the home) | Arrangement / clips timeline |
 | Flow + Loop modes | Multi-track recording & mixing desk |
 | **Patch editor** — shape and save the sound | Audio-file import as timeline regions |
-| ~~**Piano roll**~~ — REVERSED by the founder 2026-07-26 ("Pianoroll soll raus"); the note editor is CUT | Video trim & edit (capture of the visual STAYS — see the mp4 export in KEEP) |
+| ~~**Piano roll**~~ — REVERSED by the founder 2026-07-26; the note editor is CUT | Video trim & edit (capture of the visual STAYS — see the mp4 export in KEEP) |
 | Curated genres | AUv3 hosting and the AUv3 plugin target |
 | Output stage (below) | RTMP / broadcast |
 | Export: audio (WAV) · MIDI (.mid) · visual recording (mp4) | Subscription commerce |
@@ -62,7 +61,7 @@ tune is not an instrument. Task #131 shipped the patch editor as a live door
 (`soundPanel`, behind the Sound chip) — that half stands.
 
 > ⛔ **CORRECTION 2026-07-26/27 — the piano-roll half of this section is REVERSED.**
-> The founder decided "Pianoroll soll raus" (#178). The `PianoRollView` struct had no
+> The founder decided to remove the piano roll (#178). The `PianoRollView` struct had no
 > door, was not mounted, and was DELETED by #475 (2026-08-07); there is **no note
 > editor** in the app. A generated take can be
 > heard, mixed and exported — not corrected note by note.

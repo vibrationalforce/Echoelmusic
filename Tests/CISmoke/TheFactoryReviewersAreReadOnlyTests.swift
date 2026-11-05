@@ -430,13 +430,18 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
         }
     }
 
+    /// ⭐ 2026-11-05: the inbox moved to the project's private working repository
+    /// (`echoelmusic-intern`). The skill must still route ESCALATE there and name that repo;
+    /// the file itself is no longer in this tree, so its existence cannot be asserted here.
     func testEscalationsGoToTheFounderInbox() {
-        XCTAssertTrue(text(Self.skillPath).contains("docs/dev/FOUNDER_INBOX.md"), """
+        let skill = text(Self.skillPath)
+        XCTAssertTrue(skill.contains("docs/dev/FOUNDER_INBOX.md"), """
             The factory skill no longer routes ESCALATE to `docs/dev/FOUNDER_INBOX.md`. A question \
             to the founder stands there once, with a date, or it is not asked.
             """)
-        XCTAssertTrue(FileManager.default.fileExists(
-            atPath: repoRoot().appendingPathComponent("docs/dev/FOUNDER_INBOX.md").path),
-            "docs/dev/FOUNDER_INBOX.md is gone — re-point the factory's escalation lane")
+        XCTAssertTrue(skill.contains("echoelmusic-intern"), """
+            The factory skill no longer says that the founder inbox lives in the private repo \
+            `echoelmusic-intern`. Without it an escalation looks for a file this tree no longer has.
+            """)
     }
 }

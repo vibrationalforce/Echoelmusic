@@ -20,13 +20,13 @@ Developer: Echoel (Michael Terbuyken) @ Studio Hamburg
 App Apple ID: 6757957358 · SKU: Simsalabimbam · Team ID: via `APPLE_TEAM_ID` secret
 Bundle prefix: `com.echoelmusic` · App Group: `group.com.echoelmusic`
 
-**Canonical identity map:** `docs/dev/APP_STORE_CONNECT.md` · **Cross-platform plan:** `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` §10
+**Privat seit 2026-11-05** (Repo `echoelmusic-intern`, `docs/dev/`): Identitätskarte `APP_STORE_CONNECT.md`, Plattformplan `ECHOELMUSIC_MASTER_PLAN.md` §10, Founder-Inbox, Roadmap, Pläne, Gedächtnis
 
 ## Wo was liegt
 
 | Pfad | Was | Gesetz / Einstieg |
 |---|---|---|
-| `EchoelStudio/` | die App: `Core/` · `DSP/` · `Engine/` · `App/` · `Plugins/` | `EchoelStudio/CLAUDE.md` · Bauplan `docs/dev/NEUPLANUNG_2026-10-18.md` · Song-Format `docs/FORMAT.md` |
+| `EchoelStudio/` | die App: `Core/` · `DSP/` · `Engine/` · `App/` · `Plugins/` | `EchoelStudio/CLAUDE.md` · Bauplan `NEUPLANUNG_2026-10-18.md` (privat) · Song-Format `docs/FORMAT.md` |
 | `Sources/` · `Tests/` · `Package.swift` · `project.yml` | die frühere App; `Tests/CISmoke` ist das blockierende Wächter-Bündel | `Sources/CLAUDE.md` · `Tests/CISmoke/CLAUDE.md` |
 | `docs/` | Website (GitHub Pages); `docs/dev/` · `adr/` · `research/` intern, unveröffentlicht | `docs/CLAUDE.md` |
 | `ContentPipeline/` · `fastlane/` | Content und Store-Text; `ContentPipeline/CLAIMS.md` = was nach außen gesagt werden darf | `ContentPipeline/README.md` |
@@ -48,8 +48,8 @@ Ein Zeiger auf einen Abschnitt „von `CLAUDE.md`" — in Code, Wächtern, Skrip
 
 ## Produktgesetz — vor jeder Scope-Entscheidung
 
-- **⭐ PRODUCT LAW (canonical since 2026-09-24 — read `docs/dev/FOUNDER_PRODUCT_LAW.md` before ANY scope decision; entry + timeline = `docs/dev/ECHOEL_VISION_2026-10-19.md`; Studio order = NEUPLANUNG §5).** Echoelmusic is a full professional **DMMW** (distributed multidimensional multimedia workstation) — audio, MIDI/MPE, instruments, FX, recording, arrangement, mixing, mastering, automation, video, visual, light, spatial/XR, streaming, collaboration, AI. *Own the complete creative workflow, integrate the complete professional ecosystem* — never rebuild specialist infrastructure (codecs, Dante, NDI, CDNs, plugin SDKs).
-  **CURRENT PRODUCT LAW SUPERSEDES HISTORICAL PRODUCT CUTS — a historical deletion revokes an IMPLEMENTATION, not the capability.** Every ⛔ „gestrichen / CUT / reines Instrument" in this file and in `decisions.csv` is PHASE HISTORY: its ENGINEERING warning stays law (#1302 input graph, #299 refcount, black-screen chain, hot-state), its SCOPE verdict does not. Recovery ports the proven core into today's owners — never copy a subsystem back; what existed, whether it worked and its recovery class: `docs/dev/HISTORY_ARCHIVE.md`. ⚠️ **Scope is not a claim:** store, website and content still claim only what ships (`docs/dev/FEATURE_STATUS.md`, `ContentPipeline/CLAIMS.md`).
+- **⭐ PRODUCT LAW (canonical since 2026-09-24 — read `docs/dev/FOUNDER_PRODUCT_LAW.md` before ANY scope decision; entry + timeline = `ECHOEL_VISION_2026-10-19.md`, Studio order = NEUPLANUNG §5, both private).** Echoelmusic is a full professional **DMMW** (distributed multidimensional multimedia workstation) — audio, MIDI/MPE, instruments, FX, recording, arrangement, mixing, mastering, automation, video, visual, light, spatial/XR, streaming, collaboration, AI. *Own the complete creative workflow, integrate the complete professional ecosystem* — never rebuild specialist infrastructure (codecs, Dante, NDI, CDNs, plugin SDKs).
+  **CURRENT PRODUCT LAW SUPERSEDES HISTORICAL PRODUCT CUTS — a historical deletion revokes an IMPLEMENTATION, not the capability.** Every ⛔ „gestrichen / CUT / reines Instrument" in this file and in `decisions.csv` is PHASE HISTORY: its ENGINEERING warning stays law (#1302 input graph, #299 refcount, black-screen chain, hot-state), its SCOPE verdict does not. Recovery ports the proven core into today's owners — never copy a subsystem back; what existed, whether it worked and its recovery class: `HISTORY_ARCHIVE.md` (privat). ⚠️ **Scope is not a claim:** store, website and content still claim only what ships (`docs/dev/FEATURE_STATUS.md`, `ContentPipeline/CLAIMS.md`).
 - **§4b — keine Waffen, keine Überwachung, kein Targeting** (Founder 2026-11-01): nie gebaut, nie
   integriert, nie als Beitrag angenommen; einmal in `decisions.csv` verbucht und nicht wieder geöffnet.
 - **§4c — nicht beim Steuern:** niemand spielt Echoelmusic beim Fahren, Steuern oder Bedienen einer
@@ -75,10 +75,10 @@ NEVER use "BLAB", "Vibrational Force", legacy bio-wellness/soundscape branding, 
   am Gerät geprüft.
 - **Build-Rhythmus** (die Founder-Regeln, seit 2026-11-01 auch für jeden Agenten, `decisions.csv`):
   seit 2026-11-04 (Founder: „immer wieder TestFlight deploy“) ein Build, sobald ein grüner, stimmiger Stapel landet — davor höchstens EIN TestFlight-Build pro Woche · höchstens drei gebaute Scheiben warten auf ein
-  Geräte-Urteil (WIP 3) · genau fünf Geräte-Fragen je Build (`docs/dev/FOUNDER_INBOX.md`, Regeln 1–4;
+  Geräte-Urteil (WIP 3) · genau fünf Geräte-Fragen je Build (`docs/dev/FOUNDER_INBOX.md` in `echoelmusic-intern`, Regeln 1–4;
   Skill `studio-release`). Außer der Reihe nur ein Absturzfix für den Build, den der Founder gerade
   testet, und ein grüner Knackfix — Knacken ist ein Blocker wie ein Absturz.
-- **Eine Frage an den Founder genau einmal**, in `docs/dev/FOUNDER_INBOX.md`, und erst nach der
+- **Eine Frage an den Founder genau einmal**, in `docs/dev/FOUNDER_INBOX.md` (privat, `echoelmusic-intern`), und erst nach der
   Messung, die sie erübrigen könnte (`.claude/rules/context.md` §6).
 - **Tempo:** roher Puls erreicht die Uhr nie direkt — das gilt für beide Apps. Wortlaut T1·T2·T3 und
   Wächter der früheren App: `Sources/CLAUDE.md` „TEMPO INVARIANT"; in Studio

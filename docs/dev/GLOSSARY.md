@@ -3,8 +3,8 @@
 **Rule 1 of the interface audit (COGA objective 3): one word per thing, app-wide.** A
 beginner who reads "song" in the head, "project" in the Library and "session" in a hint has
 to guess whether those are three things or one. They are one. This file is the ONE
-definition of the words the app wears; the founder's table in the audit doc (Tiefenprüfung
-und Neustruktur, „Ein Wort pro Sache") is its source, and the guard
+definition of the words the app wears; it began as a table in the 2026-09-30 interface audit,
+and the guard
 `Tests/CISmoke/TheChromeSpeaksOneWordPerThingTests.swift` READS THIS FILE — it does not
 carry a second copy of the list (#416). Change the table here and the guard follows.
 

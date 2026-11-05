@@ -39,6 +39,11 @@
 // by its retraction line alone, item 7 and item 3 by one pin each). The other **3 are
 // COUNTERWEIGHTS** (#343), green on both trees: the two anchors, plus claim 3, which keeps the
 // surviving true half of the CLAIMS entry from being deleted along with the false one.
+// ⭐ 2026-11-05: `docs/dev/ROADMAP.md` moved to the project's private working repository, and
+// claim 2 (the roadmap pins) moved with it — a guard whose subject leaves the public tree goes
+// where the subject went, it is not skipped. Claims 1 and 3 guard `ContentPipeline/CLAIMS.md`,
+// which stays here, so the file keeps its name and its two claims. Today: 4 assertions
+// (claim 1 = 1 anchor + 2 pins, claim 3 = 1).
 // SOURCE-TEXT SCAN (§1). Prose only; nothing here runs app code.
 
 import Foundation
@@ -47,7 +52,6 @@ import XCTest
 final class TheTwoPlanningRegistersDroppedTheDeletedTests: XCTestCase {
 
     private static let claims = "ContentPipeline/CLAIMS.md"
-    private static let roadmap = "docs/dev/ROADMAP.md"
 
     /// Claim 1 — the claim register records the deletion instead of listing a removed file as
     /// "built and unconditionally constructed".
@@ -66,24 +70,6 @@ final class TheTwoPlanningRegistersDroppedTheDeletedTests: XCTestCase {
             + "below it warns that \"nie gebaut\" invites a session to rebuild something that "
             + "already exists; for this entry the opposite is now true, and leaving that "
             + "unstated turns the surrounding advice against the reader.")
-    }
-
-    /// Claim 2 — the roadmap does not hold a NEXT item or a ✅ DONE row for deleted code.
-    func testTheRoadmapHoldsNoOrderForDeletedCode() throws {
-        let text = try Self.text(Self.roadmap)
-        XCTAssertFalse(text.isEmpty, "ANCHOR MISSING: could not read \(Self.roadmap) (#454).")
-        XCTAssertTrue(
-            text.contains("CUT — [Sound/flagship] Audiovisual Vocoder wiring"),
-            "roadmap item 7 no longer records that the flagship vocoder is CUT. It sat under "
-            + "**NEXT (authorized direction)** saying the cores exist. `VocoderCore` and "
-            + "`FeedbackGuard` are deleted files and the microphone they needed is gone — an "
-            + "authorized NEXT is the strongest instruction this document can give.")
-        XCTAssertTrue(
-            text.contains("VOID — the item, the door and the view are all gone"),
-            "roadmap item 3 no longer records that its ✅ DONE is void. It claimed "
-            + "`SampleBrowserView` reachable via Tools → Drum Samples; the grid went 2026-07-02, "
-            + "the drums with #166/#167 and the view with #167. A ✅ row is the last place anyone "
-            + "re-checks, which is exactly why it outlived three deletions.")
     }
 
     /// Claim 3 — counterweight: the TRUE half of the edited CLAIMS entry must survive the edit.

@@ -144,8 +144,7 @@ GMMW R2, VV-4e, der Wellenform-Fix, F1–F6b und A3a sind ausgeliefert.
 | AUv3-Instrument in anderen Apps (kein Hosting) | Host-App, z. B. AUM | ≤ 2612 | **ja (AUM, 2026-09-20)** |
 
 Die zwei offenen Punkte aus dem Ship-Gate (**Klang** und **Stabilität**) kann nur ein Gerät
-entscheiden. Die Liste aller Geräteproben druckt `python3 scripts/founder-verify.py`; die
-gebündelte Runde steht in `docs/dev/FOUNDER_INBOX.md` §2.
+entscheiden. Die Liste aller Geräteproben druckt `python3 scripts/founder-verify.py`.
 
 ---
 
@@ -162,8 +161,8 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 |---|---|---|---|
 | `BioSourceView` | alte Bio-Seite; trägt Atem-Führung und Puls-Messanzeige | seit dem Tools-Grid-Abbau (2026-07-02) ohne Tür | ein Knopf im Bio-Panel |
 | `ImmersiveStageView` | Raumkarte: jede Spur als Punkt im Raum, ADM-OSC-Status | Ship-Gate 4: Raum „demonstrierbar, nicht Pflicht“ | ein Chip oder Routing-Knopf |
-| `SessionView` | geführte Session mit Atemtakt | Founder 2026-07-06: „keine Atemübung“ | nur mit neuer Founder-Entscheidung |
-| `ProUnlockView` | Kauf-Seite (StoreKit) | Preismodell v1.1 (Jahres-Abo) steht aus | erst mit v1.1 |
+| `SessionView` | geführte Session mit Atemtakt | Founder-Entscheid 2026-07-06: keine Atemübung | nur mit neuer Founder-Entscheidung |
+| `ProUnlockView` | Kauf-Seite (StoreKit) | Preismodell steht aus | erst mit einer späteren Version |
 | `BroadcastView` | RTMP-Livestream | HaishinKit ist nicht verlinkt; eine Tür führte ins Leere. ⛔ **Broadcast S2 ist gesperrt:** das Einbinden von HaishinKit 2.2.5 als Swift-Paket in `project.yml` (für Build und TestFlight-Lauf) wurde am 2026-10-04 von der automatischen Sicherheitsprüfung zweimal abgelehnt („Untrusted Code Integration“). Kein Umweg; freischalten kann nur der Founder (Berechtigungsregel, interaktive Zustimmung oder selbst einbinden) | erst mit neuer Abhängigkeit, und erst nach Freigabe |
 
 ### 2b. Versteckt, eine Ebene tiefer (der Wächter sieht sie NICHT)
@@ -216,7 +215,7 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
 | Noten-**Fläche** Piano Roll | 2026-07-26, #178/#475 | „Pianoroll soll raus“ — ⭐ 2026-10-10: Noten werden wieder bearbeitet, im `PartNoteEditor` (Spur-Detail → Seite „Notes“, `TrackInspectorView`); Composer-Parts erst nach „Edit a copy“ |
 | DAW-Arrangement (Clips, Arrange-Timeline, Mixer-Spuren) | 2026-07-24…31, #121 | Phase „reines Instrument“ (historisch, 2026-07-24) |
 | AUv3-HOST (fremde Plugins laden) | #121 Slice 2 | wie oben (das Echoel-PLUGIN ist zurück, #1385) — ⭐ 2026-10-14: **wieder GEBAUT** für Instrument-Plugins (`Audio/HostedInstrumentHost`, Tür `TrackPluginRow`), Gerät offen, nicht behauptet (CLAIMS §1b) |
-| Mikrofon / Audio-Eingang, Vocoder, Autotune | 2026-09-12, #1302 | „Face und Audio Input komplett entfernen“ |
+| Mikrofon / Audio-Eingang, Vocoder, Autotune | 2026-09-12, #1302 | Founder-Entscheid: Gesichts- und Audio-Eingang entfernt |
 | Harmonizer, Granularsynthese | 2026-09-12, #1305 | wörtlich gestrichen — ⭐ die Granular-Hälfte ist zurück (Echoel Grain, GA-9/GA-10, Fach 1); der Harmonizer bleibt gestrichen |
 | Gesichts-/Körper-Tracking | 2026-09-12, #1301 | wie Audio-Eingang |
 | Video-Aufnahme und -Schnitt | 2026-09-12, #1304 (Schnitt schon #121) | „Kein Video Capture“ |
@@ -229,8 +228,8 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
 **Was einer Profi-DAW heute wirklich fehlt** (UX-Audit 2026-10-02, `UX_AUDIT_2026-10-02.md`; Song-WAV-Export und
 Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): Beats aus Samples (⛔ „eine Tür zum Sampler … `SamplerVoice` hat keinen Lader“ stand hier — seit GA-4 hat jede Spur
 einen Sampler mit Lader und Tür `TrackSampleRow`; korrigiert 2026-10-10) · Sends/Returns · Audio-Eingang mit Aufnahme, Sampling, Analyse
-(#1302, Inbox E10) · AUv3-**Hosting** (Inbox E11 — ⭐ für Instrument-Plugins seit H2–H4 gebaut, Gerät offen; Effekt-Plugins nicht; das ausgelieferte AUv3-INSTRUMENT ist kein Hosting-Nachweis) ·
-Video als musikalisches Material (Inbox E12; ⭐ der erste Schritt E12-1 „Use Its Sound“ ist seit Build 2617 ausgeliefert, Fach 1c) · ein hörbarer Raum im Kopfhörer (S3; ⭐ für Audiospuren seit Build 2617 über „Headphone space“, Fach 1c — die generierten Stimmen bleiben stereo). Die Pläne dazu stehen in
+(#1302) · AUv3-**Hosting** (⭐ für Instrument-Plugins seit H2–H4 gebaut, Gerät offen; Effekt-Plugins nicht; das ausgelieferte AUv3-INSTRUMENT ist kein Hosting-Nachweis) ·
+Video als musikalisches Material (⭐ der erste Schritt E12-1 „Use Its Sound“ ist seit Build 2617 ausgeliefert, Fach 1c) · ein hörbarer Raum im Kopfhörer (S3; ⭐ für Audiospuren seit Build 2617 über „Headphone space“, Fach 1c — die generierten Stimmen bleiben stereo). Die Pläne dazu stehen in
 `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7; geplant heißt nicht ausgeliefert.
 
 RTMP-Livestream · Bewegungs-Sensor · EEG · MPE-**Eingang** mit Zonen (MPE-Ausgang läuft) · iPad ·

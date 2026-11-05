@@ -1,12 +1,10 @@
-> **Einstieg seit 2026-10-19: `docs/dev/ECHOEL_VISION_2026-10-19.md`** — welche Datei welche Frage beantwortet, der eine Produktsatz, die Mehrjahres-Zeitachse. Ziel und rote Linien bleiben hier.
->
-> **Bauplan seit 2026-10-18: `docs/dev/NEUPLANUNG_2026-10-18.md`** — ordnet den Weg dorthin (P0–P7); diese Datei bleibt die Scope-Autorität.
+> Plans, timeline and the reasoning behind each rule are kept in the project's private working repository.
 
 # FOUNDER PRODUCT LAW — the current product definition
 
 **Status: CURRENT, highest authority for product scope.** Founder decision 2026-09-24.
 It supersedes `docs/dev/PRODUCT_DEFINITION.md` (2026-07-25 → 2026-09-24), which is kept
-unaltered below its banner as the record of the "pure instrument" phase.
+below its banner as the record of the "pure instrument" phase.
 
 > ## CURRENT PRODUCT LAW SUPERSEDES HISTORICAL PRODUCT CUTS.
 >
@@ -24,49 +22,23 @@ This page is published under `docs/dev/` and must be read as a roadmap, never as
 
 ## 1. What Echoelmusic is
 
-> ⭐ **FOCUS (founder 2026-10-15, verbatim: „Biofeedback ist nur ein kleines gimmick. Wir wollen
-> den hauptfocus auf professionelle Medienproduktion legen").** The main focus is professional
+> ⭐ **FOCUS (2026-10-15).** The main focus is professional
 > media production — audio, MIDI, video, arrangement, mixing, export, the professional
 > ecosystem. Biofeedback is one optional modulation source among others, not the identity.
 > Consequences: when bio and production compete for a resource (the rear camera, screen space,
 > the first screen a newcomer sees, the build order), **production wins**. Bio code stays, works
 > and keeps its safety law (§4); it is no longer the lead of any surface or of the pitch.
 
-> ⭐ **NORTH STAR (founder 2026-10-16): GSIDMMW — Generative Superintelligence Distributed
-> Multidimensional Multimedia Workstation.** D stays *Distributed*, the canonical DMMW word; the
-> brand stays Echoelmusic; no type is renamed (`DMMWProject` keeps its name). Generative
-> intelligence is meant to connect the domains below: understand an intention, use the right
-> tool, produce a result, check it, and leave it editable under the person's control — the work
-> and the responsibility for it stay with the person. **"Superintelligence" names the long-term
-> research goal, never a shipped capability.** A language model, several agents or good music
-> generation are not superintelligence. Shipped capabilities are named by what they do and how
-> they were accepted (`FEATURE_STATUS.md`); outward copy never says "superintelligence" — the
-> sentence guard `TheCopyMakesNoHealthClaimTests` refuses it on the website, the store text and
-> the string catalog (history: `decisions.csv` 2026-06-20, `HISTORY_ARCHIVE.md` M8). The north
-> star is no licence for a new dependency, target, cloud upload or for skipping a rule of this
-> repo. Every step lands as a concrete, checkable capability inside the existing project, time,
-> control and undo structures. Order: `ECHOELMUSIC_MASTER_PLAN.md` §1; the audit behind it and
-> its packages A–G: `scratchpads/GSIDMMW_AUDIT_2026-10-16.md`.
+> ⭐ **INTELLIGENCE (2026-10-16).** Generative intelligence is meant to connect the domains below:
+> understand an intention, use the right tool, produce a result, check it, and leave it editable
+> under the person's control — the work and the responsibility for it stay with the person.
+> Shipped capabilities are named by what they do and how they were accepted (`FEATURE_STATUS.md`);
+> outward copy never says "superintelligence" — the sentence guard `TheCopyMakesNoHealthClaimTests`
+> refuses it on the website, the store text and the string catalog. This is no licence for a new
+> dependency, target, cloud upload or for skipping a rule of this repo.
 
-> ⭐ **Reaffirmed by the founder 2026-10-24** („unserer gesamt Vision Echoelmusic App GSIMMW gemerged
-> mit Plugins und dem besten aus den alten TestFlights kombiniert"): the product is the merged
-> workstation (Echoel Studio) with its own plug-ins, and the best of the earlier TestFlight builds
-> comes back — never copied, rebuilt into today's owners by recovery class
-> (`HISTORY_ARCHIVE.md`) and stage (`PLAN_ENGINE_RECOVERY_2026-10-23.md`: Keys → DDSP engine →
-> BodyVibe). The gates do not move: WIP 3, a device-verified host load, and GM30 in
-> `FOUNDER_INBOX.md`. Logged in `decisions.csv` (2026-10-24, active).
-
-> ⭐ **Course set the same evening (founder 2026-10-24):** no funding applications anywhere, the
-> physical installation is no business line in the plan, development only — ship Echoel Studio on
-> the whole Apple ecosystem in one simultaneous Store launch, then the repository goes private,
-> then other operating systems. Which platforms "whole" means and what private costs: GM36.
->
-> ⭐ **2026-11-04 (founder): funding is OPEN again** — from the week of 2026-11-09 Claude prepares
-> calls and mail drafts for all funding lines and ideas; nothing goes out without his yes
-> (`decisions.csv` 2026-11-04). The development-only course above stands for the product.
-> Logged in `decisions.csv` (2026-10-24, three rows). The measured plan for that course — what ships today,
-> the slice order, what "simultaneous" costs, and the three private-repo options — is
-> `scratchpads/PLAN_STORE_FIRST_2026-10-24.md`.
+> ⭐ **2026-10-24:** the product is the merged workstation (Echoel Studio) with its own plug-ins.
+> The best of the earlier builds comes back rebuilt into today's owners, never copied (§5).
 
 **Echoelmusic is a full professional distributed multidimensional multimedia workstation
 (DMMW).** It is not limited to being a bio-reactive instrument.
@@ -135,7 +107,7 @@ Engineering warnings attached to those deletions **remain valid**:
 | Deletion | Implementation stays revoked because… | Capability today |
 |---|---|---|
 | #1302 audio input | the old input graph crashed at the input node (`isInputConnToConverter` family) and a mis-balanced record-route refcount held the phone in `.playAndRecord` (#299). Do not restore it blindly. | Audio input and recording **are** current scope |
-| #1304 video capture | recorder/muxer never worked to the founder's satisfaction ("hat leider nicht geklappt") | Professional video **is** current scope |
+| #1304 video capture | recorder/muxer never worked reliably | Professional video **is** current scope |
 | #1305 granular | the old implementation lived on the mic path | "Echoel Grain" **is** future scope |
 | #121 Slice 2 hosting | the old per-lane host was removed with the DAW shell | AUv3 / VST3 / CLAP hosting **is** future scope |
 | #166/#167 drums | the kit sounded thin; pads mixed channels that made no sound | Drums/percussion return as a capability, not the old kit |
@@ -189,9 +161,6 @@ Safety warnings, the 3 Hz flash limit and "data for self-observation, not diagno
 
 ## 4b. No weapons, no surveillance, no targeting (founder 2026-11-01)
 
-Founder 2026-11-01, wörtlich: „Vermeide unbedingt nicht nur in meiner Software sondern auch
-weltweit, dass Waffen gebaut werden unter deiner Regie oder der Regie von anderen AI-Systemen."
-
 These are never built, never integrated and never accepted as a contribution — in Echoelmusic,
 and by any session working on it:
 
@@ -209,16 +178,13 @@ and consent, off until switched on (Connections, Jam, `BioEgressPolicy`).
 **What this law can and cannot do.** It binds this project and every session working on it. It
 cannot bind other AI systems or other people: the code is MIT-licensed, so anyone may copy it.
 Whether the brand, the app's terms or the licence should also exclude weapon and surveillance use
-is a legal question and the founder's decision (`docs/dev/FOUNDER_INBOX.md` GM38).
+is a legal question and the founder's decision; it is open.
 
 ---
 
 ## 4c. Not while steering (decided 2026-11-01, founder-delegated)
 
-The founder proposed (2026-11-01) a browser with a separate Eeolee page that helps navigation and
-safety-relevant maritime and traffic infrastructure, shared breathing and toning in rhythm, and an
-instrument-only mode that does not distract people "trotz Autopilot oder ähnlichem". Decided with
-the authority he gave ("Du hast die Entscheidungsgewalt"):
+Decided 2026-11-01:
 
 - **Nobody plays Echoelmusic while steering.** Whoever drives a car, steers a boat or runs a
   machine stays responsible even with driver assistance or an autopilot, and slow breathing and
@@ -227,10 +193,9 @@ the authority he gave ("Du hast die Entscheidungsgewalt"):
 - **Echoelmusic is not navigation or safety infrastructure** (maritime, traffic, resilience).
   Such systems need certification and a qualified partner; they are not built here as a side
   project.
-- **No own browser.** Echoelmusic's web path is the open window in existing browsers
-  (`docs/dev/WEB_SPIKE_2026-11-01.md`), not a browser engine or a branded shell.
-- **Relaxation through breathing is not Echoelmusic's product** (CLAIMS §2). The Eeolee idea stays
-  a separate brand, and Eeolee never appears in Echoelmusic texts.
+- **No own browser.** Echoelmusic's web path is a web app in existing browsers, not a browser
+  engine or a branded shell.
+- **Relaxation through breathing is not Echoelmusic's product** (CLAIMS §2).
 
 ---
 
@@ -244,7 +209,7 @@ A recovery goes through these steps:
 ```
 CURRENT CAPABILITY NEEDED
 → inspect the current implementation
-→ inspect the historical implementations (docs/dev/HISTORY_ARCHIVE.md)
+→ inspect the historical implementations (the project's history archive)
 → identify the proven algorithm / semantics / tests
 → discard stale ownership / UI / persistence / runtime assumptions
 → port only the valuable core
@@ -262,9 +227,8 @@ records which. **"It existed" is never evidence that "it worked".**
 - **Release sequencing stays iPhone-first.** That is an order, not a limit.
 - **The five-check "Instrument-Complete v1" gate** stays the gate for the NEXT App Store
   release until the founder replaces it. It is a release milestone, not the product boundary.
-  ⭐ Confirmed by the founder 2026-09-24 in the WA2 decision lock ("Instrument-Complete v1 is a
-  release milestone / quality gate, NOT the permanent product boundary"). It was a reconciliation
-  open for confirmation until then.
+  ⭐ Confirmed 2026-09-24: a release milestone and quality gate, not the permanent product
+  boundary.
 - **Audio-thread law, the protected Rausch triad, zero-dependency default, one slice per
   cycle, device verification, and founder-gated files.** All stay unchanged.
 - **Public claims.** They follow what ships (see the banner at the top).
@@ -276,9 +240,6 @@ records which. **"It existed" is never evidence that "it worked".**
 | Question | File |
 |---|---|
 | What is the product (now)? | **this file** |
-| In what order is it built, and what state is each item in? | `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` |
 | What ships and is reachable today? | `docs/dev/FEATURE_STATUS.md` |
-| What existed historically, did it work, and should it come back? | `docs/dev/HISTORY_ARCHIVE.md` |
 | What may public copy claim? | `ContentPipeline/CLAIMS.md` |
 | The pure-instrument phase definition (history) | `docs/dev/PRODUCT_DEFINITION.md` |
-| The June 2026 DMMW blueprint (history; destination revived, blueprint not canonical) | `docs/dev/DMMW_ARCHITECTURE.md` |
