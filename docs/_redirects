@@ -3,6 +3,16 @@
 # Note: www-to-non-www and HTTP-to-HTTPS are handled by Cloudflare domain settings
 # =============================================================================
 
+# Working files are not part of the website (same list as docs/_config.yml `exclude`).
+# Cloudflare evaluates these before serving a file, so a path that slipped into an upload
+# still answers with the 404 page instead of the file.
+/dev/* /404.html 302
+/adr/* /404.html 302
+/research/* /404.html 302
+/CLAUDE.md /404.html 302
+/ECHOEL_SESSION_PROTOCOL.md /404.html 302
+/SPATIAL_EXPANSION_AUDIT.md /404.html 302
+
 # App Store shortcut (app not yet released — point to the homepage, whose hero
 # carries the TestFlight request; repoint to the App Store URL once live)
 /app / 302
