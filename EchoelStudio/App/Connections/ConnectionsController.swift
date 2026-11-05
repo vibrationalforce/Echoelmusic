@@ -3,6 +3,9 @@ import EchoelEngine
 import Foundation
 import Observation
 import os
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// The Connections module (wave W4): OSC, ADM-OSC, Art-Net and sACN out of the song, and — only
 /// while the musician keeps body sharing on — out of the body. Everything is off at every launch
@@ -95,6 +98,9 @@ final class ConnectionsController {
     /// How many stream-terminated packets say goodbye when sACN is switched off (the standard
     /// asks for three, so one lost datagram does not leave the receiver waiting out its timeout).
     nonisolated static let goodbyeCount = 3
+    /// The longest step a light's flash guard takes in one tick. A tick after a suspension sees
+    /// seconds pass; the light still fades at the flash limit's rate instead of jumping.
+    nonisolated static let longestLightStep = 0.2
 
     @ObservationIgnored private var engine: AudioEngine?
     @ObservationIgnored private var store: ProjectStore?
@@ -135,9 +141,18 @@ final class ConnectionsController {
     /// The rig was left dark and nothing has lit it since.
     @ObservationIgnored private var leftDark = false
     /// Each universe numbers its own packets, as both standards count per universe.
-    @ObservationIgnored private var showSequences: [Int: (artNet: UInt8, sacn: UInt8)] = [:]
-    @ObservationIgnored private var artNetSequence: UInt8 = 0
-    @ObservationIgnored private var sacnSequence: UInt8 = 0
+    /// Every DMX frame is numbered per output and per universe on the wire, as both standards count.
+    @ObservationIgnored private var wireSequences: [Kind: [Int: UInt8]] = [:]
+    /// Per light output, every universe on the wire it has sent to since it last went dark, with the
+    /// longest frame there. Leaving the rig darkens each of them, and a universe the output stops
+    /// addressing — a fixture moved or removed, another song, a new universe setting — is darkened
+    /// at once: a node holds the last frame it heard.
+    @ObservationIgnored private var lit: [Kind: [Int: Int]] = [:]
+    @ObservationIgnored private var lastDarkSent: ContinuousClock.Instant?
+    @ObservationIgnored private var terminationObserver: NSObjectProtocol?
+    #if canImport(UIKit)
+    @ObservationIgnored private var darkTask: UIBackgroundTaskIdentifier = .invalid
+    #endif
     /// The E1.31 component identifier, made once for this installation and kept.
     @ObservationIgnored private let cid: [UInt8]
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "connections")
@@ -178,6 +193,16 @@ final class ConnectionsController {
         self.engine = engine
         self.store = store
         self.strap = strap
+        #if canImport(UIKit)
+        // The app is quit while it drives a rig (swiped away while the song plays): the dark
+        // frame goes out on its way down. A suspended app is not told; `letGo` covers that.
+        if terminationObserver == nil {
+            terminationObserver = NotificationCenter.default.addObserver(forName: UIApplication.willTerminateNotification,
+                                                                         object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.darkenAll() }
+            }
+        }
+        #endif
     }
 
     // MARK: - Settings
@@ -277,10 +302,17 @@ final class ConnectionsController {
             Task { @MainActor [weak self] in self?.senderChanged(kind, generation: generation, to: state) }
         }) else {
             refusals[kind] = "Type the receiver's address first."
+            // The socket of the old address says goodbye; nothing keeps sending behind a switch
+            // that shows off.
+            if let old = senders.removeValue(forKey: kind) {
+                retire(old, kind)
+                activity[kind] = nil
+            }
             return false
         }
         refusals[kind] = nil
-        senders[kind]?.cancel()
+        // A new receiver: the old one is left dark, not on its last frame.
+        if let old = senders[kind] { retire(old, kind) }
         senders[kind] = sender
         activity[kind] = Activity(state: .preparing, counters: UDPSender.Counters())
         forgetLastSent(kind)
@@ -288,39 +320,36 @@ final class ConnectionsController {
     }
 
     private func close(_ kind: Kind) {
-        guard let sender = senders[kind] else { return }
-        // A light output that is switched off leaves the rig dark, not on its last frame.
-        if kind.isLight { sendDark(through: [kind]) }
-        senders[kind] = nil
+        guard let sender = senders.removeValue(forKey: kind) else { return }
         generations[kind] = (generations[kind] ?? 0) + 1
-        if kind == .sacn {
-            // Three goodbyes on every universe it fed, then the socket goes; a moment later, so
-            // they are on their way.
-            if lastUniverses.isEmpty {
-                for _ in 0..<Self.goodbyeCount {
-                    sacnSequence = E131Packet.nextSequence(sacnSequence)
-                    sender.send(E131Packet.packet(universe: sacnUniverse, sequence: sacnSequence, cid: cid, channels: lastChannels,
-                                                  options: E131Packet.streamTerminatedOption))
-                }
-            }
-            for universe in lastUniverses.keys.sorted() {
-                var sequence = showSequences[universe] ?? (0, 0)
-                for _ in 0..<Self.goodbyeCount {
-                    sequence.sacn = E131Packet.nextSequence(sequence.sacn)
-                    sender.send(E131Packet.packet(universe: sacnAddress(of: universe), sequence: sequence.sacn, cid: cid,
-                                                  channels: lastUniverses[universe] ?? [], options: E131Packet.streamTerminatedOption))
-                }
-                showSequences[universe] = sequence
-            }
-            Task {
-                try? await Task.sleep(for: .milliseconds(100))
-                sender.cancel()
-            }
-        } else {
-            sender.cancel()
-        }
+        retire(sender, kind)
+        // Switched on again, the light fades up from dark at the flash limit's rate.
+        if !enabled.contains(where: \.isLight) { resetLightGuards() }
         activity[kind] = nil
         forgetLastSent(kind)
+    }
+
+    /// A socket that stops: a light output leaves every universe it lit dark, sACN adds its three
+    /// stream-terminated goodbyes, and the socket closes a moment later, so they are on their way.
+    private func retire(_ sender: UDPSender, _ kind: Kind) {
+        guard kind.isLight else {
+            sender.cancel()
+            return
+        }
+        let frames = darken(kind, through: sender)
+        if kind == .sacn {
+            for _ in 0..<Self.goodbyeCount {
+                for wire in frames.keys.sorted() {
+                    guard let channels = frames[wire] else { continue }
+                    sendDMX(.sacn, wire: wire, channels, through: sender, options: E131Packet.streamTerminatedOption)
+                }
+            }
+            lit[.sacn] = [:]
+        }
+        Task {
+            try? await Task.sleep(for: .milliseconds(100))
+            sender.cancel()
+        }
     }
 
     private func reopenIfOn(_ kind: Kind) {
@@ -376,15 +405,18 @@ final class ConnectionsController {
     private func tick() {
         guard let engine, let store, !enabled.isEmpty else { return }
         let now = ContinuousClock.now
-        let elapsed = lastTick.map { Self.seconds(now - $0) } ?? Self.seconds(Self.tickInterval)
+        let elapsed = Swift.min(lastTick.map { Self.seconds(now - $0) } ?? Self.seconds(Self.tickInterval),
+                                Self.longestLightStep)
         lastTick = now
-        // In the background with the song standing, the app may be suspended at any moment and
-        // stop sending: the lights are left dark once, and stay so until the song plays again.
-        if inBackground, !engine.isPlaying {
-            letGo()
-            return
+        // In the background with the song standing — or a transport left set over an engine that
+        // stopped — the app may be suspended at any moment and stop sending: the lights are left
+        // dark, and stay so until the song plays again. OSC and ADM-OSC go on meanwhile.
+        let parked = inBackground && !(engine.isPlaying && engine.isRunning)
+        if parked {
+            letGo(now: now)
+        } else if leftDark {
+            comeBack()
         }
-        if leftDark { comeBack() }
 
         let project = store.project
         let playhead = engine.playheadTick(in: project)
@@ -405,7 +437,7 @@ final class ConnectionsController {
         if enabled.contains(.admOSC) {
             sendObjects(project: project, engine: engine, now: now)
         }
-        if enabled.contains(.artNet) || enabled.contains(.sacn) {
+        if !parked, enabled.contains(.artNet) || enabled.contains(.sacn) {
             if project.lighting.fixtures.isEmpty {
                 sendLight(frame: frame, elapsed: elapsed, now: now)
             } else {
@@ -467,16 +499,16 @@ final class ConnectionsController {
     }
 
     private func sendLight(frame: FieldFrame, elapsed: Double, now: ContinuousClock.Instant) {
-        let look = slew.next(towards: LightFixture.look(for: frame, sharesBody: consent.sharesBody), after: elapsed)
+        // Blackout darkens the one fixture too, at the flash limit's rate, as it does a rig.
+        let wanted = blackout ? LightFixture.Look.dark : LightFixture.look(for: frame, sharesBody: consent.sharesBody)
+        let look = slew.next(towards: wanted, after: elapsed)
         let channels = LightFixture.channels(look, resolution: resolution, startChannel: startChannel)
         guard channels != lastChannels || isDue(lastLightSent, now: now, after: Self.lightRestateSeconds) else { return }
-        if let sender = senders[.artNet] {
-            artNetSequence = ArtDMXPacket.nextSequence(artNetSequence)
-            sender.send(ArtDMXPacket.packet(universe: artNetUniverse, sequence: artNetSequence, channels: channels))
-        }
-        if let sender = senders[.sacn] {
-            sacnSequence = E131Packet.nextSequence(sacnSequence)
-            sender.send(E131Packet.packet(universe: sacnUniverse, sequence: sacnSequence, cid: cid, channels: channels))
+        for kind in [Kind.artNet, .sacn] {
+            guard enabled.contains(kind), let sender = senders[kind] else { continue }
+            let wire = singleWire(kind)
+            sendDMX(kind, wire: wire, channels, through: sender)
+            darkenDropped(kind, keeping: [wire], through: sender)
         }
         lastChannels = channels
         lastLightSent = now
@@ -488,28 +520,43 @@ final class ConnectionsController {
     /// the song while it plays and are left dark when it stands (`tick`).
     func enterBackground() {
         inBackground = true
-        if let engine, !engine.isPlaying { letGo() }
+        if let engine, !(engine.isPlaying && engine.isRunning) { letGo() }
     }
 
     func enterForeground() {
         inBackground = false
     }
 
-    /// Leaves the rig dark on every light output, once, and forgets what was sent, so the next
-    /// frame states everything again.
-    private func letGo() {
-        guard !leftDark else { return }
-        let lights = enabled.filter(\.isLight)
-        guard !lights.isEmpty else { return }
-        sendDark(through: lights)
+    /// Leaves the rig dark on every light output — once, and again at the restatement rate while
+    /// the app still runs, so one lost burst does not leave a lamp lit — and asks for a moment of
+    /// background time, so the frames leave before the app is suspended.
+    private func letGo(now: ContinuousClock.Instant = .now) {
+        guard enabled.contains(where: \.isLight) else { return }
+        guard !leftDark || isDue(lastDarkSent, now: now, after: Self.lightRestateSeconds) else { return }
+        if !leftDark {
+            log.info("connections: lights left dark (background)")
+            holdBackgroundTime()
+        }
+        darkenAll()
         leftDark = true
-        log.info("connections: lights left dark (background)")
+        lastDarkSent = now
     }
 
-    /// Lighting again after `letGo`: the guards start from dark, so the light fades back up at
-    /// the flash limit's rate instead of jumping to the look it had.
+    /// Lighting again after `letGo`: the light fades back up from dark at the flash limit's rate.
     private func comeBack() {
         leftDark = false
+        lastDarkSent = nil
+        resetLightGuards()
+    }
+
+    private func darkenAll() {
+        for kind in [Kind.artNet, .sacn] where enabled.contains(kind) {
+            darken(kind, through: senders[kind])
+        }
+    }
+
+    /// The guards start from dark and the next frame states everything.
+    private func resetLightGuards() {
         slew = LightSlew()
         showGuard = RigFlashGuard()
         lastChannels = []
@@ -517,46 +564,99 @@ final class ConnectionsController {
         lastLightSent = nil
     }
 
-    /// The dark frame — every light at 0, heads where they stand (`Lighting.leavingUniverses`) —
-    /// `goodbyeCount` times, so one lost datagram does not leave a lamp burning.
-    private func sendDark(through kinds: Set<Kind>) {
-        guard let store else { return }
+    /// The dark frame, `goodbyeCount` times, on every universe `kind` has lit: the rig's leaving
+    /// frame where the song's rig sits (every light at 0, heads where they stand,
+    /// `Lighting.leavingUniverses`), the one fixture at 0 without a rig, zeros on any other
+    /// universe it lit. Returns what it sent, by universe on the wire.
+    @discardableResult
+    private func darken(_ kind: Kind, through sender: UDPSender?) -> [Int: [UInt8]] {
+        guard let sender, let store else { return [:] }
         let lighting = store.project.lighting
+        var frames: [Int: [UInt8]] = [:]
         if lighting.fixtures.isEmpty {
-            let dark = LightFixture.channels(.dark, resolution: resolution, startChannel: startChannel)
-            for _ in 0..<Self.goodbyeCount {
-                if kinds.contains(.artNet), let sender = senders[.artNet] {
-                    artNetSequence = ArtDMXPacket.nextSequence(artNetSequence)
-                    sender.send(ArtDMXPacket.packet(universe: artNetUniverse, sequence: artNetSequence, channels: dark))
-                }
-                if kinds.contains(.sacn), let sender = senders[.sacn] {
-                    sacnSequence = E131Packet.nextSequence(sacnSequence)
-                    sender.send(E131Packet.packet(universe: sacnUniverse, sequence: sacnSequence, cid: cid, channels: dark))
-                }
-            }
-            lastChannels = dark
+            frames[singleWire(kind)] = LightFixture.channels(.dark, resolution: resolution, startChannel: startChannel)
         } else {
-            let dark = lighting.leavingUniverses(from: showTarget)
-            for _ in 0..<Self.goodbyeCount {
-                for universe in dark.keys.sorted() {
-                    guard let channels = dark[universe] else { continue }
-                    var sequence = showSequences[universe] ?? (0, 0)
-                    if kinds.contains(.artNet), let sender = senders[.artNet] {
-                        sequence.artNet = ArtDMXPacket.nextSequence(sequence.artNet)
-                        sender.send(ArtDMXPacket.packet(universe: artNetAddress(of: universe), sequence: sequence.artNet,
-                                                        channels: channels))
-                    }
-                    if kinds.contains(.sacn), let sender = senders[.sacn] {
-                        sequence.sacn = E131Packet.nextSequence(sequence.sacn)
-                        sender.send(E131Packet.packet(universe: sacnAddress(of: universe), sequence: sequence.sacn, cid: cid,
-                                                      channels: channels))
-                    }
-                    showSequences[universe] = sequence
-                }
+            for (universe, channels) in lighting.leavingUniverses(from: showTarget) {
+                frames[showWire(kind, universe)] = channels
             }
-            lastUniverses = dark
+        }
+        for (wire, length) in lit[kind] ?? [:] where frames[wire] == nil {
+            frames[wire] = [UInt8](repeating: 0, count: length)
+        }
+        for _ in 0..<Self.goodbyeCount {
+            for wire in frames.keys.sorted() {
+                guard let channels = frames[wire] else { continue }
+                sendDMX(kind, wire: wire, channels, through: sender)
+            }
+        }
+        lit[kind] = [:]
+        return frames
+    }
+
+    /// A universe `kind` lit before and does not address now is darkened once and forgotten.
+    private func darkenDropped(_ kind: Kind, keeping wires: Set<Int>, through sender: UDPSender) {
+        guard let addressed = lit[kind] else { return }
+        for (wire, length) in addressed where !wires.contains(wire) {
+            for _ in 0..<Self.goodbyeCount {
+                sendDMX(kind, wire: wire, [UInt8](repeating: 0, count: length), through: sender)
+            }
+            lit[kind]?[wire] = nil
         }
     }
+
+    /// One DMX frame out: numbered per universe on the wire and remembered in `lit`. On Art-Net a
+    /// frame shorter than one sent there before is padded with zeros, so slots past it are not
+    /// left on their last value (sACN always sends all 512).
+    @discardableResult
+    private func sendDMX(_ kind: Kind, wire: Int, _ channels: [UInt8], through sender: UDPSender,
+                         options: UInt8 = 0) -> Bool {
+        let longest = lit[kind]?[wire] ?? 0
+        var frame = channels
+        if frame.count < longest { frame.append(contentsOf: [UInt8](repeating: 0, count: longest - frame.count)) }
+        var sequence = wireSequences[kind]?[wire] ?? 0
+        let packet: Data
+        switch kind {
+        case .artNet:
+            sequence = ArtDMXPacket.nextSequence(sequence)
+            packet = ArtDMXPacket.packet(universe: wire, sequence: sequence, channels: frame)
+        case .sacn:
+            sequence = E131Packet.nextSequence(sequence)
+            packet = E131Packet.packet(universe: wire, sequence: sequence, cid: cid, channels: frame, options: options)
+        case .osc, .admOSC:
+            return false
+        }
+        wireSequences[kind, default: [:]][wire] = sequence
+        lit[kind, default: [:]][wire] = Swift.max(longest, frame.count)
+        return sender.send(packet)
+    }
+
+    /// The universe on the wire of the one fixture, and of rig universe `universe`.
+    private func singleWire(_ kind: Kind) -> Int { kind == .sacn ? sacnUniverse : artNetUniverse }
+    private func showWire(_ kind: Kind, _ universe: Int) -> Int {
+        kind == .sacn ? sacnAddress(of: universe) : artNetAddress(of: universe)
+    }
+
+    #if canImport(UIKit)
+    /// A moment of background time, so the dark frames leave before the app is suspended.
+    private func holdBackgroundTime() {
+        guard darkTask == .invalid else { return }
+        darkTask = UIApplication.shared.beginBackgroundTask(withName: "Lights dark") { [weak self] in
+            MainActor.assumeIsolated { self?.endBackgroundTime() }
+        }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(300))
+            self?.endBackgroundTime()
+        }
+    }
+
+    private func endBackgroundTime() {
+        guard darkTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(darkTask)
+        darkTask = .invalid
+    }
+    #else
+    private func holdBackgroundTime() {}
+    #endif
 
     // MARK: - The light show
 
@@ -619,18 +719,16 @@ final class ConnectionsController {
         let state = showGuard.next(towards: blackout ? RigFlashGuard.dark(target) : target, after: elapsed)
         let universes = lighting.universes(state)
         guard universes != lastUniverses || isDue(lastLightSent, now: now, after: Self.lightRestateSeconds) else { return }
-        for universe in universes.keys.sorted() {
-            guard let channels = universes[universe] else { continue }
-            var sequence = showSequences[universe] ?? (0, 0)
-            if let sender = senders[.artNet] {
-                sequence.artNet = ArtDMXPacket.nextSequence(sequence.artNet)
-                sender.send(ArtDMXPacket.packet(universe: artNetAddress(of: universe), sequence: sequence.artNet, channels: channels))
+        for kind in [Kind.artNet, .sacn] {
+            guard enabled.contains(kind), let sender = senders[kind] else { continue }
+            var wires: Set<Int> = []
+            for universe in universes.keys.sorted() {
+                guard let channels = universes[universe] else { continue }
+                let wire = showWire(kind, universe)
+                sendDMX(kind, wire: wire, channels, through: sender)
+                wires.insert(wire)
             }
-            if let sender = senders[.sacn] {
-                sequence.sacn = E131Packet.nextSequence(sequence.sacn)
-                sender.send(E131Packet.packet(universe: sacnAddress(of: universe), sequence: sequence.sacn, cid: cid, channels: channels))
-            }
-            showSequences[universe] = sequence
+            darkenDropped(kind, keeping: wires, through: sender)
         }
         lastUniverses = universes
         lastLightSent = now
