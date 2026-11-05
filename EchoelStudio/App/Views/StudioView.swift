@@ -1013,6 +1013,19 @@ struct SongMenu: View {
                     }
                 }
                 .disabled(documents.isExporting || !store.project.arrangementHasSound)
+                // Every track on the master as an audio object, the returns as a stereo bed, in one
+                // Broadcast Wave file with ADM metadata, for an immersive renderer or a DAW that
+                // imports ADM.
+                Button("Export ADM BWF (immersive)…", systemImage: "dot.radiowaves.left.and.right") {
+                    Task {
+                        let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
+                        if let url = await documents.exportADMBWF(plugins: engine.plugins) {
+                            if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
+                            router.share(url)
+                        }
+                    }
+                }
+                .disabled(documents.isExporting || !store.project.arrangementHasSound)
                 Button("Export MIDI…", systemImage: "pianokeys") {
                     if let url = documents.exportMIDI() { router.share(url) }
                 }

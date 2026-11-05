@@ -1240,6 +1240,108 @@ final class DocumentController {
         return folder
     }
 
+    /// Renders the open song to an ADM Broadcast Wave file (`ADMExport`): every track that plays
+    /// into the master as an audio object on its own channel, placed where its pan and pan
+    /// automation put it, the returns and tracks on an interface output of their own as a stereo
+    /// bed; 24-bit at the export rate, RF64 past 4 GiB. One stem at a time into a scratch file
+    /// beside the export, each with its plugins loaded afresh, then read back together — the same
+    /// song gives the same file. Like the stems, it leaves out the master's inserts.
+    func exportADMBWF(plugins: PluginHost) async -> URL? {
+        guard !isExporting else { return nil }
+        isExporting = true
+        defer {
+            isExporting = false
+            exportProgress = nil
+            followRenamedSong()
+        }
+        let rate = 48_000.0
+        let exportedSong = songsOpened
+        let songName = openSongName
+        await mediaLoaded(for: exportedSong)
+        guard exportedSong == songsOpened else { return exportStopped(songName) }
+        plugins.store(into: store)
+        let project = store.project
+        let buffers = samples
+        let unread = Self.unreadMedia(in: project, buffers: buffers, notLoaded: unfitMedia)
+        guard let plan = ADMExport.plan(for: project, samples: buffers) else {
+            lastExportIsNews = false
+            lastError = unread.isEmpty
+                ? "No track that plays is heard in the mix: unmute one to export it."
+                : Self.nothingToExport(audio: unread)
+            return nil
+        }
+        let name = ProjectLibrary.safeFileName(for: "\(songName) (ADM)")
+        let exports = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        let url = exports.appendingPathComponent(name).appendingPathExtension("wav")
+        let scratch = exports.appendingPathComponent("ADM " + UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: scratch) }
+        exportProgress = "Measuring the song…"
+        let measuring = await plugins.offlineUnits(for: project, sampleRate: rate)
+        guard exportedSong == songsOpened else { return exportStopped(songName) }
+        // The mix's length as its channels sum to it: without the master's inserts.
+        let measured: Result<Int, Error> = await Task.detached(priority: .userInitiated) {
+            Result {
+                try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
+                return OfflineRender.render(project, sampleRate: rate, samples: buffers, units: measuring.units,
+                                            effects: measuring.chains.mapValues { $0 as [any HostedProcessor] }) { _, _, _ in }
+                    .frameCount
+            }
+        }.value
+        var outcome = measured.map { _ in () }
+        var missing = measuring.missing
+        if case .success(0) = measured {
+            lastExportIsNews = false
+            lastError = Self.nothingToExport(audio: unread)
+            return nil
+        }
+        if case .success(let length) = measured {
+            let files = plan.parts.indices.map { scratch.appendingPathComponent("part-\($0).f32") }
+            for (index, part) in plan.parts.enumerated() {
+                exportProgress = "Rendering \(index + 1) of \(plan.parts.count)…"
+                let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
+                guard exportedSong == songsOpened else { break }
+                for plugin in offline.missing where !missing.contains(plugin) { missing.append(plugin) }
+                let file = files[index]
+                outcome = await Task.detached(priority: .userInitiated) {
+                    Result {
+                        try ADMExport.renderPart(part, of: plan, frameCount: length, sampleRate: rate, samples: buffers,
+                                                 units: offline.units,
+                                                 effects: offline.chains.mapValues { $0 as [any HostedProcessor] }, to: file)
+                        guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
+                    }
+                }.value
+                if case .failure = outcome { break }
+            }
+            if case .success = outcome, exportedSong == songsOpened {
+                exportProgress = "Writing the ADM file…"
+                let layout = ADMExport.layout(plan, title: songName, frameCount: length, sampleRate: rate)
+                outcome = await Task.detached(priority: .userInitiated) {
+                    Result { try ADMExport.assemble(plan, layout: layout, partFiles: files, frameCount: length, to: url) }
+                }.value
+            }
+        }
+        guard exportedSong == songsOpened, case .success = outcome else {
+            try? FileManager.default.removeItem(at: url)
+            guard exportedSong == songsOpened else { return exportStopped(songName) }
+            if case .failure(let error) = outcome {
+                log.error("ADM export failed — \(error.localizedDescription, privacy: .private)")
+                lastExportIsNews = false
+                lastError = error is PluginRenderFailed
+                    ? "A plugin stopped rendering during the export, so the file would have had gaps. Nothing was saved."
+                    : "Could not export the ADM file. Check the free space and try again; if it fails again, share the diagnostics from About Echoel."
+            }
+            return nil
+        }
+        lastExportLoudness = nil
+        lastExportIsNews = false
+        var notes = [Self.exportedWithout(plugins: missing, audio: unread)].compactMap { $0 }
+        if project.masterInserts.contains(where: { !$0.isBypassed }) {
+            notes.append("The ADM file leaves out the master effects: its channels together are the mix before those.")
+        }
+        lastError = notes.isEmpty ? nil : notes.joined(separator: " ")
+        return url
+    }
+
     /// What the Mix Analysis measured: the mix as the master's effects receive it, each stem's
     /// octave bands, and where two stems share their strongest octave.
     struct MixReport: Sendable {
