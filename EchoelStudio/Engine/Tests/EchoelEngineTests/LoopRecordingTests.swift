@@ -114,6 +114,23 @@ final class LoopRecordingTests: XCTestCase {
         XCTAssertFalse(LoopRecording.recordsPasses(over: nil, meter: meter))
     }
 
+    func testTheLoopRestsUnderAShortAudioTakeAndWhileAChasedTimecodeRuns() {
+        let short = 0..<bar
+        XCTAssertTrue(LoopRecording.loopRuns(isOn: true, audioTake: false, over: short, meter: meter, timecodeRuns: false))
+        XCTAssertFalse(LoopRecording.loopRuns(isOn: false, audioTake: false, over: loop, meter: meter, timecodeRuns: false))
+        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, audioTake: true, over: short, meter: meter, timecodeRuns: false),
+                       "a first recording runs freely")
+        XCTAssertTrue(LoopRecording.loopRuns(isOn: true, audioTake: true, over: loop, meter: meter, timecodeRuns: false),
+                      "loop record")
+        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, audioTake: false, over: loop, meter: meter, timecodeRuns: true),
+                       "the sender is the master")
+        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, audioTake: true, over: loop, meter: meter, timecodeRuns: true))
+        XCTAssertTrue(LoopRecording.takeRecordsPasses(isOn: true, over: loop, meter: meter, timecodeRuns: false))
+        XCTAssertFalse(LoopRecording.takeRecordsPasses(isOn: true, over: loop, meter: meter, timecodeRuns: true),
+                       "no passes while the loop rests")
+        XCTAssertFalse(LoopRecording.takeRecordsPasses(isOn: true, over: short, meter: meter, timecodeRuns: false))
+    }
+
     func testTheLatencyMovesEveryCutByTheSameFrames() {
         let passes = LoopRecording.audioPasses(frameCount: 3 * loopFrames + 480, startSample: 0, startPlayed: 0,
                                                latency: 480, wraps: [384_000, 768_000], loop: loop, time: time,

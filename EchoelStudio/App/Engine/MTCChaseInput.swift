@@ -24,8 +24,13 @@ final class MTCChaseInput {
     private(set) var sources: [Source] = []
     /// The source whose timecode the song follows; nil for none. Kept on this device.
     private(set) var chased: MIDIUniqueID?
-    /// The sender's timecode runs.
-    private(set) var isLocked = false
+    /// The sender's timecode runs. The engine's song loop rests meanwhile (`timecodeRuns`).
+    private(set) var isLocked = false {
+        didSet {
+            guard isLocked != oldValue else { return }
+            engine?.timecodeRuns = isLocked
+        }
+    }
     private(set) var lastError: String?
 
     @ObservationIgnored weak var engine: AudioEngine?
@@ -152,17 +157,21 @@ final class MTCChaseInput {
     }
 
     private func carry(_ action: MTCChase.Action, hostTime: UInt64) {
+        // A stopped or relocated sender gives the loop back even while a MIDI clock sets the pace.
+        switch action {
+        case .locate, .stop: isLocked = false
+        case .follow: break
+        }
         guard let engine, !engine.followsExternalClock else { return }
         switch action {
         case .locate(let seconds):
-            isLocked = false
             if engine.isPlaying { engine.pauseFromOutside(nil) }
             engine.clockWillMovePlayhead()
             engine.seek(toSeconds: seconds)
         case .stop:
-            isLocked = false
             if engine.isPlaying { engine.pauseFromOutside(nil) }
         case .follow(let seconds, let at):
+            // Before the seek below: the loop must rest when the song lands past its end.
             isLocked = true
             // Before the song's first sample the song waits at its start.
             guard seconds >= 0 else {

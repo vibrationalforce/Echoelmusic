@@ -211,14 +211,25 @@ final class AudioEngine {
 
     /// The loop runs while it is on — except under an audio take when it is shorter than a loop
     /// record takes (`LoopRecording.minimumBars`): one file cannot be placed twice, so that take
-    /// runs freely, as every audio take did before loop record.
+    /// runs freely, as every audio take did before loop record — and except while a chased
+    /// timecode runs (`LoopRecording.loopRuns`).
     private var loopRuns: Bool {
-        loopsSong && (take == nil || LoopRecording.recordsPasses(over: songLoop, meter: songMeter))
+        LoopRecording.loopRuns(isOn: loopsSong, audioTake: take != nil, over: songLoop, meter: songMeter,
+                               timecodeRuns: timecodeRuns)
     }
 
     /// Whether a take started now is cut into passes of the loop.
     var recordsLoopPasses: Bool {
-        loopsSong && LoopRecording.recordsPasses(over: songLoop, meter: songMeter)
+        LoopRecording.takeRecordsPasses(isOn: loopsSong, over: songLoop, meter: songMeter, timecodeRuns: timecodeRuns)
+    }
+
+    /// The sender of the timecode chase runs (`MTCChaseInput`): its clock is the master, and the
+    /// song's loop rests until it stops, so a wrap cannot throw the song off it.
+    var timecodeRuns = false {
+        didSet {
+            guard timecodeRuns != oldValue else { return }
+            applyLoop()
+        }
     }
 
     /// How often the loop has wrapped (`EngineCore.wrapCount`), for the record status line.

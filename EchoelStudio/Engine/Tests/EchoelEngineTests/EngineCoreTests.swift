@@ -251,6 +251,32 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(core.positionSample, 120_000)
     }
 
+    /// A timecode chase over a running loop: the sender stands past the loop's end, the chase puts
+    /// the song there, and a running loop folds it straight back — far beyond the tolerance, so the
+    /// chase jumps again, every quarter frame, and never locks. With the loop resting while the
+    /// sender runs (`LoopRecording.loopRuns`), the song stays with the sender: no correction.
+    func testATimecodeChaseIsNotThrownOffByTheSongLoop() throws {
+        let s = try song([[]])
+        let chase = MTCChase(start: Timecode(hours: 0, minutes: 0, seconds: 0, frames: 0))
+        let meter = s.project.meterMap
+        let sender = 3.0                                  // one bar is 2 s at 120 BPM
+        var corrections: [MTCChase.Correction] = []
+        for timecodeRuns in [false, true] {
+            let core = core()
+            publish(s.project, to: core)
+            let runs = LoopRecording.loopRuns(isOn: true, audioTake: false, over: 0..<bar, meter: meter,
+                                              timecodeRuns: timecodeRuns)
+            core.setLoop(runs ? 0..<bar : nil)
+            core.seek(toSample: Int64(sender * rate))
+            core.play()
+            _ = render(core, frames: 4_800)
+            let heard = Double(core.positionSample) / rate
+            corrections.append(chase.correction(gap: sender + 0.1 - heard))
+        }
+        XCTAssertEqual(corrections[0], .relocate, "the running loop folds the song off the sender")
+        XCTAssertEqual(corrections[1], .nudge(seconds: 0), "resting, the song is where the sender is")
+    }
+
     func testMuteSoloAndPanShapeTheMix() throws {
         var s = try song([[Note(pitch: 60, start: 0, length: 9_600)], [Note(pitch: 67, start: 0, length: 9_600)]])
         let core = core()

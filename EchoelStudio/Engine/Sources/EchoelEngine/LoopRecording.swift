@@ -26,6 +26,22 @@ public enum LoopRecording {
         return loop.upperBound >= end
     }
 
+    /// Whether the song's loop runs: while it is on, except under an audio take over a loop too
+    /// short to record passes over (that take runs freely), and except while the sender of a
+    /// timecode chase runs. The sender is the master then: a wrap at the loop's end threw the song
+    /// off it, the chase jumped back onto the sender, the loop threw it off again — at every quarter
+    /// frame, and the chase never locked (2026-11-05).
+    public static func loopRuns(isOn: Bool, audioTake: Bool, over loop: Range<Tick>?, meter: MeterMap,
+                                timecodeRuns: Bool) -> Bool {
+        isOn && !timecodeRuns && (!audioTake || recordsPasses(over: loop, meter: meter))
+    }
+
+    /// Whether a take started now is cut into passes of the loop: it runs and spans enough bars.
+    public static func takeRecordsPasses(isOn: Bool, over loop: Range<Tick>?, meter: MeterMap,
+                                         timecodeRuns: Bool) -> Bool {
+        isOn && !timecodeRuns && recordsPasses(over: loop, meter: meter)
+    }
+
     /// A pass shorter than a quarter of a bar — Stop pressed just after the loop came round, or
     /// Record just before it did — is no take, and is dropped.
     public static func isTooShort(_ span: Range<Tick>, meter: MeterMap) -> Bool {
