@@ -119,22 +119,28 @@ final class ConnectionsController {
     @ObservationIgnored private var lastBodySent: ContinuousClock.Instant?
     @ObservationIgnored private var lastObjects: [Int: ADMObject] = [:]
     @ObservationIgnored private var lastObjectsSent: ContinuousClock.Instant?
-    @ObservationIgnored private var slew = LightSlew()
-    @ObservationIgnored private var lastChannels: [UInt8] = []
-    @ObservationIgnored private var lastLightSent: ContinuousClock.Instant?
+    /// Each light output has its own flash guard and its own memory of what it last said, so
+    /// switching one on, off or to a new receiver fades that one alone, from dark.
+    @ObservationIgnored private var slews: [Kind: LightSlew] = [:]
+    @ObservationIgnored private var lastChannels: [Kind: [UInt8]] = [:]
+    @ObservationIgnored private var lastLightSent: [Kind: ContinuousClock.Instant] = [:]
     // The song's light show (CUES), played instead of the one-fixture light while the song has a rig.
     /// The cue the show last started, by GO or by the timeline; nil before the first.
     private(set) var liveCue: CueID?
     /// Blackout: every light fades to 0 at the flash limit's rate, position holds. Not stored.
     private(set) var blackout = false
-    @ObservationIgnored private var showGuard = RigFlashGuard()
+    @ObservationIgnored private var showGuards: [Kind: RigFlashGuard] = [:]
     /// What the show asked for last, before the blackout: a GO fades from here.
     @ObservationIgnored private var showTarget: RigState?
     /// A cue started by GO, with what it fades from and when; the timeline takes over again when
     /// the playhead crosses one of its cues.
     @ObservationIgnored private var manual: (cue: CueID, from: RigState, start: ContinuousClock.Instant)?
     @ObservationIgnored private var lastTimelineIndex: Int?
-    @ObservationIgnored private var lastUniverses: [Int: [UInt8]] = [:]
+    @ObservationIgnored private var lastUniverses: [Kind: [Int: [UInt8]]] = [:]
+    /// Universes an output no longer addresses, still to be told dark: one zero frame each tick
+    /// until `goodbyeCount` were admitted, so a full send queue or a lost burst does not leave
+    /// one lit (`UDPSender` refuses past its bound and expects the caller to say it again).
+    @ObservationIgnored private var darkening: [Kind: [Int: (length: Int, said: Int)]] = [:]
     /// The app is in the background. While the song plays there (audio runs on) the lights go on;
     /// while it stands the app is about to be suspended, and the rig is left dark (`letGo`).
     @ObservationIgnored private var inBackground = false
@@ -199,7 +205,11 @@ final class ConnectionsController {
         if terminationObserver == nil {
             terminationObserver = NotificationCenter.default.addObserver(forName: UIApplication.willTerminateNotification,
                                                                          object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.darkenAll() }
+                MainActor.assumeIsolated {
+                    self?.darkenAll()
+                    // A moment for the datagrams to leave before the process ends.
+                    Thread.sleep(forTimeInterval: 0.1)
+                }
             }
         }
         #endif
@@ -215,7 +225,10 @@ final class ConnectionsController {
 
     func setHost(_ host: String, for kind: Kind) {
         var target = self.target(kind)
-        target.host = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        // The same receiver again opens nothing: a reopen leaves the rig dark and fades it up.
+        guard trimmed != target.host else { return }
+        target.host = trimmed
         targets[kind] = target
         UserDefaults.standard.set(target.host, forKey: Self.hostKey(kind))
         reopenIfOn(kind)
@@ -223,6 +236,7 @@ final class ConnectionsController {
 
     func setPort(_ port: UInt16, for kind: Kind) {
         var target = self.target(kind)
+        guard port != target.port else { return }
         target.port = port
         targets[kind] = target
         UserDefaults.standard.set(Int(port), forKey: Self.portKey(kind))
@@ -232,11 +246,18 @@ final class ConnectionsController {
     func setUniverse(_ universe: Int, for kind: Kind) {
         switch kind {
         case .artNet:
-            artNetUniverse = Self.clamp(universe, to: ArtDMXPacket.universeRange)
+            let next = Self.clamp(universe, to: ArtDMXPacket.universeRange)
+            guard next != artNetUniverse else { return }
+            artNetUniverse = next
             UserDefaults.standard.set(artNetUniverse, forKey: Self.artNetUniverseKey)
+            // The old universe goes dark on the next frame; the new one fades up from dark.
+            resetLightGuards(.artNet)
         case .sacn:
-            sacnUniverse = Self.clamp(universe, to: E131Packet.universeRange)
+            let next = Self.clamp(universe, to: E131Packet.universeRange)
+            guard next != sacnUniverse else { return }
+            sacnUniverse = next
             UserDefaults.standard.set(sacnUniverse, forKey: Self.sacnUniverseKey)
+            resetLightGuards(.sacn)
         case .osc, .admOSC:
             break
         }
@@ -311,8 +332,10 @@ final class ConnectionsController {
             return false
         }
         refusals[kind] = nil
-        // A new receiver: the old one is left dark, not on its last frame.
+        // A new receiver: the old one is left dark, not on its last frame, and the new one fades
+        // up from dark.
         if let old = senders[kind] { retire(old, kind) }
+        if kind.isLight { resetLightGuards(kind) }
         senders[kind] = sender
         activity[kind] = Activity(state: .preparing, counters: UDPSender.Counters())
         forgetLastSent(kind)
@@ -324,7 +347,7 @@ final class ConnectionsController {
         generations[kind] = (generations[kind] ?? 0) + 1
         retire(sender, kind)
         // Switched on again, the light fades up from dark at the flash limit's rate.
-        if !enabled.contains(where: \.isLight) { resetLightGuards() }
+        if kind.isLight { resetLightGuards(kind) }
         activity[kind] = nil
         forgetLastSent(kind)
     }
@@ -344,8 +367,10 @@ final class ConnectionsController {
                     sendDMX(.sacn, wire: wire, channels, through: sender, options: E131Packet.streamTerminatedOption)
                 }
             }
-            lit[.sacn] = [:]
         }
+        // This socket's universes are said dark; the next socket starts its own ledger.
+        lit[kind] = [:]
+        darkening[kind] = nil
         Task {
             try? await Task.sleep(for: .milliseconds(100))
             sender.cancel()
@@ -374,10 +399,9 @@ final class ConnectionsController {
             lastObjects = [:]
             lastObjectsSent = nil
         case .artNet, .sacn:
-            // Both lights share the slew and the last channels; a restart of either re-sends.
-            lastChannels = []
-            lastLightSent = nil
-            lastUniverses = [:]
+            lastChannels[kind] = nil
+            lastLightSent[kind] = nil
+            lastUniverses[kind] = nil
         }
     }
 
@@ -501,17 +525,21 @@ final class ConnectionsController {
     private func sendLight(frame: FieldFrame, elapsed: Double, now: ContinuousClock.Instant) {
         // Blackout darkens the one fixture too, at the flash limit's rate, as it does a rig.
         let wanted = blackout ? LightFixture.Look.dark : LightFixture.look(for: frame, sharesBody: consent.sharesBody)
-        let look = slew.next(towards: wanted, after: elapsed)
-        let channels = LightFixture.channels(look, resolution: resolution, startChannel: startChannel)
-        guard channels != lastChannels || isDue(lastLightSent, now: now, after: Self.lightRestateSeconds) else { return }
         for kind in [Kind.artNet, .sacn] {
             guard enabled.contains(kind), let sender = senders[kind] else { continue }
+            var slew = slews[kind] ?? LightSlew()
+            let look = slew.next(towards: wanted, after: elapsed)
+            slews[kind] = slew
+            let channels = LightFixture.channels(look, resolution: resolution, startChannel: startChannel)
             let wire = singleWire(kind)
+            darkenDropped(kind, keeping: [wire])
+            sayDarkening(kind, through: sender)
+            guard channels != lastChannels[kind] || isDue(lastLightSent[kind], now: now, after: Self.lightRestateSeconds)
+            else { continue }
             sendDMX(kind, wire: wire, channels, through: sender)
-            darkenDropped(kind, keeping: [wire], through: sender)
+            lastChannels[kind] = channels
+            lastLightSent[kind] = now
         }
-        lastChannels = channels
-        lastLightSent = now
     }
 
     // MARK: - Leaving the rig
@@ -525,6 +553,12 @@ final class ConnectionsController {
 
     func enterForeground() {
         inBackground = false
+    }
+
+    /// The window that owns this controller goes away (an iPad window closed): every light output
+    /// leaves its rig dark and closes; nothing else would ever reach those sockets again.
+    func leave() {
+        for kind in Kind.allCases where enabled.contains(kind) { setOn(false, kind) }
     }
 
     /// Leaves the rig dark on every light output — once, and again at the restatement rate while
@@ -546,7 +580,8 @@ final class ConnectionsController {
     private func comeBack() {
         leftDark = false
         lastDarkSent = nil
-        resetLightGuards()
+        resetLightGuards(.artNet)
+        resetLightGuards(.sacn)
     }
 
     private func darkenAll() {
@@ -555,13 +590,13 @@ final class ConnectionsController {
         }
     }
 
-    /// The guards start from dark and the next frame states everything.
-    private func resetLightGuards() {
-        slew = LightSlew()
-        showGuard = RigFlashGuard()
-        lastChannels = []
-        lastUniverses = [:]
-        lastLightSent = nil
+    /// The output's guards start from dark and its next frame states everything.
+    private func resetLightGuards(_ kind: Kind) {
+        slews[kind] = nil
+        showGuards[kind] = nil
+        lastChannels[kind] = nil
+        lastUniverses[kind] = nil
+        lastLightSent[kind] = nil
     }
 
     /// The dark frame, `goodbyeCount` times, on every universe `kind` has lit: the rig's leaving
@@ -583,24 +618,44 @@ final class ConnectionsController {
         for (wire, length) in lit[kind] ?? [:] where frames[wire] == nil {
             frames[wire] = [UInt8](repeating: 0, count: length)
         }
+        for (wire, entry) in darkening[kind] ?? [:] where frames[wire] == nil {
+            frames[wire] = [UInt8](repeating: 0, count: entry.length)
+        }
+        // Every universe hears its first dark frame before any hears its second.
         for _ in 0..<Self.goodbyeCount {
             for wire in frames.keys.sorted() {
                 guard let channels = frames[wire] else { continue }
                 sendDMX(kind, wire: wire, channels, through: sender)
             }
         }
-        lit[kind] = [:]
+        // They stay in the ledger, so a restatement (`letGo`) says each of them dark again.
+        darkening[kind] = nil
+        lit[kind] = frames.mapValues(\.count)
         return frames
     }
 
-    /// A universe `kind` lit before and does not address now is darkened once and forgotten.
-    private func darkenDropped(_ kind: Kind, keeping wires: Set<Int>, through sender: UDPSender) {
+    /// A universe `kind` lit before and does not address now goes to `darkening`; one it
+    /// addresses again leaves it.
+    private func darkenDropped(_ kind: Kind, keeping wires: Set<Int>) {
+        for wire in wires { darkening[kind]?[wire] = nil }
         guard let addressed = lit[kind] else { return }
         for (wire, length) in addressed where !wires.contains(wire) {
-            for _ in 0..<Self.goodbyeCount {
-                sendDMX(kind, wire: wire, [UInt8](repeating: 0, count: length), through: sender)
-            }
+            darkening[kind, default: [:]][wire] = (length, 0)
             lit[kind]?[wire] = nil
+        }
+    }
+
+    /// One zero frame to each universe in `darkening`, counted only when the socket admitted
+    /// it; a universe leaves once `goodbyeCount` were admitted.
+    private func sayDarkening(_ kind: Kind, through sender: UDPSender) {
+        guard let pending = darkening[kind], !pending.isEmpty else { return }
+        for wire in pending.keys.sorted() {
+            guard var entry = darkening[kind]?[wire] else { continue }
+            let admitted = sendDMX(kind, wire: wire, [UInt8](repeating: 0, count: entry.length), through: sender)
+            // `sendDMX` remembers the wire as addressed; it is not lit, it is being darkened.
+            lit[kind]?[wire] = nil
+            if admitted { entry.said += 1 }
+            darkening[kind]?[wire] = entry.said >= Self.goodbyeCount ? nil : entry
         }
     }
 
@@ -716,22 +771,23 @@ final class ConnectionsController {
         target = target.filter { lighting.fixture($0.key) != nil }
         for (id, values) in lighting.restState where target[id] == nil { target[id] = values }
         showTarget = target
-        let state = showGuard.next(towards: blackout ? RigFlashGuard.dark(target) : target, after: elapsed)
-        let universes = lighting.universes(state)
-        guard universes != lastUniverses || isDue(lastLightSent, now: now, after: Self.lightRestateSeconds) else { return }
+        let goal = blackout ? RigFlashGuard.dark(target) : target
         for kind in [Kind.artNet, .sacn] {
             guard enabled.contains(kind), let sender = senders[kind] else { continue }
-            var wires: Set<Int> = []
+            var guardRail = showGuards[kind] ?? RigFlashGuard()
+            let universes = lighting.universes(guardRail.next(towards: goal, after: elapsed))
+            showGuards[kind] = guardRail
+            darkenDropped(kind, keeping: Set(universes.keys.map { showWire(kind, $0) }))
+            sayDarkening(kind, through: sender)
+            guard universes != lastUniverses[kind] || isDue(lastLightSent[kind], now: now, after: Self.lightRestateSeconds)
+            else { continue }
             for universe in universes.keys.sorted() {
                 guard let channels = universes[universe] else { continue }
-                let wire = showWire(kind, universe)
-                sendDMX(kind, wire: wire, channels, through: sender)
-                wires.insert(wire)
+                sendDMX(kind, wire: showWire(kind, universe), channels, through: sender)
             }
-            darkenDropped(kind, keeping: wires, through: sender)
+            lastUniverses[kind] = universes
+            lastLightSent[kind] = now
         }
-        lastUniverses = universes
-        lastLightSent = now
     }
 
     private func send(_ kind: Kind, _ messages: [OSCMessage]) {
