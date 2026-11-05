@@ -1,0 +1,10 @@
+# Cloudflare Workers static assets: these paths are never uploaded (wrangler.toml serves ./docs).
+# Same list as docs/_config.yml `exclude` and the rsync step in .github/workflows/pages.yml.
+dev/
+adr/
+research/
+CLAUDE.md
+ECHOEL_SESSION_PROTOCOL.md
+SPATIAL_EXPANSION_AUDIT.md
+_config.yml
+og-cover.source.sha256
