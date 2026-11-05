@@ -2,12 +2,12 @@
 
 Der am häufigsten wiederholte Ablauf dieses Repos (sechs Uploads am 31.10./01.11.2026) — als Skill,
 damit er nicht jedes Mal aus dem Gedächtnis gebaut wird. Gesetz dazu: `EchoelStudio/CLAUDE.md`
-(„Shipping to TestFlight") und `docs/dev/FOUNDER_INBOX.md` Regeln 1–3.
+(„Shipping to TestFlight") und `echoelmusic-intern/docs/dev/FOUNDER_INBOX.md` Regeln 1–3.
 
 ## Vorher — drei Ja, sonst kein Build
 
-1. **Rhythmus:** höchstens EIN Build pro Woche (`decisions.csv` 2026-11-01). Einzige Ausnahme: ein
-   Absturz in genau dem Build, den der Founder gerade testet.
+1. **Rhythmus:** CLAUDE.md „Build-Rhythmus" erlaubt diesen Build (dort auch die Ausnahmen außer der
+   Reihe; Entscheide in `echoelmusic-intern/decisions.csv`).
 2. **Grün:** der Kopf von `origin/main` hat einen grünen „Echoel Studio"-Lauf, oder der Release-Lauf
    selbst ist der erste gemeinsame Test (dann erst nach seinem Grün etwas versprechen).
 3. **Gerät:** höchstens drei gebaute Scheiben warten auf ein Geräte-Urteil (WIP 3). Liegen mehr
@@ -30,8 +30,9 @@ damit er nicht jedes Mal aus dem Gedächtnis gebaut wird. Gesetz dazu: `EchoelSt
 ```bash
 git fetch origin && git checkout -B claude/release-<thema> origin/main
 # RELEASE schreiben (Write/Edit), dann: Commit „chore(release): 11.0.0 <n>th upload — …"
-# Passagiere (decisions.csv, memory/, inspiration.csv) als EIGENEN Commit dazu — sie erreichen
-# main nur auf einem Code-Branch (CLAUDE.md: Passagier-Regel)
+# Passagiere (z. B. CLAUDE.md) als EIGENEN Commit dazu — sie erreichen main nur auf einem
+# Code-Branch (CLAUDE.md: Passagier-Regel). decisions.csv, memory/, inspiration.csv: nur als
+# Commit in echoelmusic-intern, nie in diesem Branch
 git push -u origin claude/release-<thema>
 ```
 
@@ -50,5 +51,5 @@ verbrauchen Nummern — die Nummer erst aus der `[ASC] build …`-Zeile nennen, 
 ## Danach
 
 - Dem Founder in Musiker-Worten: Build-Nummer, VALID, was neu ist, die fünf Prüfungen.
-- `docs/dev/TESTFLIGHT_PUBLIC_BETA.md` §0 „Stand" nachführen (eigener Docs-Commit).
+- `echoelmusic-intern/docs/dev/TESTFLIGHT_PUBLIC_BETA.md` §0 „Stand" nachführen (eigener Commit dort).
 - Kein weiterer Build, bis die Antworten da sind.

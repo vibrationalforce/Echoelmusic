@@ -19,6 +19,6 @@ Run from the repository root:
 Fixtures default to the script's sibling file; `--fixtures PATH` selects alternatives.
 Python success proves the reference contract only. Port the cases to Swift behaviour
 tests and keep sensor, audio, persistence and device acceptance separate.
-Start the combined handover at `scratchpads/grok-handover-2026-10-27/README.md`.
+Start the combined handover at `echoelmusic-intern/scratchpads/grok-handover-2026-10-27/README.md`.
 
 Permissions gap is real (no Camera/Bluetooth/Health yet). Production has priority. Coordinate with G-D.

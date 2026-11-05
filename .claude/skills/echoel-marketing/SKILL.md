@@ -69,10 +69,10 @@ These OVERRIDE anything in the vendored skills. Any draft that violates them is 
    is broad ("market Echoel"), start at App Store + website, not everything.
 2. **Read** the chosen `.claude/skills/marketing/skills/<name>/SKILL.md` and its
    `references/`; follow it, but rewrite every line through the guardrails.
-3. **Ground in the repo** — pull real facts from `memory/vision.md`,
+3. **Ground in the repo** — pull real facts from `ContentPipeline/CLAIMS.md`,
    `docs/dev/FEATURE_MATRIX.md`, `docs/` site, CLAUDE.md before inventing claims.
 4. **Significant marketing moves** (a launch, a pricing change, a positioning
-   shift, anything published externally) → run `the-council` + `vision-gate`
+   shift, anything published externally) → run `the-council` + `echoelmusic-intern:vision-gate`
    first; external publishing is hard to reverse.
 5. **Deliver** the artifact (copy, audit, plan) and say which underlying skill it
    used. Don't bulk-run the whole pack; one job at a time (Ralph loop spirit).

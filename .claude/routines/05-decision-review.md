@@ -3,7 +3,7 @@
 **Triggers:** none today — paste by hand.
 **Runs on:** Anthropic cloud (Linux, no iOS SDK)
 **Status:** Active as a prompt, unwired as automation
-**Lives in:** the private working repository `vibrationalforce/echoelmusic-intern` since
+**Lives in:** Echoel's private working repository `vibrationalforce/echoelmusic-intern` since
 2026-11-05 — `decisions.csv`, `review.sh` and `check-decisions.sh` are there. The rows are
 private: read them there and open the issues there, never in the public repo.
 

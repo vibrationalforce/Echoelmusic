@@ -23,7 +23,8 @@ on that ONE file, not on the total, and the earlier wording here attached it to 
 so on 2026-08-21 the section printed "Under the ceiling" at a surface of 155,062 B
 (`CLAUDE.md` 142,688). A stated threshold that does not test the quantity it names is the
 same defect class as a needle that cannot match. The ceiling is on the one file on purpose:
-#538's repair — moving provenance to `memory/LEDGER_COUNTS.md` — only shrinks `CLAUDE.md`.
+#538's repair — moving provenance to the counts ledger (since 2026-11-05
+`echoelmusic-intern/memory/LEDGER_COUNTS.md`) — only shrinks `CLAUDE.md`.
 ⭐ **W-MAP (2026-11-01): the law file is two files.** `CLAUDE.md` is the map of the repo (ceiling
 25,000 B); the earlier app's law moved verbatim to `Sources/CLAUDE.md` (the old 150,000 B, and it
 loads only while a session works in `Sources/`). App law goes to its directory's `CLAUDE.md`.
@@ -35,7 +36,7 @@ i.e. it went stale TWICE in the three days after it was written (2026-08-19 `54e
 2026-08-21 `6136dff` → 2026-08-22), in the file whose own §2 says *measure; do not recite*.
 ⛔ "six days" stood here for one commit and was never measured — no pairing of those dates
 yields six (#708).
-A count of sections is a date, not a fact. Re-derive:
+A count of sections is a date, not a fact. Re-derive in `echoelmusic-intern`:
 `grep -cE '^## [A-Z]+ — ' memory/LEDGER_COUNTS.md` — ⚠️ das `+` ist nicht Kosmetik: A–Z
 waren mit #1376 vergeben, und die einstellige Form hätte `## AA — ` still übersehen..
 
@@ -53,26 +54,28 @@ first. **Do not grow the always-loaded set.** Adding a line to an accreting ledg
 for you and charged to every future session.
 
 **Two caps hold this line. Do not remove either.** `sed -n '1,80p'` on `SESSION_LOG.md` and a
-slice of `memory/`: five small files whole, `decisions.md` tail-400, `inspiration_intake.md`
-head-60 (the funnel + the gate) plus tail-120. Each slice prints what it withheld and the
-command to read the whole file.
+slice of `memory/` (both in the private repo `echoelmusic-intern` since 2026-11-05): five small
+files whole, `decisions.md` tail-400, `inspiration_intake.md` head-60 (the funnel + the gate)
+plus tail-120. Each slice prints what it withheld and the command to read the whole file.
 
 ⛔ **FOUR BYTE FIGURES STOOD HERE AND ALL FOUR WERE STALE (#764) — in the file whose §2 says
 *measure; do not recite* and whose §1 deleted a byte table for exactly this.** They ran in the
 dangerous direction: each UNDERSTATED what the caps prevent (the quoted 191,875 B for an
 uncapped `cat memory/*.md` predates `LEDGER_COUNTS.md` moving into that directory, which alone
 is bigger than that whole figure), so the sentence arguing for the caps made them look optional.
-Deleted, not refreshed. Re-derive both sides with `wc -c` — pipe the hook's own `cat`/`tail`/
-`head`/`sed` list from `.claude/settings.json` into it, and the uncapped equivalent beside it.
+Deleted, not refreshed. Re-derive both sides with `wc -c` in `echoelmusic-intern` — pipe the
+hook's own `cat`/`tail`/`head`/`sed` list from `.claude/settings.json` into it, and the uncapped
+equivalent beside it.
 The DURABLE fact: the hook reads a **single-digit percentage** of the uncapped cost, and the gap
 widens every time a ledger grows. Removing a cap does not add a little — it multiplies.
 
 ⚠️ The `decisions.md` slice is a **heuristic, not a guarantee**, and the banner says so:
 that file is **not** in date order. The tail wins only because the newest entry happens to sit
 near it — re-derive with `grep -nE '^### 20[0-9]{2}-' memory/decisions.md | tail -3` against
-`wc -l`, and note that a plain newest-date scan is WRONG here: it lands on a `review_date`
-inside an older entry, not on the newest entry. If entries ever get appended elsewhere, the cap
-silently shows the wrong ones. The real repair is ordering the file, not widening the slice.
+`wc -l` in `echoelmusic-intern`, and note that a plain newest-date scan is WRONG here: it lands
+on a `review_date` inside an older entry, not on the newest entry. If entries ever get appended
+elsewhere, the cap silently shows the wrong ones. The real repair is ordering the file, not
+widening the slice.
 
 ## 2. Measure; do not recite, estimate, or remember
 

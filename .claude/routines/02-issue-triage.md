@@ -32,7 +32,7 @@ Never close an issue. Never commit a fix directly. Draft only.
    | Build failure | `bug/build` | CI failing, compile error |
    | Science concern | `science/review` | Wellness claim needs citation |
    | Design concern | `design` | UI violates constraints |
-   | Docs update | `docs` | CLAUDE.md, README, scratchpads |
+   | Docs update | `docs` | CLAUDE.md, README |
 
 3. **Assess priority:**
 

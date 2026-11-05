@@ -26,7 +26,7 @@ thinking humans ever produced.** The Grand Council is one fast internal
 deliberation that runs a founder-level decision past a panel of great minds and
 a short mental-model checklist, then converges on ONE recommendation and the
 cheapest reversible first step. It is the *strategy* companion to `the-council`
-(the build-decision gate) and composes with `vision-gate` (the vision filter).
+(the build-decision gate) and composes with `echoelmusic-intern:vision-gate` (the vision filter).
 
 It advises. It never overrides an explicit founder instruction or the hard rules
 in `CLAUDE.md`. Its job is to make the founder's decision *better-informed*, then
@@ -42,7 +42,7 @@ get out of the way.
 - anything that, if wrong, costs months or the brand
 
 **Skip** (do NOT convene): reversible build choices (that's `the-council`),
-typo/UX tweaks, anything already decided and logged in `decisions.csv`, or a
+typo/UX tweaks, anything already decided and logged in `echoelmusic-intern/decisions.csv`, or a
 direct factual question. Convening a 18-mind panel on trivia is the failure mode.
 
 ## The panel (select the 4–7 most relevant; never run all eighteen)
@@ -86,8 +86,8 @@ bio-signal claim, a lawyer for a compliance fork, etc.)
 ## Procedure (one pass, then act)
 
 1. **Frame** the decision in one sentence — the actual fork, with the options.
-2. **Ground it** in repo reality first: `memory/`, `docs/dev/FEATURE_MATRIX.md`,
-   `CLAUDE.md` "CURRENT STATE" / "Absent", `decisions.csv`. No invented facts.
+2. **Ground it** in repo reality first: `echoelmusic-intern/memory/`, `docs/dev/FEATURE_MATRIX.md`,
+   `CLAUDE.md` "CURRENT STATE" / "Absent", `echoelmusic-intern/decisions.csv`. No invented facts.
 3. **Seat 4–7 relevant minds.** Each gives ONE line: position + sharpest concern,
    spoken through their lens. No padding, no fortune-cookie quotes.
 4. **Run the three mental-model checks** (inversion · premortem · blind-spot).
@@ -98,8 +98,8 @@ bio-signal claim, a lawyer for a compliance fork, etc.)
 7. **Gate:** proceed / proceed-with-mitigation / **hold-for-founder**. Use
    `AskUserQuestion` for hold-for-founder only — when the call is genuinely the
    founder's (irreversible + values-laden) and the evidence doesn't force it.
-8. **Log** the decision + rationale to `decisions.csv` and `memory/decisions.md`
-   so the Grand Council never re-litigates a settled question.
+8. **Log** the decision + rationale to `decisions.csv` and `memory/decisions.md` in the
+   private repo `echoelmusic-intern`, so the Grand Council never re-litigates a settled question.
 
 ## Output (compact verdict, not a transcript)
 
@@ -132,7 +132,7 @@ irreversible calls.
 - **No hero worship, no invented quotes.** Use each mind's *method*, applied to
   the real facts of the decision. A lens that doesn't cut this decision stays silent.
 - **Composes, doesn't duplicate.** Build-level / reversible → `the-council`.
-  External-inspiration adoption → `vision-gate`. Marketing publication →
+  External-inspiration adoption → `echoelmusic-intern:vision-gate`. Marketing publication →
   `echoel-marketing` + `the-council`. Grand Council is for the big founder forks.
 - **PIPELINE only.** It is a thinking tool. It never ships in-app and never
   touches `Sources/`.

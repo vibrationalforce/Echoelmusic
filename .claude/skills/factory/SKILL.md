@@ -5,9 +5,10 @@ description: |
   Echoel factory — one feature from spec to "approved or escalated" with a bounded review loop:
   the PM writes a spec with Assumptions and Acceptance criteria, builds it, up to four read-only
   lenses review the diff in parallel, at most two rework rounds, then a separate approver either
-  approves or escalates to the founder through docs/dev/FOUNDER_INBOX.md. Job state lives on disk
-  under scratchpads/factory/<id>/ so it survives context compaction. Use for a multi-file or
-  user-facing slice ("/factory <feature>"); skip for a one-line reversible fix.
+  approves or escalates to the founder through docs/dev/FOUNDER_INBOX.md (private repo
+  echoelmusic-intern). Job state lives on disk under scratchpads/factory/<id>/ so it survives
+  context compaction. Use for a multi-file or user-facing slice ("/factory <feature>"); skip for a
+  one-line reversible fix.
 ---
 
 # Factory — Spec → Bau → vier Linsen → höchstens zwei Nacharbeiten → Freigabe oder Founder
@@ -20,7 +21,7 @@ human“, Freigabe per `/factory approve <id>`), Zustand als Dateien je Job. Das
 Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NICHT geöffnet.
 Übernommen ist das MUSTER, neu geschrieben für dieses Repo. Verdikt und Messung: die Zeile
 `instagram:zazencodes` in `inspiration.csv` und der Absatz „Factory-Reel“ in
-`memory/inspiration_intake.md`.
+`memory/inspiration_intake.md`, beide im privaten Repo `echoelmusic-intern`.
 
 ## Was dieses Repo daran anders macht — und warum
 
@@ -34,9 +35,10 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
 
 ## Der Ablauf
 
-1. **Job anlegen.** Nächste Nummer unter `scratchpads/factory/` (`001-kurzer-name`), darin
-   `board.json` (`stage: "spec"`) und `spec.md`. Der Ordner liegt unter `scratchpads/`, weil
-   neue Top-Level-Ordner Founder-Sache sind.
+1. **Job anlegen.** Nächste Nummer unter `scratchpads/factory/` (`001-kurzer-name`; frühere Jobs
+   liegen archiviert in `echoelmusic-intern/scratchpads/factory/`), darin `board.json`
+   (`stage: "spec"`) und `spec.md`. Der Ordner liegt unter `scratchpads/`, weil neue Top-Level-Ordner
+   Founder-Sache sind; als einziger Teil davon bleibt er in diesem Repo (`.gitignore`).
 2. **Spec schreiben** — vier Abschnitte, nicht mehr:
    - **Goal** — ein Satz, was der Nutzer danach kann.
    - **Assumptions** — jede Entscheidung, die du für den Founder triffst („du entscheidest alles“),
@@ -46,8 +48,9 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      Eintrag mit Nummer 0 und Art `founder`; der PM übergibt ihre Zahl als `founderAssumptions`
      (Pflicht, `0` wenn keine), der Approver zählt sie in der Spec selbst nach, und fehlt ein Eintrag,
      ist es `RERUN`. Erfüllt ist er nur mit einem DATIERTEN Beleg — Datei, Zeile oder
-     Eintrag, Datum der Antwort (`docs/dev/FOUNDER_INBOX.md` oder `memory/decisions.md`); eine offene
-     Zeile ist keine Antwort, und dann eskaliert der Workflow. Ein NUMMERIERTES Kriterium ist nie
+     Eintrag, Datum der Antwort (`docs/dev/FOUNDER_INBOX.md` oder `memory/decisions.md`, beide in
+     `echoelmusic-intern`); eine offene Zeile ist keine Antwort, und dann eskaliert der Workflow.
+     Ein NUMMERIERTES Kriterium ist nie
      `founder`: braucht es den Founder, gehört es als `[FOUNDER]`-Annahme in die Spec. Etikettiert der
      Approver ein nummeriertes Kriterium trotzdem `founder`, ist es nie ein Code-Beleg: erfüllt nur mit
      demselben datierten Beleg, sonst eskaliert der Workflow — er arbeitet es nie als Nacharbeit ab, und
@@ -66,8 +69,8 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    Bei einer bedeutenden Scope-Frage zuerst `the-council`, dann die Spec.
 3. **Bauen** (`stage: "build"`) — eine Ralph-Scheibe, Wächter im selben Commit, die acht Prüfer
    aus `scripts/INDEX.md` Abschnitt A, dann Commit. Hat die Spec ein `[DEVICE]`-Kriterium, zuerst
-   das WIP-Limit prüfen (`docs/dev/FOUNDER_INBOX.md`, Regel 3: höchstens drei gebaute Scheiben
-   warten auf ein Geräte-Urteil). **Eine Scheibe, die `docs/`, `ContentPipeline/` oder
+   das WIP-Limit prüfen (`echoelmusic-intern/docs/dev/FOUNDER_INBOX.md`, Regel 3: höchstens drei
+   gebaute Scheiben warten auf ein Geräte-Urteil). **Eine Scheibe, die `docs/`, `ContentPipeline/` oder
    `fastlane/metadata/` anfasst, wird auf dem LOKALEN Commit geprüft, bevor sie gepusht wird**:
    die Linsen lesen das lokale git, und eine reine `docs/`-Delta geht nach dem Push ohne Gate an
    die Website (Schritt 6). **Vor JEDEM Push** muss
@@ -211,9 +214,9 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    beide Lesungen: Nummer 0 ist `founder`; eine Nummer ist `device` nur, wenn sie in `deviceCriteria`
    steht UND der Approver sie `device` nennt; nennt er sie `founder`, ist sie ein Founder-Punkt (Regel 4);
    alles andere ist `code`. Ein `founder`-Eintrag gilt nur als erfüllt, wenn sein Beleg
-   `docs/dev/FOUNDER_INBOX.md` oder `memory/decisions.md` UND ein Datum (`JJJJ-MM-TT`) nennt. Der
-   Approver prüft außerdem, dass `board.json` am Kopf dieselbe `base` führt, mit der er gerufen
-   wurde — sonst eskaliert er, weil der geprüfte Bereich nicht der ganze Job wäre.
+   `docs/dev/FOUNDER_INBOX.md` oder `memory/decisions.md` (beide in `echoelmusic-intern`) UND ein Datum
+   (`JJJJ-MM-TT`) nennt. Der Approver prüft außerdem, dass `board.json` am Kopf dieselbe `base` führt,
+   mit der er gerufen wurde — sonst eskaliert er, weil der geprüfte Bereich nicht der ganze Job wäre.
    **Welche Dateien gesperrt sind, liest der Approver an der JOB-BASIS** (`git show <base>:` von
    `.claude/rules/context.md` §3, `.claude/hooks/protect-founder-gated.py` und
    `.claude/settings.json`), nie aus dem Baum unter Prüfung — sonst könnte ein Job die Liste
@@ -234,8 +237,8 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      sind, sagen seine Lese-Aufrufe — JEDE API, die eine Datei liest oder nach ihr fragt: `text(…)`,
      `String(contentsOf:)`, `Data(contentsOf:)`, `FileManager.default.fileExists`; gefunden mit
      `grep -n 'contentsOf\|fileExists\|text(' <Wächter-Datei>`. In `TheFactoryReviewersAreReadOnlyTests`
-     sind das die `text(…)`-Stellen, das `Data(contentsOf:)` auf `.claude/settings.json` (Anspruch 8) und
-     die `fileExists`-Prüfung der Inbox). Sonst heißt der Wächter am Kopf „transkribiert, kein Lauf“, nie grün —
+     sind das die `text(…)`-Stellen und das `Data(contentsOf:)` auf `.claude/settings.json`
+     (Anspruch 8)). Sonst heißt der Wächter am Kopf „transkribiert, kein Lauf“, nie grün —
      oder ein weiterer Commit berührt die Wächter-Datei und startet den Lauf auf dem letzten Baum
      (Job 003, Runde 2: ein Lauf auf dem Kopf der ersten Nacharbeit hätte sonst einen Workflow-Text
      bestätigt, den die zweite schon geändert hatte):
@@ -258,13 +261,13 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
        Check`: `Sources/**`, `Tests/**`, `project.yml`, `Package.swift`, `Package.resolved`,
        `Resources/iOS/Info.plist`, `scripts/check-infoplist.sh` · CI/CD: `Sources/**`, `Tests/**`,
        `Package.swift`, `project.yml` · `Echoel Studio`: `EchoelStudio/**`; jedes zusätzlich seine
-       eigene Workflow-Datei). Typisch: `.claude/**`, `scratchpads/**`, `memory/**`, die `*.csv` im
-       Wurzelordner und `scripts/**` außer `check-infoplist.sh`. Dann zählen die `--selftest`s, ihre
+       eigene Workflow-Datei). Typisch: `.claude/**`, der Job-Ordner unter `scratchpads/factory/`
+       und `scripts/**` außer `check-infoplist.sh`. Dann zählen die `--selftest`s, ihre
        `--mutate`-Läufe und die Python-Transkription, und das Wort heißt „kein Lauf“, nie „grün“.
        Berührt der Job gefilterte Pfade, ist „kein Lauf“ nie die Antwort, auch wenn der letzte Commit
        keinen auslöst — dann gilt die Regel „Welcher Lauf zählt“ oben.
      **Geräte-Bitten** (`deviceAsks`) gehen nicht einzeln in die Inbox: sie werden in eine FAMILIE
-     der nächsten Geräte-Runde in `docs/dev/FOUNDER_INBOX.md` §2 eingefaltet, im Budget von fünf je
+     der nächsten Geräte-Runde in `echoelmusic-intern/docs/dev/FOUNDER_INBOX.md` §2 eingefaltet, im Budget von fünf je
      Build (Regeln 1 und 4 dort). Ihre Zeilen kommen als `deviceOpen` in `board.json`; ein Job mit
      offenem `deviceOpen` ist „fertig, gerät-unbestätigt“, und `factory-board.py --open` zeigt ihn,
      bis jeder Eintrag ein Feld `verified` mit dem Datum (`JJJJ-MM-TT`) trägt — gesetzt am selben
@@ -319,9 +322,9 @@ als Befund.
 ## Wann nicht
 
 Eine Ein-Zeilen-Reparatur, ein reiner Tippfehler, ein Satz in einer INTERNEN Datei (`docs/dev/`
-außer `FEATURE_STATUS.md`, `memory/`, `scratchpads/`): direkt, ohne Factory (Council-Regel gegen
-Trivia). `docs/dev/FEATURE_STATUS.md` ist eines der zwei Register, aus denen Store, Website und
-Content ihre Behauptungen holen. Ein Satz auf der
+außer `FEATURE_STATUS.md`; `memory/` und `scratchpads/` in `echoelmusic-intern`): direkt, ohne Factory
+(Council-Regel gegen Trivia). `docs/dev/FEATURE_STATUS.md` ist eines der zwei Register, aus denen
+Store, Website und Content ihre Behauptungen holen. Ein Satz auf der
 Website, im Store-Text oder in `ContentPipeline/` ist dagegen eine Behauptung nach außen und läuft
 durch die Factory — die UX-Linse prüft genau das. Die Factory kostet bis zu fünf Agentenläufe je Runde — vier Linsen,
 der Approver nur in der Runde ohne offene Befunde, an der Grenze, bei einer Änderung an der

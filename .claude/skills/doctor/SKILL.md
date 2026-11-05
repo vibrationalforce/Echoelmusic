@@ -166,8 +166,8 @@ die in CLAUDE.md eine Behauptung aufstellen.
 brüchig und würde falsche Sicherheit erzeugen. Lies die zitierten Zeilen gegen die Zahlen.
 Der Modifier-Wert ist **dateiweit**, nicht nur die Body-Kette; ein Modifier im Content-Closure
 eines anderen zählt hier mit, sitzt aber nicht auf dem generischen Typ des Body. Wer diese
-Zahl korrigiert, zieht in CLAUDE.md nur noch EINE Stelle mit (der Presentation-Absatz);
-ihre Provenienz liegt seit #707 in `memory/LEDGER_COUNTS.md` §D. ⛔ Hier stand „muss beide
+Zahl korrigiert, zieht in CLAUDE.md nur noch EINE Stelle mit (der Presentation-Absatz); ihre
+Provenienz liegt seit #707 in `echoelmusic-intern/memory/LEDGER_COUNTS.md` §D. ⛔ Hier stand „muss beide
 Stellen in CLAUDE.md mitziehen … die Datei sagt selbst, dass sie synchron zu halten sind" —
 alle drei Teilaussagen sind seit #707 falsch: der CRAFT-TOOL-DOORS-Absatz trägt keinen Zähler
 mehr, und der zitierte Selbst-Hinweis („keep the two in sync or delete one") ist derselbe

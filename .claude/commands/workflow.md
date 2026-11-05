@@ -3,10 +3,10 @@
 Automated workflow for complex multi-step tasks. Combines planning, parallel execution, and self-verification.
 
 ## Phase 1: Plan
-1. Read `scratchpads/SESSION_LOG.md` for context
+1. Read the end of `echoelmusic-intern/scratchpads/SESSION_LOG.md` for context
 2. Analyze task scope — break into atomic steps (max 5 min each)
 3. Identify dependencies between steps
-4. Write plan to `scratchpads/PLAN_<feature>.md`
+4. Write plan to `echoelmusic-intern/scratchpads/PLAN_<feature>.md`
 5. If ambiguous, ask ONE clarifying question. Then proceed.
 
 ## Phase 2: Execute (Parallel Agents)
@@ -34,7 +34,7 @@ web session; on the founder's Mac `swift build` / `swift test --filter [relevant
 
 ## Phase 4: Ship
 1. Conventional commit: `feat:` / `fix:` / `refactor:` / `test:`
-2. Update `scratchpads/SESSION_LOG.md`
+2. Update `echoelmusic-intern/scratchpads/SESSION_LOG.md`
 3. Push to feature branch
 
 ## Principles

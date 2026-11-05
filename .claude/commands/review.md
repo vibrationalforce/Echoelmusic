@@ -39,7 +39,7 @@ Before reviewing code quality, check: **did they build what was requested — no
 
 1. Read commit messages: `git log origin/<base>..HEAD --oneline`
 2. Read PR description (`gh pr view --json body --jq .body 2>/dev/null || true`).
-   Read `scratchpads/PLAN_*.md` files if they exist. Read `TODOS.md` if it exists.
+   Read `echoelmusic-intern/scratchpads/PLAN_*.md` files if they exist. Read `TODOS.md` if it exists.
    **If no PR exists:** rely on commit messages, plan files, and TODOS.md for stated intent.
 3. Identify the **stated intent** — what was this branch supposed to accomplish?
 4. Run `git diff origin/<base> --stat` and compare the files changed against the stated intent.
@@ -336,12 +336,12 @@ Before producing the final review output:
 
 ## Step 5.5: TODOS Cross-Reference
 
-Read `TODOS.md` in the repository root (if it exists). Also check `scratchpads/PLAN_*.md` and `scratchpads/SESSION_LOG.md`.
+Read `TODOS.md` in the repository root (if it exists). Also check `echoelmusic-intern/scratchpads/PLAN_*.md` and the end of `echoelmusic-intern/scratchpads/SESSION_LOG.md` (private repo, if attached).
 
 - **Does this PR close any open TODOs or planned items?** If yes, note: "This PR addresses: <title>"
 - **Does this PR create work that should become a TODO?** If yes, flag as informational.
 - **Are there related TODOs that provide context?** If yes, reference them.
-- **Does this relate to any decisions in `memory/decisions.md`?** If yes, note the connection.
+- **Does this relate to any decisions in `echoelmusic-intern/memory/decisions.md`?** If yes, note the connection without quoting the private text.
 
 If none of these files exist, skip silently.
 
@@ -349,7 +349,7 @@ If none of these files exist, skip silently.
 
 ## Step 5.6: Documentation Staleness Check
 
-Cross-reference the diff against documentation files. For each `.md` file in the repo root (CLAUDE.md, README.md, etc.) and `memory/` directory:
+Cross-reference the diff against documentation files. For each `.md` file in the repo root (CLAUDE.md, README.md, etc.) and the `echoelmusic-intern/memory/` directory:
 
 1. Check if code changes affect features, components, or workflows described in that doc.
 2. If the doc was NOT updated but the code it describes WAS changed, flag as INFORMATIONAL:

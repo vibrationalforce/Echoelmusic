@@ -17,7 +17,7 @@ Analyze the current session for:
 
 ### 2. Update Knowledge Base
 
-#### `memory/decisions.md` — Architectural Decisions
+#### `echoelmusic-intern/memory/decisions.md` — Architectural Decisions
 ```markdown
 ## [Date] — [Decision Title]
 **Decision:** [What was decided]
@@ -26,7 +26,7 @@ Analyze the current session for:
 **Review Date:** [30 days from now]
 ```
 
-#### `decisions.csv` — Machine-Readable Log
+#### `echoelmusic-intern/decisions.csv` — Machine-Readable Log
 ```csv
 date,decision,reasoning,expected_outcome,review_date,status
 ```
@@ -40,7 +40,7 @@ If a new error pattern was discovered, add it to the
 | [error message] | [solution] |
 ```
 
-#### `scratchpads/SESSION_LOG.md` — Session Summary
+#### `echoelmusic-intern/scratchpads/SESSION_LOG.md` — Session Summary
 ```markdown
 ## Session [Date]
 **Branch:** [branch]
@@ -58,15 +58,16 @@ If a specialized agent (DSP, audio-thread, bio-safety) needs new rules:
 - Include the specific pattern and its fix
 
 ### 4. Review Overdue Decisions
-Check `decisions.csv` for any decisions past their review date:
+Check `echoelmusic-intern/decisions.csv` for any decisions past their review date:
 ```bash
 # Find decisions due for review
-grep "$(date +%Y-%m)" decisions.csv 2>/dev/null
+./review.sh   # run in the private repo echoelmusic-intern
 ```
 
 ## Rules
-- ALWAYS update `scratchpads/SESSION_LOG.md` at session end
-- ALWAYS log architectural decisions to both `memory/decisions.md` AND `decisions.csv`
+- ALWAYS update `echoelmusic-intern/scratchpads/SESSION_LOG.md` at session end
+- ALWAYS log architectural decisions to both `echoelmusic-intern/memory/decisions.md` AND
+  `echoelmusic-intern/decisions.csv`
 - New error patterns → update CLAUDE.md
 - New agent rules → update agent .md files
 - Keep insights specific and actionable (not vague)

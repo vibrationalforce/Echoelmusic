@@ -48,13 +48,9 @@ Add new patterns to CLAUDE.md:
 - Performance discoveries
 
 ### 6. Decision Review
-Check `decisions.csv` for decisions due for review:
+Check `echoelmusic-intern/decisions.csv` for decisions due for review:
 ```bash
-cat decisions.csv 2>/dev/null | while IFS=, read date decision reasoning outcome review status; do
-    if [[ "$review" < "$(date +%Y-%m-%d)" ]] && [[ "$status" != "REVIEWED" ]]; then
-        echo "DUE: $date - $decision"
-    fi
-done
+./review.sh   # run in the private repo echoelmusic-intern (the one quote-aware CSV parser)
 ```
 
 ### 7. Metrics Trend

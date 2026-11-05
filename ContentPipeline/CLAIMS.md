@@ -69,8 +69,8 @@ liefert — im selben Commit wie der Code.
 Der Merge nach `main` ist erfolgt (gemessen 2026-10-26). Die Studio-Hinweise in `docs/roadmap.html`,
 `docs/privacy.html` und `docs/claims.html` stehen inzwischen auf `main`. `docs/privacy.html` nennt den
 Studio-Mikrofonzugriff beim Scharfschalten einer Audiospur oder beim Abhören ihres Eingangs ausdrücklich.
-F22 ist erledigt (`docs/dev/FOUNDER_INBOX.md`, seit 2026-10-23 als gegenstandslos markiert).
-Einstieg: `docs/dev/ECHOEL_VISION_2026-10-19.md`.
+F22 ist erledigt (`echoelmusic-intern/docs/dev/FOUNDER_INBOX.md`, seit 2026-10-23 als gegenstandslos markiert).
+Einstieg: `echoelmusic-intern/docs/dev/ECHOEL_VISION_2026-10-19.md`.
 (6) **2026-10-31, Nachtrag CI-OUT (Dirigent, Founder hat delegiert):** neun Studio-Fähigkeiten, je mit Tür im Code auf
 `main` (Stand dieses Tages) gemessen, **in TestFlight, auf keinem Gerät geprüft** — jede Kopie sagt das. Sagbar, englisch, nicht erweitern:
 - **Sky:** „A Sky view draws the night sky above you from a star catalogue, your approximate location and the phone's orientation.“ (`App/Sky/SkyView.swift`, Tür „Sky“ in `App/Views/StudioView.swift`; Ort einmal, gerundet auf ~10 km, bleibt auf dem Gerät — `docs/privacy.html#studio`)
@@ -263,7 +263,7 @@ Entitlements ist die Reparatur, und sie ist jetzt nachgemessen statt vermutet.
 
 ⚠️ **WAS DAMIT NICHT BEWIESEN IST, und die Grenze ist eng zu ziehen: EIN Host, nicht jeder.**
 Geprüft ist AUM. **Logic Pro und GarageBand sind unverändert ungeprüft**, und GarageBand ist
-der interessantere Fall, weil er auf 44,1 kHz läuft (Board A10). Was in einer Caption stehen
+der interessantere Fall, weil er auf 44,1 kHz läuft (Board A10, privat). Was in einer Caption stehen
 darf, ist also **„läuft in AUM"** — nicht „läuft in Deiner DAW" und nicht „in Logic".
 Gepinnt von `TheStandingPromptDescribesThisRepoTests.testNoRoutineClaimsAUv3HostCompatibility`,
 dessen Host-Liste seit #1386 genau die zwei UNGEPRÜFTEN nennt: ein Wächter, der eine
@@ -435,7 +435,7 @@ Umsatz kommt erst in **v1.1** als „Echoel Live"-Jahresabo (~29,99 €, weltwei
 SharePlay-Sessions) plus Event-Gebühr in v1.2. `ProUnlockView` / `EchoelStore` /
 `ProGate` kompilieren, werden aber **nirgends präsentiert** — sie liegen bereit, um
 dafür umgewidmet zu werden.
-⛔ **Der Abo-Plan in diesem Absatz ist seit 2026-10-17 ABGELÖST** (`decisions.csv`, ECHOEL_VISION §7): kein
+⛔ **Der Abo-Plan in diesem Absatz ist seit 2026-10-17 ABGELÖST** (`echoelmusic-intern/decisions.csv`, ECHOEL_VISION §7): kein
 „Echoel Live“-Abo, keine Event-Gebühr — die App bleibt frei, eigene Instrumente werden einmal gekauft (für das
 Studio gebaut, noch nicht im Verkauf, siehe Nachtrag (1) oben). Der Absatz bleibt als Geschichte stehen; die
 Außenregel darunter gilt weiter, für das Studio zusätzlich „geplant als Einmalkauf, kein Abo“.

@@ -13,4 +13,4 @@ description: DDSP, granular, pitch correction and MPE Out recovery contracts for
 - Live and offline share musical semantics. Lookahead, tail, bypass and latency compensation explicit.
 - Reference script covers at least one DSP contract and the MPE state machine against independent fixtures.
 
-Full contract, fixtures and reference.py available in the skill references or handover scratchpad.
+Full contract, fixtures and reference.py available in the skill references or in `echoelmusic-intern/scratchpads/grok-handover-2026-10-27/`.

@@ -240,7 +240,7 @@ tools above are all blind to it by construction.** `dead-needles.py` gates every
 guard file naming ONLY `Sources/` paths — that gate is what keeps its false-alarm rate at zero,
 so widening it would cost more than it buys. `moved-needles.py` diffs `-- Sources` ONLY (#1182).
 Yet guards in this bundle assert literals against `CLAUDE.md`, `project.yml`, `docs/*.html`,
-`ContentPipeline/CLAIMS.md`, `decisions.csv`, `fastlane/metadata/`, `Resources/iOS/Info.plist`
+`ContentPipeline/CLAIMS.md`, `fastlane/metadata/`, `Resources/iOS/Info.plist`
 and this very file. #1190 proved the cost: a prose slimming reworded two sentences in
 `CLAUDE.md`, cut both needles of `TheVocalChainStopsAtTheAutotuneTests` claim 5, and all four
 checkers exited 0.
@@ -579,10 +579,11 @@ the one false alarm the prototype produced is gated out.
    readers could not agree on. If a count is ever needed, ship the predicate as a flag on the
    tool rather than a figure in prose (#818: delete, do not refresh).
 2. **The non-empty half of the path gate is not decoration.** `TheDecisionLogIsMachineReadableTests`
-   reads `review.sh`, whose needle is legitimately absent from `Sources/`. That file names NO
-   qualifying path, so a bare `all(p.startswith("Sources/"))` is **vacuously TRUE** and lets it
-   through — #926 in a new file. `bool(paths) and all(…)` is the whole fix, and the selftest
-   drives all three cases (no path / Sources-only / mixed).
+   read `review.sh` (both in `echoelmusic-intern` since 2026-11-05), whose needle is legitimately
+   absent from `Sources/`. That file names NO qualifying path, so a bare
+   `all(p.startswith("Sources/"))` is **vacuously TRUE** and lets it through — #926 in a new file.
+   `bool(paths) and all(…)` is the whole fix, and the selftest drives all three cases (no path /
+   Sources-only / mixed).
 ⚠️ **And the var-bound form had to ship WITH the inline one, or the shape would have gone
 quiet on its own known positive the moment it was repaired**: #959b hoists the anchor to a
 type-level `private let offAnchor = "…"`. A shape that read only inline literals would pass
@@ -939,7 +940,7 @@ section), or you spend a cycle debugging correct code — the #478 trap, one lay
 starts a full `build-for-testing` on a macOS runner. #538's commit message claimed "neither
 gate triggers" because the change was documentation; it touched `Tests/CISmoke/CLAUDE.md` and
 both gates ran. The rule that IS true, and the one `docs/CLAUDE.md` states for its own tree:
-a commit touching only `.claude/**`, `docs/**`, `scripts/**` or `memory/**` produces **no
+a commit touching only `.claude/**`, `docs/**` or `scripts/**` produces **no
 run at all** — a fourth state that is neither green nor red. Read the filter, not the suffix.
 
 Responses overflow the token cap; they are saved to a file. Parse runs with
@@ -1020,9 +1021,9 @@ Nothing above this line was rewritten; where it disagrees with §5, §5 is newer
   genau diese Ziffer schon eine Rücknahme trägt. Jetzt wird in ±2000 Zeichen um den Treffer
   gesucht. (c) Die `Error Domain=`-Vorsilbe war Pflicht und die Anführungszeichen um den
   Plist-SCHLÜSSEL auch — beide jetzt optional, weil dieser Baum die FBS-Domäne ausnahmslos BLOSS
-  schreibt und `RUN_DESTINATION_DEVICE_NAME` im `HARNESS_LEDGER` und im `SESSION_LOG` ohne
-  Anführungszeichen steht (die Quoted-Form habe ich selbst in Lauf 33420005558 gesehen — beide
-  sind echt).
+  schreibt und `RUN_DESTINATION_DEVICE_NAME` im `HARNESS_LEDGER` und im `SESSION_LOG` (beide seit
+  2026-11-05 im privaten Repo `echoelmusic-intern`) ohne Anführungszeichen steht (die Quoted-Form
+  habe ich selbst in Lauf 33420005558 gesehen — beide sind echt).
   ⚠️ **Selbsttest, ehrlich beschriftet:** zwei Schreibweisen des Startfehlers, **eine gemessene
   Domäne (Mach) und eine, die dieser Baum nur BLOSS führt (FBS)**, beide Plist-Schreibweisen und
   vier Negative — darunter die zwei Prosa-Zeilen, auf die die alte Nadel hereinfiel. ⛔ Hier stand
@@ -1035,7 +1036,7 @@ Nothing above this line was rewritten; where it disagrees with §5, §5 is newer
 ## 6. What does NOT belong in this directory
 
 - **The count chain.** The history of how many files live here lives in
-  `memory/LEDGER_COUNTS.md` §A. Do not start a second one in this file; keep the commands in §0
+  `echoelmusic-intern/memory/LEDGER_COUNTS.md` §A. Do not start a second one in this file; keep the commands in §0
   and derive the number. ⛔ This line said "a root-`CLAUDE.md` ledger" and #538 moved it — the
   chain was 5,599 lines and 80.2 % of a file that is loaded before every session, while the
   executable law it crowded out was 2.7 %. Nothing was deleted. A stale pointer here would be

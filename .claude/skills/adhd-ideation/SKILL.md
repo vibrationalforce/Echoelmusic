@@ -74,8 +74,8 @@ three metrics (1–10 scale):
 
 - This is a **divergence** tool — it widens the option space. It composes with, and
   hands off to, the convergence tools: `the-council` (deliberate on the shortlist),
-  `vision-gate` (filter any externally-inspired direction against the brand), and the
-  Ralph-Wiggum loop (ship ONE slice). Ideate wide here → converge there → ship one.
+  `echoelmusic-intern:vision-gate` (filter any externally-inspired direction against the
+  brand), and the Ralph-Wiggum loop (ship ONE slice). Ideate wide here → converge there → ship one.
 - **It never overrides the hard rules** in `CLAUDE.md` / `.claude/rules/`: audio-thread
   sanctity, the protected Rausch triad (BioEventGraph · HilbertSensorMapper ·
   BioSignalDeconvolver stay READ-ONLY — a "novel" idea that simplifies them is

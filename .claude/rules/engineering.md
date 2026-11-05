@@ -33,7 +33,8 @@ for params) — where those are more specific, they win. This file adds the cros
 
 ## 4. Architectural Justification
 - Briefly explain *WHY* an architectural decision was taken — in the commit body, the PR
-  description, and (for a significant/hard-to-reverse call) `decisions.csv` + `memory/`.
+  description, and (for a significant/hard-to-reverse call) `decisions.csv` + `memory/` in the
+  private repo `echoelmusic-intern`.
 - For significant or hard-to-reverse moves, convene `the-council` first (it exists to
   catch the mistake before the commit); log the material decision so it is not
   re-litigated.

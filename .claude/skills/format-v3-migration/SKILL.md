@@ -13,4 +13,4 @@ description: Explicit Format 3 migration for ModRoutes, empty array from v1/v2, 
 - Failed mutation leaves last valid document.
 - Offline export: live camera/BLE never produce a second random render. Explicit freeze or recorded tracks.
 
-See also scratchpads/FORMAT_V3_MIGRATION_SKETCH_2026-10-26.md and G-A contract.
+See also `echoelmusic-intern/scratchpads/FORMAT_V3_MIGRATION_SKETCH_2026-10-26.md` and G-A contract.

@@ -22,7 +22,7 @@ allowed-tools:
 **Principle: no significant move without a seat at the table.** The Council is a
 single fast internal deliberation, not a meeting. It exists to catch the mistake
 *before* the commit, surface real dissent, and converge on ONE next step — then
-get out of the way. It composes with `vision-gate` (vision filter) and the Ralph
+get out of the way. It composes with `echoelmusic-intern:vision-gate` (vision filter) and the Ralph
 Wiggum loop (ship one thing); it does not replace them.
 
 ## When to convene (and when NOT to)
@@ -35,7 +35,7 @@ we X?" / "what's best?".
 
 **Skip** (optimized form — do NOT council these): typo/format fixes, single
 obvious reversible edits, reading/searching, answering a direct factual question,
-anything already decided and logged in `decisions.csv` (point to the row instead).
+anything already decided and logged in `echoelmusic-intern/decisions.csv` (point to the row instead).
 Convening on trivia is the failure mode — stay cheap.
 
 ## The seats (fixed; only relevant seats speak)
@@ -44,7 +44,7 @@ Convening on trivia is the failure mode — stay cheap.
 |------|------|------|
 | **Architect** | system shape, coupling, EngineBus integrity | "Does this reuse what exists? What does it couple that shouldn't?" |
 | **DSP Purist** | audio-thread sanctity, Rausch triad (read-only), no simplification | "Any malloc/lock/ObjC/GCD/file-I/O in render? Are we simplifying protected DSP?" |
-| **Vision-Keeper** | brand/positioning, no esoteric/overclaim, open standards | "On-vision? Any false promise or banned term? (defer to `vision-gate`)" |
+| **Vision-Keeper** | brand/positioning, no esoteric/overclaim, open standards | "On-vision? Any false promise or banned term? (defer to `ContentPipeline/CLAIMS.md` + `echoelmusic-intern:vision-gate`)" |
 | **Shipper (Ralph)** | minimal change, one feature/cycle, green build, TestFlight | "Smallest change that ships? Does build/test stay green? One thing only?" |
 | **Skeptic** | risk, scope creep, what breaks | "What's the failure mode? What are we NOT seeing? Cheapest way to be wrong?" |
 | **User-Advocate** | founder's real intent, UX clarity, accessibility-first | "Is this what was actually asked? Is it legible and reversible for the user?" |
@@ -60,7 +60,7 @@ nobody arguing the other way, an instrument converges on safe and thin — and "
 already a real founder complaint about the sound. This seat is the counterweight.
 **Its constraint, non-negotiable:** it argues for expressive DEPTH on what exists — wiring
 a dead modulation channel, widening a range, making a mapping legible — never for an ad-hoc
-screen or surface outside the master plan's WA order (`docs/dev/ECHOELMUSIC_MASTER_PLAN.md`),
+screen or surface outside the master plan's WA order (`echoelmusic-intern/docs/dev/ECHOELMUSIC_MASTER_PLAN.md`),
 and never for a new modal on the root chain (black-screen law). It loses to Vision-Keeper on brand and to the
 flash/accessibility laws every time. When it and Vision-Keeper disagree, name the
 disagreement rather than averaging it.
@@ -77,8 +77,8 @@ disagreement rather than averaging it.
 5. **Decide the gate:** proceed / proceed-with-mitigation / hold-for-founder.
    Use `AskUserQuestion` for **hold-for-founder** only — when dissent is
    material, the change is hard to reverse, or intent is genuinely ambiguous.
-6. **Log** material decisions to `decisions.csv` (+ `memory/decisions.md`) so the
-   Council never re-litigates the same point.
+6. **Log** material decisions to `decisions.csv` (+ `memory/decisions.md`) in the private repo
+   `echoelmusic-intern`, so the Council never re-litigates the same point.
 
 ## Output (optimized form)
 

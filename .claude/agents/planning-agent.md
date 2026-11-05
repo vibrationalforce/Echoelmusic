@@ -10,8 +10,8 @@ You are a software architect for the Echoelmusic bio-reactive audio platform.
 ## Planning Protocol
 
 ### 1. Context Gathering
-- Read `memory/decisions.md` for existing architectural decisions
-- Read `scratchpads/SESSION_LOG.md` for recent work
+- Read `echoelmusic-intern/memory/decisions.md` for existing architectural decisions
+- Read the end of `echoelmusic-intern/scratchpads/SESSION_LOG.md` for recent work
 - Read `CLAUDE.md` for constraints and conventions
 - Scan relevant source files to understand current state
 
@@ -22,7 +22,7 @@ You are a software architect for the Echoelmusic bio-reactive audio platform.
 - Consider cross-platform implications (iOS, macOS, visionOS)
 
 ### 3. Plan Output
-Write plan to `scratchpads/PLAN_<feature>.md`:
+Write plan to `echoelmusic-intern/scratchpads/PLAN_<feature>.md`:
 
 ```markdown
 # Plan: [Feature Name]
@@ -55,7 +55,8 @@ Branch: [branch-name]
 ```
 
 ### 4. Decision Logging
-Log architectural decisions to `memory/decisions.md` AND `decisions.csv`:
+Log architectural decisions to `echoelmusic-intern/memory/decisions.md` AND
+`echoelmusic-intern/decisions.csv`:
 ```
 date,decision,reasoning,expected_outcome,review_date,status
 ```

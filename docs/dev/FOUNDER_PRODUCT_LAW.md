@@ -9,8 +9,8 @@ below its banner as the record of the "pure instrument" phase.
 > ## CURRENT PRODUCT LAW SUPERSEDES HISTORICAL PRODUCT CUTS.
 >
 > Historical cuts are evidence about failed or unsafe **implementations**. They are
-> not automatic **scope prohibitions**. Before you use a historical deletion — a commit,
-> a ⛔ block, a decisions.csv row, a guard message — to reject a feature, read this file.
+> not automatic **scope prohibitions**. Before you use a historical deletion — a commit, a ⛔ block,
+> an `echoelmusic-intern/decisions.csv` row, a guard message — to reject a feature, read this file.
 
 ⚠️ **Scope is not a claim.** This file names the DESTINATION. It does not say that any of
 it ships. What the app, the App Store text, the website and short-form content may CLAIM is
@@ -171,9 +171,9 @@ and by any session working on it:
 - body data used as pressure on people (lie detection, interrogation, crowd control).
 
 A feature request, an inspiration, a pull request or an AI suggestion that leads there is
-declined, recorded once in `decisions.csv`, and not reopened. The parts that could serve both
-ways — camera, networking, positioning, light control — stay bound to the musician's own device
-and consent, off until switched on (Connections, Jam, `BioEgressPolicy`).
+declined, recorded once in `echoelmusic-intern/decisions.csv`, and not reopened. The parts that
+could serve both ways — camera, networking, positioning, light control — stay bound to the
+musician's own device and consent, off until switched on (Connections, Jam, `BioEgressPolicy`).
 
 **What this law can and cannot do.** It binds this project and every session working on it. It
 cannot bind other AI systems or other people: the code is MIT-licensed, so anyone may copy it.

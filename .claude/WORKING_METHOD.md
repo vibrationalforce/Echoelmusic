@@ -29,7 +29,7 @@
 4. **PUSH** to the current dev branch (never `main`).
 5. **VERIFY** — CI `build_only: true` first; only after green, `build_only: false` to ship to TestFlight.
 6. **DEVICE TEST** — owner confirms on TestFlight (the only oracle for audio/Metal/rPPG).
-7. **LOG** — update `scratchpads/SESSION_LOG.md` with commit + outcome.
+7. **LOG** — update `echoelmusic-intern/scratchpads/SESSION_LOG.md` with commit + outcome.
 8. **REPEAT.**
 
 **Hard rules:** ONE feature/fix per cycle, no batching. Tests in the same commit as the feature. Red CI = drop everything until green.
@@ -42,10 +42,10 @@
 |---|---|
 | Project doctrine | `CLAUDE.md` (read FIRST every session) |
 | Working method | `.claude/WORKING_METHOD.md` (this file) |
-| Decisions | `memory/decisions.md` + `decisions.csv` |
-| Session history | `scratchpads/SESSION_LOG.md` |
+| Decisions | `echoelmusic-intern/memory/decisions.md` + `echoelmusic-intern/decisions.csv` |
+| Session history | `echoelmusic-intern/scratchpads/SESSION_LOG.md` |
 | Audio-thread rules | `.claude/rules/swift-audio.md` |
-| User profile | `memory/user.md`, `people.md`, `preferences.md` |
+| User profile | `echoelmusic-intern/memory/user.md`, `people.md`, `preferences.md` |
 | Public README | `README.md` |
 
 Anything not in this map is either obsolete or should be merged into one of these files.
@@ -70,6 +70,6 @@ Types: `feat · fix · refactor · test · docs · chore · perf`. One change pe
 - Modify `Info.plist`, `*.entitlements`, `.github/workflows/*.yml`, `Package.swift`, or `project.yml` target membership without naming it explicitly (and, for CI/Info.plist, asking first)
 - `--no-verify`, `--amend` on a published commit, or force-push a shared branch
 - Push directly to `main`
-- Add a dependency without logging the decision in `memory/decisions.md`
+- Add a dependency without logging the decision in `echoelmusic-intern/memory/decisions.md`
 - Create a new top-level dir under `Sources/Echoelmusic/` beyond the approved set
 - Re-introduce bio-reactive auto-play in the main flow (launch silence is a rule)

@@ -12,4 +12,4 @@ description: Camera ownership FSM with production priority, stable target IDs, d
 - Non-destructive edit; results stay editable and undoable.
 - Agent already has menu door, availability check and executor; preserve them.
 
-Coordinates with G-A for source validity. Full contract in references or scratchpads.
+Coordinates with G-A for source validity. Full contract in references or `echoelmusic-intern/scratchpads/grok-handover-2026-10-27/`.

@@ -3,7 +3,7 @@
 > ⭐ **Banner (2026-10-26):** Diese Datei beschreibt nur die eingefrorene Alt-App
 > (`Sources/Echoelmusic`, Versionsstand 10.79.515); die folgenden Einträge behalten ihre historischen Messstände.
 > Studio (`EchoelStudio/`, TestFlight 11.0.0, siebter Upload am 2026-10-25) ist hier nicht abgedeckt —
-> bekannte Lücke L1 (`ECHOEL_VISION_2026-10-19.md`, §10).
+> bekannte Lücke L1 (`echoelmusic-intern/docs/dev/ECHOEL_VISION_2026-10-19.md`, §10).
 
 > **Produktumfang ≠ diese Seite.** Was Echoelmusic werden soll, entscheidet
 > [`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md) (DMMW, seit 2026-09-24). Diese Seite sagt nur, was HEUTE
@@ -64,7 +64,7 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
 
 Stand 2026-10-16, Zweig `claude/echoelmusic-review-optimize-u5jjpd` ab `81ebe64`/`39f954d`; Gates zum
 Zeitpunkt des Eintrags offen, kein TestFlight-Build. Gerät für alle: offen. Präfix je ID, weil zwei
-Pläne dieselben Buchstaben nutzen (`scratchpads/GSIDMMW_AUDIT_2026-10-16.md` §ID-Namensraum).
+Pläne dieselben Buchstaben nutzen (`echoelmusic-intern/scratchpads/GSIDMMW_AUDIT_2026-10-16.md` §ID-Namensraum).
 
 | Was | Wo | Commit |
 |---|---|---|
@@ -181,7 +181,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 
 | Fähigkeit | Stand | Was fehlt |
 |---|---|---|
-| Fluid-Oberfläche (`FluidSurfaceMath`, F1) | reiner Kern mit begrenzter Energie, kein Aufrufer, kein Shader | F2–F3: Shader und Tür (`scratchpads/PLAN_FLUID_SURFACE_2026-10-13.md`) |
+| Fluid-Oberfläche (`FluidSurfaceMath`, F1) | reiner Kern mit begrenzter Energie, kein Aufrufer, kein Shader | F2–F3: Shader und Tür (`echoelmusic-intern/scratchpads/PLAN_FLUID_SURFACE_2026-10-13.md`) |
 | Erkannte Tonart übernehmen | wird nur angezeigt, nie übernommen (Absicht) | Founder-Entscheidung + ein Knopf |
 | „Follow pulse“-Tempo (`BioTempoDirector`) | fertig, aber ein Zwilling des lebenden Servos | Entscheidung, welcher gilt |
 | Raum-Render (7 eigene Kerne: VBAP, Ambisonics, `BinauralPanner`, Raumhall …) | Steuer-Hälfte (ADM-OSC aus und ein) läuft. Im Kopfhörer: seit Restructure S3c sitzen AUDIO-Spuren an ihrer Szenen-Position — über Apples HRTF (`AVAudioEnvironmentNode`, `AudioEngine.attachSpaceBus`), NICHT über die 7 Kerne; Schalter „Headphone space“ im Mixer, Default aus, Gerät offen (G6). Die generierten Stimmen bleiben stereo. ⛔ Bis 2026-10-11 stand hier „im Kopfhörer ist nichts räumlich“ — seit S3c falsch (`docs/research/SPATIAL_MIX_RESEARCH.md` §7). Unter den 7 Kernen hängen zwei Dateien, die NUR sie benutzen (aufgeschrieben 2026-10-13): `EchoelRenderLayout` — die Lautsprecher-Geometrie, von ihren 15 Typen nennt nur `VBAPPanner` einen — und `AutomationGestureRecorder`, den nur `SpatialAutomationMapping` nennt; Wächter `TheSpatialRenderHalfIsNotClaimedLiveTests` Anspruch 5 | für die 7 Kerne: je ein Aufrufer (die zwei Dateien darunter kommen mit); für den Kopfhörer: G6 am Gerät |
@@ -204,7 +204,7 @@ Messen: `git grep -n "FeatureFlags.<name>" -- Sources | grep -v ': *//'`.
 ⭐ Seit 2026-09-24 gilt [`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md): **aktuelles Produktgesetz schlägt
 historische Streichungen.** Die Zeilen unten sagen, welche IMPLEMENTIERUNG warum ging — nicht, dass die
 Fähigkeit tabu ist. Ob und wie eine zurückkommt (wiederverwenden, Algorithmus portieren, neu bauen, nie wieder),
-steht je Fähigkeit in [`HISTORY_ARCHIVE.md`](HISTORY_ARCHIVE.md).
+steht je Fähigkeit in `echoelmusic-intern/docs/dev/HISTORY_ARCHIVE.md`.
 
 Nichts davon ist verloren: jeder Stand liegt in der Git-Historie unter der genannten Nummer.
 Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
@@ -230,10 +230,10 @@ Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): Beat
 einen Sampler mit Lader und Tür `TrackSampleRow`; korrigiert 2026-10-10) · Sends/Returns · Audio-Eingang mit Aufnahme, Sampling, Analyse
 (#1302) · AUv3-**Hosting** (⭐ für Instrument-Plugins seit H2–H4 gebaut, Gerät offen; Effekt-Plugins nicht; das ausgelieferte AUv3-INSTRUMENT ist kein Hosting-Nachweis) ·
 Video als musikalisches Material (⭐ der erste Schritt E12-1 „Use Its Sound“ ist seit Build 2617 ausgeliefert, Fach 1c) · ein hörbarer Raum im Kopfhörer (S3; ⭐ für Audiospuren seit Build 2617 über „Headphone space“, Fach 1c — die generierten Stimmen bleiben stereo). Die Pläne dazu stehen in
-`scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7; geplant heißt nicht ausgeliefert.
+`echoelmusic-intern/scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7; geplant heißt nicht ausgeliefert.
 
 RTMP-Livestream · Bewegungs-Sensor · EEG · MPE-**Eingang** mit Zonen (MPE-Ausgang läuft) · iPad ·
-Mac · Vision Pro. Video/KI-Video steht als Roadmap in `scratchpads/ROADMAP_VIDEO_AWB_AI_2026-09-23.md`.
+Mac · Vision Pro. Video/KI-Video steht als Roadmap in `echoelmusic-intern/scratchpads/ROADMAP_VIDEO_AWB_AI_2026-09-23.md`.
 
 ---
 

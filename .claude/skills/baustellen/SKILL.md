@@ -2,7 +2,8 @@
 
 Adoptiert aus „Everything Claude Code" (Founder-Reel 2026-07-17) sind die MUSTER —
 Verification-Loop + Board-Orchestrierung — nicht das Paket (Entscheid in
-decisions.csv 2026-07-17). Das Board ist `scratchpads/BAUSTELLEN_BOARD.md`.
+decisions.csv 2026-07-17). Das Board ist `scratchpads/BAUSTELLEN_BOARD.md`; beide liegen im
+privaten Repo `echoelmusic-intern`.
 
 ## Das Gesetz des Loops
 
@@ -12,20 +13,21 @@ sein Test IST das Verify; CI-grün ist nur das Gate davor). „Code gepusht" ≠
 
 ## Loop (jede Session / jeder Heartbeat)
 
-1. **Board lesen** (`scratchpads/BAUSTELLEN_BOARD.md`) — VOR dem Task-Tool; das
+1. **Board lesen** (`echoelmusic-intern/scratchpads/BAUSTELLEN_BOARD.md`) — VOR dem Task-Tool; das
    Board ist die konsolidierte Wahrheit, die Task-Liste die Historie.
 2. **Oberste AKTIV-Zeile ziehen**, deren nächste Slice nicht blockiert ist.
    Founder-Direktiven des Tages überstimmen die Reihenfolge sofort.
 3. **Slice bauen** (integriert, nicht Ein-Punkt — Founder-Verdikt 07-17), Route-
-   Spalte beachten (Reviewer-Agent, Plan-Dokument, Copy-Gesetz).
+   Spalte beachten (Reviewer-Agent, Plan-Dokument in `echoelmusic-intern/scratchpads/`, Copy-Gesetz).
 4. **Gates** (Xcode Compile Check + CI/CD) → **jede grüne Runde deployt**
    (`.deploy/release`-Bump) mit deutscher, founder-lesbarer Release-Note, die den
    Verify-Weg als Test-Bitte formuliert („öffne X, prüfe Y").
 5. **Board aktualisieren**: Slice-Fortschritt, Verify-Spalte (CI ✓ / Gerät offen /
    Founder ✓ + Build-Nummer), Erledigtes in die ERLEDIGT-Tabelle (nie löschen),
    Blockiertes nach BLOCKIERT mit dem, worauf es wartet.
-6. **Lernen persistieren**: echte Dead-Ends/Playbooks → `HARNESS_LEDGER.md`
-   (unser Instinct-System), Entscheide → `decisions.csv` + `memory/decisions.md`.
+6. **Lernen persistieren** (im privaten Repo `echoelmusic-intern`): echte Dead-Ends/Playbooks →
+   `scratchpads/HARNESS_LEDGER.md` (unser Instinct-System), Entscheide → `decisions.csv` +
+   `memory/decisions.md`.
 
 ## Board-Pflege-Regeln
 

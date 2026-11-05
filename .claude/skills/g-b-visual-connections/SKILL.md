@@ -15,4 +15,4 @@ Load the full contract and fixtures before any change.
 - Network outside the audio callback. Bounded queue, drop/coalesce, no cue storm on reconnect.
 - F25 is the specific workflow allowlist for ConnectionsOutput; not a general blocker.
 
-Reference checks and fixtures live alongside this skill or in scratchpads/grok-handover-2026-10-27/.
+Reference checks and fixtures live alongside this skill or in `echoelmusic-intern/scratchpads/grok-handover-2026-10-27/`.

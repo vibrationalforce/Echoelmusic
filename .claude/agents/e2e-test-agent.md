@@ -77,8 +77,8 @@ flake), and #445 on why a **missing** test name proves nothing — is written on
 
 ⚠️ **A fourth state exists and is the easiest to misreport: NOT TRIGGERED.** Both gates
 are `paths:`-filtered to `Sources/**`, `Tests/**`, `Package.swift`, `project.yml` and a
-short list besides. A commit touching only `.claude/**`, `scripts/**`, `docs/**` or
-`memory/**` produces **no run**. That is neither green nor red, and calling it either is
+short list besides. A commit touching only `.claude/**`, `scripts/**` or `docs/**`
+produces **no run**. That is neither green nor red, and calling it either is
 a false claim about a build that never happened.
 
 ---
