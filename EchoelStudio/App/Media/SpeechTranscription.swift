@@ -100,10 +100,10 @@ enum SpeechTranscription {
         let transcriber = SpeechTranscriber(locale: match, transcriptionOptions: [], reportingOptions: [],
                                             attributeOptions: [.audioTimeRange])
         let analyzer = SpeechAnalyzer(modules: [transcriber])
-        guard let read = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: readRate, channels: 1,
+        guard let readFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: readRate, channels: 1,
                                        interleaved: false) else { throw Failure.unreadable }
-        let target = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber]) ?? read
-        let converter = target == read ? nil : AVAudioConverter(from: read, to: target)
+        let target = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber]) ?? readFormat
+        let converter = target == readFormat ? nil : AVAudioConverter(from: readFormat, to: target)
         let (inputs, feed) = AsyncStream<AnalyzerInput>.makeStream()
         let collecting = Task { () throws -> [Subtitles.Word] in
             var words: [Subtitles.Word] = []
@@ -118,7 +118,7 @@ enum SpeechTranscription {
         }
         do {
             try await analyzer.start(inputSequence: inputs)
-            try await read(url, from: start, length: length, format: read) { buffer in
+            try await read(url, from: start, length: length, format: readFormat) { buffer in
                 if let converter {
                     guard let converted = convert(buffer, with: converter, to: target) else { return }
                     feed.yield(AnalyzerInput(buffer: converted))
