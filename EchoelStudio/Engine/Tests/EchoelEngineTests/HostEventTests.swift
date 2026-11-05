@@ -158,12 +158,14 @@ final class HostEventTests: XCTestCase {
         for round in 0..<rounds {
             kernel.rampParameter(cutoff, to: 18_000, frames: 48_000)
             go.signal()
-            while done.wait(timeout: .now()) != .success {
+            var renders = 0
+            while done.wait(timeout: .now()) != .success, renders < 1_000_000 {
                 kernel.render(frames: 64, left: left, right: right, gain: 1)
+                renders += 1
             }
+            guard renders < 1_000_000 else { return XCTFail("the setter never ran, round \(round)") }
             kernel.render(frames: 64, left: left, right: right, gain: 1)
             XCTAssertEqual(kernel.parameter(cutoff), 500, "round \(round)")
-            if kernel.parameter(cutoff) != 500 { break }
         }
     }
 }
