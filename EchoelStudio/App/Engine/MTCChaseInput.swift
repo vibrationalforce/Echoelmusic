@@ -156,26 +156,29 @@ final class MTCChaseInput {
         carry(action, hostTime: mach_absolute_time())
     }
 
+    /// `isLocked` rests the song's loop (`AudioEngine.timecodeRuns`). It changes only where the song
+    /// cannot run across the loop's end meanwhile: after a pause, or after `clockWillMovePlayhead`
+    /// (which ends a take on the loop it began with) and before the seek that follows it.
     private func carry(_ action: MTCChase.Action, hostTime: UInt64) {
-        // A stopped or relocated sender gives the loop back even while a MIDI clock sets the pace.
-        switch action {
-        case .locate, .stop: isLocked = false
-        case .follow: break
+        guard let engine, !engine.followsExternalClock else {
+            // A MIDI clock or a jam sets the pace: the chase steps aside and gives the loop back.
+            isLocked = false
+            return
         }
-        guard let engine, !engine.followsExternalClock else { return }
         switch action {
         case .locate(let seconds):
             if engine.isPlaying { engine.pauseFromOutside(nil) }
+            isLocked = false
             engine.clockWillMovePlayhead()
             engine.seek(toSeconds: seconds)
         case .stop:
             if engine.isPlaying { engine.pauseFromOutside(nil) }
+            isLocked = false
         case .follow(let seconds, let at):
-            // Before the seek below: the loop must rest when the song lands past its end.
-            isLocked = true
             // Before the song's first sample the song waits at its start.
             guard seconds >= 0 else {
                 if engine.isPlaying { engine.pauseFromOutside(nil) }
+                isLocked = true
                 return
             }
             let now = mach_absolute_time()
@@ -184,15 +187,18 @@ final class MTCChaseInput {
                 // The sender runs and the song does not: start it where the sender is now, plus
                 // the output's latency so the first frame heard is the sender's.
                 engine.clockWillMovePlayhead()
+                isLocked = true
                 engine.seek(toSeconds: seconds + along + engine.outputLatencySeconds)
                 engine.play()
                 return
             }
             switch follower.correction(gap: seconds - heard) {
             case .nudge(let by):
+                isLocked = true
                 if by != 0 { engine.nudge(seconds: by) }
             case .relocate:
                 engine.clockWillMovePlayhead()
+                isLocked = true
                 engine.seek(toSeconds: seconds + along + engine.outputLatencySeconds)
             }
         }

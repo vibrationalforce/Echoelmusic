@@ -62,6 +62,9 @@ final class AudioEngine {
     /// Where the take stands between Record, an end from outside, the stop and the closed file.
     /// What a pause, a jump or a rebuild does to it is decided there and tested in the package.
     @ObservationIgnored private var takeLife = TakeLifecycle()
+    /// The loop a MIDI take began over (`beginLoopCapture`): its passes are cut on it even when the
+    /// loop rests before the take ends — a chased timecode that starts running, say.
+    @ObservationIgnored private var captureLoop: Range<Tick>?
     /// Which reading of the engine's meters shows each track, as of the last snapshot.
     @ObservationIgnored private var meterIndices: [TrackID: Int] = [:]
     @ObservationIgnored private var core: EngineCore?
@@ -1024,16 +1027,20 @@ final class AudioEngine {
     /// take began on both of its clocks (Loop record).
     func beginLoopCapture() -> LoopRecording.Moment {
         core?.setReportsLoopWraps(true)
+        captureLoop = activeLoop
         return currentMoment
     }
 
-    /// A MIDI take ends: the wraps since `beginLoopCapture`, the loop it ran over and the moment it
-    /// ended. Synchronous, against the core the take was played on.
+    /// A MIDI take ends: the wraps since `beginLoopCapture`, the loop it began over (as an audio
+    /// take keeps `take.loop`) and the moment it ended. Synchronous, against the core the take was
+    /// played on.
     func endLoopCapture() -> (wraps: [Int64], loop: Range<Tick>?, end: LoopRecording.Moment) {
         let end = currentMoment
         let wraps = core?.takeLoopWraps() ?? []
         core?.setReportsLoopWraps(false)
-        return (wraps, activeLoop, end)
+        let loop = captureLoop
+        captureLoop = nil
+        return (wraps, loop, end)
     }
 
     /// The playhead and the played frames, now.
