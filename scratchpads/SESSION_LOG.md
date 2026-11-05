@@ -1942,3 +1942,11 @@ Nächster Schritt: PR prüfen und mergen; der nächste TestFlight-Upload trägt 
 ## 2026-11-04 — Privates Founder-Projekt aus dem Repo entfernt
 
 - Founder-Entscheid: alle Inhalte eines privaten Projekts außerhalb von Echoelmusic entfernt, auch aus Entscheidungs- und Ledger-Dateien. Kein Code, kein founder-gated File.
+
+## 2026-11-04 abends → 2026-11-05 — Dirigent: Werkzeuge zurückgeholt, vier Builds
+
+- TestFlight VALID: 10040 (Wavetable, fünf Effekte, SRT weg), 10045 (Drums/Breaks, Mix Analysis, Comping, Siri, Resolve-Export, externer Bildschirm, Apple Health, Browser, Convert to MIDI, Texture), 10050 (Headphone Spatial, Pitch & Texture, Loop-Record, MIDI 2.0, Phone Motion, Licht-Cues, Farbe). Nächster mit ADM BWF, Learn, MTC läuft.
+- Upload 30b1753ed scheiterte an fehlendem NSHealthUpdateUsageDescription; behoben in project.yml (Freigabe-Abfrage). Auch NSMotionUsageDescription nennt jetzt Phone Motion.
+- Gemergte Teams: W2-A, MIX-1, COMP, REC-1, PRO-W2, BROWSE (2 Slices), TEX, A2M, BAKE, LOOP (+Schwelle 2 Takte), SPAT, MIDI2, MOTION, COLOR, CUES, ADMBWF, LEARN, TC. Alle nur kompiliert und getestet, nichts am Gerät.
+- Lehre: Mehr als drei Teams gleichzeitig verstopfen die CI-Warteschlange; zwei Auto-Merges brachen nach 45 Minuten ab.
+- Offen: Format-4-Builds verweigern Songs mit neuen Modulationsquellen (vorwärts-kompatibel als „nicht gemessen“ abspielen wäre eine eigene Entscheidung); MTC-Chase mit Song-Loop verliert den Sender; App hat keinen String-Katalog (Learn nur Englisch); Learn-Pfade werden nicht automatisch gegen die echten Menütexte geprüft.
