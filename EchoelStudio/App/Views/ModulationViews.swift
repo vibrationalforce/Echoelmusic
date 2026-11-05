@@ -4,8 +4,8 @@ import SwiftUI
 /// "Modulate" for one owner (wave W2): the body moves the owner's volume, pan or instrument values. Only sources
 /// with a producer are offered — the pulse, HRV, coherence and breath of the chest strap or the
 /// camera (W1; the breath, read from the timing of the heartbeat, since W12b), and the phone's own tilt, turning and
-/// movement (Recovery 9); a source nothing
-/// measures would be a control that does nothing. Every change goes through
+/// movement (Recovery 9), and the Bar LFO, a sine over each bar read from the song position
+/// (`Modulation.songLFO`); a source nothing measures would be a control that does nothing. Every change goes through
 /// `ProjectStore.perform` (`modulation.set` / `modulation.remove`), one undo step each.
 struct ModulateMenu: View {
     @Environment(ProjectStore.self) private var store
@@ -21,7 +21,8 @@ struct ModulateMenu: View {
     static let sources: [(ModulationSource, String)] = [(.heartRate, "Heart Rate"), (.hrv, "HRV"),
                                                         (.coherence, "Coherence"), (.breath, "Breath"),
                                                         (.motionTiltX, "Tilt Left/Right"), (.motionTiltY, "Tilt Forward/Back"),
-                                                        (.motionRotation, "Turning"), (.motionEnergy, "Movement")]
+                                                        (.motionRotation, "Turning"), (.motionEnergy, "Movement"),
+                                                        (.lfo1, "Bar LFO")]
     /// The depths offered, as a share of the control's travel.
     static let depths: [Double] = [0.1, 0.25, 0.5, 1]
 
@@ -73,7 +74,7 @@ struct ModulateMenu: View {
     static func measuringLine(_ measuring: Set<ModulationSource>, sourceOn: Bool) -> String {
         let names = sources.filter { measuring.contains($0.0) }.map(\.1)
         if !names.isEmpty { return "Measuring: " + names.joined(separator: ", ") }
-        return sourceOn ? "Nothing measured yet" : "Body source off — routes add nothing"
+        return sourceOn ? "Nothing measured yet" : "Body source off — body routes add nothing"
     }
 
     static func title(of route: ModulationRoute, in project: Project) -> String {

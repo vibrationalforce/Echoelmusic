@@ -105,4 +105,18 @@ public enum Modulation {
         let curved = curve == .linear ? position : position * Swift.abs(position)
         return depth * curved
     }
+
+    /// The reading of `lfo.1` at song position `tick`: a sine over each bar of the song's meter —
+    /// 0.5 on the bar line, 1 a quarter of the way in, 0 at three quarters — so a change of time
+    /// signature changes its period with the bar. It comes from the song position, never a wall
+    /// clock, so an export moves exactly as playback does. Nil for a position that is not finite
+    /// or beyond any song. Arithmetic only, render-safe.
+    public static func songLFO(at tick: Double, meter: MeterMap) -> Double? {
+        guard tick.isFinite, Swift.abs(tick) < 4.0e18 else { return nil }
+        let whole = Tick(tick.rounded(.down))
+        let length = meter.ticksPerBar(at: whole)
+        guard length > 0 else { return nil }
+        let phase = (tick - Double(meter.barStart(at: whole))) / Double(length)
+        return 0.5 + 0.5 * sin(2 * Double.pi * phase)
+    }
 }

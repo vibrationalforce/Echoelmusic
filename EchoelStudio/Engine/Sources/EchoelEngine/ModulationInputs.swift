@@ -6,6 +6,7 @@ import Synchronization
 /// to read (wave W2). One cell per `ModulationSource`, each normalized 0 … 1 or ABSENT: a source
 /// that is not measured right now adds nothing to any route (G-A contract) — never a centred
 /// stand-in. An offline render reads none of this, so an export never depends on a live sensor.
+/// `lfo.1` has a cell but no writer: it is read from the song position (`Modulation.songLFO`).
 /// No locks, no allocation after `init`; any thread may write, the render thread reads.
 public final class ModulationInputs: @unchecked Sendable {
     private final class Cell: @unchecked Sendable {

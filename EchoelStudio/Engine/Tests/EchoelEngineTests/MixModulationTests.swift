@@ -4,7 +4,7 @@ import XCTest
 
 /// A route moves a track's or the master's fader and pan as a lane does (W2 E2/E3): exactly the
 /// stored value while the source is absent, along the control's travel while it is measured,
-/// and nothing in an offline render, which passes no inputs.
+/// and in an offline render, which passes no inputs, only the song clock (`lfo.1`) moves it.
 final class MixModulationTests: XCTestCase {
     private let rate = 48_000.0
 
@@ -102,8 +102,8 @@ final class MixModulationTests: XCTestCase {
         XCTAssertTrue(breathing.lanes.first?.patchRoutes.isEmpty ?? true)
     }
 
-    /// An offline render never reads a live sensor: without inputs nothing moves.
-    func testWithoutInputsNoRouteMovesAnything() throws {
+    /// An offline render never reads a live sensor: without inputs no body route moves anything.
+    func testWithoutInputsNoBodyRouteMovesAnything() throws {
         let (project, _) = try song { [ModulationRoute(source: .heartRate, target: .volume($0), depth: -1)] }
         XCTAssertNil(snapshot(project, inputs: nil).lanes.first?.mix)
     }
@@ -127,6 +127,22 @@ final class MixModulationTests: XCTestCase {
         inputs.set(.heartRate, 1)
         XCTAssertGreaterThan(route.routes.value(400), 400, "the pulse opens the filter")
         XCTAssertNil(snapshot(project, inputs: nil).lanes.first?.patchRoutes.first, "an offline render compiles none")
+    }
+
+    /// `lfo.1` reads the song position, not a sensor: it compiles without inputs (an export) and
+    /// moves the pan with the bar, while a body route beside it still compiles only live.
+    func testASongLFORouteMovesThePanWithTheBarEvenWithoutInputs() throws {
+        let (project, _) = try song { [ModulationRoute(source: .lfo1, target: .pan($0), depth: 1, polarity: .bipolar),
+                                       ModulationRoute(source: .heartRate, target: .volume($0), depth: -1)] }
+        let offline = try XCTUnwrap(snapshot(project, inputs: nil).lanes.first)
+        let mix = try XCTUnwrap(offline.mix, "the song clock moves the pan in an export too")
+        XCTAssertNil(mix.volumeRoutes, "the heart rate does not reach an export")
+        let routes = try XCTUnwrap(mix.panRoutes)
+        XCTAssertTrue(routes.followsSongClock)
+        XCTAssertEqual(routes.value(0, at: 0), 0, accuracy: 1e-9, "on the bar line, centred")
+        XCTAssertEqual(routes.value(0, at: 960), 1, accuracy: 1e-9, "a quarter in, hard right")
+        XCTAssertEqual(routes.value(0, at: 2_880), -1, accuracy: 1e-9, "three quarters in, hard left")
+        XCTAssertEqual(routes.value(0.25, at: nil), 0.25, "with the song standing, nothing is added")
     }
 
     func testADisabledRouteMovesNothing() throws {

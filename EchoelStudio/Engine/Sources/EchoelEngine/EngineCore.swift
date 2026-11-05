@@ -800,10 +800,15 @@ public final class EngineCore: @unchecked Sendable {
         if patchesMoved, isPlayingFlag.load(ordering: .acquiring), let snapshot = current?.snapshot, snapshot.automatesPatches {
             applyPatchAutomation(snapshot, at: snapshot.time.position(atSample: playhead))
         }
-        // Routes on instrument values follow the body every chunk, playing or not (W2).
+        // Routes on instrument values follow the body every chunk, playing or not (W2). While a
+        // route on the song clock plays, the 32-frame automation grid sets them instead, between
+        // a start or a seek: a chunk's first sample is the device's buffer edge, and setting the
+        // clock's value there would make the sound depend on the buffer size, as with lanes.
         if let snapshot = current?.snapshot, snapshot.modulatesPatches {
-            applyPatchModulation(snapshot, at: snapshot.time.position(atSample: playhead),
-                                 playing: isPlayingFlag.load(ordering: .acquiring))
+            let playing = isPlayingFlag.load(ordering: .acquiring)
+            if !(playing && snapshot.clocksPatches && !patchesMoved) {
+                applyPatchModulation(snapshot, at: snapshot.time.position(atSample: playhead), playing: playing)
+            }
         }
         playLiveEvents()
         let playing = isPlayingFlag.load(ordering: .acquiring)
@@ -881,7 +886,9 @@ public final class EngineCore: @unchecked Sendable {
             // The earliest due event: a launch, a session note, an arrangement note, or the next
             // beat. At one sample a launch comes first, so the old clip's notes there never play.
             var due = Due(sample: snapshot.time.sample(at: nextBeat))
-            if snapshot.automatesPatches || !snapshot.unitAutomation.isEmpty { due.offer(automationNext, -1, .automation) }
+            if snapshot.automatesPatches || snapshot.clocksPatches || !snapshot.unitAutomation.isEmpty {
+                due.offer(automationNext, -1, .automation)
+            }
             for (index, lane) in snapshot.lanes.enumerated() {
                 let session = sessions[lane.slot]
                 if case .none = session.pending {} else {
@@ -1979,7 +1986,7 @@ public final class EngineCore: @unchecked Sendable {
             for modulation in lane.patchRoutes where modulation.index < values.count {
                 let stored = Double(values[modulation.index])
                 let base = playing ? (modulation.lane?.value(atPosition: tick) ?? stored) : stored
-                let value = Float(modulation.routes.value(base))
+                let value = Float(modulation.routes.value(base, at: playing ? tick : nil))
                 guard value.isFinite, builtIn.parameter(modulation.index) != value else { continue }
                 builtIn.setParameter(modulation.index, value)
                 changed = true
