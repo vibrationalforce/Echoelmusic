@@ -2,7 +2,7 @@
 
 ## Swift 6 Strict Concurrency
 - `@MainActor` on ALL `@Observable` view models
-- `nonisolated(unsafe)` for audio thread parameters
+- Audio-thread state: Studio `Synchronization.Atomic`, one writer per word (`add` sums, render drains: `exchange(0)`); earlier app `nonisolated(unsafe)`
 - `@Sendable` closures where required — and ALWAYS on a closure literal that a framework
   calls off the main queue, when it is formed inside a `@MainActor` type. Without it the
   closure inherits MainActor isolation; passed as an argument to a module that is not
@@ -163,9 +163,7 @@ Language-level notes that ARE still true and worth keeping:
 - **Argument order in `max`/`min` decides NaN behaviour.** `max(x, y)` is
   `y >= x ? y : x`, so `max(0, NaN)` returns `0` (NaN-safe) while `max(NaN, 0)`
   returns `NaN`. `min(max(v, lo), hi)` therefore passes NaN straight through — use
-  the NaN-safe `clamped(to:)` (`Core/FloatingPointClamp.swift`) for anything that
+  the NaN-safe `clamped(to:)` (`Sources/Echoelmusic/Core/FloatingPointClamp.swift`) for anything that
   reaches the audio thread. This has caused shipped permanent-silence bugs.
 - `@escaping` required for `TaskGroup.addTask` closures.
 - Result builder: `buildBlock(_ components: [T]...)` when using `buildExpression`.
-
-(`Core/FloatingPointClamp.swift` above is the earlier app's file, `Sources/Echoelmusic/Core/FloatingPointClamp.swift`.)
