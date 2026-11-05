@@ -63,6 +63,7 @@ extension Command {
         case foldTake, compTake, removeTakeGroup
         case addFixture, patchFixture, renameFixture, removeFixture
         case addCue, setCue, removeCue, placeCue, removeCuePlacement
+        case makePlacementUnique
     }
 
     public var kind: Kind {
@@ -139,6 +140,7 @@ extension Command {
         case .removeRegion: .removeRegion
         case .splitPlacement: .splitPlacement
         case .consolidatePlacements: .consolidatePlacements
+        case .makePlacementUnique: .makePlacementUnique
         case .consolidateRegions: .consolidateRegions
         case .setRegionFades: .setRegionFades
         case .setRegionGain: .setRegionGain
@@ -578,6 +580,11 @@ public enum CommandCatalog {
                                parameters: [P("track", .trackID, "The track."),
                                             P("placements", .placementIDList, "The placements to join, at least two."),
                                             P("clip", .clipID, "Identifier for the joined clip.")])
+        case .makePlacementUnique:
+            return CommandSpec(name: "arrangement.makeUnique", title: "Make Unique",
+                               summary: "Gives a placed clip that also plays elsewhere (a linked copy) a clip of its own, a copy of the shared one; later edits stay with it.",
+                               parameters: [P("track", .trackID, "The track."), P("placement", .placementID, "The placement."),
+                                            P("clip", .clipID, "Identifier for the placement's own clip.")])
         case .consolidateRegions:
             return CommandSpec(name: "region.consolidate", title: "Join Regions",
                                summary: "Joins audio or video regions that are consecutive pieces of one file (as a split leaves them) into one. Overlapping or separate media needs a bounce and is refused.",

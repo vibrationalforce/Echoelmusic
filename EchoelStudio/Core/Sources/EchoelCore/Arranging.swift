@@ -206,10 +206,30 @@ public enum Arranging {
         }
     }
 
-    /// A copy of the placement straight after it, as in any DAW's Duplicate.
+    /// A linked copy of the placement straight after it ("Duplicate as Linked", an alias): a second
+    /// placement of the same clip, so an edit to the notes is heard in both.
     public static func duplicated(_ placement: Placement, in track: Track) -> Command? {
+        duplicated(placement, in: track, as: PlacementID())
+    }
+
+    private static func duplicated(_ placement: Placement, in track: Track, as id: PlacementID) -> Command? {
         guard let stop = Self.end(of: placement, in: track), stop <= MusicalTime.maximumTick else { return nil }
-        return .placeClip(track: track.id, id: PlacementID(), clip: placement.clip, start: stop)
+        return .placeClip(track: track.id, id: id, clip: placement.clip, start: stop)
+    }
+
+    /// An independent copy of the placement straight after it, as in any DAW's Duplicate: the
+    /// linked copy given a clip of its own in the same undo step.
+    public static func copied(_ placement: Placement, in track: Track) -> [Command]? {
+        let id = PlacementID()
+        guard let place = duplicated(placement, in: track, as: id) else { return nil }
+        return [place, .makePlacementUnique(track: track.id, id, clip: ClipID())]
+    }
+
+    /// The command that gives a linked placement a clip of its own; nil when nothing else plays
+    /// its clip.
+    public static func madeUnique(_ placement: Placement, in track: Track) -> Command? {
+        guard track.uses(of: placement.clip) >= 2 else { return nil }
+        return .makePlacementUnique(track: track.id, placement.id, clip: ClipID())
     }
 
     /// A copy of an audio or video region straight after it: the same stretch of the same file, no

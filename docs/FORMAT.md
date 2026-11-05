@@ -253,6 +253,12 @@ that overlap or name another folder's take refuse the song.
 (`{media, offset, length}` in frames: an audio loop, on an audio track, with no notes or controls,
 in session slots only) and `controls`.
 
+A clip that more than one placement or session slot names is a **linked copy** (an alias): every
+one of them plays the same notes, and an edit to the clip is heard in all of them. Nothing else is
+stored for a link — the shared clip id is the link. Echoel's Make Unique writes a copy of the clip
+under a new id and points one placement at it. An export (MIDI, DAWproject) writes each placement
+as a copy of its own.
+
 **Note:** `{id, pitch, velocity, start, length}`, start relative to the clip.
 
 **Control change:** `{id, kind, start, value}` where `kind` is `{"pitchBend": {}}` or

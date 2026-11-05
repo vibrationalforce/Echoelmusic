@@ -5,7 +5,7 @@ import SwiftUI
 /// play. Tap empty space to place the track's clip at that bar — or, on an audio track, to
 /// import a file there; tap a clip to edit its notes, drag a clip or audio region to move it
 /// onto the magnet (Snap, shared with the note editor: Off to the tick, Bar, Beat, 1/8 … 1/128,
-/// triplets), hold for Snap, Duplicate, Split at Playhead, Consolidate and Delete. One drag is one
+/// triplets), hold for Snap, Duplicate, Duplicate as Linked, Make Unique, Split at Playhead, Consolidate and Delete. One drag is one
 /// undo step, and so is each of those.
 /// A video part shows its hits (CUT): where the picture cuts and where a sound in its own audio
 /// begins. With Snap to Hits a dragged clip or audio region lands on a hit within reach instead of
@@ -463,6 +463,8 @@ private struct PlacementBlock: View {
         Int(clamping: meter.bar(at: meter.nextBarLine(atOrAfter: placement.start + clip.length)) - meter.bar(at: placement.start))
     }
     private var nextHit: Tick? { Hits.next(after: placement.start, in: hits) }
+    /// How many places play this clip (placements and session slots); two or more is a linked copy.
+    private var uses: Int { track.uses(of: clip.id) }
 
     var body: some View {
         accessible(block.contextMenu { menu })
@@ -484,6 +486,7 @@ private struct PlacementBlock: View {
                     .lineLimit(1)
                     .padding(Theme.Space.xs)
             }
+            .overlay(alignment: .bottomTrailing) { linkBadge }
             .frame(width: width, height: Theme.Size.trackRowHeight - Theme.Space.s)
             .offset(x: CGFloat(Double(placement.start) / ticksPerPoint) + dragX, y: Theme.Space.xs)
             .opacity(dragX == 0 ? 1 : 0.8)
@@ -496,6 +499,21 @@ private struct PlacementBlock: View {
                         drop(movedBy: value.translation.width)
                     }
             )
+    }
+
+    /// A linked copy shows a chain and how many places play its clip (×3). VoiceOver reads it in the
+    /// block's label.
+    @ViewBuilder private var linkBadge: some View {
+        if uses >= 2 {
+            HStack(spacing: 2) {
+                Image(systemName: "link")
+                Text("×\(uses)")
+            }
+            .font(Theme.Font.caption)
+            .foregroundStyle(Theme.Color.text)
+            .lineLimit(1)
+            .padding(Theme.Space.xs)
+        }
     }
 
     /// Where the block shows while the finger moves: on a hit as soon as one is within reach.
@@ -530,6 +548,10 @@ private struct PlacementBlock: View {
             Toggle("Snap to Hits", systemImage: "scope", isOn: $snapsToHits)
         }
         Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
+        Button("Duplicate as Linked", systemImage: "link") { duplicateLinked() }
+        if uses >= 2 {
+            Button("Make Unique", systemImage: "link.badge.plus") { makeUnique() }
+        }
         Button("Split at Playhead", systemImage: "scissors") { splitAtPlayhead() }
         if Arranging.consolidated(placement, in: track) != nil {
             Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
@@ -545,7 +567,7 @@ private struct PlacementBlock: View {
     private func accessible(_ view: some View) -> some View {
         view
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(clip.name), bar \(startBar), \(lengthBars) bars")
+            .accessibilityLabel(spokenLabel)
             .accessibilityAddTraits(.isButton)
             .accessibilityHint("Opens the note editor.")
             .accessibilityAction { open(track.id, clip.id) }
@@ -553,6 +575,8 @@ private struct PlacementBlock: View {
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
             .accessibilityAction(named: "Place at Next Hit") { placeAtNextHit() }
             .accessibilityAction(named: "Duplicate") { duplicate() }
+            .accessibilityAction(named: "Duplicate as Linked") { duplicateLinked() }
+            .accessibilityAction(named: "Make Unique") { makeUnique() }
             .accessibilityAction(named: "Split at Playhead") { splitAtPlayhead() }
             .accessibilityAction(named: "Consolidate") { consolidate() }
             .accessibilityAction(named: "Rename Clip") { router.sheet = .rename(.clip(clip.id)) }
@@ -566,8 +590,27 @@ private struct PlacementBlock: View {
         }
     }
 
+    /// The block's VoiceOver label: name, where, how long, and whether it is a linked copy.
+    private var spokenLabel: String {
+        let base = "\(clip.name), bar \(startBar), \(lengthBars) bars"
+        return uses >= 2 ? "\(base), linked, plays in \(uses) places" : base
+    }
+
+    /// An independent copy right after it: a clip of its own, one undo step.
     private func duplicate() {
-        if let command = Arranging.duplicated(placement, in: track) { try? store.perform(command) }
+        if let commands = Arranging.copied(placement, in: track) { try? store.perform(commands, title: "Duplicate") }
+    }
+
+    /// A linked copy right after it: the same clip again, so a note edit is heard in both.
+    private func duplicateLinked() {
+        if let command = Arranging.duplicated(placement, in: track) {
+            try? store.perform([command], title: "Duplicate as Linked")
+        }
+    }
+
+    /// Gives this placement a clip of its own; nothing happens when nothing else plays its clip.
+    private func makeUnique() {
+        if let command = Arranging.madeUnique(placement, in: track) { try? store.perform(command) }
     }
 
     /// Starts the clip exactly on the first hit after its start, one undo step; nothing after the last hit.

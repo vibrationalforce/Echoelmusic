@@ -131,6 +131,10 @@ public enum Command: Codable, Equatable, Sendable {
     /// order, with overlaps of one pitch resolved as playback resolves them. The earliest
     /// placement plays the new clip, the others go; a clip nothing uses any more goes with them.
     case consolidatePlacements(track: TrackID, [PlacementID], clip: ClipID)
+    /// Gives a placement a clip of its own: a copy of the clip it shares with other placements or
+    /// session slots (a linked copy, an alias), under `clip`. The others keep the original; an edit
+    /// to either afterwards stays with it. Refused when nothing else plays the clip.
+    case makePlacementUnique(track: TrackID, PlacementID, clip: ClipID)
 
     // Audio regions
     case placeAudio(track: TrackID, id: RegionID, media: MediaID, start: Tick)
@@ -1008,6 +1012,20 @@ extension Command {
             for source in Set(sources) { track.removeClipIfUnused(source) }
             project.tracks[t] = track
 
+        case let .makePlacementUnique(trackID, id, clipID):
+            let t = try project.requireTrack(trackID)
+            guard let p = project.tracks[t].placementIndex(id) else { throw CommandError.unknownPlacement(id) }
+            let source = project.tracks[t].placements[p].clip
+            guard let c = project.tracks[t].clipIndex(source) else { throw CommandError.unknownClip(source) }
+            guard project.clipLocation(clipID) == nil else { throw CommandError.duplicateID(clipID.description) }
+            guard project.tracks[t].uses(of: source) >= 2 else {
+                throw CommandError.invalidValue(parameter: "placement", reason: "its clip plays nowhere else")
+            }
+            var copy = project.tracks[t].clips[c]
+            copy.id = clipID
+            project.tracks[t].clips.insert(copy, at: c + 1)
+            project.tracks[t].placements[p].clip = clipID
+
         case let .placeAudio(trackID, id, mediaID, start):
             let t = try project.requireTrack(trackID)
             guard project.tracks[t].kind == .audio else {
@@ -1420,6 +1438,12 @@ public enum Palette {
 extension Track {
     /// Removes a clip nothing plays any more — no placement and no session slot — after an edit
     /// replaced it with new clips. A clip still in use stays.
+    /// How many places play the clip: its placements in the arrangement and its session slots.
+    /// Two or more is a linked clip — an edit to its notes is heard in every one of them.
+    public func uses(of clip: ClipID) -> Int {
+        placements.reduce(0) { $0 + ($1.clip == clip ? 1 : 0) } + slots.reduce(0) { $0 + ($1.clip == clip ? 1 : 0) }
+    }
+
     mutating func removeClipIfUnused(_ id: ClipID) {
         guard !placements.contains(where: { $0.clip == id }), !slots.contains(where: { $0.clip == id }) else { return }
         clips.removeAll { $0.id == id }
