@@ -128,6 +128,8 @@ struct EchoelStudioApp: App {
                     midi.start()
                     launchpad.start()
                     engine.clock.start()
+                    engine.timecode.begin()
+                    engine.timecodeChase.begin()
                 }
                 .onChange(of: store.project) { _, project in
                     documents.projectChanged()

@@ -71,6 +71,14 @@ public final class EngineCore: @unchecked Sendable {
     /// live — and its all-notes-off, timed like the clock, written only while `setNoteOut(slot:)`
     /// names a slot. Channel messages on channel 1; the sender spreads them over a zone.
     public let noteOut = MIDIClockRing()
+    /// Render → MTC sender (W17-TC): quarter frames while playing, a full frame at a start, a
+    /// locate and a stop, written only while `setTimecodeOut` names a rate.
+    public let timecodeOut = TimecodeRing()
+    /// −1 off; otherwise the start offset in frames shifted left by two, over the rate's code.
+    private let timecodeSetting = Atomic<Int64>(-1)
+    /// Render thread: the MTC generator and whether it ran last chunk.
+    private var timecode = MTCGenerator(sampleRate: 48_000)
+    private var timecodeWasOn = false
     /// The slot whose notes `noteOut` carries; −1 for none.
     private let noteOutSlot = Atomic<Int>(-1)
 
@@ -301,6 +309,7 @@ public final class EngineCore: @unchecked Sendable {
     public init(sampleRate: Double, slotCapacity: Int = Track.limit(for: .instrument)) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.sampleRate = rate
+        timecode = MTCGenerator(sampleRate: rate)
         self.slotCapacity = Swift.max(1, slotCapacity)
         meters = MeterBank(count: self.slotCapacity + Self.smoothedAudioTracks + Self.returnCapacity + 1)
         let builtIn = InstrumentDevice.builtIn
@@ -588,6 +597,15 @@ public final class EngineCore: @unchecked Sendable {
     /// so the ring never fills up.
     public func setClockOutEnabled(_ enabled: Bool) { clockFlag.store(enabled, ordering: .relaxed) }
 
+    /// MTC out: the rate and the timecode of the song's first sample, in frames from
+    /// 00:00:00:00 (`Timecode.frameCount(rate:)`); nil switches it off, so the ring never fills
+    /// while nothing reads it.
+    public func setTimecodeOut(rate: MTCRate?, startFrames: Int64) {
+        guard let rate else { return timecodeSetting.store(-1, ordering: .relaxed) }
+        let start = Swift.min(Swift.max(startFrames, 0), rate.framesPerDay - 1)
+        timecodeSetting.store(start << 2 | Int64(rate.rawValue), ordering: .relaxed)
+    }
+
     /// The slot whose notes are timed into `noteOut`, or nil for none (the default), so the ring
     /// never fills while nothing reads it.
     public func setNoteOut(slot: Int?) {
@@ -791,6 +809,7 @@ public final class EngineCore: @unchecked Sendable {
         let playing = isPlayingFlag.load(ordering: .acquiring)
         let clocking = clockFlag.load(ordering: .relaxed)
         if clocking { sendTransport(playing: playing, sought: seek >= 0) }
+        let timecoding = sendTimecodeTransport(playing: playing, sought: seek >= 0)
         let stopping = wasPlaying && !playing
         // What a hosted unit learns as "the transport changed": a start, a stop or a jump.
         let transportMoved = stopping || (playing && !wasPlaying) || seek >= 0
@@ -927,6 +946,10 @@ public final class EngineCore: @unchecked Sendable {
         renderVoices(rendered..<frames)
         // Counted on with clock out off too, so switching it on mid-song sends no burst.
         sendClocks(snapshot, blockEnd: blockEnd, emitting: clocking)
+        if timecoding {
+            timecode.sendQuarterFrames(from: playhead, to: blockEnd, into: timecodeOut,
+                                       hostTime: callHostTime, chunkStart: chunkStart)
+        }
         renderUnits(frames: frames)
         mixFrom = snapshot.time.position(atSample: playhead)
         mixTo = snapshot.time.position(atSample: blockEnd)
@@ -1586,6 +1609,25 @@ public final class EngineCore: @unchecked Sendable {
         let sixteenth = Swift.min(Swift.max(tick / (MusicalTime.ticksPerQuarter / 4), 0), 0x3FFF)
         emit(0xF2, UInt8(sixteenth & 0x7F), UInt8(sixteenth >> 7))
         emit(0xFB)
+    }
+
+    /// MTC's transport, before `wasPlaying` moves on: a full frame of where the song stands at a
+    /// start, a locate (a seek, a jump, the loop's wrap), a stop, and when MTC out is switched on
+    /// or its rate or start changes; the quarter frames then start again from the playhead. True
+    /// while MTC out is on.
+    private func sendTimecodeTransport(playing: Bool, sought: Bool) -> Bool {
+        let setting = timecodeSetting.load(ordering: .relaxed)
+        guard setting >= 0, let rate = MTCRate(rawValue: Int(setting & 3)) else {
+            timecodeWasOn = false
+            return false
+        }
+        let changed = timecode.configure(rate: rate, startFrames: setting >> 2) || !timecodeWasOn
+        timecodeWasOn = true
+        let starting = playing && !wasPlaying, stopping = wasPlaying && !playing
+        guard changed || sought || starting || stopping else { return true }
+        timecode.locate()
+        timecode.sendFullFrame(atSample: playhead, into: timecodeOut, hostTime: callHostTime, frame: chunkStart)
+        return true
     }
 
     /// Times every clock due before `blockEnd`, or only counts past them while clock out is off.
