@@ -800,10 +800,15 @@ public final class EngineCore: @unchecked Sendable {
         if patchesMoved, isPlayingFlag.load(ordering: .acquiring), let snapshot = current?.snapshot, snapshot.automatesPatches {
             applyPatchAutomation(snapshot, at: snapshot.time.position(atSample: playhead))
         }
-        // Routes on instrument values follow the body every chunk, playing or not (W2).
+        // Routes on instrument values follow the body every chunk, playing or not (W2). While a
+        // route on the song clock plays, the 32-frame automation grid sets them instead, between
+        // a start or a seek: a chunk's first sample is the device's buffer edge, and setting the
+        // clock's value there would make the sound depend on the buffer size, as with lanes.
         if let snapshot = current?.snapshot, snapshot.modulatesPatches {
-            applyPatchModulation(snapshot, at: snapshot.time.position(atSample: playhead),
-                                 playing: isPlayingFlag.load(ordering: .acquiring))
+            let playing = isPlayingFlag.load(ordering: .acquiring)
+            if !(playing && snapshot.clocksPatches && !patchesMoved) {
+                applyPatchModulation(snapshot, at: snapshot.time.position(atSample: playhead), playing: playing)
+            }
         }
         playLiveEvents()
         let playing = isPlayingFlag.load(ordering: .acquiring)

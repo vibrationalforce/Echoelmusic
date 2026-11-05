@@ -1,4 +1,5 @@
 import XCTest
+import Foundation
 @testable import EchoelCore
 
 /// The G-A modulation vectors (`.claude/skills/g-a-body-modulation/references/FIXTURES.json`, group
@@ -254,7 +255,8 @@ final class ModulationTests: XCTestCase {
         XCTAssertEqual(try lfo(3_840), 0.5, accuracy: 1e-12, "the next bar line")
         XCTAssertEqual(try lfo(3_840 + 720), 1, accuracy: 1e-12, "a quarter of the 3/4 bar")
         XCTAssertEqual(try lfo(3_840 + 2_880), 0.5, accuracy: 1e-12, "its bar line")
-        XCTAssertEqual(try lfo(480.5), try lfo(480.5), "a position between ticks reads the same every time")
+        XCTAssertEqual(try lfo(480.5), 0.5 + 0.5 * sin(2 * Double.pi * 480.5 / 3_840), accuracy: 1e-12,
+                       "a position between ticks keeps its fraction")
         XCTAssertNil(Modulation.songLFO(at: .nan, meter: meter))
         XCTAssertNil(Modulation.songLFO(at: .infinity, meter: meter))
         XCTAssertNil(Modulation.songLFO(at: 1e300, meter: meter))

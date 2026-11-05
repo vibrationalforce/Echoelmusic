@@ -122,6 +122,21 @@ final class ADMExportTests: XCTestCase {
         XCTAssertEqual(Double(value) / 8_388_607, 0.25, accuracy: 0.002)
     }
 
+    /// The song clock moves an export (`lfo.1`), but an object's place is metadata only: a route on
+    /// its pan does not reach the object's samples, which stay at the track's own level.
+    func testARouteOnAnObjectsPanLeavesItsSamplesAlone() throws {
+        var s = try song()
+        try Command.setModRoute(ModulationRoute(source: .lfo1, target: .pan(s.loop), depth: 1, polarity: .bipolar))
+            .apply(to: &s.project)
+        let plan = try XCTUnwrap(ADMExport.plan(for: s.project, samples: s.samples))
+        XCTAssertFalse(plan.objectSong.modRoutes.contains { $0.target == .pan(s.loop) })
+        let (layout, data) = try export(s, in: try folder())
+        let samples = try XCTUnwrap(try XCTUnwrap(RIFFChunks(data)).chunk("data"))
+        let channel = layout.channel(ofObject: 2) - 1
+        let value = samples.le24((10_000 * 5 + channel) * 3)
+        XCTAssertEqual(Double(value) / 8_388_607, 0.25, accuracy: 0.002, "a fifth of a bar in, the LFO would pan it right")
+    }
+
     func testTheSameSongGivesTheSameBytes() throws {
         let s = try song()
         let place = try folder()

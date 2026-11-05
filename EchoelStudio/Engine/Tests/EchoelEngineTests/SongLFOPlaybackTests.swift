@@ -92,7 +92,8 @@ final class SongLFOPlaybackTests: XCTestCase {
         let frames = 2 * 96_000
         let exported = export(project, frames: frames)
         XCTAssertGreaterThan(exported.peak, 0.01, "the note sounds")
-        for block in [64, 256, 4_096] {
+        // 470 and 100 are device-like buffers off the 32-frame grid.
+        for block in [64, 100, 256, 470, 4_096] {
             let played = live(project, frames: frames, block: block)
             XCTAssertEqual(played.left.count, exported.left.count)
             var largest: Float = 0

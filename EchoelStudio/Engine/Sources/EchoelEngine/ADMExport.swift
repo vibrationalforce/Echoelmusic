@@ -64,6 +64,9 @@ public enum ADMExport {
             if isObject {
                 objectSong.tracks[index].mixer.pan = 0
                 objectSong.automation.removeAll { $0.target == .pan(track.id) }
+                // A route on the pan (the song clock's `lfo.1` moves an export) would pan the
+                // object's samples while its metadata stands still: the place is metadata only.
+                objectSong.modRoutes.removeAll { $0.target == .pan(track.id) }
                 parts.append(Plan.Part(track: track.id, name: track.name, role: .object(objectCount)))
                 objectCount += 1
             } else {
