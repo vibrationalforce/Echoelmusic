@@ -224,7 +224,7 @@ public enum AgentTools {
         case let .addEffect(reference, name):
             let target = try track(reference, in: project)
             let effect = try standardEffect(name)
-            guard target.inserts.count < Insert.maximumPerTrack else {
+            guard target.inserts.count + target.keptInsertCount < Insert.maximumPerTrack else {
                 throw AgentError.wrongTrack(target.name, reason: "already has \(Insert.maximumPerTrack) effects")
             }
             return [.addInsert(track: target.id, id: InsertID(), plugin: effect.component, index: nil)]

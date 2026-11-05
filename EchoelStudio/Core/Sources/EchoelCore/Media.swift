@@ -46,7 +46,13 @@ public struct MediaFile: Codable, Equatable, Sendable, Identifiable {
         path = try c.decode(String.self, forKey: .path)
         frameCount = try c.decode(Int.self, forKey: .frameCount)
         sampleRate = try c.decode(Double.self, forKey: .sampleRate)
-        kind = try c.decodeIfPresent(MediaKind.self, forKey: .kind) ?? .audio
+        // What a file is decides what may play it; a kind from a newer build has no stand-in.
+        if let name = try c.decodeIfPresent(String.self, forKey: .kind) {
+            guard let known = MediaKind(rawValue: name) else { throw UnknownStoredName(field: "media kind", name: name) }
+            kind = known
+        } else {
+            kind = .audio
+        }
     }
 
     public func encode(to encoder: Encoder) throws {

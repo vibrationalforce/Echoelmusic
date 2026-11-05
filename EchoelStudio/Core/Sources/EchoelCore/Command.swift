@@ -474,6 +474,7 @@ extension Command {
             project.automation.removeAll { $0.target.involves(id) }
             // A route on a parameter that is gone would refuse the song when it next opens.
             project.modRoutes.removeAll { $0.target.involves(id) }
+            project.storedRoutes.kept.removeAll { $0.target?.involves(id) == true }
 
         case let .renameTrack(id, name):
             let t = try project.requireTrack(id)
@@ -650,7 +651,7 @@ extension Command {
             guard plugin.role == .effect else {
                 throw CommandError.invalidValue(parameter: "plugin", reason: "must be an effect (type aufx)")
             }
-            guard project.tracks[t].inserts.count < Insert.maximumPerTrack else {
+            guard project.tracks[t].storedInserts.count < Insert.maximumPerTrack else {
                 throw CommandError.invalidValue(parameter: "track", reason: "has \(Insert.maximumPerTrack) inserts already")
             }
             let at = index ?? project.tracks[t].inserts.count
@@ -690,7 +691,7 @@ extension Command {
             guard plugin.role == .effect else {
                 throw CommandError.invalidValue(parameter: "plugin", reason: "must be an effect (type aufx)")
             }
-            guard project.masterInserts.count < Insert.maximumPerTrack else {
+            guard project.storedMasterInserts.count < Insert.maximumPerTrack else {
                 throw CommandError.invalidValue(parameter: "master", reason: "has \(Insert.maximumPerTrack) inserts already")
             }
             let at = index ?? project.masterInserts.count
@@ -878,10 +879,14 @@ extension Command {
             guard route.depth.isFinite, (-1...1).contains(route.depth) else {
                 throw CommandError.invalidValue(parameter: "depth", reason: "must be within −1…1")
             }
+            // A route kept from a newer build is not this build's to change or to shadow.
+            guard !project.storedRoutes.kept.contains(where: { $0.id == route.id }) else {
+                throw CommandError.duplicateID(route.id.uuidString)
+            }
             if let index = project.modRoutes.firstIndex(where: { $0.id == route.id }) {
                 project.modRoutes[index] = route
             } else {
-                guard project.modRoutes.count < Modulation.routeLimit else {
+                guard project.storedRoutes.count < Modulation.routeLimit else {
                     throw CommandError.invalidValue(parameter: "route", reason: "a song holds at most \(Modulation.routeLimit) routes")
                 }
                 project.modRoutes.append(route)
@@ -1551,6 +1556,8 @@ extension Project {
     /// Whether any chain, a track's or the master's, holds an insert with this id.
     func hasInsert(_ id: InsertID) -> Bool {
         masterInserts.contains { $0.id == id } || tracks.contains { $0.insertIndex(id) != nil }
+            || storedMasterInserts.kept.contains { $0.id == id.rawValue }
+            || tracks.contains { $0.storedInserts.kept.contains { $0.id == id.rawValue } }
     }
 
     /// Rejects audio that does not lie within a file of the song.

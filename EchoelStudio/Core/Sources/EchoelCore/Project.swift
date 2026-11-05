@@ -56,7 +56,12 @@ public struct Project: Codable, Equatable, Sendable {
     public var master: MixerStrip
     /// Effects on the master mix, in order, after the master fader — where a final limiter goes.
     /// Tracks on their own outputs skip the master, and its inserts with it.
-    public var masterInserts: [Insert]
+    public var masterInserts: [Insert] {
+        get { storedMasterInserts.known }
+        set { storedMasterInserts.known = newValue }
+    }
+    /// The master inserts as stored, with any kept from a newer build (`NewerSongParts.swift`).
+    var storedMasterInserts: KeptList<Insert>
     /// Audio and video files imported into the song, in import order.
     public var media: [MediaFile]
     /// Controllers learned for this song, one target per control.
@@ -64,8 +69,13 @@ public struct Project: Codable, Equatable, Sendable {
     /// Parameters that move over time, one lane per parameter.
     public var automation: [AutomationLane]
     /// Sources (body, LFO, macro, controller) that move parameters, each by its own depth. Nothing
-    /// plays them yet; the arithmetic is `Modulation`.
-    public var modRoutes: [ModulationRoute]
+    /// plays them yet; the arithmetic is `Modulation`. Routes kept from a newer build are not here.
+    public var modRoutes: [ModulationRoute] {
+        get { storedRoutes.known }
+        set { storedRoutes.known = newValue }
+    }
+    /// The routes as stored, with any kept from a newer build (`NewerSongParts.swift`).
+    var storedRoutes: KeptList<ModulationRoute>
 
     public init(
         name: String = "Untitled",
@@ -96,15 +106,17 @@ public struct Project: Codable, Equatable, Sendable {
         self.media = media
         self.midiMappings = midiMappings
         self.automation = automation
-        self.masterInserts = masterInserts
-        self.modRoutes = modRoutes
+        self.storedMasterInserts = KeptList(known: masterInserts)
+        self.storedRoutes = KeptList(known: modRoutes)
         self.storedSignatureChanges = timeSignatureChanges.isEmpty ? nil : timeSignatureChanges
         self.storedMarkers = markers.isEmpty ? nil : markers
     }
 
     private enum CodingKeys: String, CodingKey {
         case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master, media, midiMappings, automation
-        case masterInserts, context, modRoutes
+        case context
+        case storedMasterInserts = "masterInserts"
+        case storedRoutes = "modRoutes"
         case storedSignatureChanges = "timeSignatureChanges"
         case storedMarkers = "markers"
         case storedLighting = "lighting"
@@ -138,18 +150,24 @@ public struct Project: Codable, Equatable, Sendable {
         media = try c.decodeIfPresent([MediaFile].self, forKey: .media) ?? []
         midiMappings = try c.decodeIfPresent([MIDIMapping].self, forKey: .midiMappings) ?? []
         automation = try c.decodeIfPresent([AutomationLane].self, forKey: .automation) ?? []
-        masterInserts = try c.decodeIfPresent([Insert].self, forKey: .masterInserts) ?? []
+        storedMasterInserts = KeptList.reading(try c.decodeIfPresent([Insert].self, forKey: .storedMasterInserts) ?? [],
+                                               raw: try c.decodeIfPresent([StoredJSON].self, forKey: .storedMasterInserts) ?? [])
         context = try c.decodeIfPresent(MusicalContext.self, forKey: .context) ?? MusicalContext()
         // Format 3 requires the routes; an older file opens with none and never carries the key —
         // a format-2 file with routes in it came from somewhere this reader cannot vouch for.
         if stored < 3 {
-            guard !c.contains(.modRoutes) else {
-                throw DecodingError.dataCorruptedError(forKey: .modRoutes, in: c,
+            guard !c.contains(.storedRoutes) else {
+                throw DecodingError.dataCorruptedError(forKey: .storedRoutes, in: c,
                                                        debugDescription: "format \(stored) has no modulation routes")
             }
-            modRoutes = []
+            storedRoutes = KeptList()
         } else {
-            modRoutes = try c.decode([ModulationRoute].self, forKey: .modRoutes)
+            // Read twice: with its names unread, to tell a route from a newer build from a damaged
+            // one, and as JSON, so a route this build keeps is written back as it was.
+            let loose = try c.decode([LooseRoute].self, forKey: .storedRoutes)
+            let raw = try c.decode([StoredJSON].self, forKey: .storedRoutes)
+            storedRoutes = KeptList()
+            storedRoutes = try splitRoutes(loose, raw: raw)
         }
         // Video arrived with format 4; an older build never wrote a video track or a video file,
         // so one in an older file came from somewhere this reader cannot vouch for.
@@ -239,8 +257,14 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     public var regions: [AudioRegion]
     /// The synth sound. Instrument tracks play it; other kinds keep the default and ignore it.
     public var instrument: InstrumentSettings
-    /// Effects on the track's signal, in order, before its fader and pan.
-    public var inserts: [Insert]
+    /// Effects on the track's signal, in order, before its fader and pan. Inserts kept from a newer
+    /// build are not here (`keptInsertCount`).
+    public var inserts: [Insert] {
+        get { storedInserts.known }
+        set { storedInserts.known = newValue }
+    }
+    /// The inserts as stored, with any kept from a newer build (`NewerSongParts.swift`).
+    var storedInserts: KeptList<Insert>
     /// Post-fader sends into return tracks, one per return at most. A return track has none.
     public var sends: [Send]
     /// Where the track plays: nil into the master, or the first channel (0-based, even) of a
@@ -311,12 +335,13 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         self.slots = slots
         self.instrument = instrument
         self.regions = regions
-        self.inserts = inserts
+        self.storedInserts = KeptList(known: inserts)
         self.sends = sends
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts, sends, output, input
+        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, sends, output, input
+        case storedInserts = "inserts"
         case arpeggio
         case monitorName = "monitor"
         case storedTakeGroups = "takeGroups"
@@ -327,7 +352,10 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(TrackID.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
-        kind = try c.decode(TrackKind.self, forKey: .kind)
+        // What a track holds follows its kind; a kind from a newer build has no stand-in.
+        let kindName = try c.decode(String.self, forKey: .kind)
+        guard let known = TrackKind(rawValue: kindName) else { throw UnknownStoredName(field: "track kind", name: kindName) }
+        kind = known
         colorIndex = try c.decode(Int.self, forKey: .colorIndex)
         mixer = try c.decode(MixerStrip.self, forKey: .mixer)
         clips = try c.decode([Clip].self, forKey: .clips)
@@ -335,7 +363,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         slots = try c.decode([SlotAssignment].self, forKey: .slots)
         instrument = try c.decodeIfPresent(InstrumentSettings.self, forKey: .instrument) ?? InstrumentSettings()
         regions = try c.decodeIfPresent([AudioRegion].self, forKey: .regions) ?? []
-        inserts = try c.decodeIfPresent([Insert].self, forKey: .inserts) ?? []
+        storedInserts = KeptList.reading(try c.decodeIfPresent([Insert].self, forKey: .storedInserts) ?? [],
+                                         raw: try c.decodeIfPresent([StoredJSON].self, forKey: .storedInserts) ?? [])
         sends = try c.decodeIfPresent([Send].self, forKey: .sends) ?? []
         output = try c.decodeIfPresent(Int.self, forKey: .output)
         input = try c.decodeIfPresent(Int.self, forKey: .input)

@@ -495,8 +495,13 @@ final class DocumentController {
     }
 
     private static func isNewer(_ error: Error) -> Bool {
-        if case ProjectCodec.DecodeError.newerFormat = error { return true }
-        return false
+        (error as? ProjectCodec.DecodeError)?.isFromNewerBuild == true
+    }
+
+    /// The newer-build refusal as the musician reads it, naming what is missing when one name is.
+    private static func newerLine(_ name: String, _ error: Error) -> String {
+        let missing = (error as? ProjectCodec.DecodeError)?.missingName.map { " \($0)" } ?? ""
+        return "\(name) was saved by a newer Echoel.\(missing) Update the app to open it."
     }
 
     /// A song handed to the app — tapped in Files, sent by AirDrop, shared from another app. It
@@ -517,7 +522,7 @@ final class DocumentController {
             let name = url.deletingPathExtension().lastPathComponent
             // As a song chosen from the library says it (`open(_:)`).
             lastError = Self.isNewer(error)
-                ? "\(name) was saved by a newer Echoel. Update the app to open it."
+                ? Self.newerLine(name, error)
                 : "Could not open \(name). It may be damaged or still downloading; try again, or choose it from the Files app."
         }
     }
@@ -568,7 +573,7 @@ final class DocumentController {
             return false
         } catch {
             lastError = Self.isNewer(error)
-                ? "\(url.deletingPathExtension().lastPathComponent) was saved by a newer Echoel. Update the app to open it."
+                ? Self.newerLine(url.deletingPathExtension().lastPathComponent, error)
                 : "Could not open \(url.deletingPathExtension().lastPathComponent). It may be damaged or still downloading; try again, or choose it from the Files app."
             return false
         }
@@ -610,11 +615,14 @@ final class DocumentController {
             isUnwritten = false
             starterMadeFolder = false
             // A move the open song still owes is still true; another song's went with `moveSettled`.
-            lastError = failedMoveLine
+            // Parts a newer build saved are kept but play nothing; the musician hears so (FWD).
+            let lines = [failedMoveLine, project.newerBuildNotice].compactMap { $0 }
+            lastError = lines.isEmpty ? nil : lines.joined(separator: " ")
             if found.fromPrevious {
                 let name = url.deletingPathExtension().lastPathComponent
                 log.error("the document did not open — opened the copy one save back")
-                lastError = [failedMoveLine, "\(name) was damaged on disk, so Echoel opened it as it was one save earlier."]
+                lastError = [failedMoveLine, "\(name) was damaged on disk, so Echoel opened it as it was one save earlier.",
+                             project.newerBuildNotice]
                     .compactMap { $0 }.joined(separator: " ")
             }
             loadMedia(of: project)

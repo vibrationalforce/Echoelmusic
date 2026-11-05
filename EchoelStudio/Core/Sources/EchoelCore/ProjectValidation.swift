@@ -73,7 +73,10 @@ extension Project {
             }
         }
         var trackIDs = Set<TrackID>(), clipIDs = Set<ClipID>(), regionIDs = Set<RegionID>(), insertIDs = Set<InsertID>()
-        guard masterInserts.count <= Insert.maximumPerTrack else { throw Self.invalid("masterInserts", "too many") }
+        guard storedMasterInserts.count <= Insert.maximumPerTrack else { throw Self.invalid("masterInserts", "too many") }
+        for part in storedMasterInserts.kept {
+            guard insertIDs.insert(InsertID(part.id)).inserted else { throw CommandError.duplicateID(part.id.uuidString) }
+        }
         for insert in masterInserts {
             guard insertIDs.insert(insert.id).inserted else { throw CommandError.duplicateID(insert.id.description) }
             guard insert.plugin.role == .effect else { throw Self.invalid("masterInserts", "an insert is not an effect") }
@@ -143,7 +146,10 @@ extension Project {
                 }
             }
             guard Set(track.sends.map(\.target)).count == track.sends.count else { throw Self.invalid("sends", "two sends into one return") }
-            guard track.inserts.count <= Insert.maximumPerTrack else { throw Self.invalid("inserts", "too many on one track") }
+            guard track.storedInserts.count <= Insert.maximumPerTrack else { throw Self.invalid("inserts", "too many on one track") }
+            for part in track.storedInserts.kept {
+                guard insertIDs.insert(InsertID(part.id)).inserted else { throw CommandError.duplicateID(part.id.uuidString) }
+            }
             for insert in track.inserts {
                 guard insertIDs.insert(insert.id).inserted else { throw CommandError.duplicateID(insert.id.description) }
                 guard insert.plugin.role == .effect else { throw Self.invalid("inserts", "an insert is not an effect") }
@@ -196,6 +202,7 @@ extension Project {
         } catch {
             throw Self.invalid("modRoutes", "more than \(Modulation.routeLimit) routes, a repeated id, or a depth outside −1…1")
         }
+        try validateKeptParts()
         for lane in automation {
             // A lane on a parameter this build does not know is kept, but still plays safely.
             let range = descriptor(for: lane.target)?.range ?? -Double.infinity...Double.infinity
@@ -239,6 +246,12 @@ extension Project {
         for (key, value) in instrument.values {
             // A key this build does not know is kept for the build that does; a known one obeys its range.
             if let parameter = SynthParameter.builtIn(ParameterKey(rawValue: key)), !parameter.accepts(value) {
+                // A whole number past the last choice is a choice a newer build appended (an engine,
+                // a rule): nothing stands in for it, so the song asks for that build.
+                if parameter.taper == .stepped, value.isFinite, value == value.rounded(),
+                   value > parameter.range.upperBound, value <= 1_000_000 {
+                    throw UnknownStoredName(field: key, name: String(Int(value)))
+                }
                 throw Self.invalid(key, "must be within \(parameter.range)")
             }
         }

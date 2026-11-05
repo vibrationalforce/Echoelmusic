@@ -37,6 +37,8 @@ Every audio and video file is a plain file you can take out of `Media/`.
   fallback, so a new kind comes with a new format number and an unknown one refuses the song.
   The same holds for a parameter address's owner (`project`, `master`, `track`): a new owner is
   a new format number, and an address with an owner this build does not know refuses the song.
+  A modulation route or an insert with a name it does not know is kept but plays nothing — see
+  "Reading newer songs".
 - On open, the song is checked against the same rules the editor enforces (ranges, unique ids,
   references that resolve, what each kind of track holds, names). A file that breaks one is
   refused, not repaired silently.
@@ -340,15 +342,50 @@ required. `source` one of `body.heartRate` `body.hrv` `body.coherence` `body.bre
 `macro.1` `midi.cc.1`, and — added inside format 4 (2026-11-04), the phone's own motion —
 `body.motion.tiltX` `body.motion.tiltY` `body.motion.rotation` `body.motion.energy` (sideways tilt
 and forward tilt, 0.5 lying flat; turning, 0.5 at rest; movement without gravity, 0 lying still).
-A format-4 build from before that date refuses a song with one of these four, as it refuses any
-source it does not know; `target` a parameter address in its text form; `depth` −1 … 1; `curve`
+A format-4 build from before that date refuses a song with one of these four, as it refused any
+source it did not know until 2026-11-05; `target` a parameter address in its text form; `depth` −1 … 1; `curve`
 `linear` or `square` (signed: `u·|u|`); `polarity` `unipolar` (the source's 0 … 1 as is) or
-`bipolar` (centred, −1 … 1); `enabled` true or false. An unknown source, curve or polarity
-refuses the song — a route is never guessed. Each source is normalized to 0 … 1; a parameter's
+`bipolar` (centred, −1 … 1); `enabled` true or false. A route is never guessed: since 2026-11-05
+a route with an unknown source, curve or polarity, or on a parameter this build does not know, is
+kept inactive ("Reading newer songs"); a route that lacks a key or breaks a range refuses the song. Each source is normalized to 0 … 1; a parameter's
 value is its stored or automated value plus each enabled route's `depth × curve(source)`, in the
 order of the route ids, clamped to the parameter's range once, after the last route. A source
 that is not measured at the moment adds nothing. A song stores the routes, never a measured
 value: what a body did during a take is not in the file.
+
+## Reading newer songs
+
+Names are only ever added inside format 4, so a song saved by a newer build can name something
+an older build does not know. Since 2026-11-05 a reader follows one rule for it (FWD):
+
+- **Where leaving the part out of the playback is safe, the song opens and the part is kept.**
+  That is a modulation route whose `source`, `curve` or `polarity` the reader does not know, or
+  whose `target` is a parameter it does not know of a track (or the master, or the song) that is
+  in the file; and an insert whose plugin `type` is not an effect type the reader takes in an
+  insert slot (a MIDI effect `aumi`, or a type it does not know at all). A kept part plays
+  nothing — a kept route moves no parameter, a kept insert is passed by as if bypassed — and the
+  musician is told when the song opens: "This song was saved by a newer Echoel Studio. N items
+  are kept but inactive until you update."
+- **A kept part is written back as it was read.** The reader holds it as the JSON it found —
+  every key, the ones it does not know included — and saving writes it again at its place in its
+  list, byte for byte, so the newer build finds it unchanged. A part whose place an edit removed
+  goes to the end of its list. Removing a track removes the kept routes on its parameters, as it
+  removes every other route on them.
+- **A kept part still obeys the rules of its list.** A route has all seven keys of their types,
+  a depth within −1 … 1, an id unique among the song's routes, and an owner the reader knows
+  whose track is in the song; an insert has an id unique among the song's inserts; kept parts
+  count against the list's limit (64 routes, 8 inserts in one place). A part that breaks one of
+  these is damage and refuses the song, as before. An instrument (`aumu`) in an insert slot is
+  no newer build's doing and refuses the song.
+- **Where nothing can stand in for the name, the song is refused, naming it.** A track's `kind`,
+  a media file's `kind`, a parameter address's owner, and a choice index past the end of its list
+  (`synth.engine`, `synth.waveform`, `synth.filter`, `synth.textureRule`) — the reader says which
+  name is missing and that a newer build is needed.
+- The editor never makes a kept part: no command can name a source, an effect type or an id a
+  kept part holds. Nothing here changes what a format-4 build writes for a song without kept parts.
+
+Elsewhere the earlier rules hold: a key the reader does not know is ignored (so it is not
+written back), and the names listed under "Versioning" are kept and play their fallback.
 
 ## Format 3
 

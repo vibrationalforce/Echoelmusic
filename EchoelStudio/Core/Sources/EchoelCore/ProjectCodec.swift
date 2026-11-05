@@ -14,6 +14,24 @@ public enum ProjectCodec {
         /// Larger than any song document Echoel writes (`maximumDocumentBytes`): refused before it is
         /// parsed, so a crafted or damaged file cannot take the memory a parse of it would need.
         case tooLarge(bytes: Int)
+        /// The song names something only a newer build knows, where nothing can stand in for it — a
+        /// track kind, a media kind, a parameter owner, a choice past the end of its list. The song
+        /// is refused, never opened with the part missing (`docs/FORMAT.md`, "Reading newer songs").
+        case needsNewerBuild(field: String, name: String)
+
+        /// Whether a newer build would open the song.
+        public var isFromNewerBuild: Bool {
+            switch self {
+            case .newerFormat, .needsNewerBuild: true
+            default: false
+            }
+        }
+
+        /// What the musician reads about the name that is missing, nil for any other refusal.
+        public var missingName: String? {
+            guard case let .needsNewerBuild(field, name) = self else { return nil }
+            return "It uses the \(field) “\(name)”, which this build does not know."
+        }
     }
 
     /// The most bytes a song document may have. Media lives beside it in the package, never in it,
@@ -36,12 +54,16 @@ public enum ProjectCodec {
         guard version <= Project.currentFormatVersion else {
             throw DecodeError.newerFormat(found: version, supported: Project.currentFormatVersion)
         }
-        let project = try JSONDecoder().decode(Project.self, from: data)
         do {
-            try project.validate()
-        } catch let error as CommandError {
-            throw DecodeError.invalidContent(error)
+            let project = try JSONDecoder().decode(Project.self, from: data)
+            do {
+                try project.validate()
+            } catch let error as CommandError {
+                throw DecodeError.invalidContent(error)
+            }
+            return project
+        } catch let unknown as UnknownStoredName {
+            throw DecodeError.needsNewerBuild(field: unknown.field, name: unknown.name)
         }
-        return project
     }
 }

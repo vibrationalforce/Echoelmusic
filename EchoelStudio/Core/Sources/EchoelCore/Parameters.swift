@@ -74,6 +74,11 @@ public struct ParameterAddress: Hashable, Codable, Sendable, CustomStringConvert
     public init(from decoder: any Decoder) throws {
         if let text = try? decoder.singleValueContainer().decode(String.self) {
             guard let address = ParameterAddress(text: text) else {
+                // An owner from a newer build — `scene/…` — is a new format number's, and no stand-in.
+                if let slash = text.firstIndex(of: "/"), text[..<slash].allSatisfy(\.isLetter), !text[..<slash].isEmpty,
+                   !["project", "master", "track"].contains(String(text[..<slash])) {
+                    throw UnknownStoredName(field: "parameter owner", name: String(text[..<slash]))
+                }
                 throw DecodingError.dataCorrupted(DecodingError.Context(
                     codingPath: decoder.codingPath, debugDescription: "not a parameter address: \(text)"))
             }

@@ -713,6 +713,55 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// A song from the future (FWD, 2026-11-05): written the way a later format-4 build writes it,
+    /// with names this build does not know — a modulation source, a curve, a synth parameter, and
+    /// an insert type — where leaving them out of the playback is safe. It opens, keeps all five
+    /// inactive and writes them back byte for byte (`docs/FORMAT.md`, "Reading newer songs").
+    static let formatFourFromTheFuture = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Tomorrow",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "masterInserts": [
+        { "id": "1F500000-0000-4000-8000-000000000001", "isBypassed": false,
+          "plugin": { "type": 1635083896, "subtype": 1699041589, "manufacturer": 1164142703,
+                      "name": "Echoel EQ", "manufacturerName": "Echoel" } },
+        { "id": "1F500000-0000-4000-8000-000000000002", "isBypassed": false, "sidechain": { "source": "kick", "amount": 0.75 },
+          "plugin": { "type": 1635085673, "subtype": 1698787952, "manufacturer": 1164142703,
+                      "name": "Echoel Arp", "manufacturerName": "Echoel" } }
+      ],
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-0000000000F1",
+          "name": "Keys",
+          "kind": "instrument",
+          "colorIndex": 2,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "inserts": [
+            { "id": "1F500000-0000-4000-8000-000000000003", "isBypassed": true,
+              "plugin": { "type": 1635085673, "subtype": 1698787952, "manufacturer": 1164142703,
+                          "name": "Echoel Arp", "manufacturerName": "Echoel" } }
+          ]
+        }
+      ],
+      "modRoutes": [
+        { "id": "40D00000-0000-4000-8000-0000000000F1", "source": "body.heartRate", "target": "master/mixer.pan",
+          "depth": 0.25, "curve": "square", "polarity": "bipolar", "enabled": true },
+        { "id": "40D00000-0000-4000-8000-0000000000F2", "source": "body.motion.gaze", "target": "master/mixer.volume",
+          "depth": -0.5, "curve": "linear", "polarity": "unipolar", "enabled": true, "smoothing": 0.2 },
+        { "id": "40D00000-0000-4000-8000-0000000000F3", "source": "lfo.1", "target": "master/mixer.pan",
+          "depth": 1, "curve": "sine", "polarity": "bipolar", "enabled": true },
+        { "id": "40D00000-0000-4000-8000-0000000000F4", "source": "macro.1",
+          "target": "track/7A000000-0000-4000-8000-0000000000F1/synth.shimmer",
+          "depth": 0.5, "curve": "linear", "polarity": "unipolar", "enabled": false }
+      ]
+    }
+    """.utf8)
+
     private let pad = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000004") ?? UUID())
     private let room = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000005") ?? UUID())
 
@@ -746,7 +795,8 @@ final class FormatGoldenTests: XCTestCase {
     func testEveryGoldenFileSurvivesARoundTrip() throws {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
                      formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes, formatFourLighting,
-                     formatFourTexture, formatFourBake, formatFourMotion, formatFourGrade, formatFourSubtitles] {
+                     formatFourTexture, formatFourBake, formatFourMotion, formatFourGrade, formatFourSubtitles,
+                     Self.formatFourFromTheFuture] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -821,11 +871,21 @@ final class FormatGoldenTests: XCTestCase {
         XCTAssertThrowsError(try ProjectCodec.decode(olderWithRoutes))
     }
 
-    /// An unknown source or curve refuses the song rather than being guessed (M13, M15).
-    func testARouteWithAnUnknownNameRefusesTheSong() throws {
-        for (from, to) in [("\"body.heartRate\"", "\"eeg\""), ("\"square\"", "\"magic\"")] {
-            let text = try XCTUnwrap(String(data: formatThree, encoding: .utf8))
-            XCTAssertThrowsError(try ProjectCodec.decode(Data(text.replacingOccurrences(of: from, with: to).utf8)), to)
+    /// An unknown source or curve is never guessed (M13, M15): since FWD (2026-11-05) the route is
+    /// kept inactive and the song opens. A route that lacks a key, or has a depth outside −1 … 1, is
+    /// damage and still refuses the song.
+    func testARouteWithAnUnknownNameIsKeptInactiveAndADamagedOneRefuses() throws {
+        let text = try XCTUnwrap(String(data: formatThree, encoding: .utf8))
+        for (from, to) in [("\"body.heartRate\"", "\"eeg\""), ("\"square\"", "\"magic\""), ("\"bipolar\"", "\"tripolar\"")] {
+            let later = Data(text.replacingOccurrences(of: from, with: to).utf8)
+            XCTAssertNotEqual(later, formatThree, "the replacement must land")
+            let project = try ProjectCodec.decode(later)
+            XCTAssertEqual(project.modRoutes.map(\.source), [.macro1], to)
+            XCTAssertEqual(project.keptRouteCount, 1, to)
+        }
+        for (from, to) in [("\"enabled\": true", "\"on\": true"), ("\"depth\": 0.25", "\"depth\": 3")] {
+            let later = text.replacingOccurrences(of: from, with: to).replacingOccurrences(of: "\"body.heartRate\"", with: "\"eeg\"")
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(later.utf8)), to)
         }
     }
 
