@@ -1,17 +1,24 @@
-11.0.0 — ADM BWF export, Learn, MIDI Time Code
+11.0.0 — Bar LFO, lights left dark when the app lets go, MTC chase over a looping song
 
-What is new since 10050. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10051. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- "Export ADM BWF (immersive)...": every track to the master becomes a mono object at its pan
-  position (pan automation moves it), returns and own-output tracks form a stereo bed; BW64 with
-  chna and axml, 24-bit, 48 kHz. Read and rendered without warnings by the EBU ADM renderer
-  (ear 2.1.0) offline; not tried in a DAW yet.
-- Learn (Song menu, App, "Learn..."): eleven short chapters with the real menu paths, search.
-- Timecode (MTC) under Connect: send at 24, 25, 29.97 drop-frame or 30 fps from a virtual source
-  "Echoel Timecode" (start 01:00:00:00), or chase an incoming MTC. Off by default.
+- Modulate (a track's or the master's menu): a new source "Bar LFO", a sine over each bar read
+  from the song position. It moves volume, pan, sends and instrument values, and an export moves
+  exactly as playback does (no clock, no sensor).
+- Lights (Connect, Art-Net / sACN): when the app goes to the background with the song stopped,
+  when a light output is switched off or pointed at another receiver, and when a universe is no
+  longer used, every universe it lit gets a dark frame (heads keep their position). Blackout now
+  also darkens the one fixture without a rig. Coming back, the light fades up at the flash limit.
+- Chase MTC: with Loop on, the song follows the sender instead of being thrown back to bar 1;
+  the loop rests while the sender runs. A MIDI loop take keeps its passes when the chase starts.
+- The Echoel Synth plug-in: a value set from the plug-in's view during a host's automation ramp
+  is no longer overwritten by the ramp.
+- Arrangement: "Duplicate as Linked" and "Make Unique" for clips.
+- "Transcribe…" on an audio part or video part: subtitles from speech recognized on the device
+  (languages whose model is installed), export as SRT, WebVTT or OTIO markers.
+- A song saved by a newer build opens; parts this build does not know are kept inactive.
 
-Previous: 11.0.0 (10050) — headphone spatial, pitch and texture, loop record, MIDI 2.0, light
-cues, colour. Earlier: git history.
+Previous: 11.0.0 (10051) — ADM BWF export, Learn, MIDI Time Code. Earlier: git history.
 group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
 of earlier songs has not been seen on a device yet.
 
@@ -21,11 +28,14 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Export ADM BWF from a song with three panned tracks and open it in a DAW with ADM import
-   (Reaper with EAR, Nuendo, Fairlight). Are the objects where the pans were?
-2. Song menu, App, "Learn...": search "slice", open the chapter. Do the menu paths match the app?
-3. Timecode (MTC) on at 25 fps, QLab or Reaper listening to "Echoel Timecode". Does it count
-   from 01:00:00:00 and jump on locate and stop?
-4. Chase an MTC from QLab or Reaper. Does the song start, follow a jump and stop within a
-   moment of the sender?
-5. Open a song made before this build (with takes, cues, colour). Does everything come back?
+1. Clicks: play a song with an audio track from the middle of a region, jump, pause and play;
+   in AUM or GarageBand, automate the Echoel Synth's cutoff and turn the knob during the ramp.
+   No click anywhere, and the knob keeps the value you turned to?
+2. Chase MTC from QLab or Reaper with Loop on, sender running past the song's end. Does the song
+   follow the sender (not bar 1) and stop within a moment when the sender stops?
+3. A track's Modulate, Pan, "Bar LFO → Pan", play. Does the pan swing once per bar, and does an
+   exported WAV swing the same way?
+4. Art-Net to a node or a DMX monitor, no fixtures patched, light on: Blackout on; then play,
+   stop, go to the home screen. Does the light go dark both times, and fade up when you return?
+5. "Transcribe…" on a spoken take in a language your phone has installed. Do subtitle cues
+   appear on the timeline, and does the SRT export open in a video player?
