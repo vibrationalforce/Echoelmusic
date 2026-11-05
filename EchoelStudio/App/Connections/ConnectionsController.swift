@@ -129,6 +129,11 @@ final class ConnectionsController {
     @ObservationIgnored private var manual: (cue: CueID, from: RigState, start: ContinuousClock.Instant)?
     @ObservationIgnored private var lastTimelineIndex: Int?
     @ObservationIgnored private var lastUniverses: [Int: [UInt8]] = [:]
+    /// The app is in the background. While the song plays there (audio runs on) the lights go on;
+    /// while it stands the app is about to be suspended, and the rig is left dark (`letGo`).
+    @ObservationIgnored private var inBackground = false
+    /// The rig was left dark and nothing has lit it since.
+    @ObservationIgnored private var leftDark = false
     /// Each universe numbers its own packets, as both standards count per universe.
     @ObservationIgnored private var showSequences: [Int: (artNet: UInt8, sacn: UInt8)] = [:]
     @ObservationIgnored private var artNetSequence: UInt8 = 0
@@ -283,7 +288,10 @@ final class ConnectionsController {
     }
 
     private func close(_ kind: Kind) {
-        guard let sender = senders.removeValue(forKey: kind) else { return }
+        guard let sender = senders[kind] else { return }
+        // A light output that is switched off leaves the rig dark, not on its last frame.
+        if kind.isLight { sendDark(through: [kind]) }
+        senders[kind] = nil
         generations[kind] = (generations[kind] ?? 0) + 1
         if kind == .sacn {
             // Three goodbyes on every universe it fed, then the socket goes; a moment later, so
@@ -370,6 +378,13 @@ final class ConnectionsController {
         let now = ContinuousClock.now
         let elapsed = lastTick.map { Self.seconds(now - $0) } ?? Self.seconds(Self.tickInterval)
         lastTick = now
+        // In the background with the song standing, the app may be suspended at any moment and
+        // stop sending: the lights are left dark once, and stay so until the song plays again.
+        if inBackground, !engine.isPlaying {
+            letGo()
+            return
+        }
+        if leftDark { comeBack() }
 
         let project = store.project
         let playhead = engine.playheadTick(in: project)
@@ -465,6 +480,82 @@ final class ConnectionsController {
         }
         lastChannels = channels
         lastLightSent = now
+    }
+
+    // MARK: - Leaving the rig
+
+    /// The app went to the background (`scenePhase`). Audio may run on there; the lights follow
+    /// the song while it plays and are left dark when it stands (`tick`).
+    func enterBackground() {
+        inBackground = true
+        if let engine, !engine.isPlaying { letGo() }
+    }
+
+    func enterForeground() {
+        inBackground = false
+    }
+
+    /// Leaves the rig dark on every light output, once, and forgets what was sent, so the next
+    /// frame states everything again.
+    private func letGo() {
+        guard !leftDark else { return }
+        let lights = enabled.filter(\.isLight)
+        guard !lights.isEmpty else { return }
+        sendDark(through: lights)
+        leftDark = true
+        log.info("connections: lights left dark (background)")
+    }
+
+    /// Lighting again after `letGo`: the guards start from dark, so the light fades back up at
+    /// the flash limit's rate instead of jumping to the look it had.
+    private func comeBack() {
+        leftDark = false
+        slew = LightSlew()
+        showGuard = RigFlashGuard()
+        lastChannels = []
+        lastUniverses = [:]
+        lastLightSent = nil
+    }
+
+    /// The dark frame — every light at 0, heads where they stand (`Lighting.leavingUniverses`) —
+    /// `goodbyeCount` times, so one lost datagram does not leave a lamp burning.
+    private func sendDark(through kinds: Set<Kind>) {
+        guard let store else { return }
+        let lighting = store.project.lighting
+        if lighting.fixtures.isEmpty {
+            let dark = LightFixture.channels(.dark, resolution: resolution, startChannel: startChannel)
+            for _ in 0..<Self.goodbyeCount {
+                if kinds.contains(.artNet), let sender = senders[.artNet] {
+                    artNetSequence = ArtDMXPacket.nextSequence(artNetSequence)
+                    sender.send(ArtDMXPacket.packet(universe: artNetUniverse, sequence: artNetSequence, channels: dark))
+                }
+                if kinds.contains(.sacn), let sender = senders[.sacn] {
+                    sacnSequence = E131Packet.nextSequence(sacnSequence)
+                    sender.send(E131Packet.packet(universe: sacnUniverse, sequence: sacnSequence, cid: cid, channels: dark))
+                }
+            }
+            lastChannels = dark
+        } else {
+            let dark = lighting.leavingUniverses(from: showTarget)
+            for _ in 0..<Self.goodbyeCount {
+                for universe in dark.keys.sorted() {
+                    guard let channels = dark[universe] else { continue }
+                    var sequence = showSequences[universe] ?? (0, 0)
+                    if kinds.contains(.artNet), let sender = senders[.artNet] {
+                        sequence.artNet = ArtDMXPacket.nextSequence(sequence.artNet)
+                        sender.send(ArtDMXPacket.packet(universe: artNetAddress(of: universe), sequence: sequence.artNet,
+                                                        channels: channels))
+                    }
+                    if kinds.contains(.sacn), let sender = senders[.sacn] {
+                        sequence.sacn = E131Packet.nextSequence(sequence.sacn)
+                        sender.send(E131Packet.packet(universe: sacnAddress(of: universe), sequence: sequence.sacn, cid: cid,
+                                                      channels: channels))
+                    }
+                    showSequences[universe] = sequence
+                }
+            }
+            lastUniverses = dark
+        }
     }
 
     // MARK: - The light show

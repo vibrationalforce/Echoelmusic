@@ -500,6 +500,14 @@ extension Lighting {
                                 progress: Self.progress(elapsed: seconds - current.start, fade: current.cue.fade))
     }
 
+    /// What goes out when the app can no longer drive the rig — it is about to be suspended, or a
+    /// light output is switched off: every light at 0 and every head where it stands. A node holds
+    /// the last frame it heard (Art-Net has no goodbye), so the last frame must not leave a lamp or
+    /// a laser's beam burning. `state` is what the rig showed last; nil before anything was sent.
+    public func leavingUniverses(from state: RigState?) -> [Int: [UInt8]] {
+        universes(RigFlashGuard.dark(state ?? restState))
+    }
+
     /// The DMX universes the rig fills from `state`, each 512 slots, keyed 1 …. A fixture without
     /// a known profile sends nothing; a universe no fixture uses is not in the result.
     public func universes(_ state: RigState) -> [Int: [UInt8]] {

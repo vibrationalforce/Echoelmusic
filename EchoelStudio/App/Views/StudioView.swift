@@ -16,6 +16,8 @@ struct StudioView: View {
     /// The Connections module (wave W4), owned here so a connection keeps sending while its
     /// panel is closed; every connection is off until switched on in the panel.
     @State private var connections = ConnectionsController()
+    /// The lights follow it: dark when the app goes to the background with the song standing.
+    @Environment(\.scenePhase) private var scenePhase
     @State private var surface: Surface = .tracks
     /// The keys and pads under the surface; on by default so the phone alone makes sound.
     @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
@@ -88,6 +90,13 @@ struct StudioView: View {
         }
         .onChange(of: store.project) { _, project in engine.update(project) }
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .background: connections.enterBackground()
+            case .active: connections.enterForeground()
+            default: break
+            }
+        }
     }
 
     /// Four named areas, so VoiceOver's Containers rotor reaches each in one swipe and says where

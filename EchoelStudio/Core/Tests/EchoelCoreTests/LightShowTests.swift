@@ -228,6 +228,18 @@ final class LightShowTests: XCTestCase {
         XCTAssertEqual(dark[head.id]?[.pan], 1)
     }
 
+    /// When the app lets go of the rig, every light goes to 0 where it stands: the frame a node
+    /// keeps holding lights nothing, and no head swings back to its centre on the way.
+    func testTheFrameLeftBehindLightsNothingAndHoldsPosition() {
+        let head = fixture(.movingHead, address: 1)
+        let lighting = Lighting(fixtures: [head])
+        let lit: RigState = [head.id: [.pan: 0.8, .tilt: 0.3, .dimmer: 1, .red: 1, .green: 0.5, .blue: 1]]
+        let still: RigState = [head.id: [.pan: 0.8, .tilt: 0.3, .dimmer: 0, .red: 0, .green: 0, .blue: 0]]
+        XCTAssertEqual(lighting.leavingUniverses(from: lit), lighting.universes(still))
+        XCTAssertNotEqual(lighting.leavingUniverses(from: lit), lighting.universes(lit))
+        XCTAssertEqual(lighting.leavingUniverses(from: nil), lighting.universes(lighting.restState), "before any frame, at rest")
+    }
+
     // MARK: - Determinism
 
     func testTheSameSongAlwaysRendersTheSameDMX() throws {
