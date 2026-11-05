@@ -17,14 +17,19 @@ final class FieldSpectrum: @unchecked Sendable {
     private var mono: UnsafeMutablePointer<Float>
     private var monoCapacity = 0
     private var latest = SpectralPeaks.silent
-    /// The meters' last reading (`FieldMeter`): the spectrum's bands and the triggered trace.
+    /// The meters' last reading (`FieldMeter`): the spectrum's bands, the triggered trace, and the
+    /// phase meter's goniometer points (side, mid, …) and correlation (nil: a side is silent).
     private let bands: UnsafeMutablePointer<Double>
     private let trace: UnsafeMutablePointer<Float>
+    private let phase: UnsafeMutablePointer<Float>
+    private var correlation: Float?
 
     /// Bands across 20 Hz … 20 kHz on the spectrum meter: a third of an octave each.
     static let bandCount = 30
     /// Samples the scope draws: about 10 ms at 48 kHz, two periods of a low A.
     static let traceLength = 512
+    /// Points the goniometer draws from each block.
+    static let phasePairs = 256
 
     init() {
         mono = .allocate(capacity: 1)
@@ -33,21 +38,34 @@ final class FieldSpectrum: @unchecked Sendable {
         bands.initialize(repeating: 0, count: Self.bandCount)
         trace = .allocate(capacity: Self.traceLength)
         trace.initialize(repeating: 0, count: Self.traceLength)
+        phase = .allocate(capacity: 2 * Self.phasePairs)
+        phase.initialize(repeating: 0, count: 2 * Self.phasePairs)
     }
 
     deinit {
         mono.deallocate()
         bands.deallocate()
         trace.deallocate()
+        phase.deallocate()
     }
 
     /// The meters' newest reading, copied out on the caller's thread (a meter's leaf, at most 30
-    /// times a second): the spectrum's bands 0 … 1 and the scope's trace −1 … 1.
-    func meterReading() -> (bands: [Double], trace: [Float]) {
+    /// times a second): the spectrum's bands 0 … 1, the scope's trace −1 … 1, the goniometer's
+    /// points and the correlation.
+    func meterReading() -> MeterReading {
         lock.lock()
         defer { lock.unlock() }
-        return (Array(UnsafeBufferPointer(start: bands, count: Self.bandCount)),
-                Array(UnsafeBufferPointer(start: trace, count: Self.traceLength)))
+        return MeterReading(bands: Array(UnsafeBufferPointer(start: bands, count: Self.bandCount)),
+                            trace: Array(UnsafeBufferPointer(start: trace, count: Self.traceLength)),
+                            phase: Array(UnsafeBufferPointer(start: phase, count: 2 * Self.phasePairs)),
+                            correlation: correlation)
+    }
+
+    struct MeterReading {
+        var bands: [Double]
+        var trace: [Float]
+        var phase: [Float]
+        var correlation: Float?
     }
 
     /// The newest partials; silence before the first block and after `reset`.
@@ -64,6 +82,8 @@ final class FieldSpectrum: @unchecked Sendable {
         latest = .silent
         bands.update(repeating: 0, count: Self.bandCount)
         trace.update(repeating: 0, count: Self.traceLength)
+        phase.update(repeating: 0, count: 2 * Self.phasePairs)
+        correlation = nil
         lock.unlock()
     }
 
@@ -90,5 +110,8 @@ final class FieldSpectrum: @unchecked Sendable {
         latest = analyzer.analyze()
         analyzer.bandLevels(into: bands, count: Self.bandCount)
         ScopeTrace.capture(mono, count: frames, into: trace, length: Self.traceLength)
+        // The two sides apart, for the phase meter (a mono tap reads as mono).
+        StereoPhase.capture(left: input[0], right: input[right], count: frames, into: phase, pairs: Self.phasePairs)
+        correlation = StereoPhase.correlation(left: input[0], right: input[right], count: frames)
     }
 }

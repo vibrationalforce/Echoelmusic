@@ -424,6 +424,9 @@ public enum FieldMeter: String, CaseIterable, Sendable {
     case spectrum
     /// The master's waveform, triggered on a rising zero crossing so a steady tone stands still.
     case scope
+    /// The master's stereo phase: a goniometer (mid up, side across) and the correlation, +1 mono,
+    /// 0 unrelated, −1 cancelling in mono (`StereoPhase`).
+    case phase
 
     public static let storageKey = "field.meter"
 
@@ -432,6 +435,7 @@ public enum FieldMeter: String, CaseIterable, Sendable {
         case .off: "Picture"
         case .spectrum: "Spectrum"
         case .scope: "Scope"
+        case .phase: "Phase"
         }
     }
 

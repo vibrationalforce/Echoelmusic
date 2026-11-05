@@ -2,7 +2,8 @@ import EchoelCore
 import EchoelDSP
 import SwiftUI
 
-/// The Field as a meter (`FieldMeter`): the master's spectrum, or its triggered waveform, in place
+/// The Field as a meter (`FieldMeter`): the master's spectrum, its triggered waveform, or its stereo
+/// phase (a goniometer and the correlation as a number and a bar), in place
 /// of the picture — one view at a time, so while a meter shows no GPU picture runs. A leaf by
 /// construction (Law 6): its own `TimelineView` reads the engine's ear in this body and nowhere
 /// above; the views around it hand down nothing live.
@@ -22,15 +23,53 @@ struct FieldMeterView: View {
             Canvas { canvas, size in
                 switch meter {
                 case .scope: FieldMeterView.drawScope(reading.trace, in: &canvas, size: size)
+                case .phase: FieldMeterView.drawPhase(reading.phase, in: &canvas, size: size)
                 default: FieldMeterView.drawSpectrum(reading.bands, in: &canvas, size: size)
                 }
+            }
+            .overlay(alignment: .bottom) {
+                if meter == .phase { PhaseCorrelationBar(correlation: reading.correlation) }
             }
         }
         .background(Theme.Color.background)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(meter == .scope ? "Oscilloscope of the master output" : "Spectrum of the master output")
+        .accessibilityLabel(Self.accessibilityTitle(meter))
         .onAppear { listener.listen(to: engine) }
         .onDisappear { listener.stop() }
+    }
+
+    private static func accessibilityTitle(_ meter: FieldMeter) -> String {
+        switch meter {
+        case .scope: "Oscilloscope of the master output"
+        case .phase: "Stereo phase of the master output"
+        default: "Spectrum of the master output"
+        }
+    }
+
+    /// The goniometer: mid up, side across, in a square, with the mono axis and the two hard-panned
+    /// diagonals as the grid. Thin lines only.
+    private static func drawPhase(_ points: [Float], in canvas: inout GraphicsContext, size: CGSize) {
+        guard points.count >= 4 else { return }
+        let inset: CGFloat = 12
+        let side = Swift.min(size.width, size.height - 40) - 2 * inset
+        guard side > 0 else { return }
+        let centre = CGPoint(x: size.width / 2, y: inset + side / 2)
+        let half = side / 2
+        var grid = Path()
+        grid.move(to: CGPoint(x: centre.x, y: centre.y - half))
+        grid.addLine(to: CGPoint(x: centre.x, y: centre.y + half))
+        grid.move(to: CGPoint(x: centre.x - half, y: centre.y - half))
+        grid.addLine(to: CGPoint(x: centre.x + half, y: centre.y + half))
+        grid.move(to: CGPoint(x: centre.x + half, y: centre.y - half))
+        grid.addLine(to: CGPoint(x: centre.x - half, y: centre.y + half))
+        canvas.stroke(grid, with: .color(Theme.Color.border), lineWidth: 1)
+        var line = Path()
+        for pair in 0..<(points.count / 2) {
+            let x = centre.x + half * CGFloat(points[2 * pair])
+            let y = centre.y - half * CGFloat(points[2 * pair + 1])
+            if pair == 0 { line.move(to: CGPoint(x: x, y: y)) } else { line.addLine(to: CGPoint(x: x, y: y)) }
+        }
+        canvas.stroke(line, with: .color(Theme.Color.accent), lineWidth: 1)
     }
 
     private static func drawSpectrum(_ bands: [Double], in canvas: inout GraphicsContext, size: CGSize) {
@@ -82,6 +121,7 @@ struct FieldMeterView: View {
 final class FieldMeterListener {
     private weak var engine: AudioEngine?
     private var bands: [Double] = []
+    private var correlation: Float?
     private var last: Date?
 
     func listen(to engine: AudioEngine) {
@@ -95,12 +135,15 @@ final class FieldMeterListener {
         engine?.listenForSpectrum(false, by: ObjectIdentifier(self))
         engine = nil
         bands = []
+        correlation = nil
         last = nil
     }
 
-    /// The newest reading, the bands eased by the meter's ballistics; the trace as it was captured.
-    func reading(from engine: AudioEngine, at now: Date) -> (bands: [Double], trace: [Float]) {
-        let fresh = engine.fieldSpectrum.meterReading()
+    /// The newest reading, the bands eased by the meter's ballistics, the correlation eased over
+    /// about a third of a second (a studio correlation meter's pace); the trace and the goniometer
+    /// as they were captured.
+    func reading(from engine: AudioEngine, at now: Date) -> FieldSpectrum.MeterReading {
+        var fresh = engine.fieldSpectrum.meterReading()
         let seconds = last.map { Swift.min(Swift.max(now.timeIntervalSince($0), 0), 0.1) } ?? 0
         last = now
         if bands.count != fresh.bands.count {
@@ -110,6 +153,48 @@ final class FieldMeterListener {
                 bands[index] = MeterBallistics.follow(bands[index], fresh.bands[index], after: seconds)
             }
         }
-        return (bands, fresh.trace)
+        fresh.bands = bands
+        if let target = fresh.correlation {
+            let eased = correlation.map { $0 + (target - $0) * Float(Swift.min(1, seconds / 0.3)) } ?? target
+            correlation = eased
+            fresh.correlation = eased
+        } else {
+            correlation = nil
+        }
+        return fresh
+    }
+}
+
+/// The correlation under the goniometer: the number first, legible, and a thin bar from −1 to +1
+/// with its mark. "—" while a side is silent.
+private struct PhaseCorrelationBar: View {
+    let correlation: Float?
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(correlation.map { String(format: "%+.2f", $0) } ?? "—")
+                .font(.system(.body, design: .monospaced))
+                .foregroundStyle(Theme.Color.text)
+            GeometryReader { geometry in
+                let width = geometry.size.width
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(Theme.Color.border).frame(height: 1)
+                    Rectangle().fill(Theme.Color.border).frame(width: 1, height: 8).offset(x: width / 2)
+                    if let correlation {
+                        Rectangle().fill(Theme.Color.accent).frame(width: 2, height: 10)
+                            .offset(x: width * CGFloat((correlation + 1) / 2) - 1)
+                    }
+                }
+                .frame(height: 10)
+            }
+            .frame(height: 10)
+            HStack {
+                Text("−1"); Spacer(); Text("0"); Spacer(); Text("+1")
+            }
+            .font(.caption2)
+            .foregroundStyle(Theme.Color.textSecondary)
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 8)
     }
 }
