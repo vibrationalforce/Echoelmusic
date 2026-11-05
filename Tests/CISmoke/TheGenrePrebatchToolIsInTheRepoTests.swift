@@ -1,5 +1,6 @@
 // TheGenrePrebatchToolIsInTheRepoTests.swift
-// Echoel — #1320. Blocking bundle. Every claim is a FILE-CONTENT SCAN
+// Echoel — #1320. Blocking bundle. (2026-11-05: claim 3 read the genre plan, which moved to
+// the private working repository; it is dropped here and recorded there.) Every claim is a FILE-CONTENT SCAN
 // (`Tests/CISmoke/CLAUDE.md` §1): it proves the tool is present and self-contained, never
 // that its arithmetic is right. The tool proves that about itself with `--selftest`, which
 // nothing in this bundle can run (no Python step in the Xcode test action) — that limit is
@@ -45,7 +46,6 @@ import XCTest
 final class TheGenrePrebatchToolIsInTheRepoTests: XCTestCase {
 
     private static let toolPath = "scripts/genre-prebatch.py"
-    private static let planPath = "scratchpads/PLAN_GENRE_WELT_2026-09-11.md"
 
     // MARK: - claim 1 — the tool is here and it is the whole tool
 
@@ -79,15 +79,12 @@ final class TheGenrePrebatchToolIsInTheRepoTests: XCTestCase {
             """)
     }
 
-    // MARK: - claim 3 — the recipe names the durable path
-
-    func testThePlanCitesTheRepositoryPath() throws {
-        XCTAssertTrue(try text(Self.planPath).contains("scripts/genre-prebatch.py"), """
-            `\(Self.planPath)` no longer names `scripts/genre-prebatch.py`. The plan is where \
-            the next genre batch reads what to run first; a recipe pointing anywhere else is \
-            how this tool went missing in the first place.
-            """)
-    }
+    // MARK: - claim 3 — DROPPED (2026-11-05)
+    //
+    // It asserted that the genre plan names `scripts/genre-prebatch.py`. The plan moved to the
+    // project's private working repository, and its half is recorded there
+    // (`echoelmusic-intern/guards/README.md`). The public half — the tool index names the tool —
+    // is already pinned once, by `TheToolboxHasAnIndexTests` (#416).
 
     // MARK: - claim 4 (counterweight) — it still reads the shipped tree
 

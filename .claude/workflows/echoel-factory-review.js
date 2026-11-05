@@ -425,8 +425,9 @@ goes into forTheHuman.
   check. It does not block approval; the PM folds it into the next build's device round. It travels ONLY
   as this acceptance entry; never repeat it in forTheHuman.
 - kind 'founder': only the number-0 entries, one per Assumption tagged [FOUNDER]. Met only when
-  docs/dev/FOUNDER_INBOX.md or memory/decisions.md records the ANSWER: cite the file, the row or entry and the
-  date of the answer (YYYY-MM-DD) in the evidence. An open row is no answer.
+  docs/dev/FOUNDER_INBOX.md or memory/decisions.md (both in the private repo, checkout ../echoelmusic-intern)
+  records the ANSWER: cite the file, the row or entry and the date of the answer (YYYY-MM-DD) in the
+  evidence. An open row is no answer, and an unreadable private checkout is no record.
 ESCALATE when the change decides something the founder owns and no record answers it: product scope per
 docs/dev/FOUNDER_PRODUCT_LAW.md, money, prices, contracts, legal or licence text, health or wellness wording,
 App Store submission, deleting user data, or a founder-locked file. Which files are founder-locked is
@@ -436,12 +437,12 @@ judged by): read \`git show ${a.base}:.claude/rules/context.md\` (§3), \`git sh
 on memory. Check them against the UNSCOPED list \`git -c core.quotePath=false diff --name-only --no-renames ${range}\`: a locked file outside the
 scope still counts. If .claude/rules/context.md changed, compare its §3 at ${a.base} and ${head}; a change
 to §3 is the founder's. A release of a locked file counts only when memory/decisions.md or
-docs/dev/FOUNDER_INBOX.md records it with a date AND its scope still covers this file now; a release given
+docs/dev/FOUNDER_INBOX.md (private repo, ../echoelmusic-intern) records it with a date AND its scope still covers this file now; a release given
 for one session or one task does not count outside it. Cite that record, or ESCALATE.
 Confirm that \`git show ${head}:${jobDir}/board.json\` records base ${a.base} (read its base field only, after you counted); if it records another base,
 ESCALATE: the range under review would not be the whole job.
 A question goes into forTheHuman only when it is the founder's and not yet answered: grep
-docs/dev/FOUNDER_INBOX.md first and cite the number instead of asking again.
+../echoelmusic-intern/docs/dev/FOUNDER_INBOX.md first and cite the number instead of asking again.
 Otherwise APPROVE. Your final answer is data for the orchestrator.`),
   { label: 'approver', phase: 'Approve', agentType: 'general-purpose', schema: APPROVER_SCHEMA, effort: 'high' })
 

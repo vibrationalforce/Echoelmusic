@@ -3,6 +3,9 @@
 **Triggers:** none today — paste by hand.
 **Runs on:** Anthropic cloud (Linux, no iOS SDK)
 **Status:** Active as a prompt, unwired as automation
+**Lives in:** the private working repository `vibrationalforce/echoelmusic-intern` since
+2026-11-05 — `decisions.csv`, `review.sh` and `check-decisions.sh` are there. The rows are
+private: read them there and open the issues there, never in the public repo.
 
 > ⛔ Corrected 2026-08-08 (#510). This line claimed a daily cron via
 > `.github/workflows/decision-review.yml`. **That workflow has never existed** — there
@@ -18,19 +21,20 @@ When pasting into claude.ai: prepend `_golden-goal.md` verbatim, then this file.
 
 ## Your job
 
-Check `decisions.csv` for decisions with `review_date` ≤ today.
-Open a GitHub issue for each overdue decision so Michael reviews it.
+Check `decisions.csv` (in `echoelmusic-intern`) for decisions with `review_date` ≤ today.
+Open a GitHub issue in `echoelmusic-intern` for each overdue decision so Michael reviews it.
 One issue per overdue decision. Never open duplicates.
 
 ### Step-by-step
 
-1. **Read decisions.csv:**
+1. **Read decisions.csv (private repo):**
    ```bash
-   gh api repos/vibrationalforce/Echoelmusic/contents/decisions.csv \
+   gh api repos/vibrationalforce/echoelmusic-intern/contents/decisions.csv \
      --jq '.content' | base64 --decode
    ```
 
-2. **Parse for overdue decisions — with a QUOTE-AWARE parser, never a comma split:**
+2. **Parse for overdue decisions — with a QUOTE-AWARE parser, never a comma split** (run it
+   inside the `echoelmusic-intern` checkout):
    ```bash
    python3 -c '
    import csv, sys, datetime
@@ -62,14 +66,14 @@ One issue per overdue decision. Never open duplicates.
 
 3. **Check for existing open issues (avoid duplicates):**
    ```bash
-   gh issue list --repo vibrationalforce/Echoelmusic \
+   gh issue list --repo vibrationalforce/echoelmusic-intern \
      --label "decision-review" --state open --json number,title
    ```
    If an issue already exists with the decision text in the title, skip it.
 
 4. **Open one issue per overdue decision:**
    ```bash
-   gh issue create --repo vibrationalforce/Echoelmusic \
+   gh issue create --repo vibrationalforce/echoelmusic-intern \
      --title "Decision Review: <decision short title>" \
      --label "decision-review" \
      --body "..."

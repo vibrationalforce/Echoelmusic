@@ -156,8 +156,12 @@ git status --porcelain=v1
 git status --porcelain=v1 | grep '^??'
 # STOP on any changed path outside the shipping roots (rename lines are read at their target):
 git status --porcelain=v1 | cut -c4- | sed 's/.* -> //; s/^"//' \
-  | grep -vE '^(Sources|Tests|docs|memory|scratchpads|\.claude|ContentPipeline)/'
+  | grep -vE '^(Sources|Tests|docs|scratchpads/factory|\.claude|ContentPipeline)/'
 ```
+
+(`memory/`, the rest of `scratchpads/`, `decisions.csv` and `inspiration.csv` left this repo on
+2026-11-05 for the private working repository `echoelmusic-intern`; a path under them here is a
+STOP too. `scratchpads/factory/` stays: a factory job's state is committed with its branch.)
 
 Both `grep`s must print NOTHING. Anything they print is a STOP: name the file to the user and
 leave it out of the commit — do not delete it, do not ignore it silently.

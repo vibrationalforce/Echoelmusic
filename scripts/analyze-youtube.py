@@ -3,7 +3,8 @@
 Echoel inspiration funnel.
 
 PIPELINE ONLY. This is dev tooling for the Knowledge Funnel (memory/inspiration_intake.md
-+ .claude/skills/vision-gate/). It NEVER ships in the app and NEVER touches Sources/.
++ the vision-gate skill, both in the private repo echoelmusic-intern since 2026-11-05). It
+NEVER ships in the app and NEVER touches Sources/.
 Its job: turn a YouTube link into plain text so Claude can read it and score it against
 memory/vision.md (ADOPT-PRODUCT / ADOPT-PIPELINE / WATCH / REJECT).
 
@@ -12,7 +13,8 @@ Usage:
     python3 scripts/analyze-youtube.py --self-test      # offline: verify ID parsing
 
 Output: a Markdown brief on stdout, and (unless --no-save) saved to
-    scratchpads/inspiration/youtube-<id>.md
+    ../echoelmusic-intern/scratchpads/inspiration/youtube-<id>.md
+when that private checkout sits beside this one; otherwise nothing is written.
 
 Runtime deps (auto-detected): youtube-transcript-api (transcript, required) and yt-dlp
 (richer metadata, optional; oEmbed fallback). Install them ONLY as the hashed pipeline set
@@ -32,7 +34,9 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SAVE_DIR = REPO / "scratchpads" / "inspiration"
+# Briefs are working notes and belong to the private working repository, never to this tree.
+PRIVATE = REPO.parent / "echoelmusic-intern"
+SAVE_DIR = PRIVATE / "scratchpads" / "inspiration"
 
 # Accept the common URL shapes + a bare 11-char ID.
 _ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
@@ -141,8 +145,9 @@ def build_markdown(video_id: str, meta: dict, transcript: list[dict] | None,
     else:
         out.append(f"_No transcript: {transcript_err or 'unavailable'}_")
     out += ["", "---", "",
-            "> Next step: score this against `memory/vision.md` via the **vision-gate** "
-            "skill, then log the verdict to `inspiration.csv` + `memory/inspiration_intake.md`."]
+            "> Next step (private repo `echoelmusic-intern`): score this against `memory/vision.md` "
+            "via the **vision-gate** skill, then log the verdict to `inspiration.csv` + "
+            "`memory/inspiration_intake.md` there."]
     return "\n".join(out)
 
 
@@ -218,10 +223,14 @@ def main() -> int:
     md = build_markdown(video_id, meta, transcript, transcript_err)
     print(md)
     if not args.no_save:
+        if not PRIVATE.is_dir():
+            print(f"\n[not saved] {PRIVATE} is not attached; the brief is on stdout only.",
+                  file=sys.stderr)
+            return 0
         SAVE_DIR.mkdir(parents=True, exist_ok=True)
         dest = SAVE_DIR / f"youtube-{video_id}.md"
         dest.write_text(md, encoding="utf-8")
-        print(f"\n[saved] {dest.relative_to(REPO)}", file=sys.stderr)
+        print(f"\n[saved] {dest}", file=sys.stderr)
     return 0
 
 

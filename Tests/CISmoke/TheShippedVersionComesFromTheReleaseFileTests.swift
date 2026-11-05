@@ -222,7 +222,7 @@ final class TheShippedVersionComesFromTheReleaseFileTests: XCTestCase {
             App Store Connect rejects it, which is why a failed deploy has always needed a \
             fresh `.deploy/release` bump instead of a re-run. If that has been repaired, pull \
             the prose along in the same commit: this header, and the deploy-loop section of \
-            `scratchpads/PLAN_TESTFLIGHT_LOOP_2026-08-19.md`.
+            the TestFlight-loop plan in the private working repository.
             """)
     }
 }

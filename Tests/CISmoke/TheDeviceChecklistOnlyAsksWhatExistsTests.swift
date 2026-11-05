@@ -1,6 +1,9 @@
 // TheDeviceChecklistOnlyAsksWhatExistsTests.swift
 // Echoel — #816: the founder's ONE device checklist asked for four things that cannot be
 // done at all, and nothing in the repo could say so.
+// ⚠️ 2026-11-05: the checklist moved to the private working repository (`echoelmusic-intern`).
+// Claims 1, 3, 7 and the checklist half of claim 2 moved with it (`echoelmusic-intern/guards/`);
+// what reads only `Sources/`, `Tests/` and `scripts/` stays here.
 //
 // WHY THIS EXISTS. `scratchpads/FOUNDER_DEVICE_SESSION.md` was written 2026-07-16 to bundle
 // every device-bound question into a single session, because the founder is the only device
@@ -154,50 +157,16 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
         return s
     }
 
-    /// The `- [ ]` line plus the indented lines that continue it. No force unwrap: every
-    /// branch binds `current` with `if let`, per the repo-wide ban.
-    private func checkboxAsks(in document: String) -> [String] {
-        var asks: [String] = []
-        var current: String?
-        for line in document.components(separatedBy: "\n") {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix("- [ ]") {
-                if let open = current { asks.append(open) }
-                current = trimmed
-            } else if let open = current, line.hasPrefix("      "), !trimmed.isEmpty {
-                current = open + " " + trimmed
-            } else if let open = current, !line.hasPrefix(" ") {
-                asks.append(open)
-                current = nil
-            }
-        }
-        if let open = current { asks.append(open) }
-        return asks
-    }
+    // 1 — MOVED (2026-11-05). `testNoDeviceAskPointsAtARemovedSurface` read the checklist
+    // itself, `scratchpads/FOUNDER_DEVICE_SESSION.md`, which now lives in the project's private
+    // working repository; the claim moved with it (`echoelmusic-intern/guards/`, a spec).
 
-    // 1 — no ASK names a surface that no longer exists.
-    func testNoDeviceAskPointsAtARemovedSurface() throws {
-        let doc = try text("scratchpads/FOUNDER_DEVICE_SESSION.md")
-        let asks = checkboxAsks(in: doc)
-        XCTAssertGreaterThan(asks.count, 3,
-            "The checklist parsed to \(asks.count) asks. Either the file lost its content or "
-            + "the `- [ ]` convention changed — in both cases this guard is measuring nothing.")
-        for ask in asks {
-            for surface in Self.struckSurfaces {
-                XCTAssertFalse(ask.contains(surface),
-                    "The founder is asked to test \"\(surface)\", which does not exist: "
-                    + "\(ask.prefix(90))… Device time is the scarcest resource in this project "
-                    + "(#525) — either remove the ask or, if the surface came back, move it out "
-                    + "of the ⛔ table in the same commit.")
-            }
-        }
-    }
-
-    // 2 — the struck surfaces really are gone, so claim 1 fails for its named reason (#367).
+    // 2 — the struck surfaces really are gone, so the checklist guard fails for its named reason (#367).
     func testTheStruckSurfacesAreStillAbsentFromTheApp() throws {
         let recovery = "If this is red because the surface RETURNED, that is correct and "
-            + "expected (#364): update the ⛔ table in scratchpads/FOUNDER_DEVICE_SESSION.md "
-            + "in the same commit, and the checklist may ask for its probe again."
+            + "expected (#364): update the ⛔ table of the device checklist "
+            + "(private working repository) in the same commit, and the checklist may ask for "
+            + "its probe again."
 
         let roll = try text("Sources/Echoelmusic/Studio/PianoRollView.swift")
         XCTAssertFalse(roll.contains("struct PianoRollView"),
@@ -214,42 +183,16 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
                            "\(gone) exists again. \(recovery)")
         }
 
-        // ⭐ THE AUv3 ABSENCE PIN IS GONE FROM HERE, 2026-09-20 (#1385) — and that is this
-        // guard's own `recovery` instruction being followed, not an assertion being dodged:
-        // *"If this is red because the surface RETURNED, that is correct and expected (#364):
-        // update the ⛔ table in scratchpads/FOUNDER_DEVICE_SESSION.md in the same commit, and
-        // the checklist MAY ASK FOR ITS PROBE AGAIN."* Both halves happened in this commit.
-        // The target is now pinned POSITIVELY, once, in `ContentPipelineClaimsTests` — a
-        // second copy here would be the #416 duplication this repo keeps paying for, and the
-        // one that goes stale is always the copy nobody remembers owning.
-        //
-        // What this file asserts INSTEAD is its actual subject: the checklist may only ask for
-        // what exists. An AUv3 that ships un-probed is worse than one that is absent, because
-        // the -3000 instantiation failure recorded in `EchoelmusicAUv3.entitlements` was never
-        // resolved on device — it was made moot by deletion. So the probe is now MANDATORY.
-        let doc = try text("scratchpads/FOUNDER_DEVICE_SESSION.md")
-        XCTAssertTrue(doc.contains("EchoelBodyVibe"), """
-        The device checklist does not ask the founder to open EchoelBodyVibe in a host. The \
-        AUv3 target came back in #1385 and its ONE open question — does instantiating it still \
-        return -3000 invalidComponentID, or did dropping the App-Group entitlement fix it — \
-        cannot be answered by any test in this repo. It needs a phone, AUM or GarageBand, and \
-        two minutes. If the target was cut again, delete this assertion together with the \
-        target, the embed in project.yml and the compile_scheme line in testflight.yml.
-        """)
+        // The AUv3 half: the target came back in #1385 and is pinned POSITIVELY, once, in
+        // `ContentPipelineClaimsTests`. The assertion that the checklist ASKS for the
+        // EchoelBodyVibe probe read the checklist and moved with it (2026-11-05).
     }
 
-    // 3 — the document routes a reader to the tool instead of being a second list.
-    func testTheChecklistPointsAtTheToolThatScansTheCode() throws {
-        let doc = try text("scratchpads/FOUNDER_DEVICE_SESSION.md")
-        XCTAssertTrue(doc.contains("scripts/founder-verify.py"),
-            "The checklist must name the tool that prints the code-anchored asks. Without that "
-            + "pointer it is again a second list, which is how it rotted for two months.")
-        XCTAssertTrue(doc.contains("NEEDS-FOUNDER-VERIFY"),
-            "The checklist must name the marker convention, so a reader knows which asks live "
-            + "in the code and which live here.")
-    }
+    // 3 — MOVED with the checklist (2026-11-05): the document names `scripts/founder-verify.py`
+    // and the marker convention. Spec in `echoelmusic-intern/guards/`.
 
-    // 4 — the tool really does exclude scratchpads, which is WHY claim 3 is needed.
+    // 4 — the tool scans only the code and the map. The private checklist (claim 3, moved)
+    // depends on that, and claim 6 below states its second consequence.
     func testTheToolDeliberatelyDoesNotScanScratchpads() throws {
         let tool = try text("scripts/founder-verify.py")
         XCTAssertTrue(tool.contains("ROOTS = [\"Sources\", \"Tests\", \"CLAUDE.md\"]"),
@@ -275,8 +218,8 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
     func testTheToolDoesNotCountThisGuardsOwnAssertion() throws {
         let tool = try text("scripts/founder-verify.py")
         XCTAssertTrue(tool.contains("BARE_LITERAL"), """
-            founder-verify.py lost its bare-string-literal rule. Claim 3 in THIS file asserts a \
-            naked "NEEDS-FOUNDER-VERIFY" literal, and without that rule the tool files this very \
+            founder-verify.py lost its bare-string-literal rule. Claims 6 and 8 in THIS file use a \
+            naked "NEEDS-FOUNDER-VERIFY" literal, and without that rule the tool files such a \
             line as a device probe — a job nobody can perform, in the queue the founder works \
             from. If the rule was deliberately replaced, point this claim at whatever replaced \
             it in the same commit; do not delete it.
@@ -341,62 +284,8 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
             + "do not make it the ask.")
     }
 
-    // MARK: - #1346 — the rot claim 1 could not see, because it was never a checkbox
-
-    /// Capability words that name something a founder deletion removed. Each was measured
-    /// ABSENT from `Sources/` code on 2026-09-16 before it was written here.
-    ///
-    /// ⭐ THE SCOPE IS HEADINGS, AND THAT IS THE WHOLE POINT OF CLAIM 7. Claim 1 scans
-    /// `- [ ]` items, which is right for an ASK — and §1's rot was never an ask. It was a
-    /// SECTION, headed "Der eine Handgriff — er blockiert die ganze Vokal-Kette", naming a
-    /// handle (`Mix-Panel → "Choose input…" → Live monitoring`) that #1302 deleted. A
-    /// document that calls something its BLOCKER in a heading costs more than a stale
-    /// checkbox: the founder plans the whole session around it and never reaches §2.
-    ///
-    /// ⚠️ IT CANNOT BE A FILE-WIDE SCAN (#491). The ⛔ tables quote every struck name in
-    /// order to withdraw it, and §1 now quotes its own former heading — a naive negative
-    /// scan would go red on this very retraction. A heading is the narrowest scope that
-    /// still catches the defect: it is one line, it is what a reader sees first, and no
-    /// retraction is written as one.
-    private static let removedCapabilities = [
-        "Vokal-Kette",     // #1302 — the whole chain; the ONE known positive on the parent
-        "Vocal chain",
-        "Monitoring",      // #1302 — no monitor path, no switch
-        "Mikrofon",        // #1302
-        "Microphone",      // #1302
-        "Harmonizer",      // #1305
-        "Granular",        // #1305
-        "Autotune",        // #1302 (VoicePitchCorrector went with the input)
-        "Face-Tracking",   // #1301 — NOT the bare "Face": the match is case-insensitive
-        "Gesichts",        //         and substring, so "Face" would fire on "Interface"
-        "Video Capture"    // #1304
-    ]
-
-    // 7 — no SECTION HEADING names a capability the founder removed.
-    func testNoSectionHeadingNamesARemovedCapability() throws {
-        let doc = try text("scratchpads/FOUNDER_DEVICE_SESSION.md")
-        let headings = doc.components(separatedBy: "\n")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { $0.hasPrefix("## ") || $0.hasPrefix("### ") }
-        XCTAssertGreaterThan(headings.count, 4,
-            "ANCHOR MISSING: fewer than five headings in FOUNDER_DEVICE_SESSION.md — the "
-            + "extraction found nothing and this claim would be vacuously green (#926).")
-
-        var offenders: [String] = []
-        for heading in headings {
-            for word in Self.removedCapabilities where heading.localizedCaseInsensitiveContains(word) {
-                offenders.append("\(word) → \(heading)")
-            }
-        }
-        XCTAssertTrue(offenders.isEmpty,
-            "A section of the founder's device checklist is HEADED with a capability that "
-            + "no longer exists: \(offenders). Device time is this project's scarcest "
-            + "resource and the heading is what he plans the session from. Either the "
-            + "capability came back — then strike this needle in the SAME commit and say so "
-            + "in the ⛔ index of that document (#364: nothing here forbids a return) — or "
-            + "the section is void and belongs in that index with its measurement, the way "
-            + "#1346 moved §1 there.")
-    }
+    // 7 — MOVED with the checklist (2026-11-05): no section heading of the checklist names a
+    // removed capability (#1346). Spec in `echoelmusic-intern/guards/`.
 
     // 8 — the one ask #1302 stranded is marked BLOCKED, not deleted, and its machine stands.
     func testTheStrandedAskIsBlockedRatherThanDeleted() throws {
@@ -415,8 +304,8 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
             + "`recordOptions` applies only in `.playAndRecord`, and the only way in is "
             + "`upgradeToPlayAndRecord()`, which #1302 left without a production caller — so "
             + "there is no monitoring switch to turn on. If an audio input came back, remove "
-            + "the mark deliberately and pull the ⛔ block above it plus §1 of "
-            + "scratchpads/FOUNDER_DEVICE_SESSION.md in the same commit (#456).")
+            + "the mark deliberately and pull the ⛔ block above it plus §1 of the device "
+            + "checklist (private working repository) in the same commit (#456).")
 
         // Counterweights (#343): BLOCKED means the door died, never that the machine did. If
         // either of these goes, the honest move is to DELETE the ask, not to keep it blocked —
@@ -502,9 +391,9 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
             XCTAssertTrue(inPath.isEmpty,
                 "`\(surface)` is on `struckSurfaces` — the list of things that do NOT exist — "
                 + "but it names a live path: \(inPath.sorted().prefix(3).joined(separator: ", ")). "
-                + "Claim 1 is therefore forbidding the founder to be asked about a surface that "
-                + "is back. Remove the needle here and update the ⛔ table in "
-                + "scratchpads/FOUNDER_DEVICE_SESSION.md in the same commit.")
+                + "The checklist guard would therefore forbid asking the founder about a surface "
+                + "that is back. Remove the needle here and update the ⛔ table of the device "
+                + "checklist (private working repository) in the same commit.")
 
             var hits: [String] = []
             for (rel, body) in bodies where body.contains(surface) {

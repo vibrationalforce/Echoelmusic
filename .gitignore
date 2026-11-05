@@ -171,3 +171,13 @@ coverage.lcov
 *.p12
 *.mobileprovision
 *.cer
+
+# Private working notes — since 2026-11-05 they live only in the private working repository
+# (`echoelmusic-intern`, same paths). A session that writes them here by habit must not publish
+# them. A factory job's state is the one exception: it is committed with its branch.
+/memory/
+/scratchpads/*
+!/scratchpads/factory/
+/decisions.csv
+/inspiration.csv
+/decision_reviews.log

@@ -41,7 +41,6 @@ planning-agent
 security-agent
 tdd-agent
 ui-state-reviewer
-vision-coach
 <!-- ultracode-roster: end -->
 
 `general-purpose` is the host's built-in. It has no file under `.claude/agents/`.

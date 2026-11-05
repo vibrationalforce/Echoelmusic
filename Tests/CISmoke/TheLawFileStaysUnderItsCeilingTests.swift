@@ -1,6 +1,9 @@
 // TheLawFileStaysUnderItsCeilingTests.swift
 // Echoel — #702, extended by #707 (§D), corrected by #708, widened by #746 (§E + §F).
 // Blocking bundle: the other suite cannot fail a merge (#208).
+// ⚠️ 2026-11-05: `memory/` moved to the private working repository (`echoelmusic-intern`).
+// Claim 3 and the ledger halves of claims 5 and 6 moved with it (`echoelmusic-intern/guards/`);
+// what reads only files in this tree stays here unchanged.
 //
 // WHAT THIS RECORDS. `CLAUDE.md` is loaded before the first line of work in EVERY session,
 // and `.claude/settings.json` sets `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "50"`, so compaction
@@ -199,7 +202,8 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
             wrote" — #701 added a genuine register entry with 628 B of headroom and was \
             right to. The repair is the one #538 and #702 both took: move PROVENANCE (how a \
             number reached its value, which claim was retracted, which cycle paid for it) \
-            into `memory/LEDGER_COUNTS.md`, and keep LAW (what a session must DO) here. The \
+            into `echoelmusic-intern/memory/LEDGER_COUNTS.md` (the private working repository), \
+            and keep LAW (what a session must DO) here. The \
             ledger deletes nothing, so the move costs no knowledge. Largest paragraphs, to \
             start from: `python3 -c "for i,l in enumerate(open('Sources/CLAUDE.md',encoding='utf-8')): \
             print(len(l.encode()),i+1)" | sort -rn | head`.
@@ -211,7 +215,7 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
     /// ⭐ The root `CLAUDE.md` is loaded in EVERY session, including every Echoel Studio session,
     /// so it carries only what holds everywhere. The ceiling is the target the move was made for.
     /// A red here is not "delete your line" either: app law goes to its directory's `CLAUDE.md`
-    /// (`Sources/CLAUDE.md`, `EchoelStudio/CLAUDE.md`), provenance to `memory/LEDGER_COUNTS.md`.
+    /// (`Sources/CLAUDE.md`, `EchoelStudio/CLAUDE.md`), provenance to the private ledger.
     func testTheMapStaysAMap() throws {
         let bytes = try byteCount(Self.mapFile)
         XCTAssertLessThan(bytes, Self.mapCeilingBytes, """
@@ -220,89 +224,16 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
             Studio sessions included — so it holds identity, where things live, the universal law \
             and pointers, nothing else. Move app law into its directory's `CLAUDE.md` \
             (`Sources/CLAUDE.md`, `EchoelStudio/CLAUDE.md`) and provenance into \
-            `memory/LEDGER_COUNTS.md`, and leave a pointer. Delete nothing.
+            `echoelmusic-intern/memory/LEDGER_COUNTS.md`, and leave a pointer. Delete nothing.
             """)
     }
 
-    // MARK: - 3: the ledger the repair depends on
+    // MARK: - 3: the ledger the repair depends on — MOVED (2026-11-05)
 
-    /// "Moved, not deleted" is only true while the destination exists and holds every chain
-    /// that left this file. If one were gone, claim 2's message would be advising a deletion.
-    /// ⛔ RENAMED FROM `…AllThreeChains` (#708, the #374 precedent): a count in a TEST NAME is
-    /// the same stale-number defect this very commit deleted from `.claude/rules/context.md`,
-    /// and #707 added §D in the same breath that left "three" standing. The name now says what
-    /// it checks instead of how many, so the next move cannot age it.
-    func testTheLedgerExistsAndHoldsEveryMovedChain() throws {
-        let ledger = try rawFile("memory/LEDGER_COUNTS.md")
-        XCTAssertTrue(ledger.contains("## A — `Tests/CISmoke/`"), """
-            §A (the blocking bundle's chain, moved by #538) is gone from the ledger. Claim \
-            2 tells a session to move provenance THERE — if the destination lost a section, \
-            fix that before trusting this file's advice.
-            """)
-        XCTAssertTrue(ledger.contains("## B — `Sources/**/*.swift`"),
-                      "§B (the Sources chain, #538) is gone — see the message above.")
-        XCTAssertTrue(ledger.contains("## C — `Tests/EchoelmusicTests/`"), """
-            §C (the non-blocking suite's chain, moved by #702) is gone. That is the chain \
-            CLAUDE.md now POINTS at instead of carrying — a dangling pointer here means the \
-            law file promises provenance that no longer exists.
-            """)
-        // ⚠️ #707 is the first section moved for HEADROOM rather than to fix an accretion:
-        // CLAUDE.md stood 942 B under this file's own ceiling, and claim 2's message names
-        // exactly this trade. It recovered 2,074 B ON THE FILE THIS GUARD TESTS and lost no
-        // law. ⛔ Not the same as the always-loaded SURFACE, which recovered 2,027 B — the
-        // same commit spent 47 B on `.claude/rules/context.md`. Naming the wrong quantity is
-        // this file's own §D lesson (a threshold that does not test what it names), so both
-        // numbers are stated rather than one (#708).
-        XCTAssertTrue(ledger.contains("## D — `EchoelStudioView` Präsentations-Modifier"), """
-            §D (the presentation-modifier chain, moved by #707) is gone. CLAUDE.md's \
-            Presentation and CRAFT-TOOL-DOORS bullets both POINT at it instead of carrying \
-            the history — same dangling-pointer failure as §C above.
-            """)
-        // #746 moved two blocks for HEADROOM, the #707 shape: `CLAUDE.md` 148,238 → 145,285 B
-        // (2,953 B recovered on the file this guard tests; the always-loaded SURFACE fell by
-        // the same 2,953 B, because this commit spent nothing on `.claude/rules/*`). Both
-        // quantities are named on purpose — §D's lesson is a threshold that did not test what
-        // it named, and one number standing for two is how that happens.
-        XCTAssertTrue(ledger.contains("## E — `PianoRollView` (#475)"), """
-            §E (the `PianoRollView` line-count nachlese, moved by #746) is gone. CLAUDE.md's \
-            register bullet POINTS at it and keeps only the law (state the size of the edit, \
-            never a living file's line count) — a dangling pointer here means the law file \
-            promises a nachlese that no longer exists.
-            """)
-        XCTAssertTrue(ledger.contains("## G — Die „Donuts\"-Pille und der tote Tools-Katalog"), """
-            §G (the donut-pill retraction and the dead tools catalogue, moved by #751) is gone.
-            CLAUDE.md's Absent-register bullet POINTS here and keeps only the law: unreachable is
-            NOT the same as ineffective, this line deliberately gets no text-scan guard (#491),
-            and the two lessons about reachability and persisted flags.
-            """)
-        // W-MAP (2026-11-01) — FORWARD: the section is created by the same commit. It holds the
-        // two lines of the universal sections that the map replaced rather than kept.
-        XCTAssertTrue(ledger.contains("## AQ — Die Karte"), """
-            §AQ (the lines the map replaced, W-MAP 2026-11-01) is gone. The map's table "Wohin \
-            die alten Abschnitte gezogen sind" POINTS there — a dangling pointer in the one file \
-            every session reads.
-            """)
-        XCTAssertTrue(ledger.contains("## F — `AdaptiveCardGrid` / reflowende Panels"), """
-            §F (the four versions of the reflowing-panel count, moved by #746) is gone. The \
-            adaptivity paragraph in CLAUDE.md POINTS here and keeps only what a session \
-            needs while MEASURING: the number, the `grep -c` that yields its denominator, \
-            that command's TWO known deviations, the note that the neighbouring block runs a \
-            DIFFERENT command yielding 11, and the two rules for using it (a \
-            grid can live in a `private var` that is not a panel — follow the CALLER; \
-            `spacing` is an ARGUMENT because a one-column grid REPLACES its host's spacing).
-            ⛔ THIS MESSAGE DESCRIBED AN END STATE THE FILE DID NOT HAVE, FROM #746 UNTIL \
-            #912: the pointer was written and the ~1.8 kB door history stayed in the \
-            always-loaded file. NOTHING here could see that — claim 3 only asks whether the \
-            DESTINATION exists. Claim 5's `wortgrenzen-genau zwei Schreiber` witness is the \
-            half that was missing. ⚠️ #912's own first draft then repeated the defect one \
-            size smaller: it cut the `grep -c` OUT of the paragraph while this message still \
-            promised commands, leaving a pointer to a NEIGHBOURING block whose different \
-            command yields 11 where the prose says 10. The law is therefore two-sided — a \
-            move is only a move when the SOURCE got shorter (measure both sides, put the \
-            figures in the commit), and every description of what SURVIVED has to be \
-            re-read against the shortened text, not against the intention.
-            """)
-    }
+    // `testTheLedgerExistsAndHoldsEveryMovedChain` read `memory/LEDGER_COUNTS.md`. The counts
+    // ledger now lives in the project's private working repository, so the method moved there
+    // with it (`echoelmusic-intern/guards/`, a spec, no CI). A public checkout has no ledger to
+    // read; an XCTSkip here would be a permanent skip, and a skip is not a pass.
 
     // MARK: - 4: THE INVARIANT that makes the move worth anything
 
@@ -373,19 +304,19 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
         // EITHER is re-accretion.
         let law: String = try rawFile(Self.mapFile) + "\n" + rawFile(Self.lawFile)
         let witnesses: [(needle: String, home: String, section: String, what: String)] = [
-            ("MIDIFileExporterDrumTests", "memory/LEDGER_COUNTS.md", "§C",
+            ("MIDIFileExporterDrumTests", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§C",
              "the #474 retraction — a cited test file that NEVER existed"),
-            ("988 Zeilen", "memory/LEDGER_COUNTS.md", "§E",
+            ("988 Zeilen", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§E",
              "the struck `PianoRollView` line count (#475 wrote 988; it was 987)"),
-            ("Der Träger sitzt in `weatherRow`", "memory/LEDGER_COUNTS.md", "§F",
+            ("Der Träger sitzt in `weatherRow`", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§F",
              "the sentence naming the panel that never had a grid"),
-            ("statt einen 17. anzuhängen", "memory/LEDGER_COUNTS.md", "§G",
+            ("statt einen 17. anzuhängen", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§G",
              "the ambiguous slot-budget phrase from the donut-pill block"),
-            ("eine Zahl, die eine UNGETRACKTE Datei mitzählt", "memory/LEDGER_COUNTS.md", "§B",
+            ("eine Zahl, die eine UNGETRACKTE Datei mitzählt", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§B",
              "the #818 move — the source-file COUNT and its whole chain (983 B) left the law "
              + "file; the literal was deleted rather than nursed, because #813 added one file "
              + "and made the number wrong with nothing going red"),
-            ("wortgrenzen-genau zwei Schreiber", "memory/LEDGER_COUNTS.md", "§F.4",
+            ("wortgrenzen-genau zwei Schreiber", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§F.4",
              "the `visualVJOverlay` door history (#505 doorless -> #747 doored) — the ~1.8 kB "
              + "that #746 pointed away from and then LEFT IN PLACE; #912 measured both sides "
              + "and finished the move. ⛔ THE FIRST NEEDLE HERE WAS `tote Zweitkopie` AND IT "
@@ -397,7 +328,7 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
              + "wording; a re-accretion that dropped that one clause would have passed "
              + "silently. This needle names the MEASUREMENT instead (`showVisual` had two "
              + "writers, both `false`), which paraphrase does not survive"),
-            ("die Reads sind elf", "memory/LEDGER_COUNTS.md", "§O",
+            ("die Reads sind elf", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§O",
              "the #919 -> #928 count chain for the menu host's HOT producers — #919 counted "
              + "THREE and read as an inventory, #928 found the fourth, and the correction was "
              + "itself wrong three ways. This needle is the measurement from that third "
@@ -406,7 +337,7 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
              + "ordinary de-shouting could touch (#912). The LAW — which four producers are "
              + "hot, why the metronome surface is the most dangerous, the guard — stays in "
              + "CLAUDE.md; only the chain moved"),
-            ("Niemand hatte das entschieden", "memory/LEDGER_COUNTS.md", "§S",
+            ("Niemand hatte das entschieden", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§S",
              "the iPad provenance (#292) — the SAME story stood under the platform ladder in "
              + "THREE blocks, and this 209-byte sentence was in TWO of them WORD FOR WORD. "
              + "That is #912 one step worse: there a pointer was set and the text left behind; "
@@ -418,7 +349,7 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
              + "(#912), and no paraphrase of the block survives it. The LAW stayed in "
              + "CLAUDE.md: the decision, its reason, and that re-enabling iPad is four "
              + "settings + a guard + two prose blocks, never \"one line\""),
-            ("kann eine Nutzer-Eingabe nie überschreiben", "memory/LEDGER_COUNTS.md", "§Z",
+            ("kann eine Nutzer-Eingabe nie überschreiben", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§Z",
              "the `PatchEditorView` provenance (#132 Slice 6, moved by #1327) — 1,995 B of "
              + "back-story about a file that no longer exists, in a law file that was 504 B "
              + "under its ceiling. This needle is the MEASUREMENT that refuted the blocking "
@@ -437,49 +368,52 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
             // headroom than the ADR itself weighs. Each needle below is a MEASUREMENT or a
             // verbatim quote from the removed half — no paraphrase of the block survives it,
             // and none carries caps that ordinary de-shouting could touch (#912).
-            ("die B5-Tür starb schon mit den Drums", "memory/LEDGER_COUNTS.md", "§AI",
+            ("die B5-Tür starb schon mit den Drums", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§AI",
              "the absence register's door provenance — 7,913 B, the largest paragraph in the "
              + "file. The LAW stayed: the register itself, the three lessons (unreachable is "
              + "not ineffective; slot plus setter proves nothing; check what a UI block is the "
              + "SOLE writer of), and `doctor --section C` as the command instead of a copy"),
-            ("hatte null Produktions-Aufrufer", "memory/LEDGER_COUNTS.md", "§AI",
+            ("hatte null Produktions-Aufrufer", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§AI",
              "the live-pipeline provenance — the BLE-3 lifecycle history, the #277 retraction "
              + "in full, and the whole ⛔ walk-back of \"ModulationEngine wired (bio→tempo)\". "
              + "The LAW stayed: one owner for the belt, MPE-IN is not MPE-OUT, the matrix has "
              + "its door since #1250, and the drum product is dead"),
-            ("Das hat leider nichtbgeklappt", "memory/LEDGER_COUNTS.md", "§AI",
+            ("Das hat leider nichtbgeklappt", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§AI",
              "the strike list's founder quotes in full. This needle is the founder's own "
              + "verbatim wording INCLUDING its typo, which is why no paraphrase can reproduce "
              + "it. The LAW stayed: what is struck, when, why — and the two ⚠️ lines that stop "
              + "a session deleting live code (the rPPG path under Video/, MicrotonalTuning)"),
-            ("#459-Nachlese, 2026-08-07", "memory/LEDGER_COUNTS.md", "§AI",
+            ("#459-Nachlese, 2026-08-07", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§AI",
              "the fourth and fifth editions of the 10 Hz / 1 Hz confusion. The LAW stayed as "
              + "ONE sentence — a rate belongs to exactly one operation — plus the guard that "
              + "anchors the NAMED constant rather than a spelling"),
-            ("WorkspaceView.swift:345", "memory/LEDGER_COUNTS.md", "§AI",
+            ("WorkspaceView.swift:345", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§AI",
              "the deleted TransportBar's archaeology, quoted down to a line number that had "
              + "long pointed at unrelated code — which is itself the lesson the law file kept: "
              + "a quoted phrase survives an insertion, a line number does not"),
             // W-MAP (2026-11-01) — the two lines of the universal sections the map replaced.
-            ("**PRIMARY** — TestFlight builds (ID: 225043686)", "memory/LEDGER_COUNTS.md", "§AQ",
+            ("**PRIMARY** — TestFlight builds (ID: 225043686)", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§AQ",
              "the Active Workflows row that called the earlier app's `testflight.yml` the PRIMARY "
              + "TestFlight path, false since Echoel Studio took the record on 2026-10-18/19; the map "
              + "carries the corrected row"),
-            ("die Schwere hing nie allein an `if: false`", "memory/LEDGER_COUNTS.md", "§AQ",
+            ("die Schwere hing nie allein an `if: false`", "echoelmusic-intern/memory/LEDGER_COUNTS.md", "§AQ",
              "the gate-revert provenance (what a merge without gates cost) — moved to give the map "
              + "its room; the gate law itself stayed in the map")
         ]
         for w in witnesses {
+            XCTAssertFalse(law.contains(w.needle), """
+                \(w.what) is back in a law file (the root `CLAUDE.md` or `Sources/CLAUDE.md`). \
+                That is the re-accretion this guard exists to stop. Point at `\(w.home)` \
+                \(w.section) instead of re-quoting the provenance in a law file.
+                """)
+            // Since 2026-11-05 the counts ledger is private; its half of this check is a spec
+            // in `echoelmusic-intern/guards/`. Only a home in this tree is read here.
+            if w.home.hasPrefix("echoelmusic-intern/") { continue }
             let home: String = try rawFile(w.home)
             XCTAssertTrue(home.contains(w.needle), """
                 \(w.what) is missing from `\(w.home)` \(w.section).
                 Every move out of CLAUDE.md was made on that file's promise to keep every \
                 line. If this needle is in NEITHER file, the lesson was deleted, not moved.
-                """)
-            XCTAssertFalse(law.contains(w.needle), """
-                \(w.what) is back in a law file (the root `CLAUDE.md` or `Sources/CLAUDE.md`). \
-                That is the re-accretion this guard exists to stop. Point at `\(w.home)` \
-                \(w.section) instead of re-quoting the provenance in a law file.
                 """)
         }
     }
@@ -512,11 +446,8 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
             The Files line must carry the instruction, not just the command — the command
             without it reads as an optional extra rather than the rule.
             """)
-        let ledger: String = try rawFile("memory/LEDGER_COUNTS.md")
-        XCTAssertTrue(ledger.contains(command), """
-            LEDGER_COUNTS.md §B must name the SAME command, so the two homes cannot teach two
-            different recipes for one number (#416).
-            """)
+        // The ledger half (§B names the SAME command, #416) moved with the ledger to
+        // `echoelmusic-intern/guards/` on 2026-11-05.
     }
 
     // MARK: - file access
@@ -572,7 +503,7 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
         XCTAssertFalse(heading.contains(" files"), """
             The KEY TESTS heading asserts a file count again: \(heading)
             A heading is part of the claim. Point at the `git ls-files` command in REPO \
-            STRUCTURE instead; the counting chain lives in `memory/LEDGER_COUNTS.md` §C.
+            STRUCTURE instead; the counting chain lives in the private ledger, §C.
             """)
     }
 

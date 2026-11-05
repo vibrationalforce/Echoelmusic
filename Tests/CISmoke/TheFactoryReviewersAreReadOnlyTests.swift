@@ -16,7 +16,8 @@
 //    whitespace-normalised.
 // 3. Every `agentType:` in the workflow is a name on the ultracode roster.
 // 4. `MAX_REWORK_ROUNDS` in the workflow equals the number the skill states for it.
-// 5. The skill routes an escalation to `docs/dev/FOUNDER_INBOX.md`, and that file exists.
+// 5. The skill routes an escalation to `docs/dev/FOUNDER_INBOX.md` in the private repo
+//    `echoelmusic-intern` (moved 2026-11-05), and names that repo.
 // 6. `withReadOnly` really PREPENDS `READ_ONLY` — claims 1 and 2 would stay green over a wrapper
 //    rewritten as `(text) => text`, while no prompt carried the clause (factory job 001, round 1).
 // 7. The approver reads the locked set AT THE JOB BASE — `git show ${a.base}:` of

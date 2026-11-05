@@ -30,11 +30,9 @@ Bundle prefix: `com.echoelmusic` · App Group: `group.com.echoelmusic`
 | `Sources/` · `Tests/` · `Package.swift` · `project.yml` | die frühere App; `Tests/CISmoke` ist das blockierende Wächter-Bündel | `Sources/CLAUDE.md` · `Tests/CISmoke/CLAUDE.md` |
 | `docs/` | Website (GitHub Pages); `docs/dev/` · `adr/` · `research/` intern, unveröffentlicht | `docs/CLAUDE.md` |
 | `ContentPipeline/` · `fastlane/` | Content und Store-Text; `ContentPipeline/CLAIMS.md` = was nach außen gesagt werden darf | `ContentPipeline/README.md` |
-| `memory/` | kuratiertes Gedächtnis, der Hook liest Scheiben; `memory/LEDGER_COUNTS.md` = Provenienz, nie beim Start lesen | DEVELOPMENT WORKFLOW unten |
-| `scratchpads/` | Rohes: Sitzungsprotokoll, Pläne, Board, Sackgassen | DEVELOPMENT WORKFLOW unten |
+| `memory/` · `scratchpads/` · `decisions.csv` · `inspiration.csv` | Gedächtnis, Protokoll, Pläne, Ledger — seit 2026-11-05 nur im privaten Repo `echoelmusic-intern` | DEVELOPMENT WORKFLOW unten |
 | `scripts/` | die Messinstrumente | `scripts/INDEX.md` |
 | `.claude/` | `rules/` (immer geladen), `skills/`, `agents/`, `hooks/` | `.claude/rules/context.md` |
-| `decisions.csv` · `inspiration.csv` | Entscheidungs- und Inspirations-Ledger, maschinenlesbar | Decision Logging unten |
 
 ## Wohin die alten Abschnitte gezogen sind (W-MAP, 2026-11-01)
 
@@ -44,14 +42,14 @@ Ein Zeiger auf einen Abschnitt „von `CLAUDE.md`" — in Code, Wächtern, Skrip
 |---|---|
 | IDENTITY (Tagline, Built for, Capabilities, Streichliste) · CURRENT STATE · BRAND (Fassung von 10.x) · ARCHITECTURE · EchoelStudioView · TECH STACK mit Plattform-Leiter · REPO STRUCTURE · BIO-SIGNAL DSP · DDSP Bio-Mappings · PERFORMANCE · TEMPO INVARIANT · RALPH WIGGUM LAMBDA PROTOCOL · "CLEAR SOFTWARE" CHECKLIST · SESSION START (Bash) · CODE STYLE · Logger Usage · API Gotchas · KEY TESTS · die Alt-App-Zeilen aus CI/CD · GitHub API Access · OSC (EchoelSync) · PLATFORM NOTES · 4-Phase Workflow · Parallel Agent Strategy · Code Review Checklist · Parameter rows (`EchoelValueField`) | `Sources/CLAUDE.md` — wörtlich, gleiche Überschriften, gleiche Reihenfolge |
 | CRITICAL BUILD ERROR PATTERNS · Language-level notes | `.claude/rules/swift-audio.md` (gelten für beide Apps) |
-| Zeilen der universellen Abschnitte, die hier ersetzt wurden | `memory/LEDGER_COUNTS.md` §AQ |
+| Zeilen der universellen Abschnitte, die hier ersetzt wurden | `echoelmusic-intern/memory/LEDGER_COUNTS.md` §AQ |
 
 ## Produktgesetz — vor jeder Scope-Entscheidung
 
 - **⭐ PRODUCT LAW (canonical since 2026-09-24 — read `docs/dev/FOUNDER_PRODUCT_LAW.md` before ANY scope decision; entry + timeline = `ECHOEL_VISION_2026-10-19.md`, Studio order = NEUPLANUNG §5, both private).** Echoelmusic is a full professional **DMMW** (distributed multidimensional multimedia workstation) — audio, MIDI/MPE, instruments, FX, recording, arrangement, mixing, mastering, automation, video, visual, light, spatial/XR, streaming, collaboration, AI. *Own the complete creative workflow, integrate the complete professional ecosystem* — never rebuild specialist infrastructure (codecs, Dante, NDI, CDNs, plugin SDKs).
   **CURRENT PRODUCT LAW SUPERSEDES HISTORICAL PRODUCT CUTS — a historical deletion revokes an IMPLEMENTATION, not the capability.** Every ⛔ „gestrichen / CUT / reines Instrument" in this file and in `decisions.csv` is PHASE HISTORY: its ENGINEERING warning stays law (#1302 input graph, #299 refcount, black-screen chain, hot-state), its SCOPE verdict does not. Recovery ports the proven core into today's owners — never copy a subsystem back; what existed, whether it worked and its recovery class: `HISTORY_ARCHIVE.md` (privat). ⚠️ **Scope is not a claim:** store, website and content still claim only what ships (`docs/dev/FEATURE_STATUS.md`, `ContentPipeline/CLAIMS.md`).
 - **§4b — keine Waffen, keine Überwachung, kein Targeting** (Founder 2026-11-01): nie gebaut, nie
-  integriert, nie als Beitrag angenommen; einmal in `decisions.csv` verbucht und nicht wieder geöffnet.
+  integriert, nie als Beitrag angenommen; einmal in `decisions.csv` (privat) verbucht und nicht wieder geöffnet.
 - **§4c — nicht beim Steuern:** niemand spielt Echoelmusic beim Fahren, Steuern oder Bedienen einer
   Maschine, auch nicht mit Autopilot; hier entsteht kein Navigations-, Sicherheits- oder Browser-Projekt.
 - **Fokus seit 2026-10-15 (§1):** professionelle Medienproduktion. Biofeedback ist eine optionale
@@ -145,9 +143,9 @@ Priority: Build errors → Test failures → Crash code → Task → Cleanup
 ⚠️ **Die EINE Ausnahme, und sie ist eng:** berührt der Merge weder `Sources/` noch `Tests/` noch `Package.swift` noch `project.yml` noch `EchoelStudio/`, läuft KEIN Gate — die Gate-Workflows haben genau diese Pfadfilter plus ihre eigene Datei. Dann gibt es nichts zu prüfen und der Merge geht durch. Ohne diese Ausnahme wartete ausgerechnet ein Commit, der CI repariert, auf ein Gate, das nie startet.
 
 
-Wächter: `Tests/CISmoke/TheAutoMergeWaitsForTheGatesTests.swift`. ⛔ Die Provenienz — die vier Monate ohne Gate, die zwei gemessenen Fenster (`f61be63` zehn Minuten, `edc37a4a5` neun) und die zurückgenommene Fassung dieses Absatzes — liegt in `memory/LEDGER_COUNTS.md` §AG.
+Wächter: `Tests/CISmoke/TheAutoMergeWaitsForTheGatesTests.swift`. ⛔ Die Provenienz — die vier Monate ohne Gate, die zwei gemessenen Fenster (`f61be63` zehn Minuten, `edc37a4a5` neun) und die zurückgenommene Fassung dieses Absatzes — liegt in `echoelmusic-intern/memory/LEDGER_COUNTS.md` §AG.
 
-⛔ **UND DER ZWILLING DAZU (#697/#698/#699): ein Commit, der NUR `CLAUDE.md`, `memory/**` oder `scratchpads/**` anfasst, löst KEINEN eigenen Merge aus.** Die Filter stehen in `ContentPipeline/README.md` (#252). Er fährt als **PASSAGIER** auf dem nächsten Code-Commit mit (der Merge nimmt `${{ github.sha }}` samt Vorgeschichte); endet ein Zweig auf ihm, bleibt die Drift ohne Signal. Ein wartender Gesetzes-Commit **blockiert den Docs-Merge** (`auto-merge-docs.yml` setzt dann `docs_only=false` und endet trotzdem grün). Wächter: `Tests/CISmoke/TheLawFileNeverReachesMainByItselfTests.swift`. Die #697-Über-Behauptung („NIE durch Automatik“) samt Messung: `memory/LEDGER_COUNTS.md` §AO.
+⛔ **UND DER ZWILLING DAZU (#697/#698/#699): ein Commit, der NUR `CLAUDE.md` anfasst, löst KEINEN eigenen Merge aus.** Die Filter stehen in `ContentPipeline/README.md` (#252). Er fährt als **PASSAGIER** auf dem nächsten Code-Commit mit (der Merge nimmt `${{ github.sha }}` samt Vorgeschichte); endet ein Zweig auf ihm, bleibt die Drift ohne Signal. Ein wartender Gesetzes-Commit **blockiert den Docs-Merge** (`auto-merge-docs.yml` setzt dann `docs_only=false` und endet trotzdem grün). Wächter: `Tests/CISmoke/TheLawFileNeverReachesMainByItselfTests.swift`. Die #697-Über-Behauptung („NIE durch Automatik“) samt Messung: `echoelmusic-intern/memory/LEDGER_COUNTS.md` §AO.
 
 
 ⚠️ **`Sources/CLAUDE.md` liegt unter `Sources/**`:** anders als dieses File löst ein Commit, der nur
@@ -158,71 +156,23 @@ das Gesetz der früheren App ändert, den Merge und beide Alt-App-Gates aus (Pfa
 
 ## DEVELOPMENT WORKFLOW
 
-### Persistent Memory (memory/)
+**Gedächtnis, Protokoll und Ledger liegen seit 2026-11-05 nur im privaten Repo
+`echoelmusic-intern`, unter denselben Pfaden:** `memory/` (kuratiert; `memory/LEDGER_COUNTS.md` ist
+Zähl-Provenienz und wird nie beim Start gelesen), `scratchpads/` (`SESSION_LOG.md`,
+`HARNESS_LEDGER.md`, Board, `PLAN_*.md`), `decisions.csv` (Kopf
+`date,decision,reasoning,expected_outcome,review_date,status`, Review nach 30 Tagen, `review.sh`
+dort; nichts flaggt automatisch), `inspiration.csv` und die Vision-Skills
+(`echoelmusic-intern:vision-gate`). **Ein Verweis auf diese Pfade irgendwo in diesem Repo löst dort
+auf.** Eine Sitzung hängt es als zweites Repo an; sein eigenes `CLAUDE.md` regelt den Rest.
 
-The `memory/` directory is **durable knowledge** that persists across all sessions:
-
-| File | Purpose |
-|------|---------|
-| `decisions.md` | Architectural and strategic decisions with rationale and review dates |
-| `people.md` | Key contributors, collaborators, contacts |
-| `preferences.md` | User preferences for workflow, communication, tooling |
-| `user.md` | User profile, project vision, working style |
-| `LEDGER_COUNTS.md` | **Zähl-Ketten (Provenienz).** ~580 KB. **NICHT beim Sitzungsstart lesen** — nur öffnen, wenn eine Zahl nachzuführen ist (#538) |
-
-**SESSION START (mandatory):**
-1. Restore context from `memory/` — **but not by reading the directory whole.** The
-   SessionStart hook already `cat`s the small files (`people` · `user` · `vision` ·
-   `project_knowledge` · `preferences`) and prints SLICES of the two big ones
-   (`decisions.md` tail-400, `inspiration_intake.md` head-60 + tail-120), each with the
-   command that reads the rest. ⛔ **„Read ALL files in `memory/`" stand hier und war
-   die Anweisung, die sich selbst widerlegt:** der Hook schneidet seit #533 zwei Dateien,
-   weil sie zusammen 191 875 B kosteten — eine Prosa-Zeile, die „lies alles" sagt, hebt
-   genau die Messung auf, für die der Schnitt existiert. Seit #538 liegt zusätzlich
-   `LEDGER_COUNTS.md` dort, das allein ~580 KB wiegt; wer die Zeile wörtlich befolgt,
-   verbrennt mehr Budget als das gesamte Gesetz dieser Datei ausmacht.
-2. Read `scratchpads/SESSION_LOG.md` for recent session history
-3. Read `memory/decisions.md` for any decisions due for review
-
-**SESSION END (mandatory):**
-1. Update `memory/` files with any new discoveries, decisions, or preferences learned during the session
-2. Log new decisions to `memory/decisions.md` AND `decisions.csv` (see Decision Logging below)
-3. Update `scratchpads/SESSION_LOG.md` with session summary
-
-### Decision Logging (decisions.csv)
-
-Machine-readable decision log at repo root. Format:
-```
-date,decision,reasoning,expected_outcome,review_date,status
-```
-
-- Log every architectural/strategic decision the user describes
-- Review dates default to 30 days from decision date
-- Run `./review.sh` to surface decisions due for review; `./review.sh --flag` schreibt `REVIEW_DUE` in die Datei zurück
-- ⛔ **NICHTS FLAGGT AUTOMATISCH — hier stand ein täglicher Cron als Tatsache.** #510 hat genau diese Behauptung am 2026-08-08 in `.claude/routines/05-decision-review.md` zurückgenommen („unwired as automation") und **diese** Datei stehen lassen, die jede Sitzung ZUERST liest — die #456-Form: Prosa zieht in JEDEM Zuhause mit, nicht nur dort, wo man gerade schreibt, und 16 Tage lang gewann das immer-geladene Zuhause. Gemessen an der STATUS-SPALTE, weil ein Wort-Zähler hier von der Prosa über sich selbst widerlegt wird (⛔ `git log -S REVIEW_DUE` stand hier als „leer" und liefert seit #805/#815 zwei Treffer — beide Prosa, null geflaggte Zeilen; §W): `python3 -c "import csv;print(sum(1 for r in csv.reader(open('decisions.csv')) if len(r)==6 and r[5].strip()=='REVIEW_DUE'))"` → **0**. Und **kein einziger Workflow trägt überhaupt einen `schedule:`-Trigger**; `check-decisions.sh` ist eine crontab-Zeile, die ein Mensch installiert. Die Folge ist nicht kosmetisch: der Rückstand — Zahl mit `./review.sh | grep -c '^REVIEW DUE'` messen, nicht hier ablesen (#803) — sieht betreut aus und ist es nicht. Wächter: `TheDecisionLogIsMachineReadableTests`, Anspruch 7.
-
-### Long-Term Memory (scratchpads/)
-
-The `scratchpads/` directory is session-specific logs and plans:
-
-| File | Purpose |
-|------|---------|
-| `SESSION_LOG.md` | **Read first — CAPPED**: newest entries are at the END; the hook prints `sed -n '1,80p'`; read `grep -n '^## ' scratchpads/SESSION_LOG.md \| tail -20` + `tail -200`, never the whole ~1.8 MB |
-| `HARNESS_LEDGER.md` | **The idea-maze** — proven DEAD-ENDS (don't retry), reliable PLAYBOOKS, shipped leaderboard |
-| `ARCHITECTURE_AUDIT_*.md` | Data flow diagrams, env object chains, init sequence |
-| `PLAN_*.md` | Feature/fix plans before implementation |
-
-**Start every session** by reading `memory/` first (the hook's slices), then the END of
-`scratchpads/SESSION_LOG.md`, then the DEAD-ENDS table of `scratchpads/HARNESS_LEDGER.md`
-(~300 KB — index it with `grep -n '^## ' scratchpads/HARNESS_LEDGER.md`, do not read it whole).
-
-**Harness discipline (long-running-agent effectiveness).** Before trying any
-non-trivial approach, scan `HARNESS_LEDGER.md` DEAD-ENDS — a past (context-compacted)
-cycle may already have proven it wrong; take the "do this instead". After a cycle,
-append ONE row for any real dead-end hit or reliable playbook found, so the loop
-climbs instead of circling. Check CI gate status compactly with
-`python3 scripts/gh-run-status.py <saved-tool-result.json>` (parses the overflowing
-`mcp__github__actions_*` dump into `sha status conclusion run_id title`).
+- **Sitzungsstart:** dort die Hook-Scheiben von `memory/`, das ENDE von `scratchpads/SESSION_LOG.md`
+  (`grep -n '^## ' … | tail -20`, nie die ganze Datei) und die DEAD-ENDS von
+  `scratchpads/HARNESS_LEDGER.md` (indexieren, nicht ganz lesen): eine bewiesene Sackgasse wird
+  nicht wiederholt.
+- **Sitzungsende:** Entdeckungen nach `memory/`, Entscheidungen nach `memory/decisions.md` und
+  `decisions.csv`, die Zusammenfassung nach `scratchpads/SESSION_LOG.md` — **dort, nie in diesem
+  Repo.** Diese Pfade hier sind ein Fehler; `.gitignore` hält sie draußen.
+- CI kompakt lesen: `python3 scripts/gh-run-status.py <saved-tool-result.json>`.
 
 ---
 
@@ -290,7 +240,7 @@ Vision-Keeper · Shipper · Skeptic · User-Advocate) each give a one-line posit
 + sharpest concern; dissent is surfaced, not smoothed; synthesize ONE cheapest
 next step + a gate (proceed / mitigate / hold-for-founder). **Skip trivial
 reversible actions** — convening on trivia is the failure mode. Composes with
-`vision-gate` and the Ralph Wiggum loop; never overrides explicit founder
+`echoelmusic-intern:vision-gate` and the Ralph Wiggum loop; never overrides explicit founder
 instructions or the hard rules above.
 
 **Marketing:** to market Echoel (App Store/ASO, website `docs/`, launch, pricing,

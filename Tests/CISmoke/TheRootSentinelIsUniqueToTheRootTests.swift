@@ -163,8 +163,8 @@ final class TheRootSentinelIsUniqueToTheRootTests: XCTestCase {
             — which is what #804 found in two guards, one of them red since #757.
 
             This is not a ban on any sentinel: it is the requirement that the marker be \
-            unique to the place it marks. `Package.swift`, `project.yml` and `decisions.csv` \
-            all qualify today; `CLAUDE.md` does not, because this directory owns one.
+            unique to the place it marks. `Package.swift` and `project.yml` \
+            both qualify today; `CLAUDE.md` does not, because this directory owns one.
             """)
     }
 }

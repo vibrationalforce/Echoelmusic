@@ -19,7 +19,8 @@ docstring printed one of them next to a header showing the other and explained n
 long expired — the second by roughly a factor of two — in a file whose whole job is to
 print the current count two lines lower. **The header IS the measurement; the docstring
 only names the two OPERATIONS.** Re-derive the wide one with
-`git grep -c NEEDS-FOUNDER-VERIFY -- Sources Tests CLAUDE.md scratchpads`, and the narrow
+`git grep -c NEEDS-FOUNDER-VERIFY -- Sources Tests CLAUDE.md` (plus the same command in the
+private repo for its `scratchpads/` share, moved there 2026-11-05), and the narrow
 one by running this tool.
 
 ⛔ AND THE INSTRUMENT COUNTED ITS OWN DESCRIPTION (#753). Registering this tool in

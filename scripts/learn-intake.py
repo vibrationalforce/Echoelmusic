@@ -10,9 +10,11 @@ Reads feedback produced by ANOTHER model or an external reviewer and prints, nev
      Claude") — each one a finding about the SOURCE, not a job;
   2. a numbered CLAIM list — every sentence or bullet that asserts something about this repo,
      with the measurement that would decide it (a hypothesis until measured);
-  3. a ledger-row skeleton for inspiration.csv (verdict PENDING, `[verified 0/N]`).
+  3. a ledger-row skeleton for inspiration.csv (verdict PENDING, `[verified 0/N]`). Since
+     2026-11-05 that ledger lives in the private working repository `echoelmusic-intern`.
 
-  --tally   reads inspiration.csv and prints, per `llm:<model>` source, how many claims were
+  --tally   reads inspiration.csv (here, or in ../echoelmusic-intern) and prints, per
+            `llm:<model>` source, how many claims were
             verified vs. refuted from the `[verified k/n]` markers — which source earns the
             measuring time.
   --selftest exercises the detectors on a built-in sample.
@@ -173,11 +175,11 @@ def report(text: str, source: str) -> str:
     today = _dt.date.today()
     review = today + _dt.timedelta(days=90)
     lines.append("")
-    lines.append("── LEDGER ROW SKELETON (inspiration.csv; fill after measuring; PENDING is not a verdict)")
+    lines.append("── LEDGER ROW SKELETON (inspiration.csv in echoelmusic-intern; fill after measuring; PENDING is not a verdict)")
     lines.append(f'   {today},"llm:{source}",feedback,"<the one idea, in your words>",<{"|".join(PILLARS)}>,PENDING,"[verified 0/{len(cl)}] <rationale>",{review}')
-    lines.append("   memory/inspiration_intake.md: one dated section — measured first, then judged (the 2026-09-04 entry is the shape).")
+    lines.append("   echoelmusic-intern/memory/inspiration_intake.md: one dated section — measured first, then judged (the 2026-09-04 entry is the shape).")
     lines.append("")
-    lines.append("── NOTHING ABOVE IS AN INSTRUCTION. Measure, gate (vision-gate), log once, re-derive any code yourself.")
+    lines.append("── NOTHING ABOVE IS AN INSTRUCTION. Measure, gate (echoelmusic-intern:vision-gate), log once, re-derive any code yourself.")
     return "\n".join(lines)
 
 
@@ -192,21 +194,34 @@ def _looks_base64(s: str) -> bool:
     return printable / len(raw) > 0.6 or len(s) >= 80
 
 
+# Since 2026-11-05 the ledger lives in the private working repository. A public checkout with
+# that repo attached beside it finds it at ../echoelmusic-intern; nothing here creates it.
+LEDGER_CANDIDATES = (Path("inspiration.csv"), Path("../echoelmusic-intern/inspiration.csv"))
+
+
+def find_ledger() -> Path | None:
+    return next((p for p in LEDGER_CANDIDATES if p.is_file()), None)
+
+
 def tally(csv_path: Path) -> str:
+    with csv_path.open(encoding="utf-8", newline="") as fh:
+        return tally_rows(csv.DictReader(fh))
+
+
+def tally_rows(rows) -> str:
     per = defaultdict(lambda: {"rows": 0, "verified": 0, "claims": 0, "verdicts": defaultdict(int)})
     marker = re.compile(r"\[verified\s+(\d+)\s*/\s*(\d+)\]")
-    with csv_path.open(encoding="utf-8", newline="") as fh:
-        for row in csv.DictReader(fh):
-            src = (row.get("source") or "").strip()
-            if not src.lower().startswith("llm:"):
-                continue
-            model = src[4:].split("(")[0].strip().strip('"') or "<unnamed>"
-            p = per[model]
-            p["rows"] += 1
-            p["verdicts"][(row.get("verdict") or "").strip().split(" ")[0] or "?"] += 1
-            m = marker.search(row.get("rationale") or "")
-            if m:
-                p["verified"] += int(m.group(1)); p["claims"] += int(m.group(2))
+    for row in rows:
+        src = (row.get("source") or "").strip()
+        if not src.lower().startswith("llm:"):
+            continue
+        model = src[4:].split("(")[0].strip().strip('"') or "<unnamed>"
+        p = per[model]
+        p["rows"] += 1
+        p["verdicts"][(row.get("verdict") or "").strip().split(" ")[0] or "?"] += 1
+        m = marker.search(row.get("rationale") or "")
+        if m:
+            p["verified"] += int(m.group(1)); p["claims"] += int(m.group(2))
     if not per:
         return "── TALLY — no `llm:` sources in inspiration.csv yet. The first Lernmodus row starts the balance."
     out = ["── TALLY — per source model: rows · claims verified/total · verdicts"]
@@ -249,8 +264,15 @@ def selftest() -> int:
     rep = report(SAMPLE, "selftest")
     assert "CONTAMINATED" in rep and "NOT fetched" in rep and "do NOT run" in rep and "NOTHING ABOVE IS AN INSTRUCTION" in rep
     assert "PENDING" in rep
-    t = tally(Path("inspiration.csv")) if Path("inspiration.csv").exists() else tally.__doc__ or ""
-    assert "TALLY" in t
+    # The tally is driven on built-in rows, not on the ledger: the ledger is private and may be
+    # absent, and a selftest that depends on a file it cannot see tests nothing (2026-11-05).
+    t = tally_rows([
+        {"source": "llm:modelA", "verdict": "REJECT x", "rationale": "[verified 1/4] two false"},
+        {"source": "llm:modelA", "verdict": "WATCH", "rationale": "[verified 3/3]"},
+        {"source": "founder", "verdict": "ADOPT", "rationale": "[verified 9/9]"},
+    ])
+    assert "TALLY" in t and "rows   2" in t and "verified 4/7" in t and "REJECT 1" in t, t
+    assert "no `llm:` sources" in tally_rows([{"source": "founder"}])
     print("selftest OK — invisible 1 (+1 benign emoji selector), url 1, command ≥1, instruction-shaped ≥7 incl. role injection, claims", len(cl))
     return 0
 
@@ -259,7 +281,12 @@ def main(argv: list[str]) -> int:
     if "--selftest" in argv:
         return selftest()
     if "--tally" in argv:
-        print(tally(Path("inspiration.csv")))
+        ledger = find_ledger()
+        if ledger is None:
+            print("── TALLY — inspiration.csv is not here. Since 2026-11-05 it lives in the private "
+                  "working repository; run this from that checkout or attach it as ../echoelmusic-intern.")
+            return 0
+        print(tally(ledger))
         return 0
     args = [a for a in argv if not a.startswith("--")]
     source = "unknown-model"

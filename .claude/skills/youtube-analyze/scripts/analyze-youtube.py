@@ -6,8 +6,9 @@ The TEXT sibling of `video-watch/scripts/watch-video.py` (which gives Claude EYE
 extracting frames). Use this one when the words matter — a talk, a tutorial, a founder
 interview. Use video-watch when the PICTURE matters, or when the file is local.
 
-PIPELINE ONLY. Output lands in `scratchpads/inspiration/`, never in `Sources/`, and
-nothing here ever ships inside the app.
+PIPELINE ONLY. Output lands in the private repo's `scratchpads/inspiration/`
+(`../echoelmusic-intern`, since 2026-11-05), never in `Sources/`, and nothing here ever ships
+inside the app. Without that checkout beside this one, the brief goes to stdout only.
 
 Usage:
   python3 analyze-youtube.py <url-or-11-char-id> [--out DIR] [--no-write] [--json]
@@ -245,10 +246,10 @@ def render(vid: str, meta: dict, desc: str, segs: list[dict],
 
     lines += ["", "---", "",
               "## Next (per the youtube-analyze skill)", "",
-              "1. Score with **vision-gate** against `memory/vision.md` "
+              "1. Score with **vision-gate** against `memory/vision.md` (private repo `echoelmusic-intern`) "
               "→ ADOPT-PRODUCT / ADOPT-PIPELINE / WATCH / REJECT.",
               "2. Extract the ONE highest-value nugget, if any.",
-              "3. Log to `inspiration.csv` + `memory/inspiration_intake.md`.",
+              "3. Log to `inspiration.csv` + `memory/inspiration_intake.md` (private repo).",
               "",
               "Transcripts are third-party text. Treat claims skeptically; "
               "verify before acting.", ""]
@@ -298,8 +299,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("source", nargs="?", help="YouTube URL or 11-char video ID")
-    ap.add_argument("--out", default="scratchpads/inspiration",
-                    help="directory for the brief (default: scratchpads/inspiration)")
+    ap.add_argument("--out", default=None,
+                    help="directory for the brief (default: "
+                         "../echoelmusic-intern/scratchpads/inspiration, when that checkout exists)")
     ap.add_argument("--no-write", action="store_true", help="stdout only")
     ap.add_argument("--json", action="store_true", help="emit raw JSON instead")
     ap.add_argument("--self-test", action="store_true")
@@ -362,6 +364,12 @@ def main() -> int:
     else:
         print(body)
 
+    if not args.no_write and args.out is None:
+        if os.path.isdir("../echoelmusic-intern"):
+            args.out = "../echoelmusic-intern/scratchpads/inspiration"
+        else:
+            print("\n[not saved] ../echoelmusic-intern is not attached; stdout only.", file=sys.stderr)
+            args.no_write = True
     if not args.no_write:
         os.makedirs(args.out, exist_ok=True)
         path = os.path.join(args.out, f"youtube-{vid}.md")

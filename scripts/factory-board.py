@@ -301,7 +301,9 @@ def main(argv):
         return selftest() or mutate()
     root = Path(__file__).resolve().parent.parent / "scratchpads" / "factory"
     if not root.is_dir():
-        print(f"no factory yet: {root} does not exist (start a job per .claude/skills/factory/SKILL.md)")
+        print(f"no factory job in this checkout: {root} does not exist. Finished jobs are archived "
+              f"in the private repo echoelmusic-intern (scratchpads/factory/); a new job starts per "
+              f".claude/skills/factory/SKILL.md")
         return 2
     jobs, problems = load(root)
     print(render(jobs, only_open="--open" in argv))

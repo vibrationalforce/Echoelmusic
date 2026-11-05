@@ -1144,29 +1144,10 @@ def section_b() -> Section:
     # ever emitted. That is why the check is ALSO here: the doctor runs on demand, in this
     # container, with no simulator. A guard in a bundle that mostly does not execute is a
     # record of intent, not a safety net.
-    log = ROOT / "decisions.csv"
-    if log.exists():
-        try:
-            with log.open(encoding="utf-8", newline="") as fh:
-                rows = list(csv.reader(fh))
-        except (OSError, csv.Error) as exc:
-            sec.findings.append(Finding(
-                WARN, "decisions.csv could not be parsed at all",
-                [f"decisions.csv  {exc}"],
-                "`review.sh` reads this file with the same parser and reports nothing while it "
-                "cannot be read. Repair the file, then re-run `bash review.sh`."))
-        else:
-            width = len(rows[0]) if rows else 0
-            odd = [f"decisions.csv:{i + 1}  {len(r)} columns, expected {width}"
-                   for i, r in enumerate(rows) if width and len(r) != width]
-            if odd:
-                sec.findings.append(Finding(
-                    WARN, "A decisions.csv row does not have the header's column count",
-                    odd[:10] + ([f"... and {len(odd) - 10} more"] if len(odd) > 10 else []),
-                    "`review.sh` prints MALFORMED and reports NOTHING while this holds, so every "
-                    "due review stays invisible. The usual cause is a bare `\"` inside a quoted "
-                    "field — in CSV it must be doubled (`\"\"`). Fix the row, then re-run "
-                    "`bash review.sh` to see the backlog it was hiding."))
+    # ⚠️ 2026-11-05: `decisions.csv`, `review.sh` and the guard named above moved to the
+    # private working repository (`echoelmusic-intern`). The column check moved with them; a
+    # public checkout has no decision log to parse, and checking an absent file would print a
+    # clean note over nothing (the vacuous pass this script exists to catch).
 
     # ⛔ A CLASS NAME THAT LIVES IN A PLIST STRING HAS NO COMPILER BEHIND IT (#761).
     # `Resources/iOS/Info.plist` wires the external-display scene to
@@ -1279,7 +1260,7 @@ def section_b() -> Section:
 
     if not sec.findings:
         sec.clean_note = ("Commands and skills reference only paths that exist; "
-                          "decisions.csv parses; every plist-named class is declared.")
+                          "every plist-named class is declared.")
     return sec
 
 
@@ -1742,33 +1723,44 @@ def section_d() -> Section:
     # boundaries (measured 88,631 here against 88,811 from the shell pipeline — 0.009 %). Stated
     # rather than chased, because a magnitude check that pretends to be exact invites someone to
     # quote it as one.
-    small = ["people", "user", "vision", "project_knowledge", "preferences"]
-    def size(p: pathlib.Path) -> int:
-        return p.stat().st_size if p.exists() else 0
-    def head_tail(p: pathlib.Path, head: int, tail: int) -> int:
-        if not p.exists():
-            return 0
-        lines = read(p).split("\n")
-        keep = lines[:head] + (lines[-tail:] if tail else [])
-        return len("\n".join(keep).encode())
-    capped = sum(size(ROOT / f"memory/{n}.md") for n in small)
-    capped += head_tail(ROOT / "memory/decisions.md", 0, 400)
-    capped += head_tail(ROOT / "memory/inspiration_intake.md", 60, 120)
-    capped += head_tail(ROOT / "scratchpads/SESSION_LOG.md", 80, 0)
-    uncapped = sum(size(f) for f in sorted((ROOT / "memory").glob("*.md")))
-    uncapped += size(ROOT / "scratchpads/SESSION_LOG.md")
-    pct = (capped / uncapped * 100) if uncapped else 0.0
-    sec.findings.append(Finding(
-        WARN if pct >= 10 else INFO,
-        f"SessionStart hook reads {capped:,} B of a possible {uncapped:,} B ({pct:.1f} %)",
-        [f"{uncapped - capped:>9,} B  kept off the bill by the two caps",
-         f"{size(ROOT / 'memory/LEDGER_COUNTS.md'):>9,} B  memory/LEDGER_COUNTS.md — "
-         f"in memory/ and deliberately NOT in the hook's cat list"],
-        "The two caps have stopped paying. Re-read `.claude/rules/context.md` §1 before widening "
-        "any slice — this is the number that argues for them."
-        if pct >= 10 else
-        "Single digits is the durable claim `.claude/rules/context.md` §1 makes; the literal "
-        "bytes are a date, so they live here and not in an always-loaded file (#764)."))
+    # ⚠️ 2026-11-05: `memory/` and `scratchpads/` moved to the private working repository. The
+    # caps are measured there when it is attached beside this checkout; otherwise the figure is
+    # UNMEASURED — summing absent files gives 0 of 0, which reads as a pass and is not one.
+    base = next((b for b in (ROOT, ROOT.parent / "echoelmusic-intern")
+                 if (b / "memory").is_dir()), None)
+    if base is None:
+        sec.findings.append(Finding(
+            INFO, "SessionStart hook cost UNMEASURED — memory/ is not in this checkout",
+            ["memory/ and scratchpads/ live in the private working repository (echoelmusic-intern)"],
+            "Attach that repository beside this one (../echoelmusic-intern) to measure the caps."))
+    else:
+        small = ["people", "user", "vision", "project_knowledge", "preferences"]
+        def size(p: pathlib.Path) -> int:
+            return p.stat().st_size if p.exists() else 0
+        def head_tail(p: pathlib.Path, head: int, tail: int) -> int:
+            if not p.exists():
+                return 0
+            lines = read(p).split("\n")
+            keep = lines[:head] + (lines[-tail:] if tail else [])
+            return len("\n".join(keep).encode())
+        capped = sum(size(base / f"memory/{n}.md") for n in small)
+        capped += head_tail(base / "memory/decisions.md", 0, 400)
+        capped += head_tail(base / "memory/inspiration_intake.md", 60, 120)
+        capped += head_tail(base / "scratchpads/SESSION_LOG.md", 80, 0)
+        uncapped = sum(size(f) for f in sorted((base / "memory").glob("*.md")))
+        uncapped += size(base / "scratchpads/SESSION_LOG.md")
+        pct = (capped / uncapped * 100) if uncapped else 0.0
+        sec.findings.append(Finding(
+            WARN if pct >= 10 else INFO,
+            f"SessionStart hook reads {capped:,} B of a possible {uncapped:,} B ({pct:.1f} %)",
+            [f"{uncapped - capped:>9,} B  kept off the bill by the two caps",
+             f"{size(base / 'memory/LEDGER_COUNTS.md'):>9,} B  memory/LEDGER_COUNTS.md — "
+             f"in memory/ and deliberately NOT in the hook's cat list"],
+            "The two caps have stopped paying. Re-read `.claude/rules/context.md` §1 before widening "
+            "any slice — this is the number that argues for them."
+            if pct >= 10 else
+            "Single digits is the durable claim `.claude/rules/context.md` §1 makes; the literal "
+            "bytes are a date, so they live here and not in an always-loaded file (#764)."))
 
     # --- a routing line that does not resolve is worse than no routing line ---------------------
     #
@@ -1778,14 +1770,30 @@ def section_d() -> Section:
     # live pointer and never an obituary.
     routable = re.compile(r"`((?:memory|scripts|\.claude|docs)/[^`\s]+|[A-Za-z][\w/]*/CLAUDE\.md)`")
     missing: dict[str, list[str]] = {}
+    # ⚠️ 2026-11-05: `memory/` lives in the private working repository under the same path, and
+    # the map says a pointer there resolves there. It is checked there when that checkout sits
+    # beside this one; otherwise it is COUNTED as unchecked, never passed as resolved.
+    private = ROOT.parent / "echoelmusic-intern"
+    unchecked = 0
     for name, text in laws:
         for i, line in enumerate(text.splitlines()):
             for hit in routable.findall(line):
                 target = hit.rstrip(".,;:)")
                 if "*" in target or "…" in target:
                     continue
+                if target.startswith("memory/"):
+                    if not private.is_dir():
+                        unchecked += 1
+                    elif not (private / target).exists():
+                        missing.setdefault(f"echoelmusic-intern/{target}", []).append(f"{name}:{i + 1}")
+                    continue
                 if not (ROOT / target).exists():
                     missing.setdefault(target, []).append(f"{name}:{i + 1}")
+    if unchecked:
+        sec.findings.append(Finding(
+            INFO, f"{unchecked} pointer(s) into the private memory/ not checked",
+            ["the private working repository (../echoelmusic-intern) is not attached"],
+            "Attach it beside this checkout to resolve them; they are not counted as resolved."))
     # ⛔ THE FIRST VERSION REPORTED `.claude/settings.local.json` THREE TIMES, and that file is
     # SUPPOSED to be absent here: it is gitignored (it holds the GitHub token) and CLAUDE.md's own
     # text says "If token missing: ask the user to create it". Flagging a deliberately-absent file

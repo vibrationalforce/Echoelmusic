@@ -53,7 +53,7 @@ was missing from the list, so the one `AUAudioUnit` render block in the repo wen
 was deleted with the AUv3 removal, #121 Slice 1 (`5ef8856`), and REVIVED by #1385 (2026-09-20). `Sources/EchoelVoice/**` does not exist either,
 but NOT for that reason — it has no source history in this checkout at all; it was a
 Tuist-declared target that went with Tuist, separately and earlier, see
-`docs/dev/APP_STORE_CONNECT.md`. Either way an agent scanning them reported "clean" for nothing.
+`docs/dev/APP_STORE_CONNECT.md` in the private repo `echoelmusic-intern`. Either way an agent scanning them reported "clean" for nothing.
 Note this is a SHALLOW clone, so "was never here" can only ever mean "not in the history this
 checkout has".)
 
