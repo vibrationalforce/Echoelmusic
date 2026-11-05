@@ -240,4 +240,23 @@ final class ModulationTests: XCTestCase {
         }
         XCTAssertEqual(try Modulation.validate(Array(routes.dropLast()), targets: [pan]).count, Modulation.routeLimit)
     }
+
+    /// `lfo.1` is a sine over each bar, read from the song position: 0.5 on the bar line, 1 a
+    /// quarter of the way through, 0 at three quarters; a 3/4 bar is shorter, and so is its period.
+    func testTheSongLFOIsASineOverEachBarOfTheMeter() throws {
+        let threeFour = TimeSignatureChange(tick: 3_840, signature: TimeSignature(3, 4))
+        let meter = MeterMap(signature: .common, changes: [threeFour])
+        func lfo(_ tick: Double) throws -> Double { try XCTUnwrap(Modulation.songLFO(at: tick, meter: meter)) }
+        XCTAssertEqual(try lfo(0), 0.5, accuracy: 1e-12)
+        XCTAssertEqual(try lfo(960), 1, accuracy: 1e-12, "a quarter of a 4/4 bar")
+        XCTAssertEqual(try lfo(1_920), 0.5, accuracy: 1e-12)
+        XCTAssertEqual(try lfo(2_880), 0, accuracy: 1e-12)
+        XCTAssertEqual(try lfo(3_840), 0.5, accuracy: 1e-12, "the next bar line")
+        XCTAssertEqual(try lfo(3_840 + 720), 1, accuracy: 1e-12, "a quarter of the 3/4 bar")
+        XCTAssertEqual(try lfo(3_840 + 2_880), 0.5, accuracy: 1e-12, "its bar line")
+        XCTAssertEqual(try lfo(480.5), try lfo(480.5), "a position between ticks reads the same every time")
+        XCTAssertNil(Modulation.songLFO(at: .nan, meter: meter))
+        XCTAssertNil(Modulation.songLFO(at: .infinity, meter: meter))
+        XCTAssertNil(Modulation.songLFO(at: 1e300, meter: meter))
+    }
 }

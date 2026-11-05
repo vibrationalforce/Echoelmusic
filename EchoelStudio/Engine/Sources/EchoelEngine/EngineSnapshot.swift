@@ -138,15 +138,15 @@ public struct EngineSnapshot: Sendable {
             var track = strip
             if let value = volume?.value(atPosition: position) { track.volumeDB = value }
             if let value = pan?.value(atPosition: position) { track.pan = value }
-            if let volumeRoutes { track.volumeDB = volumeRoutes.value(track.volumeDB) }
-            if let panRoutes { track.pan = panRoutes.value(track.pan) }
+            if let volumeRoutes { track.volumeDB = volumeRoutes.value(track.volumeDB, at: position) }
+            if let panRoutes { track.pan = panRoutes.value(track.pan, at: position) }
             var bus = MixerStrip()
             if let master {
                 bus = master.strip
                 if let value = master.volume?.value(atPosition: position) { bus.volumeDB = value }
                 if let value = master.pan?.value(atPosition: position) { bus.pan = value }
-                if let routes = master.volumeRoutes { bus.volumeDB = routes.value(bus.volumeDB) }
-                if let routes = master.panRoutes { bus.pan = routes.value(bus.pan) }
+                if let routes = master.volumeRoutes { bus.volumeDB = routes.value(bus.volumeDB, at: position) }
+                if let routes = master.panRoutes { bus.pan = routes.value(bus.pan, at: position) }
             }
             return EngineSnapshot.gains(track: track, master: bus)
         }
@@ -163,7 +163,7 @@ public struct EngineSnapshot: Sendable {
         public func gains(at position: Double) -> (Float, Float) {
             let (left, right) = mix.gains(at: position)
             let base = level?.value(atPosition: position) ?? levelDB
-            let send = EngineSnapshot.linear(levelRoutes?.value(base) ?? base)
+            let send = EngineSnapshot.linear(levelRoutes?.value(base, at: position) ?? base)
             return (left * send, right * send)
         }
     }
@@ -256,6 +256,9 @@ public struct EngineSnapshot: Sendable {
     public let automatesPatches: Bool
     /// Some lane's built-in instrument has a value that routes move (W2).
     public let modulatesPatches: Bool
+    /// One of those routes reads the song position (`lfo.1`), so the value moves while the song
+    /// plays and is set again on the automation grid, live and in an export alike.
+    public let clocksPatches: Bool
     /// The song's lanes on parameters of loaded, playing units. A lane on a unit that is not
     /// loaded, bypassed, or does not have that parameter (another version) does nothing.
     public let unitAutomation: [UnitAutomation]
@@ -309,7 +312,8 @@ public struct EngineSnapshot: Sendable {
         masterMix.panRoutes = MixModulation(.masterPan, in: project, inputs: modulation)
         let masterMoves = masterMix.moves
         /// Nil when nothing moves the track's gains, so the render thread keeps the fixed ones.
-        /// A route moves them as a lane does; an offline render passes no inputs, so it never does.
+        /// A route moves them as a lane does; an offline render passes no inputs, so only a route on
+        /// the song clock (`lfo.1`) does there.
         let moving = { (track: Track, throughMaster: Bool) -> MovingMix? in
             let volume = automation[.volume(track.id)], pan = automation[.pan(track.id)]
             let volumeRoutes = MixModulation(.volume(track.id), in: project, inputs: modulation)
@@ -420,6 +424,7 @@ public struct EngineSnapshot: Sendable {
         lanes = compiled
         automatesPatches = compiled.contains { !$0.patchLanes.isEmpty }
         modulatesPatches = compiled.contains { !$0.patchRoutes.isEmpty }
+        clocksPatches = compiled.contains { $0.patchRoutes.contains { $0.routes.followsSongClock } }
         unitAutomation = project.automation.compactMap { lane -> UnitAutomation? in
             if lane.target.owner == .master, let parameter = lane.target.key.pluginParameter,
                case .insert(let insert) = parameter.unit {

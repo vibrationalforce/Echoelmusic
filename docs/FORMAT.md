@@ -350,7 +350,10 @@ a route with an unknown source, curve or polarity, or on a parameter this build 
 kept inactive ("Reading newer songs"); a route that lacks a key or breaks a range refuses the song. Each source is normalized to 0 … 1; a parameter's
 value is its stored or automated value plus each enabled route's `depth × curve(source)`, in the
 order of the route ids, clamped to the parameter's range once, after the last route. A source
-that is not measured at the moment adds nothing. A song stores the routes, never a measured
+that is not measured at the moment adds nothing. `lfo.1` is measured from the song position, not
+from the world: a sine over each bar of the song's meter at that position, 0.5 on the bar line,
+1 a quarter of the way through the bar, 0 at three quarters; while the song stands it adds nothing
+to an instrument value, and a mixer value keeps the reading at the position where the song stands. A song stores the routes, never a measured
 value: what a body did during a take is not in the file.
 
 ## Reading newer songs
