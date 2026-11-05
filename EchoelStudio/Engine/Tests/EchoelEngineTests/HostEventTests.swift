@@ -1,6 +1,7 @@
 import EchoelCore
 import EchoelDSP
 @testable import EchoelKernels
+import Foundation
 import XCTest
 
 /// What a host's render events do to an instrument kernel (audit 2026-11-04): a two-byte MIDI
@@ -89,5 +90,80 @@ final class HostEventTests: XCTestCase {
         kernel.setParameter(cutoff, 500)
         kernel.render(frames: 512, left: left, right: right, gain: 1)
         XCTAssertEqual(kernel.parameter(cutoff), 500, "the newer value stands")
+    }
+
+    /// The plugin's view sets exactly the value a ramp is passing through — the musician stops
+    /// the knob where it shows. That is a newer set and ends the ramp; the ramp did not overwrite it.
+    func testSettingTheValueARampPassesThroughEndsTheRamp() {
+        let cutoff = SynthKernel.parameters.firstIndex { $0.identifier == "synth_cutoff" } ?? -1
+        let kernel = SynthKernel(sampleRate: 48_000, maximumFrames: 512)
+        let left = UnsafeMutablePointer<Float>.allocate(capacity: 512)
+        let right = UnsafeMutablePointer<Float>.allocate(capacity: 512)
+        defer {
+            left.deallocate()
+            right.deallocate()
+        }
+        kernel.rampParameter(cutoff, to: 18_000, frames: 48_000)
+        kernel.render(frames: 512, left: left, right: right, gain: 1)
+        let shown = kernel.parameter(cutoff)
+        kernel.setParameter(cutoff, shown)
+        for _ in 0..<4 { kernel.render(frames: 512, left: left, right: right, gain: 1) }
+        XCTAssertEqual(kernel.parameter(cutoff), shown, "the set stands, the ramp is over")
+    }
+
+    /// A ramp holds its goal once it is there; it does not fall back to the value set before it.
+    func testARampHoldsItsGoalAndASetLaterStillWins() {
+        let cutoff = SynthKernel.parameters.firstIndex { $0.identifier == "synth_cutoff" } ?? -1
+        let kernel = SynthKernel(sampleRate: 48_000, maximumFrames: 512)
+        let left = UnsafeMutablePointer<Float>.allocate(capacity: 512)
+        let right = UnsafeMutablePointer<Float>.allocate(capacity: 512)
+        defer {
+            left.deallocate()
+            right.deallocate()
+        }
+        kernel.setParameter(cutoff, 1_000)
+        kernel.rampParameter(cutoff, to: 4_000, frames: 1_024)
+        for _ in 0..<4 { kernel.render(frames: 512, left: left, right: right, gain: 1) }
+        XCTAssertEqual(kernel.parameter(cutoff), 4_000)
+        kernel.render(frames: 512, left: left, right: right, gain: 1)
+        XCTAssertEqual(kernel.parameter(cutoff), 4_000, "held")
+        kernel.setParameter(cutoff, 1_000)
+        XCTAssertEqual(kernel.parameter(cutoff), 1_000, "a set reads back at once")
+        kernel.render(frames: 512, left: left, right: right, gain: 1)
+        XCTAssertEqual(kernel.parameter(cutoff), 1_000)
+    }
+
+    /// Another thread sets a value while the render thread runs a ramp the host started before
+    /// it. Whatever the interleaving, the set is the value once the render thread has run again.
+    func testASetFromAnotherThreadIsNeverOverwrittenByARamp() {
+        let cutoff = SynthKernel.parameters.firstIndex { $0.identifier == "synth_cutoff" } ?? -1
+        let kernel = SynthKernel(sampleRate: 48_000, maximumFrames: 64)
+        let left = UnsafeMutablePointer<Float>.allocate(capacity: 64)
+        let right = UnsafeMutablePointer<Float>.allocate(capacity: 64)
+        defer {
+            left.deallocate()
+            right.deallocate()
+        }
+        let rounds = 200
+        let go = DispatchSemaphore(value: 0)
+        let done = DispatchSemaphore(value: 0)
+        DispatchQueue.global().async {
+            for _ in 0..<rounds {
+                go.wait()
+                kernel.setParameter(cutoff, 500)
+                done.signal()
+            }
+        }
+        kernel.setParameter(cutoff, 500)
+        for round in 0..<rounds {
+            kernel.rampParameter(cutoff, to: 18_000, frames: 48_000)
+            go.signal()
+            while done.wait(timeout: .now()) != .success {
+                kernel.render(frames: 64, left: left, right: right, gain: 1)
+            }
+            kernel.render(frames: 64, left: left, right: right, gain: 1)
+            XCTAssertEqual(kernel.parameter(cutoff), 500, "round \(round)")
+            if kernel.parameter(cutoff) != 500 { break }
+        }
     }
 }

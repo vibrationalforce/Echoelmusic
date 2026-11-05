@@ -7,14 +7,27 @@ import Synchronization
 /// MIDI bytes in, stereo out. Shared by the Echoel Synth Audio Unit and its tests.
 ///
 /// Threading: `setParameter` may be called from any thread (host automation, the plugin's view);
-/// it writes one float and raises a version the render thread compares. Everything else is the
-/// render thread's. Nothing allocates after `init`.
+/// it stores one word — the value's bits and a count of sets — and raises a version the render
+/// thread compares. Only `setParameter` writes that word. The render thread plays its own copy
+/// (`playing`), runs a host's ramp on that copy, and tells other threads where it is through a
+/// second word only it writes (`reported`), so no write of one side can overwrite the other's.
+/// Nothing allocates after `init`.
 public final class SynthKernel: @unchecked Sendable {
     /// The patch parameters by index; `parameters` (InstrumentKernel) publishes the same list.
     static let patchParameters = SynthParameter.all
     public let sampleRate: Double
 
-    private let values: UnsafeMutablePointer<Float>
+    /// Per address, the value set last: its bits in the low half, the count of sets in the high
+    /// half — so setting the value a ramp passes through is still a new set. Written only by
+    /// `setParameter`.
+    private let values: UnsafeMutablePointer<Atomic<UInt64>>
+    /// Per address, the render thread's value and the set it started from (same packing).
+    /// Written only by the render thread; `parameter` reads it while it belongs to the newest set.
+    private let reported: UnsafeMutablePointer<Atomic<UInt64>>
+    /// Render thread: the values the voices play, and the word of `values` each was taken from.
+    private let playing: UnsafeMutablePointer<Float>
+    private let taken: UnsafeMutablePointer<UInt64>
+    private var playingMoved = true
     private let version = Atomic<UInt64>(0)
     private var appliedVersion: UInt64 = .max
     private var synth: PolySynth
@@ -27,13 +40,12 @@ public final class SynthKernel: @unchecked Sendable {
     private let base: SynthPatch
     private let count: Int
     private let ranges: [ClosedRange<Float>]
-    /// A host's parameter ramp, per address, run by the render thread (`rampParameter`): where it
-    /// goes, how far each frame moves it, the frames left, and the value it wrote last — a value
-    /// set since from another thread (the plugin's view) is newer than the ramp and ends it.
+    /// A host's parameter ramp, per address, run by the render thread (`rampParameter`) on
+    /// `playing`: where it goes, how far each frame moves it, and the frames left. A value set
+    /// since from another thread (the plugin's view) is newer than the ramp and ends it.
     private let rampTarget: UnsafeMutablePointer<Float>
     private let rampStep: UnsafeMutablePointer<Float>
     private let rampFrames: UnsafeMutablePointer<Int>
-    private let rampWritten: UnsafeMutablePointer<Float>
     /// Whether an address may glide: a choice (engine, waveform, filter) takes its value at once.
     private let ramps: UnsafeMutablePointer<Bool>
     private var activeRamps = 0
@@ -51,7 +63,17 @@ public final class SynthKernel: @unchecked Sendable {
         for (i, parameter) in Self.patchParameters.enumerated() { (fields + i).initialize(to: PatchField(parameter.key)) }
         ranges = Self.patchParameters.map { Float($0.range.lowerBound)...Float($0.range.upperBound) }
         values = .allocate(capacity: Self.patchParameters.count)
-        for (i, parameter) in Self.patchParameters.enumerated() { values[i] = Float(parameter.defaultValue) }
+        reported = .allocate(capacity: Self.patchParameters.count)
+        playing = .allocate(capacity: Self.patchParameters.count)
+        taken = .allocate(capacity: Self.patchParameters.count)
+        for (i, parameter) in Self.patchParameters.enumerated() {
+            let value = Float(parameter.defaultValue)
+            let word = Self.word(count: 0, value)
+            (values + i).initialize(to: Atomic(word))
+            (reported + i).initialize(to: Atomic(word))
+            (playing + i).initialize(to: value)
+            (taken + i).initialize(to: word)
+        }
         synth = PolySynth(sampleRate: Float(rate))
         mono = .allocate(capacity: self.maximumFrames)
         mono.initialize(repeating: 0, count: self.maximumFrames)
@@ -61,21 +83,23 @@ public final class SynthKernel: @unchecked Sendable {
         rampStep.initialize(repeating: 0, count: count)
         rampFrames = .allocate(capacity: count)
         rampFrames.initialize(repeating: 0, count: count)
-        rampWritten = .allocate(capacity: count)
-        rampWritten.initialize(repeating: 0, count: count)
         ramps = .allocate(capacity: count)
         for (i, parameter) in Self.patchParameters.enumerated() { ramps[i] = parameter.taper != .stepped }
     }
 
     deinit {
+        values.deinitialize(count: count)
         values.deallocate()
+        reported.deinitialize(count: count)
+        reported.deallocate()
+        playing.deallocate()
+        taken.deallocate()
         fields.deinitialize(count: count)
         fields.deallocate()
         mono.deallocate()
         rampTarget.deallocate()
         rampStep.deallocate()
         rampFrames.deallocate()
-        rampWritten.deallocate()
         ramps.deallocate()
     }
 
@@ -83,12 +107,29 @@ public final class SynthKernel: @unchecked Sendable {
     public func setParameter(_ address: Int, _ value: Float) {
         guard address >= 0, address < count, value.isFinite else { return }
         let range = ranges[address]
-        values[address] = Swift.min(Swift.max(value, range.lowerBound), range.upperBound)
+        let clamped = Swift.min(Swift.max(value, range.lowerBound), range.upperBound)
+        // Two setters racing may count the same set; one of their values wins, as with any
+        // last write. The render thread never writes this word.
+        let sets = values[address].load(ordering: .relaxed) >> 32
+        values[address].store(Self.word(count: sets &+ 1, clamped), ordering: .relaxed)
         version.add(1, ordering: .releasing)
     }
 
+    /// Any thread: the value set last, or — once the render thread has taken that set — where it
+    /// plays it, a host's ramp included.
     public func parameter(_ address: Int) -> Float {
-        address >= 0 && address < count ? values[address] : 0
+        guard address >= 0, address < count else { return 0 }
+        let set = values[address].load(ordering: .relaxed)
+        let rendered = reported[address].load(ordering: .relaxed)
+        return Self.value(rendered >> 32 == set >> 32 ? rendered : set)
+    }
+
+    private static func word(count: UInt64, _ value: Float) -> UInt64 {
+        (count & 0xFFFF_FFFF) << 32 | UInt64(value.bitPattern)
+    }
+
+    private static func value(_ word: UInt64) -> Float {
+        Float(bitPattern: UInt32(truncatingIfNeeded: word))
     }
 
     // MARK: - Render thread
@@ -106,31 +147,31 @@ public final class SynthKernel: @unchecked Sendable {
         }
         let range = ranges[address]
         let goal = Swift.min(Swift.max(value, range.lowerBound), range.upperBound)
+        // A value set before the ramp is where it starts.
+        commitParameters()
         if rampFrames[address] == 0 { activeRamps += 1 }
         rampTarget[address] = goal
-        rampStep[address] = (goal - values[address]) / Float(frames)
+        rampStep[address] = (goal - playing[address]) / Float(frames)
         rampFrames[address] = frames
-        rampWritten[address] = values[address]
     }
 
-    /// Moves every running ramp on by `frames`.
+    /// Moves every running ramp on by `frames`. Only `playing` moves; a set that arrived since
+    /// is taken first and ends its ramp (`commitParameters`).
     private func advanceRamps(by frames: Int) {
-        var moved = false
+        commitParameters()
         for i in 0..<count where rampFrames[i] > 0 {
-            if values[i] != rampWritten[i] {
-                // Set from elsewhere since the ramp began: that value stands.
-                rampFrames[i] = 0
-                activeRamps -= 1
-                continue
-            }
             let step = Swift.min(frames, rampFrames[i])
             rampFrames[i] -= step
-            values[i] = rampFrames[i] == 0 ? rampTarget[i] : values[i] + rampStep[i] * Float(step)
-            rampWritten[i] = values[i]
+            playing[i] = rampFrames[i] == 0 ? rampTarget[i] : playing[i] + rampStep[i] * Float(step)
+            report(i)
             if rampFrames[i] == 0 { activeRamps -= 1 }
-            moved = true
+            playingMoved = true
         }
-        if moved { version.add(1, ordering: .releasing) }
+    }
+
+    /// Render thread: publishes where `address` plays, tagged with the set it started from.
+    private func report(_ address: Int) {
+        reported[address].store(Self.word(count: taken[address] >> 32, playing[address]), ordering: .relaxed)
     }
 
     /// One MIDI 1.0 channel message: note on/off, the pitch wheel, and the controllers the synth
@@ -173,13 +214,26 @@ public final class SynthKernel: @unchecked Sendable {
         }
     }
 
-    /// Render thread. Applies values set since the last call. The patch reaches the synth only
+    /// Render thread. Applies values set since the last call — a set ends a running ramp on its
+    /// address, because it is newer — and the steps a ramp moved. The patch reaches the synth only
     /// when it differs from the one it plays: `setPatch` restarts each voice's control-rate
     /// counter, so re-sending equal values would move the sound by a few samples.
     public func commitParameters() {
         let current = version.load(ordering: .acquiring)
-        guard current != appliedVersion else { return }
-        appliedVersion = current
+        if current != appliedVersion {
+            appliedVersion = current
+            for i in 0..<count {
+                let set = values[i].load(ordering: .relaxed)
+                guard set != taken[i] else { continue }
+                taken[i] = set
+                playing[i] = Self.value(set)
+                if rampFrames[i] > 0 { rampFrames[i] = 0; activeRamps -= 1 }
+                report(i)
+                playingMoved = true
+            }
+        }
+        guard playingMoved else { return }
+        playingMoved = false
         let next = patch()
         if next != synth.patch { synth.setPatch(next) }
     }
@@ -214,7 +268,7 @@ public final class SynthKernel: @unchecked Sendable {
     private func patch() -> SynthPatch {
         var patch = base
         for i in 0..<count {
-            fields[i]?.apply(Double(values[i]), to: &patch)
+            fields[i]?.apply(Double(playing[i]), to: &patch)
         }
         return patch
     }
