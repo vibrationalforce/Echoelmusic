@@ -19,9 +19,11 @@ sein Test IST das Verify; CI-grün ist nur das Gate davor). „Code gepusht" ≠
    Founder-Direktiven des Tages überstimmen die Reihenfolge sofort.
 3. **Slice bauen** (integriert, nicht Ein-Punkt — Founder-Verdikt 07-17), Route-
    Spalte beachten (Reviewer-Agent, Plan-Dokument in `echoelmusic-intern/scratchpads/`, Copy-Gesetz).
-4. **Gates** (Xcode Compile Check + CI/CD) → **jede grüne Runde deployt**
-   (`.deploy/release`-Bump) mit deutscher, founder-lesbarer Release-Note, die den
-   Verify-Weg als Test-Bitte formuliert („öffne X, prüfe Y").
+4. **Gates und Deploy.** Echoel Studio: der Lauf `Echoel Studio` auf genau dem Commit
+   (Conclusion), dann TestFlight nach dem Skill `studio-release` (`EchoelStudio/RELEASE`,
+   genau fünf Prüfungen als Test-Bitten „öffne X, prüfe Y"). Nur wenn die Scheibe
+   `Sources/` oder `Tests/` berührt: zusätzlich Xcode Compile Check und der CI/CD-Schritt
+   `Build for Testing`. `.deploy/release` gehört der eingefrorenen früheren App.
 5. **Board aktualisieren**: Slice-Fortschritt, Verify-Spalte (CI ✓ / Gerät offen /
    Founder ✓ + Build-Nummer), Erledigtes in die ERLEDIGT-Tabelle (nie löschen),
    Blockiertes nach BLOCKIERT mit dem, worauf es wartet.
