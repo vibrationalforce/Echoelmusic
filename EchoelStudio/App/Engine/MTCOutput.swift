@@ -95,7 +95,7 @@ final class MTCOutput {
     }
 
     /// At launch: what was on stays on.
-    func start() {
+    func begin() {
         if isOn { open() }
         apply()
     }

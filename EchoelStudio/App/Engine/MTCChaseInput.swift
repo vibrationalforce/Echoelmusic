@@ -53,7 +53,7 @@ final class MTCChaseInput {
     }
 
     /// At launch: a chase chosen before goes on, nothing is made while none is.
-    func start() {
+    func begin() {
         if chased != nil { open() }
     }
 
