@@ -97,6 +97,7 @@ struct StudioView: View {
             default: break
             }
         }
+        .onDisappear { connections.leave() }
     }
 
     /// Four named areas, so VoiceOver's Containers rotor reaches each in one swipe and says where
