@@ -27,6 +27,8 @@ enum StudioSheet: Identifiable, Hashable {
     case agent
     /// What Echoel is, what this build holds, and what happens to the musician's data.
     case about
+    /// Short chapters on what the app does today, each with the way to its controls (Recovery 8).
+    case learn
     /// A new name for the open song, which its package takes too.
     case renameSong
     /// A new name for a track, a clip or a scene.
