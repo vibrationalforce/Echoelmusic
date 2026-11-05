@@ -358,7 +358,7 @@ public enum LearnGuide {
             id: "safety", title: "Safety",
             summary: "Light, level and what body readings are for.",
             paragraphs: [
-                "Light and the Field never change faster than three times a second (3 Hz). Listen at a moderate level, especially on headphones; a new song starts with the master 6 dB down. Body readings are for self-observation only, never a diagnosis.",
+                "Light and the Field never change faster than three times a second (3 Hz). Listen at a moderate level, especially on headphones; a new song starts with the master 6 dB down, and you raise it on the “Mixer”. Body readings are for self-observation only, never a diagnosis.",
             ],
             paths: [[.mixer]],
             keywords: ["flash", "volume", "hearing", "health", "privacy"]),
