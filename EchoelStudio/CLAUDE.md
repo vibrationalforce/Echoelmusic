@@ -1,9 +1,10 @@
 # EchoelStudio/ — the restart (2026-10-17)
 
-This directory is the new app. **The build plan is `docs/dev/NEUPLANUNG_2026-10-18.md`
-(approved 2026-10-18: no genres, no generated notes, EchoelStudio is ordered rather than
-rewritten, phase P0 before 1.0); product and scope are in `docs/dev/NEUSTART_2026-10-17.md`.
-Read both before any change here. The song format is public: `docs/FORMAT.md`, pinned by
+This directory is the new app. **The build plan (`NEUPLANUNG_2026-10-18.md`, approved
+2026-10-18: no genres, no generated notes, EchoelStudio is ordered rather than rewritten,
+phase P0 before 1.0) and the product scope (`NEUSTART_2026-10-17.md`) live under `docs/dev/` in
+the private repo `echoelmusic-intern` since 2026-11-05. Read both there before any change here.
+The song format is public: `docs/FORMAT.md`, pinned by
 `Core/Tests/EchoelCoreTests/FormatGoldenTests.swift` — a change that breaks it is a format
 version bump with a migration, never an edit to the golden files.** The root `CLAUDE.md` is
 the map of the whole repo, and its universal laws apply here too. The legacy bio-instrument
