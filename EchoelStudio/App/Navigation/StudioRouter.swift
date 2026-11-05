@@ -55,6 +55,10 @@ enum StudioSheet: Identifiable, Hashable {
     case convertToMIDI(TrackID, RegionID)
     /// One audio region's pitch correction and granular texture, baked offline (W3).
     case regionBake(TrackID, RegionID)
+    /// The speech in one audio region or video part as subtitles, recognized on the device (SUBS).
+    case transcribe(TrackID, RegionID)
+    /// The song's subtitles: their text and times, to edit or delete (SUBS).
+    case subtitles
     /// The sample and media browser: the song's, the library's and imported files, to hear and place (Recovery 7).
     case browser
 

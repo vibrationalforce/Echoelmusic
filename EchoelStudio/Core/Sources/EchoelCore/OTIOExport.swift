@@ -176,7 +176,7 @@ public enum OTIOExport {
                 ("marked_range", range(start: frame, duration: 0, rate: r)),
                 ("comment", .string("")),
             ])
-        }
+        } + subtitleMarkers(for: project, rate: r)
         let timeline: JSON = .object([
             ("OTIO_SCHEMA", .string("Timeline.1")),
             ("metadata", .object([])),
@@ -197,6 +197,26 @@ public enum OTIOExport {
         var out = ""
         timeline.write(into: &out, indent: 0)
         return out + "\n"
+    }
+
+    /// The song's subtitles as `Marker.2`s after its markers (SUBS): each spans its cue, named by
+    /// its text on one line and carrying the text in `comment`, in cyan — the colour an editor
+    /// tells apart from the yellow locators.
+    private static func subtitleMarkers(for project: Project, rate: Double) -> [JSON] {
+        let map = project.tempoMap
+        return project.subtitles.compactMap { cue in
+            let start = (map.seconds(at: cue.start) * rate).rounded()
+            let stop = (map.seconds(at: cue.end) * rate).rounded()
+            guard start.isFinite, stop.isFinite, start >= 0, stop < Double(Int32.max) else { return nil }
+            return .object([
+                ("OTIO_SCHEMA", .string("Marker.2")),
+                ("metadata", .object([])),
+                ("name", .string(EDLExport.clean(cue.text, fallback: "Subtitle"))),
+                ("color", .string("CYAN")),
+                ("marked_range", range(start: start, duration: Swift.max(0, stop - start), rate: rate)),
+                ("comment", .string(cue.text)),
+            ])
+        }
     }
 
     private static func gap(_ frames: Int, rate: Double) -> JSON {

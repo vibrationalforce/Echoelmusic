@@ -70,6 +70,7 @@ Every audio and video file is a plain file you can take out of `Media/`.
 | `timeSignatureChanges` | `[{tick, numerator, denominator}]` | optional; ticks rising, after 0, each on a bar line (below) |
 | `markers` | `[{tick, name}]` | optional; ticks rising from 0, each once, at most 1 000 (below) |
 | `lighting` | light show | optional; fixtures, cues and where cues start (below) |
+| `subtitles` | `[{id, start, end, text}]` | optional; timed text on the timeline, starts rising, never overlapping, at most 10 000 (below) |
 | `context` | musical context | optional; absent = C, chromatic, 12 equal at 440 Hz, straight |
 | `master` | mixer strip | required |
 | `masterInserts` | `[insert]` | optional; effects after the master fader |
@@ -309,6 +310,18 @@ as before, and an earlier format-4 build opens it and shows no rig.
 How fast the light may change is the player's and is not stored: every light-making channel
 follows its target no faster than three flashes a second allow, so a cut or a GO is slowed, never
 a flash.
+
+**Subtitle:** `{id, start, end, text}` — added inside format 4 (SUBS, 2026-11-05); Echoel writes
+the key only when the song has a subtitle, so a song without one is stored exactly as before, and an
+earlier format-4 build opens it and shows none. `start` and `end` are ticks, `start` < `end`; the
+list is in start order and a cue never starts before the one before it ended. `text` is one line of
+plain text — no line breaks or control characters, single spaces, nothing at either end — that
+breaks into at most two lines of 42 characters: the words are laid in order, each line as full as
+the next word allows, a word longer than a line cut at 42. A cue out of order, overlapping, empty,
+needing a third line or sharing an id refuses the song. How the text was found (Transcribe, speech
+recognized on the device) is not stored. An SRT or WebVTT export writes each cue at its times in
+milliseconds from the song's start, half a millisecond rounding up, broken into those lines; an
+OTIO export writes it as a cyan `Marker.2` spanning the cue, the text in its `comment`.
 
 **Mapping:** `{control: {channel, number}, target}` — `channel` 0 … 15 (shown as 1 … 16),
 `number` 0 … 127, `target` a parameter address. One mapping per control. The controller's travel

@@ -25,6 +25,13 @@ public enum Command: Codable, Equatable, Sendable {
     case moveMarker(from: Tick, to: Tick)
     case removeMarker(at: Tick)
 
+    // Subtitles (SUBS): timed text on the timeline, starts rising, never overlapping.
+    /// New cues, as Transcribe hears them: every cue they overlap goes, they take its place.
+    case placeSubtitles([SubtitleCue])
+    case setSubtitleText(SubtitleID, text: String)
+    case setSubtitleTiming(SubtitleID, start: Tick, end: Tick)
+    case removeSubtitle(SubtitleID)
+
     // Light (CUES): fixtures patched on DMX universes, cues, and where a cue starts.
     case addFixture(PatchedFixture)
     case patchFixture(FixtureID, universe: Int, address: Int)
@@ -357,6 +364,54 @@ extension Command {
             try project.applyLight { try $0.placeCue(id, at: tick) }
         case .removeCuePlacement(let tick):
             try project.applyLight { try $0.removeCuePlacement(at: tick) }
+
+        case .placeSubtitles(let cues):
+            guard !cues.isEmpty else {
+                throw CommandError.invalidValue(parameter: "cues", reason: "must not be empty")
+            }
+            try project.applySubtitles { list in
+                for cue in cues {
+                    guard Subtitles.isValidText(cue.text) else {
+                        throw CommandError.invalidValue(parameter: "text",
+                                                        reason: "empty, with line breaks, or longer than two lines of \(Subtitles.maximumLineLength) characters")
+                    }
+                }
+                list.removeAll { old in
+                    cues.contains { $0.id == old.id || ($0.start < old.end && old.start < $0.end) }
+                }
+                list.append(contentsOf: cues)
+            }
+        case let .setSubtitleText(id, text):
+            let clean = Subtitles.normalized(text)
+            guard Subtitles.isValidText(clean) else {
+                throw CommandError.invalidValue(parameter: "text",
+                                                reason: "empty or longer than two lines of \(Subtitles.maximumLineLength) characters")
+            }
+            try project.applySubtitles { list in
+                guard let index = list.firstIndex(where: { $0.id == id }) else {
+                    throw CommandError.invalidValue(parameter: "cue", reason: "no subtitle \(id)")
+                }
+                list[index].text = clean
+            }
+        case let .setSubtitleTiming(id, start, end):
+            guard start >= 0, start < end, end <= MusicalTime.maximumTick else {
+                throw CommandError.invalidValue(parameter: "start",
+                                                reason: "start before end, within 0…\(MusicalTime.maximumTick) ticks")
+            }
+            try project.applySubtitles { list in
+                guard let index = list.firstIndex(where: { $0.id == id }) else {
+                    throw CommandError.invalidValue(parameter: "cue", reason: "no subtitle \(id)")
+                }
+                list[index].start = start
+                list[index].end = end
+            }
+        case .removeSubtitle(let id):
+            try project.applySubtitles { list in
+                guard list.contains(where: { $0.id == id }) else {
+                    throw CommandError.invalidValue(parameter: "cue", reason: "no subtitle \(id)")
+                }
+                list.removeAll { $0.id == id }
+            }
 
         case let .addMarker(tick, name):
             try Self.validateMarkerTick(tick)

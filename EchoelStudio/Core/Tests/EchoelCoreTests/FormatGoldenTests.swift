@@ -651,6 +651,26 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with subtitles (SUBS, 2026-11-05): an optional song field added inside format 4,
+    /// so an earlier format-4 build opens the file and shows none.
+    private let formatFourSubtitles = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Spoken",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "subtitles": [
+        { "id": "5B700000-0000-4000-8000-000000000001", "start": 0, "end": 2880, "text": "Hello and welcome" },
+        { "id": "5B700000-0000-4000-8000-000000000002", "start": 3840, "end": 7680,
+          "text": "The quick brown fox jumps over the lazy dog" }
+      ],
+      "scenes": [],
+      "tracks": [],
+      "modRoutes": []
+    }
+    """.utf8)
+
     /// Format 4 with a take folder (Recovery 4, 2026-11-04): an optional track field added inside
     /// format 4, so an earlier format-4 build opens the file and plays both takes as plain regions.
     private let formatFourTakes = Data("""
@@ -726,7 +746,7 @@ final class FormatGoldenTests: XCTestCase {
     func testEveryGoldenFileSurvivesARoundTrip() throws {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
                      formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes, formatFourLighting,
-                     formatFourTexture, formatFourBake, formatFourMotion, formatFourGrade] {
+                     formatFourTexture, formatFourBake, formatFourMotion, formatFourGrade, formatFourSubtitles] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -1221,6 +1241,46 @@ final class FormatGoldenTests: XCTestCase {
                            ("\"cue\": \"C0E00000-0000-4000-8000-000000000002\"", "\"cue\": \"C0E00000-0000-4000-8000-000000000009\""),
                            ("\"fixture\": \"F1C70000-0000-4000-8000-000000000001\"", "\"fixture\": \"F1C70000-0000-4000-8000-000000000009\""),
                            ("\"fade\": 2", "\"fade\": -1"), ("\"universe\": 2", "\"universe\": 65")] {
+            let broken = text.replacingOccurrences(of: from, with: to)
+            XCTAssertNotEqual(broken, text, "the replacement must land")
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), "\(to)")
+        }
+    }
+
+    func testASongOpensWithItsSubtitlesAndAnOlderOneWithNone() throws {
+        let project = try ProjectCodec.decode(formatFourSubtitles)
+        XCTAssertEqual(project.subtitles.map(\.start), [0, 3_840])
+        XCTAssertEqual(project.subtitles.map(\.end), [2_880, 7_680])
+        XCTAssertEqual(project.subtitles.map(\.text), ["Hello and welcome", "The quick brown fox jumps over the lazy dog"])
+        XCTAssertEqual(Subtitles.srt(for: project), """
+        1
+        00:00:00,000 --> 00:00:01,500
+        Hello and welcome
+
+        2
+        00:00:02,000 --> 00:00:04,000
+        The quick brown fox jumps over the lazy
+        dog
+
+
+        """)
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let stored = try XCTUnwrap(root["subtitles"] as? [[String: Any]])
+        XCTAssertEqual(stored.count, 2)
+        XCTAssertEqual(Set(stored[0].keys), ["id", "start", "end", "text"])
+        for data in [earliest, current, formatTwo, formatTwoMedia, formatThree, formatFour, formatFourMarkers, formatFourLighting] {
+            let older = try ProjectCodec.decode(data)
+            XCTAssertTrue(older.subtitles.isEmpty, "an older song has no subtitles")
+            let written = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(older)) as? [String: Any])
+            XCTAssertNil(written["subtitles"], "a song without subtitles writes no key")
+        }
+        // Cues that overlap, end before they start, carry an empty text, a line break or three
+        // lines, or share an id refuse the song.
+        let text = String(decoding: formatFourSubtitles, as: UTF8.self)
+        for (from, to) in [("\"start\": 3840", "\"start\": 2000"), ("\"end\": 2880", "\"end\": 0"),
+                           ("\"Hello and welcome\"", "\"  \""), ("\"Hello and welcome\"", "\"Hello\\nwelcome\""),
+                           ("\"Hello and welcome\"", "\"" + Array(repeating: "word", count: 20).joined(separator: " ") + "\""),
+                           ("000000000002", "000000000001")] {
             let broken = text.replacingOccurrences(of: from, with: to)
             XCTAssertNotEqual(broken, text, "the replacement must land")
             XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), "\(to)")

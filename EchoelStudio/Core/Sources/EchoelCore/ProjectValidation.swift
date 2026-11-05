@@ -43,6 +43,7 @@ extension Project {
         try Self.validateMeter(signature: timeSignature, changes: timeSignatureChanges)
         try Self.validateMarkers(markers, nameLimit: 2 * Names.maximumLength)
         try lighting.validate()
+        try Subtitles.validate(subtitles)
         try Self.validate(master, name: "master")
         try Self.validateName(name, "name")
         var sceneIDs = Set<SceneID>()

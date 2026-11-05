@@ -41,6 +41,14 @@ public struct Project: Codable, Equatable, Sendable {
     }
     /// Absent — nil — while the song has no rig and no cue, so it is stored exactly as before.
     private var storedLighting: Lighting?
+    /// Subtitles on the timeline, starts rising, never overlapping (SUBS, optional inside format 4).
+    /// Exported as SRT, WebVTT and OTIO markers.
+    public var subtitles: [SubtitleCue] {
+        get { storedSubtitles ?? [] }
+        set { storedSubtitles = newValue.isEmpty ? nil : newValue }
+    }
+    /// Absent — nil — while there are none, so a song without subtitles is stored exactly as before.
+    private var storedSubtitles: [SubtitleCue]?
     /// Key, scale, tone system, concert pitch and swing — the frame the musician sets.
     public var context: MusicalContext
     public var tracks: [Track]
@@ -100,6 +108,7 @@ public struct Project: Codable, Equatable, Sendable {
         case storedSignatureChanges = "timeSignatureChanges"
         case storedMarkers = "markers"
         case storedLighting = "lighting"
+        case storedSubtitles = "subtitles"
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -121,6 +130,8 @@ public struct Project: Codable, Equatable, Sendable {
         storedMarkers = markers.isEmpty ? nil : markers
         let lighting = try c.decodeIfPresent(Lighting.self, forKey: .storedLighting) ?? Lighting()
         storedLighting = lighting.isEmpty ? nil : lighting
+        let subtitles = try c.decodeIfPresent([SubtitleCue].self, forKey: .storedSubtitles) ?? []
+        storedSubtitles = subtitles.isEmpty ? nil : subtitles
         tracks = try c.decode([Track].self, forKey: .tracks)
         scenes = try c.decode([Scene].self, forKey: .scenes)
         master = try c.decode(MixerStrip.self, forKey: .master)

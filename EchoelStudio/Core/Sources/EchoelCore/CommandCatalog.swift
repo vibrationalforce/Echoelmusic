@@ -64,6 +64,7 @@ extension Command {
         case addFixture, patchFixture, renameFixture, removeFixture
         case addCue, setCue, removeCue, placeCue, removeCuePlacement
         case makePlacementUnique
+        case placeSubtitles, setSubtitleText, setSubtitleTiming, removeSubtitle
     }
 
     public var kind: Kind {
@@ -169,6 +170,10 @@ extension Command {
         case .removeCue: .removeCue
         case .placeCue: .placeCue
         case .removeCuePlacement: .removeCuePlacement
+        case .placeSubtitles: .placeSubtitles
+        case .setSubtitleText: .setSubtitleText
+        case .setSubtitleTiming: .setSubtitleTiming
+        case .removeSubtitle: .removeSubtitle
         }
     }
 }
@@ -687,6 +692,24 @@ public enum CommandCatalog {
             return CommandSpec(name: "light.cue.unplace", title: "Remove Cue From Timeline",
                                summary: "Removes the cue that starts at a position on the timeline; the cue stays in the list.",
                                parameters: [P("tick", .ticks, "The position in ticks.")])
+        case .placeSubtitles:
+            return CommandSpec(name: "subtitle.place", title: "Add Subtitles",
+                               summary: "Puts subtitles on the timeline, each with its start, end and one or two lines of text; subtitles they overlap are replaced.",
+                               parameters: [P("cues", .string, "The subtitles: id, start and end in ticks, text.")])
+        case .setSubtitleText:
+            return CommandSpec(name: "subtitle.text", title: "Edit Subtitle",
+                               summary: "Gives a subtitle new text: at most two lines of 42 characters.",
+                               parameters: [P("cue", .string, "The subtitle's identifier."), P("text", .string, "The new text.")])
+        case .setSubtitleTiming:
+            return CommandSpec(name: "subtitle.timing", title: "Move Subtitle",
+                               summary: "Sets where a subtitle appears and disappears. Subtitles never overlap.",
+                               parameters: [P("cue", .string, "The subtitle's identifier."),
+                                            P("start", .ticks, "Where it appears, in ticks."),
+                                            P("end", .ticks, "Where it disappears, in ticks, after start.")])
+        case .removeSubtitle:
+            return CommandSpec(name: "subtitle.remove", title: "Delete Subtitle",
+                               summary: "Removes a subtitle from the timeline.",
+                               parameters: [P("cue", .string, "The subtitle's identifier.")])
         }
     }
 }

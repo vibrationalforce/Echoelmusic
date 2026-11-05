@@ -1667,6 +1667,33 @@ final class DocumentController {
         }
     }
 
+    /// The text formats subtitles leave the app in (SUBS).
+    enum SubtitleFormat {
+        case srt, webVTT
+
+        var fileExtension: String { self == .srt ? "srt" : "vtt" }
+    }
+
+    /// Writes the open song's subtitles as an SRT or WebVTT file (`Subtitles`) in a temporary
+    /// folder and returns its URL for the share sheet. The same song always gives the same bytes.
+    func exportSubtitles(_ format: SubtitleFormat) -> URL? {
+        let project = store.project
+        let text = format == .srt ? Subtitles.srt(for: project) : Subtitles.vtt(for: project)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        let url = folder.appendingPathComponent(ProjectLibrary.safeFileName(for: openSongName))
+            .appendingPathExtension(format.fileExtension)
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try Data(text.utf8).write(to: url, options: .atomic)
+            lastError = nil
+            return url
+        } catch {
+            log.error("subtitle export failed — \(error.localizedDescription, privacy: .private)")
+            lastError = "Could not export the subtitles. Try again."
+            return nil
+        }
+    }
+
     /// The arrangement as a CMX 3600 edit decision list for DaVinci Resolve and any editor
     /// (`EDLExport`, PRO-W1): a folder named after the song with the `.edl` and a copy of every audio
     /// and video file a region plays, each under its name in the song, so the editor relinks the

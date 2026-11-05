@@ -66,6 +66,13 @@ final class StoredNamesTests: XCTestCase {
         } else {
             XCTFail("a colour correction encodes")
         }
+        // A subtitle stores its fields by these names (SUBS).
+        if let data = try? JSONEncoder().encode(SubtitleCue(start: 0, end: 960, text: "Hello")),
+           let stored = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            XCTAssertEqual(Set(stored.keys), ["id", "start", "end", "text"])
+        } else {
+            XCTFail("a subtitle encodes")
+        }
         // A light show stores its fixture profiles, the attributes of a cue's values and a cue's
         // look by name, and every field by these keys (CUES); a new profile or attribute goes at the end.
         XCTAssertEqual(FixtureProfile.allCases.map(\.rawValue), ["dimmer", "rgb", "rgbw", "rgbaUV", "movingHead", "strobe"])

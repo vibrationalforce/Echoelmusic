@@ -158,6 +158,8 @@ struct StudioView: View {
         case let .regionColor(track, region): RegionColorView(trackID: track, regionID: region)
         case let .convertToMIDI(track, region): ConvertToMIDIView(trackID: track, regionID: region)
         case let .regionBake(track, region): RegionBakeView(trackID: track, regionID: region)
+        case let .transcribe(track, region): TranscribeView(trackID: track, regionID: region)
+        case .subtitles: SubtitlesView()
         case .browser: MediaBrowserView()
         case let .importAudio(track, start):
             AudioFilePicker(pick: { url in
@@ -968,6 +970,8 @@ struct SongMenu: View {
                 Button("Browser…", systemImage: "square.grid.2x2") { router.sheet = .browser }
                 // A Standard MIDI File as new instrument tracks; an empty song takes its tempo and meter.
                 Button("Import MIDI…", systemImage: "square.and.arrow.down") { router.sheet = .importMIDI }
+                // The song's subtitles, from Transcribe on a part's hold menu, to edit (SUBS).
+                Button("Subtitles…", systemImage: "captions.bubble") { router.sheet = .subtitles }
                 keyAndScale
                 timeSignatureMenu
             }
@@ -1057,6 +1061,15 @@ struct SongMenu: View {
                     Task { if let url = await documents.exportDAWproject() { router.share(url) } }
                 }
                 .disabled(documents.isExporting || store.project.tracks.isEmpty)
+                // The subtitles as SubRip and WebVTT text files, for an editor or a video platform (SUBS).
+                Button("Export Subtitles (SRT)…", systemImage: "captions.bubble") {
+                    if let url = documents.exportSubtitles(.srt) { router.share(url) }
+                }
+                .disabled(store.project.subtitles.isEmpty)
+                Button("Export Subtitles (WebVTT)…", systemImage: "captions.bubble") {
+                    if let url = documents.exportSubtitles(.webVTT) { router.share(url) }
+                }
+                .disabled(store.project.subtitles.isEmpty)
                 // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
                 Button("Export Video…", systemImage: "film") { router.sheet = .exportVideo }
                     .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)

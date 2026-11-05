@@ -825,6 +825,8 @@ private struct RegionBlock: View {
         if file.kind == .video {
             Button("Color…", systemImage: "camera.filters") { router.sheet = .regionColor(track.id, region.id) }
         }
+        // The speech in the part as subtitles, heard on the device (SUBS).
+        Button("Transcribe…", systemImage: "captions.bubble") { router.sheet = .transcribe(track.id, region.id) }
         Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
         Button("Split at Playhead", systemImage: "scissors") { split() }
         if Arranging.consolidated(region, in: track, project: store.project) != nil {
