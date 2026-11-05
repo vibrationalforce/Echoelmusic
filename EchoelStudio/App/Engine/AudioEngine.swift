@@ -107,6 +107,10 @@ final class AudioEngine {
     let live = LiveRouter()
     /// Sends the transport's MIDI clock to the outputs picked in the song menu.
     let clock = MIDIClockOutput()
+    /// Sends the song as MIDI Time Code, switched on in the song menu (W17-TC).
+    let timecode = MTCOutput()
+    /// Follows an external MIDI Time Code, chosen in the song menu (W17-TC).
+    let timecodeChase = MTCChaseInput()
     /// Sends the live track's notes as an MPE zone to the outputs picked in the song menu (W5b).
     let mpe = MIDIMPEOutput()
     /// Which session clip each track plays, as the render thread reports it.
@@ -307,6 +311,9 @@ final class AudioEngine {
             guard let self, let project = self.project else { return }
             self.publish(project)
         }
+        timecodeChase.engine = self
+        let timecode = self.timecode
+        timecodeChase.start = { timecode.start }
         observeConfiguration()
         // A call or Siri takes the audio away. The transport stops where it is, so the song does
         // not carry on by itself when the call ends; the graph comes back, silent, ready to play.
@@ -869,6 +876,7 @@ final class AudioEngine {
 
             installStreamTap()
             clock.attach(current, sampleRate: sampleRate, latency: session.outputLatency)
+            timecode.attach(current, sampleRate: sampleRate, latency: session.outputLatency)
             mpe.start()
             mpe.attach(current, sampleRate: sampleRate, latency: session.outputLatency, modulation: modulation)
             if reportTask == nil { pollLaunchReports() }
@@ -1160,6 +1168,23 @@ final class AudioEngine {
         guard let core, let project else { return }
         core.seek(toSample: TimeConversion(tempoMap: playing(project).tempoMap, sampleRate: core.sampleRate).sample(at: tick))
     }
+
+    /// Moves the playhead to `seconds` of the song's clock time (MTC chase). Any tempo map: the
+    /// engine's sample counter is clock time.
+    func seek(toSeconds seconds: Double) {
+        guard let core, seconds.isFinite else { return }
+        core.seek(toSample: Int64(Swift.min(Swift.max(seconds, 0), 86_400) * core.sampleRate))
+    }
+
+    /// Where the song is heard at host time `now`, in seconds of clock time; nil while stopped.
+    func heardSeconds(atHostTime now: UInt64) -> Double? {
+        guard let project, let heard = heardPosition(atHostTime: now) else { return nil }
+        let seconds = playing(project).tempoMap.seconds(atPosition: heard.tick)
+        return seconds.isFinite ? seconds : nil
+    }
+
+    /// Seconds from the device playing a frame to the speaker.
+    var outputLatencySeconds: Double { Self.outputLatency }
 
     /// Where the song is heard at host time `now`, in fractional ticks, and how many samples a
     /// tick lasts there. Taken from the position the render thread published with the host time

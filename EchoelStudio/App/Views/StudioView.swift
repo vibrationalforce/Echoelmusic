@@ -1116,6 +1116,8 @@ struct SongMenu: View {
                 // OSC, ADM-OSC, Art-Net and sACN out (wave W4): every one off until switched on there.
                 Button("Connections…", systemImage: "antenna.radiowaves.left.and.right") { router.sheet = .connections }
                 midi2Menu
+                // MIDI Time Code out and chase (W17-TC): off until chosen there.
+                TimecodeMenu()
                 // The body as a source (wave W1): off until chosen here — the chest strap or the rear
                 // camera, one at a time; only then does iOS ask for Bluetooth or the camera. The pulse
                 // shows beside Record while it is measured.
