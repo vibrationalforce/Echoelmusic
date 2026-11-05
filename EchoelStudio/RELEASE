@@ -1,26 +1,22 @@
-11.0.0 — drums and breaks, mix analysis, comping, Siri, Resolve export, the stage display
+11.0.0 — headphone spatial, pitch and texture, loop record, MIDI 2.0, light cues, colour
 
-What is new since 10040. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10045. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Drums: tune, decay and level per piece, kick glide, 808 metal hats, modal toms. "Slice to
-  Pads" cuts a break onto sampler pads and can write its pattern as a MIDI clip.
-- Mix Analysis (Master effects): loudness, true peak, octave bands, tilt, stereo and masking,
-  and a suggested master chain (EQ, Multiband, M/S, Limiter) with the reason for each value;
-  one undo step. Tone profiles Balanced, Warm, Bright, Transparent.
-- Comping: recording over a take folds it into take lanes; tap or swipe picks which take
-  sounds, with short crossfades at each cut.
-- Siri, Shortcuts and Spotlight (App Intents), markers, A/B compare, EDL and OpenTimelineIO
-  export for DaVinci Resolve.
-- The Field on an external display (cable or AirPlay) with corner pin. Apple Health (Apple
-  Watch) as a slow body source, read only, never sent anywhere.
-- Sample and media browser (search, filter, preview with its own level, detected note and
-  root key for the sampler).
-- "Convert to MIDI" on an audio region (one voice). A Texture engine (cellular automaton).
-  DAWproject export and the Field as a transparent layer (ProRes 4444 or HEVC with alpha).
-- Apple Health's write purpose string is declared (the HealthKit entitlement requires it; Echoel
-  never writes to Health). The upload of 30b1753ed failed validation without it.
+- Headphone Spatial Monitor (Song menu, Play and Sync): each track sounds where its pan puts it,
+  for headphones; "Export Spatial Headphone Mix (WAV)". Off by default, the normal export is
+  unchanged.
+- Pitch & Texture on an audio region: pitch correction toward the song's key (up to 2
+  semitones, formants not preserved) and a granular texture, baked to a new file;
+  "Revert to Original".
+- Loop record: with a loop of 2 bars or more, every pass becomes a take in the take lanes.
+- MIDI 2.0 (UMP) in and out, each off by default (Song menu, Connect).
+- Phone Motion as a body source: tilt, turning and movement as modulation sources.
+- Light show (Connections): fixture profiles, patch with conflict check, cue list with fades,
+  GO and Blackout, over Art-Net/sACN, flashes held to 3 per second.
+- Color on a video part: exposure, contrast, saturation, temperature, tint, lift/gamma/gain,
+  "Auto Enhance" and "Match Color".
 
-Previous: 11.0.0 (10040) — wavetable from your own samples, five effects, SRT removed.
+Previous: 11.0.0 (10045) — drums and breaks, mix analysis, comping, Siri, Resolve export.
 Earlier: git history.
 group.com.echoelmusic is in the app's entitlements since a14e1960a (F17, 2026-10-21); the import
 of earlier songs has not been seen on a device yet.
@@ -31,13 +27,11 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Sampler: load a drum break, "Slice to Pads" with the pattern clip. Does the break play in
-   song tempo and follow a tempo change?
-2. Master effects, "Mix Analysis...", Streaming, then Apply while playing. Does it sound closer
-   to the target without clicks?
-3. Record twice over the same bars. Do take lanes appear, and does tapping a lane switch the
-   take without a click?
-4. Connect a projector or AirPlay. Does the Field appear only there, and do the corner pin
-   fields move the corners?
-5. With a song open, say "Hey Siri, play Echoel Studio" (or run Play from Shortcuts). Does
-   the song start, and does "Stop Echoel Studio" stop it?
+1. Headphones on, Headphone Spatial Monitor on, pan a track hard left then hard right while
+   playing. Does it move outside your head, without clicks?
+2. A slightly out-of-tune vocal or lead region, "Pitch & Texture...", strength 100 %, Bake.
+   Does it land on the note without audible artefacts? Does "Revert to Original" bring it back?
+3. A song with 4 bars of content, loop on, record three passes. Do three takes appear, and
+   does the newest one sound?
+4. Phone Motion on, route Tilt Left/Right to a filter. Does the sound follow the phone smoothly?
+5. A video part, "Color...", "Auto Enhance", then export. Does the export look like the preview?
