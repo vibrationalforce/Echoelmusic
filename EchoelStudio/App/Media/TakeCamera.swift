@@ -2,19 +2,30 @@ import AVFoundation
 import EchoelCore
 import Foundation
 import os
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// The rear camera writing a video take (wave W7, C4): one capture session with a movie output and
 /// no microphone — the take's sound is the song's mix, never the room. Its own serial queue does
 /// every session call; the two recording callbacks come back stamped with the take's generation,
 /// so the owner drops one that arrives after a newer take began. Holds the camera only while open.
 /// Each take is turned the way the phone is held when it begins (`TakeOrientation`, read from the
-/// lens's `AVCaptureDevice.RotationCoordinator`) and keeps that angle until it ends.
+/// lens's `AVCaptureDevice.RotationCoordinator`) and keeps that angle until it ends. A call, Siri
+/// or another app taking the camera, and a session error, are reported too (`VideoTakeLifecycle`):
+/// iOS closes a running take's file itself, and the take lands with what was filmed.
 final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecordingDelegate {
     enum Event: Sendable {
         /// The file is being written: the first frame is in.
         case started(generation: UInt64)
         /// The file is closed; `usable` says whether it holds the take.
         case finished(generation: UInt64, url: URL, usable: Bool)
+        /// iOS took the camera (a call, Siri, Control Centre, another app).
+        case interrupted(generation: UInt64)
+        /// iOS gave the camera back.
+        case resumed(generation: UInt64)
+        /// The session stopped with an error.
+        case failed(generation: UInt64)
     }
 
     enum OpenError: Error {
@@ -31,9 +42,16 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
     /// Queue-only: the lens's rotation coordinator and the angle the next take is written at.
     private var rotation: AVCaptureDevice.RotationCoordinator?
     private var orientation = TakeOrientation()
+    /// Queue-only: the observers of the session, while it is open; whether it is meant to run and
+    /// whether iOS holds it.
+    private var observers: [NSObjectProtocol] = []
+    private var shouldRun = false
+    private var interrupted = false
     private let log = Logger(subsystem: "com.echoelmusic.studio", category: "video")
 
-    init(onEvent: @escaping @Sendable (Event) -> Void) {
+    /// `generation` stamps the events of this camera until a take names its own.
+    init(generation: UInt64, onEvent: @escaping @Sendable (Event) -> Void) {
+        self.current = generation
         self.onEvent = onEvent
         super.init()
     }
@@ -44,6 +62,8 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
             queue.async { [self] in
                 do {
                     try configure()
+                    shouldRun = true
+                    installObservers()
                     session.startRunning()
                     continuation.resume()
                 } catch {
@@ -103,9 +123,68 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
     /// Releases the camera. A take still writing is closed first and still reports `finished`.
     func close() {
         queue.async { [self] in
+            shouldRun = false
+            interrupted = false
+            removeObservers()
             if output.isRecording { output.stopRecording() }
             session.stopRunning()
         }
+    }
+
+    // MARK: - Interruptions (as `CameraCapture` observes them)
+
+    /// Queue-only.
+    private func installObservers() {
+        removeObservers()
+        let center = NotificationCenter.default
+        observers.append(center.addObserver(forName: .AVCaptureSessionRuntimeError, object: session, queue: nil) { @Sendable [weak self] note in
+            let reason = (note.userInfo?[AVCaptureSessionErrorKey] as? NSError)?.localizedDescription ?? "unknown error"
+            self?.queue.async { self?.reportFailure(reason) }
+        })
+        observers.append(center.addObserver(forName: .AVCaptureSessionWasInterrupted, object: session, queue: nil) { @Sendable [weak self] _ in
+            self?.queue.async { self?.markInterrupted() }
+        })
+        observers.append(center.addObserver(forName: .AVCaptureSessionInterruptionEnded, object: session, queue: nil) { @Sendable [weak self] _ in
+            self?.queue.async { self?.resumeAfterInterruption() }
+        })
+        #if canImport(UIKit)
+        // A background interruption does not always end with its own notification; the app
+        // becoming active again is the other way to learn that the camera may be ours again.
+        observers.append(center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: nil) { @Sendable [weak self] _ in
+            self?.queue.async { self?.resumeAfterInterruption() }
+        })
+        #endif
+    }
+
+    /// Queue-only.
+    private func removeObservers() {
+        for observer in observers { NotificationCenter.default.removeObserver(observer) }
+        observers.removeAll()
+    }
+
+    /// Queue-only.
+    private func markInterrupted() {
+        guard shouldRun, !interrupted else { return }
+        interrupted = true
+        log.notice("take camera interrupted by iOS — waiting, not restarting")
+        onEvent(.interrupted(generation: lock.withLock { current }))
+    }
+
+    /// Queue-only.
+    private func resumeAfterInterruption() {
+        guard shouldRun, interrupted else { return }
+        interrupted = false
+        if !session.isRunning { session.startRunning() }
+        log.notice("take camera resumed after interruption")
+        onEvent(.resumed(generation: lock.withLock { current }))
+    }
+
+    /// Queue-only. A running take is closed with what it holds; the camera is not restarted.
+    private func reportFailure(_ reason: String) {
+        guard shouldRun else { return }
+        log.warning("take camera runtime error: \(reason, privacy: .public)")
+        if output.isRecording { output.stopRecording() }
+        onEvent(.failed(generation: lock.withLock { current }))
     }
 
     // MARK: - AVCaptureFileOutputRecordingDelegate
