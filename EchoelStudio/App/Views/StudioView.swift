@@ -251,7 +251,8 @@ struct StudioView: View {
 }
 
 /// Play/Stop, tempo, click, undo/redo. Reads only cold state (tempo, flags), never the
-/// playhead, so an open menu elsewhere is never rebuilt by the clock.
+/// playhead, so an open menu elsewhere is never rebuilt by the clock: the song position beside
+/// Play is its own leaf (`PositionReadout`).
 struct TransportBar: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -405,6 +406,8 @@ struct TransportBar: View {
                 .accessibilityLabel("Loop")
                 .accessibilityValue(engine.loopsSong ? (engine.timecodeRuns ? "On, resting while timecode runs" : "On") : "Off")
                 .accessibilityHint("Plays the song from bar 1 again after its last bar.")
+
+            PositionReadout()
         }
     }
 
@@ -630,6 +633,34 @@ struct TransportBar: View {
         }
         if report.truePeak > -1 { text += " — peaks above −1 dBTP may distort when encoded" }
         return text
+    }
+}
+
+/// The song position beside the transport as bar.beat.sixteenth ("2.3.1"), in the bars the
+/// engine counts. Its own leaf (Law 6): it polls 15 times a second while the song plays, and its
+/// timeline is paused while it is stopped, when it reads where the transport rests.
+private struct PositionReadout: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
+
+    var body: some View {
+        // Both read here, outside the timeline: a Stop or a locate redraws the resting position.
+        let playing = engine.isPlaying
+        let resting = Double(engine.restingTick)
+        let project = store.project
+        TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: !playing)) { _ in
+            let position = TimelineGeometry.position(atPosition: playing ? engine.heardTick(in: project) : resting,
+                                                     meter: engine.playedMeterMap(of: project))
+            Text(position.text)
+                .font(Theme.Font.value)
+                .foregroundStyle(Theme.Color.text)
+                .lineLimit(1)
+                .fixedSize()
+                .frame(minWidth: 72, minHeight: Theme.Size.touch, alignment: .leading)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Position")
+                .accessibilityValue(position.spoken)
+        }
     }
 }
 

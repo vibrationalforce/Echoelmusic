@@ -10,7 +10,8 @@ import SwiftUI
 /// A video part shows its hits (CUT): where the picture cuts and where a sound in its own audio
 /// begins. With Snap to Hits a dragged clip or audio region lands on a hit within reach instead of
 /// the bar, and Place at Next Hit moves one to the next hit.
-/// Reads no playhead, so nothing here rebuilds while the song plays.
+/// Its body reads no playhead, so nothing here rebuilds while the song plays: the playhead line
+/// over the lanes is a leaf of its own (`PlayheadLine`), the one view on this page that polls it.
 struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(StudioRouter.self) private var router
@@ -26,7 +27,7 @@ struct ArrangeView: View {
 
     @ScaledMetric(relativeTo: .body) private var nameWidth: CGFloat = 96
     /// Points per bar; the horizontal zoom.
-    private let pointsPerBar: CGFloat = 88
+    private let pointsPerBar = CGFloat(TimelineGeometry.pointsPerBar)
     /// Empty bars drawn past the song's end, so there is always room to place the next clip.
     private static let spareBars = 8
 
@@ -36,7 +37,7 @@ struct ArrangeView: View {
         // The first bar is `pointsPerBar` wide; every later one as wide as its ticks (a 7/8 bar
         // after 4/4 is narrower), so x stays proportional to musical time.
         let meter = project.meterMap
-        let ticksPerPoint = Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar)
+        let ticksPerPoint = TimelineGeometry.ticksPerPoint(meter: meter, pointsPerBar: Double(pointsPerBar))
         let laneWidth = CGFloat(Double(meter.tick(ofBar: Int64(bars))) / ticksPerPoint)
         let files = videoHits?.files ?? [:]
         let hits = Hits.ticks(in: project, files: files)
@@ -100,6 +101,9 @@ struct ArrangeView: View {
                             AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
                                 .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
                         }
+                    }
+                    .overlay(alignment: .topLeading) {
+                        PlayheadLine(ticksPerPoint: ticksPerPoint)
                     }
                 }
             }
@@ -199,6 +203,36 @@ private struct BarRuler: View {
         }
         .frame(width: width, height: Theme.Size.rulerHeight)
         .background(Theme.Color.surface)
+        .accessibilityHidden(true)
+    }
+}
+
+/// The song position over the ruler and the lanes: a 1-pt accent line, no glow. The ONLY reader
+/// of the moving playhead on this page (Law 6): it polls 30 times a second while the song plays,
+/// so only this line redraws; its timeline is paused while the song is stopped, when it stands
+/// where the transport rests (`AudioEngine.restingTick`, which changes only with Stop, a pause or
+/// a locate). Takes no touch and says nothing to VoiceOver — the position readout says where.
+private struct PlayheadLine: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
+    let ticksPerPoint: Double
+
+    var body: some View {
+        // Both read here, outside the timeline: a Stop or a locate redraws the resting line.
+        let playing = engine.isPlaying
+        let resting = Double(engine.restingTick)
+        let project = store.project
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !playing)) { _ in
+            let at = playing ? engine.heardTick(in: project) : resting
+            let x = TimelineGeometry.x(ofPosition: at, ticksPerPoint: ticksPerPoint)
+            Rectangle()
+                .fill(Theme.Color.accent)
+                .frame(width: 1)
+                .frame(maxHeight: .infinity)
+                .offset(x: CGFloat(x))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
 }

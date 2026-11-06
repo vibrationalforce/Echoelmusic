@@ -20,6 +20,10 @@ import os
 final class AudioEngine {
     private(set) var isRunning = false
     private(set) var isPlaying = false
+    /// Where the transport stands while it does not play: set by Stop, a pause and a locate, so
+    /// the playhead line and the position readout show it without polling (Law 6). While playing
+    /// it says nothing; the leaves poll `heardTick(in:)` then.
+    private(set) var restingTick: Tick = 0
     /// The session records and the sink node hears the interface.
     private(set) var isInputOpen = false
     private(set) var lastError: String?
@@ -1246,18 +1250,31 @@ final class AudioEngine {
     func pause() {
         core?.pause()
         isPlaying = false
+        if let project { rest(at: playheadTick(in: project)) }
     }
 
     func seek(toTick tick: Tick) {
         guard let core, let project else { return }
         core.seek(toSample: TimeConversion(tempoMap: playing(project).tempoMap, sampleRate: core.sampleRate).sample(at: tick))
+        if !isPlaying { rest(at: tick) }
+    }
+
+    /// Records where a transport that does not play stands; written only on a change, so the
+    /// leaves that observe it redraw only when it moved.
+    private func rest(at tick: Tick) {
+        let at = Swift.min(Swift.max(0, tick), MusicalTime.maximumTick)
+        if restingTick != at { restingTick = at }
     }
 
     /// Moves the playhead to `seconds` of the song's clock time (MTC chase). Any tempo map: the
     /// engine's sample counter is clock time.
     func seek(toSeconds seconds: Double) {
         guard let core, seconds.isFinite else { return }
-        core.seek(toSample: Int64(Swift.min(Swift.max(seconds, 0), 86_400) * core.sampleRate))
+        let sample = Int64(Swift.min(Swift.max(seconds, 0), 86_400) * core.sampleRate)
+        core.seek(toSample: sample)
+        if !isPlaying, let project {
+            rest(at: TimeConversion(tempoMap: playing(project).tempoMap, sampleRate: core.sampleRate).tick(atSample: sample))
+        }
     }
 
     /// Where the song is heard at host time `now`, in seconds of clock time; nil while stopped.
@@ -1322,6 +1339,7 @@ final class AudioEngine {
     func stop() {
         core?.stop()
         isPlaying = false
+        rest(at: 0)
     }
 
     // MARK: - Session
@@ -1427,6 +1445,18 @@ final class AudioEngine {
     /// The bars as the engine counts them: the song's, or a jam host's while following one.
     func playedMeterMap(of project: Project) -> MeterMap {
         playing(project).meterMap
+    }
+
+    /// Where the song is heard now, in fractional ticks — for a leaf that polls it (the playhead
+    /// line, the position readout), never a view body. While playing it runs on between buffers
+    /// from the render thread's last anchor (`heardPosition`), so a line polled at 30 Hz moves
+    /// smoothly and sits on what the speaker plays, output latency taken off; without an anchor it
+    /// is the render thread's playhead. Stopped, it is where the transport rests. Not clamped:
+    /// `TimelineGeometry` sanitises what it draws (just after Play it can be a little negative).
+    func heardTick(in project: Project) -> Double {
+        guard isPlaying else { return Double(restingTick) }
+        if let heard = heardPosition(atHostTime: mach_absolute_time()) { return heard.tick }
+        return Double(playheadTick(in: project))
     }
 
     /// The playhead as a song position. For actions, never a view body.
