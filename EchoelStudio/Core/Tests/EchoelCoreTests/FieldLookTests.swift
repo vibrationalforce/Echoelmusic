@@ -149,7 +149,8 @@ final class FieldLookTests: XCTestCase {
 
     /// The quarters' mean light of `patterns` mixed by the look motion's mix, frame by frame.
     private func lightSeries(primary: FieldPattern, partner: FieldPattern?, mixes: (Int) -> Double,
-                             seconds: Double = 6, rate: Double = 60) -> [[Double]] {
+                             seconds: Double = 6, rate: Double = 60,
+                             beat: TuningBeat = TuningBeat.of(MusicalContext())) -> [[Double]] {
         var field = FieldMotion(), looks = FieldLookMotion(), plate = ChladniMotion()
         var quarters: [[Double]] = Array(repeating: [], count: 4)
         let plateFigures = [ChladniModes(m: SIMD4(0, 1, 0, 0), n: SIMD4(4, 3, 0, 0), weight: SIMD4(0.7, 0.3, 0, 0), drive: 1),
@@ -159,7 +160,7 @@ final class FieldLookTests: XCTestCase {
             let heard: (hertz: Double?, drive: Double) = Self.sounds[frame % Self.sounds.count].map { Self.sound([$0]) } ?? (hertz: nil, drive: 0)
             let look = looks.step(primary: primary, partner: partner, mix: mixes(frame), hertz: heard.hertz,
                                   drive: heard.drive, tonicHz: shown.toneHz, fieldPhase: shown.fieldPhase,
-                                  after: 1 / rate, still: false, patternScale: 1)
+                                  after: 1 / rate, still: false, patternScale: 1, beat: beat)
             let figure = plate.step(towards: plateFigures[frame % plateFigures.count], after: 1 / rate, still: false)
             let turns = look.turns(fieldPhase: shown.fieldPhase)
             for quarter in 0..<4 {
@@ -197,9 +198,62 @@ final class FieldLookTests: XCTestCase {
     }
 
     func testNoLookFlashesMoreThanThreeTimesASecond() {
-        for look in [FieldPattern.dish, .water, .aurora, .depth] {
+        for look in [FieldPattern.dish, .water, .aurora, .depth, .moire] {
             assertAtMostThreeFlashesASecond(lightSeries(primary: look, partner: nil, mixes: { _ in 0 }), look.title)
         }
+    }
+
+    /// The moiré at one point, under a 12-equal third (its fastest drift): the quarters' means would
+    /// average the gratings away, a single pixel cannot hide a flash. Held still, it does not move.
+    func testTheMoireFlashesAtNoPixelMoreThanThreeTimesASecond() {
+        let rate = 60.0
+        let beat = TuningBeat.of(MusicalContext())
+        XCTAssertGreaterThan(beat.driftHz, 1.9)
+        for (u, v) in [(0.5, 0.5), (0.31, 0.62), (0.7, 0.4)] {
+            var looks = FieldLookMotion()
+            var series: [Double] = []
+            var held: [Double] = []
+            var still = FieldLookMotion()
+            for _ in 0..<Int(6 * rate) {
+                let look = looks.step(primary: .moire, partner: nil, mix: 0, hertz: nil, drive: 0,
+                                      tonicHz: FieldFrame.middleC, fieldPhase: 0, after: 1 / rate, still: false,
+                                      patternScale: 1, beat: beat)
+                series.append(FieldLook.light(.moire, u: u, v: v, aspect: 1, field: FieldMotion.Shown(), look: look,
+                                              plate: ChladniMotion.Shown(), turns: 0))
+                let stood = still.step(primary: .moire, partner: nil, mix: 0, hertz: nil, drive: 0,
+                                       tonicHz: FieldFrame.middleC, fieldPhase: 0, after: 1 / rate, still: true,
+                                       patternScale: 1, beat: beat)
+                held.append(stood.moirePhase)
+            }
+            assertAtMostThreeFlashesASecond([series], "moiré at (\(u), \(v))")
+            XCTAssertEqual(Set(held), [0], "held still, the gratings do not move")
+        }
+    }
+
+    /// The moiré drifts at the blend's share the moment a second look comes in, not after its
+    /// pulse has slewed down: two looks never drift together at full speed.
+    func testTheMoireHalvesItsDriftTheMomentABlendStarts() {
+        let rate = 60.0
+        let beat = TuningBeat.of(MusicalContext())
+        var looks = FieldLookMotion()
+        var last = 0.0
+        for _ in 0..<Int(6 * rate) {
+            last = looks.step(primary: .moire, partner: nil, mix: 0, hertz: nil, drive: 0, tonicHz: FieldFrame.middleC,
+                              fieldPhase: 0, after: 1 / rate, still: false, patternScale: 1, beat: beat).moirePhase
+        }
+        var blended = false
+        for _ in 0..<30 {
+            let look = looks.step(primary: .moire, partner: .rings, mix: 1, hertz: nil, drive: 0, tonicHz: FieldFrame.middleC,
+                                  fieldPhase: 0, after: 1 / rate, still: false, patternScale: 1, beat: beat)
+            var step = look.moirePhase - last
+            if step < 0 { step += 1 }
+            last = look.moirePhase
+            if look.isBlending {
+                blended = true
+                XCTAssertLessThanOrEqual(step, TuningBeat.maximumDriftHz * FieldLookMotion.blendPhaseShare / rate + 1e-9)
+            }
+        }
+        XCTAssertTrue(blended)
     }
 
     /// Every pair at an even mix, and every pair with the mix control thrown from end to end each frame.
@@ -238,7 +292,7 @@ final class FieldLookTests: XCTestCase {
         XCTAssertEqual(FieldPattern.blend(stored: "water"), .water)
         XCTAssertNil(FieldPattern.blend(stored: ""))
         XCTAssertNil(FieldPattern.blend(stored: nil))
-        XCTAssertEqual(FieldPattern.allCases.map(\.shaderIndex), [0, 1, 2, 3, 4, 5])
+        XCTAssertEqual(FieldPattern.allCases.map(\.shaderIndex), [0, 1, 2, 3, 4, 5, 6])
     }
 
     /// The frames where the light has moved by `step` or more against the last extreme in the

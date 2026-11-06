@@ -116,7 +116,29 @@ public enum FieldLook {
     public static let depthFocusRatios = SIMD3<Double>(1.0, 1.7, 2.89)
     public static let depthWeights = SIMD3<Double>(1.0, 0.55, 0.30)
 
+    /// The moiré: two gratings at 0.2 rad to each other, each line this share of its period wide.
+    public static let moireTilt = 0.2
+    public static let moireLineWidth = 0.08
+    /// How bright the two gratings light together, over the ambient.
+    public static let moireGain = 0.45
+
     // MARK: - The looks, as the shader writes them
+
+    /// Two thin line gratings, spatial frequencies `k1` and `k2` (radians per unit), the second
+    /// tilted and moved by `phase` turns of its own period: where the lines fall together the
+    /// moiré shows, and only the second grating moves, so no point changes faster than its drift.
+    public static func moire(x: Double, y: Double, k1: Double, k2: Double, phase: Double) -> Double {
+        func line(_ coordinate: Double, _ k: Double, _ shift: Double) -> Double {
+            let t = coordinate * k / (2 * Double.pi) - shift
+            let f = t - t.rounded(.down)
+            let distance = Swift.min(f, 1 - f)
+            return 1 - smoothstep(0, moireLineWidth, distance)
+        }
+        let tilted = x * Foundation.cos(moireTilt) + y * Foundation.sin(moireTilt)
+        // The lit share of the two (max): where the lines fall together they cover less, so the
+        // fringes carry light — a plain sum would hold none, only crossings.
+        return clamp(2 * moireGain * Swift.max(line(x, k1, 0), line(tilted, k2, phase)), 0, 1)
+    }
 
     /// A dish of water lit from above: a square or hexagonal standing lattice of wavenumber `k`
     /// focusing the lamp into a caustic net; at `strength` 0 a still mirror with the lamp in it.
@@ -204,6 +226,12 @@ public enum FieldLook {
             return plate.luminance(x: px, y: py)
         case .rings:
             return ambient + (1 - ambient) * ringsEnergy(u: u, v: v, aspect: aspect, field: field, turns: turns)
+        case .moire:
+            let d = ((u * aspect - 0.5 * aspect) * (u * aspect - 0.5 * aspect) + (v - 0.5) * (v - 0.5)).squareRoot()
+            let x = (u - 0.5) * 2 * aspect, y = (v - 0.5) * 2
+            let vignette = smoothstep(1.6, 0, d)
+            let energy = clamp(moire(x: x, y: y, k1: look.moireK1, k2: look.moireK2, phase: look.moirePhase) * vignette, 0, 1)
+            return ambient + (1 - ambient) * energy
         case .dish, .water, .aurora, .depth:
             let d = ((u * aspect - 0.5 * aspect) * (u * aspect - 0.5 * aspect) + (v - 0.5) * (v - 0.5)).squareRoot()
             let x = (u - 0.5) * 2 * aspect, y = (v - 0.5) * 2
@@ -289,6 +317,10 @@ public struct FieldLookMotion: Equatable, Sendable {
         public var dishK = 25.0
         public var dishStrength = 0.0
         public var dishHex = 0.5
+        /// The moiré's two gratings (radians per unit) and the second's drift (turns).
+        public var moireK1 = 24.0
+        public var moireK2 = 24.0
+        public var moirePhase = 0.0
 
         public init() {}
 
@@ -314,6 +346,7 @@ public struct FieldLookMotion: Equatable, Sendable {
     public static let hexGlideSeconds = 0.5
 
     private var shown = Shown()
+    private var moirePulse = FieldPulse()
     private var mixLight = FlashLimit()
     private var strengthLight = FlashLimit()
     private var previousFieldPhase: Double?
@@ -350,7 +383,8 @@ public struct FieldLookMotion: Equatable, Sendable {
     /// (`hearing`), `tonicHz` the key's tonic, `fieldPhase` this frame's song phase (turns).
     public mutating func step(primary: FieldPattern, partner: FieldPattern?, mix target: Double,
                               hertz: Double?, drive: Double, tonicHz: Double, fieldPhase: Double,
-                              after seconds: Double, still: Bool, patternScale: Double) -> Shown {
+                              after seconds: Double, still: Bool, patternScale: Double,
+                              beat: TuningBeat = .unison) -> Shown {
         let elapsed = seconds.isFinite && seconds > 0 ? seconds : 0
         let level = drive.isFinite ? Swift.min(Swift.max(drive, 0), 1) : 0
         let wanted = hertz.flatMap { $0.isFinite && $0 > 0 && level > 0 ? $0 : nil }
@@ -398,6 +432,21 @@ public struct FieldLookMotion: Equatable, Sendable {
                                              tau: Self.hexGlideSeconds, seconds: elapsed)
         }
         shown.dishStrength = strengthLight.next(towards: dish?.patternStrength ?? 0, after: elapsed)
+
+        // The moiré: the first grating spaced by the lower note's partial, the second by the
+        // upper's, so their ratio is the interval's; the second drifts at the beat's drift —
+        // held while still, at the blend's share while two looks show (`FieldPulse` caps it).
+        let lower = Double(beat.p) * beat.lowerHz, upper = Double(beat.q) * beat.upperHz
+        if lower.isFinite, upper.isFinite, lower > 0, upper > 0 {
+            let k1 = Swift.min(Swift.max(6 * lower / FieldLook.anchorHz, FieldLook.dishKRange.lowerBound), ceiling / 1.04)
+            shown.moireK1 = k1
+            shown.moireK2 = k1 * upper / lower
+        }
+        // The pulse slews and caps the beat's rate; the blend's share applies at once, as the
+        // shared phase's does, so two looks never drift together at full speed.
+        moirePulse.advance(towards: still ? 0 : beat.driftHz, after: elapsed)
+        let advanced = shown.moirePhase + moirePulse.rateHz * (shown.isBlending ? Self.blendPhaseShare : 1) * elapsed
+        shown.moirePhase = advanced.isFinite ? advanced - advanced.rounded(.down) : 0
         return shown
     }
 

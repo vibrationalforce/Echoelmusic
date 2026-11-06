@@ -179,7 +179,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     }
 
     /// The looks' numbers, read by the shader at buffer 2 — mirrored by BYTE LAYOUT in the MSL
-    /// `Look` struct (eight `float`): changed in both places in one commit. All zero draws the
+    /// `Look` struct (eleven `float`): changed in both places in one commit. All zero draws the
     /// rings alone, which is what the video layer's pass binds.
     private struct LookUniforms {
         var primary: Float = 0
@@ -190,6 +190,9 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         var dishK: Float = 0
         var dishStrength: Float = 0
         var dishHex: Float = 0
+        var moireK1: Float = 0
+        var moireK2: Float = 0
+        var moirePhase: Float = 0
 
         init() {}
 
@@ -203,6 +206,9 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             dishK = Float(shown.dishK)
             dishStrength = Float(shown.dishStrength)
             dishHex = Float(shown.dishHex)
+            moireK1 = Float(shown.moireK1)
+            moireK2 = Float(shown.moireK2)
+            moirePhase = Float(shown.moirePhase)
         }
     }
 
@@ -423,7 +429,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         let heard = FieldLookMotion.hearing(frequencies: peaks.frequencies, amplitudes: peaks.amplitudes, count: peaks.count)
         let looks = lookMotion.step(primary: pattern, partner: partner, mix: mixShare, hertz: heard.hertz,
                                     drive: heard.drive, tonicHz: frame.tonicHz, fieldPhase: shown.fieldPhase,
-                                    after: seconds, still: still, patternScale: detail.patternScale)
+                                    after: seconds, still: still, patternScale: detail.patternScale,
+                                    beat: frame.tuningBeat)
         look = LookUniforms(looks)
         guard looks.primary == .chladni || looks.partner == .chladni else {
             chladni = ChladniUniforms()
