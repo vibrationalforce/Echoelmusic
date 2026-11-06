@@ -245,9 +245,9 @@ public final class EngineCore: @unchecked Sendable {
     /// `gainSegment` frames counted from the song's first sample, not from the chunk's, so a
     /// buffer of any size follows a curve through the same points as an export.
     private var mixSample: Int64 = 0
-    /// The chunk being mixed ends where the song loop wraps: its end takes the curve's own value
-    /// there, not the line towards a grid point after it, which the loop never plays.
-    private var mixEndsAtWrap = false
+    /// The song loop the chunk being mixed plays inside, in samples; nil without one. The gain
+    /// grid stops at its ends, so no line inside the loop aims at a place it never plays.
+    private var mixLoop: (start: Int64, end: Int64)?
     /// Stopped: the song position the mix's curves stay at — where it was heard when it stopped,
     /// although Stop sends the playhead home — so release and effect tails ring out at the gains
     /// they were playing at, not at bar 1's (audit 2026-10-23). A seek while stopped and Play
@@ -968,7 +968,11 @@ public final class EngineCore: @unchecked Sendable {
         mixFrom = snapshot.time.position(atSample: playhead)
         mixTo = snapshot.time.position(atSample: blockEnd)
         mixSample = playhead
-        mixEndsAtWrap = loopSeek >= 0
+        if let loop = loopSamples(snapshot), playhead >= loop.start, playhead < loop.end {
+            mixLoop = loop
+        } else {
+            mixLoop = nil
+        }
         mixLanes(frames: frames)
         renderAudio(snapshot, frames: frames)
         mixReturns(frames: frames)
@@ -1787,16 +1791,22 @@ public final class EngineCore: @unchecked Sendable {
     /// grid (`mixSample`), and between two points the straight line between their values — so
     /// every buffer size plays the same line through the same points, and a curve with a corner
     /// between two of them (the master's balance) does not depend on where the device's buffers
-    /// fall. At the end of a chunk the loop wraps after, the curve's own value.
+    /// fall. Inside the song loop its two ends are points too, and the grid goes no further: no
+    /// line aims at a place before the loop's start or after its end, which the loop never plays.
     private func gridGains<Curve: GainCurve>(at offset: Int, frames: Int, curve: Curve) -> (Float, Float) {
-        if mixEndsAtWrap, offset == frames { return curve.gains(at: tick(at: offset, of: frames)) }
         let step = Int64(Self.gainSegment)
         let sample = mixSample + Int64(offset)
-        let below = (sample >= 0 ? sample : sample - step + 1) / step * step
+        var below = (sample >= 0 ? sample : sample - step + 1) / step * step
+        var above = below + step
+        if let loop = mixLoop, sample >= loop.start, sample <= loop.end {
+            below = Swift.max(below, loop.start)
+            above = Swift.min(above, loop.end)
+        }
         let atBelow = curve.gains(at: tick(at: Int(below - mixSample), of: frames))
-        guard sample != below else { return atBelow }
-        let atAbove = curve.gains(at: tick(at: Int(below + step - mixSample), of: frames))
-        let t = Float(sample - below) / Float(step)
+        guard sample != below, above > below else { return atBelow }
+        let atAbove = curve.gains(at: tick(at: Int(above - mixSample), of: frames))
+        guard sample != above else { return atAbove }
+        let t = Float(sample - below) / Float(above - below)
         return (atBelow.0 + (atAbove.0 - atBelow.0) * t, atBelow.1 + (atAbove.1 - atBelow.1) * t)
     }
 
