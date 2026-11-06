@@ -1,4 +1,5 @@
 import EchoelCore
+import Foundation
 import EchoelDSP
 import XCTest
 @testable import EchoelEngine
@@ -145,5 +146,85 @@ final class RegionWarpPlaybackTests: XCTestCase {
                 XCTAssertEqual(right, [], "\(tempo)/\(native) stereo \(stereo): \(right.prefix(3))")
             }
         }
+    }
+
+    // MARK: - Warp modes (W-3)
+
+    /// `seconds` of silence with a one-sample click of 0.9 on every beat of `bpm`, over an optional
+    /// quiet sine.
+    private func clickTrain(bpm: Double, seconds: Double, under hertz: Double? = nil) throws -> SampleBuffer {
+        let count = Int(seconds * rate)
+        var samples = [Float](repeating: 0, count: count)
+        if let hertz {
+            for i in 0..<count { samples[i] = Float(0.1 * sin(2 * Double.pi * hertz * Double(i) / 48_000)) }
+        }
+        let beat = Int((60 / bpm * rate).rounded())
+        var at = 0
+        while at < count {
+            samples[at] = 0.9
+            at += beat
+        }
+        return try XCTUnwrap(SampleBuffer(samples: samples, sampleRate: rate))
+    }
+
+    func testBeatsKeepsEveryHitOnItsBeatAndPlaysItOnce() throws {
+        // Eight clicks at 120 BPM played at 90: a beat is 0.5 s in the file and 2/3 s in the song.
+        var s = try song(try clickTrain(bpm: 120, seconds: 4), tempo: 90, native: 120)
+        try Command.setRegionWarpMode(track: s.track, s.region, mode: .beats).apply(to: &s.project)
+        let warped = RegionWarp.prepare(s.project, samples: s.samples)
+        XCTAssertEqual(warped.count, 1)
+        let beat = 60 / 90.0 * rate
+        let out = live(s, frames: Int(8 * beat) + 4_800, warped: warped).left
+        let peaks = out.indices.filter { abs(out[$0]) > 0.3 }
+        XCTAssertEqual(peaks.count, 8, "every click once, none doubled: \(peaks)")
+        for (k, peak) in peaks.enumerated() {
+            XCTAssertEqual(Double(peak), Double(k) * beat, accuracy: rate / 1_000, "click \(k) within 1 ms of its beat")
+        }
+        let sounding = out.lastIndex { abs($0) > 1e-4 } ?? 0
+        XCTAssertLessThanOrEqual(Double(sounding), 8 * beat + 64, "ends on its eighth beat")
+    }
+
+    func testRePitchChangesTempoAndPitchTogether() throws {
+        // 120 to 150 BPM: a quarter faster, so 330 Hz sounds at 412.5 Hz, and one second lasts 0.8 s.
+        var s = try song(try sine(hertz: 330, seconds: 1), tempo: 150, native: 120)
+        try Command.setRegionWarpMode(track: s.track, s.region, mode: .rePitch).apply(to: &s.project)
+        let expected = Int(2 * 60 / 150.0 * rate)
+        let out = live(s, frames: expected + 4_800, warped: RegionWarp.prepare(s.project, samples: s.samples)).left
+        let sounding = out.lastIndex { abs($0) > 1e-4 } ?? 0
+        XCTAssertEqual(Double(sounding), Double(expected), accuracy: 64, "ends on its second beat")
+        XCTAssertEqual(frequency(out, in: 2_400..<(expected - 2_400)), 412.5, accuracy: 1)
+    }
+
+    func testEveryWarpModeExportsWhatPlaysLive() throws {
+        for mode in WarpMode.allCases {
+            var s = try song(try clickTrain(bpm: 120, seconds: 2, under: 220), tempo: 100, native: 120)
+            try Command.setRegionWarpMode(track: s.track, s.region, mode: mode).apply(to: &s.project)
+            let export = OfflineRender.render(s.project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0, samples: s.samples)
+            XCTAssertEqual(export.frameCount, Int(4 * 60 / 100.0 * rate), "\(mode): the export runs to the warped end")
+            let played = live(s, frames: export.frameCount, warped: RegionWarp.prepare(s.project, samples: s.samples), block: 300)
+            var worst: Float = 0
+            for i in 0..<export.frameCount {
+                worst = Swift.max(worst, abs(export.left[i] - played.left[i]), abs(export.right[i] - played.right[i]))
+            }
+            XCTAssertLessThanOrEqual(worst, 1e-6, "\(mode)")
+            XCTAssertGreaterThan(export.left.map { abs($0) }.max() ?? 0, 0.3, "\(mode) sounds")
+        }
+    }
+
+    func testAnUnknownWarpModePlaysExactlyAsTones() throws {
+        let s = try song(try clickTrain(bpm: 120, seconds: 2, under: 220), tempo: 90, native: 120)
+        var unknown = s
+        let index = try XCTUnwrap(unknown.project.trackIndex(s.track))
+        let region = unknown.project.tracks[index].regions[0]
+        var stored = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(region)) as? [String: Any])
+        stored["warpMode"] = "complexPro"
+        unknown.project.tracks[index].regions[0] = try JSONDecoder().decode(AudioRegion.self,
+                                                                             from: JSONSerialization.data(withJSONObject: stored))
+        let a = RegionWarp.prepare(s.project, samples: s.samples)
+        let b = RegionWarp.prepare(unknown.project, samples: unknown.samples)
+        XCTAssertEqual(Set(a.keys), Set(b.keys), "the same stretch")
+        let tones = live(s, frames: 120_000, warped: a).left
+        let other = live(unknown, frames: 120_000, warped: b).left
+        XCTAssertEqual(tones, other)
     }
 }

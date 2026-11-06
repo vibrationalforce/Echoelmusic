@@ -23,6 +23,8 @@ public enum RegionWarp {
         let nativeBPM: Double
         let fileRate: Double
         let tempo: Tempo
+        /// How it stretches (W-3): an unknown stored name stretches as Tones and shares its key.
+        let mode: WarpMode
 
         enum Tempo: Hashable, Sendable {
             case constant(Double)
@@ -46,7 +48,7 @@ public enum RegionWarp {
         let tempo: Key.Tempo = constant ? .constant(map.bpm(at: region.start))
             : .moving(start: region.start, bpm: project.tempo, changes: project.tempoChanges)
         return Key(media: region.media, offset: region.offset, length: Swift.min(region.length, buffer.frameCount - region.offset),
-                   nativeBPM: native, fileRate: buffer.sampleRate, tempo: tempo)
+                   nativeBPM: native, fileRate: buffer.sampleRate, tempo: tempo, mode: region.warpMode)
     }
 
     /// The stretched frames of a warped region, at the file's rate. Nil when there is nothing to
@@ -66,11 +68,48 @@ public enum RegionWarp {
         let outputCount = Int((seconds * rate).rounded())
         guard outputCount > 0, outputCount <= maximumFrames else { return nil }
         let start = Double(region.start)
-        return buffer.stretched(offset: region.offset, length: length, outputCount: outputCount) { (frame: Int) -> Double in
-            // The song position `frame` file-rate frames after the region's start, and the file
-            // frame its native tempo puts there.
+        // The song position `frame` file-rate frames after the region's start, and the file frame
+        // its native tempo puts there.
+        let read = { (frame: Int) -> Double in
             let position = map.position(atSeconds: startSeconds + Double(frame) / rate)
             return (position - start) / ticksPerQuarter * 60 / native * rate
+        }
+        switch region.warpMode {
+        case .tones:
+            return buffer.stretched(offset: region.offset, length: length, outputCount: outputCount, position: read)
+        case .beats:
+            guard let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
+            let stretcher = WSOLAStretcher()
+            let out = stretcher.stretch(sides, outputCount: outputCount, anchors: onsets(in: sides, rate: rate),
+                                        splice: Swift.max(1, Int((spliceSeconds * rate).rounded())), position: read)
+            return buffer.withSides(out)
+        case .rePitch:
+            guard let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
+            return buffer.withSides(WSOLAStretcher.resample(sides, outputCount: outputCount, position: read))
+        }
+    }
+
+    /// Beats (W-3): how long the piece before an attack fades out while the attack's piece fades in.
+    static let spliceSeconds = 0.002
+
+    /// The frames of `sides` where a sound starts, from their mono sum, rising.
+    static func onsets(in sides: [[Float]], rate: Double) -> [Int] {
+        guard let first = sides.first, !first.isEmpty else { return [] }
+        var mono = first
+        if sides.count > 1 {
+            let scale = 1 / Float(sides.count)
+            for i in mono.indices {
+                var sum: Float = 0
+                for side in sides where i < side.count { sum += side[i] }
+                mono[i] = sum * scale
+            }
+        }
+        var detector = OnsetDetector(sampleRate: rate)
+        detector.process(mono)
+        return detector.onsets.compactMap { (seconds: Double) -> Int? in
+            let frame = (seconds * rate).rounded()
+            guard frame.isFinite, frame > 0, frame < Double(mono.count) else { return nil }
+            return Int(frame)
         }
     }
 

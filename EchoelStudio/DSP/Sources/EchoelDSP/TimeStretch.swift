@@ -32,6 +32,71 @@ public struct WSOLAStretcher: Sendable {
     /// read at the same offsets. Input shorter than a frame is read straight at the mapped
     /// positions (linear interpolation). Empty input or no output gives empty channels.
     public func stretch(_ channels: [[Float]], outputCount: Int, position: (Int) -> Double) -> [[Float]] {
+        stretch(channels, outputCount: outputCount, earliest: 0, position: position)
+    }
+
+    /// Beats (W-3): `channels` stretched as `stretch` does, but in pieces cut at `anchors` — input
+    /// frames where a sound starts, rising. Each piece starts with its attack copied straight, at
+    /// the output frame where `position` puts the anchor, and no later frame of the piece reads the
+    /// attack again, so a hit is heard once and on its beat; the rest of the piece is stretched to
+    /// fill the time until the next attack. The pieces join over `splice` frames: the piece before
+    /// fades out over the frames that lead up to the anchor while the next fades in from them, and
+    /// the attack itself plays at full level. Anchors too close to the one before (or to the ends)
+    /// to splice are left out; no anchors is one piece, which is `stretch`.
+    public func stretch(_ channels: [[Float]], outputCount: Int, anchors: [Int], splice: Int,
+                        position: (Int) -> Double) -> [[Float]] {
+        guard let first = channels.first, !first.isEmpty, outputCount > 0,
+              channels.allSatisfy({ $0.count == first.count }) else {
+            return channels.map { _ in [] }
+        }
+        let count = first.count
+        let join = Swift.max(1, splice)
+        let start = position(0)
+        var cuts: [(input: Int, output: Int)] = [(start.isFinite ? Self.clamp(Int(start.rounded()), 0, count - 1) : 0, 0)]
+        for anchor in anchors.sorted() {
+            guard let last = cuts.last, anchor - last.input > 2 * join, count - anchor > 2 * join else { continue }
+            // The first output frame that plays the anchor or later: `position` rises.
+            var low = last.output + 1, high = outputCount
+            while low < high {
+                let middle = low + (high - low) / 2
+                if position(middle) >= Double(anchor) { high = middle } else { low = middle + 1 }
+            }
+            guard low - last.output > 2 * join, outputCount - low > 2 * join else { continue }
+            cuts.append((anchor, low))
+        }
+        guard cuts.count > 1 else { return stretch(channels, outputCount: outputCount, position: position) }
+        var result = channels.map { _ in [Float](repeating: 0, count: outputCount) }
+        for index in cuts.indices {
+            let cut = cuts[index]
+            let lead = index == 0 ? 0 : join
+            let fromInput = cut.input - lead, fromOutput = cut.output - lead
+            let isLast = index == cuts.count - 1
+            let toInput = isLast ? count : cuts[index + 1].input
+            let toOutput = isLast ? outputCount : cuts[index + 1].output
+            let pieceCount = toOutput - fromOutput
+            guard pieceCount > 0, toInput > fromInput else { continue }
+            let piece = channels.map { Array($0[fromInput..<toInput]) }
+            // The lead and the attack play straight from the piece's first frame; past them the
+            // song's mapping, and no frame after the first reads before the attack's end.
+            let out = stretch(piece, outputCount: pieceCount, earliest: lead + join) { (frame: Int) -> Double in
+                frame <= lead ? Double(frame) : position(fromOutput + frame) - Double(fromInput)
+            }
+            let tail = isLast ? 0 : join
+            for (channel, samples) in out.enumerated() where channel < result.count {
+                for frame in 0..<Swift.min(pieceCount, samples.count) {
+                    var gain: Float = 1
+                    if frame < lead { gain = Float(frame) / Float(lead) }
+                    let fall = frame - (pieceCount - tail)
+                    if fall >= 0 { gain *= 1 - Float(fall) / Float(tail) }
+                    result[channel][fromOutput + frame] += samples[frame] * gain
+                }
+            }
+        }
+        return result
+    }
+
+    /// `stretch`, where no frame after the first starts reading before input frame `earliest`.
+    private func stretch(_ channels: [[Float]], outputCount: Int, earliest: Int, position: (Int) -> Double) -> [[Float]] {
         guard let first = channels.first, !first.isEmpty, outputCount > 0,
               channels.allSatisfy({ $0.count == first.count }) else {
             return channels.map { _ in [] }
@@ -49,13 +114,13 @@ public struct WSOLAStretcher: Sendable {
                 mono[i] = sum * scale
             }
         }
-        let offsets = chosenOffsets(mono, outputCount: outputCount, position: position)
+        let offsets = chosenOffsets(mono, outputCount: outputCount, earliest: earliest, position: position)
         return channels.map { render($0, offsets: offsets, outputCount: outputCount) }
     }
 
     // MARK: - Search
 
-    private func chosenOffsets(_ signal: [Float], outputCount: Int, position: (Int) -> Double) -> [Int] {
+    private func chosenOffsets(_ signal: [Float], outputCount: Int, earliest: Int, position: (Int) -> Double) -> [Int] {
         let n = frameSize, hop = n / 2
         let last = signal.count - n
         let frames = Swift.max(1, (outputCount - n) / hop + 2)
@@ -69,8 +134,12 @@ public struct WSOLAStretcher: Sendable {
                 let natural = chosen + hop
                 let nominal = position(k * hop)
                 let center = nominal.isFinite ? Int(nominal.rounded()) : natural
-                let lo = Self.clamp(center - tolerance, 0, last)
-                let hi = Self.clamp(center + tolerance, 0, last)
+                var lo = Self.clamp(center - tolerance, 0, last)
+                var hi = Self.clamp(center + tolerance, 0, last)
+                if earliest > 0 {
+                    lo = Swift.max(lo, Self.clamp(earliest, 0, last))
+                    hi = Swift.max(hi, lo)
+                }
                 guard natural + hop <= signal.count, lo <= hi else {
                     chosen = Self.clamp(center, 0, last)
                     offsets.append(chosen)
@@ -172,6 +241,35 @@ public struct WSOLAStretcher: Sendable {
         return result
     }
 
+    /// Re-Pitch (W-3) and the second half of a transposition (W-4): `channels` read at
+    /// `position(t)` for each output frame `t`, between frames by a four-point Hermite curve —
+    /// played faster or slower like a record, so time and pitch change together. Positions before
+    /// the first frame or past the last are silence. Offline: it allocates.
+    public static func resample(_ channels: [[Float]], outputCount: Int, position: (Int) -> Double) -> [[Float]] {
+        guard let first = channels.first, !first.isEmpty, outputCount > 0,
+              channels.allSatisfy({ $0.count == first.count }) else {
+            return channels.map { _ in [] }
+        }
+        let count = first.count
+        return channels.map { (input: [Float]) -> [Float] in
+            var result = [Float](repeating: 0, count: outputCount)
+            for t in 0..<outputCount {
+                let p = position(t)
+                guard p.isFinite, p >= 0, p <= Double(count - 1) else { continue }
+                let index = Int(p)
+                let x = Float(p - Double(index))
+                let y0 = input[Swift.max(index - 1, 0)], y1 = input[index]
+                let y2 = input[Swift.min(index + 1, count - 1)], y3 = input[Swift.min(index + 2, count - 1)]
+                let c1 = 0.5 * (y2 - y0)
+                let c2 = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3
+                let c3 = 0.5 * (y3 - y0) + 1.5 * (y1 - y2)
+                let value = ((c3 * x + c2) * x + c1) * x + y1
+                result[t] = value.isFinite ? value : 0
+            }
+            return result
+        }
+    }
+
     /// The input read straight at the mapped positions, for input shorter than a frame.
     private static func read(_ input: [Float], outputCount: Int, position: (Int) -> Double) -> [Float] {
         var result = [Float](repeating: 0, count: outputCount)
@@ -194,6 +292,23 @@ public struct WSOLAStretcher: Sendable {
 }
 
 extension SampleBuffer {
+    /// `length` frames from `offset`, one array per channel; nil outside the buffer. Offline.
+    public func sides(offset: Int, length: Int) -> [[Float]]? {
+        guard offset >= 0, length > 0, offset < frameCount else { return nil }
+        let count = Swift.min(length, frameCount - offset)
+        var sides = [[Float]](repeating: [Float](repeating: 0, count: count), count: channelCount)
+        for i in 0..<count {
+            for c in 0..<channelCount { sides[c][i] = frames[(offset + i) * channelCount + c] }
+        }
+        return sides
+    }
+
+    /// A buffer of `sides` (one or two) at this buffer's rate and root; nil for none or empty.
+    public func withSides(_ sides: [[Float]]) -> SampleBuffer? {
+        if sides.count == 2 { return SampleBuffer(left: sides[0], right: sides[1], sampleRate: sampleRate, rootPitch: rootPitch) }
+        return sides.first.flatMap { SampleBuffer(samples: $0, sampleRate: sampleRate, rootPitch: rootPitch) }
+    }
+
     /// `length` frames from `offset` stretched to `outputCount` frames at this buffer's rate, where
     /// output frame `t` plays frame `offset + position(t)` — both sides read at the same offsets.
     /// Nil for a stretch outside the buffer or no output. Offline: it allocates.
