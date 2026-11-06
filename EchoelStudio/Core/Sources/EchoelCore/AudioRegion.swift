@@ -118,6 +118,53 @@ public enum FadeCurve: String, Codable, CaseIterable, Sendable {
     }
 }
 
+/// Where Follow Song Tempo starts from (W-1).
+public enum WarpTempoSource: Equatable, Sendable {
+    /// The native tempo the region already has — typed, or heard at import.
+    case stored
+    /// The tempo heard in the region's audio just now.
+    case heard
+    /// Nothing known: the song's tempo, so the region keeps its length until a tempo is set.
+    case song
+}
+
+extension AudioRegion {
+    /// A heard tempo as a native tempo: nil when there is none or it is outside `nativeBPMRange`.
+    public static func nativeBPM(heard: Double?) -> Double? {
+        guard let heard, heard.isFinite, nativeBPMRange.contains(heard) else { return nil }
+        return heard
+    }
+
+    /// The native tempo Follow Song Tempo turns on with: the region's own when it has one (a
+    /// detection never overrules a set tempo), else the heard one, else the song's at the region,
+    /// held to `nativeBPMRange` (120 for a tempo that is not a number).
+    public func warpStart(heard: Double?, songBPM: Double) -> (bpm: Double, source: WarpTempoSource) {
+        if let nativeBPM, nativeBPM.isFinite, Self.nativeBPMRange.contains(nativeBPM) { return (nativeBPM, .stored) }
+        if let bpm = Self.nativeBPM(heard: heard) { return (bpm, .heard) }
+        guard songBPM.isFinite else { return (120, .song) }
+        return (Swift.min(Swift.max(songBPM, Self.nativeBPMRange.lowerBound), Self.nativeBPMRange.upperBound), .song)
+    }
+
+    /// The native tempo at which the region's audio spans exactly `bars` bars of `quartersPerBar`
+    /// quarter notes, its file at `sampleRate` (W-2, Fit to Bars): following the song's tempo, the
+    /// region then ends on a bar line at any tempo. Nil when the counts or the rate are not usable,
+    /// or the tempo falls outside `nativeBPMRange`.
+    public func nativeBPM(forBars bars: Int, sampleRate: Double, quartersPerBar: Double = 4) -> Double? {
+        guard bars > 0, length > 0, sampleRate.isFinite, sampleRate > 0,
+              quartersPerBar.isFinite, quartersPerBar > 0 else { return nil }
+        let seconds = Double(length) / sampleRate
+        let bpm = Double(bars) * quartersPerBar * 60 / seconds
+        guard bpm.isFinite, Self.nativeBPMRange.contains(bpm) else { return nil }
+        return bpm
+    }
+
+    /// Whether the region has a native tempo warp can stretch from.
+    public var hasNativeBPM: Bool {
+        guard let nativeBPM else { return false }
+        return nativeBPM.isFinite && Self.nativeBPMRange.contains(nativeBPM)
+    }
+}
+
 extension Track {
     public func regionIndex(_ id: RegionID) -> Int? {
         regions.firstIndex { $0.id == id }

@@ -1987,7 +1987,7 @@ final class DocumentController {
     /// to the sampler — one undo step. `rootKey`, when given (the media browser's measured note,
     /// chosen by the musician), becomes the sampler's root in the same step.
     func importAudio(_ source: URL, onto track: TrackID, rootKey: Int? = nil) async {
-        guard let imported = await importMedia(source, placing: { file in
+        guard let imported = await importMedia(source, placing: { file, _ in
             [.addMedia(file), .setInstrumentDevice(track, .sampler), .setInstrumentSample(track, file.id)]
                 + MediaBrowser.rootCommands(rootKey, on: track)
         }) else { return }
@@ -1998,7 +1998,7 @@ final class DocumentController {
     /// Copies an audio file into the song and cuts the synth's wavetable from it — the track's
     /// synth on its Wavetable engine — one undo step.
     func importWavetable(_ source: URL, onto track: TrackID) async {
-        guard let imported = await importMedia(source, placing: { file in
+        guard let imported = await importMedia(source, placing: { file, _ in
             [.addMedia(file), .setInstrumentDevice(track, .synth),
              .setInstrumentWavetable(track, WavetableSource(media: file.id, frames: WavetableSource.frames(for: file))),
              .setInstrumentParameter(track, key: SynthParameter.engine.key.rawValue, value: Double(WavetableSource.engineIndex))]
@@ -2008,10 +2008,18 @@ final class DocumentController {
     }
 
     /// Copies an audio file into the song and places all of it on an audio track at `start` —
-    /// one undo step.
+    /// one undo step. The tempo heard in it (W-1, `TempoDetector`) becomes the region's native
+    /// tempo in the same step, with warp still off: the region plays as imported, and Follow Song
+    /// Tempo starts from that tempo. A file with no steady pulse keeps none.
     func importAudio(_ source: URL, placingOn track: TrackID, at start: Tick) async {
-        guard let imported = await importMedia(source, placing: { file in
-            [.addMedia(file), .placeAudio(track: track, id: RegionID(), media: file.id, start: start)]
+        let beats = TempoAnalysis.beatsPerBar(at: start, in: store.project)
+        guard let imported = await importMedia(source, hearingTempoIn: beats, placing: { file, heard in
+            let region = RegionID()
+            var commands: [Command] = [.addMedia(file), .placeAudio(track: track, id: region, media: file.id, start: start)]
+            if let bpm = AudioRegion.nativeBPM(heard: heard?.bpm) {
+                commands.append(.setRegionWarp(track: track, region, nativeBPM: bpm, followsTempo: false))
+            }
+            return commands
         }) else { return }
         perform(imported.commands, title: "Import \(imported.file.name)")
         dropBufferUnlessHeld(imported.file.id)
@@ -2020,7 +2028,7 @@ final class DocumentController {
     /// Copies an audio file into the song as a session clip of an audio track, looping over the
     /// nearest whole number of bars, in a scene's slot — one undo step.
     func importAudioClip(_ source: URL, onto track: TrackID, scene: SceneID) async {
-        guard let imported = await importMedia(source, placing: { file in
+        guard let imported = await importMedia(source, placing: { file, _ in
             let project = store.project
             let length = Arranging.loopLength(seconds: Double(file.frameCount) / file.sampleRate, bpm: project.tempo,
                                               signature: project.timeSignature)
@@ -2244,8 +2252,11 @@ final class DocumentController {
     /// Copies and decodes a file off the main thread and keeps its buffer, returning the file and
     /// the commands `placing` makes of it, for one undo step. Nil, with `lastError` set, when it
     /// cannot be read, when placing it would leave something the song plays silent at the next
-    /// open — or when another song was opened meanwhile.
-    private func importMedia(_ source: URL, placing: (MediaFile) -> [Command]) async
+    /// open — or when another song was opened meanwhile. With `hearingTempoIn` (quarter notes in a
+    /// bar), the decoded file is also listened to for its tempo off the main thread, and `placing`
+    /// gets what was heard (nil: no steady pulse, or not asked).
+    private func importMedia(_ source: URL, hearingTempoIn beatsPerBar: Double? = nil,
+                             placing: (MediaFile, DetectedTempo?) -> [Command]) async
         -> (file: MediaFile, commands: [Command])? {
         starterKeepsItsOwnPackage()
         if isImporting {
@@ -2266,11 +2277,14 @@ final class DocumentController {
             followRenamedSong()
             settleLeftBehind()
         }
-        let result: Result<AudioFileImport.Imported, Error> = await Task.detached(priority: .userInitiated) {
+        let (result, heard) = await Task.detached(priority: .userInitiated) {
+            () -> (Result<AudioFileImport.Imported, Error>, DetectedTempo?) in
             // A file picked outside the app is readable only inside this scope.
             let scoped = source.startAccessingSecurityScopedResource()
             defer { if scoped { source.stopAccessingSecurityScopedResource() } }
-            return Result { try AudioFileImport.importFile(source, into: package, id: id) }
+            let decoded = Result { try AudioFileImport.importFile(source, into: package, id: id) }
+            guard let beatsPerBar, let imported = try? decoded.get() else { return (decoded, nil) }
+            return (decoded, TempoDetector.detect(imported.buffer, beatsPerBar: beatsPerBar))
         }.value
         // Another song opened meanwhile drops the import; the same song followed to a new name in
         // Files keeps it — its copy moved with the package (second night review, 2026-10-23). A
@@ -2296,7 +2310,7 @@ final class DocumentController {
             // open would leave it, or audio the song plays, silent (R9). Judged with the file
             // placed — appended alone it would rank behind every file nothing plays any more
             // (second night review, 2026-10-23). A command that fails here fails in `perform` too.
-            let commands = placing(imported.file)
+            let commands = placing(imported.file, heard)
             var grown = store.project
             for command in commands { try? command.apply(to: &grown) }
             var channels = mediaChannels

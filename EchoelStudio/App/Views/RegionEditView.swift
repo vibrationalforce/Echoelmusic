@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import SwiftUI
 
 /// One audio region's fades, level and warp (AUD-2): the fade-in and fade-out in milliseconds with
@@ -8,9 +9,15 @@ import SwiftUI
 /// hold menu ("Fades & Gain…") through the one sheet slot.
 struct RegionEditView: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(\.dismiss) private var dismiss
     let trackID: TrackID
     let regionID: RegionID
+
+    /// Listening to the region's file for its tempo, before Follow Song Tempo turns on (W-1).
+    @State private var listening: Task<Void, Never>?
+    /// What the listening found, said under the toggle.
+    @State private var tempoNote: String?
 
     var body: some View {
         NavigationStack {
@@ -27,6 +34,7 @@ struct RegionEditView: View {
                 }
         }
         .preferredColorScheme(.dark)
+        .onDisappear { listening?.cancel() }
     }
 
     /// The region and its file as the song has them now; nil once either is gone (undone, deleted).
@@ -91,25 +99,139 @@ struct RegionEditView: View {
     }
 
     /// Follow Song Tempo and the tempo the file was played at. The tempo is typed or stepped, never
-    /// dragged: every value stretches the region anew.
+    /// dragged: every value stretches the region anew. Turned on for a region with no native tempo,
+    /// the region's audio is listened to first, and what is heard is the tempo it turns on with.
     @ViewBuilder private func warp(_ region: AudioRegion) -> some View {
         let native = region.nativeBPM ?? store.project.tempoMap.bpm(at: region.start)
         Toggle("Follow Song Tempo", isOn: Binding(get: { region.followsTempo == true }, set: { on in
             store.endGesture()
-            try? store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: Self.heldBPM(native), followsTempo: on))
+            if on, !region.hasNativeBPM {
+                listenThenFollow(region)
+            } else {
+                tempoNote = nil
+                try? store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: Self.heldBPM(native), followsTempo: on))
+            }
         }))
         .toggleStyle(EchoelToggleStyle())
+        .disabled(listening != nil)
         .accessibilityHint("Plays the region in time with the song's tempo, its pitch unchanged.")
-        SettingField(title: "Native Tempo", value: Int(Self.heldBPM(native).rounded()),
-                     range: Int(AudioRegion.nativeBPMRange.lowerBound)...Int(AudioRegion.nativeBPMRange.upperBound),
-                     unit: "BPM", standard: Int(store.project.tempoMap.bpm(at: region.start).rounded()),
-                     spokenUnit: "beats a minute", drags: false) { bpm in
+        if listening != nil {
+            Text("Listening for the tempo the file was played at…")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+        } else if let tempoNote {
+            Text(tempoNote)
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        // In hundredths of a BPM (W-2): a whole-number tempo makes most real loops drift.
+        SettingField(title: "Native Tempo", value: Self.hundredths(Self.heldBPM(native)),
+                     range: Self.hundredths(AudioRegion.nativeBPMRange.lowerBound)...Self.hundredths(AudioRegion.nativeBPMRange.upperBound),
+                     unit: "BPM", decimals: 2, standard: Self.hundredths(Self.heldBPM(store.project.tempoMap.bpm(at: region.start))),
+                     spokenUnit: "beats a minute", drags: false) { typed in
             store.endGesture()
-            try? store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: Double(bpm),
+            try? store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: Double(typed) / 100,
                                               followsTempo: region.followsTempo == true))
         }
         .disabled(region.followsTempo != true)
+        fitToBars(region)
     }
+
+    /// Fit to Bars (W-2): the native tempo at which the whole region spans a chosen number of bars,
+    /// and Follow Song Tempo on — the region then ends on a bar line at any song tempo. One step.
+    @ViewBuilder private func fitToBars(_ region: AudioRegion) -> some View {
+        let fits = Self.fits(region, rate: current?.file.sampleRate ?? 0,
+                             quartersPerBar: TempoAnalysis.beatsPerBar(at: region.start, in: store.project))
+        Menu {
+            ForEach(fits) { fit in
+                Button(fit.title) {
+                    store.endGesture()
+                    tempoNote = nil
+                    try? store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: fit.bpm, followsTempo: true))
+                }
+            }
+        } label: {
+            Text("Fit to Bars…")
+                .font(Theme.Font.body)
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.touch, alignment: .leading)
+        }
+        .disabled(fits.isEmpty || listening != nil)
+        .accessibilityHint("Sets Native Tempo so the whole region spans the bars you choose, and follows the song's tempo.")
+    }
+
+    /// A bar count a region can be fitted to, and the native tempo it takes.
+    struct BarFit: Identifiable {
+        let bars: Int
+        let bpm: Double
+        var id: Int { bars }
+        var title: String { "\(bars) \(bars == 1 ? "Bar" : "Bars") — " + NumberText.string(bpm, decimalsUpTo: 2, unit: "BPM") }
+    }
+
+    /// The bar counts a region can be fitted to, each with the native tempo it takes.
+    static func fits(_ region: AudioRegion, rate: Double, quartersPerBar: Double) -> [BarFit] {
+        [1, 2, 4, 8, 16, 32].compactMap { (bars: Int) -> BarFit? in
+            region.nativeBPM(forBars: bars, sampleRate: rate, quartersPerBar: quartersPerBar).map { BarFit(bars: bars, bpm: $0) }
+        }
+    }
+
+    /// A tempo in hundredths of a BPM, the native-tempo field's whole number.
+    static func hundredths(_ bpm: Double) -> Int {
+        guard bpm.isFinite else { return 12_000 }
+        return Int((Swift.min(Swift.max(bpm, AudioRegion.nativeBPMRange.lowerBound), AudioRegion.nativeBPMRange.upperBound) * 100).rounded())
+    }
+
+    /// Reads the region's frames for their tempo off the main thread, then turns Follow Song Tempo
+    /// on with what was heard — or, when no steady tempo was heard, with the song's tempo, said so.
+    /// One command, so one undo step.
+    private func listenThenFollow(_ region: AudioRegion) {
+        let songBPM = store.project.tempoMap.bpm(at: region.start)
+        guard let file = current?.file, let url = documents.mediaURL(file) else {
+            let start = region.warpStart(heard: nil, songBPM: songBPM)
+            if follow(from: start) {
+                tempoNote = "The file is not where the song keeps it, so the region keeps the song's tempo of "
+                    + Self.shown(start.bpm) + ". Set Native Tempo to the tempo the file was played at."
+            }
+            return
+        }
+        let offset = region.offset, length = region.length
+        let beats = TempoAnalysis.beatsPerBar(at: region.start, in: store.project)
+        listening = Task {
+            let reading = Task.detached(priority: .userInitiated) {
+                TempoAnalysis.tempo(of: url, offset: offset, length: length, beatsPerBar: beats,
+                                    isCancelled: { Task.isCancelled })
+            }
+            let heard = await withTaskCancellationHandler { await reading.value } onCancel: { reading.cancel() }
+            listening = nil
+            guard !Task.isCancelled, let now = current?.region, now.followsTempo != true else { return }
+            follow(from: now.warpStart(heard: heard?.bpm, songBPM: store.project.tempoMap.bpm(at: now.start)))
+        }
+    }
+
+    /// Turns Follow Song Tempo on from `start`, and says where its tempo came from; false when the
+    /// song refused it (the region would end past its last bar).
+    @discardableResult
+    private func follow(from start: (bpm: Double, source: WarpTempoSource)) -> Bool {
+        do {
+            try store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: start.bpm, followsTempo: true))
+        } catch {
+            tempoNote = "The region cannot follow the song's tempo here: it would end past the song's last bar."
+            return false
+        }
+        switch start.source {
+        case .heard:
+            tempoNote = "Heard " + Self.shown(start.bpm)
+                + " in the file. If it plays twice as fast or slow, double or halve Native Tempo."
+        case .song:
+            tempoNote = "No steady tempo was heard, so the region keeps the song's tempo of "
+                + Self.shown(start.bpm) + ". Set Native Tempo to the tempo the file was played at."
+        case .stored:
+            tempoNote = nil
+        }
+        return true
+    }
+
+    static func shown(_ bpm: Double) -> String { NumberText.string(bpm, decimalsUpTo: 2, unit: "BPM") }
 
     static func heldBPM(_ bpm: Double) -> Double {
         guard bpm.isFinite else { return 120 }

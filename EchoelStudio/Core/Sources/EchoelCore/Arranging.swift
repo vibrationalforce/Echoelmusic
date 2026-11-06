@@ -71,8 +71,13 @@ public enum Arranging {
     public static func end(of region: AudioRegion, in project: Project) -> Tick? {
         guard let file = project.mediaFile(region.media), file.sampleRate > 0, file.sampleRate.isFinite else { return nil }
         if region.warpBPM != nil {
-            // A warped region's file time is beats (AUD-2).
-            return project.position(of: region, atFileFrames: Double(region.length)).map { MusicalTime.integer($0.rounded(.down)) }
+            // A warped region's file time is beats (AUD-2). Seconds and back again leave the
+            // product a few ulps off a whole tick (3839.9999999999995 for a bar fitted at
+            // 44.1 kHz), and a plain floor would end a fitted region one tick before its bar line.
+            return project.position(of: region, atFileFrames: Double(region.length)).map { position in
+                let nearest = position.rounded()
+                return MusicalTime.integer(abs(position - nearest) <= 1e-6 ? nearest : position.rounded(.down))
+            }
         }
         let map = project.tempoMap
         return map.tick(atSeconds: map.seconds(at: region.start) + Double(region.length) / file.sampleRate)
