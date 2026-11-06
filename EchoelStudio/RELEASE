@@ -1,17 +1,17 @@
-11.0.0 — a kaleidoscope for the Field; a light cue that walks the Bar Weave
+11.0.0 — the engine measures its render load; the rig goes dark before the app sleeps
 
-What is new since 10060. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10061. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Field window, pattern menu, "Kaleidoscope": the Field folded round its centre in 4, 6, 8 or 12
-  segments. Never the video under the Field Layer, the Chladni plate or the Weave. A change of
-  the count fades through dark.
-- Light show, a cue's Look, "Weave": each fixture lights in the song's colour only while its cell
-  of the song's Bar Weave is lit, so the Field's weave walks across the rig a row per bar. Every
-  channel still passes the rig's flash guard.
+- Diagnostics: every ten seconds of play the diagnostics log records how much of its time the
+  engine's render used (peak, and how many callbacks used more than half, three quarters and all
+  of it) and how often the render's sample time jumped — an error line where one did.
+- Lights: when the song is paused from outside in the background (a call), every light output
+  leaves its rig dark before the engine stops, not on its next tick.
+- Song menu, Concert Pitch: the six historical and orchestral standards; a song keeps any pitch
+  it already stores.
 
-Previous: 11.0.0 (10060) — the Field keeps under three flashes a second at full level; 10059 —
-"Thin Film", the looks no longer jump at the bar; 10058 — stereo recording from an input pair.
-Earlier: git history.
+Previous: 11.0.0 (10061) — a kaleidoscope for the Field, a light cue that walks the Bar Weave;
+10060 — the Field under three flashes a second at full level. Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -19,12 +19,12 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Field window, Pattern "Water", Kaleidoscope 6: is the picture a six-fold mirror round the
-   centre, with no seam or line where the wedges meet?
-2. Change the Kaleidoscope from 6 to 12 while "Water" shows: does the picture fade out and back
-   in, without a flash?
-3. Kaleidoscope 8, Pattern "Weave": is the weave shown unfolded, rows rising from the bottom?
-4. Export a video with the Field Layer on and Kaleidoscope 6: is the video itself unfolded and
-   the Field over it folded?
-5. Light show with two or more fixtures (or Art-Net into a visualizer), a cue with Look "Weave",
-   play a song: do fixtures switch with the bars, fading rather than flashing?
+1. Play a dense song for two minutes, then About, Share Diagnostics: does the log hold lines
+   "engine: render load" with a peak below 1 and gaps 0? (Send the file.)
+2. Same song with a Bluetooth headset or an AirPlay output: do the render-load lines still show
+   no gaps, or do they name where it stuttered?
+3. Light show (or Art-Net into a visualizer) playing, app in the background, receive a call: does
+   every fixture go dark at once?
+4. Song menu, Concert Pitch: six entries, and a song set to 432 earlier still shows its value?
+5. Play for a minute with the Field open on Water and the Kaleidoscope on 6: any crackle in the
+   sound, any flicker in the picture?
