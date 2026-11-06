@@ -178,6 +178,9 @@ public final class EngineCore: @unchecked Sendable {
     private var outputCount = 2
     /// The interface inputs, from the input callback; a monitoring audio lane plays one.
     public let inputs = InputMonitor()
+    /// How hard each render callback works and whether the output's samples run on whole,
+    /// recorded by whoever drives the render (`RenderLoad`); read on the main thread.
+    public let load = RenderLoad()
     /// The inputs of the chunk being rendered, `maximumFrames` each, read once per chunk so
     /// two tracks can monitor the same input, a pair's two sides together (`inputGroups`).
     private let heard: UnsafeMutablePointer<Float>

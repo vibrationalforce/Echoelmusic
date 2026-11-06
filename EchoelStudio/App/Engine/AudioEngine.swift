@@ -610,8 +610,34 @@ final class AudioEngine {
         }
     }
 
+    /// Seconds of play since the render load was last written to the diagnostics log.
+    @ObservationIgnored private var loadSeconds = 0
+
+    /// Play starts a fresh window of render load.
+    private func startLoadWindow() {
+        loadSeconds = 0
+        _ = core?.load.take()
+    }
+
+    /// Every ten seconds of play, the render load of that window goes to the diagnostics log —
+    /// as an error when the engine's render alone overran its frames' time or its sample time
+    /// jumped, so a shared log shows trouble where it happened instead of a guess. A window
+    /// starts at Play (`startLoadWindow`): a pause's idle callbacks are not counted.
+    private func reportLoad(of core: EngineCore) {
+        loadSeconds += 1
+        guard loadSeconds >= 10 else { return }
+        loadSeconds = 0
+        let load = core.load.take()
+        guard load.callbacks > 0 || load.isTroubled else { return }
+        step("engine: render load", [("callbacks", Double(load.callbacks)), ("peak", load.peak),
+                                      ("over50", Double(load.overHalf)), ("over75", Double(load.overThreeQuarters)),
+                                      ("over100", Double(load.overBudget)), ("gaps", Double(load.discontinuities))],
+             level: load.isTroubled ? .error : .info)
+    }
+
     private func lookAtRendering(at now: Duration) {
         guard let core else { return }
+        reportLoad(of: core)
         let playing = isPlaying && suspendedInput == nil && wantsAudio
         switch watchdog.look(count: core.renderCount, at: now, playing: playing) {
         case .fine:
@@ -861,6 +887,7 @@ final class AudioEngine {
                 if let project { publish(project) }
             }
 
+            current.load.restart()
             let node = Self.makeSourceNode(format: format, core: current, preview: preview)
             step("graph: attach source node", [("Hz", sampleRate), ("ch", Double(channels))])
             engine.attach(node)
@@ -1177,6 +1204,7 @@ final class AudioEngine {
         playingWhenServicesLost = false
         core.play()
         isPlaying = true
+        startLoadWindow()
         watchRendering()
     }
 
@@ -1523,7 +1551,12 @@ final class AudioEngine {
     nonisolated private static func makeSourceNode(format: AVAudioFormat, core: EngineCore,
                                                    preview: PreviewPlayer) -> AVAudioSourceNode {
         let pointers = ChannelPointers()
+        // Host ticks to seconds, read once: the callback measures itself with two clock reads.
+        var timebase = mach_timebase_info_data_t()
+        mach_timebase_info(&timebase)
+        let secondsPerTick = timebase.denom > 0 ? Double(timebase.numer) / Double(timebase.denom) / 1e9 : 0
         return AVAudioSourceNode(format: format) { @Sendable _, timestamp, frameCount, bufferList in
+            let started = mach_absolute_time()
             let hostTime = timestamp.pointee.mFlags.contains(.hostTimeValid) ? timestamp.pointee.mHostTime : 0
             let buffers = UnsafeMutableAudioBufferListPointer(bufferList)
             let frames = Int(frameCount)
@@ -1555,6 +1588,10 @@ final class AudioEngine {
             let first = preview.firstChannel(channelCount: count)
             preview.render(left: pointers.base[first], right: pointers.base[first + 1], frames: frames,
                            outputRate: core.sampleRate)
+            // The compute and delivery clocks (`RenderLoad`): atomic counters only.
+            let sampleTime = timestamp.pointee.mFlags.contains(.sampleTimeValid) ? timestamp.pointee.mSampleTime : nil
+            core.load.record(seconds: Double(mach_absolute_time() &- started) * secondsPerTick, frames: frames,
+                             sampleRate: core.sampleRate, sampleTime: sampleTime)
             return noErr
         }
     }
