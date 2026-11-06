@@ -21,6 +21,7 @@ struct EffectsView: View {
                 VStack(alignment: .leading, spacing: Theme.Space.l) {
                     if let inserts {
                         chain(inserts)
+                        vocalStrip(inserts)
                         addMenu(count: inserts.count)
                         if case .track(let track) = owner {
                             vocalChainMenu(track: track)
@@ -91,6 +92,14 @@ struct EffectsView: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
+        }
+    }
+
+    /// The vocal strip, only on a track whose effects form a vocal chain — found from the effects
+    /// themselves, never from a stored name.
+    @ViewBuilder private func vocalStrip(_ inserts: [Insert]) -> some View {
+        if case .track(let track) = owner, let strip = VocalStrip(inserts: inserts) {
+            VocalStripSection(track: track, strip: strip)
         }
     }
 
