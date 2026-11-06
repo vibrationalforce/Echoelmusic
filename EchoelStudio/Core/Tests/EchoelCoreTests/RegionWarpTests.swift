@@ -179,4 +179,55 @@ final class RegionWarpTests: XCTestCase {
         XCTAssertNil(region.nativeBPM)
         XCTAssertTrue(CommandCatalog.all.map(\.name).contains("audio.warp"))
     }
+
+    /// W-3: the warp mode is one validated, undoable step, kept while warp is off, saved by name,
+    /// and carried by a duplicate; Tones is stored as no key at all.
+    func testTheWarpModeIsOneUndoStepAndRoundTripsByName() async throws {
+        var (p, audio, region) = try song(tempo: 90)
+        XCTAssertEqual(p.track(audio)?.regions.first?.warpMode, .tones, "absent is Tones")
+        XCTAssertThrowsError(try Command.setRegionWarpMode(track: audio, RegionID(), mode: .beats).apply(to: &p))
+        XCTAssertThrowsError(try Command.setRegionWarpMode(track: TrackID(), region, mode: .beats).apply(to: &p))
+        let before = p
+        try await MainActor.run {
+            let store = ProjectStore(project: before)
+            try store.perform(.setRegionWarpMode(track: audio, region, mode: .rePitch))
+            XCTAssertEqual(store.project.track(audio)?.regions.first?.warpMode, .rePitch)
+            store.undo()
+            XCTAssertEqual(store.project, before)
+        }
+        try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: true).apply(to: &p)
+        try Command.setRegionWarpMode(track: audio, region, mode: .beats).apply(to: &p)
+        try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: false).apply(to: &p)
+        XCTAssertEqual(p.track(audio)?.regions.first?.warpMode, .beats, "kept while warp is off")
+        let decoded = try ProjectCodec.decode(ProjectCodec.encode(p))
+        XCTAssertEqual(decoded, p)
+        XCTAssertEqual(decoded.track(audio)?.regions.first?.warpMode, .beats)
+
+        let placed = try XCTUnwrap(p.track(audio)?.regions.first)
+        let stored = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(placed)) as? [String: Any])
+        XCTAssertEqual(stored["warpMode"] as? String, "beats")
+        var tones = placed
+        tones.warpMode = .tones
+        let plain = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(tones)) as? [String: Any])
+        XCTAssertNil(plain["warpMode"], "Tones writes no key, as every earlier song")
+
+        let track = try XCTUnwrap(p.track(audio))
+        let copies = try XCTUnwrap(Arranging.duplicated(placed, in: track, project: p))
+        for command in copies { try command.apply(to: &p) }
+        XCTAssertEqual(p.track(audio)?.regions.last?.warpMode, .beats, "the copy stretches as the region does")
+        XCTAssertTrue(CommandCatalog.all.map(\.name).contains("audio.warpMode"))
+    }
+
+    /// A mode name a later build wrote is kept and saved back unchanged, and plays as Tones.
+    func testAnUnknownWarpModeIsKeptAndPlaysAsTones() throws {
+        let region = AudioRegion(media: file.id, start: 0, length: 48_000)
+        var stored = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(region)) as? [String: Any])
+        stored["warpMode"] = "complexPro"
+        let read = try JSONDecoder().decode(AudioRegion.self, from: JSONSerialization.data(withJSONObject: stored))
+        XCTAssertEqual(read.warpMode, .tones)
+        XCTAssertEqual(read.unrecognizedWarpMode, "complexPro")
+        let saved = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(read)) as? [String: Any])
+        XCTAssertEqual(saved["warpMode"] as? String, "complexPro")
+        XCTAssertNil(region.unrecognizedWarpMode)
+    }
 }

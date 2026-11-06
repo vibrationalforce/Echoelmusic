@@ -165,6 +165,9 @@ public enum Command: Codable, Equatable, Sendable {
     /// Whether a region follows the song's tempo, and the tempo its file was played at
     /// (`AudioRegion.nativeBPMRange`). Following, it keeps its pitch and spans its beats.
     case setRegionWarp(track: TrackID, RegionID, nativeBPM: Double, followsTempo: Bool)
+    /// How a region is stretched when it follows the song's tempo (W-3): Beats, Tones or Re-Pitch.
+    /// Kept while warp is off.
+    case setRegionWarpMode(track: TrackID, RegionID, mode: WarpMode)
     /// A video part's colour correction (COLOR): exposure, contrast, saturation, temperature, tint
     /// and lift, gamma and gain on the luma, each within its `ColorGrade` range. The file is never
     /// changed; the standard grade removes the correction.
@@ -1300,6 +1303,14 @@ extension Command {
             }
             project.tracks[t].regions[r] = region
 
+        case let .setRegionWarpMode(trackID, id, mode):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .audio else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only audio regions follow the tempo")
+            }
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            project.tracks[t].regions[r].warpMode = mode
+
         case let .addScene(id, name, index):
             guard project.sceneIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
             let at = index ?? project.scenes.count
@@ -1523,7 +1534,7 @@ extension Project {
         // One level and one way of following the tempo for the whole, and no fade inside it: a fade
         // between two pieces, or two levels, would be lost by the join and needs a bounce.
         guard ordered.allSatisfy({ $0.gainDB == first.gainDB && $0.nativeBPM == first.nativeBPM
-                                    && $0.followsTempo == first.followsTempo }),
+                                    && $0.followsTempo == first.followsTempo && $0.warpMode == first.warpMode }),
               ordered.dropFirst().allSatisfy({ ($0.fadeIn ?? 0) == 0 }),
               ordered.dropLast().allSatisfy({ ($0.fadeOut ?? 0) == 0 }) else { return nil }
         var joined = first
