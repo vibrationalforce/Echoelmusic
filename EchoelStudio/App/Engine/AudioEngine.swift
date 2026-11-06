@@ -26,7 +26,7 @@ final class AudioEngine {
     private(set) var restingTick: Tick = 0
     /// Where Play starts and Stop returns: the ruler's cue (`locate(to:)`). Transport state of this
     /// session — no `Command`, not in the song file — observed by the ruler only, and written only
-    /// by a locate, a Stop and an opened song.
+    /// by a locate, the musician's Stop (`transportStop()`) and an opened song.
     private(set) var cue = PlayStartCue()
     /// The session records and the sink node hears the interface.
     private(set) var isInputOpen = false
@@ -1339,12 +1339,26 @@ final class AudioEngine {
         core.jump(bySamples: Int64(samples))
     }
 
-    /// Stops and goes back to where Play started from: the ruler's cue, or bar 1 without one. A
-    /// Stop while already stopped — the second Stop — goes back to bar 1 and forgets the cue
-    /// (`PlayStartCue`).
+    /// Stops and goes back to where Play starts: the ruler's cue, or bar 1 without one. The cue
+    /// stays, stopped or not: this is the stop the engine and a take's end make — opening or closing
+    /// the input calls it — never the musician's second Stop (`transportStop()`), so arming or
+    /// disarming a track after a locate leaves the cue and the playhead where the musician put them.
     func stop() {
+        isPlaying = false
+        halt(at: cue.returnTick)
+    }
+
+    /// The musician's Stop (the transport's button, the position readout, Siri): playing, back to
+    /// the cue, or bar 1 without one; already stopped — the second Stop — back to bar 1, and the cue
+    /// is forgotten (`PlayStartCue`).
+    func transportStop() {
         let target = cue.stop(whilePlaying: isPlaying)
         isPlaying = false
+        halt(at: target)
+    }
+
+    /// Stops the core and rests at `target`; at bar 1 the core's own stop rewinds it.
+    private func halt(at target: Tick) {
         if target > 0, let core, project != nil {
             core.pause()
             seek(toTick: target)

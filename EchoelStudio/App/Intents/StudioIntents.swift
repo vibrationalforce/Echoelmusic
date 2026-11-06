@@ -209,7 +209,7 @@ struct StopIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        try StudioIntentBridge.shared.requireEngine().stop()
+        try StudioIntentBridge.shared.requireEngine().transportStop()
         return .result(dialog: "Stopped.")
     }
 }

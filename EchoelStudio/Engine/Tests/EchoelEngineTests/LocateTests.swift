@@ -21,6 +21,18 @@ final class LocateTests: XCTestCase {
         XCTAssertEqual(cue.stop(whilePlaying: true), 0)
     }
 
+    func testAStopTheEngineMakesItselfKeepsTheCue() {
+        var cue = PlayStartCue()
+        XCTAssertEqual(cue.returnTick, 0, "without a cue it goes back to bar 1")
+        cue.set(4 * bar)
+        // Arming an audio track while stopped opens the input, which stops the engine: twice in a
+        // row while stopped, and neither may count as the musician's second Stop.
+        XCTAssertEqual(cue.returnTick, 4 * bar)
+        XCTAssertEqual(cue.returnTick, 4 * bar)
+        XCTAssertEqual(cue.tick, 4 * bar, "so Record and Play still start at the cue")
+        XCTAssertEqual(cue.stop(whilePlaying: true), 4 * bar, "and the musician's Stop still returns there")
+    }
+
     func testTheCueStaysInsideWhatASongHolds() {
         var cue = PlayStartCue()
         cue.set(-480)

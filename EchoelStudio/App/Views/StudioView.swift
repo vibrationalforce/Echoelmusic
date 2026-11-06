@@ -677,7 +677,7 @@ private struct PositionReadout: View {
     private func backToStart() {
         guard !engine.isPlaying,
               TimelineGeometry.mayLocate(recording: recording.isRecording, exporting: documents.isExporting) else { return }
-        engine.stop()
+        engine.transportStop()
     }
 }
 

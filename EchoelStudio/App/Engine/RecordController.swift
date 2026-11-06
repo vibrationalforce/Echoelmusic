@@ -242,7 +242,7 @@ final class RecordController {
     /// The transport's Stop: ends a take first, so the take never outlives the song playing.
     func stopTransport() async {
         await stopRecording()
-        engine.stop()
+        engine.transportStop()
         await inputFollowsSong()
     }
 

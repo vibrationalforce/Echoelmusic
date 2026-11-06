@@ -20,6 +20,11 @@ public struct PlayStartCue: Equatable, Sendable {
 
     public mutating func clear() { tick = nil }
 
+    /// Where a stop the engine makes itself (the input opening or closing, a take's end) sends the
+    /// playhead: the cue, or bar 1 without one. It keeps the cue, because it is no Stop of the
+    /// musician's: arming a track after a locate still records from the cue.
+    public var returnTick: Tick { tick ?? 0 }
+
     /// Where a Stop sends the playhead. While playing: the cue, or bar 1 without one. While
     /// already stopped (the second Stop): bar 1, and the cue is forgotten, so the next Play starts
     /// there too.
