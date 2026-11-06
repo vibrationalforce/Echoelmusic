@@ -154,7 +154,7 @@ __pycache__/
 *.pyc
 
 # CI/build artefacts written into the working tree by ci.yml, pr-check.yml,
-# full-tests.yml and debug.sh. Verified 2026-07-27 that none of these is
+# full-tests.yml. Verified 2026-07-27 that none of these is
 # currently tracked, so the broad *.log rule cannot orphan an existing file.
 *.log
 TestResults/
