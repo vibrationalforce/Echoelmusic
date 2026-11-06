@@ -47,6 +47,9 @@ struct DDSPSource: Sendable {
     static let blendSnap: Float = 1e-6
     /// Character has to move this far before the amplitude table is rebuilt.
     static let characterStep: Float = 1e-4
+    /// A table amplitude below this is silence (−400 dB): it is stored as zero, so no partial
+    /// glides in the subnormal range, where some processors slow down many times over.
+    static let amplitudeFloor: Float = 1e-20
 
     /// The spectral exponent at Character 0 and how far it falls by Character 1: 1/n^2.5 (the
     /// earlier engine's dark shape at brightness 0) to 1/n^0.5 (its natural shape at brightness 1).
@@ -158,6 +161,9 @@ struct DDSPSource: Sendable {
     private var noiseLevel: Float = -1
     /// The character `target` was built for; −1 until the first sample builds one.
     private var tableCharacter: Float = -1
+    /// The spectral profile to play (0 … 9, anything else plays 0) and the one the table holds.
+    var profile = 0
+    private var tableProfile = 0
     private var controlCountdown = 0
     /// How many partials, from the first, the taper leaves above silence: a partial at or above
     /// Nyquist is silent, so the loops in `sumPartials` stop where they begin. All sixty-four ran
@@ -213,7 +219,7 @@ struct DDSPSource: Sendable {
         if controlCountdown <= 0 {
             controlCountdown = Self.controlInterval
             updateTaper(dt: dt)
-            if Swift.abs(character - tableCharacter) > Self.characterStep {
+            if Swift.abs(character - tableCharacter) > Self.characterStep || profile != tableProfile {
                 rebuildTable(character: character)
             }
         }
@@ -266,16 +272,21 @@ struct DDSPSource: Sendable {
         }
     }
 
-    /// The anti-alias weights for this increment: 1 − smoothstep across the band.
+    /// The anti-alias weights for this increment: 1 − smoothstep across the band. Once per
+    /// control block it also flushes a partial gliding towards silence once it is inaudible, so it
+    /// reaches exactly zero instead of sticking in the subnormal range (a profile with silent
+    /// partials, Hollow's even ones, switched in mid-note), as `blendSnap` does for the blend.
     @inline(__always)
     private mutating func updateTaper(dt: Float) {
-        let w = taperLane, r = ratioLane
+        let w = taperLane, r = ratioLane, a = amplitudeLane, g = targetLane
+        let floor = Self.amplitudeFloor
         let audible = withUnsafeMutablePointer(to: &partials) { (state: UnsafeMutablePointer<Partials>) -> Int in
             state.withMemoryRebound(to: Float.self, capacity: Self.laneCount) { (lanes: UnsafeMutablePointer<Float>) -> Int in
                 for i in 0..<Self.partialCount {
                     let position = (lanes[r + i] * dt - Self.taperStart) * Self.taperScale
                     let t = Swift.min(Swift.max(position, 0), 1)
                     lanes[w + i] = 1 - t * t * (3 - t * 2)
+                    if lanes[g + i] == 0, Swift.abs(lanes[a + i]) < floor { lanes[a + i] = 0 }
                 }
                 // The taper falls with the partial number, so the audible ones are the first ones.
                 var count = 0
@@ -286,23 +297,57 @@ struct DDSPSource: Sendable {
         audibleCount = audible
     }
 
-    /// The amplitude of partial n is n^−p for the exponent `character` chooses, the set
-    /// normalised to unit power. Sixty-four `exp2f` — only when Character has moved.
+    /// The amplitude of partial n for the profile, the set normalised to unit power. Only when
+    /// Character or the profile has moved. Profile 0 is n^−p for the exponent `character` chooses,
+    /// as always; the others are the earlier app's spectral shapes and instrument-family
+    /// templates (`EchoelDDSP`), closed forms per partial, nothing stored: 1 Metallic (odd 1/n,
+    /// even 0.1/n), 2 Hollow (odd n^−1.2, even silent), 3 Bell (n^−0.8 / (1 + 0.001·n²·c)),
+    /// 4 Flat, 5 Bowed (0.6·G(4, 3) + 0.4·n^−0.8), 6 Brass (G(5.5, 4)), 7 Low Bowed
+    /// (0.5·G(2.5, 2.5) + 0.5/n), 8 Reed (odd n^−0.7, even 0.05/n), 9 Double Reed
+    /// (0.7·G(6, 5) + 0.3/n), with G(c, w) = exp(−½((n − c)/w)²).
     private mutating func rebuildTable(character: Float) {
         tableCharacter = character
+        tableProfile = profile
         let exponent = Self.exponentAtZero - Self.exponentSpan * character
         var table = Bank()
         var power: Float = 0
         for i in 0..<Self.partialCount {
-            let a = exp2f(-exponent * Self.log2Ratios[i])
+            let a = Self.amplitude(profile: profile, partial: i, exponent: exponent, character: character)
             table[i] = a
             power += a * a
         }
         if power > 0 {
             let root = power.squareRoot()
-            for i in 0..<Self.partialCount { table[i] = table[i] / root }
+            for i in 0..<Self.partialCount {
+                let a = table[i] / root
+                table[i] = a < Self.amplitudeFloor ? 0 : a
+            }
         }
         partials.target = table
+    }
+
+    /// Partial `i` (n = i + 1) of profile `profile`. Profile 0 — and any index past the end — is
+    /// exactly the expression the engine always used, so a song without a profile sounds as before.
+    @inline(__always)
+    private static func amplitude(profile: Int, partial i: Int, exponent: Float, character: Float) -> Float {
+        let n = Float(i + 1)
+        let odd = i % 2 == 0
+        func bump(_ centre: Float, _ width: Float) -> Float {
+            let x = (n - centre) / width
+            return expf(-0.5 * x * x)
+        }
+        switch profile {
+        case 1: return odd ? 1 / n : 0.1 / n
+        case 2: return odd ? exp2f(-1.2 * log2Ratios[i]) : 0
+        case 3: return exp2f(-0.8 * log2Ratios[i]) / (1 + 0.001 * n * n * character)
+        case 4: return 1
+        case 5: return 0.6 * bump(4, 3) + 0.4 * exp2f(-0.8 * log2Ratios[i])
+        case 6: return bump(5.5, 4)
+        case 7: return 0.5 * bump(2.5, 2.5) + 0.5 / n
+        case 8: return odd ? exp2f(-0.7 * log2Ratios[i]) : 0.05 / n
+        case 9: return 0.7 * bump(6, 5) + 0.3 / n
+        default: return exp2f(-exponent * log2Ratios[i])
+        }
     }
 
     /// sin(2πt) for t in 0 ..< 1: the same folding and polynomial as the lane-wise `sine` below,

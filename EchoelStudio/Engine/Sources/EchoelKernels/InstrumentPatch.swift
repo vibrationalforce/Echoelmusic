@@ -73,6 +73,7 @@ extension SynthParameter.Name {
         case .textureRate: patch.textureRate = v
         case .textureSeed:
             patch.textureSeed = value.isFinite ? UInt32(Swift.min(Swift.max(value, 0), 9_999).rounded()) : 0
+        case .ddspProfile: patch.ddspProfile = value.isFinite ? Int(Swift.min(Swift.max(value, 0), 9).rounded()) : 0
         }
     }
 }

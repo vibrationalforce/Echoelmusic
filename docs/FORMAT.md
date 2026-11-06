@@ -162,7 +162,11 @@ cellular-automaton rule, by Wolfram's number 0 `90`, 1 `30`, 2 `110`, 3 `150`, 4
 harmonics may sound (absent 0.6); `synth.textureRate` 0 … 40 generations per second, 0 holds the row
 (absent 8); `synth.textureSeed` 0 … 9999, the row every note starts from — 0 a single cell in the middle
 of sixty-four (absent 0). How the row shapes the partials is the player's; rule, seed and rate are
-stored, so a song grows the same rows in every build.
+stored, so a song grows the same rows in every build. The DDSP engine (6) reads `synth.ddspProfile` (added inside format 4, 2026-11-06),
+the index of its spectral profile: 0 Character (the spectrum `synth.character` sets, the engine's
+sound before profiles), 1 Metallic, 2 Hollow, 3 Bell, 4 Flat, 5 Bowed, 6 Brass, 7 Low Bowed, 8 Reed,
+9 Double Reed — absent 0; a new profile goes at the end. Which partials each profile weights how is
+the player's; the index is stored, so a song plays the same profile in every build.
 
 **Plugin component:** `{type, subtype, manufacturer, name, manufacturerName}` — an Audio Unit by
 the three codes the system finds it by, each the four ASCII characters as one big-endian integer
@@ -382,7 +386,7 @@ an older build does not know. Since 2026-11-05 a reader follows one rule for it 
   no newer build's doing and refuses the song.
 - **Where nothing can stand in for the name, the song is refused, naming it.** A track's `kind`,
   a media file's `kind`, a parameter address's owner, and a choice index past the end of its list
-  (`synth.engine`, `synth.waveform`, `synth.filter`, `synth.textureRule`) — the reader says which
+  (`synth.engine`, `synth.waveform`, `synth.filter`, `synth.textureRule`, `synth.ddspProfile`) — the reader says which
   name is missing and that a newer build is needed.
 - The editor never makes a kept part: no command can name a source, an effect type or an id a
   kept part holds. Nothing here changes what a format-4 build writes for a song without kept parts.

@@ -242,6 +242,11 @@ struct EngineSource: Sendable {
                           seed: patch.textureSeed, sampleRate: sampleRate)
     }
 
+    /// The DDSP engine's spectral profile, from the patch, before each render and each strike.
+    mutating func setDDSPProfile(_ profile: Int) {
+        ddsp.profile = profile
+    }
+
     /// A key struck this voice: the mallet's modes sound again, the DDSP's noise starts a
     /// sequence of its own for this note (`order` is the synth's note counter), and the choir takes
     /// the note's register and the rate it sings at. The other engines have nothing to strike.

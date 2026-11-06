@@ -42,6 +42,9 @@ final class KernelParameterContractTests: XCTestCase {
             entry("synth_textureDensity", "Density", .amount, 0...1, 0.6),
             entry("synth_textureRate", "Evolve Rate", .hertz, 0...40, 8),
             entry("synth_textureSeed", "Seed", .amount, 0...9_999, 0),
+            // Appended 2026-11-06: the DDSP engine's spectral profile.
+            entry("synth_ddspProfile", "Profile", .choice, 0...9, 0,
+                  ["Character", "Metallic", "Hollow", "Bell", "Flat", "Bowed", "Brass", "Low Bowed", "Reed", "Double Reed"]),
         ])
     }
 

@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import EchoelDSP
 
@@ -13,11 +14,13 @@ final class DDSPSourceTests: XCTestCase {
     /// releases the key at that frame; `sweep` sets Character block by block, the last value
     /// holding to the end.
     private func tone(character: Float, frames: Int, noteOff: Int? = nil, level: Float = 1,
-                      pitch: UInt8 = 57, sweep: [Float]? = nil) -> (samples: [Float], synth: PolySynth) {
+                      pitch: UInt8 = 57, sweep: [Float]? = nil, profile: Int? = nil,
+                      switchTo: (block: Int, profile: Int)? = nil) -> (samples: [Float], synth: PolySynth) {
         var patch = SynthPatch(waveform: .saw, cutoff: 18_000, resonance: 0, filterEnvelopeAmount: 0,
                                ampEnvelope: .init(attack: 0.001, decay: 0.01, sustain: 1, release: 0.2), level: level)
         patch.engine = .ddsp
         patch.character = character
+        if let profile { patch.ddspProfile = profile }
         var synth = PolySynth(patch: patch, sampleRate: rate)
         synth.noteOn(pitch: pitch, velocity: 127)
         var buffer = [Float](repeating: 0, count: frames)
@@ -26,6 +29,10 @@ final class DDSPSourceTests: XCTestCase {
         while start < frames {
             if let sweep, index < sweep.count {
                 patch.character = sweep[index]
+                synth.setPatch(patch)
+            }
+            if let switchTo, index == switchTo.block {
+                patch.ddspProfile = switchTo.profile
                 synth.setPatch(patch)
             }
             if let noteOff, start == noteOff { synth.noteOff(pitch: pitch) }
@@ -208,5 +215,79 @@ final class DDSPSourceTests: XCTestCase {
                        "the harmonics are the same")
         XCTAssertEqual(render(seed: 1, character: 1), render(seed: 2, character: 1),
                        "without breath the seed changes no sample")
+    }
+
+    // MARK: - Profiles (2026-11-06)
+
+    /// Every profile sounds, stays finite, and keeps about one loudness (each set is normalised to
+    /// unit power, as Character's is).
+    func testEveryProfileSoundsAtOneLoudness() {
+        for profile in 0..<10 {
+            let window = steady(tone(character: 0.5, frames: 48_000, profile: profile).samples)
+            XCTAssertTrue(window.allSatisfy(\.isFinite), "profile \(profile)")
+            XCTAssertGreaterThan(rms(window), 0.2, "profile \(profile)")
+            XCTAssertLessThan(rms(window), 1, "profile \(profile)")
+        }
+    }
+
+    /// Hollow plays the odd harmonics only, Reed nearly only: the second harmonic is far below the
+    /// first and the third. Without breath (Character 1), so the bins hold the tone alone.
+    func testHollowAndReedLeaveTheEvenHarmonicsOut() {
+        for (profile, limit) in [(2, 0.05), (8, 0.2)] {
+            let window = steady(tone(character: 1, frames: 48_000, profile: profile).samples)
+            let second = magnitude(window, hertz: 440)
+            XCTAssertLessThan(second, limit * magnitude(window, hertz: 220), "profile \(profile)")
+            XCTAssertLessThan(second, limit * magnitude(window, hertz: 660), "profile \(profile)")
+        }
+    }
+
+    /// No two profiles share a spectrum: the first eight harmonics, relative to the fundamental,
+    /// differ somewhere by more than 0.05 (the closest pair, Metallic and Hollow, by about 0.065
+    /// at the third harmonic, worked out from their formulas).
+    func testEveryProfileHasItsOwnSpectrum() {
+        var spectra: [[Double]] = []
+        for profile in 0..<10 {
+            let window = steady(tone(character: 1, frames: 48_000, profile: profile).samples)
+            let fundamental = Swift.max(magnitude(window, hertz: 220), 1e-12)
+            spectra.append((2...8).map { (k: Int) -> Double in magnitude(window, hertz: 220 * Double(k)) / fundamental })
+        }
+        for a in 0..<spectra.count {
+            for b in (a + 1)..<spectra.count {
+                let largest = zip(spectra[a], spectra[b]).map { (pair: (Double, Double)) -> Double in abs(pair.0 - pair.1) }.max() ?? 0
+                XCTAssertGreaterThan(largest, 0.05, "profiles \(a) and \(b)")
+            }
+        }
+    }
+
+    /// Profile 0 is the engine's shape before profiles, by its formula: partial n at n^−p, p = 2.5 −
+    /// 2 · Character — at Character 1 (no breath) the k-th harmonic sounds at k^−0.5 of the first.
+    /// Pinned against the formula, not against the code that computes it.
+    func testProfileZeroIsTheCharacterFormula() {
+        let window = steady(tone(character: 1, frames: 48_000, profile: 0).samples)
+        let first = magnitude(window, hertz: 220)
+        for k in 2...6 {
+            let expected = Foundation.pow(Double(k), -0.5)
+            XCTAssertEqual(magnitude(window, hertz: 220 * Double(k)) / first, expected, accuracy: expected * 0.03, "harmonic \(k)")
+        }
+    }
+
+    /// An index past the end plays profile 0, sample for sample (the formula above pins profile 0).
+    func testAnUnknownProfilePlaysTheCharacterShapeExactly() {
+        let before = tone(character: 0.3, frames: 9_600).samples
+        XCTAssertEqual(tone(character: 0.3, frames: 9_600, profile: 0).samples, before)
+        XCTAssertEqual(tone(character: 0.3, frames: 9_600, profile: 42).samples, before)
+        XCTAssertEqual(tone(character: 0.3, frames: 9_600, profile: -1).samples, before)
+    }
+
+    /// Changing the profile while a note sounds glides like a turned Character: no step.
+    func testChangingTheProfileMidNoteDoesNotStep() {
+        let switched = tone(character: 1, frames: 24_000, switchTo: (block: 40, profile: 2)).samples
+        let plain = tone(character: 1, frames: 24_000).samples
+        let hollow = tone(character: 1, frames: 24_000, profile: 2).samples
+        XCTAssertTrue(switched.allSatisfy(\.isFinite))
+        // A click would be a step many times the tone's own; the glide between two spectra may
+        // pass a mix a little steeper than either.
+        let limit = Swift.max(maxStep(plain[9_600...]), maxStep(hollow[9_600...])) * 1.5
+        XCTAssertLessThanOrEqual(maxStep(switched[(40 * block - 512)..<(40 * block + 4_800)]), limit)
     }
 }

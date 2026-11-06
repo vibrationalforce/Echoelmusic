@@ -38,6 +38,9 @@ public struct SynthPatch: Equatable, Codable, Sendable {
     public var textureDensity: Float = 0.6
     public var textureRate: Float = 8
     public var textureSeed: UInt32 = 0
+    /// The DDSP engine's spectral profile (`synth.ddspProfile`, `DDSPSource.amplitude`): 0 is the
+    /// shape Character sets, as before profiles.
+    public var ddspProfile: Int = 0
 
     public enum FilterModel: String, CaseIterable, Codable, Sendable {
         case stateVariable, ladder
@@ -181,6 +184,7 @@ public struct SynthVoice: Sendable {
             ladder.setResonance(resonance)
         }
         if patch.engine == .texture { source.setTexture(patch, sampleRate: sampleRate) }
+        if patch.engine == .ddsp { source.setDDSPProfile(patch.ddspProfile) }
         // Every key strikes, a repeated one too: a mallet rings again on top of its tail, and the
         // DDSP's noise takes a sequence of its own from the note counter.
         source.strike(character: patch.character, order: order, pitch: pitch, sampleRate: sampleRate, dt: increment)
@@ -267,6 +271,7 @@ public struct SynthVoice: Sendable {
         if patch.engine == .pluck { source.setPluckRing(decaySeconds: patch.ampEnvelope.decay, sustain: patch.ampEnvelope.sustain,
                                                              sampleRate: sampleRate) }
         if patch.engine == .texture { source.setTexture(patch, sampleRate: sampleRate) }
+        if patch.engine == .ddsp { source.setDDSPProfile(patch.ddspProfile) }
         for i in buffer.indices {
             cutoffOctaves = targetOctaves + (cutoffOctaves - targetOctaves) * cutoffPole
             resonance = targetResonance + (resonance - targetResonance) * resonancePole
