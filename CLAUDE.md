@@ -66,8 +66,9 @@ Ein Zeiger auf einen Abschnitt „von `CLAUDE.md`" — in Code, Wächtern, Skrip
   Namensliste (echoelmusic-intern) stehen in keinem Echoelmusic-Text (§4c).
 NEVER use "BLAB", "Vibrational Force", legacy bio-wellness/soundscape branding, or esoteric terminology ("healing frequencies", chakras, Solfeggio) in user-facing copy.
 - **Founder-gegatet — berichten, nicht editieren:** `.github/workflows/**`, `project.yml` (beide),
-  `Resources/iOS/Info.plist`, `.claude/settings.json`, `.mcp.json` — Hook
-  `.claude/hooks/protect-founder-gated.py`, `.claude/rules/context.md` §3. `.deploy/release` ist frei.
+  `Resources/iOS/Info.plist`, `.claude/settings.json`, `.mcp.json`. Seit 2026-10-17 schützen Hook
+  und `permissions.ask` mechanisch nur `.claude/settings.json` und `.mcp.json`; die übrigen gegateten
+  Pfade gelten als Gesetz, nicht als Mechanik (`.claude/rules/context.md` §3). `.deploy/release` ist frei.
 - **Messen, nicht zitieren** (`.claude/rules/context.md` §2): eine Zahl ist ein Datum, der Befehl
   steht daneben. **Ehrlich verifizieren** (`.claude/rules/engineering.md`): grün kompiliert ist nicht
   am Gerät geprüft.

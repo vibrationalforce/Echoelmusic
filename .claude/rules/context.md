@@ -115,11 +115,10 @@ what a missing test name does and does not prove) lives in **`Tests/CISmoke/CLAU
 it is not repeated here (#416).
 
 **`.github/workflows/**`, `project.yml` and `Resources/iOS/Info.plist` are founder-gated:
-report, do not edit.** Since 2026-09-28 these three ask before the
-Claude writes that `permissions.ask` + a Bash hook recognise (measured: Claude Code 2.1.283,
-`default`/`auto`, nested `claude -p`). In `auto` the Bash hook DENIES (an "ask" there was
-emitted and the command still ran, resolver unknown); a phone release is proven in no mode.
-Scope, measurements, limits: `.claude/hooks/README.md`. `.deploy/release` is NOT gated since
+report, do not edit.** Since 2026-10-17 the hook and `permissions.ask` mechanically protect
+only `.claude/settings.json` and `.mcp.json` (`PROTECTED_FILES` in
+`.claude/hooks/protect-founder-gated.py`); the other gated paths hold as law, not as mechanism.
+In `auto` the hook DENIES. Scope, measurements, limits: `.claude/hooks/README.md`. `.deploy/release` is NOT gated since
 2026-10-01 (founder: "Nur Deploy frei") — bump it and ship.
 
 ## 4. Handling large tool output
