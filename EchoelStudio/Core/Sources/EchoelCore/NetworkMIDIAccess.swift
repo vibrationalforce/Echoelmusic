@@ -2,7 +2,8 @@ import Foundation
 
 /// Who may connect to Network MIDI (the RTP-MIDI session): nobody while it is off, and while it is
 /// on only the hosts in its contact list — never anyone on the Wi-Fi, because a host that connects
-/// plays the instrument and moves every mapped control. The app holds CoreMIDI's session; the
+/// plays the instrument and moves every mapped control. A new host gets in only through a short
+/// pairing window the musician opens, and joins the list then. The app holds CoreMIDI's session; the
 /// decisions are here, pure, so `NetworkMIDIAccessTests` replays them.
 public enum NetworkMIDIAccess {
     /// A network MIDI host as CoreMIDI describes it: a typed address and port, or a Bonjour
@@ -30,6 +31,16 @@ public enum NetworkMIDIAccess {
             return !myService.isEmpty && myService == theirService
         }
 
+        /// What the Song menu shows: the host's name, else its address and port, else its service.
+        public var title: String {
+            let named = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !named.isEmpty { return named }
+            let typed = address.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !typed.isEmpty { return port > 0 ? "\(typed):\(port)" : typed }
+            let found = service.trimmingCharacters(in: .whitespacesAndNewlines)
+            return found.isEmpty ? "Unnamed host" : found
+        }
+
         private static func normalized(_ text: String) -> String {
             text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         }
@@ -39,11 +50,15 @@ public enum NetworkMIDIAccess {
     public enum Policy: Equatable, Sendable {
         case noOne
         case contactsOnly
+        /// Only while pairing: the one way a new host gets in, for a minute the musician opened.
+        case anyone
     }
 
-    /// Off lets nobody in; on lets in the hosts in the contact list, and no one else.
-    public static func policy(networkOn: Bool) -> Policy {
-        networkOn ? .contactsOnly : .noOne
+    /// Off lets nobody in, pairing or not; on lets in the hosts in the contact list, and no one
+    /// else — except while the musician has opened a pairing window for a new host.
+    public static func policy(networkOn: Bool, pairing: Bool = false) -> Policy {
+        guard networkOn else { return .noOne }
+        return pairing ? .anyone : .contactsOnly
     }
 
     /// The positions in `connected` whose hosts must join the contact list before the policy

@@ -1148,6 +1148,7 @@ struct SongMenu: View {
                 Toggle(isOn: Binding(get: { midi.networkEnabled }, set: { midi.setNetwork($0) })) {
                     Label("Network MIDI", systemImage: "network")
                 }
+                if midi.networkEnabled { networkHostsMenu }
             }
             Section("Connect") {
                 // OSC, ADM-OSC, Art-Net and sACN out (wave W4): every one off until switched on there.
@@ -1316,6 +1317,42 @@ struct SongMenu: View {
     private func pick(_ address: ParameterAddress, _ value: Double) {
         writer.set(address, to: value, coalescingKey: nil)
         writer.endGesture()
+    }
+
+    /// The hosts Network MIDI lets in, and only they (`NetworkMIDIAccess`): each can be removed, and
+    /// a host connected outside the list can be allowed. Nothing is searched for on the network: a
+    /// new host joins the list by connecting during the one-minute window opened here, or by being
+    /// connected when Network MIDI is switched on.
+    private var networkHostsMenu: some View {
+        Menu("Network Hosts", systemImage: "desktopcomputer") {
+            if midi.networkPairing {
+                Button("Stop Waiting for a Host", systemImage: "xmark.circle") { midi.endNetworkPairing() }
+            } else {
+                Button("Let a New Host Connect", systemImage: "plus.circle") { midi.pairNetworkHost() }
+            }
+            Divider()
+            if midi.networkContacts.isEmpty && midi.networkStrangers.isEmpty {
+                Text("No hosts allowed")
+            }
+            ForEach(midi.networkContacts.indices, id: \.self) { index in
+                let host = midi.networkContacts[index]
+                Button(role: .destructive) { midi.removeNetworkHost(host) } label: {
+                    Label("Remove \(host.title)", systemImage: "minus.circle")
+                }
+            }
+            if !midi.networkStrangers.isEmpty {
+                Divider()
+                ForEach(midi.networkStrangers.indices, id: \.self) { index in
+                    let host = midi.networkStrangers[index]
+                    Button { midi.allowNetworkHost(host) } label: {
+                        Label("Allow \(host.title)", systemImage: "checkmark.circle")
+                    }
+                }
+            }
+            Divider()
+            Text(midi.networkPairing ? "For one minute, any host may connect and joins this list."
+                                     : "Only hosts in this list can connect.")
+        }
     }
 
     /// MIDI 2.0 (UMP), in and out, each off until switched on. The other side has to speak MIDI 2.0:

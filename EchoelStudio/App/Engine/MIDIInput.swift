@@ -353,6 +353,13 @@ final class MIDIInput {
     /// on Windows. While on, the session is one more source and destination like a cable, for the
     /// hosts in its contact list only (`NetworkMIDIAccess`).
     private(set) var networkEnabled = false
+    /// The hosts Network MIDI lets in (the session's contact list), for the Song menu.
+    private(set) var networkContacts: [NetworkMIDIAccess.Host] = []
+    /// Hosts connected now that are not in the contact list (one removed while it was connected):
+    /// the Song menu offers to allow them.
+    private(set) var networkStrangers: [NetworkMIDIAccess.Host] = []
+    /// True for the minute after "Let a New Host Connect": any host may connect, and joins the list.
+    private(set) var networkPairing = false
     /// MIDI 2.0 (UMP) in: the input port speaks the MIDI 2.0 protocol, so a MIDI 2.0 controller's
     /// 16-bit velocities, 32-bit controllers and per-note bends arrive at full resolution. Off by
     /// default; CoreMIDI translates a MIDI 1.0 source either way. Kept on this device.
@@ -392,6 +399,11 @@ final class MIDIInput {
     @ObservationIgnored private var gestureEnd: Task<Void, Never>?
     /// The network session's connections change without any MIDI setup change.
     @ObservationIgnored private var networkObserver: NSObjectProtocol?
+    /// Its contact list changes on its own too (another app, Audio MIDI Setup on a Mac).
+    @ObservationIgnored private var contactsObserver: NSObjectProtocol?
+    /// Ends the pairing window.
+    @ObservationIgnored private var pairingEnd: Task<Void, Never>?
+    private static let pairingSeconds = 60
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "midi")
 
     init(router: LiveRouter, store: ProjectStore, engine: AudioEngine, writer: ParameterWriter) {
@@ -594,7 +606,12 @@ final class MIDIInput {
         networkObserver = NotificationCenter.default.addObserver(
             forName: NSNotification.Name(MIDINetworkNotificationSessionDidChange), object: nil, queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.applyClockSource() }
+            MainActor.assumeIsolated { self?.networkSessionChanged() }
+        }
+        contactsObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name(MIDINetworkNotificationContactsDidChange), object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refreshNetworkHosts() }
         }
         if UserDefaults.standard.bool(forKey: Self.networkKey) { setNetwork(true) }
         connectSources()
@@ -663,22 +680,107 @@ final class MIDIInput {
         if on {
             // Only known hosts may connect, never anyone on the Wi-Fi: whoever is connected already
             // joins the contact list first, so switching on never cuts a host off silently.
-            let contacts = session.contacts().map(Self.accessHost)
-            let linked = session.connections().map(\.host)
-            for index in NetworkMIDIAccess.contactsToAdd(connected: linked.map(Self.accessHost), contacts: contacts)
-                where index < linked.count {
-                _ = session.addContact(linked[index])
-            }
+            keepConnectedHosts(session)
+        } else {
+            pairingEnd?.cancel()
+            pairingEnd = nil
+            networkPairing = false
         }
-        switch NetworkMIDIAccess.policy(networkOn: on) {
-        case .noOne: session.connectionPolicy = .noOne
-        case .contactsOnly: session.connectionPolicy = .hostsInContactList
-        }
-        session.isEnabled = on
         networkEnabled = on
+        applyNetworkPolicy(session)
+        session.isEnabled = on
         UserDefaults.standard.set(on, forKey: Self.networkKey)
         applyClockSource()
+        refreshNetworkHosts()
         log.info("midi: network \(on ? "on" : "off", privacy: .public) as \(session.networkName, privacy: .private)")
+    }
+
+    /// Opens the door to a new host for a minute, because the musician asked: whoever connects
+    /// meanwhile joins the contact list, then only the list may connect again.
+    func pairNetworkHost() {
+        guard networkEnabled else { return }
+        networkPairing = true
+        applyNetworkPolicy(MIDINetworkSession.default())
+        pairingEnd?.cancel()
+        pairingEnd = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(Self.pairingSeconds))
+            guard !Task.isCancelled else { return }
+            self?.endNetworkPairing()
+        }
+    }
+
+    /// Closes the door again: only the hosts in the contact list may connect.
+    func endNetworkPairing() {
+        pairingEnd?.cancel()
+        pairingEnd = nil
+        guard networkPairing else { return }
+        let session = MIDINetworkSession.default()
+        keepConnectedHosts(session)
+        networkPairing = false
+        applyNetworkPolicy(session)
+        refreshNetworkHosts()
+    }
+
+    /// The session's policy for the switch and the pairing window.
+    private func applyNetworkPolicy(_ session: MIDINetworkSession) {
+        switch NetworkMIDIAccess.policy(networkOn: networkEnabled, pairing: networkPairing) {
+        case .noOne: session.connectionPolicy = .noOne
+        case .contactsOnly: session.connectionPolicy = .hostsInContactList
+        case .anyone: session.connectionPolicy = .anyone
+        }
+    }
+
+    /// Every connected host that is not a contact yet becomes one.
+    private func keepConnectedHosts(_ session: MIDINetworkSession) {
+        let contacts = session.contacts().map(Self.accessHost)
+        let linked = session.connections().map(\.host)
+        for index in NetworkMIDIAccess.contactsToAdd(connected: linked.map(Self.accessHost), contacts: contacts)
+            where index < linked.count {
+            _ = session.addContact(linked[index])
+        }
+    }
+
+    /// Who is connected changed: the clock source may have come or gone, and while pairing the
+    /// host that just connected joins the contact list.
+    private func networkSessionChanged() {
+        applyClockSource()
+        if networkPairing { keepConnectedHosts(MIDINetworkSession.default()) }
+        refreshNetworkHosts()
+    }
+
+    /// Lets a connected host in from now on: it joins the contact list.
+    func allowNetworkHost(_ host: NetworkMIDIAccess.Host) {
+        let session = MIDINetworkSession.default()
+        guard let match = session.connections().map(\.host).first(where: { Self.accessHost($0).isSame(as: host) })
+        else { return }
+        _ = session.addContact(match)
+        refreshNetworkHosts()
+    }
+
+    /// Takes a host off the contact list: it can no longer connect.
+    func removeNetworkHost(_ host: NetworkMIDIAccess.Host) {
+        let session = MIDINetworkSession.default()
+        for contact in session.contacts() where Self.accessHost(contact).isSame(as: host) {
+            _ = session.removeContact(contact)
+        }
+        refreshNetworkHosts()
+    }
+
+    /// Reads the contact list and who is connected outside it, sorted by title for the menu.
+    private func refreshNetworkHosts() {
+        guard networkEnabled else {
+            networkContacts = []
+            networkStrangers = []
+            return
+        }
+        let session = MIDINetworkSession.default()
+        let contacts = session.contacts().map(Self.accessHost)
+        let linked = session.connections().map { Self.accessHost($0.host) }
+        let strangers = NetworkMIDIAccess.contactsToAdd(connected: linked, contacts: contacts)
+            .filter { $0 < linked.count }
+            .map { linked[$0] }
+        networkContacts = contacts.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+        networkStrangers = strangers.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
     }
 
     /// A CoreMIDI network host as the access policy reads it.

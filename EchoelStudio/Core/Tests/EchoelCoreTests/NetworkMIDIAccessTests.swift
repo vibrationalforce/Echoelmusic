@@ -11,6 +11,13 @@ final class NetworkMIDIAccessTests: XCTestCase {
         XCTAssertEqual(NetworkMIDIAccess.policy(networkOn: true), .contactsOnly)
     }
 
+    func testOnlyAPairingWindowLetsANewHostIn() {
+        XCTAssertEqual(NetworkMIDIAccess.policy(networkOn: true, pairing: true), .anyone)
+        XCTAssertEqual(NetworkMIDIAccess.policy(networkOn: true, pairing: false), .contactsOnly)
+        XCTAssertEqual(NetworkMIDIAccess.policy(networkOn: false, pairing: true), .noOne,
+                       "pairing never opens a session that is off")
+    }
+
     func testTheSameAddressAndPortIsTheSameHost() {
         let mac = Host(name: "Studio Mac", address: "192.168.1.20", port: 5004)
         XCTAssertTrue(mac.isSame(as: Host(name: "renamed", address: " 192.168.1.20 ", port: 5004)))
@@ -40,5 +47,13 @@ final class NetworkMIDIAccessTests: XCTestCase {
         XCTAssertEqual(NetworkMIDIAccess.contactsToAdd(connected: connected, contacts: [known]), [1, 4])
         XCTAssertEqual(NetworkMIDIAccess.contactsToAdd(connected: [], contacts: [known]), [])
         XCTAssertEqual(NetworkMIDIAccess.contactsToAdd(connected: [known], contacts: []), [0])
+    }
+
+    func testAHostIsShownByItsNameElseWhereItIs() {
+        XCTAssertEqual(Host(name: " Studio Mac ", address: "10.0.0.2", port: 5004).title, "Studio Mac")
+        XCTAssertEqual(Host(name: "", address: "10.0.0.2", port: 5004).title, "10.0.0.2:5004")
+        XCTAssertEqual(Host(name: "", address: "10.0.0.2", port: 0).title, "10.0.0.2")
+        XCTAssertEqual(Host(name: "", address: "", port: 0, service: "iPad").title, "iPad")
+        XCTAssertEqual(Host(name: "", address: "", port: 0).title, "Unnamed host")
     }
 }
