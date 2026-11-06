@@ -337,9 +337,8 @@ final class FieldLookTests: XCTestCase {
         XCTAssertEqual(last, FieldLook.auroraRayRange.upperBound, accuracy: 1e-9, "and arrives")
     }
 
-
     /// The looks that turn at fractions of the drift (the rings at 0.5 and 0.25, the dish at 0.4,
-    /// the water's 0.4 · 0.7 …, the aurora's 0.35 · 0.6 …, the depth's 0.3) draw the same picture
+    /// the water's 0.4 · 0.7 …, the aurora's 0.25 · 0.6 …, the depth's 0.3) draw the same picture
     /// at the drift's wrap as just before it, so the wrap is no jump; and the drift counts on
     /// across the song phase's own wraps.
     func testTheLooksDoNotJumpWhereTheirDriftWraps() {

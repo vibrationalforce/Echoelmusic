@@ -95,7 +95,7 @@ public enum FaradayDish {
 ///
 /// The rates that move a look are its `phase` multipliers on the song's bar phase (capped at
 /// `FieldPulse.maximumRateHz` turns a second): Dish 0.4, Water 0.4 (its fastest wave 1.7× that),
-/// Aurora 0.35, Depth 0.30 — each under one hertz of drift, and none squares its phase.
+/// Aurora 0.25, Depth 0.30 — each under one hertz of drift, and none squares its phase.
 public enum FieldLook {
     /// Shader literals: written from these numbers so the GPU cannot drift from the CPU mirror.
     public static let dishPhaseRate = 0.4
@@ -489,7 +489,7 @@ public struct FieldLookMotion: Equatable, Sendable {
         public var filmPhase = 0.0
         /// The looks' phase in turns, 0 … `driftPeriod`: the song's drift (at the blend's share
         /// while two looks show), counted on across the song phase's wraps. The rings and the
-        /// dish, water, aurora and depth turn their terms at fractions of it (0.5, 0.4, 0.35 …);
+        /// dish, water, aurora and depth turn their terms at fractions of it (0.5, 0.4, 0.25 …);
         /// on a phase that wrapped every turn each wrap jumped the whole picture — up to 2.5 times
         /// a second at the song's fastest drift (found in review, 2026-11-06). Every such
         /// fraction lands on a whole turn at `driftPeriod`, so its own wrap never shows.
@@ -503,7 +503,8 @@ public struct FieldLookMotion: Equatable, Sendable {
         /// This frame with what no look on screen draws set to rest, so two frames that draw the
         /// same picture compare equal (a renderer rests on it): the moiré's gratings without the
         /// moiré, the weave without the weave, the dish's lattice without the dish or the depth,
-        /// the heard pitch without the water or the aurora, the film's ripple without the film, the partner and its share without a blend.
+        /// the heard pitch always (no look draws it), the ripple without the water or the film, the rays
+        /// without the aurora, the partner and its share without a blend.
         public var onScreen: Shown {
             var out = self
             let looks = isBlending ? [primary, partner] : [primary]
@@ -524,8 +525,8 @@ public struct FieldLookMotion: Equatable, Sendable {
     /// The share of the song's drift two mixed looks move at.
     public static let blendPhaseShare = 0.5
     /// The turns `Shown.turns` wraps at: a whole number of turns of every rate a look turns at
-    /// (`FieldLook.dishPhaseRate` 0.4, `auroraPhaseRate` 0.35, `depthPhaseRate` 0.3, and the
-    /// multiples inside them, down to 0.21 = 21/100), measured in `FieldLookTests`.
+    /// (`FieldLook.dishPhaseRate` 0.4, `auroraPhaseRate` 0.25, `depthPhaseRate` 0.3, and the
+    /// multiples inside them, down to 0.15 = 15/100), measured in `FieldLookTests`.
     public static let driftPeriod = 100.0
     /// Under this the shader draws the primary alone.
     public static let blendThreshold = 0.001
@@ -632,6 +633,8 @@ public struct FieldLookMotion: Equatable, Sendable {
             let glided = Self.glideLog(shown.dishK, Self.lattice(dish, ceiling: ceiling),
                                        tau: Self.latticeGlideSeconds, seconds: elapsed)
             shown.dishK += Swift.min(Swift.max(glided - shown.dishK, -reach), reach)
+            // A lower detail is not a pitch: the lattice never stays finer than it allows.
+            shown.dishK = Swift.min(shown.dishK, ceiling)
             shown.dishHex = FieldMotion.ease(shown.dishHex,
                                              FaradayDish.latticeHexagonality(capillaryFraction: dish?.capillaryFraction ?? 1),
                                              tau: Self.hexGlideSeconds, seconds: elapsed)
