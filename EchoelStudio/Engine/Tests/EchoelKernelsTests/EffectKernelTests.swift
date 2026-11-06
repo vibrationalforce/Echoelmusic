@@ -129,6 +129,32 @@ final class EffectKernelTests: XCTestCase {
         XCTAssertEqual(untouched.gainReduction, 0)
     }
 
+    /// The reverb's mode is its last parameter, a named choice that starts at Hall: an insert saved
+    /// before it existed keeps its five addresses and sounds as it did, and Room is heard.
+    func testTheReverbsModeIsItsLastParameterAndStartsAtHall() {
+        let kernel = EffectKernel(effect: .reverb, sampleRate: rate)
+        XCTAssertEqual(kernel.parameters.map(\.identifier), ["size", "decay", "damping", "predelay", "mix", "mode"])
+        let mode = kernel.parameters[5]
+        XCTAssertEqual(mode.unit, .choice)
+        XCTAssertEqual(mode.choices, ["Hall", "Plate", "Room"])
+        XCTAssertEqual(mode.choice(at: kernel.parameter(5)), "Hall")
+        let saved = EffectKernel(effect: .reverb, sampleRate: rate, values: [0.6, 2.2, 7_000, 0.02, 0.5])
+        XCTAssertEqual(saved.parameter(5), 0, "five stored values: the mode takes Hall")
+
+        let tone: [Float] = (0..<9_600).map { (index: Int) -> Float in
+            let phase: Double = 2 * Double.pi * 220 * Double(index) / 48_000
+            return index < 2_400 ? Float(0.5 * sin(phase)) : 0
+        }
+        let hall = EffectKernel(effect: .reverb, sampleRate: rate, values: [0.6, 2.2, 7_000, 0.02, 0.5, 0])
+        XCTAssertEqual(process(saved, tone), process(hall, tone), "no stored mode plays the hall")
+        let room = EffectKernel(effect: .reverb, sampleRate: rate, values: [0.6, 2.2, 7_000, 0.02, 0.5, 2])
+        let roomed = process(room, tone)
+        XCTAssertTrue(roomed.allSatisfy(\.isFinite))
+        let difference = zip(process(EffectKernel(effect: .reverb, sampleRate: rate, values: [0.6, 2.2, 7_000, 0.02, 0.5]), tone),
+                             roomed).map { (pair: (Float, Float)) -> Float in abs(pair.0 - pair.1) }.max() ?? 0
+        XCTAssertGreaterThan(difference, 0.001, "the room is heard")
+    }
+
     func testAParameterReachesTheSoundAtTheNextBlockAndCarriesToANewRate() {
         let eq = EffectKernel(effect: .equalizer, sampleRate: rate)
         let tone = (0..<4_800).map { Float(sin(2 * Double.pi * 3_000 * Double($0) / 48_000)) }

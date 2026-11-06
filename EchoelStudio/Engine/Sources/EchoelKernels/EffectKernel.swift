@@ -364,7 +364,8 @@ public final class EffectKernel: @unchecked Sendable {
             if s != delay.settings { delay.settings = s }
         case .reverb:
             guard let reverb else { return }
-            let s = Reverb.Settings(size: value(0), decay: value(1), damping: value(2), predelay: value(3), mix: value(4))
+            let s = Reverb.Settings(size: value(0), decay: value(1), damping: value(2), predelay: value(3), mix: value(4),
+                                    mode: Reverb.Settings.Mode(index: value(5)))
             if s != reverb.settings { reverb.settings = s }
         case .chorus:
             guard let chorus else { return }
@@ -554,6 +555,8 @@ public final class EffectKernel: @unchecked Sendable {
             add("damping", "Damping", 500...20_000, 7_000, .hertz)
             add("predelay", "Pre-Delay", 0...0.2, 0.02, .seconds)
             add("mix", "Mix", 0...1, 0.2, .amount)
+            // Appended: an insert saved before it has no value here and plays Hall, as it did.
+            choose("mode", "Mode", Reverb.Settings.Mode.allCases.map(\.title), 0)
         case .chorus:
             add("rate", "Rate", 0.05...8, 0.6, .hertz)
             add("depth", "Depth", 0...1, 0.5, .amount)

@@ -1,7 +1,13 @@
 import Foundation
 
-/// A stereo hall reverb: a pre-delay, four allpass diffusers, then an eight-line feedback delay
+/// A stereo reverb: a pre-delay, four allpass diffusers, then an eight-line feedback delay
 /// network mixed by a Householder matrix (lossless, so the decay is set by the line gains alone).
+///
+/// Three modes voice that one network (`Settings.Mode`): Hall, the sound it has always had; Plate,
+/// shorter lines and denser diffusion, so the first 50 ms fill sooner, and a brighter tail; Room,
+/// shorter lines, shorter and earlier diffusers and about half the decay. A mode only moves the
+/// targets `update()` computes — line lengths, gains, damping, diffusers — inside the buffers
+/// `init` allocated for Hall, the longest, so switching it allocates nothing and the lines glide.
 ///
 /// Each line's gain is derived from the decay time, so every line falls by 60 dB in `decay`
 /// seconds whatever its length — the tail stays smooth instead of fluttering. A lowpass in
@@ -19,6 +25,34 @@ import Foundation
 /// Owned by the render thread; allocated in `init`, nothing allocates after that.
 public final class Reverb: @unchecked Sendable {
     public struct Settings: Equatable, Codable, Sendable {
+        /// How the network is voiced. The order is stored (an effect's choice stores its index), so a
+        /// new mode goes at the end.
+        public enum Mode: String, Codable, Sendable, CaseIterable {
+            case hall, plate, room
+
+            public var title: String {
+                switch self {
+                case .hall: "Hall"
+                case .plate: "Plate"
+                case .room: "Room"
+                }
+            }
+
+            /// The mode at a choice's index; anything outside the list plays Hall. A switch, not
+            /// `allCases`, so the render thread can call it without building an array.
+            public init(index: Double) {
+                guard index.isFinite else {
+                    self = .hall
+                    return
+                }
+                switch index.rounded() {
+                case 1: self = .plate
+                case 2: self = .room
+                default: self = .hall
+                }
+            }
+        }
+
         /// Room size 0 … 1.
         public var size: Double
         /// Seconds to fall by 60 dB, 0.2 … 20.
@@ -29,14 +63,32 @@ public final class Reverb: @unchecked Sendable {
         public var predelay: Double
         /// Dry 0 … wet 1.
         public var mix: Double
+        /// Hall, Plate or Room; Hall is the sound before modes existed.
+        public var mode: Mode
 
         public init(size: Double = 0.6, decay: Double = 2.2, damping: Double = 7_000, predelay: Double = 0.02,
-                    mix: Double = 0.2) {
+                    mix: Double = 0.2, mode: Mode = .hall) {
             self.size = size
             self.decay = decay
             self.damping = damping
             self.predelay = predelay
             self.mix = mix
+            self.mode = mode
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case size, decay, damping, predelay, mix, mode
+        }
+
+        /// Settings stored before modes existed have no mode; they decode as Hall, as they sounded.
+        public init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.init(size: try container.decode(Double.self, forKey: .size),
+                      decay: try container.decode(Double.self, forKey: .decay),
+                      damping: try container.decode(Double.self, forKey: .damping),
+                      predelay: try container.decode(Double.self, forKey: .predelay),
+                      mix: try container.decode(Double.self, forKey: .mix),
+                      mode: try container.decodeIfPresent(Mode.self, forKey: .mode) ?? .hall)
         }
 
         /// Every value inside its range; non-finite values take the default.
@@ -48,7 +100,32 @@ public final class Reverb: @unchecked Sendable {
             return Settings(size: clamp(size, 0...1, base.size), decay: clamp(decay, 0.2...20, base.decay),
                             damping: clamp(damping, 500...20_000, base.damping),
                             predelay: clamp(predelay, 0...Reverb.maximumPredelay, base.predelay),
-                            mix: clamp(mix, 0...1, base.mix))
+                            mix: clamp(mix, 0...1, base.mix), mode: mode)
+        }
+    }
+
+    /// What a mode does to the network, as factors on what Hall computes. Hall's are all exactly 1
+    /// (and its diffusion the 0.6 it always had), and a product with 1 is exact, so Hall renders bit
+    /// for bit as before. Every factor is at most 1 where a buffer is sized for Hall (the lines, the
+    /// diffusers), so a mode never needs more room than `init` allocated.
+    struct Voicing: Equatable {
+        /// Line lengths.
+        var lines: Double
+        /// The decay time.
+        var decay: Double
+        /// The tail's lowpass (capped at 20 kHz, as the setting is).
+        var brightness: Double
+        /// The diffusers' allpass coefficient.
+        var diffusion: Float
+        /// The diffusers' lengths.
+        var diffusers: Double
+
+        static func of(_ mode: Settings.Mode) -> Voicing {
+            switch mode {
+            case .hall: Voicing(lines: 1, decay: 1, brightness: 1, diffusion: 0.6, diffusers: 1)
+            case .plate: Voicing(lines: 0.55, decay: 1, brightness: 2.5, diffusion: 0.7, diffusers: 1)
+            case .room: Voicing(lines: 0.5, decay: 0.45, brightness: 0.8, diffusion: 0.6, diffusers: 0.5)
+            }
         }
     }
 
@@ -79,6 +156,8 @@ public final class Reverb: @unchecked Sendable {
     private let damp: UnsafeMutablePointer<Float>
     private let outputs: UnsafeMutablePointer<Float>
     private var dampCoefficient: Float = 1
+    /// The diffusers' allpass coefficient, set by the mode.
+    private var diffusion: Float = 0.6
     private let glide: Double
     /// Until the first sample runs, a new size takes effect at once (see `StereoDelay`).
     private var hasRun = false
@@ -180,16 +259,27 @@ public final class Reverb: @unchecked Sendable {
         guardGain = 1
     }
 
+    /// Where the settings become the network's targets. It allocates nothing: the mode only moves
+    /// lengths inside the buffers `init` sized for Hall.
     private func update() {
+        let voicing = Voicing.of(settings.mode)
         let stretch = 0.5 + settings.size
+        let decay = settings.decay * voicing.decay
         for i in 0..<Self.lines {
-            let samples = Swift.min(Self.lineMilliseconds[i] * 0.001 * stretch * sampleRate, Double(lineCapacity - 3))
+            let samples = Swift.min(Self.lineMilliseconds[i] * 0.001 * stretch * sampleRate * voicing.lines,
+                                    Double(lineCapacity - 3))
             target[i] = Swift.max(samples, 2)
             // −60 dB after `decay` seconds: g^(decay·rate / length) = 10^-3.
-            gain[i] = Float(Foundation.pow(10, -3 * target[i] / (settings.decay * sampleRate)))
+            gain[i] = Float(Foundation.pow(10, -3 * target[i] / (decay * sampleRate)))
         }
-        inputPeakFall = Float(Foundation.pow(10, -3 / (settings.decay * sampleRate)))
-        dampCoefficient = Float(1 - Foundation.exp(-2 * Double.pi * settings.damping / sampleRate))
+        inputPeakFall = Float(Foundation.pow(10, -3 / (decay * sampleRate)))
+        let cutoff = Swift.min(settings.damping * voicing.brightness, 20_000)
+        dampCoefficient = Float(1 - Foundation.exp(-2 * Double.pi * cutoff / sampleRate))
+        diffusion = voicing.diffusion
+        for d in 0..<4 {
+            let samples = Swift.max(1, Int(Self.diffuserMilliseconds[d] * 0.001 * voicing.diffusers * sampleRate))
+            diffuserLength[d] = Swift.min(samples, diffuserCapacity - 1)
+        }
         preLength = Swift.min(Int(settings.predelay * sampleRate), preCapacity - 1)
         if !hasRun {
             for i in 0..<Self.lines {
@@ -223,9 +313,9 @@ public final class Reverb: @unchecked Sendable {
                 var at = diffuserWrite[d] - diffuserLength[d]
                 if at < 0 { at += diffuserCapacity }
                 let delayed = buffer[at]
-                let v = x + 0.6 * delayed
+                let v = x + diffusion * delayed
                 buffer[diffuserWrite[d]] = v
-                x = delayed - 0.6 * v
+                x = delayed - diffusion * v
                 diffuserWrite[d] = diffuserWrite[d] + 1 < diffuserCapacity ? diffuserWrite[d] + 1 : 0
             }
             // Read every line, damp it, apply its decay gain.
