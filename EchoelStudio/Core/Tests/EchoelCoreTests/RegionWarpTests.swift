@@ -120,6 +120,23 @@ final class RegionWarpTests: XCTestCase {
             XCTAssertEqual(Arranging.end(of: warped, in: p), bar5, "at \(tempo) BPM the loop ends on bar 5")
         }
 
+        // A length that is no whole number of anything: one bar of 4/4 and one of 3/4 at 44.1 kHz,
+        // where the tempo and back land a hair under the bar line.
+        for (frames, quarters) in [(115_952, 4.0), (103_988, 3.0)] {
+            let odd = MediaFile(name: "Odd", path: "Media/odd.wav", frameCount: frames, sampleRate: 44_100)
+            var p = Project(tempo: 120)
+            let audio = TrackID(), region = RegionID()
+            try Command.addTrack(id: audio, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+            try Command.addMedia(odd).apply(to: &p)
+            try Command.placeAudio(track: audio, id: region, media: odd.id, start: 0).apply(to: &p)
+            let placed = try XCTUnwrap(p.track(audio)?.regions.first)
+            let fitted = try XCTUnwrap(placed.nativeBPM(forBars: 1, sampleRate: odd.sampleRate, quartersPerBar: quarters))
+            try Command.setRegionWarp(track: audio, region, nativeBPM: fitted, followsTempo: true).apply(to: &p)
+            let warped = try XCTUnwrap(p.track(audio)?.regions.first)
+            XCTAssertEqual(Arranging.end(of: warped, in: p), Tick(quarters) * MusicalTime.ticksPerQuarter,
+                           "\(frames) frames fitted to one bar of \(Int(quarters)) quarters end on its bar line")
+        }
+
         let plain = AudioRegion(media: loop.id, start: 0, length: 360_000)
         XCTAssertEqual(plain.nativeBPM(forBars: 2, sampleRate: 48_000), 64)
         XCTAssertEqual(plain.nativeBPM(forBars: 3, sampleRate: 48_000, quartersPerBar: 3), 72, "3/4")
