@@ -70,6 +70,9 @@ public final class PitchCorrector: @unchecked Sendable {
     /// How far the output sits behind the input, in seconds: the middle of the head's window, where
     /// it rests on an in-tune note. A host that compensates delay reads it from the Audio Unit.
     public static var latencySeconds: Double { SpliceHead.delaySeconds }
+    /// How long the corrected sound goes on after the input stops, in seconds: the farthest the
+    /// head reads behind the newest sample, and one cross-fade.
+    public static var tailSeconds: Double { SpliceHead.farthest + SpliceHead.fadeSeconds }
 
     public var settings: Settings {
         didSet { settings = settings.clamped }

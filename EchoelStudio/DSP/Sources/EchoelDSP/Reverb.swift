@@ -102,6 +102,16 @@ public final class Reverb: @unchecked Sendable {
                             predelay: clamp(predelay, 0...Reverb.maximumPredelay, base.predelay),
                             mix: clamp(mix, 0...1, base.mix), mode: mode)
         }
+
+        /// How long the wet sound goes on after the input stops, in seconds: the pre-delay, the
+        /// longest line once more, and the time the network takes to fall by 60 dB in this mode
+        /// (Room's decay is shorter than the one set). Damping and the guard only shorten it.
+        public var tailSeconds: Double {
+            let s = clamped
+            let voicing = Reverb.Voicing.of(s.mode)
+            let longest = (Reverb.lineMilliseconds.max() ?? 0) * 0.001 * (0.5 + s.size) * voicing.lines
+            return s.predelay + longest + s.decay * voicing.decay
+        }
     }
 
     /// What a mode does to the network, as factors on what Hall computes. Hall's are all exactly 1

@@ -294,4 +294,116 @@ final class EffectKernelTests: XCTestCase {
         let silent = process(kernel, input)
         XCTAssertEqual(Array(silent.suffix(1_000)), Array(input.suffix(1_000)), "every voice off passes the sound")
     }
+
+    /// The tail a host waits for after the input stops grows with what makes it: the reverb's decay,
+    /// the delay's feedback. Room rings shorter than Hall at the same decay; a delay without feedback
+    /// rings for one repeat; the longest stays at the cap.
+    func testTheReverbAndTheDelayReportATailThatGrowsWithDecayAndFeedback() {
+        let reverb = EffectKernel(effect: .reverb, sampleRate: rate)
+        let hall = reverb.tailSeconds
+        XCTAssertGreaterThan(hall, 2.2, "at least the default decay")
+        reverb.setParameter(1, 10)
+        XCTAssertGreaterThan(reverb.tailSeconds, hall + 7)
+        let longHall = reverb.tailSeconds
+        reverb.setParameter(5, 2) // Room
+        XCTAssertLessThan(reverb.tailSeconds, longHall, "Room decays faster than the decay set")
+        XCTAssertGreaterThan(reverb.tailSeconds, 0)
+
+        let delay = EffectKernel(effect: .delay, sampleRate: rate)
+        let plain = delay.tailSeconds
+        XCTAssertGreaterThan(plain, 0.375)
+        delay.setParameter(1, 0.8)
+        XCTAssertGreaterThan(delay.tailSeconds, plain)
+        delay.setParameter(1, 0)
+        XCTAssertEqual(delay.tailSeconds, 0.375, accuracy: 1e-6, "one repeat without feedback")
+        delay.setParameter(0, 2)
+        delay.setParameter(1, 0.95)
+        XCTAssertEqual(delay.tailSeconds, EffectKernel.longestTailSeconds)
+    }
+
+    /// An EQ, a compressor or a limiter stops with its input; no effect reports a tail that is
+    /// negative, past the cap or not a number, at either end of any parameter.
+    func testEveryTailIsFiniteAndOnlyTheRingingEffectsHaveOne() {
+        for effect in [StandardEffect.equalizer, .compressor, .limiter, .saturation, .stereoWidth] {
+            XCTAssertEqual(EffectKernel(effect: effect, sampleRate: rate).tailSeconds, 0, effect.rawValue)
+        }
+        for effect in [StandardEffect.chorus, .flanger, .phaser, .tape, .granular, .pitchCorrection, .harmonizer] {
+            XCTAssertGreaterThan(EffectKernel(effect: effect, sampleRate: rate).tailSeconds, 0, effect.rawValue)
+        }
+        for effect in StandardEffect.allCases {
+            for edge in [false, true] {
+                let kernel = EffectKernel(effect: effect, sampleRate: rate)
+                for p in kernel.parameters { kernel.setParameter(p.address, edge ? p.range.upperBound : p.range.lowerBound) }
+                let tail = kernel.tailSeconds
+                XCTAssertTrue(tail.isFinite, "\(effect)")
+                XCTAssertTrue((0...EffectKernel.longestTailSeconds).contains(tail), "\(effect) \(tail)")
+            }
+        }
+    }
+
+    /// The tail is what the delay plays: after it, an impulse's repeats have fallen below −60 dB.
+    func testTheDelayIsSilentAfterTheTailItReports() {
+        let delay = EffectKernel(effect: .delay, sampleRate: rate, values: [0.01, 0.5, 1, 6_000, 0])
+        let tailFrames = Int(delay.tailSeconds * rate)
+        XCTAssertGreaterThan(tailFrames, 480)
+        var impulse = [Float](repeating: 0, count: tailFrames + 4_800)
+        impulse[0] = 1
+        let out = process(delay, impulse)
+        XCTAssertGreaterThan(out[300..<700].map { abs($0) }.max() ?? 0, 0.5, "the first repeat")
+        XCTAssertLessThan(out[(tailFrames + 50)...].map { abs($0) }.max() ?? 1, 0.001)
+    }
+
+    /// A host's ramp runs over its frames exactly where the kernel says it can: a number moves in a
+    /// straight line — a tenth of the way after a tenth of a one-second ramp — and a named choice,
+    /// a switch and the delay's time (which glides itself) take the end value at once.
+    func testAHostsRampRunsOverItsFramesExactlyWhereTheKernelCanRamp() {
+        let silence = [Float](repeating: 0, count: 256)
+        let tenth = [Float](repeating: 0, count: 4_800)
+        for effect in StandardEffect.allCases {
+            for p in EffectKernel.parameters(for: effect) {
+                let kernel = EffectKernel(effect: effect, sampleRate: rate)
+                _ = process(kernel, silence)
+                let start = kernel.playingValue(p.address)
+                let end = p.defaultValue - p.range.lowerBound > p.range.upperBound - p.defaultValue
+                    ? p.range.lowerBound : p.range.upperBound
+                kernel.rampParameter(p.address, to: end, frames: 48_000)
+                XCTAssertEqual(kernel.parameter(p.address), end, "\(effect) \(p.identifier) is set to its end")
+                _ = process(kernel, tenth)
+                let now = kernel.playingValue(p.address)
+                let label = "\(effect) \(p.identifier)"
+                if EffectKernel.canRamp(effect, p.address) {
+                    XCTAssertEqual(now, start + (end - start) * 0.1, accuracy: abs(end - start) * 1e-3, label)
+                } else {
+                    XCTAssertEqual(now, end, label)
+                }
+                if p.unit == .choice || p.unit == .boolean {
+                    XCTAssertFalse(EffectKernel.canRamp(effect, p.address), "\(label) never ramps")
+                }
+            }
+        }
+        XCTAssertFalse(EffectKernel.canRamp(.delay, 0), "the delay's time glides itself")
+        XCTAssertTrue(EffectKernel.canRamp(.reverb, 1))
+        XCTAssertFalse(EffectKernel.canRamp(.reverb, 99))
+    }
+
+    /// A ramp shorter than a glide is stretched to one, so a host's 32-frame step still glides; a
+    /// value set during a ramp replaces it; a ramp before the first block is taken at once.
+    func testAShortRampGlidesAndANewValueReplacesARamp() {
+        let kernel = EffectKernel(effect: .equalizer, sampleRate: rate)
+        kernel.rampParameter(10, to: 12, frames: 4_800)
+        _ = process(kernel, [Float](repeating: 0, count: 32))
+        XCTAssertEqual(kernel.playingValue(10), 12, "before the first block the song's value is taken at once")
+
+        kernel.rampParameter(10, to: -12, frames: 32)
+        _ = process(kernel, [Float](repeating: 0, count: 64))
+        XCTAssertGreaterThan(kernel.playingValue(10), 0, "64 frames into a 32-frame ramp of 24 dB it is still on its way")
+        _ = process(kernel, [Float](repeating: 0, count: 960))
+        XCTAssertEqual(kernel.playingValue(10), -12, "after the glide it is there")
+
+        kernel.rampParameter(10, to: 12, frames: 48_000)
+        _ = process(kernel, [Float](repeating: 0, count: 480))
+        kernel.setParameter(10, -6)
+        _ = process(kernel, [Float](repeating: 0, count: 9_600))
+        XCTAssertEqual(kernel.playingValue(10), -6, accuracy: 1e-3, "the newer value wins over the ramp")
+    }
 }
