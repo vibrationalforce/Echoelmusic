@@ -56,6 +56,48 @@ final class TimelineGeometryTests: XCTestCase {
         XCTAssertEqual(TimelineGeometry.position(at: 2 * bar + 7 * eighth, meter: meter).text, "4.1.1")
     }
 
+    // MARK: The ruler's locate
+
+    func testATouchOnTheRulerLandsOnABarLineWithSnapBarAndOnTheExactTickWithSnapOff() {
+        let meter = changing
+        let ticksPerPoint = TimelineGeometry.ticksPerPoint(meter: meter)
+        func x(_ tick: Tick) -> Double { TimelineGeometry.x(ofTick: tick, ticksPerPoint: ticksPerPoint) }
+        func landing(_ tick: Tick, _ snap: SnapGrid) -> Tick {
+            TimelineGeometry.tick(atX: x(tick), ticksPerPoint: ticksPerPoint, snap: snap, meter: meter)
+        }
+        XCTAssertEqual(landing(bar + 1_000, .bar), bar, "a quarter of the way into bar 2: its bar line")
+        XCTAssertEqual(landing(bar + 2_500, .bar), 2 * bar, "past half way: the next bar line")
+        let seven = MusicalTime.ticksPerBar(TimeSignature(7, 8))
+        XCTAssertEqual(landing(2 * bar + seven * 6 / 10, .bar), 2 * bar + seven, "the 7/8 bar's own length decides")
+        for tick: Tick in [0, 1, 1_234, bar + 777, 2 * bar + 3_001] {
+            XCTAssertEqual(landing(tick, .off), tick, "Off keeps the tick the finger names")
+            XCTAssertTrue(meter.isBarLine(landing(tick, .bar)), "Bar lands on a bar line")
+        }
+        XCTAssertEqual(TimelineGeometry.tick(atX: -40, ticksPerPoint: ticksPerPoint, snap: .off, meter: meter), 0)
+        XCTAssertEqual(TimelineGeometry.tick(atX: .nan, ticksPerPoint: ticksPerPoint, snap: .bar, meter: meter), 0)
+        XCTAssertEqual(TimelineGeometry.tick(atX: 100, ticksPerPoint: .nan, snap: .off, meter: meter), 0)
+    }
+
+    func testVoiceOversStepMovesOneBarLineAndNeverBeforeBarOne() {
+        let meter = changing
+        XCTAssertEqual(TimelineGeometry.tick(steppingBars: 1, from: 0, meter: meter), bar)
+        XCTAssertEqual(TimelineGeometry.tick(steppingBars: 1, from: bar + 900, meter: meter), 2 * bar,
+                       "from inside bar 2, the next bar line")
+        XCTAssertEqual(TimelineGeometry.tick(steppingBars: 1, from: 2 * bar, meter: meter),
+                       2 * bar + MusicalTime.ticksPerBar(TimeSignature(7, 8)), "a 7/8 bar later")
+        XCTAssertEqual(TimelineGeometry.tick(steppingBars: -1, from: bar + 900, meter: meter), 0)
+        XCTAssertEqual(TimelineGeometry.tick(steppingBars: -1, from: 0, meter: meter), 0)
+        XCTAssertEqual(TimelineGeometry.tick(steppingBars: .min, from: bar, meter: meter), 0)
+        XCTAssertLessThanOrEqual(TimelineGeometry.tick(steppingBars: .max, from: bar, meter: meter), MusicalTime.maximumTick)
+    }
+
+    func testTheRulerIsLockedWhileATakeRecordsOrAnExportIsWritten() {
+        XCTAssertTrue(TimelineGeometry.mayLocate(recording: false, exporting: false))
+        XCTAssertFalse(TimelineGeometry.mayLocate(recording: true, exporting: false))
+        XCTAssertFalse(TimelineGeometry.mayLocate(recording: false, exporting: true))
+        XCTAssertFalse(TimelineGeometry.mayLocate(recording: true, exporting: true))
+    }
+
     func testANegativeOrNotANumberPositionReadsAsTheSongsStart() {
         let meter = MeterMap(signature: .common)
         let ticksPerPoint = TimelineGeometry.ticksPerPoint(meter: meter)

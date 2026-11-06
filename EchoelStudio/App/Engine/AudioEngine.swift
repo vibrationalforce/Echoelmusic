@@ -24,6 +24,10 @@ final class AudioEngine {
     /// the playhead line and the position readout show it without polling (Law 6). While playing
     /// it says nothing; the leaves poll `heardTick(in:)` then.
     private(set) var restingTick: Tick = 0
+    /// Where Play starts and Stop returns: the ruler's cue (`locate(to:)`). Transport state of this
+    /// session — no `Command`, not in the song file — observed by the ruler only, and written only
+    /// by a locate, a Stop and an opened song.
+    private(set) var cue = PlayStartCue()
     /// The session records and the sink node hears the interface.
     private(set) var isInputOpen = false
     private(set) var lastError: String?
@@ -1335,11 +1339,38 @@ final class AudioEngine {
         core.jump(bySamples: Int64(samples))
     }
 
-    /// Stops and returns to the start.
+    /// Stops and goes back to where Play started from: the ruler's cue, or bar 1 without one. A
+    /// Stop while already stopped — the second Stop — goes back to bar 1 and forgets the cue
+    /// (`PlayStartCue`).
     func stop() {
-        core?.stop()
+        let target = cue.stop(whilePlaying: isPlaying)
         isPlaying = false
-        rest(at: 0)
+        if target > 0, let core, project != nil {
+            core.pause()
+            seek(toTick: target)
+        } else {
+            core?.stop()
+            rest(at: 0)
+        }
+    }
+
+    /// The ruler's locate. Stopped: `tick` becomes the cue — where Play starts and Stop returns —
+    /// and the playhead goes there. Playing: the song moves there at once and the cue stays where
+    /// it was. Never under an audio take, which is placed from the sample it began at; the ruler
+    /// also refuses it while any take records or an export is written (`TimelineGeometry.mayLocate`).
+    func locate(to tick: Tick) {
+        guard take == nil else { return }
+        let at = Swift.min(Swift.max(0, tick), MusicalTime.maximumTick)
+        if !isPlaying {
+            cue.set(at)
+            rest(at: at)
+        }
+        seek(toTick: at)
+    }
+
+    /// Another song opened: Play starts and Stop returns at its bar 1 again.
+    func forgetCue() {
+        if cue.tick != nil { cue.clear() }
     }
 
     // MARK: - Session

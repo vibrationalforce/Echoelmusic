@@ -7,6 +7,10 @@ import SwiftUI
 /// onto the magnet (Snap, shared with the note editor: Off to the tick, Bar, Beat, 1/8 … 1/128,
 /// triplets), hold for Snap, Duplicate, Duplicate as Linked, Make Unique, Split at Playhead, Consolidate and Delete. One drag is one
 /// undo step, and so is each of those.
+/// Tap or drag along the ruler to say where the song plays from: stopped, that bar (on the magnet)
+/// becomes the cue — Play starts there, Stop returns there, a second Stop goes back to bar 1;
+/// playing, the song moves there when the finger lifts. Locked while a take records or an export is
+/// written. VoiceOver reaches the ruler as one adjustable "Play from, Bar N".
 /// A video part shows its hits (CUT): where the picture cuts and where a sound in its own audio
 /// begins. With Snap to Hits a dragged clip or audio region lands on a hit within reach instead of
 /// the bar, and Place at Next Hit moves one to the next hit.
@@ -49,7 +53,7 @@ struct ArrangeView: View {
                         .foregroundStyle(Theme.Color.textSecondary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
-                        .frame(height: Theme.Size.rulerHeight)
+                        .frame(height: Self.rulerRowHeight)
                         .accessibilityLabel("Song length \(Arranging.songBars(of: project)) bars")
                         .contextMenu {
                             AutomateMenu(owner: .master)
@@ -79,8 +83,8 @@ struct ArrangeView: View {
                 .frame(width: nameWidth)
                 ScrollView(.horizontal) {
                     VStack(alignment: .leading, spacing: Theme.Space.hairline) {
-                        BarRuler(bars: bars, meter: meter, ticksPerPoint: ticksPerPoint, width: laneWidth)
-                            .overlay(alignment: .topLeading) {
+                        RulerLocator(bars: bars, meter: meter, ticksPerPoint: ticksPerPoint, width: laneWidth)
+                            .overlay(alignment: .bottomLeading) {
                                 MarkerStrip(markers: project.markers, meter: meter, ticksPerPoint: ticksPerPoint)
                             }
                             .contextMenu { MarkerAddButton() }
@@ -147,6 +151,9 @@ extension ArrangeView {
     nonisolated static let snapsToHitsKey = "arrange.snapToHits"
     /// How near a hit, in points, a dragged start must come to land on it.
     static let hitReach: CGFloat = 12
+    /// The ruler row is a tap target, so at least a touch target high; the numbers keep their own
+    /// height at its foot, and the names column gives the same height to its first cell.
+    static let rulerRowHeight = Swift.max(Theme.Size.rulerHeight, Theme.Size.touch)
 
     /// The hit a start dragged to `tick` lands on; nil with snapping off or no hit within reach.
     static func hit(near tick: Tick, in hits: [Tick], ticksPerPoint: Double, snapping: Bool) -> Tick? {
@@ -204,6 +211,105 @@ private struct BarRuler: View {
         .frame(width: width, height: Theme.Size.rulerHeight)
         .background(Theme.Color.surface)
         .accessibilityHidden(true)
+    }
+}
+
+/// The ruler row: the bar numbers, the line where Play starts (the cue), and the touch that moves
+/// it — the earlier app's ruler locator (AE-7), ported onto this engine. `BarRuler` stays a cold
+/// picture; this leaf owns the three new jobs: the touch, the cue line, the VoiceOver control.
+///
+/// A tap or a drag lands on the magnet's line (`SnapGrid`, shared with the editors) when the finger
+/// lifts — ONE locate per touch, never one per frame. While the finger is down a line shows where
+/// it will land; that position is `@GestureState`, so it lives in this leaf alone and resets itself
+/// when the scroll view takes the touch. Stopped, the locate sets the cue and the playhead; playing,
+/// the song moves there at once (`AudioEngine.locate`). A drag that starts on the ruler does not
+/// scroll the page — the lanes do.
+///
+/// ⛔ Locked while a take records or an export is written (`TimelineGeometry.mayLocate`): a take
+/// counts its time from the transport, and a jump mid-take writes what was played at bar 2 at bar 7.
+/// VoiceOver hears why in the hint.
+///
+/// Reads the cue and whether the song plays — both change with a press, never with the clock — and
+/// never the moving playhead (Law 6); VoiceOver's step reads it in its action.
+private struct RulerLocator: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
+    @Environment(RecordController.self) private var recording
+    @Environment(DocumentController.self) private var documents
+    @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
+    /// Where the finger is while it is down, in points along the ruler.
+    @GestureState private var finger: CGFloat? = nil
+    let bars: Int
+    let meter: MeterMap
+    let ticksPerPoint: Double
+    let width: CGFloat
+
+    private var locked: Bool {
+        !TimelineGeometry.mayLocate(recording: recording.isRecording, exporting: documents.isExporting)
+    }
+
+    var body: some View {
+        let cue = engine.cue.tick
+        ZStack(alignment: .bottomLeading) {
+            BarRuler(bars: bars, meter: meter, ticksPerPoint: ticksPerPoint, width: width)
+            if let cue {
+                line(at: cue, color: Theme.Color.text)
+            }
+            if let finger, !locked {
+                line(at: landing(finger), color: Theme.Color.accent)
+            }
+        }
+        .frame(width: width, height: ArrangeView.rulerRowHeight, alignment: .bottomLeading)
+        .background(Theme.Color.surface)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .updating($finger) { value, state, _ in state = value.location.x }
+                .onEnded { value in locate(atX: value.location.x) }
+        )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Play from")
+        .accessibilityValue(spokenBar)
+        .accessibilityHint(locked ? "Locked while a take records or an export is written."
+                                  : "Swipe up or down to move one bar.")
+        .accessibilityAdjustableAction { direction in step(direction) }
+    }
+
+    /// A 1-pt line across the row at `tick`.
+    private func line(at tick: Tick, color: Color) -> some View {
+        Rectangle()
+            .fill(color)
+            .frame(width: 1, height: ArrangeView.rulerRowHeight)
+            .offset(x: CGFloat(TimelineGeometry.x(ofTick: tick, ticksPerPoint: ticksPerPoint)))
+    }
+
+    /// The tick a touch at `x` lands on.
+    private func landing(_ x: CGFloat) -> Tick {
+        TimelineGeometry.tick(atX: Double(x), ticksPerPoint: ticksPerPoint, snap: snap, meter: meter)
+    }
+
+    private func locate(atX x: CGFloat) {
+        guard !locked else { return }
+        engine.locate(to: landing(x))
+    }
+
+    /// Stopped: the bar Play starts from. Playing: the bar Stop returns to.
+    private var spokenBar: String {
+        let at = engine.isPlaying ? (engine.cue.tick ?? 0) : engine.restingTick
+        return "Bar \(meter.bar(at: at) + 1)"
+    }
+
+    /// One bar later or earlier, from where the song stands — read here, in the action.
+    private func step(_ direction: AccessibilityAdjustmentDirection) {
+        guard !locked else { return }
+        let bars: Int64
+        switch direction {
+        case .increment: bars = 1
+        case .decrement: bars = -1
+        @unknown default: return
+        }
+        let from = engine.isPlaying ? engine.playheadTick(in: store.project) : engine.restingTick
+        engine.locate(to: TimelineGeometry.tick(steppingBars: bars, from: from, meter: meter))
     }
 }
 

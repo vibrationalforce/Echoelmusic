@@ -44,6 +44,32 @@ public enum TimelineGeometry {
         return position.clamped(to: 0...Double(MusicalTime.maximumTick)) / ticksPerPoint
     }
 
+    /// The tick a touch at `x` points names, on the magnet's nearest line (`SnapGrid.nearest`):
+    /// Bar lands on a bar line, Off keeps the exact tick. A touch left of the start, a position
+    /// that is not a number or a zoom that is not a positive number names the start.
+    public static func tick(atX x: Double, ticksPerPoint: Double, snap: SnapGrid, meter: MeterMap) -> Tick {
+        guard ticksPerPoint.isFinite, ticksPerPoint > 0 else { return 0 }
+        return snap.nearest(tick(clamping: (x * ticksPerPoint).rounded()), meter: meter)
+    }
+
+    /// The bar line `bars` bars on from the bar `tick` lies in — one swipe of VoiceOver's ruler.
+    /// Never before bar 1, never past the last bar line a song holds.
+    public static func tick(steppingBars bars: Int64, from tick: Tick, meter: MeterMap) -> Tick {
+        let at = Swift.min(Swift.max(0, tick), MusicalTime.maximumTick)
+        let last = meter.barStart(at: MusicalTime.maximumTick)
+        let (target, overflow) = meter.bar(at: at).addingReportingOverflow(bars)
+        guard !overflow else { return bars < 0 ? 0 : last }
+        return Swift.min(meter.tick(ofBar: Swift.max(0, target)), last)
+    }
+
+    /// Whether a tap on the ruler may move the song now. Not while a take records: a take counts
+    /// its time from the transport, so a jump mid-take would write what was played at bar 2 at
+    /// bar 7, or place an audio file bars off. Not while an export is being written: the musician
+    /// asked for the song as it stands, and the transport keeps still until it is on the disk.
+    public static func mayLocate(recording: Bool, exporting: Bool) -> Bool {
+        !recording && !exporting
+    }
+
     /// A song position as the transport reads it: bar, beat and sixteenth, each counted from 1.
     /// The third number counts sixteenths inside the beat (two in a 7/8 beat, four in 4/4), so it
     /// changes at a pace the eye can follow while the song plays.
