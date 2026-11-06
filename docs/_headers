@@ -64,11 +64,6 @@
 /robots.txt
   Cache-Control: public, max-age=86400
 
-# Apple app site association - cache 1 hour, allow cross-origin
-/.well-known/*
-  Cache-Control: public, max-age=3600
-  Access-Control-Allow-Origin: *
-
 # Screenshots - cache 1 week
 /screenshots/*
   Cache-Control: public, max-age=604800

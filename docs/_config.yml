@@ -2,8 +2,6 @@
 # published (decision 2026-10-31, E20): working files under docs/ stay in the repository but never
 # reach echoelmusic.com. Every page here is plain HTML without front matter, so Jekyll copies it
 # unchanged. The same list is enforced in .github/workflows/pages.yml for the Actions deploy.
-include:
-  - .well-known
 exclude:
   - dev
   - adr
