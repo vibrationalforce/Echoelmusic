@@ -88,6 +88,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let multiband: MultibandCompressor?
     private let dynamicEQ: DynamicEQ?
     private let multibandClipper: MultibandClipper?
+    private let deEsser: DeEsser?
     /// The correction's targets, worked out once here so a change of key on the render thread
     /// only looks them up: each scale's pitch classes above C, and each tone system's cents for
     /// every root (`tuning × 12 + root`).
@@ -134,6 +135,7 @@ public final class EffectKernel: @unchecked Sendable {
         multiband = effect == .multibandCompressor ? MultibandCompressor(sampleRate: self.sampleRate) : nil
         dynamicEQ = effect == .dynamicEQ ? DynamicEQ(sampleRate: self.sampleRate) : nil
         multibandClipper = effect == .multibandClipper ? MultibandClipper(sampleRate: self.sampleRate) : nil
+        deEsser = effect == .deEsser ? DeEsser(sampleRate: self.sampleRate) : nil
         scaleMasks = effect == .pitchCorrection
             ? Scale.allCases.map { PitchCorrector.Settings.mask(root: 0, steps: $0.intervals) } : []
         toneSystemCents = effect == .pitchCorrection ? Self.toneSystemCents() : []
@@ -199,8 +201,8 @@ public final class EffectKernel: @unchecked Sendable {
     /// Every value, in address order, to carry into a new kernel.
     public var allValues: [Float] { parameters.indices.map(parameter) }
 
-    /// The compressor's, the multiband's (its deepest band) or the limiter's gain reduction in dB
-    /// (0 or less); 0 for the other effects.
+    /// The compressor's, the multiband's (its deepest band), the limiter's or the de-esser's (its
+    /// highs) gain reduction in dB (0 or less); 0 for the other effects.
     public var gainReduction: Float { Float(bitPattern: reductionBits.load(ordering: .relaxed)) }
 
     /// Empties delay lines and tails.
@@ -229,6 +231,7 @@ public final class EffectKernel: @unchecked Sendable {
         multiband?.reset()
         dynamicEQ?.reset()
         multibandClipper?.reset()
+        deEsser?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -316,6 +319,10 @@ public final class EffectKernel: @unchecked Sendable {
             reductionBits.store(multiband.reduction.bitPattern, ordering: .relaxed)
         case .dynamicEQ: dynamicEQ?.process(left: left, right: right, frames: frames)
         case .multibandClipper: multibandClipper?.process(left: left, right: right, frames: frames)
+        case .deEsser:
+            guard let deEsser else { return }
+            deEsser.process(left: left, right: right, frames: frames)
+            reductionBits.store(deEsser.reduction.bitPattern, ordering: .relaxed)
         }
     }
 
@@ -460,6 +467,10 @@ public final class EffectKernel: @unchecked Sendable {
                                               lowDrive: value(3), midDrive: value(4), highDrive: value(5),
                                               softness: value(6), ceiling: value(7), mix: value(8))
             if s != multibandClipper.settings { multibandClipper.settings = s }
+        case .deEsser:
+            guard let deEsser else { return }
+            let s = DeEsser.Settings(frequency: value(0), threshold: value(1), range: value(2), listen: value(3) >= 0.5)
+            if s != deEsser.settings { deEsser.settings = s }
         }
     }
 
@@ -658,6 +669,11 @@ public final class EffectKernel: @unchecked Sendable {
             add("softness", "Softness", 0...1, 0.3, .amount)
             add("ceiling", "Ceiling", -12...0, -0.3, .decibels)
             add("mix", "Mix", 0...1, 1, .amount)
+        case .deEsser:
+            add("frequency", "Frequency", 3_000...12_000, 6_500, .hertz)
+            add("threshold", "Threshold", -60...0, -30, .decibels)
+            add("range", "Range", 0...24, 6, .decibels)
+            add("listen", "Listen", 0...1, 0, .boolean)
         }
         return list
     }

@@ -579,6 +579,26 @@
 				</dict>
 				<dict>
 					<key>name</key>
+					<string>Echoel: De-Esser</string>
+					<key>description</key>
+					<string>De-Esser from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aufx</string>
+					<key>subtype</key>
+					<string>xDes</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
 					<string>Echoel: Synth (earlier sessions)</string>
 					<key>description</key>
 					<string>Opens sessions saved with the earlier Echoelmusic instrument; plays Echoel Synth from Echoel</string>

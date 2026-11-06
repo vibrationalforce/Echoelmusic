@@ -78,7 +78,7 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
     // A new effect goes at the end: a saved insert names its component, never this order.
     case equalizer, compressor, delay, reverb, chorus, phaser, flanger, limiter, saturation, tremolo, bitcrusher, tape, stereoWidth, ringModulator, frequencyShifter,
         pitchCorrection, harmonizer, granular, formantFilter, transientDesigner, midSide, multibandCompressor,
-        dynamicEQ, multibandClipper
+        dynamicEQ, multibandClipper, deEsser
 
     public var id: String { rawValue }
 
@@ -108,6 +108,7 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .multibandCompressor: "Multiband Compressor"
         case .dynamicEQ: "Dynamic EQ"
         case .multibandClipper: "Multiband Clipper"
+        case .deEsser: "De-Esser"
         }
     }
 
@@ -137,6 +138,7 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .multibandCompressor: "eMbc"
         case .dynamicEQ: "eDEQ"
         case .multibandClipper: "eMCl"
+        case .deEsser: "eDes"
         }
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",
@@ -172,6 +174,7 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .multibandCompressor: "xMbc"
         case .dynamicEQ: "xDEQ"
         case .multibandClipper: "xMCl"
+        case .deEsser: "xDes"
         }
         // The host shows "Echoel: EQ" — manufacturer, then this name, as `Plugins/AUv3/Info.plist`
         // registers it. The app's own copy (`component`) keeps its stored name: a song saves it.

@@ -437,9 +437,10 @@ public enum AgentTools {
                                                  "multibandcompressor": .multibandCompressor, "multiband": .multibandCompressor,
                                                  "multibandcomp": .multibandCompressor,
                                                  "dynamiceq": .dynamicEQ, "dynamicequalizer": .dynamicEQ,
-                                                 "dyneq": .dynamicEQ, "deesser": .dynamicEQ,
+                                                 "dyneq": .dynamicEQ,
                                                  "multibandclipper": .multibandClipper, "clipper": .multibandClipper,
-                                                 "softclipper": .multibandClipper, "mbclipper": .multibandClipper]
+                                                 "softclipper": .multibandClipper, "mbclipper": .multibandClipper,
+                                                 "deesser": .deEsser, "sibilance": .deEsser]
         guard let effect = aliases[key] else {
             throw AgentError.invalid("There is no effect \"\(name)\". Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).")
         }

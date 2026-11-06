@@ -118,4 +118,16 @@ final class KernelLoadTests: XCTestCase {
         let share = cost(of: .multibandClipper) / compressor
         XCTAssertLessThan(share, 200, "multibandClipper at \(share) compressors' cost")
     }
+
+    /// The de-esser does per sample six filter stages, one log and one power — less than the
+    /// multiband compressor (fourteen stages and three compressors), which measured 8.4
+    /// compressors' cost in a debug build. Its own share is UNMEASURED (written without a
+    /// toolchain); the bound is the one the other new effects share, about twice the multiband's
+    /// debug cost, and the share is in the message for the first CI run.
+    func testTheDeEsserCostsNoMoreThanAFewCompressors() {
+        let compressor = cost(of: .compressor)
+        XCTAssertGreaterThan(compressor, 0)
+        let share = cost(of: .deEsser) / compressor
+        XCTAssertLessThan(share, 16, "deEsser at \(share) compressors' cost")
+    }
 }
