@@ -247,6 +247,7 @@ extension FieldLookChoice {
         return FieldLookChoice(storedPattern: defaults.string(forKey: FieldPattern.storageKey),
                                storedPartner: defaults.string(forKey: FieldPattern.blendStorageKey),
                                mixPercent: defaults.object(forKey: FieldPattern.blendMixStorageKey) as? Int
-                                   ?? FieldPattern.standardMixPercent)
+                                   ?? FieldPattern.standardMixPercent,
+                               storedFold: defaults.object(forKey: FieldFold.storageKey) as? Int)
     }
 }

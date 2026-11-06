@@ -322,6 +322,89 @@ final class FieldLookTests: XCTestCase {
         XCTAssertLessThan(FieldPulse.haloGain * (1 - FieldPulse.ambient), FlashLimit.generalFlashThreshold)
     }
 
+    func testTheKaleidoscopeMirrorsThePictureRoundItsCentre() {
+        let aspect = 16.0 / 9
+        // Off, every point reads itself; on, the distance from the centre is kept.
+        XCTAssertTrue(FieldFold.fold(u: 0.3, v: 0.8, aspect: aspect, segments: 1) == (0.3, 0.8))
+        for segments in FieldFold.choices where segments > 1 {
+            // Points inside the circle the frame holds whole, so no read is held at an edge.
+            for (u, v) in [(0.31, 0.77), (0.5, 0.2), (0.4, 0.6), (0.62, 0.35)] {
+                let read = FieldFold.fold(u: u, v: v, aspect: aspect, segments: segments)
+                let before = ((u - 0.5) * aspect) * ((u - 0.5) * aspect) + (v - 0.5) * (v - 0.5)
+                let after = ((read.u - 0.5) * aspect) * ((read.u - 0.5) * aspect) + (read.v - 0.5) * (read.v - 0.5)
+                XCTAssertEqual(before, after, accuracy: 1e-12, "\(segments): the distance is kept")
+                // The point's mirror image across the vertical reads the same place.
+                let mirrored = FieldFold.fold(u: 1 - u, v: v, aspect: aspect, segments: segments)
+                XCTAssertEqual(mirrored.u, read.u, accuracy: 1e-9)
+                XCTAssertEqual(mirrored.v, read.v, accuracy: 1e-9)
+                // And so does the point turned by one wedge.
+                let wedge = 2 * Double.pi / Double(segments)
+                let x = (u - 0.5) * aspect, y = v - 0.5
+                let turned = (u: 0.5 + (x * cos(wedge) + y * sin(wedge)) / aspect, v: 0.5 + (-x * sin(wedge) + y * cos(wedge)))
+                let again = FieldFold.fold(u: turned.u, v: turned.v, aspect: aspect, segments: segments)
+                XCTAssertEqual(again.u, read.u, accuracy: 1e-9, "\(segments) segments: turned by a wedge")
+                XCTAssertEqual(again.v, read.v, accuracy: 1e-9)
+            }
+        }
+        // Every read stays inside the frame, wide, square and tall.
+        for aspect in [16.0 / 9, 1, 9.0 / 16] {
+            for segments in FieldFold.choices {
+                for i in 0...10 {
+                    for j in 0...10 {
+                        let read = FieldFold.fold(u: Double(i) / 10, v: Double(j) / 10, aspect: aspect, segments: segments)
+                        XCTAssertTrue((0...1).contains(read.u) && (0...1).contains(read.v))
+                    }
+                }
+            }
+        }
+        XCTAssertFalse(FieldFold.folds(.weave))
+        XCTAssertFalse(FieldFold.folds(.chladni))
+        XCTAssertFalse(FieldFold.changes(.rings), "the rings are round already")
+        XCTAssertEqual(FieldFold.segments(stored: 6), 6)
+        XCTAssertEqual(FieldFold.segments(stored: 5), 1, "a count not offered is no fold")
+        XCTAssertEqual(FieldFold.segments(stored: nil), 1)
+        XCTAssertEqual(FieldLookChoice(storedPattern: "water", storedPartner: nil, mixPercent: 0, storedFold: 8).fold, 8)
+        XCTAssertEqual(FieldFold.storageKey, "field.fold")
+    }
+
+    /// A new count never cuts in: the picture fades to dark under the flash guard, the count
+    /// changes there, and the picture fades back. The plate is never folded.
+    func testTheKaleidoscopeChangesThroughDark() {
+        var looks = FieldLookMotion()
+        var last = looks.step(primary: .water, partner: nil, mix: 0, hertz: 440, drive: 0.5, tonicHz: 261.63,
+                              fieldPhase: 0, after: 1.0 / 60, still: false, patternScale: 1, fold: 1)
+        XCTAssertEqual(last.fold, 1)
+        var sawDark = false
+        for _ in 0..<(60 * 6) {
+            let shown = looks.step(primary: .water, partner: nil, mix: 0, hertz: 440, drive: 0.5, tonicHz: 261.63,
+                                   fieldPhase: 0, after: 1.0 / 60, still: false, patternScale: 1, fold: 6)
+            XCTAssertLessThanOrEqual(abs(shown.foldLight - last.foldLight), FlashLimit.maximumRate / 60 + 1e-12)
+            if shown.fold != last.fold { XCTAssertLessThanOrEqual(last.foldLight, FieldLookMotion.blendThreshold) }
+            if shown.foldLight <= FieldLookMotion.blendThreshold { sawDark = true }
+            last = shown
+        }
+        XCTAssertTrue(sawDark)
+        XCTAssertEqual(last.fold, 6)
+        XCTAssertEqual(last.foldLight, 1, accuracy: 1e-9, "and back to full light")
+
+        // With only the rings on screen the count changes at once: nothing there would change.
+        var round = FieldLookMotion()
+        _ = round.step(primary: .rings, partner: nil, mix: 0, hertz: nil, drive: 0, tonicHz: 261.63,
+                       fieldPhase: 0, after: 1.0 / 60, still: false, patternScale: 1, fold: 1)
+        let at = round.step(primary: .rings, partner: nil, mix: 0, hertz: nil, drive: 0, tonicHz: 261.63,
+                            fieldPhase: 0, after: 1.0 / 60, still: false, patternScale: 1, fold: 8)
+        XCTAssertEqual(at.fold, 8)
+        XCTAssertEqual(at.foldLight, 1)
+
+        var plate = last
+        plate.primary = .chladni
+        let figure = ChladniMotion.Shown()
+        XCTAssertEqual(FieldLook.light(.chladni, u: 0.2, v: 0.7, aspect: 1, field: FieldMotion.Shown(), look: plate,
+                                       plate: figure, turns: 0),
+                       FieldLook.drawnLight(.chladni, u: 0.2, v: 0.7, aspect: 1, field: FieldMotion.Shown(), look: plate,
+                                            plate: figure, turns: 0), "the plate is read where it is")
+    }
+
     /// The aurora's rays re-space with the pitch at most `auroraRayRate` a second, and arrive.
     func testTheAurorasRaysFollowThePitchSlowly() {
         var looks = FieldLookMotion()

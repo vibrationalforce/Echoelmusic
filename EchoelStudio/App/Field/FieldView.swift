@@ -22,6 +22,7 @@ struct FieldView: View {
     @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
     @AppStorage(FieldPattern.blendMixStorageKey) private var mixPercent = FieldPattern.standardMixPercent
     @AppStorage(FieldMeter.storageKey) private var meterName = FieldMeter.off.rawValue
+    @AppStorage(FieldFold.storageKey) private var foldSegments = 1
     /// True for the Field on an external display (`ExternalFieldRoot`); every other Field yields
     /// to it while it shows, so one renderer draws at a time.
     let onStage: Bool
@@ -57,7 +58,8 @@ struct FieldView: View {
         if MetalField.isAvailable {
             MetalFieldView(reduceMotion: motionReduced, pattern: FieldPattern(stored: patternName),
                            partner: FieldPattern.blend(stored: partnerName),
-                           mix: Double(Swift.min(Swift.max(mixPercent, 0), 100)) / 100)
+                           mix: Double(Swift.min(Swift.max(mixPercent, 0), 100)) / 100,
+                           fold: FieldFold.segments(stored: foldSegments))
                 .background(Theme.Color.background)
                 .accessibilityHidden(true)
                 .overlay { FieldSpokenValue().allowsHitTesting(false) }
