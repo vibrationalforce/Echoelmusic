@@ -12,6 +12,11 @@ final class FieldTests: XCTestCase {
                                     pulse: nil, hrv: nil, coherence: nil, isPlaying: false)
         XCTAssertEqual(stopped.beatPhase, 0)
         XCTAssertEqual(stopped.barPhase, 0)
+        XCTAssertEqual(playing.bars, 1 + 1.5 / 4, accuracy: 1e-12, "the second bar, its phase on top")
+        XCTAssertEqual(stopped.bars, playing.bars, accuracy: 1e-12, "a paused song keeps its place in bars")
+        XCTAssertEqual(playing.keyMask, 0x0FFF, "chromatic: every pitch class")
+        XCTAssertEqual(FieldFrame(bars: .nan).bars, 0)
+        XCTAssertEqual(FieldFrame(bars: -2).bars, 0)
     }
 
     func testRelatedKeysSitCloseOnTheCircleOfFifths() {

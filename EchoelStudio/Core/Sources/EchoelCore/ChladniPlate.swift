@@ -22,6 +22,9 @@ public enum FieldPattern: String, CaseIterable, Sendable {
     /// Two line gratings spaced by the song's third as its tone system tunes it: a pure third
     /// stands still, a tempered one drifts at its beat (`TuningBeat`, capped under 2 Hz).
     case moire
+    /// The song's key woven one row per bar: rule 90, a cellular automaton, started from the key's
+    /// pitch classes (`BarWeave`), so each key and scale weaves its own figure.
+    case weave
 
     public static let storageKey = "field.pattern"
     /// The pattern blended over the first one (`FieldLookMotion`); absent or unknown is none.
@@ -40,6 +43,7 @@ public enum FieldPattern: String, CaseIterable, Sendable {
         case .aurora: "Aurora"
         case .depth: "Depth"
         case .moire: "Moiré Beat"
+        case .weave: "Weave"
         }
     }
 
@@ -50,8 +54,9 @@ public enum FieldPattern: String, CaseIterable, Sendable {
     }
 
     /// Whether the picture listens to the master's partials: every pattern but the rings, which
-    /// move with the song's bar and the body alone, and the moiré, which shows the tuning.
-    public var listensToSound: Bool { self != .rings && self != .moire }
+    /// move with the song's bar and the body alone, the moiré, which shows the tuning, and the
+    /// weave, which shows the key and the bars.
+    public var listensToSound: Bool { self != .rings && self != .moire && self != .weave }
 
     /// A stored blend partner read back; anything unknown or empty is no blend.
     public static func blend(stored: String?) -> FieldPattern? {

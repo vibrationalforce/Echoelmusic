@@ -25,10 +25,16 @@ public struct FieldFrame: Equatable, Sendable {
     public var isPlaying: Bool
     /// The song's third as its tone system tunes it, as a beat (`TuningBeat`): the Moiré look.
     public var tuningBeat: TuningBeat
+    /// Where the playhead is in the song, in bars from its start (the bar's number plus its
+    /// phase) — playing or not, so a paused song keeps its place. The Weave look's clock (`BarWeave`).
+    public var bars: Double
+    /// The key's pitch classes, bit `n` for pitch class `n` (`BarWeave.keyMask`): the Weave's start.
+    public var keyMask: UInt16
 
     public init(beatPhase: Double = 0, barPhase: Double = 0, keyHue: Double = 0, tonicHz: Double = FieldFrame.middleC,
                 level: Double = 0, pulse: Double? = nil, hrv: Double? = nil, coherence: Double? = nil,
-                breath: Double? = nil, isPlaying: Bool = false, tuningBeat: TuningBeat = .unison) {
+                breath: Double? = nil, isPlaying: Bool = false, tuningBeat: TuningBeat = .unison,
+                bars: Double = 0, keyMask: UInt16 = 0) {
         self.beatPhase = Self.unit(beatPhase)
         self.barPhase = Self.unit(barPhase)
         self.keyHue = Self.unit(keyHue)
@@ -40,6 +46,8 @@ public struct FieldFrame: Equatable, Sendable {
         self.breath = breath.flatMap(Self.reading)
         self.isPlaying = isPlaying
         self.tuningBeat = tuningBeat
+        self.bars = bars.isFinite ? Swift.max(0, bars) : 0
+        self.keyMask = keyMask & 0x0FFF
     }
 
     /// Middle C at A = 440 Hz: the tonic of the default song, and what a bad pitch falls back to.
@@ -63,11 +71,19 @@ public struct FieldFrame: Equatable, Sendable {
         let position = isPlaying && tick.isFinite ? Swift.min(Swift.max(0, tick), Double(MusicalTime.maximumTick)) : 0
         let whole = Tick(position.rounded(.down))
         let beat = Double(meter.ticksPerBeat(at: whole)), bar = Double(meter.ticksPerBar(at: whole))
+        let barPhase = bar > 0 ? (position - Double(meter.barStart(at: whole))) / bar : 0
+        // The place in bars counts while stopped too: the playhead's, not the phases' rest.
+        let place = tick.isFinite ? Swift.min(Swift.max(0, tick), Double(MusicalTime.maximumTick)) : 0
+        let placeWhole = Tick(place.rounded(.down))
+        let placeBar = Double(meter.ticksPerBar(at: placeWhole))
+        let bars = Double(meter.bar(at: placeWhole))
+            + unit(placeBar > 0 ? (place - Double(meter.barStart(at: placeWhole))) / placeBar : 0)
         return FieldFrame(beatPhase: beat > 0 ? (position - Double(meter.beatStart(at: whole))) / beat : 0,
-                          barPhase: bar > 0 ? (position - Double(meter.barStart(at: whole))) / bar : 0,
+                          barPhase: barPhase,
                           keyHue: keyHue(root: context.root), tonicHz: tonicHz(of: context), level: level,
                           pulse: pulse, hrv: hrv, coherence: coherence, breath: breath, isPlaying: isPlaying,
-                          tuningBeat: TuningBeat.of(context))
+                          tuningBeat: TuningBeat.of(context),
+                          bars: bars, keyMask: BarWeave.keyMask(context))
     }
 
     /// C at 0, G a twelfth on, D two twelfths: the circle of fifths.

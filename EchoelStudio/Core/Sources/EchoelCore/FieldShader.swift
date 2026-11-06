@@ -46,6 +46,10 @@ public enum FieldShader {
     struct Look { float primary; float partner; float blend; float phaseOffset;
                   float soundHz; float dishK; float dishStrength; float dishHex;
                   float moireK1; float moireK2; float moirePhase; };
+    // The weave (BarWeave.words): how far the newest row has come in, its light (flash-guarded on
+    // the CPU), two spare words, then each row on screen, newest first, as its low and high 32
+    // bits. All zero is an empty, dark weave.
+    struct Weave { float scroll; float light; float spare1; float spare2; uint rows[\(2 * BarWeave.history)]; };
 
     // Wavelength (nm) -> linear sRGB through the CIE 1931 colour-matching functions (the
     // Wyman/Sloan/Shirley 2013 analytic fit) -> XYZ -> linear sRGB (D65).
@@ -331,21 +335,52 @@ public enum FieldShader {
         return fieldColour(u) * (ambient + (1.0 - ambient) * energy);
     }
 
-    float3 lookColour(float look, VOut in, constant Uniforms& u, constant Chladni& c, constant Look& l, float turns) {
+    // The weave (BarWeave.light, exactly): square cells across the width, the newest row sliding
+    // in from the bottom and lit as far as it has come, the history fading at its top.
+    float3 weaveColour(VOut in, constant Uniforms& u, constant Weave& w) {
+        float side = u.aspect > 0.0 ? u.aspect : 1.0;
+        float x = clamp(in.uv.x, 0.0, 1.0) * \(Double(BarWeave.width));
+        float rowsUp = clamp(in.uv.y, 0.0, 1.0) * \(Double(BarWeave.width)) / side;
+        float offset = w.scroll - rowsUp;
+        float back = -floor(offset);
+        float energy = 0.0;
+        if (back >= 0.0 && back < \(Double(BarWeave.history))) {
+            int index = int(back);
+            int cell = min(int(x), \(BarWeave.width - 1));
+            uint word = cell < 32 ? w.rows[2 * index] : w.rows[2 * index + 1];
+            if (((word >> uint(cell & 31)) & 1u) != 0u) {
+                float fy = offset - floor(offset);
+                float fx = x - floor(x);
+                float edge = max(abs(fx - 0.5), abs(fy - 0.5));
+                float shape = 1.0 - smoothstep(0.3, 0.5, edge);
+                float fade = index == 0 ? w.scroll : 1.0;
+                float top = 1.0 - smoothstep(\(Double(BarWeave.history - 8)), \(Double(BarWeave.history)), rowsUp);
+                float drive = 0.35 + 0.65 * clamp(u.levelLight, 0.0, 1.0);
+                energy = clamp(shape * fade * top * drive * clamp(w.light, 0.0, 1.0), 0.0, 1.0);
+            }
+        }
+        float ambient = \(FieldPulse.ambientLiteral);
+        return fieldColour(u) * (ambient + (1.0 - ambient) * energy);
+    }
+
+    float3 lookColour(float look, VOut in, constant Uniforms& u, constant Chladni& c, constant Look& l,
+                      constant Weave& w, float turns) {
         if (look < 0.5) return ringsColour(in, u, turns);
         if (look < 1.5) return chladniColour(in, u, c);
         if (look > 5.5 && look < 6.5) return moireColour(in, u, l);
+        if (look > 6.5 && look < 7.5) return weaveColour(in, u, w);
         return lookFieldColour(look, in, u, l, turns);
     }
 
     // The Field: one look, or two blended (the second's share flash-guarded on the CPU).
     fragment float4 field_fragment(VOut in [[stage_in]], constant Uniforms& u [[buffer(0)]],
-                                   constant Chladni& plate [[buffer(1)]], constant Look& look [[buffer(2)]]) {
+                                   constant Chladni& plate [[buffer(1)]], constant Look& look [[buffer(2)]],
+                                   constant Weave& weave [[buffer(3)]]) {
         float turns = fract(u.fieldPhase + look.phaseOffset);
-        float3 col = lookColour(look.primary, in, u, plate, look, turns);
+        float3 col = lookColour(look.primary, in, u, plate, look, weave, turns);
         float share = clamp(look.blend, 0.0, 1.0);
         if (share > \(FieldLookMotion.blendThreshold) && abs(look.partner - look.primary) > 0.5) {
-            col = mix(col, lookColour(look.partner, in, u, plate, look, turns), share);
+            col = mix(col, lookColour(look.partner, in, u, plate, look, weave, turns), share);
         }
         col += (echoelHash(in.uv * 1000.0) - 0.5) / 255.0;
         return float4(clamp(col, 0.0, 1.0), 1.0);
