@@ -106,6 +106,8 @@ struct StudioView: View {
             TransportBar()
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("Transport")
+                // Return, comma and period: the locate keys, which have no button of their own.
+                .background { LocateKeys() }
             ListeningNote()
             Divider().overlay(Theme.Color.border)
             ZStack(alignment: .bottomTrailing) {
@@ -335,11 +337,13 @@ struct TransportBar: View {
             PulseReading()
             Button { store.undo() } label: { Image(systemName: "arrow.uturn.backward") }
                 .buttonStyle(ToolButtonStyle())
+                .shortcut(.undo)
                 .disabled(!store.canUndo)
                 .accessibilityLabel(store.undoTitle.map { "Undo \($0)" } ?? "Undo")
 
             Button { store.redo() } label: { Image(systemName: "arrow.uturn.forward") }
                 .buttonStyle(ToolButtonStyle())
+                .shortcut(.redo)
                 .disabled(!store.canRedo)
                 .accessibilityLabel(store.redoTitle.map { "Redo \($0)" } ?? "Redo")
             if more { moreMenu }
@@ -398,15 +402,18 @@ struct TransportBar: View {
                 Image(systemName: engine.isStalled ? "arrow.clockwise" : engine.isPlaying || countsIn ? "stop.fill" : "play.fill")
             }
             .buttonStyle(ToolButtonStyle(isActive: engine.isPlaying || countsIn, activeColor: Theme.Color.play))
+            .shortcut(.playStop)
             .accessibilityLabel(engine.isStalled ? "Restart Audio" : engine.isPlaying || countsIn ? "Stop" : "Play")
             .accessibilityValue(countsIn ? "Starts on the next bar" : "")
             // When audio could not start, this is the way to try again (ultra-audit R1).
             .disabled(!engine.isRunning && !engine.isStalled)
 
             RecordButton()
+                .shortcut(.record)
 
             Button { engine.setLoopsSong(!engine.loopsSong) } label: { Image(systemName: "repeat") }
                 .buttonStyle(ToolButtonStyle(isActive: engine.loopsSong))
+                .shortcut(.loop)
                 .accessibilityLabel("Loop")
                 .accessibilityValue(engine.loopsSong ? (engine.timecodeRuns ? "On, resting while timecode runs" : "On") : "Off")
                 .accessibilityHint("Plays the song from bar 1 again after its last bar.")
@@ -1511,8 +1518,9 @@ private struct SurfaceBar: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Theme.Space.s) {
-                ForEach(Self.items, id: \.self) { surface in
+                ForEach(Array(Self.items.enumerated()), id: \.element) { index, surface in
                     chip(surface, surface.title)
+                        .shortcut(.view(index))
                 }
             }
             .padding(.horizontal, Theme.Space.m)
@@ -1533,6 +1541,59 @@ private struct SurfaceBar: View {
             .buttonStyle(ToolButtonStyle(isActive: chosen))
             .animation(Theme.Motion.quick, value: chosen)
             .accessibilityAddTraits(chosen ? .isSelected : [])
+    }
+}
+
+/// The locate keys of the hardware keyboard (`ShortcutMap`): Return to bar 1, comma a bar back,
+/// period a bar forward — through the transport's locate, as the ruler's tap goes, and refused
+/// while a take records or an export is written. Buttons nobody sees, so the keys reach them;
+/// they read the playhead only when a key is pressed, never in a body (Law 6).
+private struct LocateKeys: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
+    @Environment(RecordController.self) private var recording
+    @Environment(DocumentController.self) private var documents
+
+    private static let actions: [ShortcutMap.Action] = [.toStart, .barBack, .barForward]
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Self.actions, id: \.self) { action in
+                Button { go(action) } label: { EmptyView() }
+                    .shortcut(action)
+            }
+        }
+        .frame(width: 0, height: 0)
+        .opacity(0)
+        .accessibilityHidden(true)
+    }
+
+    private func go(_ action: ShortcutMap.Action) {
+        guard TimelineGeometry.mayLocate(recording: recording.isRecording, exporting: documents.isExporting) else { return }
+        let project = store.project
+        let heard = engine.heardTick(in: project)
+        let from = engine.isPlaying && heard.isFinite ? MusicalTime.integer(heard.rounded(.down)) : engine.restingTick
+        engine.locate(to: ShortcutMap.locate(action, from: from, meter: engine.playedMeterMap(of: project)))
+    }
+}
+
+private extension View {
+    /// The hardware key `ShortcutMap` gives `action`, on the control that does it.
+    @ViewBuilder func shortcut(_ action: ShortcutMap.Action) -> some View {
+        if let key = ShortcutMap.key(for: action) {
+            keyboardShortcut(KeyEquivalent(key.character), modifiers: key.modifiers)
+        } else {
+            self
+        }
+    }
+}
+
+private extension ShortcutMap.Key {
+    var modifiers: EventModifiers {
+        var held: EventModifiers = []
+        if command { held.insert(.command) }
+        if shift { held.insert(.shift) }
+        return held
     }
 }
 
