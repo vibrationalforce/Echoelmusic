@@ -835,7 +835,8 @@ private struct PlacementBlock: View {
 }
 
 /// A placed audio region: the file's name over its length. Drag moves it onto the magnet, one
-/// undo step on release; drag an edge to trim it onto the magnet; hold for Duplicate, Split at
+/// undo step on release; drag an edge to trim it onto the magnet, a top corner's grip to set its
+/// fade (one undo step each); hold for Duplicate, Split at
 /// Playhead (on the magnet), Consolidate (pieces of one file only), Bake Effects and Delete. A video part
 /// shows its hits (CUT); an audio region lands on one within reach and moves to the next on Place
 /// at Next Hit.
@@ -859,6 +860,8 @@ private struct RegionBlock: View {
     /// Live drag of the left and right edge, in points, until the finger lifts.
     @State private var trimLeft: CGFloat = 0
     @State private var trimRight: CGFloat = 0
+    /// The fade a grip is dragging, in frames, until the finger lifts.
+    @State private var fadeDrag: (edge: Arranging.Edge, frames: Int)?
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
@@ -920,6 +923,8 @@ private struct RegionBlock: View {
             .overlay { hitMarks }
             .overlay(alignment: .leading) { edgeHandle(.start) }
             .overlay(alignment: .trailing) { edgeHandle(.end) }
+            .overlay(alignment: .topLeading) { fadeGrip(.start, width: width) }
+            .overlay(alignment: .topLeading) { fadeGrip(.end, width: width) }
             .frame(width: width, height: Theme.Size.trackRowHeight - Theme.Space.s)
             .offset(x: CGFloat(Double(region.start) / ticksPerPoint) + dragX + trimLeft, y: Theme.Space.xs)
             .opacity(dragX == 0 && trimLeft == 0 && trimRight == 0 ? 1 : 0.8)
@@ -942,11 +947,17 @@ private struct RegionBlock: View {
         }
     }
 
+    /// The fades as they play, or as a grip drags one until the finger lifts.
+    private var shownFades: (fadeIn: Int, fadeOut: Int) {
+        guard let fadeDrag else { return region.effectiveFades }
+        return Arranging.fadeLengths(region, edge: fadeDrag.edge, toFrames: fadeDrag.frames)
+    }
+
     /// The region's fades over it, drawn as the curve they play: a line from the bottom corner
-    /// rising to the top over the fade-in, falling to the bottom over the fade-out. Drawn, never
-    /// touched; the hold menu's Fades & Gain sets them.
+    /// rising to the top over the fade-in, falling to the bottom over the fade-out. The grips on
+    /// the top corners drag them; the hold menu's Fades & Gain sets them by number.
     private var fadeMarks: some View {
-        let fades = region.effectiveFades
+        let fades = shownFades
         let total = Double(Swift.max(region.length, 1))
         let inShare = Double(fades.fadeIn) / total, outShare = Double(fades.fadeOut) / total
         let inCurve = region.fadeInCurve, outCurve = region.fadeOutCurve
@@ -1091,6 +1102,10 @@ private struct RegionBlock: View {
             .accessibilityAction(named: "Trim Start One Beat Later") { trim(.start, beats: 1) }
             .accessibilityAction(named: "Trim End One Beat Earlier") { trim(.end, beats: -1) }
             .accessibilityAction(named: "Extend End One Beat") { trim(.end, beats: 1) }
+            .accessibilityAction(named: "Fade In One Beat Longer") { fade(.start, beats: 1) }
+            .accessibilityAction(named: "Fade In One Beat Shorter") { fade(.start, beats: -1) }
+            .accessibilityAction(named: "Fade Out One Beat Longer") { fade(.end, beats: 1) }
+            .accessibilityAction(named: "Fade Out One Beat Shorter") { fade(.end, beats: -1) }
     }
 
     /// A grip along one edge; it wins over the move drag. It looks narrow (a 4-pt stripe with
@@ -1120,6 +1135,56 @@ private struct RegionBlock: View {
             )
             .accessibilityHidden(true)
     }
+
+    /// A grip on one top corner — the fade-in's on the left, the fade-out's on the right — that
+    /// sits where its fade ends and drags it longer or shorter; it wins over the move drag. It
+    /// looks small (an 8-pt square just inside the top) and takes a 44-pt touch target centred on
+    /// it, so the lower part of each edge stays the trim handle. The fade follows the finger and
+    /// is set ONCE when it lifts: one command, one undo step. Audio regions only.
+    @ViewBuilder private func fadeGrip(_ edge: Arranging.Edge, width: CGFloat) -> some View {
+        if file.kind == .audio {
+            let fades = shownFades
+            let total = CGFloat(Swift.max(region.length, 1))
+            let share = CGFloat(edge == .start ? fades.fadeIn : fades.fadeOut) / total
+            let fadeEndX = edge == .start ? share * width : width - share * width
+            let inset = Self.gripSize / 2 + 2
+            let centre = Swift.max(inset, Swift.min(fadeEndX, width - inset))
+            let drawnWidth = Double(length) / ticksPerPoint
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Theme.Color.text)
+                .frame(width: Self.gripSize, height: Self.gripSize)
+                .frame(width: Self.gripTarget, height: Self.gripTarget)
+                .contentShape(Rectangle())
+                .offset(x: centre - Self.gripTarget / 2, y: inset - Self.gripTarget / 2)
+                .highPriorityGesture(
+                    DragGesture(minimumDistance: 2, coordinateSpace: .named(ArrangeLane.space))
+                        .onChanged { value in
+                            fadeDrag = (edge, Arranging.fadeFrames(region, edge: edge, dragged: Double(value.translation.width),
+                                                                   widthPoints: drawnWidth))
+                        }
+                        .onEnded { value in
+                            fadeDrag = nil
+                            let frames = Arranging.fadeFrames(region, edge: edge, dragged: Double(value.translation.width),
+                                                              widthPoints: drawnWidth)
+                            if let command = Arranging.faded(region, edge: edge, toFrames: frames, in: track) {
+                                try? store.perform([command], title: edge == .start ? "Fade In" : "Fade Out")
+                            }
+                        }
+                )
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// VoiceOver's fades by one beat: the same command a grip sets.
+    private func fade(_ edge: Arranging.Edge, beats: Int) {
+        guard file.kind == .audio,
+              let command = Arranging.faded(region, edge: edge, byBeats: beats, in: track, project: store.project) else { return }
+        try? store.perform([command], title: edge == .start ? "Fade In" : "Fade Out")
+    }
+
+    /// The fade grip as it shows, and the touch it takes.
+    private static let gripSize: CGFloat = 8
+    private static let gripTarget: CGFloat = 44
 
     /// VoiceOver's trims by one beat, on the beat whatever the magnet says.
     private func trim(_ edge: Arranging.Edge, beats: Tick) {
