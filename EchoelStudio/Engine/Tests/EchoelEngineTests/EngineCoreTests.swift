@@ -481,6 +481,26 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(halted.last?.clip, loop)
     }
 
+    /// A queued clip's report names the tick it will launch on, fixed when it was queued: the
+    /// session counts down to that tick, not to a boundary it works out again from the playhead.
+    func testAQueuedReportCarriesTheBoundaryItWaitsFor() throws {
+        var s = try song([[]])
+        let loop = ClipID()
+        try Command.createClip(track: s.tracks[0], id: loop, name: "L", length: bar).apply(to: &s.project)
+        try Command.addNotes(loop, [Note(pitch: 60, start: 0, length: 480)]).apply(to: &s.project)
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 256)
+
+        engine.launch(slot: 0, .launch(loop))
+        _ = render(engine, frames: 256)
+        let reports = Array(sequence(state: engine.launchReports) { $0.pop() })
+        XCTAssertEqual(reports.map(\.state), [.queued])
+        XCTAssertEqual(reports.first?.tick, bar, "queued in bar 1 with the one-bar quantum: it starts on bar 2")
+        XCTAssertEqual(reports.first?.clip, loop)
+    }
+
     func testANoteAfterATempoChangeLandsWhereTheMapSays() throws {
         var s = try song([[Note(pitch: 60, start: bar + 960, length: 480)]])
         try Command.setTempoChange(at: bar, bpm: 60).apply(to: &s.project)

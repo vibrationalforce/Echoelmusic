@@ -1169,8 +1169,8 @@ public final class EngineCore: @unchecked Sendable {
 
     // MARK: - Session
 
-    private func report(_ slot: Int, _ clip: ClipID?, _ state: LaunchReport.State) {
-        launchReports.push(LaunchReport(slot: slot, clip: clip, state: state))
+    private func report(_ slot: Int, _ clip: ClipID?, _ state: LaunchReport.State, at tick: Tick = 0) {
+        launchReports.push(LaunchReport(slot: slot, clip: clip, state: state, tick: tick))
     }
 
     /// Ends every sounding note of one track's instrument. `offset` is the frame in this block it
@@ -1221,7 +1221,6 @@ public final class EngineCore: @unchecked Sendable {
                 continue
             case .launch(let clip):
                 sessions[lane.slot].pending = .launch(clip)
-                report(lane.slot, clip, .queued)
             case .stop:
                 calledOff(lane.slot)
                 guard sessions[lane.slot].clip != nil else {
@@ -1231,6 +1230,10 @@ public final class EngineCore: @unchecked Sendable {
                 sessions[lane.slot].pending = .stop
             }
             sessions[lane.slot].pendingTick = playing ? boundary(after: tick, snapshot) : tick
+            // Queued once its boundary is known: the session counts down to that very tick.
+            if case .launch(let clip) = request.action {
+                report(lane.slot, clip, .queued, at: sessions[lane.slot].pendingTick)
+            }
             if !playing { fire(lane, offset: 0) }
         }
     }
@@ -1251,7 +1254,6 @@ public final class EngineCore: @unchecked Sendable {
             return
         case .launch(let clip):
             sessions[slot].pending = .launch(clip)
-            report(slot, clip, .queued)
         case .stop:
             calledOff(slot)
             guard sessions[slot].clip != nil else {
@@ -1261,6 +1263,7 @@ public final class EngineCore: @unchecked Sendable {
             sessions[slot].pending = .stop
         }
         sessions[slot].pendingTick = playing ? boundary(after: tick, snapshot) : tick
+        if case .launch(let clip) = action { report(slot, clip, .queued, at: sessions[slot].pendingTick) }
         if !playing { fireAudio(lane) }
     }
 

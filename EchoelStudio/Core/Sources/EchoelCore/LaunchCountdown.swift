@@ -1,42 +1,44 @@
 import Foundation
 
-/// How long a queued session clip still waits: the launch boundary the engine waits for, seen
-/// from where the song is heard, and the bars until it — for the clip's countdown in the session.
-/// The same boundaries the render thread launches on (`EngineCore.boundary`): the next bar line of
-/// the meter, the next multiple of a shorter quantum, or at once.
+/// How long a queued session clip still waits, for its countdown in the session: from where the
+/// song is heard to the tick the render thread fixed for its launch when it was queued
+/// (`LaunchReport.tick`). More than a bar away it counts whole bars, inside the last bar beats, so
+/// the number goes down as the clip waits — with the one-bar quantum from "4 beats" to "1 beat".
 public enum LaunchCountdown {
-    /// The tick a launch waiting now starts on, from a playhead at `playhead` (fractional ticks):
-    /// with `quantum` nil the next bar line after it, with a positive quantum the next multiple of
-    /// it after it, with 0 the playhead itself.
-    public static func launchTick(after playhead: Double, quantum: Tick?, meter: MeterMap) -> Tick {
-        let at = position(playhead)
-        if let quantum {
-            guard quantum > 0 else { return at }
-            let next = (at / quantum + 1) * quantum
-            return Swift.min(next, MusicalTime.maximumTick)
-        }
-        return Swift.min(meter.tick(ofBar: meter.bar(at: at) + 1), MusicalTime.maximumTick)
+    public enum Remaining: Equatable, Sendable {
+        case bars(Int)
+        case beats(Int)
     }
 
-    /// Whole bars until `launch`, rounded up, in the length of the bar playing at `playhead`: 1 for
-    /// any wait inside the next bar, 0 once the launch is due.
-    public static func barsUntil(_ launch: Tick, from playhead: Double, meter: MeterMap) -> Int {
-        guard playhead.isFinite else { return 0 }
+    /// What is left until `launch` from a playhead at `playhead` (fractional ticks), each count
+    /// rounded up, in the bar and beat playing at the playhead; nil once the launch is due or the
+    /// playhead is no number.
+    public static func remaining(until launch: Tick, from playhead: Double, meter: MeterMap) -> Remaining? {
+        guard playhead.isFinite else { return nil }
         let wait = Double(launch) - playhead
-        guard wait > 0 else { return 0 }
-        let bar = Double(Swift.max(meter.ticksPerBar(at: position(playhead)), 1))
-        return Int(Swift.min((wait / bar).rounded(.up), Double(Int32.max)))
+        guard wait > 0 else { return nil }
+        let at = position(playhead)
+        let bar = Double(Swift.max(meter.ticksPerBar(at: at), 1))
+        if wait > bar { return .bars(count(wait / bar)) }
+        let beat = Double(Swift.max(meter.ticksPerBeat(at: at), 1))
+        return .beats(count(wait / beat))
     }
 
-    /// The bars a queued clip waits from `playhead`, for its label: "1 bar", "2 bars"; nil once due.
-    public static func text(bars: Int) -> String? {
-        guard bars > 0 else { return nil }
-        return bars == 1 ? "1 bar" : "\(bars) bars"
+    /// The label: "2 bars", "1 beat"; nil once due.
+    public static func text(_ remaining: Remaining?) -> String? {
+        switch remaining {
+        case .bars(let n): return n == 1 ? "1 bar" : "\(n) bars"
+        case .beats(let n): return n == 1 ? "1 beat" : "\(n) beats"
+        case nil: return nil
+        }
     }
 
-    /// A fractional playhead as a tick inside what a song holds; a non-finite one is bar 1.
+    private static func count(_ ratio: Double) -> Int {
+        Int(Swift.min(Swift.max(ratio.rounded(.up), 1), Double(Int32.max)))
+    }
+
+    /// A fractional playhead as a tick inside what a song holds.
     private static func position(_ playhead: Double) -> Tick {
-        guard playhead.isFinite else { return 0 }
-        return MusicalTime.integer(Swift.min(Swift.max(playhead, 0), Double(MusicalTime.maximumTick)).rounded(.down))
+        MusicalTime.integer(Swift.min(Swift.max(playhead, 0), Double(MusicalTime.maximumTick)).rounded(.down))
     }
 }
