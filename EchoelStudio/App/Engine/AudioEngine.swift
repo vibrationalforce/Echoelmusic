@@ -299,6 +299,19 @@ final class AudioEngine {
         }
         return result
     }
+
+    /// The right input of every monitored track that records a pair (`Track.inputChannels`) — only
+    /// where the interface has it: a pair whose right side never arrives would keep its whole
+    /// group of inputs silent (`InputMonitor.read(group:into:stride:frames:)`), so on a one-input
+    /// microphone a stereo track monitors its one input in both sides, as it records it.
+    private func monitoringRight(in project: Project) -> [TrackID: Int] {
+        var result: [TrackID: Int] = [:]
+        for (id, left) in monitoring(in: project) {
+            guard project.track(id)?.inputChannels == Track.maximumInputChannels, left + 1 < inputChannels else { continue }
+            result[id] = left + 1
+        }
+        return result
+    }
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "audio")
 
     /// Render calls of the current core, for the ladder's rungs (0 without a core).
@@ -954,12 +967,15 @@ final class AudioEngine {
     }
 
     /// Starts writing the input to `url` from the next input block.
-    /// `channel` is the input to record, 0-based; one the input lacks records the first.
-    func beginTake(url: URL, channel: Int) throws {
+    /// `channel` is the input to record, 0-based; one the input lacks records the first. With
+    /// `stereo` the take records `channel` and the input after it into a two-channel file, left and
+    /// right — when the interface has both; otherwise one channel, as a mono track would.
+    func beginTake(url: URL, channel: Int, stereo: Bool) throws {
         // Not while the last take is still being written out: a second writer would drain the same
         // ring, arming would reset the start that take still reads, and its drain task would be lost.
         guard takeLife.canBegin, let recorder, let core else { throw EngineError.inputClosed }
-        let writer = try TakeWriter(url: url, sampleRate: core.sampleRate, ring: recorder.ring)
+        let pair = stereo && channel >= 0 && channel + 1 < inputChannels
+        let writer = try TakeWriter(url: url, sampleRate: core.sampleRate, channels: pair ? 2 : 1, ring: recorder.ring)
         let session = AVAudioSession.sharedInstance()
         let latency = MusicalTime.integer(((session.inputLatency + session.outputLatency) * core.sampleRate).rounded())
         // The map the take's first frame is stamped against: the one the engine plays now — a
@@ -972,7 +988,7 @@ final class AudioEngine {
         take = (url, writer, recorder, core.sampleRate, Swift.max(0, latency), tempoMap, core,
                 recordsLoopPasses ? activeLoop : nil)
         takeLife.begin()
-        recorder.arm(channel: channel)
+        recorder.arm(channel: channel, pair: pair)
         applyLoop()
         drainTask = Task.detached(priority: .userInitiated) {
             while !Task.isCancelled {
@@ -1019,7 +1035,8 @@ final class AudioEngine {
             return nil
         }
         return RecordedTake(url: current.url, sampleRate: current.sampleRate, startSample: firstSample,
-                            startPlayed: recorder.startPlayed, latency: current.latency, tempoMap: current.tempoMap,
+                            channels: current.writer.channels, startPlayed: recorder.startPlayed,
+                            latency: current.latency, tempoMap: current.tempoMap,
                             loop: current.loop, wraps: wraps)
     }
 
@@ -1416,7 +1433,8 @@ final class AudioEngine {
                                       samples: samples, units: plugins.units,
                                       effects: plugins.chains.mapValues { $0 as [any HostedProcessor] },
                                       outputChannels: outputChannels, revisions: revisions.update(for: plan),
-                                      monitoring: monitoring(in: project), masterEffects: plugins.masterChain,
+                                      monitoring: monitoring(in: project), monitoringRight: monitoringRight(in: project),
+                                      masterEffects: plugins.masterChain,
                                       modulation: modulation, warped: stretches(for: project),
                                       wavetables: wavetables(for: project))
         meterIndices = core.meterIndices(for: snapshot)

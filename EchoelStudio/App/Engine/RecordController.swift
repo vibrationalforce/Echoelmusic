@@ -152,7 +152,9 @@ final class RecordController {
         }
         guard let file = documents.newTakeTarget() else { return }
         do {
-            try engine.beginTake(url: file.url, channel: store.project.track(track)?.input ?? 0)
+            let held = store.project.track(track)
+            try engine.beginTake(url: file.url, channel: held?.input ?? 0,
+                                 stereo: held?.inputChannels == Track.maximumInputChannels)
         } catch {
             documents.takeAbandoned(file)
             return

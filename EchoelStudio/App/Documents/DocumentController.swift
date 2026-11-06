@@ -2663,8 +2663,9 @@ final class DocumentController {
             passes = LoopRecording.newest(passes, room: LoopRecording.room(on: held, in: store.project, over: loop))
         }
         if let buffer { samples[target.id] = buffer }
-        // A take is one input channel (`TakeWriter`), so a decode keeps one.
-        mediaChannels[target.id] = buffer?.channelCount ?? 1
+        // What the writer wrote — one input, or a pair (`TakeWriter`) — as an import counts it
+        // from the file's header, loaded or not.
+        mediaChannels[target.id] = take.channels
         mediaRevision += 1
         let number = store.project.media.filter { $0.name.hasPrefix("Take ") }.count + 1
         let file = MediaFile(id: target.id, name: "Take \(number)", path: target.path,
