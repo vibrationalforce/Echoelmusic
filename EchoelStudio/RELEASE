@@ -1,16 +1,17 @@
-11.0.0 — the Field keeps under three flashes a second at full level
+11.0.0 — a kaleidoscope for the Field; a light cue that walks the Bar Weave
 
-What is new since 10059. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10060. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Water, Aurora, Dish and Depth: a jump of the pitch re-spaced their pattern in a third of a
-  second, which in a loud song could flash a point of the picture far more than three times a
-  second. Now each re-spaces over a few seconds; the aurora sways a little slower.
-- Rings: the beat's ring and the coherence halo are faint now, and a key change or a coherence
-  change re-spaces the rings over some seconds instead of at once.
+- Field window, pattern menu, "Kaleidoscope": the Field folded round its centre in 4, 6, 8 or 12
+  segments. Never the video under the Field Layer, the Chladni plate or the Weave. A change of
+  the count fades through dark.
+- Light show, a cue's Look, "Weave": each fixture lights in the song's colour only while its cell
+  of the song's Bar Weave is lit, so the Field's weave walks across the rig a row per bar. Every
+  channel still passes the rig's flash guard.
 
-Previous: 11.0.0 (10059) — a Field look "Thin Film", the looks no longer jump at the bar; 10058 —
-stereo recording from an input pair; 10057 — the Field's looks in exported video and in the
-live stream, Bar Weave. Earlier: git history.
+Previous: 11.0.0 (10060) — the Field keeps under three flashes a second at full level; 10059 —
+"Thin Film", the looks no longer jump at the bar; 10058 — stereo recording from an input pair.
+Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -18,10 +19,12 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Field window, Pattern "Water", a loud song with high and low notes: does the net follow the
-   pitch smoothly, never snapping?
-2. Pattern "Aurora", same song: do the rays re-space slowly, and do the curtains still move?
-3. Pattern "Rings" in a fast song: is the beat still visible as a faint ring, and does nothing
-   blink?
-4. Change the song's key while "Rings" play: do the rings tighten or widen over a few seconds?
-5. Any pattern, a minute of a loud, fast song: does any part of the picture flicker or flash?
+1. Field window, Pattern "Water", Kaleidoscope 6: is the picture a six-fold mirror round the
+   centre, with no seam or line where the wedges meet?
+2. Change the Kaleidoscope from 6 to 12 while "Water" shows: does the picture fade out and back
+   in, without a flash?
+3. Kaleidoscope 8, Pattern "Weave": is the weave shown unfolded, rows rising from the bottom?
+4. Export a video with the Field Layer on and Kaleidoscope 6: is the video itself unfolded and
+   the Field over it folded?
+5. Light show with two or more fixtures (or Art-Net into a visualizer), a cue with Look "Weave",
+   play a song: do fixtures switch with the bars, fading rather than flashing?
