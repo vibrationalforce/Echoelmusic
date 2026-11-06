@@ -12,11 +12,14 @@ struct StudioView: View {
     @Environment(CameraPulseSource.self) private var camera
     @Environment(MIDIInput.self) private var midi
 
+    /// The Connections module (wave W4), the app's one: this window reports its phase to it, and
+    /// the rig is let go only when the last window leaves the foreground (Q2).
+    @Environment(ConnectionsController.self) private var connections
+
     @State private var router = StudioRouter()
-    /// The Connections module (wave W4), owned here so a connection keeps sending while its
-    /// panel is closed; every connection is off until switched on in the panel.
-    @State private var connections = ConnectionsController()
-    /// The lights follow it: dark when the app goes to the background with the song standing.
+    /// This window, as the connections know it.
+    @State private var sceneID = UUID()
+    /// This window's phase (a view reads its own scene's, not the app's).
     @Environment(\.scenePhase) private var scenePhase
     @State private var surface: Surface = .tracks
     /// The keys and pads under the surface; on by default so the phone alone makes sound.
@@ -74,7 +77,6 @@ struct StudioView: View {
         }
         .environment(router)
         .environment(streaming)
-        .environment(connections)
         .environment(jam)
         .environment(flow)
         .environment(videoHits)
@@ -84,20 +86,14 @@ struct StudioView: View {
             StudioIntentBridge.shared.share = { [weak router = self.router] url in router?.share(url) }
             engine.setSamples(documents.samples)
             engine.update(store.project)
-            connections.attach(engine: engine, store: store, strap: strap)
+            connections.scene(sceneID, is: ScenePresence.Phase(scenePhase))
             jam.attach(engine: engine, store: store, midi: midi)
             flow.attach(engine: engine, store: store, strap: strap, camera: camera, midi: midi, jam: jam)
         }
         .onChange(of: store.project) { _, project in engine.update(project) }
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
-        .onChange(of: scenePhase) { _, phase in
-            switch phase {
-            case .background: connections.enterBackground()
-            case .active: connections.enterForeground()
-            default: break
-            }
-        }
-        .onDisappear { connections.leave() }
+        .onChange(of: scenePhase) { _, phase in connections.scene(sceneID, is: ScenePresence.Phase(phase)) }
+        .onDisappear { connections.sceneLeft(sceneID) }
     }
 
     /// Four named areas, so VoiceOver's Containers rotor reaches each in one swipe and says where
@@ -1460,6 +1456,19 @@ private struct MIDI2UnheardLine: View {
     var body: some View {
         if midi.midi2Enabled, midi.unheardCount > 0 {
             Text("\(midi.unheardCount) messages without a MIDI 1.0 equivalent were not heard")
+        }
+    }
+}
+
+private extension ScenePresence.Phase {
+    /// A phase the system adds later counts as the background: a lamp left lit by an app that may
+    /// be suspended is the harm, a rig let go too early only waits for the next Play.
+    init(_ phase: ScenePhase) {
+        switch phase {
+        case .active: self = .active
+        case .inactive: self = .inactive
+        case .background: self = .background
+        @unknown default: self = .background
         }
     }
 }

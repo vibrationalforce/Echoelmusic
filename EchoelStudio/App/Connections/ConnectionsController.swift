@@ -150,14 +150,18 @@ final class ConnectionsController {
     /// until `goodbyeCount` were admitted, so a full send queue or a lost burst does not leave
     /// one lit (`UDPSender` refuses past its bound and expects the caller to say it again).
     @ObservationIgnored private var darkening: [Kind: [Int: (length: Int, said: Int)]] = [:]
-    /// The app is in the background. While the song plays there (audio runs on) the lights go on;
-    /// while it stands the app is about to be suspended, and the rig is left dark (`letGo`).
+    /// The app is in the background: no studio window is in the foreground (`presence`). While the
+    /// song plays there (audio runs on) the lights go on; while it stands the app is about to be
+    /// suspended, and the rig is left dark (`letGo`).
     @ObservationIgnored private var inBackground = false
+    /// The studio windows and their phases; one controller serves them all.
+    @ObservationIgnored private var presence = ScenePresence()
     /// The rig was left dark and nothing has lit it since.
     @ObservationIgnored private var leftDark = false
-    /// Each universe numbers its own packets, as both standards count per universe.
-    /// Every DMX frame is numbered per output and per universe on the wire, as both standards count.
-    @ObservationIgnored private var wireSequences: [Kind: [Int: UInt8]] = [:]
+    /// Every DMX frame is numbered per output and per universe on the wire, as both standards
+    /// count. Kept for the whole run and never reset — not by switching an output off and on, not
+    /// by a new receiver — so a universe's numbers never run backwards (`WireSequences`).
+    @ObservationIgnored private var wireSequences = WireSequences()
     /// Per light output, every universe on the wire it has sent to since it last went dark, with the
     /// longest frame there. Leaving the rig darkens each of them, and a universe the output stops
     /// addressing — a fixture moved or removed, another song, a new universe setting — is darkened
@@ -170,6 +174,9 @@ final class ConnectionsController {
     /// that receiver again — never at launch, which would open a connection nobody switched on.
     @ObservationIgnored private var litLedger: LitLedger
     @ObservationIgnored private var terminationObserver: NSObjectProtocol?
+    /// The app as a whole entered the background: the backstop for a window that left without
+    /// reporting its own phase (`ScenePresence.appEnteredBackground`).
+    @ObservationIgnored private var backgroundObserver: NSObjectProtocol?
     #if canImport(UIKit)
     @ObservationIgnored private var darkTask: UIBackgroundTaskIdentifier = .invalid
     #endif
@@ -209,8 +216,8 @@ final class ConnectionsController {
         }
     }
 
-    /// Where the tick reads from. Called once by the root view; nothing is sent before a
-    /// connection is switched on.
+    /// Where the tick reads from. Called once by the app; nothing is sent before a connection is
+    /// switched on.
     func attach(engine: AudioEngine, store: ProjectStore, strap: HeartRateStrap) {
         self.engine = engine
         self.store = store
@@ -223,6 +230,18 @@ final class ConnectionsController {
             self.letGo()
         }
         #if canImport(UIKit)
+        // The app as a whole left the foreground: no window is in front, whatever each one last
+        // reported.
+        if backgroundObserver == nil {
+            backgroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification,
+                                                                        object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.presence.appEnteredBackground()
+                    self.followPresence()
+                }
+            }
+        }
         // The app is quit while it drives a rig (swiped away while the song plays): the dark
         // frame goes out on its way down. A suspended app is not told; `letGo` covers that.
         if terminationObserver == nil {
@@ -569,22 +588,37 @@ final class ConnectionsController {
 
     // MARK: - Leaving the rig
 
-    /// The app went to the background (`scenePhase`). Audio may run on there; the lights follow
-    /// the song while it plays and are left dark when it stands (`tick`).
-    func enterBackground() {
+    /// A studio window reported its phase (`scenePhase`). The controller belongs to the app, not
+    /// to a window, so the rig follows the app: it is let go only once no window is in the
+    /// foreground (`ScenePresence`) — one of two iPad windows going inactive or to the background
+    /// while the other stays in front changes nothing.
+    func scene(_ id: UUID, is phase: ScenePresence.Phase) {
+        presence.report(phase, for: id)
+        followPresence()
+    }
+
+    /// A studio window closed. The connections stay on for the windows left; when it was the last
+    /// one, the app is away and the rig is let go as in the background.
+    func sceneLeft(_ id: UUID) {
+        presence.remove(id)
+        followPresence()
+    }
+
+    private func followPresence() {
+        let away = presence.isAway
+        guard away != inBackground else { return }
+        if away { enterBackground() } else { enterForeground() }
+    }
+
+    /// The app went to the background: its last window left the foreground. Audio may run on
+    /// there; the lights follow the song while it plays and are left dark when it stands (`tick`).
+    private func enterBackground() {
         inBackground = true
         if let engine, !(engine.isPlaying && engine.isRunning) { letGo() }
     }
 
-    func enterForeground() {
+    private func enterForeground() {
         inBackground = false
-    }
-
-    /// The window that owns this controller goes away (an iPad window closed): every light output
-    /// leaves its rig dark and closes; nothing else would ever reach those sockets again.
-    func leave() {
-        engine?.onSuspending(self, nil)
-        for kind in Kind.allCases where enabled.contains(kind) { setOn(false, kind) }
     }
 
     /// Leaves the rig dark on every light output — once, and again at the restatement rate while
@@ -735,19 +769,17 @@ final class ConnectionsController {
         let longest = lit[kind]?[wire] ?? 0
         var frame = channels
         if frame.count < longest { frame.append(contentsOf: [UInt8](repeating: 0, count: longest - frame.count)) }
-        var sequence = wireSequences[kind]?[wire] ?? 0
         let packet: Data
         switch kind {
         case .artNet:
-            sequence = ArtDMXPacket.nextSequence(sequence)
+            let sequence = wireSequences.next(.artNet, universe: wire)
             packet = ArtDMXPacket.packet(universe: wire, sequence: sequence, channels: frame)
         case .sacn:
-            sequence = E131Packet.nextSequence(sequence)
+            let sequence = wireSequences.next(.sacn, universe: wire)
             packet = E131Packet.packet(universe: wire, sequence: sequence, cid: cid, channels: frame, options: options)
         case .osc, .admOSC:
             return false
         }
-        wireSequences[kind, default: [:]][wire] = sequence
         lit[kind, default: [:]][wire] = Swift.max(longest, frame.count)
         return sender.send(packet)
     }

@@ -28,6 +28,10 @@ struct EchoelStudioApp: App {
     /// The phone's own tilt, turning and movement (Recovery 9), off until turned on there; it runs
     /// beside the pulse source.
     @State private var phoneMotion: PhoneMotionSource
+    /// The Connections module (wave W4), one for the app: the rig belongs to the app, not to a
+    /// window, so a second iPad window shows the same connections and closing one leaves them on
+    /// (Q2). Every connection is off until switched on in the panel.
+    @State private var connections: ConnectionsController
     @Environment(\.scenePhase) private var scenePhase
     #if canImport(UIKit)
     /// Only for the external display's scene (REC-1, `ExternalFieldSceneDelegate`); the studio's
@@ -59,6 +63,9 @@ struct EchoelStudioApp: App {
         let phoneMotion = PhoneMotionSource()
         phoneMotion.output = engine.modulation
         _phoneMotion = State(initialValue: phoneMotion)
+        let connections = ConnectionsController()
+        connections.attach(engine: engine, store: store, strap: strap)
+        _connections = State(initialValue: connections)
         _documents = State(initialValue: documents)
         // Siri, Shortcuts and Spotlight reach the open song and the transport through these (PRO-W1).
         StudioIntentBridge.shared.store = store
@@ -115,6 +122,7 @@ struct EchoelStudioApp: App {
                 .environment(camera)
                 .environment(health)
                 .environment(phoneMotion)
+                .environment(connections)
                 .preferredColorScheme(.dark)
                 // The system's own controls — a sheet's Done, a menu's checkmark, a segmented
                 // picker, an alert — take the bio-green accent instead of the system blue, so
