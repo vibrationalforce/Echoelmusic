@@ -149,18 +149,11 @@ and the `?v=` query is a repair that does not ship.** Guard:
 directory rather than a named page, because `index.html` is the one page that loads no
 `shared.css` at all (§6) and a needle pointed there passes vacuously.
 
-⚠️ `version.json`'s `features` block stays honest (`12UnifiedTools`, `3Editions`, `8Personas`,
-`generativeWorlds`, `arWorlds` all `false`). Its `changelog` array is **not**: it narrates AUv3,
-EchoelBeat, RTMP, "12 unified tools" and `EchoelCreativeWorkspace` — a type that has never
-existed here (`git ls-files "*EchoelCreativeWorkspace*"` → 0). **A changelog is a claim surface
-too**, and this one is still unrepaired.
-
-The `features` block is honest where it matters — `12UnifiedTools`, `3Editions`, `8Personas`,
-`generativeWorlds`, `arWorlds` all read `false`. **The `changelog` array is not**: it narrates
-AUv3, EchoelBeat, RTMP, "12 unified tools" and `EchoelCreativeWorkspace` as shipped history.
-The last of those is a type that has never existed in this repo
-(`git ls-files "*EchoelCreativeWorkspace*"` → 0) and it is the same phantom two reviewer agents
-carried until 2026-08-12. **A changelog is a claim surface too.**
+⭐ **`version.json` holds only `version` and `build` since 2026-11-06.** Every page's inline guardian
+and `shared.js` read `d.version` and nothing else; the `features` and `changelog` blocks (24 KB,
+fetched once a minute per open tab) were read by no page, and the changelog narrated AUv3,
+EchoelBeat, RTMP, "12 unified tools" and a type that never existed as shipped history. A
+changelog is a claim surface too; the release history lives in git and `EchoelStudio/RELEASE`.
 
 ## 5. Do NOT "fix" the AUv3 and RTMP mentions
 
