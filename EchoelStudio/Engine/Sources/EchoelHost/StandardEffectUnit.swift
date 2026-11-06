@@ -35,6 +35,9 @@ public final class StandardEffectUnit: AUAudioUnit {
         var maximumFrames = 0
         let unlocked = Atomic<Bool>(true)
         let bypassed = Atomic<Bool>(false)
+        /// Raised by `reset()` on the host's thread; the render drains it and empties the tails
+        /// at the start of its next block, so the kernel's buffers have one writer.
+        let resetRequested = Atomic<Bool>(false)
         var demoFrame: Int64 = 0
         /// In another app's host (the extension's ids) the output ends in `OutputSafety`. In Echoel
         /// the unit is an insert inside a float mix whose end has its own guard, so it does not
@@ -130,6 +133,12 @@ public final class StandardEffectUnit: AUAudioUnit {
 
     public override var canProcessInPlace: Bool { true }
 
+    /// Stereo in, stereo out, and nothing else: the render takes exactly two channels and
+    /// `allocateRenderResources` refuses any other format. Without this a host such as AUM or
+    /// Logic reads "any count" (nil) and may offer a mono or surround insert the unit then refuses
+    /// at load.
+    public override var channelCapabilities: [NSNumber]? { [NSNumber(value: 2), NSNumber(value: 2)] }
+
     /// The base state (the parameter tree by address) plus the same values by identifier
     /// (`StandardEffectSettings`). A state Echoel wrote without loading the unit — the master
     /// suggestion's — carries only the identifiers; a state with both plays the identifiers.
@@ -211,6 +220,16 @@ public final class StandardEffectUnit: AUAudioUnit {
         render.kernel.follow(key: old.key)
         render.maximumFrames = Int(maximumFramesToRender)
         render.demoFrame = 0
+        render.resetRequested.store(false, ordering: .releasing)
+    }
+
+    /// A host's reset (a transport jump, a stop, a new song): the delay lines, the reverb and
+    /// every other tail are emptied, so the old take does not ring into the new one. The host
+    /// may call this while rendering, so it only asks; the render block empties the kernel at
+    /// the start of its next block. Parameters stay as they are.
+    public override func reset() {
+        super.reset()
+        render.resetRequested.store(true, ordering: .releasing)
     }
 
     public override var internalRenderBlock: AUInternalRenderBlock {
@@ -227,6 +246,7 @@ public final class StandardEffectUnit: AUAudioUnit {
                   let left = buffers[0].mData?.assumingMemoryBound(to: Float.self),
                   let right = buffers[1].mData?.assumingMemoryBound(to: Float.self) else { return noErr }
             let kernel = state.kernel
+            if state.resetRequested.exchange(false, ordering: .acquiringAndReleasing) { kernel.reset() }
             let bypassed = state.bypassed.load(ordering: .relaxed)
             let start = AUEventSampleTime(timestamp.pointee.mSampleTime)
             var done = 0

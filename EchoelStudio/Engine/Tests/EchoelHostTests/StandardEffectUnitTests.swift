@@ -40,6 +40,15 @@ final class StandardEffectUnitTests: XCTestCase {
                              "only a standard effect's id makes one")
     }
 
+    /// A host reads the one channel layout the unit plays — stereo to stereo — before it offers
+    /// the insert, instead of guessing and getting a refusal at load.
+    func testEachStandardEffectDeclaresStereoInStereoOut() throws {
+        for effect in StandardEffect.allCases {
+            let u = try unit(effect)
+            XCTAssertEqual(u.channelCapabilities?.map(\.intValue), [2, 2], "\(effect)")
+        }
+    }
+
     /// A named choice reaches a host as an indexed parameter with its names.
     func testANamedChoiceIsAnIndexedParameterWithItsNames() throws {
         let u = try unit(.harmonizer)
@@ -117,6 +126,30 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertEqual(out[0], 0, accuracy: 1e-6, "fully wet")
         XCTAssertEqual(out[480], 1, accuracy: 0.05, "10 ms later, across block boundaries")
         XCTAssertEqual(tree.parameter(withAddress: 2)?.value, 1, "the tree reads what the kernel holds")
+    }
+
+    /// A host's reset empties the tail: an impulse that would repeat 10 ms later is gone once the
+    /// host resets the unit, while a unit that is not reset still plays the repeat.
+    func testAResetEmptiesTheDelaysTail() throws {
+        func primed() throws -> StandardEffectUnit {
+            let delay = try unit(.delay)
+            let tree = try XCTUnwrap(delay.parameterTree)
+            tree.parameter(withAddress: 0)?.value = 0.01 // time: 480 frames
+            tree.parameter(withAddress: 1)?.value = 0 // feedback
+            tree.parameter(withAddress: 2)?.value = 1 // mix
+            var impulse = [Float](repeating: 0, count: 256)
+            impulse[0] = 1
+            _ = render(delay, impulse)
+            return delay
+        }
+        let silence = [Float](repeating: 0, count: 512)
+        let kept = render(try primed(), silence)
+        XCTAssertEqual(kept[480 - 256], 1, accuracy: 0.05, "without a reset the repeat is still in the line")
+        let cleared = try primed()
+        cleared.reset()
+        let out = render(cleared, silence)
+        XCTAssertEqual(out.map { abs($0) }.max() ?? 1, 0, accuracy: 1e-6, "after a reset: silence")
+        XCTAssertEqual(cleared.parameterTree?.parameter(withAddress: 2)?.value, 1, "the parameters stay")
     }
 
     /// A host's bypass passes the input through untouched, and the effect plays again when the

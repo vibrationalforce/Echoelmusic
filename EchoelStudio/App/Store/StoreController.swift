@@ -88,7 +88,11 @@ final class StoreController {
     }
 
     /// Asks the App Store for this account's purchases again, and says what it found: a restore
-    /// that finds nothing used to end without a word, so the button looked dead.
+    /// that finds nothing used to end without a word, so the button looked dead. Offline the sync
+    /// fails, but the device still holds its own record of the account's purchases
+    /// (`Transaction.currentEntitlements` reads it without the network), so a buyer on a plane is
+    /// still unlocked; only "nothing on this device" waits for the connection, because then the
+    /// store was never asked.
     func restore() async {
         guard !isBusy else { return }
         isBusy = true
@@ -99,7 +103,10 @@ final class StoreController {
             return
         } catch {
             log.error("restore failed — \(error.localizedDescription, privacy: .public)")
-            message = "Could not reach the App Store. Check the connection and try again."
+            await refreshOwned()
+            message = isOwned
+                ? "\(PluginUnlock.name) are restored from this device's purchase record. The App Store could not be reached."
+                : "Could not reach the App Store. Check the connection and try again."
             return
         }
         await refreshOwned()
