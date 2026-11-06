@@ -329,6 +329,17 @@ public enum FieldLook {
     public static func light(_ pattern: FieldPattern, u: Double, v: Double, aspect: Double,
                              field: FieldMotion.Shown, look: FieldLookMotion.Shown,
                              plate: ChladniMotion.Shown, turns: Double) -> Double {
+        // The kaleidoscope folds where every look but the plate and the weave reads; a change fades.
+        let read = FieldFold.folds(pattern) ? FieldFold.fold(u: u, v: v, aspect: aspect, segments: look.fold) : (u: u, v: v)
+        let unfolded = drawnLight(pattern, u: read.u, v: read.v, aspect: aspect, field: field, look: look,
+                                  plate: plate, turns: turns)
+        return unfolded * clamp(look.foldLight, 0, 1)
+    }
+
+    /// `light` at a point read as it is, before the fold and its fade.
+    static func drawnLight(_ pattern: FieldPattern, u: Double, v: Double, aspect: Double,
+                           field: FieldMotion.Shown, look: FieldLookMotion.Shown,
+                           plate: ChladniMotion.Shown, turns: Double) -> Double {
         let ambient = FieldPulse.ambient
         switch pattern {
         case .chladni:
@@ -409,25 +420,70 @@ public enum FieldLook {
     }
 }
 
+/// The Field folded as a kaleidoscope: the picture's wedge from the centre, mirrored round it
+/// `segments` times. It folds the Field only — never a video under it, which is the musician's
+/// picture (decision 2026-11-06) — and not the Chladni plate, whose sand already has the plate's
+/// symmetry, nor the weave, whose newest row enters at the bottom edge the fold never reads. It only moves where each point is read from, so it adds no flashing of its own; a
+/// change of the count fades through dark (`FieldLookMotion`). A device setting, never in the song.
+public enum FieldFold {
+    /// The counts offered: 1 is no fold.
+    public static let choices = [1, 4, 6, 8, 12]
+    public static let storageKey = "field.fold"
+
+    /// A stored count read back: anything not offered is no fold.
+    public static func segments(stored: Int?) -> Int {
+        guard let stored, choices.contains(stored) else { return 1 }
+        return stored
+    }
+
+    public static func title(_ segments: Int) -> String { segments <= 1 ? "Off" : "\(segments) Segments" }
+
+    /// Whether `pattern` is read through the fold.
+    public static func folds(_ pattern: FieldPattern) -> Bool { pattern != .chladni && pattern != .weave }
+
+    /// Whether folding changes what `pattern` shows: the rings are round already.
+    public static func changes(_ pattern: FieldPattern) -> Bool { folds(pattern) && pattern != .rings }
+
+    /// Where (`u`, `v`) — the picture's coordinates, 0 … 1 from the bottom left — reads the
+    /// unfolded picture from, in a frame of `aspect`: its angle round the centre folded into the
+    /// first half-wedge (from straight up, clockwise), its distance kept, and held inside the
+    /// frame — a corner's distance would read past its edge, where nothing is drawn or measured.
+    /// One segment is itself.
+    public static func fold(u: Double, v: Double, aspect: Double, segments: Int) -> (u: Double, v: Double) {
+        guard segments > 1, aspect.isFinite, aspect > 0, u.isFinite, v.isFinite else { return (u, v) }
+        let x = (u - 0.5) * aspect, y = v - 0.5
+        let r = (x * x + y * y).squareRoot()
+        let wedge = 2 * Double.pi / Double(segments)
+        var angle = atan2(x, y)
+        angle -= wedge * (angle / wedge).rounded(.down)
+        if angle > wedge / 2 { angle = wedge - angle }
+        return (Swift.min(Swift.max(0.5 + r * sin(angle) / aspect, 0), 1), Swift.min(Swift.max(0.5 + r * cos(angle), 0), 1))
+    }
+}
+
 /// The looks a Field shows, as the musician chose them on this device: the pattern, the one
-/// blended over it (none: nil) and its share 0 … 1. A device setting, never in the song.
+/// blended over it (none: nil) and its share 0 … 1, and the kaleidoscope's fold. A device setting,
+/// never in the song.
 public struct FieldLookChoice: Hashable, Sendable {
     public let primary: FieldPattern
     public let partner: FieldPattern?
     public let mix: Double
+    public let fold: Int
 
-    public init(primary: FieldPattern = .rings, partner: FieldPattern? = nil, mix: Double = 0) {
+    public init(primary: FieldPattern = .rings, partner: FieldPattern? = nil, mix: Double = 0, fold: Int = 1) {
         self.primary = primary
         self.partner = partner
         self.mix = mix.isFinite ? Swift.min(1, Swift.max(0, mix)) : 0
+        self.fold = FieldFold.segments(stored: fold)
     }
 
     /// The choice as the device stores it (`FieldPattern.storageKey`, `blendStorageKey`,
-    /// `blendMixStorageKey`), read as the Field window reads it: an unknown pattern is the rings,
-    /// an unknown or empty partner is none, the share in percent.
-    public init(storedPattern: String?, storedPartner: String?, mixPercent: Int) {
+    /// `blendMixStorageKey`, `FieldFold.storageKey`), read as the Field window reads it: an unknown
+    /// pattern is the rings, an unknown or empty partner is none, the share in percent, an
+    /// unknown fold none.
+    public init(storedPattern: String?, storedPartner: String?, mixPercent: Int, storedFold: Int? = nil) {
         self.init(primary: FieldPattern(stored: storedPattern), partner: FieldPattern.blend(stored: storedPartner),
-                  mix: Double(Swift.min(Swift.max(mixPercent, 0), 100)) / 100)
+                  mix: Double(Swift.min(Swift.max(mixPercent, 0), 100)) / 100, fold: FieldFold.segments(stored: storedFold))
     }
 
     /// The shown looks that listen to the sound, the pattern first — the partner only while its
@@ -483,6 +539,10 @@ public struct FieldLookMotion: Equatable, Sendable {
         /// The aurora's ray count: the heard pitch's (`FieldLook.auroraRays`), moving at most
         /// `FieldLook.auroraRayRate` a second, held while still.
         public var auroraRays = FieldLook.auroraRays(toneHz: FieldFrame.middleC)
+        /// The kaleidoscope's segments drawn (`FieldFold`; 1: none) and the picture's light while
+        /// the count changes, 0 … 1, flash-guarded: it fades to dark, changes, and fades back.
+        public var fold = 1
+        public var foldLight = 1.0
         /// The thin film's own phase, turns 0 … 1: the song's drift at `FieldLook.filmPhaseRate`,
         /// counted on across the song phase's wraps (the shared `turns` jumps back at each, which
         /// a share of it would show as a jump of the whole film), held while still.
@@ -540,6 +600,7 @@ public struct FieldLookMotion: Equatable, Sendable {
     private var mixLight = FlashLimit()
     private var strengthLight = FlashLimit()
     private var weaveLight = FlashLimit(value: 1)
+    private var foldLight = FlashLimit(value: 1)
     private var previousFieldPhase: Double?
     private var hasSeeded = false
 
@@ -575,7 +636,8 @@ public struct FieldLookMotion: Equatable, Sendable {
     public mutating func step(primary: FieldPattern, partner: FieldPattern?, mix target: Double,
                               hertz: Double?, drive: Double, tonicHz: Double, fieldPhase: Double,
                               after seconds: Double, still: Bool, patternScale: Double,
-                              beat: TuningBeat = .unison, bars: Double = 0, keyMask: UInt16 = 0) -> Shown {
+                              beat: TuningBeat = .unison, bars: Double = 0, keyMask: UInt16 = 0,
+                              fold foldRequest: Int = 1) -> Shown {
         let elapsed = seconds.isFinite && seconds > 0 ? seconds : 0
         let level = drive.isFinite ? Swift.min(Swift.max(drive, 0), 1) : 0
         let wanted = hertz.flatMap { $0.isFinite && $0 > 0 && level > 0 ? $0 : nil }
@@ -598,6 +660,7 @@ public struct FieldLookMotion: Equatable, Sendable {
             shown.weavePosition = Self.weaveTarget(bars)
             shown.weaveSeed = BarWeave.seed(keyMask: keyMask)
             shown.turns = fieldPhase.isFinite ? fieldPhase - fieldPhase.rounded(.down) : 0
+            shown.fold = FieldFold.segments(stored: foldRequest)
         }
         shown.primary = primary
 
@@ -608,6 +671,21 @@ public struct FieldLookMotion: Equatable, Sendable {
             if mixLight.value <= Self.blendThreshold { shown.partner = requested } else { mixGoal = 0 }
         }
         shown.mix = mixLight.next(towards: mixGoal, after: elapsed)
+
+        // The kaleidoscope: a new count is never cut in — the picture fades to dark, the count
+        // changes, the picture fades back. Where no look on screen changes under the fold, it
+        // changes at once.
+        let foldGoal = FieldFold.segments(stored: foldRequest)
+        var foldLightGoal = 1.0
+        if foldGoal != shown.fold {
+            let shownLooks = shown.isBlending ? [shown.primary, shown.partner] : [shown.primary]
+            if foldLight.value <= Self.blendThreshold || !shownLooks.contains(where: FieldFold.changes) {
+                shown.fold = foldGoal
+            } else {
+                foldLightGoal = 0
+            }
+        }
+        shown.foldLight = foldLight.next(towards: foldLightGoal, after: elapsed)
 
         // The shared phase: while blending, the looks drift at a share of the song's rate.
         if let previous = previousFieldPhase, fieldPhase.isFinite, previous.isFinite {
@@ -689,7 +767,8 @@ public struct FieldLookMotion: Equatable, Sendable {
                               patternScale: Double) -> Shown {
         step(primary: choice.primary, partner: choice.partner, mix: choice.mix, hertz: hertz, drive: drive,
              tonicHz: frame.tonicHz, fieldPhase: fieldPhase, after: seconds, still: still,
-             patternScale: patternScale, beat: frame.tuningBeat, bars: frame.bars, keyMask: frame.keyMask)
+             patternScale: patternScale, beat: frame.tuningBeat, bars: frame.bars, keyMask: frame.keyMask,
+             fold: choice.fold)
     }
 
     /// The weave's place for a song at `bars`: one row on, so the key's row is whole from the start.

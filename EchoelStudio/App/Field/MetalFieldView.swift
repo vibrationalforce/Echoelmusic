@@ -34,6 +34,8 @@ struct MetalFieldView: UIViewRepresentable {
     /// The look blended over it (nil: none) and its share, 0 … 1 — cold too.
     var partner: FieldPattern?
     var mix: Double = 0
+    /// The kaleidoscope's segments (`FieldFold`; 1: none) — cold too.
+    var fold = 1
 
     func makeCoordinator() -> MetalFieldRenderer { MetalFieldRenderer() }
 
@@ -71,7 +73,7 @@ struct MetalFieldView: UIViewRepresentable {
         renderer.store = store
         renderer.engine = engine
         renderer.reduceMotion = reduceMotion
-        renderer.setLooks(primary: pattern, partner: partner, mix: mix)
+        renderer.setLooks(primary: pattern, partner: partner, mix: mix, fold: fold)
     }
 
     /// The view goes: the renderer stops asking the engine for the spectrum.
@@ -201,7 +203,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     }
 
     /// The looks' numbers, read by the shader at buffer 2 — mirrored by BYTE LAYOUT in the MSL
-    /// `Look` struct (thirteen `float`): changed in both places in one commit. All zero draws the
+    /// `Look` struct (fifteen `float`): changed in both places in one commit. All zero draws the
     /// rings alone; the video layer binds the film's looks (`FieldExport.film`).
     private struct LookUniforms {
         var primary: Float = 0
@@ -217,6 +219,9 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         var filmPhase: Float = 0
         var turns: Float = 0
         var auroraRays: Float = 0
+        var fold: Float = 1
+        /// 1 − the fold's fade light, so all-zero uniforms still draw at full light.
+        var foldDark: Float = 0
 
         init() {}
 
@@ -235,6 +240,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             filmPhase = Float(shown.filmPhase)
             turns = Float(shown.turns)
             auroraRays = Float(shown.auroraRays)
+            fold = Float(shown.fold)
+            foldDark = Float(1 - shown.foldLight)
         }
     }
 
@@ -249,6 +256,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     private(set) var pattern: FieldPattern = .rings
     private var partner: FieldPattern?
     private var mixShare = 0.0
+    private var foldSegments = 1
     private weak var listeningTo: AudioEngine?
     private var look = LookUniforms()
     private var lastEncodedLook = LookUniforms()
@@ -273,7 +281,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     /// Switches the picture and its blend; every look but the rings listens to the master while it
     /// is drawn, and only then.
     @MainActor
-    func setLooks(primary: FieldPattern, partner next: FieldPattern?, mix: Double) {
+    func setLooks(primary: FieldPattern, partner next: FieldPattern?, mix: Double, fold: Int = 1) {
+        foldSegments = FieldFold.segments(stored: fold)
         if pattern != primary {
             pattern = primary
             chladniMotion = ChladniMotion()
@@ -474,7 +483,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         let looks = lookMotion.step(primary: pattern, partner: partner, mix: mixShare, hertz: heard.hertz,
                                     drive: heard.drive, tonicHz: frame.tonicHz, fieldPhase: shown.fieldPhase,
                                     after: seconds, still: still, patternScale: detail.patternScale,
-                                    beat: frame.tuningBeat, bars: frame.bars, keyMask: frame.keyMask)
+                                    beat: frame.tuningBeat, bars: frame.bars, keyMask: frame.keyMask,
+                                    fold: foldSegments)
         // What no shown look reads is set to rest, so an unshown moiré's drift does not redraw a
         // picture that has not changed.
         look = LookUniforms(looks.onScreen)

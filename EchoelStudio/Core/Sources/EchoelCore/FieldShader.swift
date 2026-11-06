@@ -48,7 +48,7 @@ public enum FieldShader {
     struct Look { float primary; float partner; float blend;
                   float dishK; float dishStrength; float dishHex;
                   float moireK1; float moireK2; float moirePhase; float rippleK; float filmPhase; float turns;
-                  float auroraRays; };
+                  float auroraRays; float fold; float foldDark; };
     // The weave (BarWeave.words): how far the newest row has come in, its light (flash-guarded on
     // the CPU), two spare words, then each row on screen, newest first, as its low and high 32
     // bits. All zero is an empty, dark weave.
@@ -402,6 +402,11 @@ public enum FieldShader {
         return lookFieldColour(look, in, u, l, turns);
     }
 
+    // Not read through the kaleidoscope (FieldFold.folds): the plate (1) and the weave (7).
+    bool unfolded(float look) {
+        return abs(look - 1.0) < 0.5 || abs(look - 7.0) < 0.5;
+    }
+
     // The Field: one look, or two blended (the second's share flash-guarded on the CPU).
     fragment float4 field_fragment(VOut in [[stage_in]], constant Uniforms& u [[buffer(0)]],
                                    constant Chladni& plate [[buffer(1)]], constant Look& look [[buffer(2)]],
@@ -409,11 +414,27 @@ public enum FieldShader {
         // Counted on across the song phase's wraps (FieldLookMotion.Shown.turns): fract() of it
         // here would jump every look that turns at a fraction of it, at every wrap.
         float turns = look.turns;
-        float3 col = lookColour(look.primary, in, u, plate, look, weave, turns);
+        // The kaleidoscope (FieldFold.fold, exactly): every look but the plate and the weave reads its point
+        // folded into the first half-wedge from straight up; its count's change fades the picture.
+        VOut folded = in;
+        float segments = floor(look.fold + 0.5);
+        if (segments > 1.5 && u.aspect > 0.0) {
+            float2 q = float2((in.uv.x - 0.5) * u.aspect, in.uv.y - 0.5);
+            float r = length(q);
+            float wedge = 6.2831853 / segments;
+            float angle = atan2(q.x, q.y);
+            angle -= wedge * floor(angle / wedge);
+            if (angle > wedge * 0.5) angle = wedge - angle;
+            folded.uv = clamp(float2(0.5 + r * sin(angle) / u.aspect, 0.5 + r * cos(angle)), 0.0, 1.0);
+        }
+        VOut primaryIn = unfolded(look.primary) ? in : folded;
+        float3 col = lookColour(look.primary, primaryIn, u, plate, look, weave, turns);
         float share = clamp(look.blend, 0.0, 1.0);
         if (share > \(FieldLookMotion.blendThreshold) && abs(look.partner - look.primary) > 0.5) {
-            col = mix(col, lookColour(look.partner, in, u, plate, look, weave, turns), share);
+            VOut partnerIn = unfolded(look.partner) ? in : folded;
+            col = mix(col, lookColour(look.partner, partnerIn, u, plate, look, weave, turns), share);
         }
+        col *= 1.0 - clamp(look.foldDark, 0.0, 1.0);
         col += (echoelHash(in.uv * 1000.0) - 0.5) / 255.0;
         return float4(clamp(col, 0.0, 1.0), 1.0);
     }

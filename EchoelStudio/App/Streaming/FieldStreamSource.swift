@@ -99,7 +99,7 @@ final class FieldStreamSource {
         // The Field window's looks, as they are now: a change there reaches the stream next frame.
         let looks = FieldLookChoice.onThisDevice
         for (format, lane) in lanes {
-            lane.renderer.setLooks(primary: looks.primary, partner: looks.partner, mix: looks.mix)
+            lane.renderer.setLooks(primary: looks.primary, partner: looks.partner, mix: looks.mix, fold: looks.fold)
             var made: CVPixelBuffer?
             let limit = [kCVPixelBufferPoolAllocationThresholdKey: Self.poolLimit] as CFDictionary
             guard CVPixelBufferPoolCreatePixelBufferWithAuxAttributes(nil, lane.pool, limit, &made) == kCVReturnSuccess,

@@ -103,6 +103,7 @@ struct FieldPatternMenu: View {
     @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
     @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
     @AppStorage(FieldMeter.storageKey) private var meterName = FieldMeter.off.rawValue
+    @AppStorage(FieldFold.storageKey) private var foldSegments = 1
 
     var body: some View {
         #if canImport(MetalKit) && canImport(UIKit)
@@ -124,6 +125,14 @@ struct FieldPatternMenu: View {
                     Text("None").tag("")
                     ForEach(FieldPattern.allCases, id: \.rawValue) { pattern in
                         Text(pattern.title).tag(pattern.rawValue)
+                    }
+                }
+                .pickerStyle(.menu)
+                // The Field folded round its centre; never the video under it, the plate or the weave.
+                Picker("Kaleidoscope", selection: Binding(get: { FieldFold.segments(stored: foldSegments) },
+                                                          set: { foldSegments = $0 })) {
+                    ForEach(FieldFold.choices, id: \.self) { segments in
+                        Text(FieldFold.title(segments)).tag(segments)
                     }
                 }
                 .pickerStyle(.menu)
