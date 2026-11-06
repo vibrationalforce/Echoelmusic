@@ -67,9 +67,10 @@ final class MusicalContextTests: XCTestCase {
         }
     }
 
-    /// Every named concert pitch is one a song can store, and an orbit's is the arithmetic it
-    /// says: the Earth's tropical year, octaved, is C♯ at 136.10 Hz, which puts A at 432.10.
-    func testEveryConcertPitchPresetIsStorableAndTheOrbitsAreArithmetic() throws {
+    /// Every named concert pitch is one a song can store, and every one is a historical or
+    /// orchestral standard — no pitch derived from an orbit. A song that stores such a
+    /// pitch keeps it: the song holds only the number.
+    func testEveryConcertPitchPresetIsAStorableStandard() throws {
         let presets = MusicalContext.concertPitchPresets
         XCTAssertEqual(presets.first?.hertz, 440)
         for preset in presets {
@@ -77,10 +78,12 @@ final class MusicalContextTests: XCTestCase {
             var project = Project()
             XCTAssertNoThrow(try Command.setConcertPitch(hertz: preset.hertz).apply(to: &project), preset.title)
         }
-        XCTAssertEqual(ConcertPitchPreset.audibleOctave(ofPeriodDays: 365.24219) * 4, 136.10, accuracy: 0.01)
-        let earth = try XCTUnwrap(presets.first { $0.title.hasPrefix("Earth year") })
-        XCTAssertEqual(earth.hertz, 432.10, accuracy: 0.005)
+        XCTAssertEqual(presets.map(\.hertz), [440, 442, 415, 430, 435, 466])
         XCTAssertEqual(Set(presets.map(\.title)).count, presets.count)
+        var project = Project()
+        try Command.setConcertPitch(hertz: 432.10).apply(to: &project)
+        let reopened = try ProjectCodec.decode(ProjectCodec.encode(project))
+        XCTAssertEqual(reopened.context.concertPitch, 432.10, accuracy: 1e-9, "a stored pitch off the list stays")
     }
 
     func testTheToneSystemIdsAreUniqueAndEqualTemperamentComesFirst() {
