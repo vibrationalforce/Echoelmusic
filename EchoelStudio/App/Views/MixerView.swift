@@ -259,8 +259,9 @@ struct OutputMenu: View {
     static func name(_ channel: Int) -> String { "\(channel + 1)/\(channel + 2)" }
 }
 
-/// Which interface input an audio track records from. The inputs are known while one is open
-/// (a track is armed); a chosen input the interface lacks is kept and shown, and the first records.
+/// Which interface input — or input pair, left and right — an audio track records from. The inputs are known while one is open
+/// (a track is armed); a chosen input the interface lacks is kept and shown, and the first records;
+/// a pair without its right input records its left alone, and says so.
 struct InputMenu: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -269,11 +270,22 @@ struct InputMenu: View {
 
     var body: some View {
         let chosen = track.input ?? 0
-        let count = Swift.max(engine.inputChannels, chosen + 1)
+        let count = Swift.max(engine.inputChannels, chosen + width)
+        let starts = Self.pairs(count: count, chosen: isPair ? chosen : nil)
         Menu {
             ForEach(0..<count, id: \.self) { channel in
-                Button { set(channel) } label: {
-                    if channel == chosen { Label("Input \(channel + 1)", systemImage: "checkmark") } else { Text("Input \(channel + 1)") }
+                Button { set(channel, pair: false) } label: {
+                    if !isPair, channel == chosen { Label("Input \(channel + 1)", systemImage: "checkmark") } else { Text("Input \(channel + 1)") }
+                }
+            }
+            if !starts.isEmpty {
+                Section("Stereo") {
+                    ForEach(starts, id: \.self) { start in
+                        Button { set(start, pair: true) } label: {
+                            let name = "Input \(OutputMenu.name(start))"
+                            if isPair, start == chosen { Label(name, systemImage: "checkmark") } else { Text(name) }
+                        }
+                    }
                 }
             }
             Section("Monitor") {
@@ -295,13 +307,24 @@ struct InputMenu: View {
         .accessibilityHint(engine.inputChannels == 0 ? "Arm the track to see every input of the interface." : "")
     }
 
+    /// Whether the track records an input pair rather than one input.
+    private var isPair: Bool { track.inputChannels == Track.maximumInputChannels }
+    private var width: Int { isPair ? Track.maximumInputChannels : 1 }
+
     private var isMissing: Bool {
         engine.inputChannels > 0 && (track.input ?? 0) >= engine.inputChannels
     }
 
+    /// A pair whose right input the interface lacks: its left records alone, as a mono take.
+    private var isMono: Bool {
+        isPair && engine.inputChannels > 0 && !isMissing && (track.input ?? 0) + 1 >= engine.inputChannels
+    }
+
     private var label: String {
-        let name = "In \((track.input ?? 0) + 1)"
+        let first = track.input ?? 0
+        let name = isPair ? "In \(OutputMenu.name(first))" : "In \(first + 1)"
         if isMissing { return "\(name) missing" }
+        if isMono { return "\(name) · Mono" }
         switch track.monitor {
         case .auto: return name
         case .input: return "\(name) · Mon"
@@ -317,10 +340,18 @@ struct InputMenu: View {
         }
     }
 
-    /// The menu offers single inputs; picking the one a stored pair starts at keeps the pair, so
-    /// choosing what the menu shows as chosen changes nothing.
-    private func set(_ channel: Int) {
-        let keepsPair = track.inputChannels == Track.maximumInputChannels && channel == (track.input ?? 0)
-        try? store.perform(.setInput(track.id, channel: channel == 0 ? nil : channel, stereo: keepsPair))
+    /// The pairs the menu offers: every one that starts on an odd input (1/2, 3/4, …) and fits in
+    /// `count`, and a stored pair that starts elsewhere (2/3) as its own entry.
+    static func pairs(count: Int, chosen: Int?) -> [Int] {
+        var starts = Array(stride(from: 0, to: Swift.max(0, count - 1), by: 2))
+        if let chosen, chosen >= 0, !starts.contains(chosen) {
+            starts.append(chosen)
+            starts.sort()
+        }
+        return starts
+    }
+
+    private func set(_ channel: Int, pair: Bool) {
+        try? store.perform(.setInput(track.id, channel: channel == 0 ? nil : channel, stereo: pair))
     }
 }
