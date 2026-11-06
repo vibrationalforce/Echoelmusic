@@ -62,7 +62,7 @@ final class TuningBeatTests: XCTestCase {
                 for scale in Scale.allCases {
                     let beat = TuningBeat.of(context(root: root, scale: scale, tuning: system.id))
                     XCTAssertTrue(beat.beatHz.isFinite && beat.beatHz >= 0, "\(system.id) \(root) \(scale)")
-                    XCTAssertTrue(beat.driftHz >= 0 && beat.driftHz < TuningBeat.maximumDriftHz, "\(system.id)")
+                    XCTAssertTrue(beat.driftHz >= 0 && beat.driftHz <= TuningBeat.maximumDriftHz, "\(system.id)")
                 }
             }
         }
@@ -94,5 +94,7 @@ final class TuningBeatTests: XCTestCase {
         XCTAssertEqual(FieldFrame().tuningBeat, .unison)
         XCTAssertTrue(TuningBeat.of(context()).spoken.contains("major third 5 to 4"))
         XCTAssertTrue(TuningBeat.of(context(tuning: "just-major")).spoken.contains("stands still"))
+        // Named by the ratio it is judged against: just minor plays the major scale's third as 6/5.
+        XCTAssertTrue(TuningBeat.of(context(scale: .major, tuning: "just-minor")).spoken.hasPrefix("minor third 6 to 5"))
     }
 }

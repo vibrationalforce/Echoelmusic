@@ -13,8 +13,9 @@ import Foundation
 /// - The pure ratio p/q is the nearest of 9/8, 6/5, 5/4 and 4/3; the beat is |q·f₂ − p·f₁| Hz,
 ///   f₁ the tonic in the octave of middle C at the song's concert pitch.
 /// - The picture drifts at `maximumDriftHz` · tanh(beat / `maximumDriftHz`): a slow beat at its
-///   own rate, a fast one ever closer to the ceiling, faster beats never slower — and never as
-///   fast as `FieldPulse.maximumRateHz`, the house flash ceiling.
+///   own rate, a fast one at most `maximumDriftHz` (a beat above about 38 Hz rounds to it
+///   exactly), faster beats never slower — and always under `FieldPulse.maximumRateHz`, the house
+///   flash ceiling.
 public struct TuningBeat: Equatable, Sendable {
     /// Semitones above the tonic: 4 or 3.
     public var semitones: Int
@@ -26,7 +27,7 @@ public struct TuningBeat: Equatable, Sendable {
     public var upperHz: Double
     /// The beat of the coinciding partials, Hz.
     public var beatHz: Double
-    /// How fast the picture drifts, Hz (below `maximumDriftHz`).
+    /// How fast the picture drifts, Hz (at most `maximumDriftHz`).
     public var driftHz: Double
 
     /// The picture's drift ceiling, under the house flash ceiling with half a hertz to spare.
@@ -71,15 +72,22 @@ public struct TuningBeat: Equatable, Sendable {
                           beatHz: beat, driftHz: drift(beatHz: beat))
     }
 
-    /// The picture's drift for a beat: monotone, 0 at 0, below the ceiling.
+    /// The picture's drift for a beat: monotone, 0 at 0, at most the ceiling.
     public static func drift(beatHz: Double) -> Double {
         guard beatHz.isFinite, beatHz > 0 else { return 0 }
         return maximumDriftHz * Foundation.tanh(beatHz / maximumDriftHz)
     }
 
-    /// What VoiceOver says while the Moiré look shows.
+    /// What VoiceOver says while the Moiré look shows: the interval named by the ratio it is
+    /// judged against (a system that plays its third as 6/5 sounds a minor third).
     public var spoken: String {
-        let name = semitones == 4 ? "major third" : semitones == 3 ? "minor third" : "unison"
+        let name: String = switch (p, q) {
+        case (5, 4): "major third"
+        case (6, 5): "minor third"
+        case (9, 8): "whole tone"
+        case (4, 3): "fourth"
+        default: "unison"
+        }
         if beatHz < 0.05 { return "\(name) \(p) to \(q), pure, stands still" }
         return "\(name) \(p) to \(q), beats \(String(format: "%.1f", beatHz)) times a second"
     }

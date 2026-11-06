@@ -323,8 +323,8 @@ public enum FieldShader {
         float d = distance(uv, float2(0.5 * u.aspect, 0.5));
         float2 p = float2((in.uv.x - 0.5) * 2.0 * u.aspect, (in.uv.y - 0.5) * 2.0);
         float tilted = p.x * cos(\(FieldLook.moireTilt)) + p.y * sin(\(FieldLook.moireTilt));
-        float lines = clamp(\(FieldLook.moireGain) * (moireLine(p.x, l.moireK1, 0.0) + moireLine(tilted, l.moireK2, l.moirePhase)),
-                            0.0, 1.0);
+        float lines = clamp(2.0 * \(FieldLook.moireGain) * max(moireLine(p.x, l.moireK1, 0.0),
+                                                                 moireLine(tilted, l.moireK2, l.moirePhase)), 0.0, 1.0);
         float vignette = smoothstep(1.6, 0.0, d);
         float energy = clamp(lines * vignette, 0.0, 1.0);
         float ambient = \(FieldPulse.ambientLiteral);

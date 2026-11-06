@@ -135,7 +135,9 @@ public enum FieldLook {
             return 1 - smoothstep(0, moireLineWidth, distance)
         }
         let tilted = x * Foundation.cos(moireTilt) + y * Foundation.sin(moireTilt)
-        return clamp(moireGain * (line(x, k1, 0) + line(tilted, k2, phase)), 0, 1)
+        // The lit share of the two (max): where the lines fall together they cover less, so the
+        // fringes carry light — a plain sum would hold none, only crossings.
+        return clamp(2 * moireGain * Swift.max(line(x, k1, 0), line(tilted, k2, phase)), 0, 1)
     }
 
     /// A dish of water lit from above: a square or hexagonal standing lattice of wavenumber `k`
@@ -440,8 +442,11 @@ public struct FieldLookMotion: Equatable, Sendable {
             shown.moireK1 = k1
             shown.moireK2 = k1 * upper / lower
         }
-        let drift = still ? 0 : beat.driftHz * (shown.isBlending ? Self.blendPhaseShare : 1)
-        shown.moirePhase = moirePulse.advance(towards: drift, after: elapsed)
+        // The pulse slews and caps the beat's rate; the blend's share applies at once, as the
+        // shared phase's does, so two looks never drift together at full speed.
+        moirePulse.advance(towards: still ? 0 : beat.driftHz, after: elapsed)
+        let advanced = shown.moirePhase + moirePulse.rateHz * (shown.isBlending ? Self.blendPhaseShare : 1) * elapsed
+        shown.moirePhase = advanced.isFinite ? advanced - advanced.rounded(.down) : 0
         return shown
     }
 

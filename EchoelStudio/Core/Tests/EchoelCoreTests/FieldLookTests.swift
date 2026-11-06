@@ -230,6 +230,32 @@ final class FieldLookTests: XCTestCase {
         }
     }
 
+    /// The moiré drifts at the blend's share the moment a second look comes in, not after its
+    /// pulse has slewed down: two looks never drift together at full speed.
+    func testTheMoireHalvesItsDriftTheMomentABlendStarts() {
+        let rate = 60.0
+        let beat = TuningBeat.of(MusicalContext())
+        var looks = FieldLookMotion()
+        var last = 0.0
+        for _ in 0..<Int(6 * rate) {
+            last = looks.step(primary: .moire, partner: nil, mix: 0, hertz: nil, drive: 0, tonicHz: FieldFrame.middleC,
+                              fieldPhase: 0, after: 1 / rate, still: false, patternScale: 1, beat: beat).moirePhase
+        }
+        var blended = false
+        for _ in 0..<30 {
+            let look = looks.step(primary: .moire, partner: .rings, mix: 1, hertz: nil, drive: 0, tonicHz: FieldFrame.middleC,
+                                  fieldPhase: 0, after: 1 / rate, still: false, patternScale: 1, beat: beat)
+            var step = look.moirePhase - last
+            if step < 0 { step += 1 }
+            last = look.moirePhase
+            if look.isBlending {
+                blended = true
+                XCTAssertLessThanOrEqual(step, TuningBeat.maximumDriftHz * FieldLookMotion.blendPhaseShare / rate + 1e-9)
+            }
+        }
+        XCTAssertTrue(blended)
+    }
+
     /// Every pair at an even mix, and every pair with the mix control thrown from end to end each frame.
     func testNoBlendFlashesMoreThanThreeTimesASecond() {
         let looks = FieldPattern.allCases

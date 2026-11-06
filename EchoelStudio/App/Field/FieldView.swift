@@ -77,6 +77,7 @@ private struct FieldSpokenValue: View {
     @Environment(HeartRateStrap.self) private var strap
     @Environment(ProjectStore.self) private var store
     @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
+    @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
 
     var body: some View {
         Color.clear
@@ -89,7 +90,9 @@ private struct FieldSpokenValue: View {
         var parts = [engine.isPlaying ? "Playing" : "Stopped"]
         if let bpm = strap.beatsPerMinute { parts.append("pulse \(bpm) beats per minute") }
         // The Moiré look shows the tuning: say the third and its beat.
-        if FieldPattern(stored: patternName) == .moire { parts.append(TuningBeat.of(store.project.context).spoken) }
+        if FieldPattern(stored: patternName) == .moire || FieldPattern.blend(stored: partnerName) == .moire {
+            parts.append(TuningBeat.of(store.project.context).spoken)
+        }
         return parts.joined(separator: ", ")
     }
 }
