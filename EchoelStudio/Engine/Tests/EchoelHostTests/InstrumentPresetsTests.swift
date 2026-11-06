@@ -6,15 +6,9 @@ import XCTest
 
 /// A host's preset menu for the synth plugin, and what choosing an entry does.
 final class InstrumentPresetsTests: XCTestCase {
-    /// A tree over a synth kernel, wired as the plugin's unit wires it.
+    /// The plugin's tree over a synth kernel, wired as the plugin's unit wires it.
     private func tree(over kernel: SynthKernel) -> AUParameterTree {
-        let nodes = SynthKernel.parameters.enumerated().map { index, parameter in
-            AUParameterTree.createParameter(
-                withIdentifier: parameter.identifier, name: parameter.title, address: AUParameterAddress(index),
-                min: AUValue(parameter.range.lowerBound), max: AUValue(parameter.range.upperBound), unit: .generic,
-                unitName: nil, flags: [.flag_IsReadable, .flag_IsWritable], valueStrings: nil, dependentParameters: nil)
-        }
-        let tree = AUParameterTree.createTree(withChildren: nodes)
+        let tree = InstrumentParameterTree.make(for: SynthKernel.self)
         tree.implementorValueObserver = { parameter, value in kernel.setParameter(Int(parameter.address), value) }
         tree.implementorValueProvider = { parameter in kernel.parameter(Int(parameter.address)) }
         return tree

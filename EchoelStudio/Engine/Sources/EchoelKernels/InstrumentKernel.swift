@@ -47,6 +47,10 @@ public protocol InstrumentKernel: AnyObject, Sendable {
     func setParameter(_ address: Int, _ value: Float)
     func parameter(_ address: Int) -> Float
     func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8)
+    /// Whether `rampParameter` glides `address` over its frames, rather than taking the end value
+    /// at once. What a plugin tells a host (`.flag_CanRamp`): a host ramps a parameter itself when
+    /// the kernel cannot. False by default, and always for a choice.
+    static func canRamp(_ address: Int) -> Bool
     /// Render thread: a host's parameter ramp — `address` reaches `value` over the next `frames`
     /// frames. A kernel that cannot glide takes the value at once (the default).
     func rampParameter(_ address: Int, to value: Float, frames: Int)
@@ -56,6 +60,8 @@ public protocol InstrumentKernel: AnyObject, Sendable {
 
 extension InstrumentKernel {
     public static var factoryPresets: [InstrumentKernelPreset] { [] }
+
+    public static func canRamp(_ address: Int) -> Bool { false }
 
     public func rampParameter(_ address: Int, to value: Float, frames: Int) { setParameter(address, value) }
 
@@ -118,6 +124,13 @@ extension SynthKernel: InstrumentKernel {
 
     /// The synth's presets of the app (`InstrumentPreset.all`).
     public static var factoryPresets: [InstrumentKernelPreset] { InstrumentKernelPreset.factory(for: .synth) }
+
+    /// Every number glides; a choice (engine, waveform, filter, rule, profile) and the seed, which
+    /// step, take their value at once.
+    public static func canRamp(_ address: Int) -> Bool {
+        guard address >= 0, address < patchParameters.count else { return false }
+        return patchParameters[address].taper != .stepped
+    }
 }
 
 extension SynthKernel: EngineInstrumentKernel {}

@@ -91,7 +91,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         bus.maximumChannelCount = 2
         outputBus = bus
         busArray = AUAudioUnitBusArray(audioUnit: self, busType: .output, busses: [bus])
-        tree = Self.makeTree(kernel.parameters)
+        // `.flag_CanRamp` only where the kernel glides a host's ramp (the synth's numbers).
+        tree = InstrumentParameterTree.make(for: kernel)
         let state = render
         tree?.implementorValueObserver = { parameter, value in
             state.kernel.setParameter(Int(parameter.address), value)
@@ -102,30 +103,6 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         maximumFramesToRender = 4_096
         // The tree starts at the parameters' defaults, which is the first preset ("Init").
         selectedPreset = presetMenu.first
-    }
-
-    private static func makeTree(_ parameters: [InstrumentKernelParameter]) -> AUParameterTree {
-        let nodes = parameters.enumerated().map { index, parameter in
-            let unit: AudioUnitParameterUnit = switch parameter.unit {
-            case .hertz: .hertz
-            case .seconds: .seconds
-            case .octaves: .octaves
-            case .decibel: .decibels
-            case .bpm: .BPM
-            case .choice: .indexed
-            // Pan and plain amounts read as numbers; the units a host knows are named above.
-            default: .generic
-            }
-            let node = AUParameterTree.createParameter(
-                withIdentifier: parameter.identifier, name: parameter.title, address: AUParameterAddress(index),
-                min: AUValue(parameter.range.lowerBound), max: AUValue(parameter.range.upperBound), unit: unit,
-                // No `.flag_CanRamp`: a ramp event is taken as its end value, so the host ramps (A9).
-                unitName: nil, flags: [.flag_IsReadable, .flag_IsWritable],
-                valueStrings: parameter.choices.isEmpty ? nil : parameter.choices, dependentParameters: nil)
-            node.value = AUValue(parameter.defaultValue)
-            return node
-        }
-        return AUParameterTree.createTree(withChildren: nodes)
     }
 
     override var parameterTree: AUParameterTree? {
