@@ -1,6 +1,7 @@
 import AVFoundation
 import CoreVideo
 import EchoelCore
+import EchoelDSP
 import EchoelEngine
 import MetalKit
 import QuartzCore
@@ -62,6 +63,11 @@ struct FieldLayerPicture: UIViewRepresentable {
         preview.layer = layer
         preview.reduceMotion = reduceMotion
     }
+
+    /// The view goes: the preview stops asking the engine for the spectrum.
+    static func dismantleUIView(_ view: MTKView, coordinator: FieldLayerPreview) {
+        coordinator.letGo()
+    }
 }
 
 /// Draws the video window's picture with the Field over it. `MTKView` calls it on the main thread
@@ -82,8 +88,12 @@ final class FieldLayerPreview: NSObject, MTKViewDelegate {
     var reduceMotion = false
 
     private var motion = FieldMotion()
-    /// The looks of the Field window, as a film draws them (`FieldLookMotion.step(drawing:)`).
+    /// The looks of the Field window, as a film draws them (`FieldLookMotion.step(drawing:)`),
+    /// hearing the master live while a shown look listens; and the plate while one is the plate.
     private var lookMotion = FieldLookMotion()
+    private var chladniMotion = ChladniMotion()
+    private var platePattern: FieldPattern?
+    private weak var listeningTo: AudioEngine?
     private var lastFrameTime = CFAbsoluteTimeGetCurrent()
     /// The newest frame the player handed over, kept until a newer one comes.
     private var picture: CVPixelBuffer?
@@ -93,6 +103,7 @@ final class FieldLayerPreview: NSObject, MTKViewDelegate {
     private struct Drawn: Equatable {
         let shown: FieldMotion.Shown
         let look: FieldLookMotion.Shown
+        let plate: ChladniMotion.Shown?
         let layer: FieldLayer
         let picture: ObjectIdentifier?
         let width: Int
@@ -128,12 +139,28 @@ final class FieldLayerPreview: NSObject, MTKViewDelegate {
         let frame = FieldFrame.current(store: store, engine: engine).withoutBody
         let still = reduceMotion || Self.deviceAsksForStillness()
         let shown = motion.step(frame, after: seconds, still: still, patternScale: 1)
-        // The looks chosen in the Field window, drawn as the export draws them.
-        let look = lookMotion.step(drawing: FieldLookChoice.onThisDevice, from: frame, fieldPhase: shown.fieldPhase,
-                                   after: seconds, still: still, patternScale: 1)
+        // The looks chosen in the Field window, drawn as the export draws them; a look that listens
+        // hears the master live here, where the export hears its mix.
+        let choice = FieldLookChoice.onThisDevice
+        listen(to: choice.listening.isEmpty ? nil : engine)
+        let peaks = listeningTo?.fieldSpectrum.peaks ?? .silent
+        let heard = FieldLookMotion.hearing(frequencies: peaks.frequencies, amplitudes: peaks.amplitudes, count: peaks.count)
+        let look = lookMotion.step(drawing: choice, from: frame, hertz: heard.hertz, drive: heard.drive,
+                                   fieldPhase: shown.fieldPhase, after: seconds, still: still, patternScale: 1)
+        if platePattern != choice.primary {
+            platePattern = choice.primary
+            chladniMotion = ChladniMotion()
+        }
+        var plate: ChladniMotion.Shown?
+        if look.primary == .chladni || look.partner == .chladni {
+            plate = chladniMotion.step(towards: ChladniPlate.modes(frequencies: peaks.frequencies, amplitudes: peaks.amplitudes,
+                                                                   count: peaks.count),
+                                       after: seconds, still: still)
+        }
         let size = view.drawableSize
         // Compared as drawn: what no shown look reads (an unshown moiré's drift) does not wake the GPU.
-        let drawn = Drawn(shown: shown, look: look.onScreen, layer: layer, picture: picture.map { ObjectIdentifier($0) },
+        let drawn = Drawn(shown: shown, look: look.onScreen, plate: plate, layer: layer,
+                          picture: picture.map { ObjectIdentifier($0) },
                           width: Int(size.width), height: Int(size.height))
         // Nothing changed: the last frame stays on the layer, and the GPU rests.
         if drawn == lastDrawn { return }
@@ -146,7 +173,7 @@ final class FieldLayerPreview: NSObject, MTKViewDelegate {
             return FieldLayerPlacement(placing: placing, sourceWidth: Double(natural.width),
                                        sourceHeight: Double(natural.height))
         }
-        guard pass.encode(field: shown, look: look, over: wrapped.flatMap { CVMetalTextureGetTexture($0) },
+        guard pass.encode(field: shown, look: look, plate: plate, over: wrapped.flatMap { CVMetalTextureGetTexture($0) },
                           placement: placement, layer: layer, into: drawable.texture, on: buffer) else { return }
         // The frame's texture stays alive until the GPU has read it.
         let held = HeldTexture(texture: wrapped)
@@ -154,6 +181,21 @@ final class FieldLayerPreview: NSObject, MTKViewDelegate {
         buffer.present(drawable)
         buffer.commit()
         lastDrawn = drawn
+    }
+
+    /// Asks `engine` for the master's spectrum (nil: no one), letting go of the one asked before.
+    @MainActor
+    private func listen(to engine: AudioEngine?) {
+        guard listeningTo !== engine else { return }
+        listeningTo?.listenForSpectrum(false, by: ObjectIdentifier(self))
+        engine?.listenForSpectrum(true, by: ObjectIdentifier(self))
+        listeningTo = engine
+    }
+
+    /// The preview goes: no analysis runs for a picture nobody draws.
+    @MainActor
+    func letGo() {
+        listen(to: nil)
     }
 
     /// A warm device or Low Power Mode holds the layer still, as the Field window sheds its motion.

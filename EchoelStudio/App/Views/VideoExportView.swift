@@ -27,10 +27,6 @@ struct VideoExportView: View {
     @AppStorage(VideoExportView.fieldBlendKey) private var fieldBlend = FieldLayer.Blend.off
     /// Percent, 0 … 100.
     @AppStorage(VideoExportView.fieldOpacityKey) private var fieldOpacity = FieldLayer().opacityPercent
-    /// The Field window's looks, read for what the film can draw of them.
-    @AppStorage(FieldPattern.storageKey) private var patternName = FieldPattern.rings.rawValue
-    @AppStorage(FieldPattern.blendStorageKey) private var partnerName = ""
-    @AppStorage(FieldPattern.blendMixStorageKey) private var mixPercent = FieldPattern.standardMixPercent
 
     var body: some View {
         NavigationStack {
@@ -106,17 +102,6 @@ struct VideoExportView: View {
         }
     }
 
-    /// What the film draws in place of the chosen looks that listen to the sound; nil for none.
-    static func listeningNote(_ looks: [FieldPattern]) -> String? {
-        guard let first = looks.first else { return nil }
-        let names = looks.count == 1 ? first.title : looks.map(\.title).joined(separator: " and ")
-        let drawn = FieldPattern.allCases.filter { !$0.listensToSound }.map(\.title)
-        let shown = drawn.count > 1 ? drawn.dropLast().joined(separator: ", ") + " and " + (drawn.last ?? "") : drawn.joined()
-        let verb = looks.count == 1 ? "listens" : "listen"
-        let place = looks.count == 1 ? "its place" : "their place"
-        return "\(names) \(verb) to the sound as it plays, and the export does not analyse it for that yet, so the film draws the rings in \(place). \(shown) export as the Field shows them."
-    }
-
     /// The Field over the picture (W15): Off, or Screen, Add or Normal at an opacity. Without Metal
     /// the choice is held at Off and says why.
     private var fieldSection: some View {
@@ -132,10 +117,8 @@ struct VideoExportView: View {
                 if fieldBlend != .off {
                     SettingField(title: "Field Opacity", value: fieldOpacity, range: 0...100, unit: "%",
                                  standard: FieldLayer().opacityPercent, spokenUnit: "percent") { fieldOpacity = $0 }
-                    let chosen = FieldLookChoice(storedPattern: patternName, storedPartner: partnerName, mixPercent: mixPercent)
-                    if let note = Self.listeningNote(chosen.listening) { NoteText(note) }
                 }
-                NoteText("The Field follows the song's beat, key and mix, and the video window shows it as the export will draw it. Body readings are live and not part of the song, so the export leaves them out: two exports of a song with the same looks chosen look the same.")
+                NoteText("The Field follows the song's beat, key and mix, with the looks the Field window shows, and the video window shows it as the export will draw it. Body readings are live and not part of the song, so the export leaves them out: two exports of a song with the same looks chosen look the same.")
             }
         }
     }

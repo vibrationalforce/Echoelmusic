@@ -332,18 +332,9 @@ final class FieldLookTests: XCTestCase {
         XCTAssertEqual(shown.weavePosition, 41, accuracy: 1e-9, "held still, the place stays")
     }
 
-    /// A film draws the chosen looks that do not listen to the sound and the rings for the rest;
-    /// the stored choice reads as the Field window reads it.
-    func testAFilmDrawsTheLooksThatDoNotListenAndRingsForTheRest() {
-        let partners: [FieldPattern?] = [nil] + FieldPattern.allCases.map { $0 }
-        for primary in FieldPattern.allCases {
-            for partner in partners {
-                let offline = FieldLookChoice(primary: primary, partner: partner, mix: 0.4).offline
-                XCTAssertEqual(offline.primary, primary.listensToSound ? .rings : primary)
-                XCTAssertEqual(offline.partner, partner.map { $0.listensToSound ? .rings : $0 })
-                XCTAssertEqual(offline.mix, 0.4)
-            }
-        }
+    /// The shown looks that listen are what an export analyses its mix for; the stored choice
+    /// reads as the Field window reads it.
+    func testTheShownLooksThatListenAreWhatAnExportHearsFor() {
         XCTAssertEqual(FieldLookChoice(primary: .dish, partner: .weave, mix: 1).listening, [.dish])
         XCTAssertEqual(FieldLookChoice(primary: .moire, partner: .aurora, mix: 1).listening, [.aurora])
         XCTAssertEqual(FieldLookChoice(primary: .water, partner: .water, mix: 1).listening, [.water])
@@ -377,7 +368,7 @@ final class FieldLookTests: XCTestCase {
         XCTAssertNotEqual(a.onScreen, b.onScreen, "a blended weave reads its place")
     }
 
-    /// The film's step is the window's step with the frame's tuning, bars and key and no partials.
+    /// The film's step is the window's step with the frame's tuning, bars and key, hearing what it is given.
     func testAFilmsLooksComeFromTheFramesTuningBarsAndKey() {
         let context = MusicalContext(root: 0, scale: .major)
         let frame = FieldFrame(tonicHz: 261.6, tuningBeat: TuningBeat.of(context), bars: 7.25,
@@ -393,8 +384,14 @@ final class FieldLookTests: XCTestCase {
         XCTAssertEqual(a.weavePosition, 8.25, accuracy: 1e-12)
         XCTAssertEqual(a.weaveSeed, BarWeave.seed(keyMask: frame.keyMask))
         var dish = FieldLookMotion()
-        XCTAssertEqual(dish.step(drawing: FieldLookChoice(primary: .dish), from: frame, fieldPhase: 0, after: 1.0 / 30,
-                                 still: false, patternScale: 1).primary, .rings)
+        var spelledDish = FieldLookMotion()
+        let heard = dish.step(drawing: FieldLookChoice(primary: .dish), from: frame, hertz: 440, drive: 0.8, fieldPhase: 0,
+                              after: 1.0 / 30, still: false, patternScale: 1)
+        XCTAssertEqual(heard.primary, .dish)
+        XCTAssertEqual(heard, spelledDish.step(primary: .dish, partner: nil, mix: 0, hertz: 440, drive: 0.8,
+                                               tonicHz: frame.tonicHz, fieldPhase: 0, after: 1.0 / 30, still: false,
+                                               patternScale: 1, beat: frame.tuningBeat, bars: frame.bars,
+                                               keyMask: frame.keyMask))
     }
 
     /// A tick back while paused (a tempo change re-rounds the playhead) is no step back: the light

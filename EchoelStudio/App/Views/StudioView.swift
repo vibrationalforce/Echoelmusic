@@ -927,10 +927,6 @@ struct SongMenu: View {
     @Environment(JamSession.self) private var jam: JamSession?
     /// What Export WAV brings the mix to (CUT): kept on this device, never in the song; Off at first.
     @AppStorage(SongMenu.wavLoudnessKey) private var wavLoudness = ExportLoudness.exportDefault
-    /// The Field window's looks, for what the alpha export can draw of them.
-    @AppStorage(FieldPattern.storageKey) private var fieldPatternName = FieldPattern.rings.rawValue
-    @AppStorage(FieldPattern.blendStorageKey) private var fieldPartnerName = ""
-    @AppStorage(FieldPattern.blendMixStorageKey) private var fieldMixPercent = FieldPattern.standardMixPercent
 
     nonisolated static let wavLoudnessKey = "export.wav.loudness"
 
@@ -1090,9 +1086,6 @@ struct SongMenu: View {
                 // The Field alone with transparency (ProRes 4444 or HEVC with alpha), a layer to lay
                 // over the picture in Resolve or Final Cut (PRO-W2).
                 Menu("Export Field Layer (Alpha)", systemImage: "square.2.layers.3d") {
-                    let looks = FieldLookChoice(storedPattern: fieldPatternName, storedPartner: fieldPartnerName,
-                                                mixPercent: fieldMixPercent)
-                    if let note = VideoExportView.listeningNote(looks.listening) { Text(note) }
                     ForEach([VideoExportPlan.Shape.landscape, .vertical, .square, .portrait], id: \.self) { shape in
                         Button(shape.title) {
                             Task {

@@ -313,15 +313,8 @@ public struct FieldLookChoice: Hashable, Sendable {
                   mix: Double(Swift.min(Swift.max(mixPercent, 0), 100)) / 100)
     }
 
-    /// What a film draws (`FieldExport.film`): a look that listens to the master's partials is drawn
-    /// as the rings, because an export does not analyse its mix for them yet; the others as chosen.
-    public var offline: FieldLookChoice {
-        func drawn(_ pattern: FieldPattern) -> FieldPattern { pattern.listensToSound ? .rings : pattern }
-        return FieldLookChoice(primary: drawn(primary), partner: partner.map(drawn), mix: mix)
-    }
-
     /// The shown looks that listen to the sound, the pattern first — the partner only while its
-    /// share shows it: what a film draws as the rings.
+    /// share shows it: what an export analyses its mix for (none: it reads the level alone).
     public var listening: [FieldPattern] {
         var shown = [primary]
         if let partner, partner != primary, mix > FieldLookMotion.blendThreshold { shown.append(partner) }
@@ -538,15 +531,15 @@ public struct FieldLookMotion: Equatable, Sendable {
         return shown
     }
 
-    /// One frame of `choice` as a film draws it (`FieldLookChoice.offline`): no partials heard, the
+    /// One frame of `choice` hearing `hertz` and `drive` (`hearing`; none: silence), with the
     /// tuning, the bars and the key from `frame` — the one call the export and its preview share,
     /// so neither forgets an argument the window passes.
-    public mutating func step(drawing choice: FieldLookChoice, from frame: FieldFrame, fieldPhase: Double,
-                              after seconds: Double, still: Bool, patternScale: Double) -> Shown {
-        let drawn = choice.offline
-        return step(primary: drawn.primary, partner: drawn.partner, mix: drawn.mix, hertz: nil, drive: 0,
-                    tonicHz: frame.tonicHz, fieldPhase: fieldPhase, after: seconds, still: still,
-                    patternScale: patternScale, beat: frame.tuningBeat, bars: frame.bars, keyMask: frame.keyMask)
+    public mutating func step(drawing choice: FieldLookChoice, from frame: FieldFrame, hertz: Double? = nil,
+                              drive: Double = 0, fieldPhase: Double, after seconds: Double, still: Bool,
+                              patternScale: Double) -> Shown {
+        step(primary: choice.primary, partner: choice.partner, mix: choice.mix, hertz: hertz, drive: drive,
+             tonicHz: frame.tonicHz, fieldPhase: fieldPhase, after: seconds, still: still,
+             patternScale: patternScale, beat: frame.tuningBeat, bars: frame.bars, keyMask: frame.keyMask)
     }
 
     /// The weave's place for a song at `bars`: one row on, so the key's row is whole from the start.

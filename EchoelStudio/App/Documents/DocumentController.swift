@@ -1863,13 +1863,14 @@ final class DocumentController {
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                 let prepared = try mix.flatMap {
                     try VideoExport.preparedMix($0, from: 0, to: duration, loudness: .off,
+                                                partials: !look.listening.isEmpty,
                                                 into: folder.appendingPathComponent("Mix", isDirectory: true))
                 }
                 defer { if let prepared { try? FileManager.default.removeItem(at: prepared.url) } }
                 let count = Int((duration * Double(FieldExport.framesPerSecond)).rounded(.up)) + 1
                 let film = FieldExport.film(FieldExport.frames(of: project, fromSeconds: 0, count: count,
                                                                levels: FieldExport.levels(peaks: prepared?.peaks ?? [])),
-                                            look: look)
+                                            look: look, partials: prepared?.partials ?? [])
                 // ProRes first; a device whose writer takes the settings and then refuses the frames
                 // gets the HEVC movie instead.
                 var lastFailure: Error = FieldAlphaExport.ExportError.noEncoder
@@ -2200,7 +2201,9 @@ final class DocumentController {
         let result: Result<MixLoudness.Report?, Error> = await Task.detached(priority: .userInitiated) { () async -> Result<MixLoudness.Report?, Error> in
             do {
                 let prepared = try mix.flatMap {
+                    // The mix is analysed for partials only when the Field layer draws a look that listens.
                     try VideoExport.preparedMix($0, from: span.from, to: span.to, loudness: options.loudness,
+                                                partials: layerPass != nil && !look.listening.isEmpty,
                                                 into: folder.appendingPathComponent("Mix", isDirectory: true))
                 }
                 defer { if let prepared { try? FileManager.default.removeItem(at: prepared.url) } }
@@ -2208,7 +2211,8 @@ final class DocumentController {
                 // The Field over the picture comes from the song and the mix alone (FieldExport).
                 let field = layerPass.map {
                     VideoExport.FieldOverPicture(pass: $0, project: project, fromSeconds: span.from,
-                                                 peaks: prepared?.peaks ?? [], look: look)
+                                                 peaks: prepared?.peaks ?? [], look: look,
+                                                 partials: prepared?.partials ?? [])
                 }
                 try await VideoExport.write(segments: segments, files: sources, grades: grades, mix: prepared?.url,
                                             duration: span.to - span.from, options: options, field: field, to: url)

@@ -60,16 +60,16 @@ final class FieldLayerPass: @unchecked Sendable {
         CVMetalTextureCacheFlush(textureCache, 0)
     }
 
-    /// Draws the Field from `shown` with its looks `look` and lays it over `picture`, placed by
-    /// `placement` (all black without a picture), into `target`, on `buffer`. False when a pass
-    /// could not be encoded.
-    func encode(field shown: FieldMotion.Shown, look: FieldLookMotion.Shown, over picture: MTLTexture?,
-                placement: FieldLayerPlacement?, layer: FieldLayer, into target: MTLTexture,
+    /// Draws the Field from `shown` with its looks `look` and the plate's figure `plate` (nil while
+    /// no shown look is the plate) and lays it over `picture`, placed by `placement` (all black
+    /// without a picture), into `target`, on `buffer`. False when a pass could not be encoded.
+    func encode(field shown: FieldMotion.Shown, look: FieldLookMotion.Shown, plate: ChladniMotion.Shown?,
+                over picture: MTLTexture?, placement: FieldLayerPlacement?, layer: FieldLayer, into target: MTLTexture,
                 on buffer: MTLCommandBuffer) -> Bool {
         guard let field = fieldTexture(width: target.width, height: target.height) else { return false }
         let aspect = target.height > 0 ? Float(target.width) / Float(target.height) : 1
-        guard MetalFieldRenderer.encode(shown, look: look, aspect: aspect, pipeline: fieldPipeline, into: field,
-                                        on: buffer) else {
+        guard MetalFieldRenderer.encode(shown, look: look, plate: plate, aspect: aspect, pipeline: fieldPipeline,
+                                        into: field, on: buffer) else {
             return false
         }
         let pass = MTLRenderPassDescriptor()

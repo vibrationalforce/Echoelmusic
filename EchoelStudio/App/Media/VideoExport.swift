@@ -38,6 +38,9 @@ enum VideoExport {
         let peaks: [Float]
         /// The looks the Field window shows on this device, read when the export started.
         let look: FieldLookChoice
+        /// Each frame's partials of the mix (`FieldExport.Peaks`), for a look that listens; empty
+        /// for none.
+        let partials: [SpectralPeaks]
     }
 
     enum ExportError: LocalizedError {
@@ -65,9 +68,11 @@ enum VideoExport {
     /// The mix from `from` to `to` seconds as a new WAV in `folder`, brought to `loudness` (CUT) —
     /// at Off copied as it is — and the loudest sample of each frame of the film, read in the
     /// measuring pass before any gain: the level the Field Layer shows, as the meter read it while
-    /// the song played. Nil when the stretch holds none of the mix.
-    static func preparedMix(_ source: URL, from: Double, to: Double, loudness: ExportLoudness,
-                            into folder: URL) throws -> (url: URL, loudness: MixLoudness.Report, peaks: [Float])? {
+    /// the song played. With `partials`, each frame's partials too, from the same pass
+    /// (`FieldExport.Peaks`), for the looks that listen. Nil when the stretch holds none of the mix.
+    static func preparedMix(_ source: URL, from: Double, to: Double, loudness: ExportLoudness, partials: Bool = false,
+                            into folder: URL) throws
+        -> (url: URL, loudness: MixLoudness.Report, peaks: [Float], partials: [SpectralPeaks])? {
         let file: AVAudioFile
         do {
             file = try AVAudioFile(forReading: source)
@@ -80,8 +85,15 @@ enum VideoExport {
         let last = Swift.min(file.length, AVAudioFramePosition(Swift.max(0, (to * rate).rounded())))
         guard last > first else { return nil }
         var meter = LoudnessMeter(sampleRate: rate)
-        var framePeaks = FieldExport.Peaks(sampleRate: rate)
+        var framePeaks = FieldExport.Peaks(sampleRate: rate, partials: partials)
         do {
+            // A stretch from inside the song: the analyzer first hears the mix up to it.
+            let before = Swift.max(0, first - AVAudioFramePosition(framePeaks.hearingBefore))
+            if before < first {
+                try MixLoudness.forEachBlock(of: file, from: before, to: first) { left, right, count in
+                    framePeaks.hearBefore(left: left, right: right, count: count)
+                }
+            }
             try MixLoudness.forEachBlock(of: file, from: first, to: last) { left, right, count in
                 meter.process(left: left, right: right, count: count)
                 framePeaks.add(left: left, right: right, count: count)
@@ -101,7 +113,7 @@ enum VideoExport {
             try? FileManager.default.removeItem(at: url)
             throw error
         }
-        return (url, report, framePeaks.finished)
+        return (url, report, framePeaks.finished, framePeaks.finishedPartials)
     }
 
     // MARK: - The picture
@@ -192,7 +204,7 @@ enum VideoExport {
             let frames = Int((CMTimeGetSeconds(total) * Double(FieldExport.framesPerSecond)).rounded(.up)) + 1
             let shown = FieldExport.film(FieldExport.frames(of: layered.project, fromSeconds: layered.fromSeconds,
                                                             count: frames, levels: FieldExport.levels(peaks: layered.peaks)),
-                                         look: layered.look)
+                                         look: layered.look, partials: layered.partials)
             let film = FieldLayerFilm(pass: layered.pass, layer: options.fieldLayer, film: shown)
             video.customVideoCompositorClass = FieldLayerCompositor.self
             video.instructions = shots.map { shot in

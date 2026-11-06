@@ -39,8 +39,8 @@ final class FieldLayerFilm: @unchecked Sendable {
         let picture = source.flatMap { pass.texture($0) }
         let pictureTexture = picture.flatMap { CVMetalTextureGetTexture($0) }
         let shown = film.isEmpty ? FieldExport.Shown() : film[FieldExport.index(at: seconds, count: film.count)]
-        guard pass.encode(field: shown.field, look: shown.look, over: pictureTexture, placement: placement, layer: layer,
-                          into: targetTexture, on: buffer) else { return false }
+        guard pass.encode(field: shown.field, look: shown.look, plate: shown.plate, over: pictureTexture,
+                          placement: placement, layer: layer, into: targetTexture, on: buffer) else { return false }
         buffer.commit()
         // The textures stay alive until the GPU has used them.
         withExtendedLifetime((target, picture)) {

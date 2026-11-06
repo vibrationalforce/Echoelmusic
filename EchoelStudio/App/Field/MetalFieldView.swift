@@ -233,7 +233,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     /// Sand grains along one side of the plate at full detail: 180 × 180 ≈ 32 000 grains, one per
     /// cell of the grid the shader lays over the plate. The detail level scales the side
     /// (`FieldDetail.patternScale`): about 16 000 grains at low, 8 000 at minimal.
-    static let grainsPerSide = 180.0
+    nonisolated static let grainsPerSide = 180.0
 
     weak var store: ProjectStore?
     weak var engine: AudioEngine?
@@ -358,12 +358,14 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         }
     }
 
-    /// Draws one Field frame from `shown` and its looks `look` into `texture` on `buffer`, cleared
-    /// to the ground: the video layer's Field (W15) — the export's from its computed film, the
-    /// preview's from its own motion — with the window's pipeline and shader, at the texture's size
-    /// and `aspect`. The plate is never drawn here (a film draws no look that listens to partials).
-    /// False when the pass could not be encoded. Any thread: it touches only what it is handed.
-    nonisolated static func encode(_ shown: FieldMotion.Shown, look: FieldLookMotion.Shown, aspect: Float,
+    /// Draws one Field frame from `shown`, its looks `look` and the plate's figure `figure` (nil
+    /// while no shown look is the plate) into `texture` on `buffer`, cleared to the ground: the
+    /// video layer's Field (W15) — the export's from its computed film, the preview's from its own
+    /// motion — with the window's pipeline and shader, at the texture's size and `aspect`, the plate
+    /// at full detail. False when the pass could not be encoded. Any thread: it touches only what
+    /// it is handed.
+    nonisolated static func encode(_ shown: FieldMotion.Shown, look: FieldLookMotion.Shown,
+                                   plate figure: ChladniMotion.Shown?, aspect: Float,
                                    pipeline: MTLRenderPipelineState, into texture: MTLTexture,
                                    on buffer: MTLCommandBuffer) -> Bool {
         let pass = MTLRenderPassDescriptor()
@@ -374,7 +376,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         guard let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) else { return false }
         encoder.setRenderPipelineState(pipeline)
         var sent = Uniforms(aspect: aspect, shown: shown)
-        var plate = ChladniUniforms()
+        var plate = figure.map { ChladniUniforms($0, grains: grainsPerSide) } ?? ChladniUniforms()
         var looks = LookUniforms(look)
         encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
         encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)

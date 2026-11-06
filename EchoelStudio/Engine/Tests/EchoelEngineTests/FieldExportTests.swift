@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import XCTest
 @testable import EchoelEngine
 
@@ -113,13 +114,92 @@ final class FieldExportTests: XCTestCase {
         XCTAssertGreaterThan(Set(film.map(\.look.moirePhase)).count, 100, "the moiré drifts")
     }
 
-    /// A look that listens to the master's partials is filmed as the rings.
-    func testALookThatListensIsFilmedAsTheRings() {
+    /// Each frame's partials are the live analyzer's window ending with the frame, whatever blocks
+    /// the mix is read in — and asking for them leaves the peaks as they were.
+    func testEachFramesPartialsAreTheWindowEndingWithItWhateverTheBlocks() {
+        let rate = 48_000.0
+        let count = 48_000
+        var left = [Float](repeating: 0, count: count)
+        for index in 0..<count {
+            let hertz = index < count / 2 ? 440.0 : 1_760.0
+            left[index] = Float(0.5 * sin(2 * Double.pi * hertz * Double(index) / rate))
+        }
+        left[12_345] = .nan
+        let right = left
+        func read(_ blocks: [Int], partials: Bool) -> FieldExport.Peaks {
+            var peaks = FieldExport.Peaks(sampleRate: rate, partials: partials)
+            var start = 0, turn = 0
+            while start < count {
+                let take = Swift.min(blocks[turn % blocks.count], count - start)
+                left.withUnsafeBufferPointer { l in
+                    right.withUnsafeBufferPointer { r in
+                        guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                        peaks.add(left: lp + start, right: rp + start, count: take)
+                    }
+                }
+                start += take
+                turn += 1
+            }
+            return peaks
+        }
+        let whole = read([count], partials: true)
+        let pieces = read([1_000, 777, 3_000, 2_000], partials: true)
+        XCTAssertEqual(pieces.finishedPartials, whole.finishedPartials, "the blocks change nothing")
+        XCTAssertEqual(whole.finishedPartials.count, whole.finished.count)
+        XCTAssertEqual(read([4_096], partials: false).finished, whole.finished, "the peaks as they were")
+        XCTAssertEqual(read([4_096], partials: false).finishedPartials, [])
+        // The live analyzer, pushed the same mono to the end of frame 10, hears the same.
+        let reference = SpectrumAnalyzer(sampleRate: rate)
+        let mono = (0..<(11 * 1_600)).map { (index: Int) -> Float in 0.5 * (left[index] + right[index]) }
+        mono.withUnsafeBufferPointer { m in if let base = m.baseAddress { reference.push(base, count: m.count) } }
+        let tenth = whole.finishedPartials[10]
+        XCTAssertEqual(tenth, reference.analyze())
+        XCTAssertEqual(tenth.frequencies[0], 440, accuracy: 1.5)
+        XCTAssertEqual(whole.finishedPartials[25].frequencies[0], 1_760, accuracy: 2)
+
+        // A stretch from inside the mix hears the analyzer's window before it first: its first
+        // frame hears what a film from the start heard at that place.
+        var inside = FieldExport.Peaks(sampleRate: rate, partials: true)
+        let start = 16_000
+        XCTAssertEqual(inside.hearingBefore, 4_096)
+        left.withUnsafeBufferPointer { l in
+            right.withUnsafeBufferPointer { r in
+                guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                inside.hearBefore(left: lp + start - 4_096, right: rp + start - 4_096, count: 4_096)
+                inside.add(left: lp + start, right: rp + start, count: 1_600)
+            }
+        }
+        XCTAssertEqual(inside.finishedPartials.first, whole.finishedPartials[10], "frame 10 of the whole, frame 0 of the stretch")
+        XCTAssertEqual(FieldExport.Peaks(sampleRate: rate).hearingBefore, 0)
+    }
+
+    /// A look that listens hears the mix's partials in a film: the plate takes the figure they
+    /// choose and lights, the dish's lattice shows, the aurora's pitch follows; without partials it
+    /// is the silent look, and a film of the rings is the same with or without them.
+    func testALookThatListensIsFilmedFromTheMixsPartials() {
         let frames = FieldExport.frames(of: Project(tempo: 120), fromSeconds: 0, count: 120, levels: [])
-        XCTAssertEqual(FieldExport.film(frames, look: FieldLookChoice(primary: .dish)),
-                       FieldExport.film(frames, look: FieldLookChoice()))
-        XCTAssertEqual(FieldExport.film(frames, look: FieldLookChoice(primary: .moire, partner: .aurora, mix: 0.5)),
-                       FieldExport.film(frames, look: FieldLookChoice(primary: .moire, partner: .rings, mix: 0.5)))
+        let tone = Array(repeating: SpectralPeaks([(frequency: 440, amplitude: 0.5)]), count: 120)
+        let plate = FieldExport.film(frames, look: FieldLookChoice(primary: .chladni), partials: tone)
+        XCTAssertTrue(plate.allSatisfy { $0.plate != nil }, "the plate is stepped while it shows")
+        XCTAssertGreaterThan(plate.last?.plate?.light ?? 0, 0, "and lights")
+        var fresh = ChladniMotion()
+        let chosen = fresh.step(towards: ChladniPlate.modes(frequencies: tone[0].frequencies, amplitudes: tone[0].amplitudes,
+                                                            count: tone[0].count),
+                                after: 1.0 / 30, still: false)
+        XCTAssertEqual(plate.last?.plate?.to, chosen.to, "the figure the partials choose")
+        let dish = FieldExport.film(frames, look: FieldLookChoice(primary: .dish), partials: tone)
+        XCTAssertEqual(dish.last?.look.primary, .dish)
+        XCTAssertNil(dish.last?.plate)
+        XCTAssertGreaterThan(dish.last?.look.dishStrength ?? 0, 0)
+        let silentDish = FieldExport.film(frames, look: FieldLookChoice(primary: .dish))
+        XCTAssertEqual(silentDish.last?.look.dishStrength ?? 1, 0, accuracy: 1e-12, "a silent dish is a mirror")
+        let aurora = FieldExport.film(frames, look: FieldLookChoice(primary: .moire, partner: .aurora, mix: 0.5), partials: tone)
+        XCTAssertEqual(aurora.last?.look.soundHz ?? 0, 440, accuracy: 1)
+        let rings = FieldExport.film(frames, look: FieldLookChoice(), partials: tone)
+        XCTAssertEqual(rings.map(\.look.onScreen), FieldExport.film(frames, look: FieldLookChoice()).map(\.look.onScreen))
+        XCTAssertTrue(rings.allSatisfy { $0.plate == nil })
+        XCTAssertEqual(plate, FieldExport.film(frames, look: FieldLookChoice(primary: .chladni), partials: tone))
+        XCTAssertEqual(plate.map(\.field), FieldExport.motion(frames))
     }
 
     func testTheFrameAtATimeIsTheNearestOfTheFilm() {
