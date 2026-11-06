@@ -1708,11 +1708,17 @@ public final class EngineCore: @unchecked Sendable {
             let next = Tick((position / quarter).rounded(.up) * quarter)
             toNextBeat = Int(Swift.max(0, snapshot.time.sample(at: next) - playhead))
         }
+        // The song loop, while it runs, as the cycle a looper or an arpeggiator in a unit follows:
+        // the word `setLoop` stored, in beats — no snapshot time involved.
+        let packed = loopRange.load(ordering: .relaxed)
+        let cycle = packed == 0 ? (start: 0.0, end: 0.0)
+            : (start: Double(packed >> 32) / quarter, end: Double(packed & 0xFFFF_FFFF) / quarter)
         let transport = HostTransport(isPlaying: playing, changed: changed, tempo: snapshot.time.tempoMap.bpm(at: Tick(position)),
                                       numerator: signature.numerator, denominator: signature.denominator,
                                       beat: position / quarter,
                                       downbeat: Double(snapshot.meter.barStart(at: Tick(position))) / quarter,
-                                      samplesToNextBeat: toNextBeat, sample: Double(playhead))
+                                      samplesToNextBeat: toNextBeat, sample: Double(playhead),
+                                      cycleStart: cycle.start, cycleEnd: cycle.end)
         // And in which key: a harmonizer's choir styles sing in it (VOX). The effect takes only a change.
         let key = snapshot.key
         for lane in snapshot.lanes {

@@ -63,6 +63,8 @@ final class PluginHost {
 
     /// Changes whenever the loaded units do; observe this, not the units.
     private(set) var revision = 0
+    /// Moves when a preset is chosen or saved on a loaded unit, so its page reads the menu again.
+    private(set) var presetRevision = 0
 
     @ObservationIgnored private(set) var units: [TrackID: HostedUnit] = [:]
     /// Each track's loaded, active inserts in chain order, for the engine.
@@ -463,12 +465,44 @@ final class PluginHost {
     }
 
     /// Moves a loaded plugin parameter to `position` (0…1) of its travel — a mapped controller.
+    /// The plugin page's fields set through here too, so every path clamps alike and a NaN never
+    /// reaches the unit (`HostedParameters`).
     func setPosition(_ address: ParameterAddress, to position: Double) {
-        guard let target = loadedParameter(address), position.isFinite else { return }
+        guard let target = loadedParameter(address) else { return }
         let (found, observer) = target
-        let n = Float(Swift.min(Swift.max(position, 0), 1))
-        let value = found.minValue + n * (found.maxValue - found.minValue)
-        if let observer { found.setValue(value, originator: observer) } else { found.value = value }
+        HostedParameters.set(found, toPosition: position, originator: observer)
+    }
+
+    /// The parameters of the unit in `slot` the musician can move, as the plugin page lists them
+    /// for a unit without an interface of its own; none while it is not loaded. Observed through
+    /// `revision`, which a load moves — the values themselves are read where they are shown.
+    func parameterRows(_ slot: Slot) -> [HostedParameters.Row] {
+        _ = revision
+        guard let unit = loaded[slot]?.unit else { return [] }
+        return HostedParameters.rows(of: unit)
+    }
+
+    /// Where the parameter `address` of the unit in `slot` is automated and learned; nil for a slot
+    /// whose owner is gone.
+    func parameterAddress(_ address: UInt64, in slot: Slot) -> ParameterAddress? {
+        owner(of: slot).map { ParameterAddress($0, .plugin(PluginParameter(slot.unit, address: address))) }
+    }
+
+    /// Of the sizes the plugin page offers (`PluginViewSize.offered`), those the unit in `slot`
+    /// says its interface can take, in the offered order; none while it is not loaded.
+    func interfaceSizes(for slot: Slot) -> [CGSize] {
+        guard let unit = loaded[slot]?.unit else { return [] }
+        let offered = PluginViewSize.offered.map {
+            AUAudioUnitViewConfiguration(width: $0.width, height: $0.height, hostHasController: false)
+        }
+        let supported = unit.supportedViewConfigurations(offered)
+        return offered.indices.filter { supported.contains($0) }.map { PluginViewSize.offered[$0] }
+    }
+
+    /// Tells the unit in `slot` which of its reported sizes the page draws its interface at.
+    func selectInterfaceSize(_ size: CGSize, for slot: Slot) {
+        guard let unit = loaded[slot]?.unit else { return }
+        unit.select(AUAudioUnitViewConfiguration(width: size.width, height: size.height, hostHasController: false))
     }
 
     /// Stereo at `sampleRate` (input too, for an effect), the engine's largest block, the saved
@@ -658,6 +692,51 @@ final class PluginHost {
         }
         for (slot, data) in capturedState { syncedState[slot] = data }
         return true
+    }
+
+    /// The presets the unit in `slot` offers — its factory presets, then the musician's own — and
+    /// the one it says it plays; nothing while it is not loaded. Observed through `revision` and
+    /// `presetRevision`, which move on a load and on a choice or a save, never at a frame rate.
+    func presets(for slot: Slot) -> (menu: [HostedPresets.Entry], current: HostedPresets.Entry?) {
+        _ = revision
+        _ = presetRevision
+        guard let unit = loaded[slot]?.unit else { return ([], nil) }
+        let menu = HostedPresets.menu(of: unit)
+        return (menu, HostedPresets.resolve(unit.currentPreset?.number, in: menu))
+    }
+
+    /// Whether the unit in `slot` keeps presets of the musician's own.
+    func savesUserPresets(_ slot: Slot) -> Bool {
+        _ = revision
+        return loaded[slot]?.unit.supportsUserPresets ?? false
+    }
+
+    /// Chooses a preset on the unit in `slot` (main thread; a unit that applies it elsewhere does
+    /// its own hop), then stores the unit's settings in the song as one undo step through the same
+    /// capture as leaving the page, so the song reopens with the preset's sound. False when the unit
+    /// is not loaded or does not list the number. A unit that applies the preset later than this
+    /// call is caught by the capture when the page closes.
+    @discardableResult
+    func choose(preset number: Int, for slot: Slot, into songStore: ProjectStore) -> Bool {
+        guard let unit = loaded[slot]?.unit, HostedPresets.choose(number, on: unit) else { return false }
+        presetRevision += 1
+        store(into: songStore, only: slot, title: "Choose Preset")
+        return true
+    }
+
+    /// Saves the sound of the unit in `slot` as a preset of the musician's own. The system keeps it
+    /// for that plugin, in every host; the song keeps the sound itself, as always. Nil when nothing
+    /// was saved.
+    func saveUserPreset(named name: String, for slot: Slot) -> HostedPresets.Entry? {
+        guard let unit = loaded[slot]?.unit else { return nil }
+        do {
+            let saved = try HostedPresets.saveUserPreset(named: name, on: unit)
+            presetRevision += 1
+            return saved
+        } catch {
+            log.error("plugin: preset not saved — \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
 
     /// The plugin's own interface, or nil when it has none or its unit is not loaded.

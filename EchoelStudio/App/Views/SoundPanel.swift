@@ -88,21 +88,15 @@ struct SoundPanel: View {
         .accessibilityLabel("Instrument")
     }
 
-    /// Every installed Audio Unit instrument; choosing one plays this track through it.
+    /// Every installed Audio Unit instrument, searchable, by maker and the ones used last
+    /// (`PluginBrowser`, opened in place); choosing one plays this track through it.
     private var pluginMenu: some View {
-        let host = engine.plugins
-        return Menu {
-            if host.instruments.isEmpty {
-                Text("No Audio Unit instruments installed")
-            }
-            ForEach(host.instruments, id: \.self) { component in
-                Button("\(component.displayName) — \(component.manufacturerName)") { choose(component) }
-            }
-        } label: {
-            Label("Audio Unit Instrument", systemImage: "puzzlepiece.extension")
-                .font(Theme.Font.body)
+        PluginBrowser(title: "Audio Unit Instrument", systemImage: "puzzlepiece.extension",
+                      hint: "Plays this track through an installed Audio Unit instrument.",
+                      installed: engine.plugins.instruments, recentsKind: .instruments,
+                      emptyText: "No Audio Unit instruments installed") { component in
+            choose(component)
         }
-        .accessibilityHint("Plays this track through an installed Audio Unit instrument.")
     }
 
     /// The chosen plugin and the switch to it, as one undo step.
