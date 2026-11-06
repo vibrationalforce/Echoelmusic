@@ -41,11 +41,13 @@ public enum FieldShader {
     struct Chladni { float4 fromM; float4 fromN; float4 fromW; float4 toM; float4 toN; float4 toW;
                      float active; float mix; float light; float grains; };
     // The looks (FieldLookMotion): which two patterns (FieldPattern.shaderIndex), how much of the
-    // second, the blend's phase offset in turns, the heard pitch and the dish's solve. All zero
-    // draws the rings alone, as every pass bound before the looks existed.
+    // second, the dish's solve, the moiré's gratings, the water's and the film's ripple spacing,
+    // the film's phase, the looks' phase in turns and the aurora's rays. All zero draws the rings
+    // alone, as every pass bound before the looks existed.
     struct Look { float primary; float partner; float blend;
-                  float soundHz; float dishK; float dishStrength; float dishHex;
-                  float moireK1; float moireK2; float moirePhase; float filmK; float filmPhase; float turns; };
+                  float dishK; float dishStrength; float dishHex;
+                  float moireK1; float moireK2; float moirePhase; float rippleK; float filmPhase; float turns;
+                  float auroraRays; };
     // The weave (BarWeave.words): how far the newest row has come in, its light (flash-guarded on
     // the CPU), two spare words, then each row on screen, newest first, as its low and high 32
     // bits. All zero is an empty, dark weave.
@@ -247,9 +249,9 @@ public enum FieldShader {
         float mirror = 0.55 + 0.30 * exp(-dot(p, p) * 2.5);
         return clamp(mix(mirror, net, clamp(strength, 0.0, 1.0)), 0.0, 1.0);
     }
-    float fieldWater(float2 p, float toneHz, float phase, float coh, float breath) {
+    float fieldWater(float2 p, float k, float phase, float coh, float breath) {
         float t = phase * \(FieldLook.waterPhaseRate);
-        float scale = clamp(5.5 * pow(max(toneHz, 20.0) / \(FieldLook.anchorHz), 0.6666667), 3.0, 24.0);
+        float scale = clamp(k, \(FieldLook.rippleKRange.lowerBound), \(FieldLook.rippleKRange.upperBound));
         float w = sin(p.x * scale + t) * cos(p.y * (scale * 0.818) - t * 0.7);
         w += sin(length(p) * (scale * 1.545) - t * 1.1);
         w += sin((p.x + p.y) * (scale * 0.727) + t * 0.5);
@@ -260,15 +262,14 @@ public enum FieldShader {
         float e = exp(-clamp(x, -6.0, 40.0));
         return exp(clamp(1.0 - x - e, -30.0, 0.0));
     }
-    float fieldAurora(float2 p, float toneHz, float phase, float coh, float breath) {
+    float fieldAurora(float2 p, float rays, float phase, float coh, float breath) {
         float t = phase * \(FieldLook.auroraPhaseRate);
         float wave = sin(p.x * 2.2 + t) * 0.35 + sin(p.x * 4.7 - t * 0.6) * 0.15;
         float H = mix(0.30, 0.14, clamp(coh, 0.0, 1.0));
         float curtain = auroraChapman((p.y - wave) / H);
         float wave2 = sin(p.x * 3.1 - t * 0.8) * 0.30;
         float curtain2 = auroraChapman((p.y + 0.4 - wave2) / (H * 1.35));
-        float rays = clamp(3.0 * max(toneHz, 20.0) / \(FieldLook.anchorHz), 2.0, 14.0);
-        float ray = 0.72 + 0.28 * cos(p.x * rays * 6.2831853);
+        float ray = 0.72 + 0.28 * cos(p.x * clamp(rays, \(FieldLook.auroraRayRange.lowerBound), \(FieldLook.auroraRayRange.upperBound)) * 6.2831853);
         float swell = 0.80 + 0.20 * clamp(breath, 0.0, 1.0);
         return clamp((curtain + curtain2 * 0.6) * ray * swell, 0.0, 1.0);
     }
@@ -303,8 +304,8 @@ public enum FieldShader {
         float phase = turns * 6.2831853;
         float field;
         if (look < 2.5) field = fieldDish(p, l.dishK, l.dishStrength, l.dishHex, phase, coh);
-        else if (look < 3.5) field = fieldWater(p, l.soundHz, phase, coh, breath);
-        else if (look < 4.5) field = fieldAurora(p, l.soundHz, phase, coh, breath);
+        else if (look < 3.5) field = fieldWater(p, l.rippleK, phase, coh, breath);
+        else if (look < 4.5) field = fieldAurora(p, l.auroraRays, phase, coh, breath);
         else field = fieldDepth(p, phase, coh, breath, l.dishK, l.dishStrength);
         float spread = 0.85 + 0.35 * breath;
         float vignette = smoothstep(0.9 + 0.5 * spread, 0.0, d);
@@ -372,7 +373,7 @@ public enum FieldShader {
         float drained = smoothstep(1.2, -1.2, p.y);
         float d = \(FieldLook.filmThinnest) + (\(FieldLook.filmThickest - FieldLook.filmThinnest)) * drained * drained;
         d += \(FieldLook.filmSwirlDepth) * (0.6 * sin(1.7 * p.x + 0.9 * p.y + t) + 0.4 * sin(2.3 * p.y - 1.3 * p.x - t));
-        d += \(FieldLook.filmRippleDepth) * level * sin(l.filmK * length(p) - t);
+        d += \(FieldLook.filmRippleDepth) * level * sin(l.rippleK * length(p) - t);
         d = max(d, 0.0);
         float3 sum = float3(0.0);
         float3 white = float3(0.0);

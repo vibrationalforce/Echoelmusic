@@ -203,16 +203,16 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         var primary: Float = 0
         var partner: Float = 0
         var blend: Float = 0
-        var soundHz: Float = 0
         var dishK: Float = 0
         var dishStrength: Float = 0
         var dishHex: Float = 0
         var moireK1: Float = 0
         var moireK2: Float = 0
         var moirePhase: Float = 0
-        var filmK: Float = 0
+        var rippleK: Float = 0
         var filmPhase: Float = 0
         var turns: Float = 0
+        var auroraRays: Float = 0
 
         init() {}
 
@@ -221,16 +221,16 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             primary = Float(shown.primary.shaderIndex)
             partner = Float(shown.partner.shaderIndex)
             blend = Float(shown.mix)
-            soundHz = Float(shown.soundHz)
             dishK = Float(shown.dishK)
             dishStrength = Float(shown.dishStrength)
             dishHex = Float(shown.dishHex)
             moireK1 = Float(shown.moireK1)
             moireK2 = Float(shown.moireK2)
             moirePhase = Float(shown.moirePhase)
-            filmK = Float(shown.filmK)
+            rippleK = Float(shown.rippleK)
             filmPhase = Float(shown.filmPhase)
             turns = Float(shown.turns)
+            auroraRays = Float(shown.auroraRays)
         }
     }
 
