@@ -419,6 +419,9 @@ struct PianoRoll: View {
                     }
                 }
             }
+            Section("Your chords") {
+                Button("Revoice by Octaves") { revoice() }
+            }
         } label: {
             Label("Chords", systemImage: "pianokeys")
         }
@@ -429,6 +432,21 @@ struct PianoRoll: View {
     }
 
     private static let suggestedChords = 6
+
+    /// Revoice: the upper notes of the chords in this clip moved by octaves so the voices travel
+    /// as few semitones as the placements allow (`Revoice`); one undo step.
+    private func revoice() {
+        let result = Revoice.revoiced(clip)
+        guard let command = result.command else {
+            return announce("The chords already move as little as octaves allow.")
+        }
+        do {
+            try store.perform([command], title: "Revoice")
+            announce("Revoiced: the voices move \(result.revoicedMovement) semitones instead of \(result.writtenMovement).")
+        } catch {
+            announce("The chords could not be revoiced.", urgent: true)
+        }
+    }
 
     private func chordTitle(_ chord: ChordSuggest.Chord, in context: MusicalContext) -> String {
         let outside = ChordSuggest.outside(chord, in: context).map { MusicalContext.rootNames[$0] }
