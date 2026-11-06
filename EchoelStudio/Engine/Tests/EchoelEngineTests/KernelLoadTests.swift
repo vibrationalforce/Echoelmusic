@@ -104,4 +104,16 @@ final class KernelLoadTests: XCTestCase {
             XCTAssertLessThan(share, 16, "\(effect.rawValue) at \(share) compressors' cost")
         }
     }
+
+    /// The multiband clipper clips at four times the rate: per side, three bands raised and the sum
+    /// brought down through 99- and 23-tap halfband stages, nine filter stages and a 32-sample
+    /// look-ahead — more than the bound above allows for. Its bound is an estimate, UNMEASURED
+    /// (written without a toolchain): roughly four times the multiband compressor's work per
+    /// sample. The share is in the message; tighten the bound from the first CI run.
+    func testTheMultibandClipperCostsNoMoreThanAFewDozenCompressors() {
+        let compressor = cost(of: .compressor)
+        XCTAssertGreaterThan(compressor, 0)
+        let share = cost(of: .multibandClipper) / compressor
+        XCTAssertLessThan(share, 64, "multibandClipper at \(share) compressors' cost")
+    }
 }

@@ -87,6 +87,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let midSide: MidSide?
     private let multiband: MultibandCompressor?
     private let dynamicEQ: DynamicEQ?
+    private let multibandClipper: MultibandClipper?
     /// The correction's targets, worked out once here so a change of key on the render thread
     /// only looks them up: each scale's pitch classes above C, and each tone system's cents for
     /// every root (`tuning × 12 + root`).
@@ -132,6 +133,7 @@ public final class EffectKernel: @unchecked Sendable {
         midSide = effect == .midSide ? MidSide(sampleRate: self.sampleRate) : nil
         multiband = effect == .multibandCompressor ? MultibandCompressor(sampleRate: self.sampleRate) : nil
         dynamicEQ = effect == .dynamicEQ ? DynamicEQ(sampleRate: self.sampleRate) : nil
+        multibandClipper = effect == .multibandClipper ? MultibandClipper(sampleRate: self.sampleRate) : nil
         scaleMasks = effect == .pitchCorrection
             ? Scale.allCases.map { PitchCorrector.Settings.mask(root: 0, steps: $0.intervals) } : []
         toneSystemCents = effect == .pitchCorrection ? Self.toneSystemCents() : []
@@ -183,9 +185,16 @@ public final class EffectKernel: @unchecked Sendable {
     /// The key the effect plays in now.
     public var key: SongKey { SongKey(packed: keyBits.load(ordering: .relaxed)) }
 
-    /// How far the output sits behind the input, in seconds: the pitch correction's delay, 0 for
+    /// How far the output sits behind the input, in seconds: the pitch correction's delay and the
+    /// multiband clipper's oversampling and look-ahead (`MultibandClipper.latencySamples`), 0 for
     /// every other effect (the harmonizer's voices lag, its dry sound does not).
-    public var latencySeconds: Double { effect == .pitchCorrection ? PitchCorrector.latencySeconds : 0 }
+    public var latencySeconds: Double {
+        switch effect {
+        case .pitchCorrection: PitchCorrector.latencySeconds
+        case .multibandClipper: Double(MultibandClipper.latencySamples) / sampleRate
+        default: 0
+        }
+    }
 
     /// Every value, in address order, to carry into a new kernel.
     public var allValues: [Float] { parameters.indices.map(parameter) }
@@ -219,6 +228,7 @@ public final class EffectKernel: @unchecked Sendable {
         midSide?.reset()
         multiband?.reset()
         dynamicEQ?.reset()
+        multibandClipper?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -305,6 +315,7 @@ public final class EffectKernel: @unchecked Sendable {
             multiband.process(left: left, right: right, frames: frames)
             reductionBits.store(multiband.reduction.bitPattern, ordering: .relaxed)
         case .dynamicEQ: dynamicEQ?.process(left: left, right: right, frames: frames)
+        case .multibandClipper: multibandClipper?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -443,6 +454,12 @@ public final class EffectKernel: @unchecked Sendable {
                                        high: DynamicEQ.Band(frequency: value(4), q: value(5), threshold: value(6), range: value(7)),
                                        attack: value(8), release: value(9))
             if s != dynamicEQ.settings { dynamicEQ.settings = s }
+        case .multibandClipper:
+            guard let multibandClipper else { return }
+            let s = MultibandClipper.Settings(inputGain: value(0), lowCrossover: value(1), highCrossover: value(2),
+                                              lowDrive: value(3), midDrive: value(4), highDrive: value(5),
+                                              softness: value(6), ceiling: value(7), mix: value(8))
+            if s != multibandClipper.settings { multibandClipper.settings = s }
         }
     }
 
@@ -631,6 +648,16 @@ public final class EffectKernel: @unchecked Sendable {
             add("highRange", "Band 2 Range", -18...18, -6, .decibels)
             add("attack", "Attack", 0.0001...0.2, 0.005, .seconds)
             add("release", "Release", 0.01...2, 0.15, .seconds)
+        case .multibandClipper:
+            add("inputGain", "Input", -12...24, 0, .decibels)
+            add("lowCrossover", "Low Crossover", 40...800, 150, .hertz)
+            add("highCrossover", "High Crossover", 1_000...10_000, 3_000, .hertz)
+            add("lowDrive", "Low Drive", 0...18, 0, .decibels)
+            add("midDrive", "Mid Drive", 0...18, 0, .decibels)
+            add("highDrive", "High Drive", 0...18, 0, .decibels)
+            add("softness", "Softness", 0...1, 0.3, .amount)
+            add("ceiling", "Ceiling", -12...0, -0.3, .decibels)
+            add("mix", "Mix", 0...1, 1, .amount)
         }
         return list
     }

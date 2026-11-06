@@ -163,8 +163,9 @@ public final class StandardEffectUnit: AUAudioUnit {
         set { fullState = newValue }
     }
 
-    /// The pitch correction plays its output a little behind its input (`PitchCorrector`); a host
-    /// that compensates delay (Logic, AUM) lines the track up with this. The other effects have none.
+    /// The pitch correction and the multiband clipper play their output a little behind their
+    /// input (`EffectKernel.latencySeconds`); a host that compensates delay (Logic, AUM) lines the
+    /// track up with this. The other effects have none.
     public override var latency: TimeInterval {
         render.kernel.latencySeconds
     }

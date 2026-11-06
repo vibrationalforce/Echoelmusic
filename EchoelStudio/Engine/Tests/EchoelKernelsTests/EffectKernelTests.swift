@@ -47,6 +47,8 @@ final class EffectKernelTests: XCTestCase {
                                    "highThreshold", "highRatio", "attack", "release", "makeup"],
             .dynamicEQ: ["lowFrequency", "lowQ", "lowThreshold", "lowRange", "highFrequency", "highQ", "highThreshold",
                          "highRange", "attack", "release"],
+            .multibandClipper: ["inputGain", "lowCrossover", "highCrossover", "lowDrive", "midDrive", "highDrive",
+                                "softness", "ceiling", "mix"],
         ]
         for (effect, identifiers) in expected {
             XCTAssertEqual(EffectKernel.parameters(for: effect).map(\.identifier), identifiers, effect.rawValue)
@@ -61,7 +63,7 @@ final class EffectKernelTests: XCTestCase {
         }
         let turned: [(StandardEffect, Int, Float)] = [(.formantFilter, 0, 3), (.transientDesigner, 2, -12),
                                                       (.midSide, 1, -12), (.multibandCompressor, 10, 12),
-                                                      (.dynamicEQ, 7, -18)]
+                                                      (.dynamicEQ, 7, -18), (.multibandClipper, 0, 24)]
         for (effect, address, value) in turned {
             let plain = process(EffectKernel(effect: effect, sampleRate: rate), tone)
             let kernel = EffectKernel(effect: effect, sampleRate: rate)
@@ -74,6 +76,23 @@ final class EffectKernelTests: XCTestCase {
         multiband.setParameter(2, -50)
         _ = process(multiband, tone)
         XCTAssertLessThan(multiband.gainReduction, -10, "the meter reads the multiband's deepest band")
+    }
+
+    /// The clipper's ranges and defaults as they shipped, and its delay reported to the host in
+    /// seconds at the rate the kernel runs at — the other new effects report none.
+    func testTheMultibandClipperPinsItsRangesAndReportsItsLatency() {
+        let parameters = EffectKernel.parameters(for: .multibandClipper)
+        let ranges: [ClosedRange<Float>] = [-12...24, 40...800, 1_000...10_000, 0...18, 0...18, 0...18, 0...1, -12...0, 0...1]
+        let defaults: [Float] = [0, 150, 3_000, 0, 0, 0, 0.3, -0.3, 1]
+        let units: [EffectParameter.Unit] = [.decibels, .hertz, .hertz, .decibels, .decibels, .decibels, .amount, .decibels, .amount]
+        XCTAssertEqual(parameters.map(\.range), ranges)
+        XCTAssertEqual(parameters.map(\.defaultValue), defaults)
+        XCTAssertEqual(parameters.map(\.unit), units)
+        for kernelRate in [44_100.0, 48_000, 96_000] {
+            let kernel = EffectKernel(effect: .multibandClipper, sampleRate: kernelRate)
+            XCTAssertEqual(kernel.latencySeconds, Double(MultibandClipper.latencySamples) / kernelRate, accuracy: 1e-12)
+        }
+        XCTAssertEqual(EffectKernel(effect: .dynamicEQ, sampleRate: rate).latencySeconds, 0)
     }
 
     func testAParameterReachesTheSoundAtTheNextBlockAndCarriesToANewRate() {
