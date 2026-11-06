@@ -102,6 +102,53 @@ final class VocalStripTests: XCTestCase {
         }
     }
 
+    /// What the page does when a finger lets go: the effect's settings go into the song as one
+    /// step. The strip stays on the track, its fader shows the new place, and one undo brings the
+    /// old sound and the old place back.
+    func testAStoredFaderMoveIsOneUndoStepAndTheStripReadsItBack() async throws {
+        try await MainActor.run {
+            let store = ProjectStore()
+            let track = TrackID()
+            try store.perform(.addTrack(id: track, name: "Vocal", kind: .audio, index: nil))
+            let empty = try XCTUnwrap(store.project.track(track))
+            try store.perform(VocalChain.clean.commands(for: empty), title: VocalChain.actionTitle)
+            let applied = try XCTUnwrap(store.project.track(track))
+            let strip = try XCTUnwrap(VocalStrip(track: applied))
+            for fader in strip.faders {
+                let effect = fader.control.effect
+                let insert = try XCTUnwrap(applied.inserts.first { $0.id == fader.insert })
+                let before = try XCTUnwrap(fader.control.position(in: insert))
+                // The insert's values by identifier, with the fader's over them.
+                let parameters = EffectKernel.parameters(for: effect)
+                var values: [String: Float] = [:]
+                let original = try XCTUnwrap(insert.state)
+                for stored in StandardEffectSettings.values(in: original, for: effect) {
+                    if let parameter = parameters.first(where: { $0.address == stored.address }) {
+                        values[parameter.identifier] = stored.value
+                    }
+                }
+                let kept = values.count
+                for setting in fader.control.settings(at: 0.9) { values[setting.identifier] = setting.value }
+                let state = StandardEffectSettings.state(values, for: effect)
+                let steps = store.undoStack.count
+                try store.perform([.setInsertState(track: track, fader.insert, state)], title: fader.control.actionTitle)
+                XCTAssertEqual(store.undoStack.count, steps + 1)
+                XCTAssertEqual(store.undoTitle, fader.control.actionTitle)
+                let moved = try XCTUnwrap(store.project.track(track))
+                XCTAssertEqual(VocalStrip(track: moved), strip, "the strip survives its own move")
+                let now = try XCTUnwrap(moved.inserts.first { $0.id == fader.insert })
+                XCTAssertEqual(try XCTUnwrap(fader.control.position(in: now)), 0.9, accuracy: 1e-4)
+                // The chain's other values of that effect are kept.
+                let written = try XCTUnwrap(now.state)
+                let stored = StandardEffectSettings.values(in: written, for: effect)
+                XCTAssertGreaterThanOrEqual(stored.count, kept)
+                store.undo()
+                let undone = try XCTUnwrap(store.project.track(track)?.inserts.first { $0.id == fader.insert })
+                XCTAssertEqual(try XCTUnwrap(fader.control.position(in: undone)), before, accuracy: 1e-4)
+            }
+        }
+    }
+
     func testATrackWithoutAVocalChainGetsNoStrip() {
         let none: [[StandardEffect]] = [
             [],
