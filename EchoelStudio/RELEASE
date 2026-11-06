@@ -1,25 +1,22 @@
-11.0.0 — a de-esser, vocal chains, reverb modes, presets for the synth in other apps
+11.0.0 — a playhead you can move, loops that find their tempo, plugins at full size
 
-What is new since 10063. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10064. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Effects: De-Esser (Frequency, Threshold, Range, Listen) turns down only the band above its
-  frequency when an S crosses the threshold; also as "Echoel: De-Esser" in the extension, free.
-- Effects page of a track: Vocal Chain — Clean, Present, Warm or Spoken loads a chain of the
-  standard effects (low cut, de-esser, compressor, EQ, reverb) in place of the track's effects,
-  as one step that one undo takes back.
-- Reverb: Mode — Hall (the sound it had), Plate or Room.
-- Audio Units in other apps: the synth lists the app's sounds as presets and keeps your own;
-  each effect declares stereo in and out, empties its tail when the host resets it, stays in
-  time when bypassed, and refuses a different input and output rate.
-- Network MIDI: only hosts on its list connect; Song menu, Network Hosts, "Let a New Host
-  Connect" opens the door for a minute, and Remove ends a host's connection.
-- Lights: a rig left lit when the app was killed goes dark when that output is switched on
-  again; on an iPad with two windows the rig goes dark only when the last window leaves.
-- Store: Restore Purchases without a network reads the device's own purchase record.
-- Diagnostics: the render-load line also counts callbacks that came out exactly silent while
-  the song played.
+- Arrange: a playhead line moves with the song, and the position (bar.beat.sixteenth) shows
+  beside Play. Tap or drag the ruler to locate; Stop returns to where you started, a second
+  Stop to bar 1. VoiceOver: "Play from", one bar per swipe.
+- Warping: an imported loop and a region switched to Follow Song Tempo listen for the tempo
+  the file was played at. Native Tempo takes two decimals, and "Fit to Bars…" makes a region
+  span the bars you choose.
+- Audio Units in the app: a preset menu for an installed plugin (its own and yours, "Save
+  Preset"), "Full Size" for its interface, value fields for a plugin without one, a plugin
+  list to search by name or maker, and the song loop reported to the plugin as its cycle.
+- Vocal chain: on a track that carries one, four fields — De-Ess, Level, Air, Space.
+- Effects as Audio Units in other apps: delay and reverb report their tail; host ramps glide.
+- Mixing: a track behind an effect that plays late (pitch correction, multiband clipper) is
+  lined up with the others.
 
-Previous: 11.0.0 (10063) — a multiband clipper; 10062 — the engine measures its render load.
+Previous: 11.0.0 (10064) — a de-esser, vocal chains, reverb modes; 10063 — a multiband clipper.
 Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -28,13 +25,15 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. A track with a voice, Effects, Vocal Chain, Present: does the chain appear with the S sounds
-   softer than before, and does one Undo bring the track's own effects back?
-2. Reverb on a return, Mode Hall, then Plate, then Room while the song plays: three clearly
-   different rooms, and no crackle at the switch?
-3. AUM or GarageBand at 44.1 and at 48 kHz: does "Echoel: Synth" show a preset list that changes
-   the sound, does a preset you save there come back, and does "Echoel: De-Esser" load?
-4. Art-Net or sACN on, the rig lit, swipe the app away, open it, switch the same output on:
-   does the rig go dark at once? (On an iPad with two windows: closing one keeps the lights.)
-5. Network MIDI on, a Mac tries to connect: refused until "Let a New Host Connect", then let in,
-   and Remove stops its notes at once?
+1. Arrange: play a song, tap the ruler at bar 5 while it plays, then Stop twice: does the
+   playhead jump to bar 5, does the first Stop return to where you started and the second to
+   bar 1, and does the position beside Play match what you hear?
+2. Import a drum loop that is not at the song tempo, Fades, Gain & Warp, Follow Song Tempo:
+   does Native Tempo show the loop's real tempo, and does it play in time with the click?
+3. Change the song tempo by 20 BPM with that loop playing: does it stay in time, and after
+   "Fit to Bars…" (4 bars) does it end exactly on the bar line?
+4. An installed plugin on a track (a synth with its own presets): does the preset menu change
+   the sound, does "Full Size" fill the page, and does a saved preset come back after reopening
+   the song?
+5. One track with Pitch Correction, one identical track without, both playing: do they sound
+   together (no flam or echo between them)?
