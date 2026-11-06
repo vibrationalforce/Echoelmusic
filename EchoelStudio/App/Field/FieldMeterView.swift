@@ -25,7 +25,7 @@ struct FieldMeterView: View {
                     switch meter {
                     case .scope: FieldMeterView.drawScope(reading.trace, in: &canvas, size: size)
                     case .phase: FieldMeterView.drawPhase(reading.phase, in: &canvas, size: size)
-                    case .partials: FieldMeterView.drawPartials(PartialRatios.of(reading.peaks), in: &canvas, size: size)
+                    case .partials: FieldMeterView.drawPartials(reading.partials, in: &canvas, size: size)
                     default: FieldMeterView.drawSpectrum(reading.bands, in: &canvas, size: size)
                     }
                 }
@@ -39,7 +39,7 @@ struct FieldMeterView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Self.accessibilityTitle(meter))
             .accessibilityValue(meter == .phase ? PhaseCorrelationBar.spoken(reading.correlation)
-                                : meter == .partials ? PartialRatios.of(reading.peaks).spoken : "")
+                                : meter == .partials ? reading.partials.spoken : "")
         }
         .background(Theme.Color.background)
         .onAppear { listener.listen(to: engine) }
@@ -97,21 +97,24 @@ struct FieldMeterView: View {
 
     /// The partials on a log axis of ratios 1 … 16, the whole numbers as faint grid lines so an
     /// inharmonic partial stands visibly beside its harmonic; each partial a thin line as tall as
-    /// its level, labelled with its ratio and its distance from the nearest whole number in cents.
+    /// its level. The labels sit in one row above the plot, a label skipped where it would touch
+    /// its left neighbour (VoiceOver and the larger window read every one); a distance from the
+    /// whole number shows from `PartialRatios.centsShown`. Partials above 16 are counted at the
+    /// right edge, never dropped silently. The reading is held (`FieldMeterListener`).
     private static func drawPartials(_ ratios: PartialRatios, in canvas: inout GraphicsContext, size: CGSize) {
-        let inset: CGFloat = 16
-        let labelRoom: CGFloat = 34
-        let width = size.width - 2 * inset, height = size.height - 2 * inset - labelRoom
+        let inset: CGFloat = 12
+        let labelRow: CGFloat = 22
+        let width = size.width - 2 * inset, height = size.height - 2 * inset - labelRow
         guard width > 0, height > 0 else { return }
         let top = 16.0
-        func x(_ ratio: Double) -> CGFloat {
+        func place(_ ratio: Double) -> CGFloat {
             inset + width * CGFloat(Foundation.log2(Swift.min(Swift.max(ratio, 1), top)) / Foundation.log2(top))
         }
-        let base = inset + labelRoom + height
+        let base = inset + labelRow + height
         var grid = Path()
         for whole in 1...Int(top) {
-            grid.move(to: CGPoint(x: x(Double(whole)), y: base))
-            grid.addLine(to: CGPoint(x: x(Double(whole)), y: base - (whole <= 4 ? height : height * 0.25)))
+            grid.move(to: CGPoint(x: place(Double(whole)), y: base))
+            grid.addLine(to: CGPoint(x: place(Double(whole)), y: base - (whole <= 4 ? height : height * 0.25)))
         }
         canvas.stroke(grid, with: .color(Theme.Color.border), lineWidth: 1)
         guard !ratios.entries.isEmpty else {
@@ -120,18 +123,33 @@ struct FieldMeterView: View {
             return
         }
         var lines = Path()
-        for entry in ratios.entries where entry.ratio <= top {
-            let px = x(entry.ratio)
-            let tip = base - height * CGFloat(Swift.min(Swift.max(entry.level, 0), 1))
+        var labelEnd = -CGFloat.greatestFiniteMagnitude
+        var above = 0
+        for entry in ratios.entries {
+            guard entry.ratio <= top else {
+                above += 1
+                continue
+            }
+            let px = place(entry.ratio)
             lines.move(to: CGPoint(x: px, y: base))
-            lines.addLine(to: CGPoint(x: px, y: tip))
+            lines.addLine(to: CGPoint(x: px, y: base - height * CGFloat(Swift.min(Swift.max(entry.level, 0), 1))))
             let cents = Int(entry.cents.rounded())
-            let offset = cents == 0 ? "" : (cents > 0 ? " +\(cents)¢" : " \u{2212}\(-cents)¢")
-            canvas.draw(Text(String(format: "%.2f", entry.ratio) + offset)
-                            .font(Theme.Font.caption).monospacedDigit().foregroundStyle(Theme.Color.text),
-                        at: CGPoint(x: px, y: tip - 10))
+            let offset = Swift.abs(entry.cents) < PartialRatios.centsShown ? ""
+                : (cents > 0 ? " +\(cents)¢" : " \u{2212}\(-cents)¢")
+            let text = String(format: "%.2f", entry.ratio) + offset
+            // About 7 pt a character at the caption size: a label is drawn only where it clears
+            // the last one and the edges.
+            let half = CGFloat(text.count) * 3.5
+            guard px - half > labelEnd + 4, px - half >= 0, px + half <= size.width else { continue }
+            canvas.draw(Text(text).font(Theme.Font.caption).monospacedDigit().foregroundStyle(Theme.Color.text),
+                        at: CGPoint(x: px, y: inset + labelRow / 2))
+            labelEnd = px + half
         }
         canvas.stroke(lines, with: .color(Theme.Color.accent), lineWidth: 1.5)
+        if above > 0 {
+            canvas.draw(Text("+\(above) above 16").font(Theme.Font.caption).foregroundStyle(Theme.Color.textSecondary),
+                        at: CGPoint(x: size.width - inset, y: base - height), anchor: .topTrailing)
+        }
     }
 
     private static func drawSpectrum(_ bands: [Double], in canvas: inout GraphicsContext, size: CGSize) {
@@ -185,7 +203,12 @@ final class FieldMeterListener {
     private var bands: [Double] = []
     private var correlation: Float?
     private var phase: [Float] = []
+    private var partials = PartialRatios.silent
+    private var partialsTaken: Date?
     private var last: Date?
+    /// The partials meter holds each reading this long: its numbers stay legible, and no line or
+    /// label changes more than three times a second, whatever the analysis delivers (~12 a second).
+    static let partialsHoldSeconds = 1.0 / 3
 
     func listen(to engine: AudioEngine) {
         guard self.engine !== engine else { return }
@@ -200,6 +223,8 @@ final class FieldMeterListener {
         bands = []
         correlation = nil
         phase = []
+        partials = .silent
+        partialsTaken = nil
         last = nil
     }
 
@@ -219,6 +244,11 @@ final class FieldMeterListener {
             }
         }
         fresh.bands = bands
+        if partialsTaken.map({ now.timeIntervalSince($0) >= Self.partialsHoldSeconds || now < $0 }) ?? true {
+            partials = PartialRatios.of(fresh.peaks)
+            partialsTaken = now
+        }
+        fresh.partials = partials
         if easing, phase.count == fresh.phase.count {
             for index in phase.indices { phase[index] += (fresh.phase[index] - phase[index]) * 0.5 }
             fresh.phase = phase

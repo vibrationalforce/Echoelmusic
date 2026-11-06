@@ -28,6 +28,9 @@ public struct PartialRatios: Equatable, Sendable {
 
     /// A partial weaker than this share of the strongest is left out.
     public static let floor = 0.01
+    /// A distance from the whole number under this many cents is not shown: the analysis (4096
+    /// points, about 12 Hz a bin at 48 kHz) does not resolve finer at a low reference.
+    public static let centsShown = 10.0
 
     public static let silent = PartialRatios(entries: [], lowestHz: nil)
 
@@ -59,10 +62,16 @@ public struct PartialRatios: Equatable, Sendable {
         return PartialRatios(entries: entries, lowestHz: lowest)
     }
 
-    /// What VoiceOver says: the ratios to two decimals, the lowest partial's pitch.
+    /// What VoiceOver says: the lowest partial's pitch, then each ratio to two decimals, with
+    /// its distance from the nearest whole number where it is at least `centsShown`.
     public var spoken: String {
         guard let lowestHz else { return "No partials" }
-        let ratios = entries.map { String(format: "%.2f", $0.ratio) }.joined(separator: ", ")
-        return "Partials over \(Int(lowestHz.rounded())) hertz: \(ratios)"
+        let ratios = entries.map { (entry: Entry) -> String in
+            let ratio = String(format: "%.2f", entry.ratio)
+            let cents = Int(entry.cents.rounded())
+            guard Swift.abs(entry.cents) >= Self.centsShown else { return ratio }
+            return "\(ratio), \(Swift.abs(cents)) cents \(cents < 0 ? "flat of" : "sharp of") \(entry.harmonic)"
+        }.joined(separator: "; ")
+        return "Partials as ratios to the lowest, \(Int(lowestHz.rounded())) hertz: \(ratios)"
     }
 }

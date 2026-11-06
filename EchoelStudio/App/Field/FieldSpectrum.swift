@@ -67,6 +67,8 @@ final class FieldSpectrum: @unchecked Sendable {
         var phase: [Float]
         var correlation: Float?
         var peaks: SpectralPeaks = .silent
+        /// The partials meter's held reading (`FieldMeterListener`), not the raw analysis.
+        var partials: PartialRatios = .silent
     }
 
     /// The newest partials; silence before the first block and after `reset`.

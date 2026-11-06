@@ -38,6 +38,8 @@ final class PartialRatiosTests: XCTestCase {
     func testSilenceReadsNothing() {
         XCTAssertEqual(PartialRatios.of(.silent), .silent)
         XCTAssertEqual(PartialRatios.of(.silent).spoken, "No partials")
-        XCTAssertTrue(PartialRatios.of(SpectralPeaks([(220, 1), (440, 0.5)])).spoken.contains("1.00, 2.00"))
+        XCTAssertTrue(PartialRatios.of(SpectralPeaks([(220, 1), (440, 0.5)])).spoken.hasSuffix("1.00; 2.00"))
+        XCTAssertTrue(PartialRatios.of(SpectralPeaks([(220, 1), (220 * 2.76, 0.5)])).spoken
+                        .contains("2.76, 144 cents flat of 3"), "the bell's distance is spoken")
     }
 }
