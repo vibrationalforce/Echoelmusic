@@ -350,7 +350,8 @@ final class MIDIInput {
     /// The control that moved last, for the learn banner.
     private(set) var lastControl: MIDIControl?
     /// MIDI over the network (RTP-MIDI): a Mac's Audio MIDI Setup, another iPad, any rtpMIDI host
-    /// on Windows. While on, the session is one more source and destination like a cable.
+    /// on Windows. While on, the session is one more source and destination like a cable, for the
+    /// hosts in its contact list only (`NetworkMIDIAccess`).
     private(set) var networkEnabled = false
     /// MIDI 2.0 (UMP) in: the input port speaks the MIDI 2.0 protocol, so a MIDI 2.0 controller's
     /// 16-bit velocities, 32-bit controllers and per-note bends arrive at full resolution. Off by
@@ -659,13 +660,32 @@ final class MIDIInput {
     /// local-network access, so it happens when the musician asks for it, not at launch.
     func setNetwork(_ on: Bool) {
         let session = MIDINetworkSession.default()
+        if on {
+            // Only known hosts may connect, never anyone on the Wi-Fi: whoever is connected already
+            // joins the contact list first, so switching on never cuts a host off silently.
+            let contacts = session.contacts().map(Self.accessHost)
+            let linked = session.connections().map(\.host)
+            for index in NetworkMIDIAccess.contactsToAdd(connected: linked.map(Self.accessHost), contacts: contacts)
+                where index < linked.count {
+                _ = session.addContact(linked[index])
+            }
+        }
+        switch NetworkMIDIAccess.policy(networkOn: on) {
+        case .noOne: session.connectionPolicy = .noOne
+        case .contactsOnly: session.connectionPolicy = .hostsInContactList
+        }
         session.isEnabled = on
-        // Anyone on the local network may connect, as a cable plugged in would.
-        session.connectionPolicy = on ? .anyone : .noOne
         networkEnabled = on
         UserDefaults.standard.set(on, forKey: Self.networkKey)
         applyClockSource()
         log.info("midi: network \(on ? "on" : "off", privacy: .public) as \(session.networkName, privacy: .private)")
+    }
+
+    /// A CoreMIDI network host as the access policy reads it.
+    private static func accessHost(_ host: MIDINetworkHost) -> NetworkMIDIAccess.Host {
+        // Optional on purpose: the SDK has typed these both ways, and either converts.
+        let name: String? = host.name, address: String? = host.address, service: String? = host.netServiceName
+        return NetworkMIDIAccess.Host(name: name ?? "", address: address ?? "", port: Int(host.port), service: service ?? "")
     }
 
     private func fail(_ step: String, _ status: OSStatus) {
