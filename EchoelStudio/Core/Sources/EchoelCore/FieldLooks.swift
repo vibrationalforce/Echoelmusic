@@ -292,6 +292,43 @@ public enum FieldLook {
     }
 }
 
+/// The looks a Field shows, as the musician chose them on this device: the pattern, the one
+/// blended over it (none: nil) and its share 0 … 1. A device setting, never in the song.
+public struct FieldLookChoice: Hashable, Sendable {
+    public let primary: FieldPattern
+    public let partner: FieldPattern?
+    public let mix: Double
+
+    public init(primary: FieldPattern = .rings, partner: FieldPattern? = nil, mix: Double = 0) {
+        self.primary = primary
+        self.partner = partner
+        self.mix = mix.isFinite ? Swift.min(1, Swift.max(0, mix)) : 0
+    }
+
+    /// The choice as the device stores it (`FieldPattern.storageKey`, `blendStorageKey`,
+    /// `blendMixStorageKey`), read as the Field window reads it: an unknown pattern is the rings,
+    /// an unknown or empty partner is none, the share in percent.
+    public init(storedPattern: String?, storedPartner: String?, mixPercent: Int) {
+        self.init(primary: FieldPattern(stored: storedPattern), partner: FieldPattern.blend(stored: storedPartner),
+                  mix: Double(Swift.min(Swift.max(mixPercent, 0), 100)) / 100)
+    }
+
+    /// What a film draws (`FieldExport.film`): a look that listens to the master's partials is drawn
+    /// as the rings, because an export does not analyse its mix for them yet; the others as chosen.
+    public var offline: FieldLookChoice {
+        func drawn(_ pattern: FieldPattern) -> FieldPattern { pattern.listensToSound ? .rings : pattern }
+        return FieldLookChoice(primary: drawn(primary), partner: partner.map(drawn), mix: mix)
+    }
+
+    /// The shown looks that listen to the sound, the pattern first — the partner only while its
+    /// share shows it: what a film draws as the rings.
+    public var listening: [FieldPattern] {
+        var shown = [primary]
+        if let partner, partner != primary, mix > FieldLookMotion.blendThreshold { shown.append(partner) }
+        return shown.filter(\.listensToSound)
+    }
+}
+
 /// How the looks move from frame to frame and how two of them blend (the earlier app's style A /
 /// style B / blend, ported as its core). The sound the looks hear is the master's partials — the
 /// same analysis the Chladni plate reads: the strongest partial is the pitch that drives the dish
@@ -344,6 +381,21 @@ public struct FieldLookMotion: Equatable, Sendable {
 
         /// Whether two looks are on screen at once.
         public var isBlending: Bool { mix > FieldLookMotion.blendThreshold && primary != partner }
+
+        /// This frame with what no look on screen draws set to rest, so two frames that draw the
+        /// same picture compare equal (a renderer rests on it): the moiré's gratings without the
+        /// moiré, the weave without the weave, the dish's lattice without the dish or the depth,
+        /// the heard pitch without the water or the aurora, the partner and its share without a blend.
+        public var onScreen: Shown {
+            var out = self
+            let looks = isBlending ? [primary, partner] : [primary]
+            if !looks.contains(.moire) { out.moireK1 = 0; out.moireK2 = 0; out.moirePhase = 0 }
+            if !looks.contains(.weave) { out.weavePosition = 0; out.weaveSeed = 0; out.weaveLight = 0 }
+            if !looks.contains(where: { $0 == .dish || $0 == .depth }) { out.dishK = 0; out.dishStrength = 0; out.dishHex = 0 }
+            if !looks.contains(where: { $0 == .water || $0 == .aurora }) { out.soundHz = 0 }
+            if !isBlending { out.partner = primary; out.mix = 0 }
+            return out
+        }
     }
 
     /// The share of the song's drift two mixed looks move at.
@@ -484,6 +536,17 @@ public struct FieldLookMotion: Equatable, Sendable {
         }
         shown.weaveLight = weaveLight.next(towards: weaveGoal, after: elapsed)
         return shown
+    }
+
+    /// One frame of `choice` as a film draws it (`FieldLookChoice.offline`): no partials heard, the
+    /// tuning, the bars and the key from `frame` — the one call the export and its preview share,
+    /// so neither forgets an argument the window passes.
+    public mutating func step(drawing choice: FieldLookChoice, from frame: FieldFrame, fieldPhase: Double,
+                              after seconds: Double, still: Bool, patternScale: Double) -> Shown {
+        let drawn = choice.offline
+        return step(primary: drawn.primary, partner: drawn.partner, mix: drawn.mix, hertz: nil, drive: 0,
+                    tonicHz: frame.tonicHz, fieldPhase: fieldPhase, after: seconds, still: still,
+                    patternScale: patternScale, beat: frame.tuningBeat, bars: frame.bars, keyMask: frame.keyMask)
     }
 
     /// The weave's place for a song at `bars`: one row on, so the key's row is whole from the start.

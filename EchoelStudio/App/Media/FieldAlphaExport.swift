@@ -66,9 +66,9 @@ enum FieldAlphaExport {
         return writer.canApply(outputSettings: settings(codec, width: width, height: height), forMediaType: .video)
     }
 
-    /// Writes `motion` (one Field per frame, at `FieldExport.framesPerSecond`) through `pass` into a
-    /// movie at `url`, `width` × `height`, in `codec`. Runs off the main thread.
-    static func write(motion: [FieldMotion.Shown], pass: FieldLayerPass, codec: Codec, width: Int, height: Int,
+    /// Writes `film` (one Field and its looks per frame, at `FieldExport.framesPerSecond`) through
+    /// `pass` into a movie at `url`, `width` × `height`, in `codec`. Runs off the main thread.
+    static func write(film shown: [FieldExport.Shown], pass: FieldLayerPass, codec: Codec, width: Int, height: Int,
                       to url: URL) async throws {
         try? FileManager.default.removeItem(at: url)
         let writer: AVAssetWriter
@@ -95,10 +95,10 @@ enum FieldAlphaExport {
         }
         writer.startSession(atSourceTime: .zero)
         // Field only: no picture under it, the layer adds the Field to black at full strength.
-        let film = FieldLayerFilm(pass: pass, layer: FieldLayer(blend: .add, opacity: 1), motion: motion)
+        let film = FieldLayerFilm(pass: pass, layer: FieldLayer(blend: .add, opacity: 1), film: shown)
         let rate = Int32(FieldExport.framesPerSecond)
         do {
-            for index in 0..<Swift.max(1, motion.count) {
+            for index in 0..<Swift.max(1, shown.count) {
                 try Task.checkCancellation()
                 while !input.isReadyForMoreMediaData {
                     guard writer.status == .writing else { throw ExportError.failed(writer.error?.localizedDescription ?? "the writer stopped") }

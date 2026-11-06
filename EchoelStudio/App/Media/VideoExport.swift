@@ -36,6 +36,8 @@ enum VideoExport {
         let fromSeconds: Double
         /// The loudest sample of the mix in each frame of the film (`FieldExport.Peaks`).
         let peaks: [Float]
+        /// The looks the Field window shows on this device, read when the export started.
+        let look: FieldLookChoice
     }
 
     enum ExportError: LocalizedError {
@@ -188,9 +190,10 @@ enum VideoExport {
         if let layered {
             // Every frame's Field, computed before the first is drawn, from the song and the mix only.
             let frames = Int((CMTimeGetSeconds(total) * Double(FieldExport.framesPerSecond)).rounded(.up)) + 1
-            let motion = FieldExport.motion(FieldExport.frames(of: layered.project, fromSeconds: layered.fromSeconds,
-                                                               count: frames, levels: FieldExport.levels(peaks: layered.peaks)))
-            let film = FieldLayerFilm(pass: layered.pass, layer: options.fieldLayer, motion: motion)
+            let shown = FieldExport.film(FieldExport.frames(of: layered.project, fromSeconds: layered.fromSeconds,
+                                                            count: frames, levels: FieldExport.levels(peaks: layered.peaks)),
+                                         look: layered.look)
+            let film = FieldLayerFilm(pass: layered.pass, layer: options.fieldLayer, film: shown)
             video.customVideoCompositorClass = FieldLayerCompositor.self
             video.instructions = shots.map { shot in
                 let placed = shot.placing.flatMap {

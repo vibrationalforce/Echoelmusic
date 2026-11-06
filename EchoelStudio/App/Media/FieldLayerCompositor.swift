@@ -6,21 +6,21 @@ import Foundation
 import Metal
 
 /// The Field of one video export, ready to draw (wave W15): the GPU pass, the layer the musician
-/// chose and the motion of every frame of the film, computed before the export starts
-/// (`FieldExport`). A frame is looked up by its time, never stepped from the frame before, so the
+/// chose and the motion and looks of every frame of the film, computed before the export starts
+/// (`FieldExport.film`). A frame is looked up by its time, never stepped from the frame before, so the
 /// film does not depend on the order or the number of times AVFoundation asks for a frame — and
 /// two exports of one song are the same film.
 final class FieldLayerFilm: @unchecked Sendable {
     private let pass: FieldLayerPass
     private let layer: FieldLayer
-    private let motion: [FieldMotion.Shown]
+    private let film: [FieldExport.Shown]
     /// One frame on the GPU at a time: the pass keeps one Field texture.
     private let lock = NSLock()
 
-    init(pass: FieldLayerPass, layer: FieldLayer, motion: [FieldMotion.Shown]) {
+    init(pass: FieldLayerPass, layer: FieldLayer, film: [FieldExport.Shown]) {
         self.pass = pass
         self.layer = layer
-        self.motion = motion
+        self.film = film
     }
 
     /// Draws the film's frame at `seconds` into `output`: `source` placed by `placement` (black
@@ -38,9 +38,9 @@ final class FieldLayerFilm: @unchecked Sendable {
               let buffer = pass.queue.makeCommandBuffer() else { return false }
         let picture = source.flatMap { pass.texture($0) }
         let pictureTexture = picture.flatMap { CVMetalTextureGetTexture($0) }
-        let shown = motion.isEmpty ? FieldMotion.Shown() : motion[FieldExport.index(at: seconds, count: motion.count)]
-        guard pass.encode(field: shown, over: pictureTexture, placement: placement, layer: layer, into: targetTexture,
-                          on: buffer) else { return false }
+        let shown = film.isEmpty ? FieldExport.Shown() : film[FieldExport.index(at: seconds, count: film.count)]
+        guard pass.encode(field: shown.field, look: shown.look, over: pictureTexture, placement: placement, layer: layer,
+                          into: targetTexture, on: buffer) else { return false }
         buffer.commit()
         // The textures stay alive until the GPU has used them.
         withExtendedLifetime((target, picture)) {

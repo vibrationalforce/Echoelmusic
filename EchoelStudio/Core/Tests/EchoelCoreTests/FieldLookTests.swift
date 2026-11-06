@@ -332,6 +332,71 @@ final class FieldLookTests: XCTestCase {
         XCTAssertEqual(shown.weavePosition, 41, accuracy: 1e-9, "held still, the place stays")
     }
 
+    /// A film draws the chosen looks that do not listen to the sound and the rings for the rest;
+    /// the stored choice reads as the Field window reads it.
+    func testAFilmDrawsTheLooksThatDoNotListenAndRingsForTheRest() {
+        let partners: [FieldPattern?] = [nil] + FieldPattern.allCases.map { $0 }
+        for primary in FieldPattern.allCases {
+            for partner in partners {
+                let offline = FieldLookChoice(primary: primary, partner: partner, mix: 0.4).offline
+                XCTAssertEqual(offline.primary, primary.listensToSound ? .rings : primary)
+                XCTAssertEqual(offline.partner, partner.map { $0.listensToSound ? .rings : $0 })
+                XCTAssertEqual(offline.mix, 0.4)
+            }
+        }
+        XCTAssertEqual(FieldLookChoice(primary: .dish, partner: .weave, mix: 1).listening, [.dish])
+        XCTAssertEqual(FieldLookChoice(primary: .moire, partner: .aurora, mix: 1).listening, [.aurora])
+        XCTAssertEqual(FieldLookChoice(primary: .water, partner: .water, mix: 1).listening, [.water])
+        XCTAssertEqual(FieldLookChoice(primary: .weave, partner: .moire, mix: 1).listening, [])
+        XCTAssertEqual(FieldLookChoice(primary: .weave, partner: .dish, mix: 0).listening, [], "a partner at 0 % is not shown")
+        XCTAssertEqual(FieldLookChoice(storedPattern: "weave", storedPartner: "", mixPercent: 50),
+                       FieldLookChoice(primary: .weave, partner: nil, mix: 0.5))
+        XCTAssertEqual(FieldLookChoice(storedPattern: "unknown", storedPartner: "nothing", mixPercent: 140),
+                       FieldLookChoice(primary: .rings, partner: nil, mix: 1))
+        XCTAssertEqual(FieldLookChoice(primary: .moire, mix: -3).mix, 0)
+        XCTAssertEqual(FieldLookChoice(primary: .moire, mix: .nan).mix, 0)
+    }
+
+    /// Two frames that draw the same picture compare equal on screen: an unshown moiré's drift or an
+    /// unshown weave's place does not count; a shown one does.
+    func testWhatNoShownLookDrawsIsAtRestOnScreen() {
+        var a = FieldLookMotion.Shown(), b = FieldLookMotion.Shown()
+        b.moirePhase = 0.4
+        b.weavePosition = 9
+        XCTAssertNotEqual(a, b)
+        XCTAssertEqual(a.onScreen, b.onScreen, "the rings read neither")
+        a.primary = .moire
+        b.primary = .moire
+        XCTAssertNotEqual(a.onScreen, b.onScreen, "the moiré reads its phase")
+        b.moirePhase = a.moirePhase
+        XCTAssertEqual(a.onScreen, b.onScreen, "and not the weave")
+        a.partner = .weave
+        b.partner = .weave
+        a.mix = 0.5
+        b.mix = 0.5
+        XCTAssertNotEqual(a.onScreen, b.onScreen, "a blended weave reads its place")
+    }
+
+    /// The film's step is the window's step with the frame's tuning, bars and key and no partials.
+    func testAFilmsLooksComeFromTheFramesTuningBarsAndKey() {
+        let context = MusicalContext(root: 0, scale: .major)
+        let frame = FieldFrame(tonicHz: 261.6, tuningBeat: TuningBeat.of(context), bars: 7.25,
+                               keyMask: BarWeave.keyMask(context))
+        var drawn = FieldLookMotion()
+        var spelled = FieldLookMotion()
+        let a = drawn.step(drawing: FieldLookChoice(primary: .weave, partner: .moire, mix: 0.5), from: frame,
+                           fieldPhase: 0.3, after: 1.0 / 30, still: false, patternScale: 1)
+        let b = spelled.step(primary: .weave, partner: .moire, mix: 0.5, hertz: nil, drive: 0, tonicHz: frame.tonicHz,
+                             fieldPhase: 0.3, after: 1.0 / 30, still: false, patternScale: 1, beat: frame.tuningBeat,
+                             bars: frame.bars, keyMask: frame.keyMask)
+        XCTAssertEqual(a, b)
+        XCTAssertEqual(a.weavePosition, 8.25, accuracy: 1e-12)
+        XCTAssertEqual(a.weaveSeed, BarWeave.seed(keyMask: frame.keyMask))
+        var dish = FieldLookMotion()
+        XCTAssertEqual(dish.step(drawing: FieldLookChoice(primary: .dish), from: frame, fieldPhase: 0, after: 1.0 / 30,
+                                 still: false, patternScale: 1).primary, .rings)
+    }
+
     /// A tick back while paused (a tempo change re-rounds the playhead) is no step back: the light
     /// stays. While two looks show, the weave glides at the blend's share of its ceiling.
     func testTheWeaveIgnoresATickBackAndGlidesAtTheBlendsShare() {

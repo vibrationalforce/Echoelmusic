@@ -91,6 +91,37 @@ final class FieldExportTests: XCTestCase {
         XCTAssertGreaterThan(Set(first.map(\.fieldPhase)).count, 100, "and the field drifts with the bars")
     }
 
+    /// The film's looks are the ones chosen, from the song's key and bars, the same in two exports
+    /// — and its Field is the motion alone, unchanged by them.
+    func testAFilmDrawsTheChosenLooksFromTheSongAndTheSameTwice() {
+        var project = Project(tempo: 97, tempoChanges: [TempoChange(tick: 7_680, bpm: 132)], timeSignature: .common)
+        project.context = MusicalContext(root: 9, scale: .minor)
+        let levels = FieldExport.levels(peaks: (0..<900).map { (index: Int) -> Float in Float(index % 17) / 17 })
+        let frames = FieldExport.frames(of: project, fromSeconds: 2.1, count: 900, levels: levels)
+        let choice = FieldLookChoice(primary: .moire, partner: .weave, mix: 0.4)
+        let film = FieldExport.film(frames, look: choice)
+        XCTAssertEqual(film, FieldExport.film(FieldExport.frames(of: project, fromSeconds: 2.1, count: 900, levels: levels),
+                                              look: choice))
+        XCTAssertEqual(film.map(\.field), FieldExport.motion(frames))
+        guard let first = film.first, let last = film.last, let lastFrame = frames.last else { return XCTFail("a film") }
+        XCTAssertEqual(first.look.primary, .moire)
+        XCTAssertEqual(first.look.partner, .weave)
+        XCTAssertEqual(first.look.mix, 0.4, accuracy: 1e-12)
+        XCTAssertEqual(first.look.weaveSeed, BarWeave.seed(keyMask: BarWeave.keyMask(project.context)))
+        XCTAssertEqual(first.look.weavePosition, frames[0].bars + 1, accuracy: 1e-9)
+        XCTAssertEqual(last.look.weavePosition, lastFrame.bars + 1, accuracy: 0.05, "the weave keeps up with the bars")
+        XCTAssertGreaterThan(Set(film.map(\.look.moirePhase)).count, 100, "the moiré drifts")
+    }
+
+    /// A look that listens to the master's partials is filmed as the rings.
+    func testALookThatListensIsFilmedAsTheRings() {
+        let frames = FieldExport.frames(of: Project(tempo: 120), fromSeconds: 0, count: 120, levels: [])
+        XCTAssertEqual(FieldExport.film(frames, look: FieldLookChoice(primary: .dish)),
+                       FieldExport.film(frames, look: FieldLookChoice()))
+        XCTAssertEqual(FieldExport.film(frames, look: FieldLookChoice(primary: .moire, partner: .aurora, mix: 0.5)),
+                       FieldExport.film(frames, look: FieldLookChoice(primary: .moire, partner: .rings, mix: 0.5)))
+    }
+
     func testTheFrameAtATimeIsTheNearestOfTheFilm() {
         XCTAssertEqual(FieldExport.index(at: 0, count: 90), 0)
         XCTAssertEqual(FieldExport.index(at: 1.0 / 30, count: 90), 1)

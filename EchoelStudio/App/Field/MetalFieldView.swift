@@ -110,6 +110,14 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     /// An empty weave: what a pass binds while no shown look is the weave (`FieldShader`'s `Weave`).
     nonisolated static let emptyWeave = [UInt32](repeating: 0, count: 4 + 2 * BarWeave.history)
 
+    /// The weave's words for `looks` (`BarWeave.words`), or an empty weave while neither shown look
+    /// is the weave: the one rule the window, the stream and the video layer bind by.
+    nonisolated static func weaveWords(_ looks: FieldLookMotion.Shown) -> [UInt32] {
+        looks.primary == .weave || (looks.isBlending && looks.partner == .weave)
+            ? BarWeave.words(position: looks.weavePosition, seed: looks.weaveSeed, light: looks.weaveLight)
+            : emptyWeave
+    }
+
     /// Binds `words` (`BarWeave.words`, always the full length) as the shader's `Weave`, index 3.
     nonisolated static func bindWeave(_ words: [UInt32], on encoder: MTLRenderCommandEncoder) {
         words.withUnsafeBytes { bytes in
@@ -190,7 +198,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
 
     /// The looks' numbers, read by the shader at buffer 2 — mirrored by BYTE LAYOUT in the MSL
     /// `Look` struct (eleven `float`): changed in both places in one commit. All zero draws the
-    /// rings alone, which is what the video layer's pass binds.
+    /// rings alone; the video layer binds the film's looks (`FieldExport.film`).
     private struct LookUniforms {
         var primary: Float = 0
         var partner: Float = 0
@@ -343,12 +351,14 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         }
     }
 
-    /// Draws one Field frame from `shown` into `texture` on `buffer`, cleared to the ground: the
-    /// video layer's Field (W15) — the export's from its computed motion, the preview's from its
-    /// own — with the window's pipeline and shader, at the texture's size and `aspect`. False when
-    /// the pass could not be encoded. Any thread: it touches only what it is handed.
-    nonisolated static func encode(_ shown: FieldMotion.Shown, aspect: Float, pipeline: MTLRenderPipelineState,
-                                   into texture: MTLTexture, on buffer: MTLCommandBuffer) -> Bool {
+    /// Draws one Field frame from `shown` and its looks `look` into `texture` on `buffer`, cleared
+    /// to the ground: the video layer's Field (W15) — the export's from its computed film, the
+    /// preview's from its own motion — with the window's pipeline and shader, at the texture's size
+    /// and `aspect`. The plate is never drawn here (a film draws no look that listens to partials).
+    /// False when the pass could not be encoded. Any thread: it touches only what it is handed.
+    nonisolated static func encode(_ shown: FieldMotion.Shown, look: FieldLookMotion.Shown, aspect: Float,
+                                   pipeline: MTLRenderPipelineState, into texture: MTLTexture,
+                                   on buffer: MTLCommandBuffer) -> Bool {
         let pass = MTLRenderPassDescriptor()
         pass.colorAttachments[0].texture = texture
         pass.colorAttachments[0].loadAction = .clear
@@ -358,12 +368,12 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         encoder.setRenderPipelineState(pipeline)
         var sent = Uniforms(aspect: aspect, shown: shown)
         var plate = ChladniUniforms()
-        var looks = LookUniforms()
+        var looks = LookUniforms(look)
         encoder.setVertexBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
         encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
         encoder.setFragmentBytes(&plate, length: MemoryLayout<ChladniUniforms>.stride, index: 1)
         encoder.setFragmentBytes(&looks, length: MemoryLayout<LookUniforms>.stride, index: 2)
-        bindWeave(emptyWeave, on: encoder)
+        bindWeave(weaveWords(look), on: encoder)
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
         encoder.endEncoding()
         return true
@@ -448,10 +458,10 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
                                     drive: heard.drive, tonicHz: frame.tonicHz, fieldPhase: shown.fieldPhase,
                                     after: seconds, still: still, patternScale: detail.patternScale,
                                     beat: frame.tuningBeat, bars: frame.bars, keyMask: frame.keyMask)
-        look = LookUniforms(looks)
-        weave = looks.primary == .weave || (looks.isBlending && looks.partner == .weave)
-            ? BarWeave.words(position: looks.weavePosition, seed: looks.weaveSeed, light: looks.weaveLight)
-            : Self.emptyWeave
+        // What no shown look reads is set to rest, so an unshown moiré's drift does not redraw a
+        // picture that has not changed.
+        look = LookUniforms(looks.onScreen)
+        weave = Self.weaveWords(looks)
         guard looks.primary == .chladni || looks.partner == .chladni else {
             chladni = ChladniUniforms()
             return

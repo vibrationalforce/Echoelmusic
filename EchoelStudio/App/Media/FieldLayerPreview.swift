@@ -82,6 +82,8 @@ final class FieldLayerPreview: NSObject, MTKViewDelegate {
     var reduceMotion = false
 
     private var motion = FieldMotion()
+    /// The looks of the Field window, as a film draws them (`FieldLookMotion.step(drawing:)`).
+    private var lookMotion = FieldLookMotion()
     private var lastFrameTime = CFAbsoluteTimeGetCurrent()
     /// The newest frame the player handed over, kept until a newer one comes.
     private var picture: CVPixelBuffer?
@@ -90,6 +92,7 @@ final class FieldLayerPreview: NSObject, MTKViewDelegate {
 
     private struct Drawn: Equatable {
         let shown: FieldMotion.Shown
+        let look: FieldLookMotion.Shown
         let layer: FieldLayer
         let picture: ObjectIdentifier?
         let width: Int
@@ -123,10 +126,14 @@ final class FieldLayerPreview: NSObject, MTKViewDelegate {
         }
         // The film the export will write: the song as it plays, without the body (`FieldExport`).
         let frame = FieldFrame.current(store: store, engine: engine).withoutBody
-        let shown = motion.step(frame, after: seconds, still: reduceMotion || Self.deviceAsksForStillness(),
-                                patternScale: 1)
+        let still = reduceMotion || Self.deviceAsksForStillness()
+        let shown = motion.step(frame, after: seconds, still: still, patternScale: 1)
+        // The looks chosen in the Field window, drawn as the export draws them.
+        let look = lookMotion.step(drawing: FieldLookChoice.onThisDevice, from: frame, fieldPhase: shown.fieldPhase,
+                                   after: seconds, still: still, patternScale: 1)
         let size = view.drawableSize
-        let drawn = Drawn(shown: shown, layer: layer, picture: picture.map { ObjectIdentifier($0) },
+        // Compared as drawn: what no shown look reads (an unshown moiré's drift) does not wake the GPU.
+        let drawn = Drawn(shown: shown, look: look.onScreen, layer: layer, picture: picture.map { ObjectIdentifier($0) },
                           width: Int(size.width), height: Int(size.height))
         // Nothing changed: the last frame stays on the layer, and the GPU rests.
         if drawn == lastDrawn { return }
@@ -139,8 +146,8 @@ final class FieldLayerPreview: NSObject, MTKViewDelegate {
             return FieldLayerPlacement(placing: placing, sourceWidth: Double(natural.width),
                                        sourceHeight: Double(natural.height))
         }
-        guard pass.encode(field: shown, over: wrapped.flatMap { CVMetalTextureGetTexture($0) }, placement: placement,
-                          layer: layer, into: drawable.texture, on: buffer) else { return }
+        guard pass.encode(field: shown, look: look, over: wrapped.flatMap { CVMetalTextureGetTexture($0) },
+                          placement: placement, layer: layer, into: drawable.texture, on: buffer) else { return }
         // The frame's texture stays alive until the GPU has read it.
         let held = HeldTexture(texture: wrapped)
         buffer.addCompletedHandler { @Sendable _ in _ = held }
@@ -187,5 +194,17 @@ extension FieldLayer {
     /// held at Off where it cannot be drawn: what the export takes, and what the video window shows.
     static func stored(blend: FieldLayer.Blend, percent: Int) -> FieldLayer {
         MetalField.isAvailable ? FieldLayer(blend: blend, opacity: Double(percent) / 100) : FieldLayer()
+    }
+}
+
+extension FieldLookChoice {
+    /// The looks chosen in the Field window on this device, read from its settings as the window
+    /// reads them (`@AppStorage`; a share nobody set is the standard one).
+    static var onThisDevice: FieldLookChoice {
+        let defaults = UserDefaults.standard
+        return FieldLookChoice(storedPattern: defaults.string(forKey: FieldPattern.storageKey),
+                               storedPartner: defaults.string(forKey: FieldPattern.blendStorageKey),
+                               mixPercent: defaults.object(forKey: FieldPattern.blendMixStorageKey) as? Int
+                                   ?? FieldPattern.standardMixPercent)
     }
 }

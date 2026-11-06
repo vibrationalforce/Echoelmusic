@@ -1853,6 +1853,7 @@ final class DocumentController {
             if let mix { try? FileManager.default.removeItem(at: mix) }
         }
         let project = store.project
+        let look = FieldLookChoice.onThisDevice
         let mixSeconds = mix.flatMap { try? AVAudioFile(forReading: $0) }.map { Double($0.length) / $0.processingFormat.sampleRate } ?? 0
         let duration = VideoExportPlan.longFormSeconds(mixSeconds: mixSeconds, of: project)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
@@ -1866,14 +1867,15 @@ final class DocumentController {
                 }
                 defer { if let prepared { try? FileManager.default.removeItem(at: prepared.url) } }
                 let count = Int((duration * Double(FieldExport.framesPerSecond)).rounded(.up)) + 1
-                let motion = FieldExport.motion(FieldExport.frames(of: project, fromSeconds: 0, count: count,
-                                                                   levels: FieldExport.levels(peaks: prepared?.peaks ?? [])))
+                let film = FieldExport.film(FieldExport.frames(of: project, fromSeconds: 0, count: count,
+                                                               levels: FieldExport.levels(peaks: prepared?.peaks ?? [])),
+                                            look: look)
                 // ProRes first; a device whose writer takes the settings and then refuses the frames
                 // gets the HEVC movie instead.
                 var lastFailure: Error = FieldAlphaExport.ExportError.noEncoder
                 for codec in candidates {
                     do {
-                        try await FieldAlphaExport.write(motion: motion, pass: pass, codec: codec, width: width,
+                        try await FieldAlphaExport.write(film: film, pass: pass, codec: codec, width: width,
                                                          height: height, to: url)
                         return .success(())
                     } catch FieldAlphaExport.ExportError.stopped {
@@ -2190,6 +2192,9 @@ final class DocumentController {
             for region in track.regions { if let grade = region.grade { grading[region.id] = grade } }
         }
         let grades = grading
+        // The looks of the Field window, as they are when the export starts; a change meanwhile
+        // does not change this film.
+        let look = FieldLookChoice.onThisDevice
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(ProjectLibrary.safeFileName(for: songName)).appendingPathExtension("mp4")
         let result: Result<MixLoudness.Report?, Error> = await Task.detached(priority: .userInitiated) { () async -> Result<MixLoudness.Report?, Error> in
@@ -2203,7 +2208,7 @@ final class DocumentController {
                 // The Field over the picture comes from the song and the mix alone (FieldExport).
                 let field = layerPass.map {
                     VideoExport.FieldOverPicture(pass: $0, project: project, fromSeconds: span.from,
-                                                 peaks: prepared?.peaks ?? [])
+                                                 peaks: prepared?.peaks ?? [], look: look)
                 }
                 try await VideoExport.write(segments: segments, files: sources, grades: grades, mix: prepared?.url,
                                             duration: span.to - span.from, options: options, field: field, to: url)

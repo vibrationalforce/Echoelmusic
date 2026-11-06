@@ -12,8 +12,22 @@ import Foundation
 /// in. The mix makes the same choice (an offline render reads no `ModulationInputs`), so picture and
 /// sound tell one story. And the device's heat, battery and Reduce Motion belong to its screen, not
 /// to a file: an export is drawn at full detail and never held still. Every flash guard and clock
-/// ceiling still applies — they live in `FieldMotion`, not in the device.
+/// ceiling still applies — they live in `FieldMotion` and `FieldLookMotion`, not in the device.
+///
+/// The looks are the musician's choice on the device, handed in (`FieldLookChoice`). A look that
+/// listens to the master's partials is drawn as the rings: the mix is read here for its level only.
 public enum FieldExport {
+    /// What one frame of a film shows: the Field's motion and its looks.
+    public struct Shown: Equatable, Sendable {
+        public var field: FieldMotion.Shown
+        public var look: FieldLookMotion.Shown
+
+        public init(field: FieldMotion.Shown = FieldMotion.Shown(), look: FieldLookMotion.Shown = FieldLookMotion.Shown()) {
+            self.field = field
+            self.look = look
+        }
+    }
+
     /// The film's frames a second: the video export's own rate.
     public static let framesPerSecond = 30
 
@@ -112,15 +126,28 @@ public enum FieldExport {
     /// What the Field shows on each frame: the motion stepped from the first frame at the film's
     /// rate, at full detail and never held still.
     public static func motion(_ frames: [FieldFrame]) -> [FieldMotion.Shown] {
+        film(frames, look: FieldLookChoice()).map(\.field)
+    }
+
+    /// Every frame of the film: the motion and the looks of `look` (as a film draws them,
+    /// `FieldLookChoice.offline`), both stepped together from the first frame at the film's rate —
+    /// in the order the Field window steps them — at full detail and never held still. Computed
+    /// whole before a frame is drawn, so a frame is looked up by its time (`index(at:count:)`) and
+    /// two exports of one song, one stretch and one choice are the same film.
+    public static func film(_ frames: [FieldFrame], look: FieldLookChoice) -> [Shown] {
         var motion = FieldMotion()
+        var looks = FieldLookMotion()
         let seconds = 1 / Double(framesPerSecond)
         let patternScale = FieldDetail(level: .full).patternScale
-        var shown: [FieldMotion.Shown] = []
-        shown.reserveCapacity(frames.count)
+        var film: [Shown] = []
+        film.reserveCapacity(frames.count)
         for frame in frames {
-            shown.append(motion.step(frame, after: seconds, still: false, patternScale: patternScale))
+            let field = motion.step(frame, after: seconds, still: false, patternScale: patternScale)
+            let shown = looks.step(drawing: look, from: frame, fieldPhase: field.fieldPhase, after: seconds, still: false,
+                                   patternScale: patternScale)
+            film.append(Shown(field: field, look: shown))
         }
-        return shown
+        return film
     }
 
     /// The frame of a `count`-frame film shown at `seconds` into it: the nearest, 0 ..< `count`.
