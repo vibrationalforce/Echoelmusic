@@ -11,6 +11,9 @@ here is device-verified yet.
   Weave of the song's key, glided into over the bar's first eighth; an export moves as playback
   does.
 
+Uploaded again from the same code: the first upload stopped before signing, when the gate
+could not read the Echoel Studio run (an API error, not a red run).
+
 Previous: 11.0.0 (10055) — Moiré Beat and Weave in the Field, phase and partials meters, DDSP
 profiles, Revoice by Octaves. Earlier: git history. The import of earlier songs (the app group
 is in the app's entitlements since a14e1960a) has not been seen on a device yet.
