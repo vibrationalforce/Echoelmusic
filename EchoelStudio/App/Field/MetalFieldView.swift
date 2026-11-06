@@ -76,7 +76,7 @@ struct MetalFieldView: UIViewRepresentable {
 
     /// The view goes: the renderer stops asking the engine for the spectrum.
     static func dismantleUIView(_ view: MTKView, coordinator: MetalFieldRenderer) {
-        coordinator.setLooks(primary: .rings, partner: nil, mix: 0)
+        coordinator.letGo()
     }
 }
 
@@ -254,6 +254,13 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     private var chladniMotion = ChladniMotion()
     /// The master's partials as last read on the main thread, for this frame's plate.
     private var peaks = SpectralPeaks.silent
+
+    /// The renderer goes (a window closes, a stream stops): it stops asking the engine for the
+    /// spectrum, so no analysis runs for a picture nobody draws.
+    @MainActor
+    func letGo() {
+        setLooks(primary: .rings, partner: nil, mix: 0)
+    }
 
     /// Switches the picture and its blend; every look but the rings listens to the master while it
     /// is drawn, and only then.

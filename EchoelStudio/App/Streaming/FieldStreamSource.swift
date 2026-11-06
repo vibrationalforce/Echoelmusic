@@ -5,8 +5,10 @@ import Foundation
 import Metal
 
 /// The live stream's picture (wave W14): the Field, drawn offscreen at 30 frames a second by its
-/// own `MetalFieldRenderer` — the same snapshot, clocks, flash guards and shader as the window on
-/// screen — once per shape the stream carries (9:16, 16:9, 1:1, 4:5), each at its encoded size.
+/// own `MetalFieldRenderer` — the same snapshot, clocks, flash guards, shader and looks as the
+/// window on screen (the looks chosen in the Field window, read every frame; live, so a look
+/// that listens to the master's partials hears them as the window does) — once per shape the
+/// stream carries (9:16, 16:9, 1:1, 4:5), each at its encoded size.
 /// A frame leaves as a `CMSampleBuffer` stamped with the host clock, the clock the master mix's
 /// timestamps use too, so the encoder keeps picture and sound together.
 ///
@@ -54,7 +56,10 @@ final class FieldStreamSource {
 
     /// Starts drawing `formats`, or changes which ones are drawn.
     func start(formats: [StreamFormat]) {
-        for format in Array(lanes.keys) where !formats.contains(format) { lanes[format] = nil }
+        for format in Array(lanes.keys) where !formats.contains(format) {
+            lanes[format]?.renderer.letGo()
+            lanes[format] = nil
+        }
         for format in formats where lanes[format] == nil {
             guard let pool = Self.makePool(format) else {
                 DiagnosticLog.app.note("stream: no pixel pool", [("w", Double(format.pixelWidth))])
@@ -85,12 +90,16 @@ final class FieldStreamSource {
     func stop() {
         ticker?.cancel()
         ticker = nil
+        for lane in lanes.values { lane.renderer.letGo() }
         lanes = [:]
         CVMetalTextureCacheFlush(textureCache, 0)
     }
 
     private func tick() {
+        // The Field window's looks, as they are now: a change there reaches the stream next frame.
+        let looks = FieldLookChoice.onThisDevice
         for (format, lane) in lanes {
+            lane.renderer.setLooks(primary: looks.primary, partner: looks.partner, mix: looks.mix)
             var made: CVPixelBuffer?
             let limit = [kCVPixelBufferPoolAllocationThresholdKey: Self.poolLimit] as CFDictionary
             guard CVPixelBufferPoolCreatePixelBufferWithAuxAttributes(nil, lane.pool, limit, &made) == kCVReturnSuccess,
