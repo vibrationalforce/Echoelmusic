@@ -214,8 +214,8 @@ struct PianoRoll: View {
     /// single tap never deletes (a slip took a note away, CI audit 2026-10-31): a tap chooses, a
     /// double tap or Delete Note removes.
     @State private var selected: NoteID?
-    /// What the last Revoice said, with the notes it left: shown in the Chords menu for sighted
-    /// players while the clip still holds exactly those notes, so it never describes an edit since.
+    /// What the last Revoice said, with the notes it left: shown above the tools while the clip
+    /// still holds exactly those notes, so it never describes an edit since.
     @State private var revoiceNote: (text: String, notes: [Note])?
     /// Quantize's swing, kept on this device: 0, 0.25, 0.5 or 0.75.
     @AppStorage(PianoRoll.swingKey) private var swing = 0.0
@@ -245,10 +245,13 @@ struct PianoRoll: View {
             .onChange(of: zoom) { proxy.scrollTo(anchorPitch, anchor: .center) }
         }
         .overlay(alignment: .bottomTrailing) {
-            HStack(spacing: Theme.Space.s) {
-                chordMenu
-                timingMenu
-                selectionBar
+            VStack(alignment: .trailing, spacing: Theme.Space.xs) {
+                if let text = shownRevoiceNote { revoiceStatus(text) }
+                HStack(spacing: Theme.Space.s) {
+                    chordMenu
+                    timingMenu
+                    selectionBar
+                }
             }
             .padding(Theme.Space.m)
         }
@@ -424,10 +427,6 @@ struct PianoRoll: View {
             }
             Section("Your chords — three or more notes together") {
                 Button("Revoice by Octaves") { revoice() }
-                if let revoiceNote, revoiceNote.notes.count == clip.notes.count,
-                   revoiceNote.notes.allSatisfy({ clip.notes.contains($0) }) {
-                    Text(revoiceNote.text)
-                }
             }
         } label: {
             Label("Chords", systemImage: "pianokeys")
@@ -440,6 +439,26 @@ struct PianoRoll: View {
 
     private static let suggestedChords = 6
 
+    /// The last Revoice's words while the clip holds the notes it left (one comparison, which
+    /// stops at the first note that differs).
+    private var shownRevoiceNote: String? {
+        guard let revoiceNote, revoiceNote.notes == clip.notes else { return nil }
+        return revoiceNote.text
+    }
+
+    private func revoiceStatus(_ text: String) -> some View {
+        Text(text)
+            .font(Theme.Font.caption)
+            .foregroundStyle(Theme.Color.text)
+            .multilineTextAlignment(.trailing)
+            .padding(.horizontal, Theme.Space.s)
+            .padding(.vertical, Theme.Space.xs)
+            .background(Theme.Color.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.small))
+            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.small).stroke(Theme.Color.border, lineWidth: 1))
+            .frame(maxWidth: 320, alignment: .trailing)
+            .allowsHitTesting(false)   // the notes under it stay at hand
+    }
+
     /// Revoice: the upper notes of the chords in this clip moved by octaves so the voices travel
     /// as few semitones as the placements allow (`Revoice`); one undo step.
     private func revoice() {
@@ -451,13 +470,7 @@ struct PianoRoll: View {
         }
         do {
             try store.perform([command], title: "Revoice")
-            var after = clip.notes
-            if case .updateNotes(_, let changed) = command {
-                for note in changed {
-                    if let index = after.firstIndex(where: { $0.id == note.id }) { after[index] = note }
-                }
-            }
-            revoiceNote = (text, after)
+            revoiceNote = (text, store.project.clip(clip.id)?.notes ?? [])
             announce(text)
         } catch {
             revoiceNote = nil
