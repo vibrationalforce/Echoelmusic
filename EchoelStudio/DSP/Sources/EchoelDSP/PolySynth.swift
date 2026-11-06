@@ -38,7 +38,8 @@ public struct SynthPatch: Equatable, Codable, Sendable {
     public var textureDensity: Float = 0.6
     public var textureRate: Float = 8
     public var textureSeed: UInt32 = 0
-    /// The DDSP engine's spectral profile (`DDSPSource.Profile`): 0 is the shape Character sets.
+    /// The DDSP engine's spectral profile (`synth.ddspProfile`, `DDSPSource.amplitude`): 0 is the
+    /// shape Character sets, as before profiles.
     public var ddspProfile: Int = 0
 
     public enum FilterModel: String, CaseIterable, Codable, Sendable {

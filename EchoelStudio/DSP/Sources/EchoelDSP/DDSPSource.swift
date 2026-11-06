@@ -47,6 +47,9 @@ struct DDSPSource: Sendable {
     static let blendSnap: Float = 1e-6
     /// Character has to move this far before the amplitude table is rebuilt.
     static let characterStep: Float = 1e-4
+    /// A table amplitude below this is silence (−400 dB): it is stored as zero, so no partial
+    /// glides in the subnormal range, where some processors slow down many times over.
+    static let amplitudeFloor: Float = 1e-20
 
     /// The spectral exponent at Character 0 and how far it falls by Character 1: 1/n^2.5 (the
     /// earlier engine's dark shape at brightness 0) to 1/n^0.5 (its natural shape at brightness 1).
@@ -269,16 +272,21 @@ struct DDSPSource: Sendable {
         }
     }
 
-    /// The anti-alias weights for this increment: 1 − smoothstep across the band.
+    /// The anti-alias weights for this increment: 1 − smoothstep across the band. Once per
+    /// control block it also flushes a partial gliding towards silence once it is inaudible, so it
+    /// reaches exactly zero instead of sticking in the subnormal range (a profile with silent
+    /// partials, Hollow's even ones, switched in mid-note), as `blendSnap` does for the blend.
     @inline(__always)
     private mutating func updateTaper(dt: Float) {
-        let w = taperLane, r = ratioLane
+        let w = taperLane, r = ratioLane, a = amplitudeLane, g = targetLane
+        let floor = Self.amplitudeFloor
         let audible = withUnsafeMutablePointer(to: &partials) { (state: UnsafeMutablePointer<Partials>) -> Int in
             state.withMemoryRebound(to: Float.self, capacity: Self.laneCount) { (lanes: UnsafeMutablePointer<Float>) -> Int in
                 for i in 0..<Self.partialCount {
                     let position = (lanes[r + i] * dt - Self.taperStart) * Self.taperScale
                     let t = Swift.min(Swift.max(position, 0), 1)
                     lanes[w + i] = 1 - t * t * (3 - t * 2)
+                    if lanes[g + i] == 0, Swift.abs(lanes[a + i]) < floor { lanes[a + i] = 0 }
                 }
                 // The taper falls with the partial number, so the audible ones are the first ones.
                 var count = 0
@@ -310,7 +318,10 @@ struct DDSPSource: Sendable {
         }
         if power > 0 {
             let root = power.squareRoot()
-            for i in 0..<Self.partialCount { table[i] = table[i] / root }
+            for i in 0..<Self.partialCount {
+                let a = table[i] / root
+                table[i] = a < Self.amplitudeFloor ? 0 : a
+            }
         }
         partials.target = table
     }

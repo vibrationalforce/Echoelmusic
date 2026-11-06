@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import EchoelDSP
 
@@ -258,8 +259,19 @@ final class DDSPSourceTests: XCTestCase {
         }
     }
 
-    /// An index past the end plays profile 0, sample for sample — and profile 0 is the engine's
-    /// sound before profiles existed, so a song without one sounds as before.
+    /// Profile 0 is the engine's shape before profiles, by its formula: partial n at n^−p, p = 2.5 −
+    /// 2 · Character — at Character 1 (no breath) the k-th harmonic sounds at k^−0.5 of the first.
+    /// Pinned against the formula, not against the code that computes it.
+    func testProfileZeroIsTheCharacterFormula() {
+        let window = steady(tone(character: 1, frames: 48_000, profile: 0).samples)
+        let first = magnitude(window, hertz: 220)
+        for k in 2...6 {
+            let expected = Foundation.pow(Double(k), -0.5)
+            XCTAssertEqual(magnitude(window, hertz: 220 * Double(k)) / first, expected, accuracy: expected * 0.03, "harmonic \(k)")
+        }
+    }
+
+    /// An index past the end plays profile 0, sample for sample (the formula above pins profile 0).
     func testAnUnknownProfilePlaysTheCharacterShapeExactly() {
         let before = tone(character: 0.3, frames: 9_600).samples
         XCTAssertEqual(tone(character: 0.3, frames: 9_600, profile: 0).samples, before)
