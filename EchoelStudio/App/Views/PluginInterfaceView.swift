@@ -4,8 +4,10 @@ import SwiftUI
 import UIKit
 
 /// A loaded plugin's own interface, inside the page that shows it rather than in a sheet of its
-/// own (one presentation slot, law 7). Leaving it stores the plugin's settings in the song as one
-/// step.
+/// own (one presentation slot, law 7). It is drawn at the largest size the unit reports that fits
+/// the page; Full Size grows it in place, never into a second sheet. A unit without an interface of
+/// its own shows its parameters as value fields instead. Leaving it stores the plugin's settings in
+/// the song as one step.
 struct PluginInterfaceSection: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -13,19 +15,32 @@ struct PluginInterfaceSection: View {
 
     @State private var controller: UIViewController?
     @State private var hasNoInterface = false
+    /// The sizes the unit says its interface can take, asked once per load.
+    @State private var sizes: [CGSize] = []
+    /// The interface drawn full size, in place.
+    @State private var isExpanded = false
+    /// The width the page gives the interface.
+    @State private var width: CGFloat = 0
+
+    /// The height the page offers an expanded interface: room for the full-size one (1024 × 700).
+    private static let expandedHeight: CGFloat = 760
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
             HostedPresetRow(slot: slot)
             interface
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onGeometryChange(for: CGFloat.self) { proxy in proxy.size.width } action: { newWidth in width = newWidth }
         // Asked again for every unit loaded into the slot — at a new rate, say — so the knobs on
         // screen are the playing unit's (audit 2026-10-23).
         .task(id: engine.plugins.loadNumber(of: slot)) {
             controller = nil
             hasNoInterface = false
+            sizes = []
             let found = await engine.plugins.interface(for: slot)
             guard !Task.isCancelled else { return }
+            sizes = found == nil ? [] : engine.plugins.interfaceSizes(for: slot)
             controller = found
             hasNoInterface = found == nil && engine.plugins.isLoaded(slot)
         }
@@ -33,27 +48,56 @@ struct PluginInterfaceSection: View {
     }
 
     @ViewBuilder private var interface: some View {
-        Group {
-            if let controller {
-                PluginControllerHost(controller: controller)
-                    .frame(height: Self.height(of: controller))
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
-            } else if hasNoInterface {
-                Text("This plugin has no interface of its own.")
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.textSecondary)
-            }
+        if let controller {
+            expandButton
+            sized(controller)
+        } else if hasNoInterface {
+            Text("This plugin has no interface of its own. Its parameters:")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+            HostedParameterGrid(slot: slot)
         }
+    }
+
+    private var expandButton: some View {
+        Button {
+            isExpanded.toggle()
+        } label: {
+            Label(isExpanded ? "Compact" : "Full Size",
+                  systemImage: isExpanded ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                .font(Theme.Font.body)
+        }
+        .buttonStyle(ToolButtonStyle(isActive: isExpanded))
+        .accessibilityLabel("Full Size Interface")
+        .accessibilityValue(isExpanded ? "On" : "Off")
+        .accessibilityHint("Shows the plugin's interface as large as this page allows.")
+    }
+
+    /// The interface at the size `PluginViewSize` chooses; the unit is told which of its sizes it got.
+    private func sized(_ controller: UIViewController) -> some View {
+        let ceiling = isExpanded ? Self.expandedHeight : PluginViewSize.compactCeiling
+        let choice = PluginViewSize.choose(reported: sizes, available: CGSize(width: width, height: ceiling),
+                                           preferredHeight: controller.preferredContentSize.height, ceiling: ceiling)
+        let frameWidth: CGFloat?, frameHeight: CGFloat
+        switch choice {
+        case .configuration(_, let size):
+            frameWidth = size.width
+            frameHeight = size.height
+        case .height(let height):
+            frameWidth = nil
+            frameHeight = height
+        }
+        return PluginControllerHost(controller: controller)
+            .frame(width: frameWidth, height: frameHeight)
+            .frame(maxWidth: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
+            .onChange(of: choice, initial: true) { _, chosen in
+                if case .configuration(_, let size) = chosen { engine.plugins.selectInterfaceSize(size, for: slot) }
+            }
     }
 
     private func storeSettings() {
         engine.plugins.store(into: store, only: slot, title: "Plugin Settings")
-    }
-
-    /// The plugin's preferred height, kept between a usable minimum and most of a phone screen.
-    private static func height(of controller: UIViewController) -> CGFloat {
-        let preferred = controller.preferredContentSize.height
-        return preferred > 0 ? min(max(preferred, 240), 560) : 360
     }
 }
 

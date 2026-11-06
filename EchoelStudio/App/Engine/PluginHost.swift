@@ -465,12 +465,44 @@ final class PluginHost {
     }
 
     /// Moves a loaded plugin parameter to `position` (0…1) of its travel — a mapped controller.
+    /// The plugin page's fields set through here too, so every path clamps alike and a NaN never
+    /// reaches the unit (`HostedParameters`).
     func setPosition(_ address: ParameterAddress, to position: Double) {
-        guard let target = loadedParameter(address), position.isFinite else { return }
+        guard let target = loadedParameter(address) else { return }
         let (found, observer) = target
-        let n = Float(Swift.min(Swift.max(position, 0), 1))
-        let value = found.minValue + n * (found.maxValue - found.minValue)
-        if let observer { found.setValue(value, originator: observer) } else { found.value = value }
+        HostedParameters.set(found, toPosition: position, originator: observer)
+    }
+
+    /// The parameters of the unit in `slot` the musician can move, as the plugin page lists them
+    /// for a unit without an interface of its own; none while it is not loaded. Observed through
+    /// `revision`, which a load moves — the values themselves are read where they are shown.
+    func parameterRows(_ slot: Slot) -> [HostedParameters.Row] {
+        _ = revision
+        guard let unit = loaded[slot]?.unit else { return [] }
+        return HostedParameters.rows(of: unit)
+    }
+
+    /// Where the parameter `address` of the unit in `slot` is automated and learned; nil for a slot
+    /// whose owner is gone.
+    func parameterAddress(_ address: UInt64, in slot: Slot) -> ParameterAddress? {
+        owner(of: slot).map { ParameterAddress($0, .plugin(PluginParameter(slot.unit, address: address))) }
+    }
+
+    /// Of the sizes the plugin page offers (`PluginViewSize.offered`), those the unit in `slot`
+    /// says its interface can take, in the offered order; none while it is not loaded.
+    func interfaceSizes(for slot: Slot) -> [CGSize] {
+        guard let unit = loaded[slot]?.unit else { return [] }
+        let offered = PluginViewSize.offered.map {
+            AUAudioUnitViewConfiguration(width: $0.width, height: $0.height, hostHasController: false)
+        }
+        let supported = unit.supportedViewConfigurations(offered)
+        return offered.indices.filter { supported.contains($0) }.map { PluginViewSize.offered[$0] }
+    }
+
+    /// Tells the unit in `slot` which of its reported sizes the page draws its interface at.
+    func selectInterfaceSize(_ size: CGSize, for slot: Slot) {
+        guard let unit = loaded[slot]?.unit else { return }
+        unit.select(AUAudioUnitViewConfiguration(width: size.width, height: size.height, hostHasController: false))
     }
 
     /// Stereo at `sampleRate` (input too, for an effect), the engine's largest block, the saved
