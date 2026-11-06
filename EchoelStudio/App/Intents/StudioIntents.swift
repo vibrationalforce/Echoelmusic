@@ -204,12 +204,12 @@ struct PlayIntent: AppIntent {
 
 struct StopIntent: AppIntent {
     static let title: LocalizedStringResource = "Stop"
-    static let description = IntentDescription("Stops the song and returns to its start.")
+    static let description = IntentDescription("Stops the song and returns to where it plays from: the bar set on the ruler, or bar 1.")
     static let openAppWhenRun = true
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        try StudioIntentBridge.shared.requireEngine().stop()
+        try StudioIntentBridge.shared.requireEngine().transportStop()
         return .result(dialog: "Stopped.")
     }
 }

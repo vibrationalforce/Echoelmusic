@@ -20,6 +20,14 @@ import os
 final class AudioEngine {
     private(set) var isRunning = false
     private(set) var isPlaying = false
+    /// Where the transport stands while it does not play: set by Stop, a pause and a locate, so
+    /// the playhead line and the position readout show it without polling (Law 6). While playing
+    /// it says nothing; the leaves poll `heardTick(in:)` then.
+    private(set) var restingTick: Tick = 0
+    /// Where Play starts and Stop returns: the ruler's cue (`locate(to:)`). Transport state of this
+    /// session — no `Command`, not in the song file — observed by the ruler only, and written only
+    /// by a locate, the musician's Stop (`transportStop()`) and an opened song.
+    private(set) var cue = PlayStartCue()
     /// The session records and the sink node hears the interface.
     private(set) var isInputOpen = false
     private(set) var lastError: String?
@@ -1246,18 +1254,31 @@ final class AudioEngine {
     func pause() {
         core?.pause()
         isPlaying = false
+        if let project { rest(at: playheadTick(in: project)) }
     }
 
     func seek(toTick tick: Tick) {
         guard let core, let project else { return }
         core.seek(toSample: TimeConversion(tempoMap: playing(project).tempoMap, sampleRate: core.sampleRate).sample(at: tick))
+        if !isPlaying { rest(at: tick) }
+    }
+
+    /// Records where a transport that does not play stands; written only on a change, so the
+    /// leaves that observe it redraw only when it moved.
+    private func rest(at tick: Tick) {
+        let at = Swift.min(Swift.max(0, tick), MusicalTime.maximumTick)
+        if restingTick != at { restingTick = at }
     }
 
     /// Moves the playhead to `seconds` of the song's clock time (MTC chase). Any tempo map: the
     /// engine's sample counter is clock time.
     func seek(toSeconds seconds: Double) {
         guard let core, seconds.isFinite else { return }
-        core.seek(toSample: Int64(Swift.min(Swift.max(seconds, 0), 86_400) * core.sampleRate))
+        let sample = Int64(Swift.min(Swift.max(seconds, 0), 86_400) * core.sampleRate)
+        core.seek(toSample: sample)
+        if !isPlaying, let project {
+            rest(at: TimeConversion(tempoMap: playing(project).tempoMap, sampleRate: core.sampleRate).tick(atSample: sample))
+        }
     }
 
     /// Where the song is heard at host time `now`, in seconds of clock time; nil while stopped.
@@ -1318,10 +1339,52 @@ final class AudioEngine {
         core.jump(bySamples: Int64(samples))
     }
 
-    /// Stops and returns to the start.
+    /// Stops and goes back to where Play starts: the ruler's cue, or bar 1 without one. The cue
+    /// stays, stopped or not: this is the stop the engine and a take's end make — opening or closing
+    /// the input calls it — never the musician's second Stop (`transportStop()`), so arming or
+    /// disarming a track after a locate leaves the cue and the playhead where the musician put them.
     func stop() {
-        core?.stop()
         isPlaying = false
+        halt(at: cue.returnTick)
+    }
+
+    /// The musician's Stop (the transport's button, the position readout, Siri): playing, back to
+    /// the cue, or bar 1 without one; already stopped — the second Stop — back to bar 1, and the cue
+    /// is forgotten (`PlayStartCue`).
+    func transportStop() {
+        let target = cue.stop(whilePlaying: isPlaying)
+        isPlaying = false
+        halt(at: target)
+    }
+
+    /// Stops the core and rests at `target`; at bar 1 the core's own stop rewinds it.
+    private func halt(at target: Tick) {
+        if target > 0, let core, project != nil {
+            core.pause()
+            seek(toTick: target)
+        } else {
+            core?.stop()
+            rest(at: 0)
+        }
+    }
+
+    /// The ruler's locate. Stopped: `tick` becomes the cue — where Play starts and Stop returns —
+    /// and the playhead goes there. Playing: the song moves there at once and the cue stays where
+    /// it was. Never under an audio take, which is placed from the sample it began at; the ruler
+    /// also refuses it while any take records or an export is written (`TimelineGeometry.mayLocate`).
+    func locate(to tick: Tick) {
+        guard take == nil else { return }
+        let at = Swift.min(Swift.max(0, tick), MusicalTime.maximumTick)
+        if !isPlaying {
+            cue.set(at)
+            rest(at: at)
+        }
+        seek(toTick: at)
+    }
+
+    /// Another song opened: Play starts and Stop returns at its bar 1 again.
+    func forgetCue() {
+        if cue.tick != nil { cue.clear() }
     }
 
     // MARK: - Session
@@ -1427,6 +1490,18 @@ final class AudioEngine {
     /// The bars as the engine counts them: the song's, or a jam host's while following one.
     func playedMeterMap(of project: Project) -> MeterMap {
         playing(project).meterMap
+    }
+
+    /// Where the song is heard now, in fractional ticks — for a leaf that polls it (the playhead
+    /// line, the position readout), never a view body. While playing it runs on between buffers
+    /// from the render thread's last anchor (`heardPosition`), so a line polled at 30 Hz moves
+    /// smoothly and sits on what the speaker plays, output latency taken off; without an anchor it
+    /// is the render thread's playhead. Stopped, it is where the transport rests. Not clamped:
+    /// `TimelineGeometry` sanitises what it draws (just after Play it can be a little negative).
+    func heardTick(in project: Project) -> Double {
+        guard isPlaying else { return Double(restingTick) }
+        if let heard = heardPosition(atHostTime: mach_absolute_time()) { return heard.tick }
+        return Double(playheadTick(in: project))
     }
 
     /// The playhead as a song position. For actions, never a view body.
