@@ -55,4 +55,48 @@ final class RenderLoadTests: XCTestCase {
         XCTAssertEqual(load.take(), RenderLoad.Reading())
         XCTAssertFalse(RenderLoad.Reading().isTroubled)
     }
+
+    /// A callback whose output is exactly zero while the transport plays counts once; one that
+    /// carries a single quiet sample anywhere does not, and stopped nothing counts.
+    func testASilentCallbackWhilePlayingIsCounted() {
+        let load = RenderLoad()
+        let frames = 256
+        let left = UnsafeMutablePointer<Float>.allocate(capacity: frames)
+        let right = UnsafeMutablePointer<Float>.allocate(capacity: frames)
+        let channels = UnsafeMutablePointer<UnsafeMutablePointer<Float>>.allocate(capacity: 2)
+        defer {
+            left.deallocate()
+            right.deallocate()
+            channels.deallocate()
+        }
+        channels[0] = left
+        channels[1] = right
+        left.update(repeating: 0, count: frames)
+        right.update(repeating: 0, count: frames)
+        load.recordOutput(channels, count: 2, frames: frames, playing: true)     // silent
+        load.recordOutput(channels, count: 2, frames: frames, playing: false)    // stopped: meant to be
+        right[frames - 1] = 1e-7
+        load.recordOutput(channels, count: 2, frames: frames, playing: true)     // one sample sounds
+        right[frames - 1] = -0.0
+        load.recordOutput(channels, count: 2, frames: frames, playing: true)     // minus zero is zero
+        load.recordOutput(channels, count: 0, frames: frames, playing: true)     // nothing to look at
+        load.recordOutput(channels, count: 2, frames: 0, playing: true)
+        let reading = load.take()
+        XCTAssertEqual(reading.silent, 2)
+        XCTAssertFalse(reading.isTroubled, "an empty bar is silent on purpose")
+        XCTAssertEqual(load.take().silent, 0, "a reading starts the next window")
+    }
+
+    /// The silence count asks the transport, which `play`, `pause` and `stop` set.
+    func testTheTransportSaysWhetherItPlays() {
+        let core = EngineCore(sampleRate: rate)
+        XCTAssertFalse(core.transportPlays)
+        core.play()
+        XCTAssertTrue(core.transportPlays)
+        core.pause()
+        XCTAssertFalse(core.transportPlays)
+        core.play()
+        core.stop()
+        XCTAssertFalse(core.transportPlays)
+    }
 }

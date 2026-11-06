@@ -20,6 +20,10 @@ public final class RenderLoad: @unchecked Sendable {
         public var discontinuities = 0
         /// The largest share of its budget one callback used, 0 … (1 is the whole budget).
         public var peak = 0.0
+        /// Callbacks whose whole output was exactly zero while the transport played: a song that
+        /// is meant to sound and a run of these is a dropout the sample time cannot show. Empty
+        /// bars count too, so it is a number to compare against the song, not trouble by itself.
+        public var silent = 0
 
         public init() {}
 
@@ -32,6 +36,7 @@ public final class RenderLoad: @unchecked Sendable {
     private let overThreeQuarters = Atomic<Int>(0)
     private let overBudget = Atomic<Int>(0)
     private let discontinuities = Atomic<Int>(0)
+    private let silent = Atomic<Int>(0)
     /// The peak share in thousandths of the budget.
     private let peakPermille = Atomic<Int>(0)
     /// Render thread only: the sample time the next callback should start at, or −1.
@@ -69,6 +74,20 @@ public final class RenderLoad: @unchecked Sendable {
         }
     }
 
+    /// Render thread: the `count` channels of one callback's `frames` as they go to the output.
+    /// While `playing`, a callback whose every sample is exactly zero is counted silent — one
+    /// atomic add; the scan stops at the first sample that is not. Stopped, nothing is counted:
+    /// a paused engine is meant to be silent.
+    public func recordOutput(_ channels: UnsafePointer<UnsafeMutablePointer<Float>>, count: Int, frames: Int,
+                             playing: Bool) {
+        guard playing, count > 0, frames > 0 else { return }
+        for c in 0..<count {
+            let channel = channels[c]
+            for i in 0..<frames where channel[i] != 0 { return }
+        }
+        silent.add(1, ordering: .relaxed)
+    }
+
     /// Main thread: a rebuilt graph's sample time starts afresh, so its first callback is no jump.
     public func restart() {
         restarted.store(true, ordering: .releasing)
@@ -85,6 +104,7 @@ public final class RenderLoad: @unchecked Sendable {
         reading.overBudget = overBudget.exchange(0, ordering: .relaxed)
         reading.discontinuities = discontinuities.exchange(0, ordering: .relaxed)
         reading.peak = Double(peakPermille.exchange(0, ordering: .relaxed)) / 1_000
+        reading.silent = silent.exchange(0, ordering: .relaxed)
         reading.callbacks = callbacks.exchange(0, ordering: .relaxed)
         return reading
     }

@@ -496,6 +496,9 @@ public final class EngineCore: @unchecked Sendable {
 
     public func play() { isPlayingFlag.store(true, ordering: .releasing) }
 
+    /// Whether the transport has been asked to play (`play`) and not since to stop. Any thread.
+    public var transportPlays: Bool { isPlayingFlag.load(ordering: .acquiring) }
+
     /// Stops where it is, as an external clock's Stop asks.
     public func pause() { isPlayingFlag.store(false, ordering: .releasing) }
 
