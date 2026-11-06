@@ -1822,26 +1822,28 @@ public final class EngineCore: @unchecked Sendable {
         return end
     }
 
-    /// What the gains a chunk starts from (`memory`) hold off the grid line: a seek, a loop's wrap,
-    /// a new snapshot or a body source's jump since the last chunk. Ramped out over the chunk's
-    /// first `gainSegment` frames, on top of the line, so a jump never steps faster than that; a
-    /// chunk shorter than that leaves the rest for the next one. Under −120 dB it is rounding.
+    /// The gains a chunk starts from (`memory`) when they lie off the grid line — after a seek, a
+    /// loop's wrap, a new snapshot or a body source's jump since the last chunk; nil when they are
+    /// on it (under −120 dB off is rounding). They are crossfaded into the line over the chunk's
+    /// first `gainSegment` frames (`ramped`), so a jump never steps faster than that; a chunk
+    /// shorter than that leaves the rest for the next one.
     private static func offGrid(from previous: (Float, Float)?, to line: (Float, Float)) -> (Float, Float)? {
         guard let previous else { return nil }
-        let jump = (previous.0 - line.0, previous.1 - line.1)
-        return Swift.abs(jump.0) > 1e-6 || Swift.abs(jump.1) > 1e-6 ? jump : nil
+        return Swift.abs(previous.0 - line.0) > 1e-6 || Swift.abs(previous.1 - line.1) > 1e-6 ? previous : nil
     }
 
-    /// The gains at the end of a segment: the grid line, plus what is left of a jump there.
-    private static func ramped(_ line: (Float, Float), _ jump: (Float, Float)?, at end: Int) -> (Float, Float) {
-        guard let jump else { return line }
-        let left = Swift.max(0, 1 - Float(end) / Float(gainSegment))
-        return (line.0 + jump.0 * left, line.1 + jump.1 * left)
+    /// The gains at the end of a segment: the grid line, crossfaded from the gains the chunk
+    /// started from (`held`) while those are still being ramped out — a blend of the two, so never
+    /// beyond either: no swell over them, no turn of polarity, whatever the line does meanwhile.
+    private static func ramped(_ line: (Float, Float), from held: (Float, Float)?, at end: Int) -> (Float, Float) {
+        guard let held else { return line }
+        let share = Swift.max(0, 1 - Float(end) / Float(gainSegment))
+        return (line.0 + (held.0 - line.0) * share, line.1 + (held.1 - line.1) * share)
     }
 
     /// Adds a stereo source into a destination at gains that may move. Fixed gains ramp from
     /// where `memory` ended the last chunk; a lane's gains follow the song's 64-frame grid
-    /// (`gridGains`), and a jump off it is ramped out over 64 frames (`offGrid`), so a curve is
+    /// (`gridGains`), and gains held off it are crossfaded in over 64 frames (`offGrid`), so a curve is
     /// followed and nothing steps. `memory` then holds the end.
     private func mix<Curve: GainCurve>(_ sourceLeft: UnsafeMutablePointer<Float>, _ sourceRight: UnsafeMutablePointer<Float>,
                                        into left: UnsafeMutablePointer<Float>, _ right: UnsafeMutablePointer<Float>,
@@ -1858,12 +1860,12 @@ public final class EngineCore: @unchecked Sendable {
         var last = fixed
         if let curve, mixFrom != mixTo {
             let line = gridGains(at: 0, frames: frames, curve: curve)
-            let jump = Self.offGrid(from: previous, to: line)
+            let held = Self.offGrid(from: previous, to: line)
             var from = previous ?? line
             var start = 0
             while start < frames {
-                let end = segmentEnd(from: start, frames: frames, ramping: jump != nil)
-                let to = Self.ramped(gridGains(at: end, frames: frames, curve: curve), jump, at: end)
+                let end = segmentEnd(from: start, frames: frames, ramping: held != nil)
+                let to = Self.ramped(gridGains(at: end, frames: frames, curve: curve), from: held, at: end)
                 add(sourceLeft + start, sourceRight + start, into: left + start, right + start, frames: end - start,
                     Ramp(left0: from.0, right0: from.1, left1: to.0, right1: to.1))
                 from = to
@@ -1909,12 +1911,12 @@ public final class EngineCore: @unchecked Sendable {
             // so a segment split at a buffer's edge places it once more on the way: close to an
             // export, not exact (the stereo path is).
             let line = gridGains(at: 0, frames: frames, curve: curve)
-            let jump = Self.offGrid(from: previous, to: line)
+            let held = Self.offGrid(from: previous, to: line)
             var from = previous ?? line
             var start = 0
             while start < frames {
-                let end = segmentEnd(from: start, frames: frames, ramping: jump != nil)
-                let to = Self.ramped(gridGains(at: end, frames: frames, curve: curve), jump, at: end)
+                let end = segmentEnd(from: start, frames: frames, ramping: held != nil)
+                let to = Self.ramped(gridGains(at: end, frames: frames, curve: curve), from: held, at: end)
                 addSpatial(sourceLeft + start, sourceRight + start, into: left + start, right + start,
                            frames: end - start, from: from, to: to, point: point)
                 from = to

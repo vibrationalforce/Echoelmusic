@@ -326,8 +326,9 @@ final class ClickHuntTests: XCTestCase {
     }
 
     /// The volume route's jumps again, now off the song's 64-frame gain grid: device buffers of 470
-    /// frames, the jumps 4,813 samples apart, and a moving master pan, so every lane follows the
-    /// grid. Each jump still ramps over 64 frames, wherever on the grid it falls.
+    /// frames, the jumps 4,863 samples apart (one frame short of the grid each time, so each lands
+    /// later on it), and a moving master pan, so every lane follows the grid. Each jump still ramps
+    /// over 64 frames, wherever on the grid it falls.
     func testAVolumeJumpOffTheGainGridDoesNotClick() throws {
         var song = try instrumentSong([Note(pitch: 45, velocity: 100, start: 0, length: 4 * bar)],
                                       settings: [(.waveform, 0)])
@@ -339,10 +340,10 @@ final class ClickHuntTests: XCTestCase {
         let engine = self.core()
         publish(song.project, to: engine, modulation: inputs)
         engine.play()
-        var out = render(engine, frames: 4_813, block: 470)
+        var out = render(engine, frames: 4_863, block: 470)
         for value in [1.0, 0, 1, 0, 0.2, 0.9, 0, 1] {
             inputs.set(.breath, value)
-            let piece = render(engine, frames: 4_813, block: 470)
+            let piece = render(engine, frames: 4_863, block: 470)
             out.left += piece.left
             out.right += piece.right
         }
@@ -373,6 +374,29 @@ final class ClickHuntTests: XCTestCase {
         }
         XCTAssertGreaterThan(expected.left.map { Swift.abs($0) }.max() ?? 0, 0.01, "the note sounds")
         XCTAssertLessThan(worst, 1e-5, "the loop plays its own bar only")
+    }
+
+    /// A seek onto a place the volume has just fallen to −60 dB, from a place at the same level,
+    /// off the gain grid with the fall inside the grid cell: the gain never leaves the levels it
+    /// moves between — no swell, no turn of polarity while the held gain is ramped out.
+    func testASeekNextToAVolumeFallNeverOvershoots() throws {
+        var song = try audioSong(try sineBuffer(seconds: 4, stereo: false))
+        // 120 BPM: 25 samples a tick. 0 dB to tick 2,000 (sample 50,000), −60 dB from tick 2,001.
+        try Command.setAutomation(.volume(song.track), points: [AutomationPoint(tick: 0, value: 0),
+                                                                AutomationPoint(tick: 2_000, value: 0),
+                                                                AutomationPoint(tick: 2_001, value: -60)])
+            .apply(to: &song.project)
+        let engine = self.core()
+        publish(song.project, to: engine, samples: song.samples)
+        engine.play()
+        engine.seek(toSample: 100_000)
+        _ = render(engine, frames: 4_800, block: 470)
+        // 50,029 = 64 · 781 + 45: the grid point before it is still at 0 dB, the one after at −60.
+        engine.seek(toSample: 50_029)
+        let after = render(engine, frames: 1_000, block: 470)
+        let quiet: Float = 0.5 * 0.001   // the region's 0.5 at −60 dB
+        let worst = after.left.map { Swift.abs($0) }.max() ?? 0
+        XCTAssertLessThan(worst, 2 * quiet, "the gain stays at −60 dB across the seek")
     }
 
     /// Steep automation on the level and the cutoff: a ramp and a jump between two points.
