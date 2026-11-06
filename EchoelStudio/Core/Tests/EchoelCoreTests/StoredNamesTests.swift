@@ -24,7 +24,8 @@ final class StoredNamesTests: XCTestCase {
                              "synth.filterDecay", "synth.attack", "synth.decay", "synth.sustain", "synth.release",
                              "synth.level", "synth.engine", "synth.character", "synth.filter", "synth.vibrato",
                              "synth.slide", "synth.accent",
-                             "synth.textureRule", "synth.textureDensity", "synth.textureRate", "synth.textureSeed"]
+                             "synth.textureRule", "synth.textureDensity", "synth.textureRate", "synth.textureSeed",
+                             "synth.ddspProfile"]
     // The kit's sound appended after its level (EchoelTools A11, 2026-11-04).
     private let drumsKeys = ["drums.level", "drums.kickGlide", "drums.hatModel", "drums.tomModel", "drums.kick.tune", "drums.kick.decay", "drums.kick.level", "drums.snare.tune", "drums.snare.decay", "drums.snare.level", "drums.clap.tune", "drums.clap.decay", "drums.clap.level", "drums.lowTom.tune", "drums.lowTom.decay", "drums.lowTom.level", "drums.highTom.tune", "drums.highTom.decay", "drums.highTom.level", "drums.closedHat.tune", "drums.closedHat.decay", "drums.closedHat.level", "drums.openHat.tune", "drums.openHat.decay", "drums.openHat.level", "drums.crash.tune", "drums.crash.decay", "drums.crash.level"]
     private let samplerKeys = ["sampler.root", "sampler.attack", "sampler.release", "sampler.level", "sampler.mode"]
@@ -124,6 +125,9 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(SynthParameter.filter.choices, ["Clean", "Ladder"], "a lane stores the filter's index")
         XCTAssertEqual(SynthParameter.textureRule.choices, ["90", "30", "110", "150", "184", "45", "73", "105"],
                        "a lane stores the rule's index; a new rule goes at the end")
+        XCTAssertEqual(SynthParameter.ddspProfile.choices.count, 10,
+                       "a lane stores the profile's index; a new profile goes at the end")
+        XCTAssertEqual(SynthParameter.ddspProfile.choices.first, "Character", "index 0 is the sound before profiles")
         // The drums' and the sampler's values are stored too (P1 A5); the order is also their
         // plugin's parameter address, which a host session saves.
         XCTAssertEqual(InstrumentDevice.drums.parameters.map(\.key.rawValue), drumsKeys, "a new row goes at the end")

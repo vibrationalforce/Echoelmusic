@@ -577,6 +577,32 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with a synth on the DDSP engine and a spectral profile (2026-11-06): one synth value
+    /// added inside format 4; a song without it plays profile 0, the sound before profiles.
+    private let formatFourDDSPProfile = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Bowed",
+      "tempo": 96,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-000000000010",
+          "name": "Bowed",
+          "kind": "instrument",
+          "colorIndex": 2,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "instrument": { "device": "synth", "preset": "Init",
+                          "values": { "synth.engine": 6, "synth.character": 0.7, "synth.ddspProfile": 5 } }
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     /// Format 4 with markers on the timeline (PRO-W1, 2026-11-04): an optional song field added
     /// inside format 4, so an earlier format-4 build opens the file and shows no markers.
     private let formatFourMarkers = Data("""
@@ -796,7 +822,7 @@ final class FormatGoldenTests: XCTestCase {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
                      formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes, formatFourLighting,
                      formatFourTexture, formatFourBake, formatFourMotion, formatFourGrade, formatFourSubtitles,
-                     Self.formatFourFromTheFuture] {
+                     formatFourDDSPProfile, Self.formatFourFromTheFuture] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -1245,6 +1271,25 @@ final class FormatGoldenTests: XCTestCase {
                            ("\"synth.textureRate\": 12", "\"synth.textureRate\": 41")] {
             let broken = String(decoding: formatFourTexture, as: UTF8.self).replacingOccurrences(of: from, with: to)
             XCTAssertNotEqual(Data(broken.utf8), formatFourTexture, "the replacement must land")
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), to)
+        }
+    }
+
+    func testASynthOpensOnTheDDSPEngineWithItsProfile() throws {
+        let project = try ProjectCodec.decode(formatFourDDSPProfile)
+        let instrument = try XCTUnwrap(project.tracks.first?.instrument)
+        XCTAssertEqual(instrument.value(.engine), 6)
+        XCTAssertEqual(SynthParameter.engine.choices[6], "DDSP")
+        XCTAssertEqual(instrument.value(.ddspProfile), 5)
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
+        // A song without a profile plays profile 0.
+        let lead = try XCTUnwrap(ProjectCodec.decode(current).tracks.first?.instrument)
+        XCTAssertEqual(lead.value(.ddspProfile), 0)
+        // A profile past its list refuses the song.
+        for (from, to) in [("\"synth.ddspProfile\": 5", "\"synth.ddspProfile\": 10"),
+                           ("\"synth.ddspProfile\": 5", "\"synth.ddspProfile\": -1")] {
+            let broken = String(decoding: formatFourDDSPProfile, as: UTF8.self).replacingOccurrences(of: from, with: to)
+            XCTAssertNotEqual(Data(broken.utf8), formatFourDDSPProfile, "the replacement must land")
             XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), to)
         }
     }

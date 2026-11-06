@@ -231,6 +231,9 @@ struct SoundPanel: View {
         if texture {
             choicePicker(.textureRule, style: .menu)
         }
+        if engineIndex == SynthParameter.ddspEngineIndex {
+            choicePicker(.ddspProfile, style: .menu)
+        }
         choicePicker(.waveform)
         choicePicker(.filter)
 

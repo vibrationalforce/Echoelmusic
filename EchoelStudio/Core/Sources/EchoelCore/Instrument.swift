@@ -182,6 +182,8 @@ public struct SynthParameter: Sendable, Equatable {
         case slide, accent
         // Appended 2026-11-04 (EchoelTools A10): the texture engine's automaton.
         case textureRule, textureDensity, textureRate, textureSeed
+        // Appended 2026-11-06: the DDSP engine's spectral profile.
+        case ddspProfile
 
         /// The row this case stands for. Builds a value: read it off the render thread.
         public var parameter: SynthParameter {
@@ -219,6 +221,12 @@ public struct SynthParameter: Sendable, Equatable {
             case .textureRate: SynthParameter("synth.textureRate", "Evolve Rate", .hertz, 0...40, 8, .linear)
             // The row each note starts from: 0 a single middle cell, any other a row drawn from it.
             case .textureSeed: SynthParameter("synth.textureSeed", "Seed", .amount, 0...9_999, 0, .stepped)
+            // The DDSP engine's spectrum. Index 0 is the one it always had, set by Character; the
+            // others are fixed shapes, Character still setting the tone/breath blend. Stored by
+            // index: a new profile goes at the end (the names are the display's, not the file's).
+            case .ddspProfile: SynthParameter("synth.ddspProfile", "Profile", .choice, 0...9, 0, .stepped,
+                                              choices: ["Character", "Metallic", "Hollow", "Bell", "Flat",
+                                                        "Bowed", "Brass", "Low Bowed", "Reed", "Double Reed"])
             }
         }
 
@@ -249,10 +257,13 @@ public struct SynthParameter: Sendable, Equatable {
     public static let textureDensity = Name.textureDensity.parameter
     public static let textureRate = Name.textureRate.parameter
     public static let textureSeed = Name.textureSeed.parameter
+    public static let ddspProfile = Name.ddspProfile.parameter
     /// The rows only the texture engine plays: the Sound page shows them while it is chosen.
     public static let textureRows: [SynthParameter] = [textureRule, textureDensity, textureRate, textureSeed]
     /// The `synth.engine` index of the texture engine.
     public static let textureEngineIndex = 10
+    /// The `synth.engine` index of the DDSP engine, the only one that hears `ddspProfile`.
+    public static let ddspEngineIndex = 6
 
     /// In display order: one row per `Name`.
     public static let all: [SynthParameter] = Name.allCases.map(\.parameter)
