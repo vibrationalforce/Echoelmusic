@@ -403,6 +403,9 @@ final class MIDIInput {
     @ObservationIgnored private var contactsObserver: NSObjectProtocol?
     /// Ends the pairing window.
     @ObservationIgnored private var pairingEnd: Task<Void, Never>?
+    /// While pairing: who was connected when the window opened, and whom the musician removed
+    /// during it. Neither joins the contact list on the window's account.
+    @ObservationIgnored private var pairingPassedOver: [NetworkMIDIAccess.Host] = []
     private static let pairingSeconds = 60
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "midi")
 
@@ -685,6 +688,7 @@ final class MIDIInput {
             pairingEnd?.cancel()
             pairingEnd = nil
             networkPairing = false
+            pairingPassedOver = []
         }
         networkEnabled = on
         applyNetworkPolicy(session)
@@ -699,8 +703,14 @@ final class MIDIInput {
     /// meanwhile joins the contact list, then only the list may connect again.
     func pairNetworkHost() {
         guard networkEnabled else { return }
+        let session = MIDINetworkSession.default()
+        if !networkPairing {
+            // Whoever is connected already was not let in by this window: a stranger stays one
+            // (the musician can allow it by name), so a removed host is not taken back.
+            pairingPassedOver = session.connections().map { Self.accessHost($0.host) }
+        }
         networkPairing = true
-        applyNetworkPolicy(MIDINetworkSession.default())
+        applyNetworkPolicy(session)
         pairingEnd?.cancel()
         pairingEnd = Task { [weak self] in
             try? await Task.sleep(for: .seconds(Self.pairingSeconds))
@@ -715,8 +725,9 @@ final class MIDIInput {
         pairingEnd = nil
         guard networkPairing else { return }
         let session = MIDINetworkSession.default()
-        keepConnectedHosts(session)
+        keepConnectedHosts(session, passedOver: pairingPassedOver)
         networkPairing = false
+        pairingPassedOver = []
         applyNetworkPolicy(session)
         refreshNetworkHosts()
     }
@@ -730,11 +741,12 @@ final class MIDIInput {
         }
     }
 
-    /// Every connected host that is not a contact yet becomes one.
-    private func keepConnectedHosts(_ session: MIDINetworkSession) {
+    /// Every connected host that is not a contact yet becomes one, except those passed over.
+    private func keepConnectedHosts(_ session: MIDINetworkSession, passedOver: [NetworkMIDIAccess.Host] = []) {
         let contacts = session.contacts().map(Self.accessHost)
         let linked = session.connections().map(\.host)
-        for index in NetworkMIDIAccess.contactsToAdd(connected: linked.map(Self.accessHost), contacts: contacts)
+        for index in NetworkMIDIAccess.contactsToAdd(connected: linked.map(Self.accessHost), contacts: contacts,
+                                                     passedOver: passedOver)
             where index < linked.count {
             _ = session.addContact(linked[index])
         }
@@ -744,7 +756,7 @@ final class MIDIInput {
     /// host that just connected joins the contact list.
     private func networkSessionChanged() {
         applyClockSource()
-        if networkPairing { keepConnectedHosts(MIDINetworkSession.default()) }
+        if networkPairing { keepConnectedHosts(MIDINetworkSession.default(), passedOver: pairingPassedOver) }
         refreshNetworkHosts()
     }
 
@@ -757,12 +769,17 @@ final class MIDIInput {
         refreshNetworkHosts()
     }
 
-    /// Takes a host off the contact list: it can no longer connect.
+    /// Takes a host off the contact list and ends its connection: it stops playing now and can
+    /// no longer connect. An open pairing window does not take it back.
     func removeNetworkHost(_ host: NetworkMIDIAccess.Host) {
         let session = MIDINetworkSession.default()
         for contact in session.contacts() where Self.accessHost(contact).isSame(as: host) {
             _ = session.removeContact(contact)
         }
+        for connection in session.connections() where Self.accessHost(connection.host).isSame(as: host) {
+            _ = session.removeConnection(connection)
+        }
+        if networkPairing { pairingPassedOver.append(host) }
         refreshNetworkHosts()
     }
 

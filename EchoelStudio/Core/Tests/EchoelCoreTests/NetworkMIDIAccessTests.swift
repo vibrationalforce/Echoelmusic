@@ -49,6 +49,16 @@ final class NetworkMIDIAccessTests: XCTestCase {
         XCTAssertEqual(NetworkMIDIAccess.contactsToAdd(connected: [known], contacts: []), [0])
     }
 
+    func testAPairingWindowTakesInOnlyHostsThatNewlyConnect() {
+        let mac = Host(name: "Mac", address: "10.0.0.2", port: 5004)
+        let pc = Host(name: "PC", address: "10.0.0.3", port: 5004)
+        // The Mac was removed (or was connected before the window opened); the PC connects now.
+        XCTAssertEqual(NetworkMIDIAccess.contactsToAdd(connected: [mac, pc], contacts: [], passedOver: [mac]), [1])
+        XCTAssertEqual(NetworkMIDIAccess.contactsToAdd(connected: [mac], contacts: [], passedOver: [mac]), [],
+                       "a window where nobody new connects adds no one")
+        XCTAssertEqual(NetworkMIDIAccess.contactsToAdd(connected: [mac], contacts: [], passedOver: [pc]), [0])
+    }
+
     func testAHostIsShownByItsNameElseWhereItIs() {
         XCTAssertEqual(Host(name: " Studio Mac ", address: "10.0.0.2", port: 5004).title, "Studio Mac")
         XCTAssertEqual(Host(name: "", address: "10.0.0.2", port: 5004).title, "10.0.0.2:5004")

@@ -63,8 +63,11 @@ public enum NetworkMIDIAccess {
 
     /// The positions in `connected` whose hosts must join the contact list before the policy
     /// narrows, so nothing connected now is cut off silently: each host not yet a contact, once.
-    public static func contactsToAdd(connected: [Host], contacts: [Host]) -> [Int] {
-        var kept = contacts
+    /// `passedOver` never joins: while pairing, the hosts that were connected before the window
+    /// opened and the ones the musician removed during it — only a host that newly connects
+    /// is taken in, so a removal is not undone by the next window.
+    public static func contactsToAdd(connected: [Host], contacts: [Host], passedOver: [Host] = []) -> [Int] {
+        var kept = contacts + passedOver
         var add: [Int] = []
         for (index, host) in connected.enumerated() {
             // A host with neither address nor service matches nothing, not even itself: a contact
