@@ -523,8 +523,9 @@ public struct EngineSnapshot: Sendable {
                         sampleRate: Double, project: Project? = nil,
                         warped: [RegionWarp.Key: SampleBuffer] = [:]) -> Region? {
         guard let buffer = samples[region.media], sampleRate > 0, sampleRate.isFinite else { return nil }
-        if region.warpBPM != nil {
-            // A warped region plays its stretch, which already runs in song time from its start.
+        if RegionWarp.isStretched(region) {
+            // A warped or transposed region plays its stretch, which already runs in song time from
+            // its start.
             guard let project, let key = RegionWarp.key(of: region, in: project, buffer: buffer),
                   let stretched = warped[key], stretched.frameCount > 0 else { return nil }
             let step = stretched.sampleRate / sampleRate

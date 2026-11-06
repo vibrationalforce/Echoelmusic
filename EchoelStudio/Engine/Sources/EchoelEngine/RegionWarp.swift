@@ -2,7 +2,8 @@ import EchoelCore
 import EchoelDSP
 import Foundation
 
-/// Warp (AUD-2): an audio region that follows the song's tempo, pitch unchanged. The stretch is
+/// Warp (AUD-2): an audio region that follows the song's tempo, pitch unchanged — or, transposed
+/// (W-4), keeps its timing with its pitch moved. The stretch is
 /// done OFF the render thread — once per region and tempo, kept by its `Key` — into a buffer at
 /// the file's own rate whose frame `t` sounds `t` file-rate frames after the region's start in
 /// song time. The snapshot plays that buffer like any region; the render thread only reads it.
@@ -25,19 +26,36 @@ public enum RegionWarp {
         let tempo: Tempo
         /// How it stretches (W-3): an unknown stored name stretches as Tones and shares its key.
         let mode: WarpMode
+        /// The transposition, in cents (W-4); 0 for none.
+        let cents: Double
 
         enum Tempo: Hashable, Sendable {
             case constant(Double)
             case moving(start: Tick, bpm: Double, changes: [TempoChange])
+            /// A region at the file's own speed, transposed: the song's tempo does not enter.
+            case fileSpeed
         }
     }
 
     /// The longest stretch, in file frames: 20 minutes at 192 kHz.
     public static let maximumFrames = 20 * 60 * 192_000
 
-    /// The key of a warped region, nil for one that plays at the file's own speed or whose file is
-    /// not loaded.
+    /// Whether a region plays a buffer made for it here: it follows the song's tempo, or it is
+    /// transposed (W-4). Any other region plays its file as it is.
+    public static func isStretched(_ region: AudioRegion) -> Bool {
+        region.warpBPM != nil || region.playedTransposeCents != 0
+    }
+
+    /// The key of a warped or transposed region, nil for one that plays its file as it is or whose
+    /// file is not loaded.
     public static func key(of region: AudioRegion, in project: Project, buffer: SampleBuffer) -> Key? {
+        let cents = region.playedTransposeCents
+        guard region.warpBPM != nil else {
+            guard cents != 0, region.offset >= 0, region.length > 0, region.offset < buffer.frameCount,
+                  buffer.sampleRate > 0, buffer.sampleRate.isFinite else { return nil }
+            return Key(media: region.media, offset: region.offset, length: Swift.min(region.length, buffer.frameCount - region.offset),
+                       nativeBPM: 0, fileRate: buffer.sampleRate, tempo: .fileSpeed, mode: .tones, cents: cents)
+        }
         guard let native = region.warpBPM, region.offset >= 0, region.length > 0,
               buffer.sampleRate > 0, buffer.sampleRate.isFinite,
               let stop = project.position(of: region, atFileFrames: Double(region.length)) else { return nil }
@@ -48,45 +66,87 @@ public enum RegionWarp {
         let tempo: Key.Tempo = constant ? .constant(map.bpm(at: region.start))
             : .moving(start: region.start, bpm: project.tempo, changes: project.tempoChanges)
         return Key(media: region.media, offset: region.offset, length: Swift.min(region.length, buffer.frameCount - region.offset),
-                   nativeBPM: native, fileRate: buffer.sampleRate, tempo: tempo, mode: region.warpMode)
+                   nativeBPM: native, fileRate: buffer.sampleRate, tempo: tempo, mode: region.warpMode, cents: cents)
     }
 
-    /// The stretched frames of a warped region, at the file's rate. Nil when there is nothing to
-    /// stretch. Allocates and takes time: never on the render thread, nor in a view body.
+    /// The stretched frames of a warped or transposed region, at the file's rate. Nil when there is
+    /// nothing to stretch. Allocates and takes time: never on the render thread, nor in a view body.
     public static func render(_ region: AudioRegion, in project: Project, buffer: SampleBuffer) -> SampleBuffer? {
-        guard let native = region.warpBPM, region.offset >= 0, region.offset < buffer.frameCount else { return nil }
+        guard region.offset >= 0, region.offset < buffer.frameCount else { return nil }
         let rate = buffer.sampleRate
         let length = Swift.min(region.length, buffer.frameCount - region.offset)
         guard length > 0, rate > 0, rate.isFinite else { return nil }
-        let map = project.tempoMap
-        let startSeconds = map.seconds(at: region.start)
-        let ticksPerQuarter = Double(MusicalTime.ticksPerQuarter)
-        // Where the file's last frame sounds, in song time.
-        let endPosition = Double(region.start) + Double(length) / rate * native / 60 * ticksPerQuarter
-        let seconds = map.seconds(atPosition: endPosition) - startSeconds
-        guard seconds.isFinite, seconds > 0 else { return nil }
-        let outputCount = Int((seconds * rate).rounded())
+        let cents = region.playedTransposeCents
+        let outputCount: Int
+        let mode: WarpMode
+        // The file frame that sounds `frame` file-rate frames after the region's start.
+        let readAt: (Double) -> Double
+        if let native = region.warpBPM {
+            let map = project.tempoMap
+            let startSeconds = map.seconds(at: region.start)
+            let ticksPerQuarter = Double(MusicalTime.ticksPerQuarter)
+            // Where the file's last frame sounds, in song time.
+            let endPosition = Double(region.start) + Double(length) / rate * native / 60 * ticksPerQuarter
+            let seconds = map.seconds(atPosition: endPosition) - startSeconds
+            guard seconds.isFinite, seconds > 0 else { return nil }
+            outputCount = Int((seconds * rate).rounded())
+            mode = region.warpMode
+            let start = Double(region.start)
+            // The song position `frame` file-rate frames after the region's start, and the file
+            // frame its native tempo puts there.
+            readAt = { (frame: Double) -> Double in
+                let position = map.position(atSeconds: startSeconds + frame / rate)
+                return (position - start) / ticksPerQuarter * 60 / native * rate
+            }
+        } else {
+            // At the file's own speed: only a transposition makes a buffer.
+            guard cents != 0 else { return nil }
+            outputCount = length
+            mode = .tones
+            readAt = { (frame: Double) -> Double in frame }
+        }
         guard outputCount > 0, outputCount <= maximumFrames else { return nil }
-        let start = Double(region.start)
-        // The song position `frame` file-rate frames after the region's start, and the file frame
-        // its native tempo puts there.
-        let read = { (frame: Int) -> Double in
-            let position = map.position(atSeconds: startSeconds + Double(frame) / rate)
-            return (position - start) / ticksPerQuarter * 60 / native * rate
+        let splice = Swift.max(1, Int((spliceSeconds * rate).rounded()))
+        guard cents != 0 else {
+            switch mode {
+            case .tones:
+                return buffer.stretched(offset: region.offset, length: length, outputCount: outputCount) { (frame: Int) -> Double in
+                    readAt(Double(frame))
+                }
+            case .beats:
+                guard let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
+                let out = WSOLAStretcher().stretch(sides, outputCount: outputCount, anchors: onsets(in: sides, rate: rate),
+                                                   splice: splice) { (frame: Int) -> Double in readAt(Double(frame)) }
+                return buffer.withSides(out)
+            case .rePitch:
+                guard let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
+                return buffer.withSides(WSOLAStretcher.resample(sides, outputCount: outputCount) { (frame: Int) -> Double in
+                    readAt(Double(frame))
+                })
+            }
         }
-        switch region.warpMode {
+        // W-4: stretched by the pitch ratio with the timing the mode gives, then read back faster
+        // or slower by the same ratio — the pitch moves, every frame still sounds where it did.
+        let ratio = Foundation.pow(2, cents / 1_200)
+        let longer = Int((Double(outputCount) * ratio).rounded(.up)) + 2
+        guard ratio.isFinite, ratio > 0, longer > 2, longer <= 4 * maximumFrames + 2,
+              let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
+        let stretcher = WSOLAStretcher()
+        let timed: [[Float]]
+        switch mode {
         case .tones:
-            return buffer.stretched(offset: region.offset, length: length, outputCount: outputCount, position: read)
+            timed = stretcher.stretch(sides, outputCount: longer) { (frame: Int) -> Double in readAt(Double(frame) / ratio) }
         case .beats:
-            guard let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
-            let stretcher = WSOLAStretcher()
-            let out = stretcher.stretch(sides, outputCount: outputCount, anchors: onsets(in: sides, rate: rate),
-                                        splice: Swift.max(1, Int((spliceSeconds * rate).rounded())), position: read)
-            return buffer.withSides(out)
+            timed = stretcher.stretch(sides, outputCount: longer, anchors: onsets(in: sides, rate: rate),
+                                      splice: splice) { (frame: Int) -> Double in readAt(Double(frame) / ratio) }
         case .rePitch:
-            guard let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
-            return buffer.withSides(WSOLAStretcher.resample(sides, outputCount: outputCount, position: read))
+            // Played like a record first, so its pitch follows the tempo, then transposed on top.
+            let played = WSOLAStretcher.resample(sides, outputCount: outputCount) { (frame: Int) -> Double in readAt(Double(frame)) }
+            timed = stretcher.stretch(played, outputCount: longer) { (frame: Int) -> Double in Double(frame) / ratio }
         }
+        return buffer.withSides(WSOLAStretcher.resample(timed, outputCount: outputCount) { (frame: Int) -> Double in
+            Double(frame) * ratio
+        })
     }
 
     /// Beats (W-3): how long the piece before an attack fades out while the attack's piece fades in.
@@ -145,7 +205,7 @@ extension RegionWarp {
         let map = project.tempoMap
         var end: Int64 = 0
         for track in project.tracks where track.kind == .audio {
-            for region in track.playedRegions(in: project) where region.warpBPM != nil && samples[region.media] != nil {
+            for region in track.playedRegions(in: project) where isStretched(region) && samples[region.media] != nil {
                 guard let stop = project.position(of: region, atFileFrames: Double(region.length)) else { continue }
                 let seconds = map.seconds(atPosition: stop)
                 guard seconds.isFinite, seconds > 0 else { continue }
@@ -157,6 +217,6 @@ extension RegionWarp {
 
     /// Whether a track plays a warped region whose file is loaded.
     static func plays(_ track: TrackID, in project: Project, samples: [MediaID: SampleBuffer]) -> Bool {
-        project.track(track)?.regions.contains { $0.warpBPM != nil && samples[$0.media] != nil } ?? false
+        project.track(track)?.regions.contains { isStretched($0) && samples[$0.media] != nil } ?? false
     }
 }
