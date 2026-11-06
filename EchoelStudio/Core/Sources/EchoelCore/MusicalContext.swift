@@ -52,7 +52,7 @@ public struct MusicalContext: Codable, Equatable, Sendable {
         ConcertPitchPreset("Classical 430", hertz: 430),
         ConcertPitchPreset("Diapason normal 435 (1859)", hertz: 435),
         ConcertPitchPreset("Venetian 466", hertz: 466),
-    ] + ConcertPitchPreset.orbits.map { ConcertPitchPreset(orbit: $0.0, days: $0.1) }
+    ]
     public static let rootNames = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"]
 
     /// The frame as the musician reads it: "D Dorian". Chromatic has no key to name and reads
@@ -138,9 +138,10 @@ public enum Scale: String, Codable, CaseIterable, Sendable {
     }
 }
 
-/// A named concert pitch. An orbit's preset is arithmetic, not a claim: the body's period,
-/// doubled in frequency until it is audible (Cousto's octave rule), and A set so that this tone
-/// lands exactly on its nearest equal-tempered pitch.
+/// A named concert pitch: the historical and orchestral standards. Pitches derived from planetary
+/// orbits stood here until 2026-11-06 and are gone from the menu (decision 2026-11-06, language law: no
+/// esoteric framing); a song that stores one keeps its number and sounds as before, because a song
+/// stores only the hertz.
 public struct ConcertPitchPreset: Equatable, Sendable {
     public let title: String
     public let hertz: Double
@@ -148,27 +149,6 @@ public struct ConcertPitchPreset: Equatable, Sendable {
     public init(_ title: String, hertz: Double) {
         self.title = title
         self.hertz = hertz
-    }
-
-    /// Periods in days: tropical year, sidereal orbits, synodic month, solar day.
-    static let orbits: [(String, Double)] = [
-        ("Earth year", 365.24219), ("Earth day", 1), ("Moon (synodic month)", 29.530589),
-        ("Mercury", 87.969), ("Venus", 224.701), ("Mars", 686.980), ("Jupiter", 4332.59), ("Saturn", 10759.22),
-    ]
-
-    /// The orbit's tone and the A that makes it an in-tune note, rounded to 0.01 Hz.
-    init(orbit name: String, days: Double) {
-        let tone = Self.audibleOctave(ofPeriodDays: days)
-        let semitones = 12 * Foundation.log2(tone / 440)
-        let a = 440 * Foundation.pow(2, (semitones - semitones.rounded()) / 12)
-        self.init("\(name), octaved \(String(format: "%.2f", a))", hertz: (a * 100).rounded() / 100)
-    }
-
-    /// The period's frequency doubled until it reaches 20 Hz.
-    static func audibleOctave(ofPeriodDays days: Double) -> Double {
-        var hertz = 1 / (days * 86_400)
-        while hertz < 20 { hertz *= 2 }
-        return hertz
     }
 }
 
