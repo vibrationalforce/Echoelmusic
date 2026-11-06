@@ -102,11 +102,7 @@ iOSInjectionProject/
 *.swo
 *~
 
-# Android
-android/.gradle/
-android/app/build/
-android/build/
-android/local.properties
+# Android packaging and signing artefacts
 *.apk
 *.aab
 *.keystore
@@ -181,3 +177,17 @@ coverage.lcov
 /decisions.csv
 /inspiration.csv
 /decision_reviews.log
+
+# Private planning documents — they live only in the private working repository under the same
+# paths. A session that writes one here by habit must not publish it.
+/docs/dev/FOUNDER_INBOX.md
+/docs/dev/APP_STORE_CONNECT.md
+/docs/dev/ECHOELMUSIC_MASTER_PLAN.md
+/docs/dev/HISTORY_ARCHIVE.md
+/docs/dev/NEUPLANUNG_*.md
+/docs/dev/FOERDERUNG_*
+/docs/dev/ECHOEL_VISION_*
+
+# Local build and deploy tool state (SwiftPM, Cloudflare Wrangler)
+.build/
+.wrangler/
