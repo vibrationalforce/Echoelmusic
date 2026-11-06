@@ -303,6 +303,46 @@ final class FieldLookTests: XCTestCase {
         }
     }
 
+    /// The test above changes the key every two seconds, and at `ringsKRate` the spacing moves only
+    /// from 40 to about 48 in that time: the rings' deepest spacing was never on screen. Here the
+    /// key goes an octave up and stays (the spacing climbs to 80, the most full detail draws, and
+    /// holds there for eight seconds) while coherence is slammed to its end and its detune slides
+    /// all the way — the detune's speed grows with the spacing, so this is where a point sees the
+    /// most bands. Everything else is at its worst as above. Simulated per pixel on 2026-11-06:
+    /// six transitions at worst, square and wide.
+    func testTheRingsFlashAtNoPixelMoreThanThreeTimesASecondAtTheirDeepestSpacing() {
+        let rate = 60.0
+        let octaveUp = FieldFrame.middleC * 2
+        let deepest = FieldMotion.ringsK(density: FieldMotion.ringDensity, toneHz: octaveUp)
+        for aspect in [1.0, 16.0 / 9] {
+            var field = FieldMotion(), looks = FieldLookMotion()
+            var series = [[Double]](repeating: [], count: 100)
+            var tightest = 0.0, mostCoherent = 0.0
+            for frame in 0..<Int(30 * rate) {
+                let beat = (Double(frame) * 3 / rate).truncatingRemainder(dividingBy: 1)
+                let loud = FieldFrame(beatPhase: beat, barPhase: Double(frame % 3) / 3,
+                                      tonicHz: frame < Int(2 * rate) ? FieldFrame.middleC : octaveUp, level: 1, pulse: 1,
+                                      coherence: frame == 0 ? 0.0 : 1.0, breath: Double((frame / 20) % 2), isPlaying: true)
+                let shown = field.step(loud, after: 1 / rate, still: false, patternScale: 1)
+                tightest = Swift.max(tightest, shown.ringsK)
+                mostCoherent = Swift.max(mostCoherent, shown.ringsCoherence)
+                let look = looks.step(primary: .rings, partner: nil, mix: 0, hertz: nil, drive: 0, tonicHz: shown.toneHz,
+                                      fieldPhase: shown.fieldPhase, after: 1 / rate, still: false, patternScale: 1)
+                for i in 0..<10 {
+                    for j in 0..<10 {
+                        series[i * 10 + j].append(FieldLook.light(.rings, u: (Double(i) + 0.5) / 10, v: (Double(j) + 0.5) / 10,
+                                                                  aspect: aspect, field: shown, look: look,
+                                                                  plate: ChladniMotion.Shown(), turns: look.turns))
+                    }
+                }
+            }
+            XCTAssertEqual(tightest, deepest, accuracy: 1e-6, "the clock reaches the deepest spacing")
+            XCTAssertGreaterThan(mostCoherent, 0.85, "the detune slides most of its way")
+            XCTAssertGreaterThan(series.flatMap { $0 }.max() ?? 0, 0.3, "the rings are lit")
+            assertAtMostThreeFlashesASecond(series, "rings at their deepest spacing, aspect \(aspect)")
+        }
+    }
+
     func testTheRingsSpacingAndCoherenceMoveAtCappedSpeeds() {
         var field = FieldMotion()
         var last = field.step(FieldFrame(tonicHz: 261.63, coherence: 0), after: 1.0 / 60, still: false, patternScale: 1)
