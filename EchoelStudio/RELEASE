@@ -1,19 +1,16 @@
-11.0.0 — a Field look "Thin Film"; the Field's looks no longer jump at the bar
+11.0.0 — the Field keeps under three flashes a second at full level
 
-What is new since 10058. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10059. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Field window, Pattern "Thin Film": a soap film in reflected light, its colours computed from its
-  thickness — black where it is thinnest at the top, coloured bands, pale below; it swirls slowly,
-  and the sound ripples it, spaced by the pitch and as deep as the level.
-- Rings, Dish, Water, Aurora and Depth moved by a phase that started over at each turn of the bar,
-  and the whole picture jumped there — up to two and a half times a second in a fast song. They
-  now run on smoothly.
+- Water, Aurora, Dish and Depth: a jump of the pitch re-spaced their pattern in a third of a
+  second, which in a loud song could flash a point of the picture far more than three times a
+  second. Now each re-spaces over a few seconds; the aurora sways a little slower.
+- Rings: the beat's ring and the coherence halo are faint now, and a key change or a coherence
+  change re-spaces the rings over some seconds instead of at once.
 
-Previous: 11.0.0 (10058) — stereo recording from an input pair; 10057 — the Field's looks in
-exported video and in the live stream, Bar Weave; 10055 — Moiré Beat and Weave in the Field,
-phase and partials meters, DDSP profiles, Revoice by Octaves. Earlier: git history. The import
-of earlier songs (the app group is in the app's entitlements since a14e1960a) has not been seen
-on a device yet.
+Previous: 11.0.0 (10059) — a Field look "Thin Film", the looks no longer jump at the bar; 10058 —
+stereo recording from an input pair; 10057 — the Field's looks in exported video and in the
+live stream, Bar Weave. Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -21,10 +18,10 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Field window, Pattern "Thin Film", a song stopped: black bands at the top, colours in the
-   middle, pale at the bottom — does it look like a soap film, not like a colour wheel?
-2. Play a loud song: does the film ripple, and do the rings get finer on high notes?
-3. Thin Film during a fast song for a minute: does any part of the picture flicker or flash?
-4. Pattern "Water", then "Rings", in a fast song: does the picture still jump once each bar, as it
-   could before?
-5. Export a short video with the Field Layer on and "Thin Film": does the film show in it?
+1. Field window, Pattern "Water", a loud song with high and low notes: does the net follow the
+   pitch smoothly, never snapping?
+2. Pattern "Aurora", same song: do the rays re-space slowly, and do the curtains still move?
+3. Pattern "Rings" in a fast song: is the beat still visible as a faint ring, and does nothing
+   blink?
+4. Change the song's key while "Rings" play: do the rings tighten or widen over a few seconds?
+5. Any pattern, a minute of a loud, fast song: does any part of the picture flicker or flash?
