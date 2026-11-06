@@ -61,6 +61,15 @@ final class ConnectionsController {
         }
 
         var isLight: Bool { self == .artNet || self == .sacn }
+
+        /// The light protocol's name in the lit-ledger; nil for OSC and ADM-OSC.
+        var litOutput: LitLedger.Output? {
+            switch self {
+            case .artNet: .artNet
+            case .sacn: .sacn
+            case .osc, .admOSC: nil
+            }
+        }
     }
 
     struct Target: Equatable, Sendable {
@@ -155,6 +164,11 @@ final class ConnectionsController {
     /// at once: a node holds the last frame it heard.
     @ObservationIgnored private var lit: [Kind: [Int: Int]] = [:]
     @ObservationIgnored private var lastDarkSent: ContinuousClock.Instant?
+    /// Every universe of every receiver lit and not yet said dark, kept in the defaults across
+    /// launches (`LitLedger`): what it holds at launch was left lit by a run that crashed, hung or
+    /// was ended while suspended. It is said dark only when the musician switches that output on to
+    /// that receiver again — never at launch, which would open a connection nobody switched on.
+    @ObservationIgnored private var litLedger: LitLedger
     @ObservationIgnored private var terminationObserver: NSObjectProtocol?
     #if canImport(UIKit)
     @ObservationIgnored private var darkTask: UIBackgroundTaskIdentifier = .invalid
@@ -170,6 +184,7 @@ final class ConnectionsController {
     private static let resolutionKey = "connections.light.resolution"
     private static let startChannelKey = "connections.light.startChannel"
     private static let cidKey = "connections.sacn.cid"
+    private static let litLedgerKey = "connections.light.litLedger"
 
     init() {
         let defaults = UserDefaults.standard
@@ -184,6 +199,7 @@ final class ConnectionsController {
         sacnUniverse = Self.clamp(defaults.object(forKey: Self.sacnUniverseKey) as? Int ?? 1, to: E131Packet.universeRange)
         resolution = LightFixture.Resolution(rawValue: defaults.string(forKey: Self.resolutionKey) ?? "") ?? .eightBit
         startChannel = Self.clamp(defaults.object(forKey: Self.startChannelKey) as? Int ?? 1, to: LightFixture.channelRange)
+        litLedger = LitLedger.decoded(defaults.data(forKey: Self.litLedgerKey))
         if let saved = defaults.array(forKey: Self.cidKey) as? [Int], saved.count == 16 {
             cid = saved.map { UInt8(truncatingIfNeeded: $0) }
         } else {
@@ -346,6 +362,7 @@ final class ConnectionsController {
         senders[kind] = sender
         activity[kind] = Activity(state: .preparing, counters: UDPSender.Counters())
         forgetLastSent(kind)
+        adoptLeftLit(kind, through: sender)
         return true
     }
 
@@ -544,6 +561,7 @@ final class ConnectionsController {
             guard channels != lastChannels[kind] || isDue(lastLightSent[kind], now: now, after: Self.lightRestateSeconds)
             else { continue }
             sendDMX(kind, wire: wire, channels, through: sender)
+            noteLit(kind, wire: wire, channels, through: sender)
             lastChannels[kind] = channels
             lastLightSent[kind] = now
         }
@@ -639,7 +657,44 @@ final class ConnectionsController {
         // They stay in the ledger, so a restatement (`letGo`) says each of them dark again.
         darkening[kind] = nil
         lit[kind] = frames.mapValues(\.count)
+        // Said dark: a crash from here on leaves this receiver dark, so the next launch owes it nothing.
+        if let output = kind.litOutput {
+            keepLitLedger(litLedger.forget(output, host: sender.host, port: sender.port))
+        }
         return frames
+    }
+
+    /// Switched on to a receiver the lit-ledger says an earlier run left lit: those universes join
+    /// this output's own (`lit`), so the first tick darkens each one it does not address — one zero
+    /// frame a tick until `goodbyeCount` were admitted (`darkenDropped`, `sayDarkening`) — pads its
+    /// first frames to their old length on Art-Net, and switching off again darkens them all
+    /// (`darken`). Only through the socket the musician just switched on.
+    private func adoptLeftLit(_ kind: Kind, through sender: UDPSender) {
+        guard let output = kind.litOutput else { return }
+        let left = litLedger.leftLit(output, host: sender.host, port: sender.port)
+        guard !left.isEmpty else { return }
+        for (wire, length) in left {
+            lit[kind, default: [:]][wire] = Swift.max(lit[kind]?[wire] ?? 0, length)
+        }
+        log.info("connections: \(kind.rawValue, privacy: .public) darkens \(left.count) universes an earlier run left lit")
+    }
+
+    /// Writes the lit-ledger to the defaults when it `changed` — on a newly lit universe or one
+    /// said dark, never on every frame.
+    private func keepLitLedger(_ changed: Bool) {
+        guard changed else { return }
+        if litLedger.isEmpty {
+            UserDefaults.standard.removeObject(forKey: Self.litLedgerKey)
+        } else {
+            UserDefaults.standard.set(litLedger.encoded(), forKey: Self.litLedgerKey)
+        }
+    }
+
+    /// A frame that may light `wire` went out through `sender`: the lit-ledger learns it.
+    private func noteLit(_ kind: Kind, wire: Int, _ channels: [UInt8], through sender: UDPSender) {
+        guard let output = kind.litOutput else { return }
+        keepLitLedger(litLedger.lit(output, host: sender.host, port: sender.port, universe: wire, channels: channels,
+                                    frameLength: lit[kind]?[wire] ?? 0))
     }
 
     /// A universe `kind` lit before and does not address now goes to `darkening`; one it
@@ -663,7 +718,11 @@ final class ConnectionsController {
             // `sendDMX` remembers the wire as addressed; it is not lit, it is being darkened.
             lit[kind]?[wire] = nil
             if admitted { entry.said += 1 }
-            darkening[kind]?[wire] = entry.said >= Self.goodbyeCount ? nil : entry
+            let done = entry.said >= Self.goodbyeCount
+            darkening[kind]?[wire] = done ? nil : entry
+            if done, let output = kind.litOutput {
+                keepLitLedger(litLedger.forget(output, host: sender.host, port: sender.port, universe: wire))
+            }
         }
     }
 
@@ -791,7 +850,9 @@ final class ConnectionsController {
             else { continue }
             for universe in universes.keys.sorted() {
                 guard let channels = universes[universe] else { continue }
-                sendDMX(kind, wire: showWire(kind, universe), channels, through: sender)
+                let wire = showWire(kind, universe)
+                sendDMX(kind, wire: wire, channels, through: sender)
+                noteLit(kind, wire: wire, channels, through: sender)
             }
             lastUniverses[kind] = universes
             lastLightSent[kind] = now
