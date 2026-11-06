@@ -589,7 +589,9 @@ struct PianoRoll: View {
     }
 }
 
-/// One note: a block in the track color, brighter with velocity. A tap chooses it (outlined in
+/// One note: a block in its pitch's light (`ToneLight.noteFill`, the colour the Field and the
+/// lamp give that pitch), muted, brighter with velocity, outlined in the track colour, and named
+/// where it has room — colour is never the only cue. A tap chooses it (outlined in
 /// the accent), a double tap removes it, dragging moves it, dragging the right edge resizes it.
 /// Its VoiceOver actions edit it in steps of a named size and say the result; VoiceOver's own
 /// double tap chooses it, as a tap does, and never removes it.
@@ -610,6 +612,9 @@ struct NoteBlock: View {
 
     private static let edgeWidth: CGFloat = 14
     private static let minimumWidth: CGFloat = 6
+    /// The least room a block needs to show its name.
+    private static let labelWidth: CGFloat = 30
+    private static let labelRowHeight: CGFloat = 16
     static let gridSpace = "pianoRoll.grid"
 
     var body: some View {
@@ -618,13 +623,27 @@ struct NoteBlock: View {
 
     private var block: some View {
         let width = Swift.max(CGFloat(note.length) * pointsPerTick, Self.minimumWidth)
+        let tint = ToneLight.noteFill(forToneHz: ToneLight.hertz(ofPitch: note.pitch,
+                                                                 concertPitch: store.project.context.concertPitch),
+                                      velocity: note.velocity)
         return RoundedRectangle(cornerRadius: Theme.Radius.small)
-            .fill(color.opacity(0.45 + 0.55 * Double(note.velocity) / 127))
+            .fill(Theme.Color.linear(tint))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.small)
-                    .stroke(isSelected ? Theme.Color.accent : Theme.Color.background.opacity(0.6),
-                            lineWidth: isSelected ? 2 : 1)
+                    .stroke(isSelected ? Theme.Color.accent : color, lineWidth: isSelected ? 2 : 1)
             )
+            .overlay(alignment: .leading) {
+                if width >= Self.labelWidth && rowHeight >= Self.labelRowHeight {
+                    // Black or white, whichever reads on this fill (at least 4.5:1, ToneLightTests).
+                    Text(name)
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Color.linear(ToneLight.label(on: tint)))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                        .padding(.leading, Theme.Space.xs)
+                        .accessibilityHidden(true)
+                }
+            }
             .overlay(alignment: .trailing) {
                 // The resize handle, visible so the edge is findable.
                 Rectangle()

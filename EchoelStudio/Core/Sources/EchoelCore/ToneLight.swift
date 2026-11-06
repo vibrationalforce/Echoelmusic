@@ -188,6 +188,26 @@ public enum ToneLight {
         shade(colour(forToneHz: toneHz), saturation: keyFillSaturation, luminance: keyFillLuminance)
     }
 
+    /// A note's fill in the piano roll: its pitch's light, muted, brightness following its
+    /// velocity (`noteFillQuietest` at velocity 0 … `noteFillLoudest` at 127, relative luminance).
+    /// A deep blue cannot reach a high luminance inside the gamut; it stays as bright as it can.
+    public static let noteFillSaturation = 0.55
+    public static let noteFillQuietest = 0.20
+    public static let noteFillLoudest = 0.55
+    public static func noteFill(forToneHz toneHz: Double, velocity: Int) -> RGB {
+        let strength = Double(Swift.min(Swift.max(velocity, 0), 127)) / 127
+        let target = noteFillQuietest + (noteFillLoudest - noteFillQuietest) * strength
+        return shade(colour(forToneHz: toneHz), saturation: noteFillSaturation, luminance: target)
+    }
+
+    /// The label for text on `fill`: black or white, whichever contrasts more. One of the two
+    /// always clears 4.58:1 (they tie where the fill's luminance is √0.0525 − 0.05 ≈ 0.18), so a
+    /// name on any colour reads at WCAG AA.
+    public static func label(on fill: RGB) -> RGB {
+        let black = RGB(grey: 0), white = RGB(grey: 1)
+        return Contrast.ratio(black, fill) >= Contrast.ratio(white, fill) ? black : white
+    }
+
     // MARK: - Helpers
 
     /// log2(f_anchor / f): how many octaves below the light octave's bottom the tone sits.

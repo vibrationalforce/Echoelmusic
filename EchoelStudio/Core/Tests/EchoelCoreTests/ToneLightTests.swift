@@ -108,8 +108,49 @@ final class ToneLightTests: XCTestCase {
                 XCTAssertGreaterThan(fill.peak, 0.05, "a fill, not black: \(pitch)")
             }
         }
-        XCTAssertEqual(ToneLight.keyFill(forToneHz: ToneLight.hertz(ofPitch: 69, concertPitch: 440)),
-                       ToneLight.keyFill(forToneHz: ToneLight.hertz(ofPitch: 81, concertPitch: 440)), "A4 and A5 share a fill")
+        XCTAssertEqual(distance(ToneLight.keyFill(forToneHz: ToneLight.hertz(ofPitch: 69, concertPitch: 440)),
+                                ToneLight.keyFill(forToneHz: ToneLight.hertz(ofPitch: 81, concertPitch: 440))), 0, accuracy: 1e-9,
+                       "A4 and A5 share a fill")
+    }
+
+    /// The piano roll's note blocks: every one of the 128 notes, quiet or loud, at any concert
+    /// pitch, carries its name at WCAG AA in the label colour chosen for it.
+    func testEveryNoteFillCarriesItsLabelAtAA() {
+        for concertPitch in [415.0, 440, 466] {
+            for pitch in 0...127 {
+                for velocity in [1, 40, 100, 127] {
+                    let fill = ToneLight.noteFill(forToneHz: ToneLight.hertz(ofPitch: pitch, concertPitch: concertPitch),
+                                                  velocity: velocity)
+                    let label = ToneLight.label(on: fill)
+                    XCTAssertGreaterThanOrEqual(Contrast.ratio(label, fill), Contrast.textMinimum,
+                                                "\(pitch) at velocity \(velocity), \(concertPitch)")
+                }
+            }
+        }
+    }
+
+    func testANotesBrightnessFollowsItsVelocityAndItsHueItsPitch() {
+        for pitch in 48..<60 {
+            let hertz = ToneLight.hertz(ofPitch: pitch, concertPitch: 440)
+            var previous = -1.0
+            for velocity in stride(from: 1, through: 127, by: 6) {
+                let lit = ToneLight.noteFill(forToneHz: hertz, velocity: velocity).luminance
+                XCTAssertGreaterThanOrEqual(lit, previous - 1e-12, "louder is never darker: \(pitch)")
+                previous = lit
+            }
+            XCTAssertEqual(distance(ToneLight.noteFill(forToneHz: hertz, velocity: 127),
+                                    ToneLight.noteFill(forToneHz: hertz * 2, velocity: 127)), 0, accuracy: 1e-9,
+                           "an octave wears one fill")
+        }
+        let a = ToneLight.noteFill(forToneHz: 440, velocity: 127)
+        XCTAssertGreaterThan(a.luminance, ToneLight.noteFill(forToneHz: 440, velocity: 1).luminance + 0.1, "loud is clearly brighter")
+        XCTAssertNotEqual(a, ToneLight.noteFill(forToneHz: 440 * Foundation.pow(2, 1.0 / 12), velocity: 127))
+        XCTAssertEqual(ToneLight.noteFill(forToneHz: 440, velocity: 900), a, "velocity held to 127")
+    }
+
+    func testALabelIsBlackOnLightAndWhiteOnDark() {
+        XCTAssertEqual(ToneLight.label(on: ToneLight.RGB(grey: 0.8)), ToneLight.RGB(grey: 0))
+        XCTAssertEqual(ToneLight.label(on: ToneLight.RGB(grey: 0.02)), ToneLight.RGB(grey: 1))
     }
 
     func testAShadeKeepsTheHueAndNeverBrightens() {
