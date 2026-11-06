@@ -183,7 +183,8 @@ final class RegionWarpTests: XCTestCase {
     /// W-3: the warp mode is one validated, undoable step, kept while warp is off, saved by name,
     /// and carried by a duplicate; Tones is stored as no key at all.
     func testTheWarpModeIsOneUndoStepAndRoundTripsByName() async throws {
-        var (p, audio, region) = try song(tempo: 90)
+        let (initial, audio, region) = try song(tempo: 90)
+        var p = initial
         XCTAssertEqual(p.track(audio)?.regions.first?.warpMode, .tones, "absent is Tones")
         XCTAssertThrowsError(try Command.setRegionWarpMode(track: audio, RegionID(), mode: .beats).apply(to: &p))
         XCTAssertThrowsError(try Command.setRegionWarpMode(track: TrackID(), region, mode: .beats).apply(to: &p))
@@ -234,7 +235,8 @@ final class RegionWarpTests: XCTestCase {
     /// W-4: a transposition is validated at the door, one undo step, saved, carried by a duplicate,
     /// and never moves where the region ends; 0 stores nothing, so the song is as before.
     func testATranspositionIsValidatedAndLeavesTheRegionsEndAlone() async throws {
-        var (p, audio, region) = try song(tempo: 90)
+        let (initial, audio, region) = try song(tempo: 90)
+        var p = initial
         let untouched = p
         for cents in [Double.nan, .infinity, -2_400.5, 2_401] {
             XCTAssertThrowsError(try Command.setRegionTranspose(track: audio, region, cents: cents).apply(to: &p), "\(cents)")
