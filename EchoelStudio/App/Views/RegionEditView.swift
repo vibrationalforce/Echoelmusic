@@ -125,15 +125,60 @@ struct RegionEditView: View {
                 .foregroundStyle(Theme.Color.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        SettingField(title: "Native Tempo", value: Int(Self.heldBPM(native).rounded()),
-                     range: Int(AudioRegion.nativeBPMRange.lowerBound)...Int(AudioRegion.nativeBPMRange.upperBound),
-                     unit: "BPM", standard: Int(store.project.tempoMap.bpm(at: region.start).rounded()),
-                     spokenUnit: "beats a minute", drags: false) { bpm in
+        // In hundredths of a BPM (W-2): a whole-number tempo makes most real loops drift.
+        SettingField(title: "Native Tempo", value: Self.hundredths(Self.heldBPM(native)),
+                     range: Self.hundredths(AudioRegion.nativeBPMRange.lowerBound)...Self.hundredths(AudioRegion.nativeBPMRange.upperBound),
+                     unit: "BPM", decimals: 2, standard: Self.hundredths(Self.heldBPM(store.project.tempoMap.bpm(at: region.start))),
+                     spokenUnit: "beats a minute", drags: false) { typed in
             store.endGesture()
-            try? store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: Double(bpm),
+            try? store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: Double(typed) / 100,
                                               followsTempo: region.followsTempo == true))
         }
         .disabled(region.followsTempo != true)
+        fitToBars(region)
+    }
+
+    /// Fit to Bars (W-2): the native tempo at which the whole region spans a chosen number of bars,
+    /// and Follow Song Tempo on — the region then ends on a bar line at any song tempo. One step.
+    @ViewBuilder private func fitToBars(_ region: AudioRegion) -> some View {
+        let fits = Self.fits(region, rate: current?.file.sampleRate ?? 0,
+                             quartersPerBar: TempoAnalysis.beatsPerBar(at: region.start, in: store.project))
+        Menu {
+            ForEach(fits) { fit in
+                Button(fit.title) {
+                    store.endGesture()
+                    tempoNote = nil
+                    try? store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: fit.bpm, followsTempo: true))
+                }
+            }
+        } label: {
+            Text("Fit to Bars…")
+                .font(Theme.Font.body)
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.touch, alignment: .leading)
+        }
+        .disabled(fits.isEmpty || listening != nil)
+        .accessibilityHint("Sets Native Tempo so the whole region spans the bars you choose, and follows the song's tempo.")
+    }
+
+    /// A bar count a region can be fitted to, and the native tempo it takes.
+    struct BarFit: Identifiable {
+        let bars: Int
+        let bpm: Double
+        var id: Int { bars }
+        var title: String { "\(bars) \(bars == 1 ? "Bar" : "Bars") — " + NumberText.string(bpm, decimalsUpTo: 2, unit: "BPM") }
+    }
+
+    /// The bar counts a region can be fitted to, each with the native tempo it takes.
+    static func fits(_ region: AudioRegion, rate: Double, quartersPerBar: Double) -> [BarFit] {
+        [1, 2, 4, 8, 16, 32].compactMap { (bars: Int) -> BarFit? in
+            region.nativeBPM(forBars: bars, sampleRate: rate, quartersPerBar: quartersPerBar).map { BarFit(bars: bars, bpm: $0) }
+        }
+    }
+
+    /// A tempo in hundredths of a BPM, the native-tempo field's whole number.
+    static func hundredths(_ bpm: Double) -> Int {
+        guard bpm.isFinite else { return 12_000 }
+        return Int((Swift.min(Swift.max(bpm, AudioRegion.nativeBPMRange.lowerBound), AudioRegion.nativeBPMRange.upperBound) * 100).rounded())
     }
 
     /// Reads the region's frames for their tempo off the main thread, then turns Follow Song Tempo

@@ -145,6 +145,19 @@ extension AudioRegion {
         return (Swift.min(Swift.max(songBPM, Self.nativeBPMRange.lowerBound), Self.nativeBPMRange.upperBound), .song)
     }
 
+    /// The native tempo at which the region's audio spans exactly `bars` bars of `quartersPerBar`
+    /// quarter notes, its file at `sampleRate` (W-2, Fit to Bars): following the song's tempo, the
+    /// region then ends on a bar line at any tempo. Nil when the counts or the rate are not usable,
+    /// or the tempo falls outside `nativeBPMRange`.
+    public func nativeBPM(forBars bars: Int, sampleRate: Double, quartersPerBar: Double = 4) -> Double? {
+        guard bars > 0, length > 0, sampleRate.isFinite, sampleRate > 0,
+              quartersPerBar.isFinite, quartersPerBar > 0 else { return nil }
+        let seconds = Double(length) / sampleRate
+        let bpm = Double(bars) * quartersPerBar * 60 / seconds
+        guard bpm.isFinite, Self.nativeBPMRange.contains(bpm) else { return nil }
+        return bpm
+    }
+
     /// Whether the region has a native tempo warp can stretch from.
     public var hasNativeBPM: Bool {
         guard let nativeBPM else { return false }
