@@ -6,8 +6,9 @@ import os
 import UIKit
 #endif
 
-/// The rear camera writing a video take (wave W7, C4): one capture session with a movie output and
-/// no microphone — the take's sound is the song's mix, never the room. Its own serial queue does
+/// The camera writing a video take (wave W7, C4), through the back or the front lens: one capture
+/// session with a movie output and no microphone — the take's sound is the song's mix, never the
+/// room. Its own serial queue does
 /// every session call; the two recording callbacks come back stamped with the take's generation,
 /// so the owner drops one that arrives after a newer take began. Holds the camera only while open.
 /// Each take is turned the way the phone is held when it begins (`TakeOrientation`, read from the
@@ -42,6 +43,8 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
     /// Queue-only: the lens's rotation coordinator and the angle the next take is written at.
     private var rotation: AVCaptureDevice.RotationCoordinator?
     private var orientation = TakeOrientation()
+    /// Queue-only: the lens the take films through.
+    private var lens: TakeOrientation.Lens
     /// Queue-only: the observers of the session, while it is open; whether it is meant to run and
     /// whether iOS holds it.
     private var observers: [NSObjectProtocol] = []
@@ -50,13 +53,14 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
     private let log = Logger(subsystem: "com.echoelmusic.studio", category: "video")
 
     /// `generation` stamps the events of this camera until a take names its own.
-    init(generation: UInt64, onEvent: @escaping @Sendable (Event) -> Void) {
+    init(lens: TakeOrientation.Lens, generation: UInt64, onEvent: @escaping @Sendable (Event) -> Void) {
+        self.lens = lens
         self.current = generation
         self.onEvent = onEvent
         super.init()
     }
 
-    /// Configures the rear camera for 1080p and starts the session, off the main thread.
+    /// Configures the lens for 1080p and starts the session, off the main thread.
     func open() async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             queue.async { [self] in
@@ -75,7 +79,7 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
 
     private func configure() throws {
         guard session.inputs.isEmpty else { return }
-        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+        guard let device = Self.device(for: lens) else {
             throw OpenError.noCamera
         }
         session.beginConfiguration()
@@ -90,6 +94,44 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
         rotation = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: nil)
     }
 
+    private static func device(for lens: TakeOrientation.Lens) -> AVCaptureDevice? {
+        AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: lens == .back ? .back : .front)
+    }
+
+    /// Films through `next` from now on; the camera's events carry `generation` from here, so a
+    /// late one of the lens put away is dropped. False (the lens stays) while a take is written or
+    /// when the other lens cannot be had.
+    func switchLens(to next: TakeOrientation.Lens, generation: UInt64) async -> Bool {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+            queue.async { [self] in
+                continuation.resume(returning: replaceInput(with: next, generation: generation))
+            }
+        }
+    }
+
+    /// Queue-only.
+    private func replaceInput(with next: TakeOrientation.Lens, generation: UInt64) -> Bool {
+        guard !output.isRecording else { return false }
+        lock.withLock { current = generation }
+        guard next != lens else { return true }
+        guard let device = Self.device(for: next), let input = try? AVCaptureDeviceInput(device: device) else {
+            return false
+        }
+        session.beginConfiguration()
+        defer { session.commitConfiguration() }
+        let previous = session.inputs
+        for old in previous { session.removeInput(old) }
+        guard session.canAddInput(input) else {
+            for old in previous where session.canAddInput(old) { session.addInput(old) }
+            return false
+        }
+        session.addInput(input)
+        session.sessionPreset = session.canSetSessionPreset(.hd1920x1080) ? .hd1920x1080 : .high
+        lens = next
+        rotation = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: nil)
+        return true
+    }
+
     /// Queue-only: the take is turned the way the phone is held now, and stays so while it runs.
     /// Without a coordinator reading the last angle stands (upright at first).
     private func turnUpright() {
@@ -98,6 +140,11 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
         guard let connection = output.connection(with: .video) else { return }
         let angle = CGFloat(orientation.angle)
         if connection.isVideoRotationAngleSupported(angle) { connection.videoRotationAngle = angle }
+        // The front take unmirrored, as a camera records (the preview may mirror; the file does not).
+        if connection.isVideoMirroringSupported {
+            connection.automaticallyAdjustsVideoMirroring = false
+            connection.isVideoMirrored = false
+        }
     }
 
     /// Starts writing `url` for the take numbered `generation`.

@@ -3,9 +3,10 @@ import EchoelCore
 import SwiftUI
 import UIKit
 
-/// The camera take, in the one sheet slot (wave W7, C4): the rear camera's picture, Record and
-/// Stop. Record plays the song from where it stands and films with it; Stop ends both, and the
-/// take lands on the video track at the tick its first frame was heard. While the camera is open
+/// The camera take, in the one sheet slot (wave W7, C4): the camera's picture, the lens (back or
+/// front, changed only while no take runs), Record and Stop. Record plays the song from where it
+/// stands and films with it; Stop ends both, and the take lands on the video track at the tick its
+/// first frame was heard. While the camera is open
 /// the pulse camera waits; it comes back when this sheet closes. The sheet cannot be swiped away
 /// while a take is being written, so no take is ever lost to a gesture. A call or Siri mid-take
 /// ends it: the take lands with what was filmed, and the caption says it was cut short.
@@ -31,6 +32,7 @@ struct CameraTakeView: View {
                     .buttonStyle(ToolButtonStyle())
                     .disabled(isBusy)
                 Spacer(minLength: 0)
+                lensButton
                 recordButton
             }
         }
@@ -64,6 +66,19 @@ struct CameraTakeView: View {
         .buttonStyle(ToolButtonStyle(isActive: recorder.state == .recording, activeColor: Theme.Color.record))
         .disabled(!recorder.canRecord && recorder.state != .recording)
         .accessibilityHint("Plays the song and films with it; Stop ends both.")
+    }
+
+    private var lensButton: some View {
+        Button {
+            recorder.flipLens()
+        } label: {
+            Image(systemName: "arrow.triangle.2.circlepath.camera")
+        }
+        .buttonStyle(ToolButtonStyle())
+        .disabled(!recorder.canRecord)
+        .accessibilityLabel("Switch Camera")
+        .accessibilityValue(recorder.lens == .back ? "Back camera" : "Front camera")
+        .accessibilityHint("Films through the other lens. Not while a take is filmed.")
     }
 
     private var isBusy: Bool { recorder.state == .recording || recorder.state == .finishing }

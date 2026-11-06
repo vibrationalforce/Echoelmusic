@@ -4,13 +4,14 @@ import Foundation
 import Observation
 import os
 
-/// A video take of the performance (wave W7, C4): the rear camera films while the song plays, and
-/// the take lands on a video track where its first frame was heard — the start tick is stored, so
-/// the picture sits on the song's timeline exactly as it was played. One camera, one producer
+/// A video take of the performance (wave W7, C4): the back or the front camera films while the
+/// song plays, and the take lands on a video track where its first frame was heard — the start
+/// tick is stored, so the picture sits on the song's timeline exactly as it was played. One camera, one producer
 /// (`CameraArbitration`): a take suspends the camera pulse and gives the camera back when it ends.
 /// The take records no sound; the song's mix is its sound. The camera's life — and what a call,
 /// Siri or a camera error does to a take — is `VideoTakeLifecycle`: a take cut short lands with
-/// what was filmed, and says so.
+/// what was filmed, and says so. The lens changes only while the picture shows, never during a
+/// take; either lens is the one camera the arbitration hands out.
 @MainActor
 @Observable
 final class VideoTakeRecorder {
@@ -59,7 +60,10 @@ final class VideoTakeRecorder {
         }
     }
 
-    /// Record may start a take now.
+    /// The lens the next take films through.
+    private(set) var lens: TakeOrientation.Lens = .back
+
+    /// Record may start a take now — and the lens may change.
     var canRecord: Bool { refusal == nil && life.canRecord }
 
     @ObservationIgnored private var camera: TakeCamera?
@@ -103,7 +107,7 @@ final class VideoTakeRecorder {
                 self.giveBack()
                 return
             }
-            let camera = TakeCamera(generation: generation) { @Sendable [weak self] event in
+            let camera = TakeCamera(lens: self.lens, generation: generation) { @Sendable [weak self] event in
                 Task { @MainActor [weak self] in self?.cameraEvent(event) }
             }
             self.camera = camera
@@ -137,6 +141,26 @@ final class VideoTakeRecorder {
         startTick = nil
         if !engine.isPlaying { engine.play() }
         camera.record(to: target.url, generation: life.generation)
+    }
+
+    /// Turns to the other lens. Refused while a take is filmed or saved, and while iOS holds the
+    /// camera; the camera stays with this take (the pulse stays suspended), only its lens changes.
+    func flipLens() {
+        guard canRecord, let camera else { return }
+        let before = lens
+        let next: TakeOrientation.Lens = before == .back ? .front : .back
+        guard life.changeLens() else { return }
+        let generation = life.generation
+        lens = next
+        Task { @MainActor [weak self] in
+            let switched = await camera.switchLens(to: next, generation: generation)
+            guard let self, self.life.isCurrent(generation) else { return }
+            if !switched {
+                self.log.warning("take camera could not change its lens")
+                self.lens = before
+            }
+            self.life.handle(.opened, stamped: generation)
+        }
     }
 
     /// Ends the take and the song with it; the take lands once its file is closed.

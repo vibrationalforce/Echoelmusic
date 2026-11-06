@@ -7,7 +7,8 @@ import Foundation
 /// A take that iOS cuts short is not thrown away: the file is closed and lands with what was
 /// filmed, said plainly (`cutShort`). An interruption while the camera only shows its picture
 /// waits and gives the picture back when it ends. Every event carries the generation it was
-/// stamped with; an event of an older generation (a camera that was closed) changes nothing. Opening and closing raise the generation.
+/// stamped with; an event of an older generation (a camera that was closed, a lens that was put
+/// away) changes nothing. Opening, closing and a change of lens raise the generation.
 public struct VideoTakeLifecycle: Equatable, Sendable {
     public enum Phase: Equatable, Sendable {
         case closed
@@ -96,6 +97,18 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
     public mutating func stop() -> Bool {
         guard phase == .recording else { return false }
         phase = .finishing
+        return true
+    }
+
+    /// The lens changes (front or back) while the picture shows: a new generation, so a late event
+    /// of the lens put away is dropped, and the camera opens again (`opened` follows). Refused —
+    /// false, nothing changed — while a take is filmed or its file is closed, and while iOS holds
+    /// the camera.
+    @discardableResult
+    public mutating func changeLens() -> Bool {
+        guard canRecord else { return false }
+        generation &+= 1
+        phase = .opening
         return true
     }
 

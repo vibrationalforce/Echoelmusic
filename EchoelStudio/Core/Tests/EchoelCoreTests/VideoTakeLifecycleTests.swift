@@ -82,6 +82,35 @@ final class VideoTakeLifecycleTests: XCTestCase {
         XCTAssertEqual(life, closed)
     }
 
+    func testAChangeOfLensDropsTheLateEventsOfTheLensPutAway() {
+        var life = readyCamera()
+        let back = life.generation
+        XCTAssertTrue(life.changeLens())
+        XCTAssertNotEqual(life.generation, back, "a new lens is a new generation")
+        XCTAssertEqual(life.phase, .opening)
+        XCTAssertFalse(life.handle(.opened, stamped: back), "the back lens's late answer is dropped")
+        XCTAssertFalse(life.handle(.interruptionBegan, stamped: back))
+        XCTAssertFalse(life.handle(.runtimeError, stamped: back))
+        XCTAssertEqual(life.phase, .opening)
+        XCTAssertTrue(life.handle(.opened, stamped: life.generation))
+        XCTAssertEqual(life.phase, .ready)
+    }
+
+    func testAChangeOfLensIsRefusedWhileATakeIsFilmedOrSaved() {
+        var life = readyCamera()
+        life.record()
+        let filming = life
+        XCTAssertFalse(life.changeLens(), "never while filming")
+        XCTAssertEqual(life, filming)
+        life.stop()
+        XCTAssertFalse(life.changeLens(), "nor while the file is closed")
+        life.handle(.fileClosed(usable: true), stamped: life.generation)
+        XCTAssertTrue(life.changeLens(), "after the take has landed it may")
+        life.handle(.opened, stamped: life.generation)
+        life.handle(.interruptionBegan, stamped: life.generation)
+        XCTAssertFalse(life.changeLens(), "nor while iOS holds the camera")
+    }
+
     func testARuntimeErrorWhileFilmingLandsWhatWasFilmedAndFails() {
         var life = readyCamera()
         life.record()
