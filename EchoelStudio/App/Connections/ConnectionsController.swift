@@ -174,6 +174,9 @@ final class ConnectionsController {
     /// that receiver again — never at launch, which would open a connection nobody switched on.
     @ObservationIgnored private var litLedger: LitLedger
     @ObservationIgnored private var terminationObserver: NSObjectProtocol?
+    /// The app as a whole entered the background: the backstop for a window that left without
+    /// reporting its own phase (`ScenePresence.appEnteredBackground`).
+    @ObservationIgnored private var backgroundObserver: NSObjectProtocol?
     #if canImport(UIKit)
     @ObservationIgnored private var darkTask: UIBackgroundTaskIdentifier = .invalid
     #endif
@@ -227,6 +230,18 @@ final class ConnectionsController {
             self.letGo()
         }
         #if canImport(UIKit)
+        // The app as a whole left the foreground: no window is in front, whatever each one last
+        // reported.
+        if backgroundObserver == nil {
+            backgroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification,
+                                                                        object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.presence.appEnteredBackground()
+                    self.followPresence()
+                }
+            }
+        }
         // The app is quit while it drives a rig (swiped away while the song plays): the dark
         // frame goes out on its way down. A suspended app is not told; `letGo` covers that.
         if terminationObserver == nil {

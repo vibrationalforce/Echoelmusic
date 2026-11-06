@@ -36,6 +36,13 @@ public struct ScenePresence: Equatable, Sendable {
         phases[scene] = nil
     }
 
+    /// The whole app went to the background (the system says so for the app, not per window):
+    /// every known window is in the background now. A window torn down without a last report of
+    /// its own would otherwise stay in front forever and keep the rig lit.
+    public mutating func appEnteredBackground() {
+        for scene in phases.keys { phases[scene] = .background }
+    }
+
     /// How many windows are known, in any phase.
     public var count: Int { phases.count }
 

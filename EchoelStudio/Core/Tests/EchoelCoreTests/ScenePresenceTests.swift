@@ -16,6 +16,20 @@ final class ScenePresenceTests: XCTestCase {
         XCTAssertTrue(ScenePresence.isAway([]), "no window left: nothing holds the app in front")
     }
 
+    func testTheAppInTheBackgroundOutranksAWindowThatNeverSaidGoodbye() {
+        var presence = ScenePresence()
+        let silent = UUID()
+        let other = UUID()
+        presence.report(.active, for: silent)
+        presence.report(.background, for: other)
+        XCTAssertFalse(presence.isAway, "the silent window still counts as in front")
+        presence.appEnteredBackground()
+        XCTAssertTrue(presence.isAway, "the app's own background says no window is in front")
+        XCTAssertEqual(presence.count, 2, "the windows stay known and can report again")
+        presence.report(.active, for: other)
+        XCTAssertFalse(presence.isAway)
+    }
+
     func testOneOfTwoWindowsGoingToTheBackgroundKeepsTheRig() {
         let first = UUID()
         let second = UUID()
