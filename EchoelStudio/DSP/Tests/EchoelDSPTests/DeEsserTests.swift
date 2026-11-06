@@ -89,15 +89,54 @@ final class DeEsserTests: XCTestCase {
         XCTAssertGreaterThan(atDefault, -10)
     }
 
-    /// A vowel passes: under the threshold it is the input itself, and even with the threshold so
-    /// low that its faint top sets the de-esser off, the highs it turns down are not where a vowel is.
-    func testAVowelBelowTwoKilohertzPasses() {
-        let v = vowel()
+    /// The part of a signal under 2 kHz: two Butterworth low-passes in a row (24 dB per octave).
+    private func below2k(_ x: [Float]) -> [Float] {
+        var first = ZDFStage(), second = ZDFStage()
+        let g = ZDFStage.g(2_000, sampleRate: rate)
+        let k = ZDFStage.butterworth
+        return x.map { (sample: Float) -> Float in
+            second.process(first.process(sample, g: g, k: k).low, g: g, k: k).low
+        }
+    }
+
+    /// A vowel alone stays under the threshold and is the input itself.
+    func testAVowelAloneDoesNotSetItOff() {
         let quiet = DeEsser(sampleRate: rate, settings: .init(threshold: -40, range: 12))
-        XCTAssertEqual(change(quiet, v), 0, accuracy: 0.1)
+        XCTAssertEqual(change(quiet, vowel()), 0, accuracy: 0.1)
         XCTAssertEqual(quiet.reduction, 0, "a vowel does not reach the detector at −40 dB")
-        let triggered = DeEsser(sampleRate: rate, settings: .init(threshold: -60, range: 12))
-        XCTAssertEqual(change(triggered, v), 0, accuracy: 0.1)
+    }
+
+    /// A vowel under an "s" passes while the "s" is turned down: with the reduction held at its
+    /// full Range for the whole second half, the part under 2 kHz — where the vowel is — comes out
+    /// within 0.1 dB of how it went in. A cut of the whole signal would take 12 dB off it here too
+    /// (a float simulation of this design, 2026-11-06: −0.002 dB for the split, −12 dB for a
+    /// broadband cut).
+    func testAVowelUnderAnSPassesWhileTheSIsTurnedDown() {
+        let input = zip(sibilant(), vowel()).map { (pair: (Float, Float)) -> Float in pair.0 + 0.5 * pair.1 }
+        let deEsser = DeEsser(sampleRate: rate, settings: .init(threshold: -40, range: 12))
+        var output = input
+        let block = 480, half = input.count / 2
+        var start = 0
+        while start < output.count {
+            let frames = Swift.min(block, output.count - start)
+            var l = Array(output[start..<(start + frames)]), r = l
+            l.withUnsafeMutableBufferPointer { lp in
+                r.withUnsafeMutableBufferPointer { rp in
+                    guard let a = lp.baseAddress, let b = rp.baseAddress else { return }
+                    deEsser.process(left: a, right: b, frames: frames)
+                }
+            }
+            output.replaceSubrange(start..<(start + frames), with: l)
+            if start >= half {
+                XCTAssertLessThan(deEsser.reduction, -6, "the \"s\" holds the reduction on, block at \(start)")
+            }
+            start += frames
+        }
+        let low = below2k(output), lowIn = below2k(input)
+        let lowChange = 20 * log10f(rms(Array(low[half...])) / rms(Array(lowIn[half...])))
+        XCTAssertEqual(lowChange, 0, accuracy: 0.1, "the vowel's band is spared")
+        let whole = 20 * log10f(rms(Array(output[half...])) / rms(Array(input[half...])))
+        XCTAssertLessThan(whole, -1, "and the mix as a whole is turned down")
     }
 
     /// With no reduction the output is the input sample for sample — the split is complementary,
