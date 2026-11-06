@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import SwiftUI
 
 /// The song on a bar timeline: one lane per track, its clips and audio laid out where they
@@ -907,6 +908,7 @@ private struct RegionBlock: View {
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.small).stroke(color, lineWidth: 1)
             )
+            .overlay { waveform(tint: color) }
             .overlay(alignment: .topLeading) {
                 Label(file.name, systemImage: file.kind == .video ? "film" : "waveform")
                     .font(Theme.Font.caption)
@@ -929,6 +931,15 @@ private struct RegionBlock: View {
                         drop(movedBy: value.translation.width)
                     }
             )
+    }
+
+    /// An audio region's file as it sounds over the stretch the region plays: drawn from the
+    /// file's picture, read once (`WaveformCache`), at the region's own level. A video part has none.
+    @ViewBuilder private func waveform(tint: Color) -> some View {
+        if file.kind == .audio {
+            RegionWaveform(url: documents.mediaURL(file), offset: region.offset, length: region.length,
+                           level: Float(region.linearGain), tint: tint)
+        }
     }
 
     /// The region's fades over it, drawn as the curve they play: a line from the bottom corner
@@ -1149,4 +1160,80 @@ private struct RegionBlock: View {
     private func consolidate() {
         if let command = Arranging.consolidated(region, in: track, project: store.project) { try? store.perform(command) }
     }
+}
+
+/// The waveform inside an audio region: each column's lowest-to-highest sample in the track's hue,
+/// softened, with its RMS over it, a flat hairline for silence. The file's picture is read once,
+/// off the main thread and cancellable (`WaveformCache`), and lands in `@State` once per file: a
+/// cold image. It reads no playhead and no clock, so it redraws only when its size or its window
+/// changes (a zoom, a trim, a gain edit). It takes no touches and says nothing: a tap or hold
+/// reaches the block, and the block speaks for the region.
+private struct RegionWaveform: View {
+    let url: URL?
+    /// The first frame of the file the region plays, and how many.
+    let offset: Int
+    let length: Int
+    /// The region's own level as a factor.
+    let level: Float
+    let tint: Color
+
+    /// The file's picture: nil while it is read, and for a file that cannot be read (the block
+    /// then stays plain).
+    @State private var overview: WaveformOverview?
+
+    var body: some View {
+        // Read in `body`, not only in the renderer, so the landing read re-renders the leaf.
+        let overview = self.overview
+        let offset = self.offset, length = self.length, level = self.level, tint = self.tint
+        Canvas { context, size in
+            guard let overview, size.width > 0, size.height > 0 else { return }
+            let columns = overview.window(offset: offset, length: length,
+                                          columns: Self.columnCount(forWidth: Double(size.width)))
+            guard !columns.isEmpty else { return }
+            let mid = size.height / 2
+            let width = size.width / CGFloat(columns.count)
+            var peaks = Path()
+            var bodies = Path()
+            for (index, column) in columns.enumerated() {
+                let x = CGFloat(index) * width
+                let top = mid - Self.drawn(column.max, level) * mid
+                let bottom = mid - Self.drawn(column.min, level) * mid
+                peaks.addRect(CGRect(x: x, y: top, width: width, height: Swift.max(Self.hairline, bottom - top)))
+                let rms = Swift.max(0, Self.drawn(column.rms, level)) * mid
+                bodies.addRect(CGRect(x: x, y: mid - rms, width: width, height: rms * 2))
+            }
+            // Peaks behind, the RMS body in front: the extremes stay visible, the energy reads.
+            context.fill(peaks, with: .color(tint.opacity(Self.peakOpacity)))
+            context.fill(bodies, with: .color(tint.opacity(Self.bodyOpacity)))
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .task(id: url) {
+            overview = nil
+            guard let url else { return }
+            let read = await WaveformCache.shared.overview(of: url)
+            // A read for a file the region no longer plays must not land over the newer one.
+            guard !Task.isCancelled else { return }
+            overview = read
+        }
+    }
+
+    /// One column per two points, at least one, at most 1 024 at any zoom; none for no width.
+    private nonisolated static func columnCount(forWidth width: Double) -> Int {
+        guard width.isFinite, width > 0 else { return 0 }
+        return Int(Swift.min(width / 2, 1_024).rounded(.up))
+    }
+
+    /// A sample at the region's level, held to the block (±1); a value that is not a number is silence.
+    private nonisolated static func drawn(_ value: Float, _ level: Float) -> CGFloat {
+        let scaled = value * level
+        guard scaled.isFinite else { return 0 }
+        return CGFloat(Swift.min(Swift.max(scaled, -1), 1))
+    }
+
+    /// The thinnest a column is drawn — silence is a line, not nothing.
+    private nonisolated static let hairline: CGFloat = 0.5
+    /// Muted: the wave sits behind the name and the fades, in the track's hue, never brighter than them.
+    private nonisolated static let peakOpacity: Double = 0.35
+    private nonisolated static let bodyOpacity: Double = 0.6
 }
