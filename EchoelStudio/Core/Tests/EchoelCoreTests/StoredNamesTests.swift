@@ -80,6 +80,7 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(LightAttribute.allCases.map(\.rawValue),
                        ["dimmer", "red", "green", "blue", "white", "amber", "uv", "pan", "tilt"])
         XCTAssertEqual(LightCue.songLook, "song")
+        XCTAssertEqual(LightCue.weaveLook, "weave")
         let rigFixture = PatchedFixture(name: "Wash", profile: .rgb, universe: 1, address: 1)
         let light = Lighting(fixtures: [rigFixture],
                              cues: [LightCue(name: "Cue 1", fade: 1, look: LightCue.songLook,

@@ -173,8 +173,10 @@ public struct LightCue: Codable, Equatable, Hashable, Sendable, Identifiable {
     /// Seconds, 0 … `fadeRange`: 0 cuts (and the flash limit still slows the cut).
     public var fade: Double
     /// `song` lights the fixtures from the song — the key's colour, the level and the beat, as the
-    /// one-fixture light without a rig does; absent is the snapshot. A name this build does not
-    /// know is kept and plays as the snapshot.
+    /// one-fixture light without a rig does; `weave` lights them so, but each fixture only while
+    /// its cell of the song's Bar Weave row is lit (fixture i of n reads cell ⌊(i + ½)·61 / n⌋,
+    /// in patch order), so the weave walks across the rig a row per bar; absent is the snapshot.
+    /// A name this build does not know is kept and plays as the snapshot.
     public var look: String?
     public var values: [CueFixtureValues]
 
@@ -187,9 +189,11 @@ public struct LightCue: Codable, Equatable, Hashable, Sendable, Identifiable {
     }
 
     public static let songLook = "song"
+    public static let weaveLook = "weave"
     public static let fadeRange: ClosedRange<Double> = 0...600
 
     public var followsSong: Bool { look == Self.songLook }
+    public var followsWeave: Bool { look == Self.weaveLook }
 
     /// The stored value of one fixture's attribute, if the cue sets it.
     public func value(_ attribute: LightAttribute, of fixture: FixtureID) -> Double? {
@@ -422,7 +426,7 @@ extension Lighting {
     /// the light comes from `songLook` (dimmer, then colour) and the position from the cue.
     public func target(of cue: LightCue, songLook: LightFixture.Look) -> RigState {
         var state = restState
-        for fixture in fixtures {
+        for (index, fixture) in fixtures.enumerated() {
             guard let profile = fixture.profile, var values = state[fixture.id] else { continue }
             for attribute in profile.attributes {
                 if let stored = cue.value(attribute, of: fixture.id), stored.isFinite {
@@ -430,9 +434,22 @@ extension Lighting {
                 }
             }
             if cue.followsSong { Self.light(&values, profile: profile, with: songLook) }
+            if cue.followsWeave {
+                let lit = BarWeave.isLit(songLook.weaveRow, cell: Self.weaveCell(of: index, among: fixtures.count))
+                var look = songLook
+                if !lit { look.dimmer = 0 }
+                Self.light(&values, profile: profile, with: look)
+            }
             state[fixture.id] = values
         }
         return state
+    }
+
+    /// The weave cell fixture `index` of `count` reads: the rig spread evenly over the row.
+    public static func weaveCell(of index: Int, among count: Int) -> Int {
+        guard count > 0, index >= 0 else { return 0 }
+        let cell = Int((Double(index) + 0.5) * Double(BarWeave.width) / Double(count))
+        return Swift.min(Swift.max(cell, 0), BarWeave.width - 1)
     }
 
     /// The song's look on one profile: a dimmer channel takes the dimmer and the colour channels

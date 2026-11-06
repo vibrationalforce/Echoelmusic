@@ -159,6 +159,41 @@ final class LightShowTests: XCTestCase {
         XCTAssertEqual(value, 0.125, accuracy: 1e-9)
     }
 
+    /// A weave cue lights each fixture from the song only while its cell of the Bar Weave row is
+    /// lit — the rig spread over the row in patch order — and keeps the colour on the dark ones.
+    func testAWeaveCueLightsTheFixturesWhoseCellsAreLit() {
+        let rig = (0..<4).map { fixture(.rgb, address: 1 + 3 * $0) }
+        let cells = (0..<4).map { Lighting.weaveCell(of: $0, among: 4) }
+        XCTAssertEqual(cells, [7, 22, 38, 53], "spread evenly over the 61 cells")
+        let row: UInt64 = (1 << UInt64(cells[0])) | (1 << UInt64(cells[2]))
+        let cue = LightCue(name: "Weave", look: LightCue.weaveLook)
+        let lighting = Lighting(fixtures: rig, cues: [cue])
+        let look = LightFixture.Look(dimmer: 0.8, red: 1, green: 0.5, blue: 0, weaveRow: row)
+        let state = lighting.target(of: cue, songLook: look)
+        XCTAssertEqual(state[rig[0].id]?[.red], 0.8, "lit: the song's colour at its level")
+        XCTAssertEqual(state[rig[1].id]?[.red], 0, "dark where the cell is not lit")
+        XCTAssertEqual(state[rig[2].id]?[.green], 0.4)
+        XCTAssertEqual(state[rig[3].id]?[.green], 0)
+        XCTAssertTrue(cue.followsWeave)
+        XCTAssertFalse(cue.followsSong)
+        XCTAssertEqual(Lighting.weaveCell(of: 0, among: 1), 30, "one fixture reads the middle cell")
+        XCTAssertEqual(Lighting.weaveCell(of: 0, among: 0), 0)
+    }
+
+    /// The song's look carries the Bar Weave row of the song's bar and key: the row the Field
+    /// settles on. The Field glides to it and fades across a seek or a new key; the rig steps to
+    /// it, slowed only by its flash guard.
+    func testTheSongsLookCarriesTheBarWeaveRow() {
+        var frame = FieldFrame(isPlaying: true)
+        frame.bars = 5.7
+        frame.keyMask = 0b1010_1011_0101
+        let look = LightFixture.look(for: frame, sharesBody: false)
+        XCTAssertEqual(look.weaveRow, BarWeave.row(5, seed: BarWeave.seed(keyMask: 0b1010_1011_0101)))
+        frame.bars = .nan
+        XCTAssertEqual(LightFixture.look(for: frame, sharesBody: false).weaveRow,
+                       BarWeave.row(0, seed: BarWeave.seed(keyMask: 0b1010_1011_0101)))
+    }
+
     func testASongLookCueLightsFromTheSong() {
         let rgb = fixture(.rgb, address: 1)
         let head = fixture(.movingHead, address: 4)

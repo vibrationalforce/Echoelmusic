@@ -119,9 +119,15 @@ struct LightShowView: View {
         }
     }
 
+    /// The look picker's value: a look this build does not know shows as the snapshot it plays.
+    static func lookChoice(_ cue: LightCue) -> String {
+        cue.followsSong || cue.followsWeave ? (cue.look ?? "") : ""
+    }
+
     static func cueText(_ cue: LightCue) -> String {
         let fade = cue.fade == 0 ? "Cut" : String(format: "%.1f s", cue.fade)
-        return cue.followsSong ? "Song look · \(fade)" : fade
+        if cue.followsSong { return "Song look · \(fade)" }
+        return cue.followsWeave ? "Weave look · \(fade)" : fade
     }
 
     /// A snapshot: the new cue copies the values of the cue showing (else the last), so a look is
@@ -323,9 +329,11 @@ private struct CueEditView: View {
                          unit: "ms", step: 100, standard: 0, spokenUnit: "milliseconds",
                          commit: { milliseconds in edit(key: "fade") { $0.fade = Double(milliseconds) / 1_000 } },
                          ended: { store.endGesture() })
-            Picker("Look", selection: Binding(get: { cue.followsSong }, set: { song in edit { $0.look = song ? LightCue.songLook : nil } })) {
-                Text("Snapshot").tag(false)
-                Text("Song (key colour, level, beat)").tag(true)
+            Picker("Look", selection: Binding(get: { LightShowView.lookChoice(cue) },
+                                              set: { look in edit { $0.look = look.isEmpty ? nil : look } })) {
+                Text("Snapshot").tag("")
+                Text("Song (key colour, level, beat)").tag(LightCue.songLook)
+                Text("Weave (the song's Bar Weave across the rig)").tag(LightCue.weaveLook)
             }
             .pickerStyle(.menu)
         }
@@ -337,6 +345,9 @@ private struct CueEditView: View {
                 attributeField(attribute, fixture: fixture, cue: cue)
             }
             if cue.followsSong { NoteText("The song lights this fixture; its position comes from here.") }
+            if cue.followsWeave {
+                NoteText("The song lights this fixture while its cell of the Bar Weave is lit; its position comes from here. A small rig reads few cells and can stay dark for the first bars.")
+            }
         }
     }
 

@@ -180,18 +180,21 @@ public enum LightFixture {
         public var channelCount: Int { self == .eightBit ? 4 : 8 }
     }
 
-    /// The fixture's four values, each 0 … 1.
+    /// The fixture's four values, each 0 … 1, and the song's Bar Weave row of the moment
+    /// (`BarWeave.row`, a bit per cell), which a weave cue lights its fixtures from.
     public struct Look: Equatable, Sendable {
         public var dimmer: Double
         public var red: Double
         public var green: Double
         public var blue: Double
+        public var weaveRow: UInt64
 
-        public init(dimmer: Double, red: Double, green: Double, blue: Double) {
+        public init(dimmer: Double, red: Double, green: Double, blue: Double, weaveRow: UInt64 = 0) {
             self.dimmer = LightFixture.unit(dimmer)
             self.red = LightFixture.unit(red)
             self.green = LightFixture.unit(green)
             self.blue = LightFixture.unit(blue)
+            self.weaveRow = weaveRow
         }
 
         public static let dark = Look(dimmer: 0, red: 0, green: 0, blue: 0)
@@ -212,7 +215,9 @@ public enum LightFixture {
         if sharesBody, let coherence = frame.coherence { floor += coherenceLift * coherence }
         let song = frame.isPlaying ? levelSwing * frame.level + beatSwing * (1 - frame.beatPhase) : 0
         let colour = rgb(hue: frame.keyHue)
-        return Look(dimmer: floor + song, red: colour.red, green: colour.green, blue: colour.blue)
+        let bar = frame.bars.isFinite ? Int64(Swift.min(Swift.max(frame.bars, 0), 1e12).rounded(.down)) : 0
+        return Look(dimmer: floor + song, red: colour.red, green: colour.green, blue: colour.blue,
+                    weaveRow: BarWeave.row(bar, seed: BarWeave.seed(keyMask: frame.keyMask)))
     }
 
     /// A fully saturated colour from a hue 0 ..< 1.

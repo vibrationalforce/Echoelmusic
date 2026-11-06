@@ -307,7 +307,11 @@ as before, and an earlier format-4 build opens it and shows no rig.
 - `cues` — at most 1 000 `{id, name, fade, look, values}`, in list order (the order GO walks).
   `fade` the seconds a cue takes to arrive from what was showing, 0 … 600; `look` optional —
   `song` lights the cue from the song (the key's colour, the level, the beat) and keeps its
-  positions; absent, or a name a reader does not know, plays the snapshot. `values` is
+  positions; `weave` (added 2026-11-06, inside format 4) lights it so, but each fixture only
+  while its cell of the song's Bar Weave row is lit — fixture i of n, in list order, reads cell
+  ⌊(i + ½)·61 / n⌋, so a small rig reads few cells and can stay dark for the first bars — and an
+  earlier build plays it as the snapshot; absent, or a name a reader
+  does not know, plays the snapshot. `values` is
   `[{fixture, values}]`, one per fixture at most: a fixture's id and its values by attribute name —
   `dimmer` `red` `green` `blue` `white` `amber` `uv` `pan` `tilt` — each 0 … 1 of the channel's
   travel; pan and tilt travel on 16 bits. An attribute a reader does not know is kept. A value the
