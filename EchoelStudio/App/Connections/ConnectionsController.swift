@@ -199,6 +199,13 @@ final class ConnectionsController {
         self.engine = engine
         self.store = store
         self.strap = strap
+        // The song paused from outside in the background (a call, another app's audio) and the
+        // engine is about to stop: the rig goes dark NOW, before the app can be suspended between
+        // two ticks with its lamps on their last frame.
+        engine.onSuspending(self) { [weak self] in
+            guard let self, self.inBackground else { return }
+            self.letGo()
+        }
         #if canImport(UIKit)
         // The app is quit while it drives a rig (swiped away while the song plays): the dark
         // frame goes out on its way down. A suspended app is not told; `letGo` covers that.
@@ -558,6 +565,7 @@ final class ConnectionsController {
     /// The window that owns this controller goes away (an iPad window closed): every light output
     /// leaves its rig dark and closes; nothing else would ever reach those sockets again.
     func leave() {
+        engine?.onSuspending(self, nil)
         for kind in Kind.allCases where enabled.contains(kind) { setOn(false, kind) }
     }
 
