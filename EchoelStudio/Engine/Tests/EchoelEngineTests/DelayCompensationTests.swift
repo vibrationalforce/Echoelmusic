@@ -186,6 +186,38 @@ final class DelayCompensationTests: XCTestCase {
         XCTAssertEqual(plan.total, 912 + 85 + 64)
     }
 
+    func testAMuteASoloOrASendAtSilenceNeverMovesTheOtherTracksInTime() throws {
+        var project = Project(tempo: 120)
+        let vox = TrackID(), gtr = TrackID(), verb = TrackID()
+        try Command.addTrack(id: vox, name: "Vocal", kind: .audio, index: nil).apply(to: &project)
+        try Command.addTrack(id: gtr, name: "Guitar", kind: .audio, index: nil).apply(to: &project)
+        try Command.addTrack(id: verb, name: "Reverb", kind: .returnTrack, index: nil).apply(to: &project)
+        try Command.setSend(track: vox, to: verb, db: 0).apply(to: &project)
+        let effects: [TrackID: [any HostedProcessor]] = [verb: [LateInsert(latency: 85)]]
+        XCTAssertEqual(snapshot(project, effects: effects).compensation.delay(of: gtr)?.directDelay, 85)
+
+        var muted = project
+        try Command.setMute(vox, true).apply(to: &muted)
+        let mutedPlan = snapshot(muted, effects: effects).compensation
+        XCTAssertEqual(mutedPlan.delay(of: gtr)?.directDelay, 85, "muting the only sender keeps the guitar where it was")
+        XCTAssertEqual(mutedPlan.total, 85)
+
+        var soloed = project
+        try Command.setSolo(gtr, true).apply(to: &soloed)
+        XCTAssertEqual(snapshot(soloed, effects: effects).compensation.delay(of: gtr)?.directDelay, 85,
+                       "soloing another track keeps it where it was")
+
+        var silent = project
+        try Command.setSend(track: vox, to: verb, db: MixerStrip.volumeRange.lowerBound).apply(to: &silent)
+        XCTAssertEqual(snapshot(silent, effects: effects).compensation.delay(of: gtr)?.directDelay, 85,
+                       "a send pulled to silence keeps it where it was")
+
+        var removed = project
+        try Command.setSend(track: vox, to: verb, db: nil).apply(to: &removed)
+        XCTAssertEqual(snapshot(removed, effects: effects).compensation.delay(of: gtr)?.directDelay, 0,
+                       "without any send the return is fed by nothing and delays no one")
+    }
+
     func testAPluginInstrumentsLatencyCountsInItsTracksChain() throws {
         var project = Project(tempo: 120)
         let keys = TrackID(), drums = TrackID()
