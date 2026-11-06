@@ -226,6 +226,10 @@ public enum FieldLook {
             return plate.luminance(x: px, y: py)
         case .rings:
             return ambient + (1 - ambient) * ringsEnergy(u: u, v: v, aspect: aspect, field: field, turns: turns)
+        case .weave:
+            let energy = BarWeave.light(u: u, v: v, aspect: aspect, position: look.weavePosition, seed: look.weaveSeed,
+                                        level: field.levelLight, strength: look.weaveLight)
+            return ambient + (1 - ambient) * energy
         case .moire:
             let d = ((u * aspect - 0.5 * aspect) * (u * aspect - 0.5 * aspect) + (v - 0.5) * (v - 0.5)).squareRoot()
             let x = (u - 0.5) * 2 * aspect, y = (v - 0.5) * 2
@@ -321,6 +325,12 @@ public struct FieldLookMotion: Equatable, Sendable {
         public var moireK1 = 24.0
         public var moireK2 = 24.0
         public var moirePhase = 0.0
+        /// The weave's shown place in bars, counted so the key's row stands complete at 1
+        /// (`BarWeave.words`), and its first row.
+        public var weavePosition = 1.0
+        public var weaveSeed = BarWeave.seed(keyMask: 0)
+        /// The weave's light, 0 … 1, flash-guarded: it fades through dark to a place it cannot glide to.
+        public var weaveLight = 1.0
 
         public init() {}
 
@@ -349,6 +359,7 @@ public struct FieldLookMotion: Equatable, Sendable {
     private var moirePulse = FieldPulse()
     private var mixLight = FlashLimit()
     private var strengthLight = FlashLimit()
+    private var weaveLight = FlashLimit(value: 1)
     private var previousFieldPhase: Double?
     private var hasSeeded = false
 
@@ -384,7 +395,7 @@ public struct FieldLookMotion: Equatable, Sendable {
     public mutating func step(primary: FieldPattern, partner: FieldPattern?, mix target: Double,
                               hertz: Double?, drive: Double, tonicHz: Double, fieldPhase: Double,
                               after seconds: Double, still: Bool, patternScale: Double,
-                              beat: TuningBeat = .unison) -> Shown {
+                              beat: TuningBeat = .unison, bars: Double = 0, keyMask: UInt16 = 0) -> Shown {
         let elapsed = seconds.isFinite && seconds > 0 ? seconds : 0
         let level = drive.isFinite ? Swift.min(Swift.max(drive, 0), 1) : 0
         let wanted = hertz.flatMap { $0.isFinite && $0 > 0 && level > 0 ? $0 : nil }
@@ -402,6 +413,8 @@ public struct FieldLookMotion: Equatable, Sendable {
             strengthLight = FlashLimit(value: dish?.patternStrength ?? 0)
             mixLight = FlashLimit(value: partner == nil ? 0 : target)
             previousFieldPhase = fieldPhase
+            shown.weavePosition = Self.weaveTarget(bars)
+            shown.weaveSeed = BarWeave.seed(keyMask: keyMask)
         }
         shown.primary = primary
 
@@ -447,7 +460,35 @@ public struct FieldLookMotion: Equatable, Sendable {
         moirePulse.advance(towards: still ? 0 : beat.driftHz, after: elapsed)
         let advanced = shown.moirePhase + moirePulse.rateHz * (shown.isBlending ? Self.blendPhaseShare : 1) * elapsed
         shown.moirePhase = advanced.isFinite ? advanced - advanced.rounded(.down) : 0
+
+        // The weave: its rows follow the song's bars no faster than `BarWeave.maximumRowsPerSecond`
+        // (at the blend's share while two looks show). What they cannot glide to — a place behind
+        // (a seek, the loop's wrap), one more than `BarWeave.maximumLead` rows ahead, a new key — is
+        // never cut in: the weave's light fades, the rows change unseen in the dark, the light comes
+        // back, as a new blend partner does. Held still, the rows stand where they are; a new key
+        // still fades through, guarded.
+        let target = Self.weaveTarget(bars)
+        let seed = BarWeave.seed(keyMask: keyMask)
+        let lead = target - shown.weavePosition
+        var weaveGoal = 1.0
+        if seed != shown.weaveSeed || (!still && (lead < -BarWeave.backwardTolerance || lead > BarWeave.maximumLead)) {
+            if weaveLight.value <= Self.blendThreshold {
+                if !still { shown.weavePosition = target }
+                shown.weaveSeed = seed
+            } else {
+                weaveGoal = 0
+            }
+        } else if !still, lead > 0 {
+            let rate = BarWeave.maximumRowsPerSecond * (shown.isBlending ? Self.blendPhaseShare : 1)
+            shown.weavePosition += Swift.min(lead, rate * elapsed)
+        }
+        shown.weaveLight = weaveLight.next(towards: weaveGoal, after: elapsed)
         return shown
+    }
+
+    /// The weave's place for a song at `bars`: one row on, so the key's row is whole from the start.
+    static func weaveTarget(_ bars: Double) -> Double {
+        (bars.isFinite ? Swift.min(Swift.max(bars, 0), 1e12) : 0) + 1
     }
 
     /// The dish's wavenumber in the shader's coordinate (half the window spans one unit).

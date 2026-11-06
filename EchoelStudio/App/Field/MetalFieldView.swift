@@ -107,6 +107,16 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     /// `Theme.Color.background` (black) as Metal's clear colour: the ground the Field draws on.
     /// The other clear colour here, the no-shader grey, is computed from the centre light (data).
     nonisolated static let ground = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+    /// An empty weave: what a pass binds while no shown look is the weave (`FieldShader`'s `Weave`).
+    nonisolated static let emptyWeave = [UInt32](repeating: 0, count: 4 + 2 * BarWeave.history)
+
+    /// Binds `words` (`BarWeave.words`, always the full length) as the shader's `Weave`, index 3.
+    nonisolated static func bindWeave(_ words: [UInt32], on encoder: MTLRenderCommandEncoder) {
+        words.withUnsafeBytes { bytes in
+            guard let base = bytes.baseAddress else { return }
+            encoder.setFragmentBytes(base, length: bytes.count, index: 3)
+        }
+    }
 
     /// The numbers the shader reads. Mirrored by BYTE LAYOUT, not by name, in the MSL `Uniforms`
     /// struct of `FieldShader.field` (EchoelCore) — no compiler checks the two agree, so a field is only ever
@@ -226,6 +236,10 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     private weak var listeningTo: AudioEngine?
     private var look = LookUniforms()
     private var lastEncodedLook = LookUniforms()
+    /// The weave's scroll and rows (`BarWeave.words`), bound at fragment index 3; empty while no
+    /// shown look is the weave.
+    private var weave = MetalFieldRenderer.emptyWeave
+    private var lastEncodedWeave = MetalFieldRenderer.emptyWeave
     private var lookMotion = FieldLookMotion()
     private var chladni = ChladniUniforms()
     private var lastEncodedChladni = ChladniUniforms()
@@ -349,6 +363,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
         encoder.setFragmentBytes(&plate, length: MemoryLayout<ChladniUniforms>.stride, index: 1)
         encoder.setFragmentBytes(&looks, length: MemoryLayout<LookUniforms>.stride, index: 2)
+        bindWeave(emptyWeave, on: encoder)
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
         encoder.endEncoding()
         return true
@@ -380,7 +395,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         // The picture cannot have changed: skip the pass and leave the last frame on the layer.
         // Not a pause — the display link keeps its cadence, and the next change encodes at once.
         if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncoded), Self.bytesEqual(chladni, lastEncodedChladni),
-           Self.bytesEqual(look, lastEncodedLook) { return }
+           Self.bytesEqual(look, lastEncodedLook), weave == lastEncodedWeave { return }
 
         guard let drawable = view.currentDrawable,
               let pass = view.currentRenderPassDescriptor,
@@ -390,6 +405,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         lastEncoded = uniforms
         lastEncodedChladni = chladni
         lastEncodedLook = look
+        lastEncodedWeave = weave
         hasEncodedOnce = true
 
         if let pipeline, let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
@@ -401,6 +417,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
             encoder.setFragmentBytes(&plate, length: MemoryLayout<ChladniUniforms>.stride, index: 1)
             encoder.setFragmentBytes(&looks, length: MemoryLayout<LookUniforms>.stride, index: 2)
+            Self.bindWeave(weave, on: encoder)
             encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
             encoder.endEncoding()
         } else {
@@ -430,8 +447,11 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         let looks = lookMotion.step(primary: pattern, partner: partner, mix: mixShare, hertz: heard.hertz,
                                     drive: heard.drive, tonicHz: frame.tonicHz, fieldPhase: shown.fieldPhase,
                                     after: seconds, still: still, patternScale: detail.patternScale,
-                                    beat: frame.tuningBeat)
+                                    beat: frame.tuningBeat, bars: frame.bars, keyMask: frame.keyMask)
         look = LookUniforms(looks)
+        weave = looks.primary == .weave || (looks.isBlending && looks.partner == .weave)
+            ? BarWeave.words(position: looks.weavePosition, seed: looks.weaveSeed, light: looks.weaveLight)
+            : Self.emptyWeave
         guard looks.primary == .chladni || looks.partner == .chladni else {
             chladni = ChladniUniforms()
             return
@@ -475,6 +495,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
                 encoder.setFragmentBytes(&sent, length: MemoryLayout<Uniforms>.stride, index: 0)
                 encoder.setFragmentBytes(&plate, length: MemoryLayout<ChladniUniforms>.stride, index: 1)
                 encoder.setFragmentBytes(&looks, length: MemoryLayout<LookUniforms>.stride, index: 2)
+                Self.bindWeave(weave, on: encoder)
                 encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
                 encoder.endEncoding()
             }

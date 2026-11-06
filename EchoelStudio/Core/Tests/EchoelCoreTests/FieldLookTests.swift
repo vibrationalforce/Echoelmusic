@@ -147,7 +147,11 @@ final class FieldLookTests: XCTestCase {
 
     private static let sounds: [(Double, Double)?] = [(440, 0.5), nil, (1_760, 0.5), (55, 0.5), (6_000, 0.4), nil, (220, 0.02)]
 
-    /// The quarters' mean light of `patterns` mixed by the look motion's mix, frame by frame.
+    /// The weave's key in these tests: C major, seven cells in the middle of the ring.
+    private static let weaveKey = BarWeave.keyMask(MusicalContext(root: 0, scale: .major))
+
+    /// The quarters' mean light of `patterns` mixed by the look motion's mix, frame by frame; the
+    /// song runs three bars a second, so the weave moves (and fades through) as well.
     private func lightSeries(primary: FieldPattern, partner: FieldPattern?, mixes: (Int) -> Double,
                              seconds: Double = 6, rate: Double = 60,
                              beat: TuningBeat = TuningBeat.of(MusicalContext())) -> [[Double]] {
@@ -160,7 +164,8 @@ final class FieldLookTests: XCTestCase {
             let heard: (hertz: Double?, drive: Double) = Self.sounds[frame % Self.sounds.count].map { Self.sound([$0]) } ?? (hertz: nil, drive: 0)
             let look = looks.step(primary: primary, partner: partner, mix: mixes(frame), hertz: heard.hertz,
                                   drive: heard.drive, tonicHz: shown.toneHz, fieldPhase: shown.fieldPhase,
-                                  after: 1 / rate, still: false, patternScale: 1, beat: beat)
+                                  after: 1 / rate, still: false, patternScale: 1, beat: beat,
+                                  bars: Double(frame) * 3 / rate, keyMask: Self.weaveKey)
             let figure = plate.step(towards: plateFigures[frame % plateFigures.count], after: 1 / rate, still: false)
             let turns = look.turns(fieldPhase: shown.fieldPhase)
             for quarter in 0..<4 {
@@ -198,7 +203,7 @@ final class FieldLookTests: XCTestCase {
     }
 
     func testNoLookFlashesMoreThanThreeTimesASecond() {
-        for look in [FieldPattern.dish, .water, .aurora, .depth, .moire] {
+        for look in [FieldPattern.dish, .water, .aurora, .depth, .moire, .weave] {
             assertAtMostThreeFlashesASecond(lightSeries(primary: look, partner: nil, mixes: { _ in 0 }), look.title)
         }
     }
@@ -256,6 +261,110 @@ final class FieldLookTests: XCTestCase {
         XCTAssertTrue(blended)
     }
 
+    /// The weave at points on its lit cells, through what moves it most: bars far faster than the
+    /// eye may follow, a one-bar loop wrapping four times a second, the key changed four times a
+    /// second. No point flashes more than three times a second — and the points do light.
+    func testTheWeaveFlashesAtNoPixelMoreThanThreeTimesASecond() {
+        let rate = 60.0
+        let major = Self.weaveKey
+        let other = BarWeave.keyMask(MusicalContext(root: 3, scale: .major))
+        var field = FieldMotion.Shown()
+        field.levelLight = 1
+        let width = Double(BarWeave.width)
+        var points: [(u: Double, v: Double)] = []
+        for cell in 26...34 {
+            for row in [0.5, 1.5, 2.5, 3.5] { points.append(((Double(cell) + 0.5) / width, row / width)) }
+        }
+        let songs: [(label: String, at: (Int) -> (bars: Double, key: UInt16))] = [
+            ("six bars a second", { (Double($0) * 6 / rate, major) }),
+            ("a one-bar loop wrapping four times a second", { (12 + Double($0 % 15) / 15, major) }),
+            ("the key changed four times a second", { (Double($0) / rate, ($0 / 15) % 2 == 0 ? major : other) }),
+        ]
+        for song in songs {
+            var looks = FieldLookMotion()
+            var series = Array(repeating: [Double](), count: points.count)
+            for frame in 0..<Int(6 * rate) {
+                let place = song.at(frame)
+                let look = looks.step(primary: .weave, partner: nil, mix: 0, hertz: nil, drive: 0,
+                                      tonicHz: FieldFrame.middleC, fieldPhase: 0, after: 1 / rate, still: false,
+                                      patternScale: 1, bars: place.bars, keyMask: place.key)
+                for (index, point) in points.enumerated() {
+                    series[index].append(FieldLook.light(.weave, u: point.u, v: point.v, aspect: 1, field: field,
+                                                         look: look, plate: ChladniMotion.Shown(), turns: 0))
+                }
+            }
+            assertAtMostThreeFlashesASecond(series, song.label)
+            XCTAssertTrue(series.contains { ($0.max() ?? 0) - ($0.min() ?? 0) > FlashLimit.generalFlashThreshold },
+                          "\(song.label): the points light at all")
+        }
+    }
+
+    /// The weave glides to a place a little ahead, at its ceiling; a place behind, one far ahead
+    /// and a new key fade through dark — the rows change unseen and the light comes back; held
+    /// still, the rows stand while a new key still fades through.
+    func testTheWeaveGlidesAheadAndFadesThroughEverythingElse() {
+        var looks = FieldLookMotion()
+        let major = Self.weaveKey
+        let other = BarWeave.keyMask(MusicalContext(root: 3, scale: .major))
+        func advance(_ bars: Double, key: UInt16? = nil, still: Bool = false, seconds: Double = 1.0 / 60)
+            -> FieldLookMotion.Shown {
+            looks.step(primary: .weave, partner: nil, mix: 0, hertz: nil, drive: 0, tonicHz: FieldFrame.middleC,
+                       fieldPhase: 0, after: seconds, still: still, patternScale: 1, bars: bars, keyMask: key ?? major)
+        }
+        XCTAssertEqual(advance(0).weavePosition, 1, "the key's row stands whole from the start")
+        XCTAssertEqual(advance(0.5, seconds: 1).weavePosition, 1.5, accuracy: 1e-9)
+        XCTAssertEqual(advance(1.5, seconds: 0.4).weavePosition, 2, accuracy: 1e-9, "a bar ahead, at the ceiling")
+        // Back: the light goes first, the place changes in the dark, the light returns.
+        var shown = advance(0.25)
+        XCTAssertEqual(shown.weavePosition, 2, accuracy: 1e-9)
+        XCTAssertLessThan(shown.weaveLight, 1)
+        for _ in 0..<200 { shown = advance(0.25) }
+        XCTAssertEqual(shown.weavePosition, 1.25, accuracy: 1e-9)
+        XCTAssertGreaterThan(shown.weaveLight, 0.5)
+        // Far ahead: the same.
+        for _ in 0..<200 { shown = advance(40) }
+        XCTAssertEqual(shown.weavePosition, 41, accuracy: 1e-9)
+        // Held still the rows stand; a new key still comes in through dark.
+        shown = advance(45, still: true, seconds: 1)
+        XCTAssertEqual(shown.weavePosition, 41, accuracy: 1e-9)
+        for _ in 0..<200 { shown = advance(45, key: other, still: true) }
+        XCTAssertEqual(shown.weaveSeed, BarWeave.seed(keyMask: other))
+        XCTAssertEqual(shown.weavePosition, 41, accuracy: 1e-9, "held still, the place stays")
+    }
+
+    /// A tick back while paused (a tempo change re-rounds the playhead) is no step back: the light
+    /// stays. While two looks show, the weave glides at the blend's share of its ceiling.
+    func testTheWeaveIgnoresATickBackAndGlidesAtTheBlendsShare() {
+        let major = Self.weaveKey
+        var paused = FieldLookMotion()
+        _ = paused.step(primary: .weave, partner: nil, mix: 0, hertz: nil, drive: 0, tonicHz: FieldFrame.middleC,
+                        fieldPhase: 0, after: 1.0 / 60, still: false, patternScale: 1, bars: 32, keyMask: major)
+        var shown = FieldLookMotion.Shown()
+        for _ in 0..<120 {
+            shown = paused.step(primary: .weave, partner: nil, mix: 0, hertz: nil, drive: 0, tonicHz: FieldFrame.middleC,
+                                fieldPhase: 0, after: 1.0 / 60, still: false, patternScale: 1, bars: 32 - 1.0 / 3_840,
+                                keyMask: major)
+        }
+        XCTAssertEqual(shown.weaveLight, 1, "no fade for a tick")
+        XCTAssertEqual(shown.weavePosition, 33, accuracy: 1e-9)
+
+        var blended = FieldLookMotion()
+        var last = 0.0
+        var checked = false
+        for frame in 0..<240 {
+            let look = blended.step(primary: .weave, partner: .rings, mix: 1, hertz: nil, drive: 0,
+                                    tonicHz: FieldFrame.middleC, fieldPhase: 0, after: 1.0 / 60, still: false,
+                                    patternScale: 1, bars: Double(frame) / 60, keyMask: major)
+            if frame > 0, look.isBlending {
+                XCTAssertLessThanOrEqual(look.weavePosition - last,
+                                         BarWeave.maximumRowsPerSecond * FieldLookMotion.blendPhaseShare / 60 + 1e-12)
+                checked = true
+            }
+            last = look.weavePosition
+        }
+        XCTAssertTrue(checked, "the blend came in")
+    }
+
     /// Every pair at an even mix, and every pair with the mix control thrown from end to end each frame.
     func testNoBlendFlashesMoreThanThreeTimesASecond() {
         let looks = FieldPattern.allCases
@@ -292,7 +401,7 @@ final class FieldLookTests: XCTestCase {
         XCTAssertEqual(FieldPattern.blend(stored: "water"), .water)
         XCTAssertNil(FieldPattern.blend(stored: ""))
         XCTAssertNil(FieldPattern.blend(stored: nil))
-        XCTAssertEqual(FieldPattern.allCases.map(\.shaderIndex), [0, 1, 2, 3, 4, 5, 6])
+        XCTAssertEqual(FieldPattern.allCases.map(\.shaderIndex), [0, 1, 2, 3, 4, 5, 6, 7])
     }
 
     /// The frames where the light has moved by `step` or more against the last extreme in the

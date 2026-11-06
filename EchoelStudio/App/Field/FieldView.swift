@@ -93,6 +93,10 @@ private struct FieldSpokenValue: View {
         if FieldPattern(stored: patternName) == .moire || FieldPattern.blend(stored: partnerName) == .moire {
             parts.append(TuningBeat.of(store.project.context).spoken)
         }
+        // The Weave grows from the key, a row a bar: say whose.
+        if FieldPattern(stored: patternName) == .weave || FieldPattern.blend(stored: partnerName) == .weave {
+            parts.append("weave of \(store.project.context.title)")
+        }
         return parts.joined(separator: ", ")
     }
 }
