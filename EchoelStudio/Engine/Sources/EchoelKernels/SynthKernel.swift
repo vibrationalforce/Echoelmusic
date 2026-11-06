@@ -90,7 +90,7 @@ public final class SynthKernel: @unchecked Sendable {
         rampFrames = .allocate(capacity: count)
         rampFrames.initialize(repeating: 0, count: count)
         ramps = .allocate(capacity: count)
-        for (i, parameter) in Self.patchParameters.enumerated() { ramps[i] = parameter.taper != .stepped }
+        for i in 0..<count { ramps[i] = Self.canRamp(i) }
     }
 
     deinit {

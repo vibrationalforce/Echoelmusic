@@ -18,6 +18,10 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     private var busArray: AUAudioUnitBusArray?
     private var tree: AUParameterTree?
     private let render: RenderState
+    /// The kernel's starting sounds, and the menu a host shows for them (`factoryPresets`).
+    private let presets: [InstrumentKernelPreset]
+    private let presetMenu: [AUAudioUnitPreset]
+    private var selectedPreset: AUAudioUnitPreset?
     private let log = Logger(subsystem: "com.echoelmusic.studio.plugins", category: "instrument")
 
     /// The sample a sampler kernel plays, kept here so a new kernel (a new sample rate) and the
@@ -77,6 +81,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         self.title = title
         self.help = help
         render = RenderState(kernel: kernel.init(sampleRate: 48_000, maximumFrames: 4_096))
+        presets = kernel.factoryPresets
+        presetMenu = InstrumentPresets.menu(presets)
         try super.init(componentDescription: componentDescription, options: options)
         guard let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2) else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_FormatNotSupported))
@@ -85,7 +91,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         bus.maximumChannelCount = 2
         outputBus = bus
         busArray = AUAudioUnitBusArray(audioUnit: self, busType: .output, busses: [bus])
-        tree = Self.makeTree(kernel.parameters)
+        // `.flag_CanRamp` only where the kernel glides a host's ramp (the synth's numbers).
+        tree = InstrumentParameterTree.make(for: kernel)
         let state = render
         tree?.implementorValueObserver = { parameter, value in
             state.kernel.setParameter(Int(parameter.address), value)
@@ -94,35 +101,43 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             state.kernel.parameter(Int(parameter.address))
         }
         maximumFramesToRender = 4_096
-    }
-
-    private static func makeTree(_ parameters: [InstrumentKernelParameter]) -> AUParameterTree {
-        let nodes = parameters.enumerated().map { index, parameter in
-            let unit: AudioUnitParameterUnit = switch parameter.unit {
-            case .hertz: .hertz
-            case .seconds: .seconds
-            case .octaves: .octaves
-            case .decibel: .decibels
-            case .bpm: .BPM
-            case .choice: .indexed
-            // Pan and plain amounts read as numbers; the units a host knows are named above.
-            default: .generic
-            }
-            let node = AUParameterTree.createParameter(
-                withIdentifier: parameter.identifier, name: parameter.title, address: AUParameterAddress(index),
-                min: AUValue(parameter.range.lowerBound), max: AUValue(parameter.range.upperBound), unit: unit,
-                // No `.flag_CanRamp`: a ramp event is taken as its end value, so the host ramps (A9).
-                unitName: nil, flags: [.flag_IsReadable, .flag_IsWritable],
-                valueStrings: parameter.choices.isEmpty ? nil : parameter.choices, dependentParameters: nil)
-            node.value = AUValue(parameter.defaultValue)
-            return node
-        }
-        return AUParameterTree.createTree(withChildren: nodes)
+        // The tree starts at the parameters' defaults, which is the first preset ("Init").
+        selectedPreset = presetMenu.first
     }
 
     override var parameterTree: AUParameterTree? {
         get { tree }
         set { tree = newValue }
+    }
+
+    /// The app's presets for this instrument, numbered by their place; none for the drums and the
+    /// sampler, which have none in the app either.
+    override var factoryPresets: [AUAudioUnitPreset]? { presetMenu }
+
+    /// A host may save the musician's own sounds as user presets: the system keeps each as this
+    /// unit's `fullState` (the parameters, and the sampler's sample), the state a session keeps.
+    override var supportsUserPresets: Bool { true }
+
+    /// A host chooses a preset from its own interface, never on the render thread. A factory
+    /// preset sets every value through the parameter tree, so the host's controls follow; a user
+    /// preset restores the state it was saved with. A number this build does not list, or a user
+    /// preset that cannot be read, changes nothing and keeps the preset chosen before.
+    override var currentPreset: AUAudioUnitPreset? {
+        get { selectedPreset }
+        set {
+            guard let newValue else {
+                selectedPreset = nil
+                return
+            }
+            let chosen = InstrumentPresets.choose(newValue, from: presets, tree: tree) { preset in
+                fullState = try presetState(for: preset)
+            }
+            if chosen {
+                selectedPreset = newValue
+            } else {
+                log.error("preset \(newValue.number, privacy: .public) not chosen")
+            }
+        }
     }
 
     override var outputBusses: AUAudioUnitBusArray {
