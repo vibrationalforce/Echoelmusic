@@ -162,6 +162,8 @@ struct SessionCell: View {
                     .foregroundStyle(Theme.Color.text)
                     .lineLimit(1)
                 Spacer(minLength: 0)
+                // The bars until it starts, its own leaf: only it reads the playhead.
+                if isQueued { LaunchCountdownLabel() }
             }
             .padding(.horizontal, Theme.Space.s)
             .frame(width: SessionView.columnWidth, height: Theme.Size.trackRowHeight)
@@ -240,6 +242,38 @@ struct SessionCell: View {
                                .setSlot(track: track.id, scene: scene.id, clip: clip)], title: "New Clip")
             open(track.id, clip)
         } catch {}
+    }
+}
+
+/// "1 bar" on a queued clip: the bars until the launch it waits for, from where the song is heard.
+/// Its own leaf (Law 6): it polls the playhead ten times a second while the clip waits, and only
+/// then; the number changes once a bar and nothing blinks, far under the 3 Hz flash ceiling.
+private struct LaunchCountdownLabel: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
+
+    var body: some View {
+        // Read outside the timeline: a quantum change or a stop redraws it.
+        let quantum = engine.session.quantum
+        let playing = engine.isPlaying
+        TimelineView(.periodic(from: .now, by: 0.1)) { _ in
+            if playing, let text = countdown(quantum: quantum) {
+                Text(text)
+                    .font(Theme.Font.caption.monospacedDigit())
+                    .foregroundStyle(Theme.Color.accent)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .accessibilityLabel("Starts in \(text)")
+            }
+        }
+    }
+
+    private func countdown(quantum: Tick?) -> String? {
+        let project = store.project
+        let heard = engine.heardTick(in: project)
+        let meter = engine.playedMeterMap(of: project)
+        let launch = LaunchCountdown.launchTick(after: heard, quantum: quantum, meter: meter)
+        return LaunchCountdown.text(bars: LaunchCountdown.barsUntil(launch, from: heard, meter: meter))
     }
 }
 
