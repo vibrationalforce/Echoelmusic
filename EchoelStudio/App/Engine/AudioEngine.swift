@@ -427,6 +427,9 @@ final class AudioEngine {
     private func replaceEngine() {
         endTakeBeforeRebuild()
         step("engine: replace after media services reset")
+        // In the background the new graph is not started (`resume` waits for the foreground):
+        // the app may be suspended next, so the lights hear it first.
+        if isInBackground { tellSuspending() }
         engine.stop()
         sourceNode = nil
         tappedNode = nil            // the stream tap went with the old engine; the rebuild adds it again
@@ -448,6 +451,19 @@ final class AudioEngine {
     /// clock moves its playhead; the record controller ends a running take there, so it never
     /// runs on over a paused song (R10) or across a jump.
     @ObservationIgnored var onPausedFromOutside: (() -> Void)?
+    /// Told, synchronously, just before the idle engine stops in the background and the app may
+    /// be suspended at once — so a light output leaves its rig dark while frames can still leave.
+    /// One entry per listener (each iPad window's connections), keyed by its identity.
+    @ObservationIgnored private var suspendingListeners: [ObjectIdentifier: @MainActor () -> Void] = [:]
+
+    func onSuspending(_ listener: AnyObject, _ action: (@MainActor () -> Void)?) {
+        suspendingListeners[ObjectIdentifier(listener)] = action
+    }
+
+    /// Every listener hears that the engine stops in the background now.
+    private func tellSuspending() {
+        for listener in suspendingListeners.values { listener() }
+    }
     /// The graph came back up after it was down — the launch, a call's end, a reset, a new
     /// interface, the foreground return, a retry or Restart audio: what waited for the audio can
     /// go on now (a song that monitors always opens its input).
@@ -650,6 +666,7 @@ final class AudioEngine {
         guard isInBackground, isRunning, !isPlaying, take == nil,
               !(followsExternalClock && (clockSourceConnected || clockSourceGone != nil)) else { return }
         step("engine: suspend in background", [("buffers", renderedBuffers)])
+        tellSuspending()
         suspendedInput = wantsInput
         engine.stop()
         isRunning = false
@@ -933,6 +950,9 @@ final class AudioEngine {
         } catch {
             failed("engine: configure failed", error)
             lastError = error.localizedDescription
+            // A rebuild that failed in the background with nothing playing leaves an idle app the
+            // system may suspend: the lights hear it as they would a suspend.
+            if isInBackground && !isPlaying { tellSuspending() }
             // An input that cannot open must not take playback down with it, and says so: the
             // successful playback start would otherwise clear the only word about it.
             if input {
