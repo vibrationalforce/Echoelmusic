@@ -128,6 +128,54 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertEqual(tree.parameter(withAddress: 2)?.value, 1, "the tree reads what the kernel holds")
     }
 
+    private func stereo(_ rate: Double) throws -> AVAudioFormat {
+        try XCTUnwrap(AVAudioFormat(standardFormatWithSampleRate: rate, channels: 2))
+    }
+
+    /// The delay at a host's rate: 10 ms is 441 frames at 44.1 kHz and 480 at 48 kHz, and the
+    /// values in its tree survive resources made again at another rate.
+    func testTheDelayPlaysAtTheHostsRateAndKeepsItsValuesAcrossARateChange() throws {
+        let delay = try StandardEffectUnit(componentDescription: StandardEffectUnit.audioComponent(StandardEffect.delay.component))
+        try delay.inputBusses[0].setFormat(try stereo(44_100))
+        try delay.outputBusses[0].setFormat(try stereo(44_100))
+        try delay.allocateRenderResources()
+        let tree = try XCTUnwrap(delay.parameterTree)
+        tree.parameter(withAddress: 0)?.value = 0.01 // time
+        tree.parameter(withAddress: 1)?.value = 0 // feedback
+        tree.parameter(withAddress: 2)?.value = 1 // mix
+        var impulse = [Float](repeating: 0, count: 2_000)
+        impulse[0] = 1
+        let slow = render(delay, impulse)
+        XCTAssertEqual(slow[441], 1, accuracy: 0.05, "10 ms at 44.1 kHz")
+        XCTAssertEqual(slow[480], 0, accuracy: 0.05, "not at the 48 kHz frame")
+
+        delay.deallocateRenderResources()
+        try delay.inputBusses[0].setFormat(try stereo(48_000))
+        try delay.outputBusses[0].setFormat(try stereo(48_000))
+        try delay.allocateRenderResources()
+        let time = try XCTUnwrap(tree.parameter(withAddress: 0)?.value)
+        XCTAssertEqual(time, 0.01, accuracy: 1e-6, "the time survives the new rate")
+        XCTAssertEqual(tree.parameter(withAddress: 2)?.value, 1, "and the mix")
+        let fast = render(delay, impulse)
+        XCTAssertEqual(fast[480], 1, accuracy: 0.05, "10 ms at 48 kHz")
+        XCTAssertEqual(fast[441], 0, accuracy: 0.05, "not at the 44.1 kHz frame")
+    }
+
+    /// Input and output at different rates are refused with the format error, not played at the
+    /// wrong pitch; the same unit allocates once both sides agree.
+    func testDifferentInputAndOutputRatesAreRefused() throws {
+        let equalizer = try StandardEffectUnit(componentDescription: StandardEffectUnit.audioComponent(StandardEffect.equalizer.component))
+        try equalizer.inputBusses[0].setFormat(try stereo(44_100))
+        try equalizer.outputBusses[0].setFormat(try stereo(48_000))
+        XCTAssertThrowsError(try equalizer.allocateRenderResources()) { error in
+            let failure = error as NSError
+            XCTAssertEqual(failure.domain, NSOSStatusErrorDomain)
+            XCTAssertEqual(failure.code, Int(kAudioUnitErr_FormatNotSupported))
+        }
+        try equalizer.outputBusses[0].setFormat(try stereo(44_100))
+        XCTAssertNoThrow(try equalizer.allocateRenderResources(), "one rate on both sides")
+    }
+
     /// A host's reset empties the tail: an impulse that would repeat 10 ms later is gone once the
     /// host resets the unit, while a unit that is not reset still plays the repeat.
     func testAResetEmptiesTheDelaysTail() throws {

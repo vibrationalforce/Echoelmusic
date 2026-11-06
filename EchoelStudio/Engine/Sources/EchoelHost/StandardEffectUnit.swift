@@ -277,12 +277,16 @@ public final class StandardEffectUnit: AUAudioUnit {
     /// another host has no song key to give.
     public var key: SongKey { render.kernel.key }
 
+    /// Stereo in and out at ONE sample rate: the kernel plays at the output's rate and has no
+    /// resampler, so a host that sets the input at 44.1 kHz and the output at 48 kHz is refused
+    /// here (before the base class allocates anything) rather than played at the wrong pitch.
     public override func allocateRenderResources() throws {
-        try super.allocateRenderResources()
         guard let format = outputBus?.format, format.channelCount == 2,
-              inputBus?.format.channelCount == 2 else {
+              let input = inputBus?.format, input.channelCount == 2,
+              input.sampleRate == format.sampleRate, format.sampleRate > 0 else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_FormatNotSupported))
         }
+        try super.allocateRenderResources()
         let old = render.kernel
         render.kernel = EffectKernel(effect: effect, sampleRate: format.sampleRate, values: old.allValues)
         render.kernel.follow(key: old.key)
