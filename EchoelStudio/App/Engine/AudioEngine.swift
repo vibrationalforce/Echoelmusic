@@ -647,7 +647,8 @@ final class AudioEngine {
         guard load.callbacks > 0 || load.isTroubled else { return }
         step("engine: render load", [("callbacks", Double(load.callbacks)), ("peak", load.peak),
                                       ("over50", Double(load.overHalf)), ("over75", Double(load.overThreeQuarters)),
-                                      ("over100", Double(load.overBudget)), ("gaps", Double(load.discontinuities))],
+                                      ("over100", Double(load.overBudget)), ("gaps", Double(load.discontinuities)),
+                                      ("silent", Double(load.silent))],
              level: load.isTroubled ? .error : .info)
     }
 
@@ -1612,6 +1613,7 @@ final class AudioEngine {
             let sampleTime = timestamp.pointee.mFlags.contains(.sampleTimeValid) ? timestamp.pointee.mSampleTime : nil
             core.load.record(seconds: Double(mach_absolute_time() &- started) * secondsPerTick, frames: frames,
                              sampleRate: core.sampleRate, sampleTime: sampleTime)
+            core.load.recordOutput(pointers.base, count: count, frames: frames, playing: core.transportPlays)
             return noErr
         }
     }
