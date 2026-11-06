@@ -130,6 +130,8 @@ final class AgentToolsTests: XCTestCase {
         XCTAssertEqual(try AgentTools.standardEffect("Autotune"), .pitchCorrection)
         XCTAssertEqual(try AgentTools.standardEffect("harmony"), .harmonizer)
         XCTAssertEqual(try AgentTools.standardEffect("Echoel Grain"), .granular)
+        XCTAssertEqual(try AgentTools.standardEffect("de-esser"), .deEsser)
+        XCTAssertEqual(try AgentTools.standardEffect("dyn EQ"), .dynamicEQ)
     }
 
     func testAPatternOnPartOfALongerClipKeepsTheRestAndASharedClipIsNotStretched() async throws {

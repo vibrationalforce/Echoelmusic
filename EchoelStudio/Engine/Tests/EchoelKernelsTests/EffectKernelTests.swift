@@ -49,6 +49,7 @@ final class EffectKernelTests: XCTestCase {
                          "highRange", "attack", "release"],
             .multibandClipper: ["inputGain", "lowCrossover", "highCrossover", "lowDrive", "midDrive", "highDrive",
                                 "softness", "ceiling", "mix"],
+            .deEsser: ["frequency", "threshold", "range", "listen"],
         ]
         for (effect, identifiers) in expected {
             XCTAssertEqual(EffectKernel.parameters(for: effect).map(\.identifier), identifiers, effect.rawValue)
@@ -63,7 +64,8 @@ final class EffectKernelTests: XCTestCase {
         }
         let turned: [(StandardEffect, Int, Float)] = [(.formantFilter, 0, 3), (.transientDesigner, 2, -12),
                                                       (.midSide, 1, -12), (.multibandCompressor, 10, 12),
-                                                      (.dynamicEQ, 7, -18), (.multibandClipper, 0, 24)]
+                                                      (.dynamicEQ, 7, -18), (.multibandClipper, 0, 24),
+                                                      (.deEsser, 3, 1)]
         for (effect, address, value) in turned {
             let plain = process(EffectKernel(effect: effect, sampleRate: rate), tone)
             let kernel = EffectKernel(effect: effect, sampleRate: rate)
@@ -93,6 +95,38 @@ final class EffectKernelTests: XCTestCase {
             XCTAssertEqual(kernel.latencySeconds, Double(MultibandClipper.latencySamples) / kernelRate, accuracy: 1e-12)
         }
         XCTAssertEqual(EffectKernel(effect: .dynamicEQ, sampleRate: rate).latencySeconds, 0)
+    }
+
+    /// The de-esser's ranges and defaults as they shipped, no delay to report, and its meter: a
+    /// 9 kHz tone at −6 dBFS is far over the −30 dB threshold, so its highs come down by the
+    /// whole default Range of 6 dB (4.9 dB at 9 kHz in a float simulation, the shelf's corner
+    /// being 6.5 kHz), and at a threshold of 0 dB nothing changes at all.
+    func testTheDeEsserPinsItsRangesAndTurnsDownOnlyWhatIsOverItsThreshold() {
+        let parameters = EffectKernel.parameters(for: .deEsser)
+        let ranges: [ClosedRange<Float>] = [3_000...12_000, -60...0, 0...24, 0...1]
+        let defaults: [Float] = [6_500, -30, 6, 0]
+        let units: [EffectParameter.Unit] = [.hertz, .decibels, .decibels, .boolean]
+        XCTAssertEqual(parameters.map(\.range), ranges)
+        XCTAssertEqual(parameters.map(\.defaultValue), defaults)
+        XCTAssertEqual(parameters.map(\.unit), units)
+        XCTAssertEqual(EffectKernel(effect: .deEsser, sampleRate: rate).latencySeconds, 0)
+        let hiss: [Float] = (0..<9_600).map { (index: Int) -> Float in
+            let phase: Double = 2 * Double.pi * 9_000 * Double(index) / 48_000
+            return Float(0.5 * sin(phase))
+        }
+        func level(_ x: [Float]) -> Float {
+            let tail = Array(x.suffix(4_800))
+            return 10 * log10f(tail.reduce(Float(0)) { $0 + $1 * $1 } / Float(tail.count))
+        }
+        let kernel = EffectKernel(effect: .deEsser, sampleRate: rate)
+        let change = level(process(kernel, hiss)) - level(hiss)
+        XCTAssertLessThan(change, -4)
+        XCTAssertGreaterThan(change, -6.01, "never more than Range")
+        XCTAssertEqual(kernel.gainReduction, -6, accuracy: 1e-4, "the meter reads the highs' reduction")
+        let untouched = EffectKernel(effect: .deEsser, sampleRate: rate)
+        untouched.setParameter(1, 0)
+        XCTAssertEqual(process(untouched, hiss), hiss, "under the threshold the input passes untouched")
+        XCTAssertEqual(untouched.gainReduction, 0)
     }
 
     func testAParameterReachesTheSoundAtTheNextBlockAndCarriesToANewRate() {
