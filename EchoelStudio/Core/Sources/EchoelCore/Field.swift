@@ -9,10 +9,9 @@ public struct FieldFrame: Equatable, Sendable {
     /// Where the playhead is in its beat and in its bar, 0 ..< 1; 0 while stopped.
     public var beatPhase: Double
     public var barPhase: Double
-    /// The key's colour: its place on the circle of fifths, 0 ..< 1, so related keys sit close.
-    public var keyHue: Double
-    /// The key's tonic in hertz, in the octave of middle C at the song's concert pitch. The Metal
-    /// renderer colours the picture with it: the pitch transposed by whole octaves into light.
+    /// The key's tonic in hertz, in the octave of middle C at the song's concert pitch. It is the
+    /// key's colour everywhere — the picture, the Canvas fallback, the lamp: the pitch transposed
+    /// by whole octaves into light (`ToneLight`).
     public var tonicHz: Double
     /// The master's loudness, 0 (silence) … 1 (full scale).
     public var level: Double
@@ -31,13 +30,12 @@ public struct FieldFrame: Equatable, Sendable {
     /// The key's pitch classes, bit `n` for pitch class `n` (`BarWeave.keyMask`): the Weave's start.
     public var keyMask: UInt16
 
-    public init(beatPhase: Double = 0, barPhase: Double = 0, keyHue: Double = 0, tonicHz: Double = FieldFrame.middleC,
+    public init(beatPhase: Double = 0, barPhase: Double = 0, tonicHz: Double = FieldFrame.middleC,
                 level: Double = 0, pulse: Double? = nil, hrv: Double? = nil, coherence: Double? = nil,
                 breath: Double? = nil, isPlaying: Bool = false, tuningBeat: TuningBeat = .unison,
                 bars: Double = 0, keyMask: UInt16 = 0) {
         self.beatPhase = Self.unit(beatPhase)
         self.barPhase = Self.unit(barPhase)
-        self.keyHue = Self.unit(keyHue)
         self.tonicHz = Self.audible(tonicHz)
         self.level = Swift.min(1, Swift.max(0, level.isFinite ? level : 0))
         self.pulse = pulse.flatMap(Self.reading)
@@ -80,16 +78,10 @@ public struct FieldFrame: Equatable, Sendable {
             + unit(placeBar > 0 ? (place - Double(meter.barStart(at: placeWhole))) / placeBar : 0)
         return FieldFrame(beatPhase: beat > 0 ? (position - Double(meter.beatStart(at: whole))) / beat : 0,
                           barPhase: barPhase,
-                          keyHue: keyHue(root: context.root), tonicHz: tonicHz(of: context), level: level,
+                          tonicHz: tonicHz(of: context), level: level,
                           pulse: pulse, hrv: hrv, coherence: coherence, breath: breath, isPlaying: isPlaying,
                           tuningBeat: TuningBeat.of(context),
                           bars: bars, keyMask: BarWeave.keyMask(context))
-    }
-
-    /// C at 0, G a twelfth on, D two twelfths: the circle of fifths.
-    public static func keyHue(root: Int) -> Double {
-        let pitchClass = ((root % 12) + 12) % 12
-        return Double((pitchClass * 7) % 12) / 12
     }
 
     /// The key's tonic in the octave of middle C, at the song's concert pitch: C4 is 261.63 Hz

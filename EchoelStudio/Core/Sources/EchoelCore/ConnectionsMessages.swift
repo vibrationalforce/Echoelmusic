@@ -166,8 +166,9 @@ public struct ADMObject: Equatable, Sendable {
 }
 
 /// The light Echoel drives: one fixture of dimmer and red, green, blue, as DMX channels. The song
-/// sets it — the key is the colour (its hue on the circle of fifths), the level and the beat are
-/// the brightness — and with body sharing on, a measured coherence lifts the brightness floor.
+/// sets it — the key is the colour (its tonic's light, `ToneLight`, the colour the Field shows),
+/// the level and the beat are the brightness — and with body sharing on, a measured coherence
+/// lifts the brightness floor.
 /// Every channel passes a `FlashLimit` on its way to the wire (`LightSlew`), so whatever the
 /// values ask for, the fixture never flashes more than three times a second.
 public enum LightFixture {
@@ -214,25 +215,10 @@ public enum LightFixture {
         var floor = restingDimmer
         if sharesBody, let coherence = frame.coherence { floor += coherenceLift * coherence }
         let song = frame.isPlaying ? levelSwing * frame.level + beatSwing * (1 - frame.beatPhase) : 0
-        let colour = rgb(hue: frame.keyHue)
+        let colour = ToneLight.colour(forToneHz: frame.tonicHz)
         let bar = frame.bars.isFinite ? Int64(Swift.min(Swift.max(frame.bars, 0), 1e12).rounded(.down)) : 0
         return Look(dimmer: floor + song, red: colour.red, green: colour.green, blue: colour.blue,
                     weaveRow: BarWeave.row(bar, seed: BarWeave.seed(keyMask: frame.keyMask)))
-    }
-
-    /// A fully saturated colour from a hue 0 ..< 1.
-    public static func rgb(hue: Double) -> (red: Double, green: Double, blue: Double) {
-        let turn = unit(hue) * 6
-        let sector = Int(turn.rounded(.down)) % 6
-        let fraction = turn - turn.rounded(.down)
-        switch sector {
-        case 0: return (1, fraction, 0)
-        case 1: return (1 - fraction, 1, 0)
-        case 2: return (0, 1, fraction)
-        case 3: return (0, 1 - fraction, 1)
-        case 4: return (fraction, 0, 1)
-        default: return (1, 0, 1 - fraction)
-        }
     }
 
     /// The DMX channels: dimmer, red, green, blue in that order from slot `startChannel`

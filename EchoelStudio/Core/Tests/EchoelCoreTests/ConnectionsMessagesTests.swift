@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import EchoelCore
 
@@ -107,26 +108,27 @@ final class ConnectionsMessagesTests: XCTestCase {
 
     // MARK: - The light
 
-    /// Component-wise, within floating-point noise: a hue of 2/3 lands on blue with a green of
-    /// a few ulps, which the wire rounds away.
-    private func assertLook(_ look: LightFixture.Look, _ dimmer: Double, _ red: Double, _ green: Double, _ blue: Double,
+    /// Component-wise, within floating-point noise.
+    private func assertLook(_ look: LightFixture.Look, _ dimmer: Double, _ colour: ToneLight.RGB,
                             _ message: String = "", line: UInt = #line) {
         XCTAssertEqual(look.dimmer, dimmer, accuracy: 1e-9, "dimmer: " + message, line: line)
-        XCTAssertEqual(look.red, red, accuracy: 1e-9, "red: " + message, line: line)
-        XCTAssertEqual(look.green, green, accuracy: 1e-9, "green: " + message, line: line)
-        XCTAssertEqual(look.blue, blue, accuracy: 1e-9, "blue: " + message, line: line)
+        XCTAssertEqual(look.red, colour.red, accuracy: 1e-9, "red: " + message, line: line)
+        XCTAssertEqual(look.green, colour.green, accuracy: 1e-9, "green: " + message, line: line)
+        XCTAssertEqual(look.blue, colour.blue, accuracy: 1e-9, "blue: " + message, line: line)
     }
 
     func testTheLightRestsAtItsFloorInTheKeysColour() {
-        let stopped = FieldFrame(keyHue: 0, level: 0.8, isPlaying: false)
-        assertLook(LightFixture.look(for: stopped, sharesBody: false), 0.2, 1, 0, 0, "C is red; a stopped song adds nothing")
+        let stopped = FieldFrame(tonicHz: 440, level: 0.8, isPlaying: false)
+        assertLook(LightFixture.look(for: stopped, sharesBody: false), 0.2, ToneLight.colour(forToneHz: 440),
+                   "a stopped song in A rests in the light of 440 Hz")
     }
 
     func testTheLevelAndTheBeatLightTheSong() {
-        let loud = FieldFrame(beatPhase: 0, keyHue: 1.0 / 3, level: 1, isPlaying: true)
-        assertLook(LightFixture.look(for: loud, sharesBody: false), 1, 0, 1, 0, "full level on the beat is full brightness")
-        let lateInTheBeat = FieldFrame(beatPhase: 0.5, keyHue: 2.0 / 3, level: 0.5, isPlaying: true)
-        assertLook(LightFixture.look(for: lateInTheBeat, sharesBody: false), 0.2 + 0.3 + 0.1, 0, 0, 1)
+        let loud = FieldFrame(beatPhase: 0, tonicHz: 392, level: 1, isPlaying: true)
+        assertLook(LightFixture.look(for: loud, sharesBody: false), 1, ToneLight.colour(forToneHz: 392),
+                   "full level on the beat is full brightness")
+        let lateInTheBeat = FieldFrame(beatPhase: 0.5, tonicHz: 293.66, level: 0.5, isPlaying: true)
+        assertLook(LightFixture.look(for: lateInTheBeat, sharesBody: false), 0.2 + 0.3 + 0.1, ToneLight.colour(forToneHz: 293.66))
     }
 
     func testTheBodyReachesTheLampOnlyWhenShared() {
@@ -136,16 +138,57 @@ final class ConnectionsMessagesTests: XCTestCase {
         XCTAssertEqual(LightFixture.look(for: FieldFrame(isPlaying: false), sharesBody: true).dimmer, 0.2, "unmeasured, there is nothing to lift")
     }
 
-    func testTheColourWheelIsSaturatedAndWraps() {
-        let wheel: [(hue: Double, red: Double, green: Double, blue: Double)] = [
-            (0, 1, 0, 0), (1.0 / 6, 1, 1, 0), (1.0 / 3, 0, 1, 0), (0.5, 0, 1, 1), (2.0 / 3, 0, 0, 1), (5.0 / 6, 1, 0, 1), (1, 1, 0, 0),
-        ]
-        for stop in wheel {
-            let colour = LightFixture.rgb(hue: stop.hue)
-            XCTAssertEqual(colour.red, stop.red, accuracy: 1e-9, "hue \(stop.hue)")
-            XCTAssertEqual(colour.green, stop.green, accuracy: 1e-9, "hue \(stop.hue)")
-            XCTAssertEqual(colour.blue, stop.blue, accuracy: 1e-9, "hue \(stop.hue)")
+    /// The lamp and the picture agree in every key and at every concert pitch: the lamp's colour
+    /// is the tonic's light, the one the Field's shader draws.
+    func testTheLampWearsTheFieldsColourInEveryKey() {
+        for concertPitch in [432.0, 440, 442] {
+            for root in 0..<12 {
+                let context = MusicalContext(root: root, concertPitch: concertPitch)
+                let frame = FieldFrame.at(tick: 0, signature: .common, context: context, level: 0,
+                                          pulse: nil, hrv: nil, coherence: nil, isPlaying: false)
+                assertLook(LightFixture.look(for: frame, sharesBody: false), LightFixture.restingDimmer,
+                           ToneLight.colour(forToneHz: FieldFrame.tonicHz(of: context)), "root \(root) at \(concertPitch)")
+            }
         }
+    }
+
+    /// The key changing on every beat, at every tempo up to 240 bpm, between every pair of keys:
+    /// what reaches the lamp (its dimmer times its colour's luminance) still flashes no more than
+    /// three times a second.
+    func testAKeyChangeOnEveryBeatStillFlashesAtMostThreeTimesASecond() {
+        let rate = 60.0, seconds = 10
+        var worst = 0.0
+        for bpm in [60.0, 120, 240] {
+            for first in 0..<12 {
+                for second in 0..<12 where second != first {
+                    var slew = LightSlew()
+                    var shown: [Double] = []
+                    for index in 0..<(seconds * Int(rate)) {
+                        let beats = Double(index) / rate * bpm / 60
+                        let beat = Int(beats.rounded(.down))
+                        let root = beat % 2 == 0 ? first : second
+                        let frame = FieldFrame(beatPhase: beats - Double(beat),
+                                               tonicHz: 440 * Foundation.pow(2, Double(root - 9) / 12), level: 1, isPlaying: true)
+                        let look = slew.next(towards: LightFixture.look(for: frame, sharesBody: false), after: 1 / rate)
+                        shown.append(look.dimmer * ToneLight.RGB(red: look.red, green: look.green, blue: look.blue).luminance)
+                    }
+                    worst = Swift.max(worst, Double(flashes(in: shown)) / Double(seconds))
+                }
+            }
+        }
+        XCTAssertLessThanOrEqual(worst, FlashLimit.flashesPerSecond)
+    }
+
+    /// Full swings of at least one flash step, a rise and then a fall.
+    private func flashes(in shown: [Double]) -> Int {
+        guard var anchor = shown.first else { return 0 }
+        var count = 0, rising = true
+        for value in shown {
+            if rising, value - anchor >= FlashLimit.flashStep { rising = false; anchor = value }
+            else if !rising, anchor - value >= FlashLimit.flashStep { rising = true; anchor = value; count += 1 }
+            if rising { anchor = Swift.min(anchor, value) } else { anchor = Swift.max(anchor, value) }
+        }
+        return count
     }
 
     func testTheChannelsAreDimmerThenRGBFromTheStartSlot() {

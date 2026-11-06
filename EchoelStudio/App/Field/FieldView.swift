@@ -152,12 +152,13 @@ struct FieldCanvasView: View {
     private static func draw(_ frame: FieldFrame, _ shown: Shown, in canvas: inout GraphicsContext, size: CGSize) {
         let middle = CGPoint(x: size.width / 2, y: size.height / 2)
         let reach = Double(Swift.min(size.width, size.height)) / 2
-        // The key's hue is the song's colour (data), so these are not Theme colours.
-        let hue = frame.keyHue
+        // The key's colour is its tonic's light (data, `ToneLight`), the colour the Metal Field
+        // and the lamp show, so these are not Theme colours.
+        let keyLight = ToneLight.colour(forToneHz: frame.tonicHz)
         // The beat: a ring that grows through each beat; its brightness is guarded.
         let ring = reach * (0.35 + 0.55 * frame.beatPhase)
         canvas.stroke(Path(ellipseIn: CGRect(x: middle.x - ring, y: middle.y - ring, width: ring * 2, height: ring * 2)),
-                      with: .color(Color(hue: hue, saturation: 0.45, brightness: 0.25 + 0.5 * shown.beat)),
+                      with: .color(Theme.Color.tone(keyLight, saturation: 0.45, brightness: 0.25 + 0.5 * shown.beat)),
                       lineWidth: 2)
         // The bar: a thin arc showing how far into the bar the song is.
         var arc = Path()
@@ -167,12 +168,12 @@ struct FieldCanvasView: View {
         // The level: the size of the solid disc.
         let disc = reach * (0.08 + 0.25 * frame.level)
         canvas.fill(Path(ellipseIn: CGRect(x: middle.x - disc, y: middle.y - disc, width: disc * 2, height: disc * 2)),
-                    with: .color(Color(hue: hue, saturation: 0.35, brightness: 0.2 + 0.35 * shown.centre)))
+                    with: .color(Theme.Color.tone(keyLight, saturation: 0.35, brightness: 0.2 + 0.35 * shown.centre)))
         // The body: coherence widens a quiet halo; absent, there is none.
         if let coherence = frame.coherence {
             let halo = disc + reach * 0.15 * coherence
             canvas.stroke(Path(ellipseIn: CGRect(x: middle.x - halo, y: middle.y - halo, width: halo * 2, height: halo * 2)),
-                          with: .color(Color(hue: hue, saturation: 0.25, brightness: 0.6)), lineWidth: 1)
+                          with: .color(Theme.Color.tone(keyLight, saturation: 0.25, brightness: 0.6)), lineWidth: 1)
         }
     }
 

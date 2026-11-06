@@ -1,4 +1,5 @@
 import EchoelCore
+import Foundation
 import XCTest
 
 /// A tone's light by octave transposition: the one colour rule every surface shares.
@@ -92,6 +93,50 @@ final class ToneLightTests: XCTestCase {
         XCTAssertEqual(Float(try XCTUnwrap(Double(ToneLight.violetEdgeLiteral))), Float(ToneLight.violetEdge))
         XCTAssertEqual(ToneLight.redEdge, Foundation.log2(780.0 / 640.0), accuracy: 1e-15)
         XCTAssertEqual(ToneLight.violetEdge, Foundation.log2(780.0 / 420.0), accuracy: 1e-15)
+    }
+
+    /// The app's text colour (#e0e0e0, `EchoelBrand.Color.neutral`) as a linear colour.
+    private let appText = ToneLight.RGB(encodedRed: 0.878, green: 0.878, blue: 0.878)
+
+    /// The hex keyboard's cells wear their key's light, and the note's name on every one of them
+    /// still reads at WCAG AA, at every concert pitch the menu offers and beyond.
+    func testEveryKeyFillCarriesItsLabelAtAA() {
+        for concertPitch in [415.0, 432, 440, 442, 466] {
+            for pitch in 0...127 {
+                let fill = ToneLight.keyFill(forToneHz: ToneLight.hertz(ofPitch: pitch, concertPitch: concertPitch))
+                XCTAssertGreaterThanOrEqual(Contrast.ratio(appText, fill), Contrast.textMinimum, "\(pitch) at \(concertPitch)")
+                XCTAssertGreaterThan(fill.peak, 0.05, "a fill, not black: \(pitch)")
+            }
+        }
+        XCTAssertEqual(ToneLight.keyFill(forToneHz: ToneLight.hertz(ofPitch: 69, concertPitch: 440)),
+                       ToneLight.keyFill(forToneHz: ToneLight.hertz(ofPitch: 81, concertPitch: 440)), "A4 and A5 share a fill")
+    }
+
+    func testAShadeKeepsTheHueAndNeverBrightens() {
+        let a = ToneLight.colour(forToneHz: 440)
+        let shaded = ToneLight.shade(a, saturation: 1, luminance: 0.05)
+        XCTAssertLessThanOrEqual(shaded.luminance, 0.05 + 1e-12)
+        XCTAssertEqual(shaded.luminance, 0.05, accuracy: 1e-9, "reachable, so reached")
+        // Proportional channels: the same chromaticity, only darker.
+        XCTAssertEqual(shaded.red / Swift.max(shaded.peak, 1e-12), a.red / a.peak, accuracy: 1e-9)
+        XCTAssertEqual(shaded.blue / Swift.max(shaded.peak, 1e-12), a.blue / a.peak, accuracy: 1e-9)
+        let grey = ToneLight.shade(a, saturation: 0, luminance: 0.2)
+        XCTAssertEqual(grey.red, grey.green, accuracy: 1e-9, "no saturation is grey")
+        XCTAssertEqual(ToneLight.shade(a, saturation: .nan, luminance: .nan), ToneLight.RGB(grey: 0))
+        let blue = ToneLight.RGB(red: 0, green: 0, blue: 1)
+        XCTAssertLessThanOrEqual(ToneLight.shade(blue, saturation: 1, luminance: 0.5).blue, 1, "capped, never past the gamut")
+    }
+
+    func testTheContrastRatioIsWCAGs() {
+        let black = ToneLight.RGB(grey: 0), white = ToneLight.RGB(grey: 1)
+        XCTAssertEqual(Contrast.ratio(black, white), 21, accuracy: 1e-12)
+        XCTAssertEqual(Contrast.ratio(white, black), 21, accuracy: 1e-12, "either order")
+        XCTAssertEqual(Contrast.ratio(white, white), 1, accuracy: 1e-12)
+        // #767676 on white is the classic 4.54:1.
+        XCTAssertEqual(Contrast.ratio(ToneLight.RGB(encodedRed: 0x76 / 255.0, green: 0x76 / 255.0, blue: 0x76 / 255.0), white),
+                       4.54, accuracy: 0.01)
+        XCTAssertEqual(ToneLight.RGB(grey: 0.5).encoded.red, 0.7354, accuracy: 1e-3, "the sRGB transfer")
+        XCTAssertEqual(ToneLight.RGB(encodedRed: 0.7354, green: 0, blue: 0).red, 0.5, accuracy: 1e-3)
     }
 
     func testAColourHoldsItsChannelsToUnit() {

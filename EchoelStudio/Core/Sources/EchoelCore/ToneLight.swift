@@ -38,6 +38,19 @@ public enum ToneLight {
             let k = factor.isFinite ? factor : 0
             return RGB(red: red * k, green: green * k, blue: blue * k)
         }
+
+        /// The colour from gamma-encoded sRGB components (what a screen colour is written in).
+        public init(encodedRed: Double, green: Double, blue: Double) {
+            self.init(red: ToneLight.decode(encodedRed), green: ToneLight.decode(green), blue: ToneLight.decode(blue))
+        }
+
+        /// The relative luminance (WCAG 2.x, Rec. 709 weights on linear channels), 0 … 1.
+        public var luminance: Double { 0.2126 * red + 0.7152 * green + 0.0722 * blue }
+
+        /// The same colour gamma-encoded for a screen (the sRGB transfer, IEC 61966-2-1).
+        public var encoded: RGB {
+            RGB(red: ToneLight.encode(red), green: ToneLight.encode(green), blue: ToneLight.encode(blue))
+        }
     }
 
     // MARK: - The constants (the shader is written from these)
@@ -141,6 +154,40 @@ public enum ToneLight {
         return RGB(red: r, green: g, blue: b)
     }
 
+    // MARK: - On a key, a lamp, a screen
+
+    /// The equal-tempered pitch `pitch` (MIDI number) at `concertPitch` (A4), hertz; a concert
+    /// pitch that is not a positive, finite number counts as 440.
+    public static func hertz(ofPitch pitch: Int, concertPitch: Double) -> Double {
+        let a4 = concertPitch.isFinite && concertPitch > 0 ? concertPitch : 440
+        return a4 * Foundation.pow(2, (Double(pitch) - 69) / 12)
+    }
+
+    /// `colour` brought `saturation` of the way out of its own grey (0 grey … 1 as it is) and then
+    /// to the relative luminance `luminance` — never above it: a colour whose brightest channel
+    /// reaches 1 first stays darker, so a light label over it only gains contrast. The hue (the
+    /// pitch) survives; only how strong and how bright it is change.
+    public static func shade(_ colour: RGB, saturation: Double, luminance: Double) -> RGB {
+        let keep = unit(saturation), target = unit(luminance)
+        let grey = colour.luminance
+        let r = grey + (colour.red - grey) * keep
+        let g = grey + (colour.green - grey) * keep
+        let b = grey + (colour.blue - grey) * keep
+        let lit = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        guard lit > 1e-9 else { return RGB(grey: target) }
+        let peak = Swift.max(r, Swift.max(g, b))
+        let k = Swift.min(target / lit, peak > 1e-9 ? 1 / peak : 1)
+        return RGB(red: r * k, green: g * k, blue: b * k)
+    }
+
+    /// A key's fill (the hex keyboard's cells): the key's light, muted and dark enough that the
+    /// app's text colour on it clears WCAG AA (`Contrast.textMinimum`) for every pitch.
+    public static let keyFillSaturation = 0.6
+    public static let keyFillLuminance = 0.10
+    public static func keyFill(forToneHz toneHz: Double) -> RGB {
+        shade(colour(forToneHz: toneHz), saturation: keyFillSaturation, luminance: keyFillLuminance)
+    }
+
     // MARK: - Helpers
 
     /// log2(f_anchor / f): how many octaves below the light octave's bottom the tone sits.
@@ -149,6 +196,16 @@ public enum ToneLight {
         guard toneHz.isFinite, toneHz > 0 else { return nil }
         let p = Foundation.log2(speedOfLightNanometresPerSecond / anchorNanometres / toneHz)
         return p.isFinite ? p : nil
+    }
+
+    static func encode(_ linear: Double) -> Double {
+        let c = unit(linear)
+        return c <= 0.0031308 ? 12.92 * c : 1.055 * Foundation.pow(c, 1 / 2.4) - 0.055
+    }
+
+    static func decode(_ encoded: Double) -> Double {
+        let c = unit(encoded)
+        return c <= 0.04045 ? c / 12.92 : Foundation.pow((c + 0.055) / 1.055, 2.4)
     }
 
     static func unit(_ value: Double) -> Double {

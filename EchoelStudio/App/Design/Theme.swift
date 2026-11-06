@@ -69,13 +69,29 @@ enum Theme {
             "Blue", "Indigo", "Violet", "Magenta", "Pink", "Gray",
         ]
 
-        /// The hex keyboard's 12 pitch-class fills: muted, dark enough for `text` on them, and
-        /// ordered around the circle of fifths, so the board's fifth neighbours (up and to the
-        /// right) are neighbouring hues and a key's region reads as one family. Every cell also
+        /// A hex key's fill: its pitch's light at the song's concert pitch (`ToneLight.keyFill`),
+        /// the colour the Field and the lamp show for that pitch, muted and dark enough that
+        /// `text` on it clears AA (`ToneLightTests` measure all 128 notes). Every cell also
         /// carries its name: colour is never the only cue.
-        static func pitchClass(_ index: Int) -> SwiftUI.Color {
-            let fifths = (((index % 12) + 12) % 12 * 7) % 12
-            return SwiftUI.Color(hue: Double(fifths) / 12, saturation: 0.34, brightness: 0.44)
+        static func pitchFill(_ pitch: Int, concertPitch: Double) -> SwiftUI.Color {
+            linear(ToneLight.keyFill(forToneHz: ToneLight.hertz(ofPitch: pitch, concertPitch: concertPitch)))
+        }
+
+        /// A linear colour from Core (`ToneLight.RGB`) on screen, gamma-encoded.
+        static func linear(_ light: ToneLight.RGB, opacity: Double = 1) -> SwiftUI.Color {
+            let shown = light.encoded
+            return SwiftUI.Color(red: shown.red, green: shown.green, blue: shown.blue, opacity: opacity)
+        }
+
+        /// A tone's light drawn as data (the Canvas Field): `saturation` of the way out of its
+        /// grey and its brightest channel at `brightness`, as an HSV brightness reads.
+        static func tone(_ light: ToneLight.RGB, saturation: Double, brightness: Double) -> SwiftUI.Color {
+            let shown = light.encoded
+            let peak = Swift.max(shown.peak, 1e-6)
+            let keep = Swift.min(Swift.max(saturation.isFinite ? saturation : 0, 0), 1)
+            let level = Swift.min(Swift.max(brightness.isFinite ? brightness : 0, 0), 1)
+            func channel(_ value: Double) -> Double { (peak - (peak - value) * keep) / peak * level }
+            return SwiftUI.Color(red: channel(shown.red), green: channel(shown.green), blue: channel(shown.blue))
         }
 
         static func track(_ index: Int) -> SwiftUI.Color {

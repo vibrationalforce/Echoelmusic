@@ -269,6 +269,27 @@ final class LightShowTests: XCTestCase {
         XCTAssertEqual(state[head.id]?[.pan], 0.1, "the position stays the cue's")
     }
 
+    /// A song in A at 440 lights a colour-only fixture with the light of 440 Hz — the Field's
+    /// colour for that key — scaled by the song's dimmer, and a fixture with a dimmer with the
+    /// colour itself.
+    func testASongInALightsTheRigWithTheLightOf440Hz() throws {
+        var project = Project()
+        project.context.root = 9
+        let look = LightShowRender.songLook(of: project, atSeconds: 0)
+        let rgb = fixture(.rgb, address: 1)
+        let head = fixture(.movingHead, address: 4)
+        let cue = LightCue(name: "Song", look: LightCue.songLook)
+        let state = Lighting(fixtures: [rgb, head], cues: [cue]).target(of: cue, songLook: look)
+        let a440 = ToneLight.colour(forToneHz: 440)
+        let lamp = try XCTUnwrap(state[rgb.id])
+        XCTAssertEqual(lamp[.red] ?? -1, a440.red * look.dimmer, accuracy: 1e-9)
+        XCTAssertEqual(lamp[.green] ?? -1, a440.green * look.dimmer, accuracy: 1e-9)
+        XCTAssertEqual(lamp[.blue] ?? -1, a440.blue * look.dimmer, accuracy: 1e-9)
+        let moving = try XCTUnwrap(state[head.id])
+        XCTAssertEqual(moving[.red] ?? -1, a440.red, accuracy: 1e-9)
+        XCTAssertEqual(moving[.dimmer] ?? -1, look.dimmer, accuracy: 1e-9)
+    }
+
     // MARK: - Flash limit
 
     /// A strobe cue pair placed every eighth note at 240 bpm (eight changes a second) and a GO

@@ -32,7 +32,8 @@ struct PlayKeysView: View {
                     DrumPads(router: engine.live, compact: isCompact)
                 } else if showsHex {
                     HexKeyboard(router: engine.live, lowest: clampedLowest,
-                                minimumCell: isCompact ? 44 : 48)
+                                minimumCell: isCompact ? 44 : 48,
+                                concertPitch: store.project.context.concertPitch)
                         .frame(height: isCompact ? Swift.min(keyHeight, 100) : Swift.min(keyHeight * 1.3, 220))
                 } else {
                     Keyboard(router: engine.live, lowest: clampedLowest)
@@ -155,6 +156,8 @@ private struct HexKeyboard: View {
     let router: LiveRouter
     let lowest: Int
     let minimumCell: CGFloat
+    /// The song's A4: a cell wears its pitch's light at it, as the Field and the lamp do.
+    let concertPitch: Double
 
     var body: some View {
         GeometryReader { geometry in
@@ -166,7 +169,7 @@ private struct HexKeyboard: View {
             let top = Swift.max(0, geometry.size.height - boardHeight)
             ZStack(alignment: .topLeading) {
                 ForEach(board.cells) { key in
-                    PlayKey(router: router, note: key.pitch, style: .hex(key.pitchClass),
+                    PlayKey(router: router, note: key.pitch, style: .hex(Theme.Color.pitchFill(key.pitch, concertPitch: concertPitch)),
                             label: Self.label(of: key.pitch))
                         .frame(width: cell, height: cell * CGFloat(HexKeyLayout.heightPerWidth))
                         .position(x: CGFloat(key.x) * cell, y: top + boardHeight - CGFloat(key.y) * cell)
@@ -239,7 +242,7 @@ private struct DrumPads: View {
 /// keys, not one struck twice (`LiveKeys` tells keys apart by channel; the instrument does not
 /// hear it).
 private struct PlayKey: View {
-    enum Style: Equatable { case white, black, pad, hex(Int) }
+    enum Style: Equatable { case white, black, pad, hex(Color) }
 
     let router: LiveRouter
     let note: Int
@@ -322,7 +325,7 @@ private struct PlayKey: View {
         case .white: return Theme.Color.keyWhite
         case .black: return Theme.Color.keyBlack
         case .pad: return Theme.Color.surfaceRaised
-        case .hex(let pitchClass): return Theme.Color.pitchClass(pitchClass)
+        case .hex(let tint): return tint
         }
     }
 

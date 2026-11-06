@@ -19,12 +19,19 @@ final class FieldTests: XCTestCase {
         XCTAssertEqual(FieldFrame(bars: -2).bars, 0)
     }
 
-    func testRelatedKeysSitCloseOnTheCircleOfFifths() {
-        XCTAssertEqual(FieldFrame.keyHue(root: 0), 0)
-        XCTAssertEqual(FieldFrame.keyHue(root: 7), 1.0 / 12, accuracy: 1e-12, "G is one fifth from C")
-        XCTAssertEqual(FieldFrame.keyHue(root: 2), 2.0 / 12, accuracy: 1e-12, "D is two")
-        XCTAssertEqual(FieldFrame.keyHue(root: 5), 11.0 / 12, accuracy: 1e-12, "F is one fifth below")
-        XCTAssertEqual(FieldFrame.keyHue(root: -1), FieldFrame.keyHue(root: 11))
+    /// The key's colour is its tonic's light (`ToneLight`): twelve keys, twelve colours, and a
+    /// root a whole octave away (−1 and 11) is the same key and the same light.
+    func testEveryKeyWearsItsTonicsLight() {
+        let colours = (0..<12).map { (root: Int) -> ToneLight.RGB in
+            ToneLight.colour(forToneHz: FieldFrame.tonicHz(of: MusicalContext(root: root)))
+        }
+        for index in 0..<12 {
+            for other in (index + 1)..<12 {
+                XCTAssertNotEqual(colours[index], colours[other], "roots \(index) and \(other)")
+            }
+        }
+        XCTAssertEqual(ToneLight.colour(forToneHz: FieldFrame.tonicHz(of: MusicalContext(root: -1))), colours[11])
+        XCTAssertEqual(colours[9], ToneLight.colour(forToneHz: 440), "A at 440 is the light of 440 Hz")
     }
 
     /// The picture never invents a body: a reading outside 0 … 1 or not finite is absent.
