@@ -158,9 +158,10 @@ final class ConnectionsController {
     @ObservationIgnored private var presence = ScenePresence()
     /// The rig was left dark and nothing has lit it since.
     @ObservationIgnored private var leftDark = false
-    /// Each universe numbers its own packets, as both standards count per universe.
-    /// Every DMX frame is numbered per output and per universe on the wire, as both standards count.
-    @ObservationIgnored private var wireSequences: [Kind: [Int: UInt8]] = [:]
+    /// Every DMX frame is numbered per output and per universe on the wire, as both standards
+    /// count. Kept for the whole run and never reset — not by switching an output off and on, not
+    /// by a new receiver — so a universe's numbers never run backwards (`WireSequences`).
+    @ObservationIgnored private var wireSequences = WireSequences()
     /// Per light output, every universe on the wire it has sent to since it last went dark, with the
     /// longest frame there. Leaving the rig darkens each of them, and a universe the output stops
     /// addressing — a fixture moved or removed, another song, a new universe setting — is darkened
@@ -753,19 +754,17 @@ final class ConnectionsController {
         let longest = lit[kind]?[wire] ?? 0
         var frame = channels
         if frame.count < longest { frame.append(contentsOf: [UInt8](repeating: 0, count: longest - frame.count)) }
-        var sequence = wireSequences[kind]?[wire] ?? 0
         let packet: Data
         switch kind {
         case .artNet:
-            sequence = ArtDMXPacket.nextSequence(sequence)
+            let sequence = wireSequences.next(.artNet, universe: wire)
             packet = ArtDMXPacket.packet(universe: wire, sequence: sequence, channels: frame)
         case .sacn:
-            sequence = E131Packet.nextSequence(sequence)
+            let sequence = wireSequences.next(.sacn, universe: wire)
             packet = E131Packet.packet(universe: wire, sequence: sequence, cid: cid, channels: frame, options: options)
         case .osc, .admOSC:
             return false
         }
-        wireSequences[kind, default: [:]][wire] = sequence
         lit[kind, default: [:]][wire] = Swift.max(longest, frame.count)
         return sender.send(packet)
     }
