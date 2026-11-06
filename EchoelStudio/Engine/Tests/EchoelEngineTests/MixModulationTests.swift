@@ -145,6 +145,25 @@ final class MixModulationTests: XCTestCase {
         XCTAssertEqual(routes.value(0.25, at: nil), 0.25, "with the song standing, nothing is added")
     }
 
+    /// `weave.1` reads the song position and the key, like `lfo.1`: it compiles without inputs and
+    /// moves the pan by each bar's value, held through the bar once it has glided in.
+    func testABarWeaveRouteMovesThePanByEachBarsValueEvenWithoutInputs() throws {
+        var (project, _) = try song { [ModulationRoute(source: .weave1, target: .pan($0), depth: 1)] }
+        project.context = MusicalContext(root: 0, scale: .major)
+        let offline = try XCTUnwrap(snapshot(project, inputs: nil).lanes.first)
+        let routes = try XCTUnwrap(offline.mix?.panRoutes, "the song clock moves the pan in an export too")
+        XCTAssertTrue(routes.followsSongClock)
+        let seed = BarWeave.seed(keyMask: BarWeave.keyMask(project.context))
+        let first = Double(BarWeave.row(0, seed: seed).nonzeroBitCount) / Double(BarWeave.width)
+        let second = Double(BarWeave.row(1, seed: seed).nonzeroBitCount) / Double(BarWeave.width)
+        // Unipolar on a pan of −1 … 1: the share of the pan's travel, from centre.
+        XCTAssertEqual(routes.value(0, at: 0), 2 * first, accuracy: 1e-9)
+        XCTAssertEqual(routes.value(0, at: 3_000), 2 * first, accuracy: 1e-9, "held through the bar")
+        XCTAssertEqual(routes.value(0, at: 3_840), 2 * first, accuracy: 1e-9, "the next bar starts from it")
+        XCTAssertEqual(routes.value(0, at: 3_840 + 480), 2 * second, accuracy: 1e-9, "and has its own an eighth in")
+        XCTAssertEqual(routes.value(0.25, at: nil), 0.25, "with the song standing, nothing is added")
+    }
+
     func testADisabledRouteMovesNothing() throws {
         let (project, _) = try song { [ModulationRoute(source: .heartRate, target: .volume($0), depth: -1, enabled: false)] }
         XCTAssertNil(snapshot(project, inputs: ModulationInputs()).lanes.first?.mix)

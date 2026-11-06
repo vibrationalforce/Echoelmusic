@@ -123,8 +123,12 @@ final class PhoneMotionTests: XCTestCase {
         XCTAssertEqual(motion.values.tiltX ?? -1, 1, accuracy: 1e-12, "after a reset the clock may start again")
     }
 
-    /// The four sources are the last four of the list, in this order — the engine finds a live value by its place.
-    func testTheFourSourcesAreTheLastOfTheList() {
-        XCTAssertEqual(Array(ModulationSource.allCases.suffix(4)), PhoneMotion.sources)
+    /// The four sources follow the MIDI controller in the list, in this order, where they were added
+    /// at its end (only the Weave's bar value came after them) — the engine finds a live value by its place.
+    func testTheFourSourcesFollowTheMIDIControllerInOrder() throws {
+        let all = ModulationSource.allCases
+        let first = try XCTUnwrap(all.firstIndex(of: .midiCC1)) + 1
+        XCTAssertEqual(Array(all[first..<(first + 4)]), PhoneMotion.sources)
+        XCTAssertEqual(Array(all.suffix(from: first + 4)), [.weave1])
     }
 }

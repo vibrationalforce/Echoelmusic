@@ -110,7 +110,9 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(ModulationSource.allCases.map(\.rawValue),
                        ["body.heartRate", "body.hrv", "body.coherence", "body.breath", "lfo.1", "macro.1", "midi.cc.1",
                         // The phone's own motion (Recovery 9), added at the end inside format 4.
-                        "body.motion.tiltX", "body.motion.tiltY", "body.motion.rotation", "body.motion.energy"])
+                        "body.motion.tiltX", "body.motion.tiltY", "body.motion.rotation", "body.motion.energy",
+                        // The Weave's bar value, added at the end inside format 4 (2026-11-06).
+                        "weave.1"])
         for curve in ["linear", "square"] { XCTAssertNotNil(ModulationRoute.Curve(rawValue: curve), curve) }
         for polarity in ["unipolar", "bipolar"] { XCTAssertNotNil(ModulationRoute.Polarity(rawValue: polarity), polarity) }
         for device in ["synth", "drums", "sampler", "plugin"] {

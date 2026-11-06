@@ -261,4 +261,37 @@ final class ModulationTests: XCTestCase {
         XCTAssertNil(Modulation.songLFO(at: .infinity, meter: meter))
         XCTAssertNil(Modulation.songLFO(at: 1e300, meter: meter))
     }
+
+    /// `weave.1` holds one value through each bar of the meter — the share of the lit cells in the
+    /// Weave's row for that bar — after gliding into it over the bar's first eighth; a 3/4 bar is a
+    /// bar too, and the first bar starts at its own value.
+    func testTheSongWeaveIsTheShareOfLitCellsOfEachBarsRow() throws {
+        let threeFour = TimeSignatureChange(tick: 3_840, signature: TimeSignature(3, 4))
+        let meter = MeterMap(signature: .common, changes: [threeFour])
+        let seed = BarWeave.seed(keyMask: BarWeave.keyMask(MusicalContext(root: 0, scale: .major)))
+        func weave(_ tick: Double) throws -> Double { try XCTUnwrap(Modulation.songWeave(at: tick, meter: meter, seed: seed)) }
+        func share(_ bar: Int64) -> Double { Double(BarWeave.row(bar, seed: seed).nonzeroBitCount) / Double(BarWeave.width) }
+        XCTAssertEqual(try weave(0), 7.0 / 61, accuracy: 1e-12, "bar 1 is the key: seven of 61 cells")
+        XCTAssertEqual(try weave(3_839.5), 7.0 / 61, accuracy: 1e-12, "the same to the bar's end")
+        XCTAssertEqual(try weave(3_840), share(0), accuracy: 1e-12, "on the bar line it starts from the last bar's")
+        XCTAssertEqual(try weave(3_840 + 180), (share(0) + share(1)) / 2, accuracy: 1e-12,
+                       "half way through the glide, half way between (an eighth of a 3/4 bar is 360 ticks)")
+        XCTAssertEqual(try weave(3_840 + 360), share(1), accuracy: 1e-12, "then the bar's own")
+        XCTAssertEqual(try weave(3_840 + 2_879), share(1), accuracy: 1e-12, "held to the bar's end")
+        XCTAssertEqual(try weave(3_840 + 2_880 + 360), share(2), accuracy: 1e-12, "a 3/4 bar later")
+        var last = try weave(3_840)
+        for step in 1...360 {
+            let now = try weave(3_840 + Double(step))
+            XCTAssertLessThanOrEqual(Swift.abs(now - last), Swift.abs(share(1) - share(0)) * 1.5 / 360 + 1e-12, "no jump")
+            last = now
+        }
+        for bar in Int64(0)..<200 {
+            let reading = share(bar)
+            XCTAssertTrue((0...1).contains(reading))
+            XCTAssertGreaterThan(reading, 0, "a weave never dies out")
+        }
+        XCTAssertNotEqual(share(1), share(0), "it moves")
+        XCTAssertNil(Modulation.songWeave(at: .nan, meter: meter, seed: seed))
+        XCTAssertNil(Modulation.songWeave(at: 1e300, meter: meter, seed: seed))
+    }
 }

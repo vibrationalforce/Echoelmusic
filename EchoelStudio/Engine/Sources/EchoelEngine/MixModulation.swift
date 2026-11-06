@@ -6,14 +6,16 @@ import Foundation
 /// knob's — by the sum of the routes whose source is measured right now, clamped once, after the
 /// last route; with every source absent it is exactly the stored or automated value. Arithmetic
 /// is `Modulation.contribution`, the one the song's own rules use. Render-safe: no allocation,
-/// no lock. A body source is a `ModulationInputs` cell, live only; `lfo.1` is read from the song
-/// position (`Modulation.songLFO`), so it moves an export exactly as it moves playback.
+/// no lock. A body source is a `ModulationInputs` cell, live only; `lfo.1` and `weave.1` are read
+/// from the song position (`Modulation.songLFO`, `Modulation.songWeave`), so they move an export
+/// exactly as they move playback.
 public struct MixModulation: Sendable {
     /// One enabled route, reduced to plain values. `source` is its `ModulationInputs` cell; a
-    /// route on the song clock (`lfo.1`) reads the position instead.
+    /// route on the song clock (`lfo.1`, `weave.1` — `weave`) reads the position instead.
     struct Route: Sendable {
         let source: Int
         let clock: Bool
+        let weave: Bool
         let depth: Double
         let curve: ModulationRoute.Curve
         let polarity: ModulationRoute.Polarity
@@ -23,6 +25,8 @@ public struct MixModulation: Sendable {
     let routes: [Route]
     let inputs: ModulationInputs?
     let meter: MeterMap
+    /// The Weave's first row, from the song's key, for `weave.1`.
+    let weaveSeed: UInt64
 
     /// Nil when no enabled route moves `target`, so the render thread keeps its fixed path.
     /// Without `inputs` (an offline render) only routes on the song clock compile: an export never
@@ -33,17 +37,20 @@ public struct MixModulation: Sendable {
             .filter { $0.enabled && $0.target == target }
             .sorted { $0.id.uuidString.lowercased() < $1.id.uuidString.lowercased() }
         let compiled = ordered.compactMap { route -> Route? in
-            if route.source == .lfo1 {
-                return Route(source: -1, clock: true, depth: route.depth, curve: route.curve, polarity: route.polarity)
+            if route.source == .lfo1 || route.source == .weave1 {
+                return Route(source: -1, clock: true, weave: route.source == .weave1, depth: route.depth,
+                             curve: route.curve, polarity: route.polarity)
             }
             guard inputs != nil, let source = ModulationInputs.index(route.source) else { return nil }
-            return Route(source: source, clock: false, depth: route.depth, curve: route.curve, polarity: route.polarity)
+            return Route(source: source, clock: false, weave: false, depth: route.depth, curve: route.curve,
+                         polarity: route.polarity)
         }
         guard !compiled.isEmpty else { return nil }
         self.descriptor = descriptor
         routes = compiled
         self.inputs = inputs
         meter = project.meterMap
+        weaveSeed = BarWeave.seed(keyMask: BarWeave.keyMask(project.context))
     }
 
     /// Whether a route reads the song position, so the value moves while the song plays.
@@ -57,7 +64,10 @@ public struct MixModulation: Sendable {
         for route in routes {
             let measured: Double?
             if route.clock {
-                measured = position.flatMap { Modulation.songLFO(at: $0, meter: meter) }
+                measured = position.flatMap {
+                    route.weave ? Modulation.songWeave(at: $0, meter: meter, seed: weaveSeed)
+                                : Modulation.songLFO(at: $0, meter: meter)
+                }
             } else {
                 measured = inputs?.value(at: route.source)
             }
