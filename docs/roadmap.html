@@ -78,7 +78,7 @@
     <main id="main" class="subpage subpage--wider">
         <div class="subpage-hero">
             <h1>Roadmap</h1>
-            <p class="subtitle">Where Echoel is today, what comes next, and in which order. The dates are plans, not promises: when something is not ready, it moves, and the order stays. As of 19 October 2026.</p>
+            <p class="subtitle">Where Echoel is today, what comes next, and in which order. The dates are plans, not promises: when something is not ready, it moves, and the order stays. As of 6 November 2026.</p>
         </div>
 
         <section>
@@ -86,7 +86,8 @@
             <p>Echoel Studio is a music workstation for iPhone and iPad. It is a fresh start, built since October 2026, and it is still being tested on devices. This build holds:</p>
             <ul>
                 <li><strong>Instruments:</strong> a 16-voice synthesizer with eleven engines (Classic, Supersaw, FM, Sub, Morph, Mallet, DDSP, Choir, Pluck, Wavetable and Texture), a synthesized eight-piece drum kit and a sampler, played from the on-screen keys or a MIDI keyboard, or written in a piano roll and a drum step grid.</li>
-                <li><strong>Effects:</strong> twenty-four built-in effects, among them EQ, compressor, delay, reverb, chorus, phaser, flanger, limiter, saturation, tape, pitch correction, a harmonizer, a granular effect and a multiband clipper, up to eight on every track and on the master.</li>
+                <li><strong>Effects:</strong> twenty-five built-in effects, among them EQ, compressor, delay, a reverb with three modes (hall, plate and room), chorus, phaser, flanger, limiter, saturation, tape, pitch correction, a harmonizer, a granular effect, a multiband clipper and a de-esser, up to eight on every track and on the master.</li>
+                <li><strong>Vocal chains:</strong> Clean, Present, Warm or Spoken loads a chain of the standard effects (low cut, de-esser, compressor, EQ and reverb) in place of a track&rsquo;s effects, as one step that one undo takes back.</li>
                 <li><strong>Arrangement and automation:</strong> clips on a bar timeline, automation for volume, pan, sends and synth parameters, undo.</li>
                 <li><strong>A session grid for live sets:</strong> clips and scenes you launch on the next bar, the next quarter note or at once.</li>
                 <li><strong>Recording:</strong> MIDI takes with pitch bend and controllers, and audio takes on an audio track. Echoel asks for the microphone only when you arm an audio track or set one to hear its input; a recording is saved in your song on the device.</li>
@@ -94,7 +95,7 @@
                 <li><strong>Picture, sky, stage and stream:</strong> video tracks from the photo library; a Sky view of the stars above you; OSC, ADM-OSC, Art-Net and sACN out, each off until you switch it on, with body values sent only while you allow it; and a live stream of the picture and the master mix over RTMP or RTMPS that starts only when you press Go Live.</li>
                 <li><strong>Editing:</strong> split a clip at the playhead, import MIDI files, bake a track&rsquo;s effects into audio, and MPE out to your synths.</li>
                 <li><strong>A heart-rate strap as a modulation source:</strong> a Bluetooth chest strap&rsquo;s heart rate, HRV or coherence moves a fader, pan, send or synth parameter you route it to. Without a strap the control stays where you set it, and an export never reads the strap.</li>
-                <li><strong>Echoel's own instruments and effects for other apps:</strong> the synthesizer, drums and sampler, and the twenty-four built-in effects, as Audio Units. They are not yet tested in a host app on a device, and they are not on sale yet.</li>
+                <li><strong>Echoel's own instruments and effects for other apps:</strong> the synthesizer, drums and sampler, and the twenty-five built-in effects, as Audio Units; in another app the synthesizer lists Echoel&rsquo;s sounds as presets. They are not yet tested in a host app on a device, and they are not on sale yet.</li>
                 <li><strong>An assistant on the device:</strong> you describe a change to the song in words, it shows what it did, and one undo takes it back. It uses the language model on the device, where the device has one, and needs no network.</li>
                 <li><strong>The network:</strong> this build contacts the App Store at launch, to check whether you bought Echoel's instruments, and when you open the store screen, and uses the network only for what you switch on yourself, such as Network MIDI; each use is listed on the <a href="privacy.html#studio">Privacy</a> page.</li>
             </ul>
@@ -111,11 +112,11 @@
                 <thead><tr><th>When</th><th>What</th><th>Done when</th></tr></thead>
                 <tbody>
                 <tr><td>Autumn 2026</td><td>Composing: starter projects, instrument presets, scale lock on keys and pads, stem and project export.</td><td>A song with four tracks is made, saved, reopened and exported on a phone in flight mode. Then a public TestFlight beta.</td></tr>
-                <tr><td>Early 2027</td><td>Echoel's own instruments and the one-time purchase, restore purchases, an accessibility check.</td><td>The instruments load and play in two host apps on a device, at 44.1 and 48 kHz. App Store 1.0, planned for March 2027.</td></tr>
-                <tr><td>Spring 2027</td><td>Live: MIDI clock in and out, scene launching from a DJ mixer or controller, Network MIDI only with partners you know.</td><td>A 30 to 60 minute set on a device with hardware, without a dropout.</td></tr>
-                <tr><td>Summer and autumn 2027</td><td>Two open packages, if public funding comes through: one that reads body signals and one that speaks the stage protocols.</td><td>Both released under the MIT licence, usable without the app.</td></tr>
-                <tr><td>Winter 2027–28</td><td>Stage output: cue, OSC, DMX and spatial-object tracks, a connections screen, OSC, ADM-OSC, Art-Net and sACN.</td><td>A water, light and sound installation runs for four hours from Echoel.</td></tr>
-                <tr><td>2028</td><td>Modulation (LFOs, envelope followers, macros), then body signals as a modulation source, then the visual on a second screen.</td><td>Body signals send nothing to other devices unless you turn on an output; the visual never flashes faster than three times a second.</td></tr>
+                <tr><td>Early 2027</td><td>Echoel's own instruments and the one-time purchase, restore purchases, an accessibility check. Restore purchases is in TestFlight now.</td><td>The instruments load and play in two host apps on a device, at 44.1 and 48 kHz. App Store 1.0, planned for March 2027.</td></tr>
+                <tr><td>Spring 2027</td><td>Live: MIDI clock in and out, scene launching from a DJ mixer or controller, Network MIDI only with partners you know. MIDI clock in and out, the session grid and Network MIDI only with hosts you let in are in TestFlight now.</td><td>A 30 to 60 minute set on a device with hardware, without a dropout.</td></tr>
+                <tr><td>Summer and autumn 2027</td><td>Two open packages, planned: one that reads body signals and one that speaks the stage protocols.</td><td>Both released under the MIT licence, usable without the app.</td></tr>
+                <tr><td>Winter 2027–28</td><td>Stage output: cue, OSC, DMX and spatial-object tracks, a connections screen, OSC, ADM-OSC, Art-Net and sACN. The four outputs are in TestFlight now.</td><td>A water, light and sound installation runs for four hours from Echoel.</td></tr>
+                <tr><td>2028</td><td>Modulation (LFOs, envelope followers, macros), then body signals as a modulation source (a heart-rate strap already is one in TestFlight now), then the visual on a second screen.</td><td>Body signals send nothing to other devices unless you turn on an output; the visual never flashes faster than three times a second.</td></tr>
                 <tr><td>2029 and later</td><td>Spatial rendering with an open spatial master file (ADM), a 360° video export of the visual, Echoel's instruments in desktop music apps, more Apple platforms, collaboration.</td><td>Decided one at a time, in the same way, and named here only once it has been measured on a device.</td></tr>
                 </tbody>
             </table>
