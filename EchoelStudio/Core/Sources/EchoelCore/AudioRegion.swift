@@ -36,6 +36,9 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
     /// build played. A name this build does not know is kept and saved back unchanged and plays as
     /// Tones. Kept while warp is off, so switching it back on finds it.
     private var warpModeName: String?
+    /// The region's transposition in cents (W-4): its pitch moves, its timing does not — warped or
+    /// not. Nil is none; stored within `transposeRange`.
+    public var transposeCents: Double?
     /// The bake that made the file it plays (W3, `RegionBaking`); nil for a region that plays its
     /// file as imported or recorded.
     public var bake: RegionBaking?
@@ -45,6 +48,8 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
 
     public static let gainRange: ClosedRange<Double> = -60...24
     public static let nativeBPMRange: ClosedRange<Double> = 20...999
+    /// Two octaves either way, in cents.
+    public static let transposeRange: ClosedRange<Double> = -2_400...2_400
 
     public init(id: RegionID = RegionID(), media: MediaID, start: Tick, offset: Int = 0, length: Int) {
         self.id = id
@@ -97,6 +102,13 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
         return Foundation.pow(10, Swift.min(Swift.max(gainDB, Self.gainRange.lowerBound), Self.gainRange.upperBound) / 20)
     }
 
+    /// The transposition that plays, in cents: 0 for none or for one that is not a number, else
+    /// held to `transposeRange`.
+    public var playedTransposeCents: Double {
+        guard let transposeCents, transposeCents.isFinite else { return 0 }
+        return Swift.min(Swift.max(transposeCents, Self.transposeRange.lowerBound), Self.transposeRange.upperBound)
+    }
+
     /// The native tempo warp stretches from, when the region follows the song's tempo.
     public var warpBPM: Double? {
         guard followsTempo == true, let nativeBPM, nativeBPM.isFinite, Self.nativeBPMRange.contains(nativeBPM) else { return nil }
@@ -108,6 +120,7 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
         case fadeInCurveName = "fadeInCurve", fadeOutCurveName = "fadeOutCurve"
         case gainDB, nativeBPM, followsTempo, bake, grade
         case warpModeName = "warpMode"
+        case transposeCents
     }
 }
 
@@ -215,6 +228,9 @@ extension Arranging {
             commands.append(.setRegionWarp(track: track.id, copy, nativeBPM: native, followsTempo: region.followsTempo == true))
         }
         if region.warpMode != .tones { commands.append(.setRegionWarpMode(track: track.id, copy, mode: region.warpMode)) }
+        if region.playedTransposeCents != 0 {
+            commands.append(.setRegionTranspose(track: track.id, copy, cents: region.playedTransposeCents))
+        }
         return commands
     }
 }

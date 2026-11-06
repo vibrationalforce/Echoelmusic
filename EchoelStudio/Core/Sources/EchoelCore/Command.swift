@@ -168,6 +168,9 @@ public enum Command: Codable, Equatable, Sendable {
     /// How a region is stretched when it follows the song's tempo (W-3): Beats, Tones or Re-Pitch.
     /// Kept while warp is off.
     case setRegionWarpMode(track: TrackID, RegionID, mode: WarpMode)
+    /// A region's transposition in cents (W-4, `AudioRegion.transposeRange`): its pitch moves, its
+    /// timing and length do not, warped or not. 0 removes it.
+    case setRegionTranspose(track: TrackID, RegionID, cents: Double)
     /// A video part's colour correction (COLOR): exposure, contrast, saturation, temperature, tint
     /// and lift, gamma and gain on the luma, each within its `ColorGrade` range. The file is never
     /// changed; the standard grade removes the correction.
@@ -1311,6 +1314,18 @@ extension Command {
             guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
             project.tracks[t].regions[r].warpMode = mode
 
+        case let .setRegionTranspose(trackID, id, cents):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .audio else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only audio regions are transposed")
+            }
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            guard cents.isFinite, AudioRegion.transposeRange.contains(cents) else {
+                throw CommandError.invalidValue(parameter: "cents",
+                                                reason: "must be within \(AudioRegion.transposeRange.lowerBound)…\(AudioRegion.transposeRange.upperBound) cents")
+            }
+            project.tracks[t].regions[r].transposeCents = cents == 0 ? nil : cents
+
         case let .addScene(id, name, index):
             guard project.sceneIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
             let at = index ?? project.scenes.count
@@ -1534,7 +1549,8 @@ extension Project {
         // One level and one way of following the tempo for the whole, and no fade inside it: a fade
         // between two pieces, or two levels, would be lost by the join and needs a bounce.
         guard ordered.allSatisfy({ $0.gainDB == first.gainDB && $0.nativeBPM == first.nativeBPM
-                                    && $0.followsTempo == first.followsTempo && $0.warpMode == first.warpMode }),
+                                    && $0.followsTempo == first.followsTempo && $0.warpMode == first.warpMode
+                                    && $0.playedTransposeCents == first.playedTransposeCents }),
               ordered.dropFirst().allSatisfy({ ($0.fadeIn ?? 0) == 0 }),
               ordered.dropLast().allSatisfy({ ($0.fadeOut ?? 0) == 0 }) else { return nil }
         var joined = first

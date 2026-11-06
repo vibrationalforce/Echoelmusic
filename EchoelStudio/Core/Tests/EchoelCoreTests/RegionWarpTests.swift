@@ -230,4 +230,45 @@ final class RegionWarpTests: XCTestCase {
         XCTAssertEqual(saved["warpMode"] as? String, "complexPro")
         XCTAssertNil(region.unrecognizedWarpMode)
     }
+
+    /// W-4: a transposition is validated at the door, one undo step, saved, carried by a duplicate,
+    /// and never moves where the region ends; 0 stores nothing, so the song is as before.
+    func testATranspositionIsValidatedAndLeavesTheRegionsEndAlone() async throws {
+        var (p, audio, region) = try song(tempo: 90)
+        let untouched = p
+        for cents in [Double.nan, .infinity, -2_400.5, 2_401] {
+            XCTAssertThrowsError(try Command.setRegionTranspose(track: audio, region, cents: cents).apply(to: &p), "\(cents)")
+        }
+        XCTAssertThrowsError(try Command.setRegionTranspose(track: audio, RegionID(), cents: 100).apply(to: &p))
+        XCTAssertEqual(p, untouched)
+        try Command.setRegionTranspose(track: audio, region, cents: 0).apply(to: &p)
+        XCTAssertEqual(p, untouched, "0 is no transposition, stored as nothing")
+
+        try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: true).apply(to: &p)
+        let end = try XCTUnwrap(Arranging.end(of: try XCTUnwrap(p.track(audio)?.regions.first), in: p))
+        let warped = p
+        try await MainActor.run {
+            let store = ProjectStore(project: warped)
+            try store.perform(.setRegionTranspose(track: audio, region, cents: -700))
+            XCTAssertEqual(store.project.track(audio)?.regions.first?.transposeCents, -700)
+            store.undo()
+            XCTAssertEqual(store.project, warped)
+        }
+        try Command.setRegionTranspose(track: audio, region, cents: -700).apply(to: &p)
+        let transposed = try XCTUnwrap(p.track(audio)?.regions.first)
+        XCTAssertEqual(transposed.playedTransposeCents, -700)
+        XCTAssertEqual(Arranging.end(of: transposed, in: p), end, "-700 cents keeps the end tick")
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(p)), p)
+
+        let track = try XCTUnwrap(p.track(audio))
+        for command in try XCTUnwrap(Arranging.duplicated(transposed, in: track, project: p)) { try command.apply(to: &p) }
+        XCTAssertEqual(p.track(audio)?.regions.last?.transposeCents, -700)
+
+        // A song file that holds a transposition out of range is refused, as every other value.
+        var bad = p
+        let index = try XCTUnwrap(bad.trackIndex(audio))
+        bad.tracks[index].regions[0].transposeCents = 5_000
+        XCTAssertThrowsError(try ProjectCodec.decode(ProjectCodec.encode(bad)))
+        XCTAssertTrue(CommandCatalog.all.map(\.name).contains("audio.transpose"))
+    }
 }
