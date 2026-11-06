@@ -1,21 +1,16 @@
-11.0.0 — the Field's looks in exported video and in the live stream, Bar Weave
+11.0.0 — stereo recording from an input pair
 
-What is new since 10055. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10057. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Exported video with the Field Layer on, and the Field Layer (Alpha) export: the film draws the
-  pattern the Field window shows and the one blended over it — Rings, Moiré Beat, Weave, and the
-  looks that listen to the sound (Chladni Plate, Dish, Water, Aurora, Depth), which now hear the
-  mix as it played. The video window's preview draws the same.
-- Go Live: the stream draws the Field window's looks too, not only the rings.
-- Modulate (a track's or the master's menu): a new source "Bar Weave" — each bar a value from the
-  Weave of the song's key, glided into over the bar's first eighth; an export moves as playback
-  does.
+- An audio track's input menu (mixer strip) has a "Stereo" section: Input 1/2, 3/4, … A track on
+  a pair records a two-channel take, the first input on the left and the second on the right,
+  and monitors it the same way; the track's pan is a balance on it. The strip reads "In 1/2".
+- Without the pair's second input on the interface (the built-in microphone) the take is one
+  channel, and the strip reads "In 1/2 · Mono".
 
-Uploaded again from the same code: the first upload stopped before signing, when the gate
-could not read the Echoel Studio run (an API error, not a red run).
-
-Previous: 11.0.0 (10055) — Moiré Beat and Weave in the Field, phase and partials meters, DDSP
-profiles, Revoice by Octaves. Earlier: git history. The import of earlier songs (the app group
+Previous: 11.0.0 (10057) — the Field's looks in exported video and in the live stream, Bar Weave;
+10055 — Moiré Beat and Weave in the Field, phase and partials meters, DDSP profiles, Revoice by
+Octaves. Earlier: git history. The import of earlier songs (the app group
 is in the app's entitlements since a14e1960a) has not been seen on a device yet.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -24,13 +19,13 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Field window, Pattern "Weave"; export a video with a video part and the Field Layer on
-   (Screen). Does the film show the Weave over the picture, as the video window showed it?
-2. Pattern "Chladni Plate" with a song that plays chords; export the video again. Does the plate
-   in the film change its figure with the music, as in the Field window?
-3. Song menu, "Export Field Layer (Alpha)", Landscape, with "Dish". Does the movie open in Final
-   Cut or Resolve with the dish on a transparent ground?
-4. Go Live (or a test stream) with "Moiré Beat" chosen. Does the stream show the moiré, not
-   rings?
-5. A track's Modulate, Cutoff, "Bar Weave", play eight bars. Does the sound change on each bar
-   line, gliding, with no click?
+1. A USB interface with two inputs; an audio track's input menu → Stereo → "Input 1/2". A cable
+   from output 1 into input 1, nothing in input 2; record four bars. Panned hard left, is the
+   click heard? Panned hard right, is it gone?
+2. Same take in headphones: is input 1 heard in the left ear only, while monitoring?
+3. Something into both inputs at once (a stereo keyboard, two microphones): does the take
+   play back with its left and right where they were, without a delay between the sides?
+4. Unplug the interface, arm the same track: does the strip read "In 1/2 · Mono", and does it
+   record from the built-in microphone without an error?
+5. A mono track next to the stereo one, both on input 1: does each play its own take, and does
+   neither click or drop out while both monitor?
