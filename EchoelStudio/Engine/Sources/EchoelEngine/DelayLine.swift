@@ -66,23 +66,35 @@ final class DelayLine: @unchecked Sendable {
     }
 
     /// Render thread, while a snapshot is taken up: the newest frames `other` holds — as many as
-    /// both lines take — become this line's newest, and anything older is silence, so a lane whose
-    /// delay changes plays on from what it held instead of falling silent for the whole new delay.
-    func takeOver(_ other: DelayLine) {
-        guard other !== self else { return }
-        let kept = Swift.min(delay, other.delay)
+    /// both lines take, and at most `budget` — become this line's newest, and anything older is
+    /// silence, so a lane whose delay changes plays on from what it held instead of falling silent
+    /// for the whole new delay. Returns the frames it copied. Two copies at most, no per-frame
+    /// work: a line only ever takes over while it is new, and a new line is already silence.
+    @discardableResult
+    func takeOver(_ other: DelayLine, upTo budget: Int = .max) -> Int {
+        guard other !== self else { return 0 }
+        let kept = Swift.max(0, Swift.min(delay, other.delay, budget))
         let older = delay - kept
-        left.update(repeating: 0, count: older)
-        right.update(repeating: 0, count: older)
-        for k in 0..<kept {
-            var from = other.cursor - kept + k
-            if from < 0 { from += other.delay }
-            left[older + k] = other.left[from]
-            right[older + k] = other.right[from]
+        // A drained line holds only silence already (it holds exactly its last `delay` inputs).
+        if !isDrained {
+            left.update(repeating: 0, count: older)
+            right.update(repeating: 0, count: older)
+        }
+        if kept > 0 {
+            var start = other.cursor - kept
+            if start < 0 { start += other.delay }
+            let first = Swift.min(kept, other.delay - start)
+            (left + older).update(from: other.left + start, count: first)
+            (right + older).update(from: other.right + start, count: first)
+            if first < kept {
+                (left + older + first).update(from: other.left, count: kept - first)
+                (right + older + first).update(from: other.right, count: kept - first)
+            }
         }
         cursor = 0
         // Silent through every kept frame: the silence before them is silent too.
         quiet = other.quiet >= kept ? delay : other.quiet
+        return kept
     }
 }
 
@@ -106,6 +118,17 @@ struct CompensationLines: Sendable {
         let line: DelayLine
     }
 
+    /// Identity only: which lines another snapshot's were resolved against.
+    final class Origin: Sendable {}
+
+    /// Frames all lines together copy when one snapshot is taken up (`takeOver(from:)`): two
+    /// copies of a pair per line, about 256 KB at most, a few tens of microseconds — so the swap
+    /// costs the same whatever the latencies. A lane's wait reaches
+    /// `DelayCompensation.maximumUnitLatency` (96,000) per unit and 64 times that per lane, and a
+    /// change to the longest wait makes every lane's line anew at once; a line beyond the budget
+    /// starts from what fits of its newest frames, and silence before them.
+    static let takeOverFrames = 32_768
+
     let instrumentPre: [DelayLine?]
     let instrumentDirect: [DelayLine?]
     let audioPre: [DelayLine?]
@@ -113,18 +136,29 @@ struct CompensationLines: Sendable {
     let returns: [DelayLine?]
     /// Every line with its place, for the next snapshot to find.
     let entries: [Entry]
+    /// Per entry, where its line takes over from in the lines it was made against (an index into
+    /// their `entries`), or -1: resolved here on the main thread, so the render thread never
+    /// searches.
+    let sources: [Int]
+    let origin: Origin
+    /// The `origin` of the lines `sources` points into.
+    let resolvedFrom: Origin?
 
     static let none = CompensationLines(instrumentPre: [], instrumentDirect: [], audioPre: [], audioDirect: [],
-                                        returns: [], entries: [])
+                                        returns: [], entries: [], sources: [], resolvedFrom: nil)
 
     private init(instrumentPre: [DelayLine?], instrumentDirect: [DelayLine?], audioPre: [DelayLine?],
-                 audioDirect: [DelayLine?], returns: [DelayLine?], entries: [Entry]) {
+                 audioDirect: [DelayLine?], returns: [DelayLine?], entries: [Entry], sources: [Int],
+                 resolvedFrom: Origin?) {
         self.instrumentPre = instrumentPre
         self.instrumentDirect = instrumentDirect
         self.audioPre = audioPre
         self.audioDirect = audioDirect
         self.returns = returns
         self.entries = entries
+        self.sources = sources
+        origin = Origin()
+        self.resolvedFrom = resolvedFrom
     }
 
     /// The lines of `snapshot`'s plan. A line the previous snapshot already has at the same place
@@ -136,14 +170,23 @@ struct CompensationLines: Sendable {
             self = .none
             return
         }
-        var known: [Place: DelayLine] = [:]
-        for entry in previous?.entries ?? [] { known[entry.place] = entry.line }
+        let earlier = previous?.entries ?? []
+        var known: [Place: Int] = [:]
+        for (index, entry) in earlier.enumerated() { known[entry.place] = index }
         var made: [Entry] = []
+        var from: [Int] = []
         let line = { (place: Place, frames: Int) -> DelayLine? in
             guard frames > 0 else { return nil }
-            let kept = known[place].flatMap { $0.delay == frames ? $0 : nil }
-            let result = kept ?? DelayLine(delay: frames)
+            let found = known[place] ?? -1
+            let old = found >= 0 && found < earlier.count ? earlier[found].line : nil
+            if let old, old.delay == frames {
+                made.append(Entry(place: place, line: old))
+                from.append(-1)
+                return old
+            }
+            let result = DelayLine(delay: frames)
             made.append(Entry(place: place, line: result))
+            from.append(old == nil ? -1 : found)
             return result
         }
         let trackDelays = Dictionary(plan.tracks.map { ($0.track, $0) }, uniquingKeysWith: { first, _ in first })
@@ -154,16 +197,27 @@ struct CompensationLines: Sendable {
         audioDirect = snapshot.audioLanes.map { line(.direct($0.track), trackDelays[$0.track]?.directDelay ?? 0) }
         returns = snapshot.returns.map { line(.back($0.track), returnDelays[$0.track]?.delay ?? 0) }
         entries = made
+        sources = from
+        origin = Origin()
+        resolvedFrom = previous?.origin
     }
 
     /// Render thread, while a snapshot is taken up: each line this snapshot brings new takes over
-    /// what the previous snapshot's line at its place holds.
+    /// what the previous snapshot's line at its place holds — by the pairing made on the main
+    /// thread, and within `takeOverFrames` in all. Lines made against other lines than the ones
+    /// the render thread held (a snapshot in between was published and never taken up) start
+    /// silent instead.
     func takeOver(from previous: CompensationLines) {
-        for entry in entries {
-            for old in previous.entries where old.place == entry.place {
-                entry.line.takeOver(old.line)
-                break
+        guard let resolvedFrom, resolvedFrom === previous.origin else { return }
+        var budget = Self.takeOverFrames
+        let count = Swift.min(entries.count, sources.count)
+        var index = 0
+        while index < count, budget > 0 {
+            let source = sources[index]
+            if source >= 0, source < previous.entries.count {
+                budget -= entries[index].line.takeOver(previous.entries[source].line, upTo: budget)
             }
+            index += 1
         }
     }
 

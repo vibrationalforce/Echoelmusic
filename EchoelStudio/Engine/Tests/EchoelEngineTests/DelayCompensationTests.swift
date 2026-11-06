@@ -486,10 +486,42 @@ final class DelayCompensationTests: XCTestCase {
         XCTAssertEqual(run(longer, [Float](repeating: 0, count: 100), block: 100), expectedLonger,
                        "all 85 it held, after silence for the 15 frames it never had")
 
+        let capped = DelayLine(delay: 100)
+        XCTAssertEqual(capped.takeOver(old, upTo: 10), 10, "no more than it may copy")
+        let expectedCapped: [Float] = [Float](repeating: 0, count: 90) + (991...1_000).map { (value: Int) -> Float in Float(value) }
+        XCTAssertEqual(run(capped, [Float](repeating: 0, count: 100), block: 100), expectedCapped,
+                       "the newest 10 frames, silence before them")
+
         let cleared = DelayLine(delay: 85)
         cleared.takeOver(old)
         cleared.clear()
         XCTAssertTrue(cleared.isDrained)
         XCTAssertEqual(run(cleared, [Float](repeating: 0, count: 85), block: 85), [Float](repeating: 0, count: 85))
+    }
+
+    /// The swap pairs each new line with the old one on the main thread, and copies within one
+    /// budget on the render thread, whatever the latencies.
+    func testASnapshotsNewLinesTakeOverOnlyFromTheLinesTheyWereMadeAgainst() throws {
+        let song = try tones(["Clipped", "Plain"])
+        let clipped = song.tracks[0], plain = song.tracks[1]
+        let late = LateInsert(latency: 85)
+        let first = snapshot(song.project, effects: [clipped: [late]])
+        let lines = CompensationLines(first, reusing: nil)
+        let at = try XCTUnwrap(first.audioLanes.firstIndex { $0.track == plain })
+        let held = try XCTUnwrap(lines.audioPre[at])
+        _ = run(held, (0..<1_000).map { (index: Int) -> Float in Float(index + 1) }, block: 256)
+
+        late.latency = 40
+        let next = snapshot(song.project, effects: [clipped: [late]])
+        let shorter = CompensationLines(next, reusing: lines)
+        shorter.takeOver(from: lines)
+        let line = try XCTUnwrap(shorter.audioPre[at])
+        XCTAssertEqual(run(line, [Float](repeating: 0, count: 40), block: 40), (961...1_000).map { (value: Int) -> Float in Float(value) },
+                       "the new line plays on from the old one")
+
+        let elsewhere = CompensationLines(next, reusing: lines)
+        elsewhere.takeOver(from: CompensationLines(first, reusing: nil))
+        let unpaired = try XCTUnwrap(elsewhere.audioPre[at])
+        XCTAssertTrue(unpaired.isDrained, "made against other lines: it starts silent")
     }
 }
