@@ -30,6 +30,19 @@ final class RecordingTests: XCTestCase {
         XCTAssertEqual(read(ring, 4), [1, 2, 3, 4])
     }
 
+    /// A stereo take's ring holds left and right side by side. Fed whole frames into an even
+    /// capacity, a full ring drops whole frames, never one side of one, and reads back in order.
+    func testAStereoTakesRingDropsOnlyWholeFrames() {
+        let ring = AudioRing(capacity: 6)
+        XCTAssertEqual(write(ring, [1, -1, 2, -2]), 4)
+        XCTAssertEqual(write(ring, [3, -3, 4, -4]), 2, "one frame fits, the other is dropped whole")
+        XCTAssertEqual(ring.dropped, 2)
+        XCTAssertEqual(read(ring, 2), [1, -1])
+        XCTAssertEqual(write(ring, [5, -5, 6, -6]), 2)
+        XCTAssertEqual(read(ring, 6), [2, -2, 3, -3, 5, -5])
+        XCTAssertEqual(ring.available, 0)
+    }
+
     func testDiscardingDropsWhatAnEarlierTakeLeft() {
         let ring = AudioRing(capacity: 8)
         _ = write(ring, [1, 2, 3])
