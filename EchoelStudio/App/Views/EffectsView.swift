@@ -4,7 +4,7 @@ import SwiftUI
 
 /// An insert chain — a track's, or the master's: the effects in order, each with bypass, order
 /// and remove, and the selected one's own interface below the list. Echoel's standard effects
-/// and the installed Audio Unit effects are added from the menu.
+/// and the installed Audio Unit effects are added from the searchable browser.
 struct EffectsView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -152,28 +152,15 @@ struct EffectsView: View {
         return insert.plugin.manufacturerName
     }
 
+    /// Echoel's effects and every installed Audio Unit effect, searchable, opened in place under the
+    /// button (`PluginBrowser`, Law 7); the one chosen goes at the end of the chain.
     private func addMenu(count: Int) -> some View {
-        let installed = engine.plugins.effects
-        return Menu {
-            Section("Echoel") {
-                ForEach(StandardEffect.allCases) { effect in
-                    Button(effect.title) { add(effect.component) }
-                }
-            }
-            Section("Audio Units") {
-                if installed.isEmpty { Text("No Audio Unit effects installed") }
-                ForEach(installed, id: \.self) { component in
-                    Button("\(component.displayName) — \(component.manufacturerName)") { add(component) }
-                }
-            }
-        } label: {
-            Label("Add Effect", systemImage: "plus")
-                .font(Theme.Font.body)
-                // One touch target high, like every other control of the page (W18, m10).
-                .frame(minHeight: Theme.Size.touch)
-                .contentShape(Rectangle())
+        PluginBrowser(title: "Add Effect", systemImage: "plus", hint: "Adds the effect at the end of the chain.",
+                      installed: engine.plugins.effects, own: StandardEffect.allCases.map(\.component),
+                      recentsKind: .effects, emptyText: "No effects to add.",
+                      isDisabled: count >= Insert.maximumPerTrack) { component in
+            add(component)
         }
-        .disabled(count >= Insert.maximumPerTrack)
     }
 
     /// One tap puts a whole vocal chain on the track, in place of its effects, as one undo step.
