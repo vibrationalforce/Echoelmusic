@@ -206,6 +206,9 @@ public struct EngineSnapshot: Sendable {
         public let mix: MovingMix?
         /// The interface input the lane plays through its strip, or −1.
         public let monitor: Int
+        /// The right side's input when the lane monitors a stereo pair, −1 when it monitors one
+        /// input in both sides (or none). Set only together with `monitor`.
+        public let monitorRight: Int
     }
 
     /// An audio clip resolved to its buffer: `length` buffer frames from `offset` each pass of
@@ -249,6 +252,11 @@ public struct EngineSnapshot: Sendable {
     public let temperament: Temperament
     public private(set) var lanes: [Lane]
     public private(set) var audioLanes: [AudioLane]
+    /// The interface inputs the audio lanes monitor, a bit per input, in sets the render reads
+    /// together each chunk (`InputMonitor.read(group:into:stride:frames:)`): the two sides of a
+    /// stereo pair, and every input linked to them through another pair, stay lined up sample for
+    /// sample. A lone input is a set of one; no input is in two sets.
+    public let inputGroups: [UInt32]
     public private(set) var returns: [ReturnLane]
     /// One past the last output sample any audio region writes; 0 without audio.
     public let audioEnd: Int64
@@ -284,6 +292,7 @@ public struct EngineSnapshot: Sendable {
                 samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
                 effects: [TrackID: [any HostedProcessor]] = [:], outputChannels: Int = 2,
                 revisions: [TrackID: UInt64] = [:], monitoring: [TrackID: Int] = [:],
+                monitoringRight: [TrackID: Int] = [:],
                 masterEffects: [any HostedProcessor] = [], isolating: TrackID? = nil,
                 modulation: ModulationInputs? = nil, warped: [RegionWarp.Key: SampleBuffer] = [:],
                 wavetables: [WavetableSource: WavetableBank] = [:]) {
@@ -367,6 +376,7 @@ public struct EngineSnapshot: Sendable {
                 Self.resolve(region, samples: samples, time: conversion, sampleRate: sampleRate,
                              project: project, warped: warped)
             }
+            let inputs = Self.monitored(monitoring[track.id], right: monitoringRight[track.id])
             let loops = track.clips.compactMap { clip -> AudioLoop? in
                 guard let audio = clip.audio, let buffer = samples[audio.media], sampleRate > 0, sampleRate.isFinite else { return nil }
                 let length = Swift.min(audio.length, buffer.frameCount - audio.offset)
@@ -378,8 +388,9 @@ public struct EngineSnapshot: Sendable {
                              gainLeft: left, gainRight: right, regions: regions,
                              inserts: inserts(track.id), sends: sends(track, audible), output: output,
                              mix: outward ? moving(track, output < 0) : nil,
-                             monitor: monitoring[track.id].flatMap { (0..<InputMonitor.channelLimit).contains($0) ? $0 : nil } ?? -1)
+                             monitor: inputs.left, monitorRight: inputs.right)
         }
+        inputGroups = Self.groups(audioLanes)
         audioEnd = audioLanes.flatMap(\.regions).map(\.endSample).max() ?? 0
         let compiled = plan.tracks.compactMap { events -> Lane? in
             guard let slot = slots[events.track], let track = project.track(events.track) else { return nil }
@@ -512,6 +523,30 @@ public struct EngineSnapshot: Sendable {
         case .exponential: .exponential
         case .sCurve: .sCurve
         }
+    }
+
+    /// The inputs a lane monitors: one in both sides, or a pair. Either side past the inputs that
+    /// can be monitored and the lane is not heard at all — the track still records — so a pair
+    /// never sounds as half of itself; a right side equal to the left is the one input.
+    static func monitored(_ left: Int?, right: Int?) -> (left: Int, right: Int) {
+        let monitorable = 0..<InputMonitor.channelLimit
+        guard let left, monitorable.contains(left) else { return (-1, -1) }
+        guard let right, right != left else { return (left, -1) }
+        return monitorable.contains(right) ? (left, right) : (-1, -1)
+    }
+
+    /// The inputs of `lanes` in the sets they are read in: the inputs of a pair join, and sets
+    /// that share an input join too, so no input is read twice in a chunk.
+    static func groups(_ lanes: [AudioLane]) -> [UInt32] {
+        var groups: [UInt32] = []
+        for lane in lanes where lane.monitor >= 0 {
+            var joined: UInt32 = 1 << UInt32(lane.monitor)
+            if lane.monitorRight >= 0 { joined |= 1 << UInt32(lane.monitorRight) }
+            for group in groups where group & joined != 0 { joined |= group }
+            groups.removeAll { $0 & joined != 0 }
+            groups.append(joined)
+        }
+        return groups.sorted()
     }
 
     /// Track fader × master fader; constant-power track pan, master pan as a balance. Every source
