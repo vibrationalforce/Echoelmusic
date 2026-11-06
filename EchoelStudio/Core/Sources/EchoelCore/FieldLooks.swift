@@ -170,25 +170,11 @@ public enum FieldLook {
 
     // MARK: - The looks, as the shader writes them
 
-    /// A wavelength's colour in linear sRGB, 0 … 1 (the shader's `wavelengthToRGB`: the CIE 1931
-    /// observer's analytic fit, Wyman/Sloan/Shirley 2013, to XYZ, to sRGB D65).
+    /// A wavelength's colour in linear sRGB, 0 … 1 (the shader's `wavelengthToRGB`), from the one
+    /// definition in `ToneLight.spectrum(nanometres:)`.
     static func spectrum(_ wavelength: Double) -> SIMD3<Double> {
-        func lobe(_ x: Double, _ mu: Double, _ s1: Double, _ s2: Double) -> Double {
-            let t = (x - mu) / (x < mu ? s1 : s2)
-            return exp(-0.5 * t * t)
-        }
-        let x = Swift.max(0, 1.056 * lobe(wavelength, 599.8, 37.9, 31.0) + 0.362 * lobe(wavelength, 442.0, 16.0, 26.7)
-            - 0.065 * lobe(wavelength, 501.1, 20.4, 26.2))
-        let y = Swift.max(0, 0.821 * lobe(wavelength, 568.8, 46.9, 40.5) + 0.286 * lobe(wavelength, 530.9, 16.3, 31.1))
-        let z = Swift.max(0, 1.217 * lobe(wavelength, 437.0, 11.8, 36.0) + 0.681 * lobe(wavelength, 459.0, 26.0, 13.8))
-        var c = SIMD3<Double>(3.2406 * x - 1.5372 * y - 0.4986 * z,
-                              -0.9689 * x + 1.8758 * y + 0.0415 * z,
-                              0.0557 * x - 0.2040 * y + 1.0570 * z)
-        let w = Swift.min(0, Swift.min(c.x, Swift.min(c.y, c.z)))
-        c -= SIMD3(repeating: w)
-        let m = Swift.max(c.x, Swift.max(c.y, c.z))
-        if m > 1 { c /= m }
-        return SIMD3(clamp(c.x, 0, 1), clamp(c.y, 0, 1), clamp(c.z, 0, 1))
+        let c = ToneLight.spectrum(nanometres: wavelength)
+        return SIMD3(c.red, c.green, c.blue)
     }
 
     /// The ripple's wavenumber for a pitch, as the water's spacing (k ∝ f^⅔), in `rippleKRange`.

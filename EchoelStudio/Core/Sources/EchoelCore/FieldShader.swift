@@ -25,11 +25,6 @@ public enum FieldShader {
     /// Every program the app compiles, for the gate.
     public static let all: [Program] = [field, layer]
 
-    /// Where the closed spectral circle leaves the pure spectrum: log2(780/640) and log2(780/420),
-    /// written as literals from the numbers so the shader cannot drift from them.
-    private static let redEdgeLiteral = String(format: "%.9f", Foundation.log2(780.0 / 640.0))
-    private static let violetEdgeLiteral = String(format: "%.9f", Foundation.log2(780.0 / 420.0))
-
     private static let fieldSource = """
     #include <metal_stdlib>
     using namespace metal;
@@ -84,20 +79,21 @@ public enum FieldShader {
     // The tone, transposed by whole octaves into visible light, on the CLOSED spectral circle:
     // the visible band is barely one octave, and where the eye's response fades (deep red,
     // violet) the circle closes along the CIE purple line, so no pitch is ever dark or black.
+    // The GPU twin of EchoelCore's ToneLight.colour(forToneHz:); its numbers are ToneLight's.
     float3 toneColour(float toneHz) {
         float f = max(toneHz, 1.0);
-        float p = log2(2.99792458e17 / 780.0 / f);
+        float p = log2(\(ToneLight.speedOfLightLiteral) / \(ToneLight.anchorLiteral) / f);
         float t = ceil(p) - p;
         if (t >= 1.0) t -= 1.0;
-        float tRed = \(redEdgeLiteral);
-        float tViolet = \(violetEdgeLiteral);
+        float tRed = \(ToneLight.redEdgeLiteral);
+        float tViolet = \(ToneLight.violetEdgeLiteral);
         if (t >= tRed && t <= tViolet) {
-            return wavelengthToRGB(780.0 / exp2(t));
+            return wavelengthToRGB(\(ToneLight.anchorLiteral) / exp2(t));
         }
         float seam = tRed + 1.0 - tViolet;
         float s = (t < tRed) ? (tRed - t) / seam : (tRed + 1.0 - t) / seam;
-        float3 red = wavelengthToRGB(640.0);
-        float3 violet = wavelengthToRGB(420.0);
+        float3 red = wavelengthToRGB(\(ToneLight.redEdgeNanometresLiteral));
+        float3 violet = wavelengthToRGB(\(ToneLight.violetEdgeNanometresLiteral));
         float3 c = mix(red, violet, s);
         float m = max(c.r, max(c.g, c.b));
         float target = mix(max(red.r, max(red.g, red.b)), max(violet.r, max(violet.g, violet.b)), s);
