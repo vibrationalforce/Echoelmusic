@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelKernels
 import SwiftUI
 
 /// An insert chain — a track's, or the master's: the effects in order, each with bypass, order
@@ -21,6 +22,9 @@ struct EffectsView: View {
                     if let inserts {
                         chain(inserts)
                         addMenu(count: inserts.count)
+                        if case .track(let track) = owner {
+                            vocalChainMenu(track: track)
+                        }
                         if owner == .master {
                             // A push, not a sheet: the page lives inside this one (Law 7).
                             NavigationLink("Mix Analysis…") { MixAnalysisView() }
@@ -172,7 +176,35 @@ struct EffectsView: View {
         .disabled(count >= Insert.maximumPerTrack)
     }
 
+    /// One tap puts a whole vocal chain on the track, in place of its effects, as one undo step.
+    /// A menu, not a sheet (Law 7).
+    private func vocalChainMenu(track: TrackID) -> some View {
+        Menu {
+            Section("Replaces this track's effects — Undo brings them back") {
+                ForEach(VocalChain.allCases) { chain in
+                    Button {
+                        apply(chain, to: track)
+                    } label: {
+                        Text(chain.title)
+                        Text(chain.summary)
+                    }
+                }
+            }
+        } label: {
+            Label("Vocal Chain", systemImage: "music.mic")
+                .font(Theme.Font.body)
+                .frame(minHeight: Theme.Size.touch)
+                .contentShape(Rectangle())
+        }
+        .accessibilityHint("Replaces this track's effects with a vocal chain")
+    }
+
     // MARK: - The commands of this chain's owner
+
+    private func apply(_ chain: VocalChain, to id: TrackID) {
+        guard let track = store.project.track(id) else { return }
+        if (try? store.perform(chain.commands(for: track), title: VocalChain.actionTitle)) != nil { selected = nil }
+    }
 
     private func add(_ component: PluginComponent) {
         let id = InsertID()
