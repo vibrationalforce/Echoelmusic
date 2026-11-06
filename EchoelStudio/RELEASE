@@ -1,17 +1,19 @@
-11.0.0 — stereo recording from an input pair
+11.0.0 — a Field look "Thin Film"; the Field's looks no longer jump at the bar
 
-What is new since 10057. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10058. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- An audio track's input menu (mixer strip) has a "Stereo" section: Input 1/2, 3/4, … A track on
-  a pair records a two-channel take, the first input on the left and the second on the right,
-  and monitors it the same way; the track's pan is a balance on it. The strip reads "In 1/2".
-- Without the pair's second input on the interface (the built-in microphone) the take is one
-  channel, and the strip reads "In 1/2 · Mono".
+- Field window, Pattern "Thin Film": a soap film in reflected light, its colours computed from its
+  thickness — black where it is thinnest at the top, coloured bands, pale below; it swirls slowly,
+  and the sound ripples it, spaced by the pitch and as deep as the level.
+- Rings, Dish, Water, Aurora and Depth moved by a phase that started over at each turn of the bar,
+  and the whole picture jumped there — up to two and a half times a second in a fast song. They
+  now run on smoothly.
 
-Previous: 11.0.0 (10057) — the Field's looks in exported video and in the live stream, Bar Weave;
-10055 — Moiré Beat and Weave in the Field, phase and partials meters, DDSP profiles, Revoice by
-Octaves. Earlier: git history. The import of earlier songs (the app group
-is in the app's entitlements since a14e1960a) has not been seen on a device yet.
+Previous: 11.0.0 (10058) — stereo recording from an input pair; 10057 — the Field's looks in
+exported video and in the live stream, Bar Weave; 10055 — Moiré Beat and Weave in the Field,
+phase and partials meters, DDSP profiles, Revoice by Octaves. Earlier: git history. The import
+of earlier songs (the app group is in the app's entitlements since a14e1960a) has not been seen
+on a device yet.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -19,13 +21,10 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. A USB interface with two inputs; an audio track's input menu → Stereo → "Input 1/2". A cable
-   from output 1 into input 1, nothing in input 2; record four bars. Panned hard left, is the
-   click heard? Panned hard right, is it gone?
-2. Same take in headphones: is input 1 heard in the left ear only, while monitoring?
-3. Something into both inputs at once (a stereo keyboard, two microphones): does the take
-   play back with its left and right where they were, without a delay between the sides?
-4. Unplug the interface, arm the same track: does the strip read "In 1/2 · Mono", and does it
-   record from the built-in microphone without an error?
-5. A mono track next to the stereo one, both on input 1: does each play its own take, and does
-   neither click or drop out while both monitor?
+1. Field window, Pattern "Thin Film", a song stopped: black bands at the top, colours in the
+   middle, pale at the bottom — does it look like a soap film, not like a colour wheel?
+2. Play a loud song: does the film ripple, and do the rings get finer on high notes?
+3. Thin Film during a fast song for a minute: does any part of the picture flicker or flash?
+4. Pattern "Water", then "Rings", in a fast song: does the picture still jump once each bar, as it
+   could before?
+5. Export a short video with the Field Layer on and "Thin Film": does the film show in it?
