@@ -65,4 +65,32 @@ final class StereoPhaseTests: XCTestCase {
         capture([], [])
         XCTAssertEqual(points, [Float](repeating: 0, count: 2 * pairs), "an empty block draws the centre")
     }
+
+    /// Left-only leans left (upper-left diagonal) and right-only right, as on a studio
+    /// goniometer; full-scale mono reaches the top of the diamond and is not clipped.
+    func testTheGoniometerLeansToTheSideThatSoundsAndFullScaleFits() {
+        let pairs = 1
+        var point = [Float](repeating: 0, count: 2)
+        func capture(_ l: Float, _ r: Float) -> (side: Float, mid: Float) {
+            let left = [l], right = [r]
+            left.withUnsafeBufferPointer { lb in
+                right.withUnsafeBufferPointer { rb in
+                    point.withUnsafeMutableBufferPointer { pb in
+                        guard let lp = lb.baseAddress, let rp = rb.baseAddress, let pp = pb.baseAddress else { return }
+                        StereoPhase.capture(left: lp, right: rp, count: 1, into: pp, pairs: pairs)
+                    }
+                }
+            }
+            return (point[0], point[1])
+        }
+        let leftOnly = capture(1, 0)
+        XCTAssertLessThan(leftOnly.side, 0, "left-only draws to the left")
+        XCTAssertEqual(leftOnly.mid, 0.5, accuracy: 1e-6)
+        XCTAssertGreaterThan(capture(0, 1).side, 0, "right-only draws to the right")
+        let fullMono = capture(1, 1)
+        XCTAssertEqual(fullMono.mid, 1, accuracy: 1e-6, "full-scale mono reaches the top")
+        XCTAssertEqual(fullMono.side, 0, accuracy: 1e-6)
+        let loud = capture(0.89, 0.89)
+        XCTAssertLessThan(loud.mid, 1, "−1 dBFS mono is drawn, not pinned to the edge")
+    }
 }

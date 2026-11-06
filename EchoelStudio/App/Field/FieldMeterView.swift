@@ -19,21 +19,27 @@ struct FieldMeterView: View {
 
     var body: some View {
         TimelineView(.animation(minimumInterval: reduceMotion ? 1.0 / 15 : 1.0 / 30)) { context in
-            let reading = listener.reading(from: engine, at: context.date)
-            Canvas { canvas, size in
-                switch meter {
-                case .scope: FieldMeterView.drawScope(reading.trace, in: &canvas, size: size)
-                case .phase: FieldMeterView.drawPhase(reading.phase, in: &canvas, size: size)
-                default: FieldMeterView.drawSpectrum(reading.bands, in: &canvas, size: size)
+            let reading = listener.reading(from: engine, at: context.date, easing: reduceMotion)
+            VStack(spacing: Theme.Space.xs) {
+                Canvas { canvas, size in
+                    switch meter {
+                    case .scope: FieldMeterView.drawScope(reading.trace, in: &canvas, size: size)
+                    case .phase: FieldMeterView.drawPhase(reading.phase, in: &canvas, size: size)
+                    default: FieldMeterView.drawSpectrum(reading.bands, in: &canvas, size: size)
+                    }
+                }
+                // Below the goniometer, never over it; a dense strip, so its text stops growing
+                // where it would no longer fit a small Field window.
+                if meter == .phase {
+                    PhaseCorrelationBar(correlation: reading.correlation)
+                        .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
                 }
             }
-            .overlay(alignment: .bottom) {
-                if meter == .phase { PhaseCorrelationBar(correlation: reading.correlation) }
-            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Self.accessibilityTitle(meter))
+            .accessibilityValue(meter == .phase ? PhaseCorrelationBar.spoken(reading.correlation) : "")
         }
         .background(Theme.Color.background)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Self.accessibilityTitle(meter))
         .onAppear { listener.listen(to: engine) }
         .onDisappear { listener.stop() }
     }
@@ -46,30 +52,44 @@ struct FieldMeterView: View {
         }
     }
 
-    /// The goniometer: mid up, side across, in a square, with the mono axis and the two hard-panned
-    /// diagonals as the grid. Thin lines only.
+    /// The goniometer: mid up, side across (left on the left), centred in the canvas. The frame is
+    /// the diamond every sample pair within full scale stays inside; the mono axis runs up, the
+    /// left and right channels' axes are its upper diagonals, marked L and R. The trace is dots,
+    /// not chords between them, so it never sweeps a large area on and off.
     private static func drawPhase(_ points: [Float], in canvas: inout GraphicsContext, size: CGSize) {
-        guard points.count >= 4 else { return }
+        guard points.count >= 2 else { return }
         let inset: CGFloat = 12
-        let side = Swift.min(size.width, size.height - 40) - 2 * inset
-        guard side > 0 else { return }
-        let centre = CGPoint(x: size.width / 2, y: inset + side / 2)
-        let half = side / 2
-        var grid = Path()
-        grid.move(to: CGPoint(x: centre.x, y: centre.y - half))
-        grid.addLine(to: CGPoint(x: centre.x, y: centre.y + half))
-        grid.move(to: CGPoint(x: centre.x - half, y: centre.y - half))
-        grid.addLine(to: CGPoint(x: centre.x + half, y: centre.y + half))
-        grid.move(to: CGPoint(x: centre.x + half, y: centre.y - half))
-        grid.addLine(to: CGPoint(x: centre.x - half, y: centre.y + half))
-        canvas.stroke(grid, with: .color(Theme.Color.border), lineWidth: 1)
-        var line = Path()
-        for pair in 0..<(points.count / 2) {
-            let x = centre.x + half * CGFloat(points[2 * pair])
-            let y = centre.y - half * CGFloat(points[2 * pair + 1])
-            if pair == 0 { line.move(to: CGPoint(x: x, y: y)) } else { line.addLine(to: CGPoint(x: x, y: y)) }
+        let half = (Swift.min(size.width, size.height) - 2 * inset) / 2
+        guard half > 0 else { return }
+        let centre = CGPoint(x: size.width / 2, y: size.height / 2)
+        func place(_ side: CGFloat, _ mid: CGFloat) -> CGPoint {
+            CGPoint(x: centre.x + half * side, y: centre.y - half * mid)
         }
-        canvas.stroke(line, with: .color(Theme.Color.accent), lineWidth: 1)
+        var frame = Path()
+        frame.move(to: place(0, 1))
+        frame.addLine(to: place(1, 0))
+        frame.addLine(to: place(0, -1))
+        frame.addLine(to: place(-1, 0))
+        frame.closeSubpath()
+        frame.move(to: place(0, -1))
+        frame.addLine(to: place(0, 1))
+        frame.move(to: centre)
+        frame.addLine(to: place(-0.5, 0.5))
+        frame.move(to: centre)
+        frame.addLine(to: place(0.5, 0.5))
+        canvas.stroke(frame, with: .color(Theme.Color.border), lineWidth: 1)
+        if half > 30 {
+            canvas.draw(Text("L").font(Theme.Font.caption).foregroundStyle(Theme.Color.textSecondary),
+                        at: place(-0.62, 0.62))
+            canvas.draw(Text("R").font(Theme.Font.caption).foregroundStyle(Theme.Color.textSecondary),
+                        at: place(0.62, 0.62))
+        }
+        var dots = Path()
+        for pair in 0..<(points.count / 2) {
+            let point = place(CGFloat(points[2 * pair]), CGFloat(points[2 * pair + 1]))
+            dots.addRect(CGRect(x: point.x - 0.75, y: point.y - 0.75, width: 1.5, height: 1.5))
+        }
+        canvas.fill(dots, with: .color(Theme.Color.accent))
     }
 
     private static func drawSpectrum(_ bands: [Double], in canvas: inout GraphicsContext, size: CGSize) {
@@ -122,6 +142,7 @@ final class FieldMeterListener {
     private weak var engine: AudioEngine?
     private var bands: [Double] = []
     private var correlation: Float?
+    private var phase: [Float] = []
     private var last: Date?
 
     func listen(to engine: AudioEngine) {
@@ -136,13 +157,15 @@ final class FieldMeterListener {
         engine = nil
         bands = []
         correlation = nil
+        phase = []
         last = nil
     }
 
     /// The newest reading, the bands eased by the meter's ballistics, the correlation eased over
-    /// about a third of a second (a studio correlation meter's pace); the trace and the goniometer
-    /// as they were captured.
-    func reading(from engine: AudioEngine, at now: Date) -> FieldSpectrum.MeterReading {
+    /// about a third of a second (a studio correlation meter's pace); the trace as it was captured.
+    /// The goniometer as captured, or — with `easing` (Reduce Motion) — halfway from the last one
+    /// each frame, so the figure drifts instead of jumping.
+    func reading(from engine: AudioEngine, at now: Date, easing: Bool = false) -> FieldSpectrum.MeterReading {
         var fresh = engine.fieldSpectrum.meterReading()
         let seconds = last.map { Swift.min(Swift.max(now.timeIntervalSince($0), 0), 0.1) } ?? 0
         last = now
@@ -154,6 +177,12 @@ final class FieldMeterListener {
             }
         }
         fresh.bands = bands
+        if easing, phase.count == fresh.phase.count {
+            for index in phase.indices { phase[index] += (fresh.phase[index] - phase[index]) * 0.5 }
+            fresh.phase = phase
+        } else {
+            phase = fresh.phase
+        }
         if let target = fresh.correlation {
             let eased = correlation.map { $0 + (target - $0) * Float(Swift.min(1, seconds / 0.3)) } ?? target
             correlation = eased
@@ -167,13 +196,33 @@ final class FieldMeterListener {
 
 /// The correlation under the goniometer: the number first, legible, and a thin bar from −1 to +1
 /// with its mark. "—" while a side is silent.
-private struct PhaseCorrelationBar: View {
+struct PhaseCorrelationBar: View {
     let correlation: Float?
 
+    /// Two decimals, a true minus sign, and 0 without a sign, so the reading does not flicker
+    /// between +0.00 and −0.00 around zero.
+    static func text(_ correlation: Float?) -> String {
+        guard let correlation else { return "—" }
+        let rounded = (correlation * 100).rounded() / 100
+        if rounded == 0 { return "0.00" }
+        let digits = String(format: "%.2f", abs(rounded))
+        return (rounded < 0 ? "\u{2212}" : "+") + digits
+    }
+
+    /// What VoiceOver says for the reading.
+    static func spoken(_ correlation: Float?) -> String {
+        guard let correlation else { return "No signal" }
+        let rounded = (correlation * 100).rounded() / 100
+        let digits = String(format: "%.2f", abs(rounded))
+        if rounded == 0 { return "Correlation 0" }
+        return "Correlation " + (rounded < 0 ? "minus " : "plus ") + digits
+    }
+
     var body: some View {
-        VStack(spacing: 4) {
-            Text(correlation.map { String(format: "%+.2f", $0) } ?? "—")
-                .font(.system(.body, design: .monospaced))
+        VStack(spacing: Theme.Space.xxs) {
+            Text(Self.text(correlation))
+                .font(Theme.Font.value)
+                .monospacedDigit()
                 .foregroundStyle(Theme.Color.text)
             GeometryReader { geometry in
                 let width = geometry.size.width
@@ -189,12 +238,12 @@ private struct PhaseCorrelationBar: View {
             }
             .frame(height: 10)
             HStack {
-                Text("−1"); Spacer(); Text("0"); Spacer(); Text("+1")
+                Text("\u{2212}1"); Spacer(); Text("0"); Spacer(); Text("+1")
             }
-            .font(.caption2)
+            .font(Theme.Font.caption)
             .foregroundStyle(Theme.Color.textSecondary)
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 8)
+        .padding(.horizontal, Theme.Space.l)
+        .padding(.bottom, Theme.Space.xs)
     }
 }
