@@ -307,6 +307,23 @@ final class RegionWarpPlaybackTests: XCTestCase {
         XCTAssertEqual(RegionWarp.render(down, in: s.project, buffer: buffer, limit: limit)?.frameCount, 48_000)
     }
 
+    func testACancelledStretchStopsAndMakesNothing() throws {
+        var songs: [Song] = [try plainSong(try sine(hertz: 330, seconds: 1), tempo: 100)]
+        for mode in WarpMode.allCases {
+            var s = try song(try sine(hertz: 330, seconds: 1), tempo: 100, native: 120)
+            try Command.setRegionWarpMode(track: s.track, s.region, mode: mode).apply(to: &s.project)
+            songs.append(s)
+        }
+        for (index, element) in songs.enumerated() {
+            var s = element
+            try Command.setRegionTranspose(track: s.track, s.region, cents: 700).apply(to: &s.project)
+            let region = try XCTUnwrap(s.project.track(s.track)?.regions.first)
+            let buffer = try XCTUnwrap(s.samples[region.media])
+            XCTAssertNil(RegionWarp.render(region, in: s.project, buffer: buffer, isCancelled: { true }), "song \(index)")
+            XCTAssertNotNil(RegionWarp.render(region, in: s.project, buffer: buffer, isCancelled: { false }), "song \(index)")
+        }
+    }
+
     func testTransposeZeroIsTheSongAsBefore() throws {
         for warp in [false, true] {
             let tone = try sine(hertz: 330, seconds: 1)

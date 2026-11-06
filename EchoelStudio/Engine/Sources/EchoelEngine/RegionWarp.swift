@@ -72,8 +72,10 @@ public enum RegionWarp {
     /// The stretched frames of a warped or transposed region, at the file's rate. Nil when there is
     /// nothing to stretch, or when a buffer it makes on the way would pass `limit` frames per
     /// channel. Allocates and takes time: never on the render thread, nor in a view body.
+    /// `isCancelled` is asked between the long steps; once it says yes, the rest is not made and
+    /// the result is nil, so a stretch nobody needs any more stops holding its memory.
     public static func render(_ region: AudioRegion, in project: Project, buffer: SampleBuffer,
-                              limit: Int = maximumFrames) -> SampleBuffer? {
+                              limit: Int = maximumFrames, isCancelled: () -> Bool = { false }) -> SampleBuffer? {
         guard region.offset >= 0, region.offset < buffer.frameCount else { return nil }
         let rate = buffer.sampleRate
         let length = Swift.min(region.length, buffer.frameCount - region.offset)
@@ -116,12 +118,12 @@ public enum RegionWarp {
                     readAt(Double(frame))
                 }
             case .beats:
-                guard let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
+                guard let sides = buffer.sides(offset: region.offset, length: length), !isCancelled() else { return nil }
                 let out = WSOLAStretcher().stretch(sides, outputCount: outputCount, anchors: onsets(in: sides, rate: rate),
                                                    splice: splice) { (frame: Int) -> Double in readAt(Double(frame)) }
                 return buffer.withSides(out)
             case .rePitch:
-                guard let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
+                guard let sides = buffer.sides(offset: region.offset, length: length), !isCancelled() else { return nil }
                 return buffer.withSides(WSOLAStretcher.resample(sides, outputCount: outputCount) { (frame: Int) -> Double in
                     readAt(Double(frame))
                 })
@@ -138,7 +140,7 @@ public enum RegionWarp {
         guard wanted.isFinite, wanted <= Double(limit) else { return nil }
         let longer = Int(wanted)
         guard longer > 2,
-              let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
+              let sides = buffer.sides(offset: region.offset, length: length), !isCancelled() else { return nil }
         let stretcher = WSOLAStretcher()
         let timed: [[Float]]
         switch mode {
@@ -150,8 +152,10 @@ public enum RegionWarp {
         case .rePitch:
             // Played like a record first, so its pitch follows the tempo, then transposed on top.
             let played = WSOLAStretcher.resample(sides, outputCount: outputCount) { (frame: Int) -> Double in readAt(Double(frame)) }
+            guard !isCancelled() else { return nil }
             timed = stretcher.stretch(played, outputCount: longer) { (frame: Int) -> Double in Double(frame) / ratio }
         }
+        guard !isCancelled() else { return nil }
         return buffer.withSides(WSOLAStretcher.resample(timed, outputCount: outputCount) { (frame: Int) -> Double in
             Double(frame) * ratio
         })
