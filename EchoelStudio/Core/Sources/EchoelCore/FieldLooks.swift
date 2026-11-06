@@ -378,26 +378,24 @@ public enum FieldLook {
     /// The rings' energy (`field_fragment`'s rings branch), for the blend's flash measure.
     static func ringsEnergy(u: Double, v: Double, aspect: Double, field: FieldMotion.Shown, turns: Double) -> Double {
         let d = ((u * aspect - 0.5 * aspect) * (u * aspect - 0.5 * aspect) + (v - 0.5) * (v - 0.5)).squareRoot()
-        let coherence = clamp(field.coherence, 0, 1)
-        let density = clamp(field.density, 4, 120)
+        let coherence = clamp(field.ringsCoherence, 0, 1)
         let spread = 0.85 + 0.35 * clamp(field.breath, 0, 1)
         let phase = turns * 2 * Double.pi
         let vignette = smoothstep(0.9 + 0.5 * spread, 0, d)
-        let pitchK = clamp(Swift.max(field.toneHz, 20) / 261.63, 0.5, 2.0)
-        let k = clamp(density * pitchK, 4, 120)
+        let k = clamp(field.ringsK, 4, 120)
         let p = phase * FieldPulse.foldDamping
         let w1 = sin(d * k - p), w2 = sin(d * k * mix(1.6, 1.02, coherence) - p * 0.5)
         let interference = (w1 + w2) * 0.5
         let rings = pow(interference * interference, mix(1.0, 2.6, coherence))
         let ringRadius = (0.12 + 0.40 * clamp(field.beatPhase, 0, 1)) * spread
         let ringT = (d - ringRadius) / 0.012
-        let ring = exp(-ringT * ringT) * clamp(field.beatLight, 0, 1)
+        let ring = exp(-ringT * ringT) * FieldPulse.beatRingGain * clamp(field.beatLight, 0, 1)
         let beat = (0.5 - 0.5 * cos(field.pulsePhase * 2 * Double.pi)) * (field.hasPulse ? 1 : 0)
         let restGlow = 0.05 + 0.18 * clamp(field.centreLight, 0, 1)
         let bloomEdge = (0.34 + 0.18 * beat) * spread
         let bloom = restGlow * (0.80 + FieldPulse.bloomSwing * beat) * smoothstep(bloomEdge, 0, d)
         let haloT = (d - (0.30 + 0.15 * coherence) * spread) / 0.010
-        let halo = exp(-haloT * haloT) * 0.22 * (field.hasCoherence ? 1 : 0)
+        let halo = exp(-haloT * haloT) * FieldPulse.haloGain * (field.hasCoherence ? 1 : 0)
         return clamp(rings * vignette * (0.35 + 0.65 * clamp(field.levelLight, 0, 1)) + bloom + ring + halo, 0, 1)
     }
 

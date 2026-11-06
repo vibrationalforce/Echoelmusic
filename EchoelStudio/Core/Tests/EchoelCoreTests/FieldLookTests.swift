@@ -272,6 +272,56 @@ final class FieldLookTests: XCTestCase {
         }
     }
 
+    /// The rings at every point of a grid at full level and the fastest drift, with everything
+    /// else that moves them at its worst: a beat ring three times a second, the key jumping from
+    /// C to B and back every two seconds, coherence and breath slammed from end to end. Simulated
+    /// per pixel on 2026-11-06 this flashed up to 34 times a second; with the beat ring and the
+    /// halo under the flash threshold and the rings' spacing and coherence rate-limited, six.
+    func testTheRingsFlashAtNoPixelMoreThanThreeTimesASecondAtFullLevel() {
+        let rate = 60.0
+        for aspect in [1.0, 16.0 / 9] {
+            var field = FieldMotion(), looks = FieldLookMotion()
+            var series = [[Double]](repeating: [], count: 100)
+            for frame in 0..<Int(8 * rate) {
+                let beat = (Double(frame) * 3 / rate).truncatingRemainder(dividingBy: 1)
+                let loud = FieldFrame(beatPhase: beat, barPhase: Double(frame % 3) / 3,
+                                      tonicHz: (frame / Int(2 * rate)) % 2 == 0 ? 261.63 : 493.88, level: 1, pulse: 1,
+                                      coherence: Double((frame / 30) % 2), breath: Double((frame / 20) % 2), isPlaying: true)
+                let shown = field.step(loud, after: 1 / rate, still: false, patternScale: 1)
+                let look = looks.step(primary: .rings, partner: nil, mix: 0, hertz: nil, drive: 0, tonicHz: shown.toneHz,
+                                      fieldPhase: shown.fieldPhase, after: 1 / rate, still: false, patternScale: 1)
+                for i in 0..<10 {
+                    for j in 0..<10 {
+                        series[i * 10 + j].append(FieldLook.light(.rings, u: (Double(i) + 0.5) / 10, v: (Double(j) + 0.5) / 10,
+                                                                  aspect: aspect, field: shown, look: look,
+                                                                  plate: ChladniMotion.Shown(), turns: look.turns))
+                    }
+                }
+            }
+            XCTAssertGreaterThan(series.flatMap { $0 }.max() ?? 0, 0.3, "the rings are lit")
+            assertAtMostThreeFlashesASecond(series, "rings at aspect \(aspect)")
+        }
+    }
+
+    func testTheRingsSpacingAndCoherenceMoveAtCappedSpeeds() {
+        var field = FieldMotion()
+        var last = field.step(FieldFrame(tonicHz: 261.63, coherence: 0), after: 1.0 / 60, still: false, patternScale: 1)
+        XCTAssertEqual(last.ringsK, FieldMotion.ringsK(density: FieldMotion.ringDensity, toneHz: 261.63), accuracy: 1e-9,
+                       "the first frame shows the key as it is")
+        XCTAssertEqual(last.ringsCoherence, 0, accuracy: 1e-12)
+        for _ in 0..<120 {
+            let shown = field.step(FieldFrame(tonicHz: 493.88, coherence: 1), after: 1.0 / 60, still: false, patternScale: 1)
+            XCTAssertLessThanOrEqual(abs(shown.ringsK - last.ringsK), FieldMotion.ringsKRate / 60 + 1e-9)
+            XCTAssertLessThanOrEqual(abs(shown.ringsCoherence - last.ringsCoherence), FieldMotion.ringsCoherenceRate / 60 + 1e-12)
+            last = shown
+        }
+        XCTAssertGreaterThan(last.ringsK, FieldMotion.ringsK(density: FieldMotion.ringDensity, toneHz: 261.63),
+                             "a higher tonic tightens the rings")
+        XCTAssertLessThan(FieldPulse.beatRingGain * (1 - FieldPulse.ambient), FlashLimit.generalFlashThreshold,
+                          "the beat ring alone stays under the flash threshold")
+        XCTAssertLessThan(FieldPulse.haloGain * (1 - FieldPulse.ambient), FlashLimit.generalFlashThreshold)
+    }
+
     /// The aurora's rays re-space with the pitch at most `auroraRayRate` a second, and arrive.
     func testTheAurorasRaysFollowThePitchSlowly() {
         var looks = FieldLookMotion()

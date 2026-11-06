@@ -174,6 +174,12 @@ public struct FieldPulse: Equatable, Sendable {
     /// transitions are not flashes and only the field's rate counts. `FieldTests` keep the product.
     public static let bloomSwing = 0.42
     public static let bloomSwingLiteral = "0.42"
+    /// How bright the beat's ring and the coherence halo may light over the rings — under the
+    /// general-flash threshold (0.10), like the bloom's swing: the ring sweeps every pixel once a
+    /// beat, unbounded by any rate, and the halo moves with the breath. At 1.0 and 0.22 (before
+    /// 2026-11-06) a 120 bpm song flashed a point nine times a second (simulated per pixel).
+    public static let beatRingGain = 0.10
+    public static let haloGain = 0.06
     /// The most the resting bloom may glow (`glow = 0.05 + 0.18 × light`).
     public static let restGlowCeiling = 0.23
     public static let restGlowFloorLiteral = "0.05"

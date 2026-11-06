@@ -37,7 +37,8 @@ public enum FieldShader {
     struct VOut { float4 pos [[position]]; float2 uv; };
     struct Uniforms { float aspect; float beatPhase; float fieldPhase; float pulsePhase;
                       float beatLight; float centreLight; float levelLight; float coherence;
-                      float breath; float toneHz; float density; float hasPulse; float hasCoherence; };
+                      float breath; float toneHz; float density; float hasPulse; float hasCoherence;
+                      float ringsK; float ringsCoherence; };
     struct Chladni { float4 fromM; float4 fromN; float4 fromW; float4 toM; float4 toN; float4 toW;
                      float active; float mix; float light; float grains; };
     // The looks (FieldLookMotion): which two patterns (FieldPattern.shaderIndex), how much of the
@@ -109,9 +110,7 @@ public enum FieldShader {
     // fringe spacing follows the tone (k proportional to f, non-dispersive) around the ring dial.
     // Squaring doubles the temporal rate, so the phase is damped by FieldPulse.foldDamping first:
     // 2 x 0.5 x the 2.5 Hz ceiling lands under WCAG's three flashes a second.
-    float fieldRings(float d, float density, float toneHz, float phase, float coh) {
-        float pitchK = clamp(max(toneHz, 20.0) / 261.63, 0.5, 2.0);
-        float k = clamp(density * pitchK, 4.0, 120.0);
+    float fieldRings(float d, float k, float phase, float coh) {
         float p = phase * \(FieldPulse.foldDampingLiteral);
         float w1 = sin(d * k - p);
         float detune = mix(1.6, 1.02, coh);
@@ -202,19 +201,19 @@ public enum FieldShader {
         uv.x *= u.aspect;
         float2 c = float2(0.5 * u.aspect, 0.5);
         float d = distance(uv, c);
-        float coh = clamp(u.coherence, 0.0, 1.0);
-        float density = clamp(u.density, 4.0, 120.0);
+        // The rings read their own coherence and wavenumber, each rate-limited (FieldMotion).
+        float coh = clamp(u.ringsCoherence, 0.0, 1.0);
         float spread = 0.85 + 0.35 * clamp(u.breath, 0.0, 1.0);
         // The field moves with the song's bar (its phase is capped on the CPU); the vignette's
         // edge is always past the screen's corner, so the picture never closes to a black centre.
         float phase = turns * 6.2831853;
         float vEdge = 0.9 + 0.5 * spread;
         float vignette = smoothstep(vEdge, 0.0, d);
-        float field = fieldRings(d, density, u.toneHz, phase, coh);
+        float field = fieldRings(d, clamp(u.ringsK, 4.0, 120.0), phase, coh);
         // The beat: one thin ring grows through each beat; its light passed the flash guard.
         float ringRadius = (0.12 + 0.40 * clamp(u.beatPhase, 0.0, 1.0)) * spread;
         float ringT = (d - ringRadius) / 0.012;
-        float ring = exp(-ringT * ringT) * clamp(u.beatLight, 0.0, 1.0);
+        float ring = exp(-ringT * ringT) * \(FieldPulse.beatRingGain) * clamp(u.beatLight, 0.0, 1.0);
         // The body: the centre blooms with the pulse (or the level when no body is measured) and
         // each heartbeat widens and brightens it; the brightening stays under the general-flash
         // threshold (FieldPulse.bloomSwing), so only the field's rate counts as flashing.
@@ -226,7 +225,7 @@ public enum FieldShader {
         // Coherence, where it is measured, widens a quiet halo; absent, there is none.
         float haloRadius = (0.30 + 0.15 * coh) * spread;
         float haloT = (d - haloRadius) / 0.010;
-        float halo = exp(-haloT * haloT) * 0.22 * clamp(u.hasCoherence, 0.0, 1.0);
+        float halo = exp(-haloT * haloT) * \(FieldPulse.haloGain) * clamp(u.hasCoherence, 0.0, 1.0);
         float energy = clamp(field * vignette * (0.35 + 0.65 * clamp(u.levelLight, 0.0, 1.0)) + bloom + ring + halo, 0.0, 1.0);
         // The colour: the key's tonic as light (fieldColour, shared with the plate).
         float3 col = fieldColour(u);

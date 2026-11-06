@@ -143,6 +143,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         var density: Float = Float(FieldMotion.ringDensity)
         var hasPulse: Float = 0
         var hasCoherence: Float = 0
+        var ringsK: Float = Float(FieldMotion.ringsK(density: FieldMotion.ringDensity, toneHz: FieldFrame.middleC))
+        var ringsCoherence: Float = 0.5
 
         init() {}
 
@@ -161,6 +163,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             density = Float(shown.density)
             hasPulse = shown.hasPulse ? 1 : 0
             hasCoherence = shown.hasCoherence ? 1 : 0
+            ringsK = Float(shown.ringsK)
+            ringsCoherence = Float(shown.ringsCoherence)
         }
     }
 
