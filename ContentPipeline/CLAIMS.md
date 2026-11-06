@@ -83,6 +83,23 @@ Einstieg: `echoelmusic-intern/docs/dev/ECHOEL_VISION_2026-10-19.md`.
 - **MIDI-Import:** „Import a Standard MIDI file into the song.“ (`App/Views/StudioView.swift`, „Import MIDI…“).
 - **Bake Effects:** „Bake Effects renders an audio region through its track's effects onto a new track below it, as one undo step.“ (`App/Documents/DocumentController.swift` `bakeEffects`).
 Weiter NICHT: Apple Health im Studio, Kamera-Puls als Werbesatz (nur Datenschutz-Offenlegung), „works in AUM/Logic“.
+(7) **2026-11-06, Nachtrag Field, Licht, Aufnahme:** gemessen auf `main` dieses Tages, **in TestFlight (10055–10061),
+auf keinem Gerät geprüft** — jede Kopie sagt das. Sagbar, englisch, nicht erweitern; nie „healing“, nie „frequencies
+for …“, nie ein Wirkversprechen — die Looks zeigen Klang und Stimmung als Bild, mehr nicht:
+- **Effekte (Zahl korrigiert):** „Twenty-three built-in effects.“ Messen statt zitieren: die Fälle von `StandardEffect`
+  in `EchoelStudio/Core/Sources/EchoelCore/OwnPlugins.swift` zählen (2026-11-06: 23). Die „Eighteen“ in (6) ist damit überholt.
+- **Field-Looks:** „The Field draws the music as patterns: Moiré Beat shows how a tuning beats, Weave grows a figure from the
+  song's key bar by bar, Thin Film shows a soap film's colours computed from its thickness, and a kaleidoscope folds the
+  picture.“ (`Core/Sources/EchoelCore/FieldLooks.swift`, `BarWeave.swift`, `FieldFold`; Tür: Field-Fenster, Pattern-Menü)
+- **Meter:** „Phase meter (goniometer and correlation) and a partials meter.“ (`FieldMeter`, Tür: Field-Fenster, „Show“)
+- **Looks im Export und im Stream:** „Exported video and the live stream draw the Field's chosen looks.“
+  (`Engine/Sources/EchoelEngine/FieldExport.swift`, `App/Streaming/FieldStreamSource.swift`)
+- **Bar Weave als Modulation:** „Bar Weave: a modulation source that changes once a bar, from the song's key.“ (`Modulation.swift`)
+- **Licht:** „A light cue can walk the song's Bar Weave across your fixtures.“ (`LightShow.swift`, Cue-Look „Weave“; jeder
+  Kanal unter dem Flash-Schutz)
+- **Stereo-Aufnahme:** „Record a stereo pair from two interface inputs onto an audio track.“ (`App/Engine/InputRecorder.swift`,
+  Menü „Stereo“ im Eingangsmenü des Kanalzugs). Ohne zweiten Eingang ist die Aufnahme mono — nie „stereo from the iPhone mic“.
+- **DDSP-Profile, Revoice:** nur mit Mechanismus-Satz und erst nach einem Hörtest am Gerät — heute NICHT als Werbesatz.
 
 Stand: 2026-10-13 (Produktgesetz vom 2026-09-24 nachgezogen — `docs/dev/FOUNDER_PRODUCT_LAW.md`:
 Echoelmusic IST die Workstation. ✅ neu: Mixer-Bühne, Sampler je Spur, Grain-Insert, Stück-Export,
