@@ -157,7 +157,7 @@ final class ChladniPlateTests: XCTestCase {
     }
 
     func testThePatternNamesAreStoredAndOrdered() {
-        XCTAssertEqual(FieldPattern.allCases.map(\.rawValue), ["rings", "chladni", "dish", "water", "aurora", "depth", "moire", "weave"])
+        XCTAssertEqual(FieldPattern.allCases.map(\.rawValue), ["rings", "chladni", "dish", "water", "aurora", "depth", "moire", "weave", "film"])
         XCTAssertEqual(FieldPattern(stored: "chladni"), .chladni)
         XCTAssertEqual(FieldPattern(stored: nil), .rings)
         XCTAssertEqual(FieldPattern(stored: "unknown"), .rings)

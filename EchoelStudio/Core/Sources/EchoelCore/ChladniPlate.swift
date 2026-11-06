@@ -25,6 +25,11 @@ public enum FieldPattern: String, CaseIterable, Sendable {
     /// The song's key woven one row per bar: rule 90, a cellular automaton, started from the key's
     /// pitch classes (`BarWeave`), so each key and scale weaves its own figure.
     case weave
+    /// A soap film standing in a frame, seen in reflected light: its colours are the
+    /// interference of the light reflected at its two faces, computed from the film's thickness
+    /// (`FieldLook.film`) — thin at the top and black where it is thinnest, thick and pale below,
+    /// swirled slowly, and rippled by the sounding pitch as loud as the sound is.
+    case film
 
     public static let storageKey = "field.pattern"
     /// The pattern blended over the first one (`FieldLookMotion`); absent or unknown is none.
@@ -44,6 +49,7 @@ public enum FieldPattern: String, CaseIterable, Sendable {
         case .depth: "Depth"
         case .moire: "Moiré Beat"
         case .weave: "Weave"
+        case .film: "Thin Film"
         }
     }
 

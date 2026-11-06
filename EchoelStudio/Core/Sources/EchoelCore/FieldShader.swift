@@ -45,7 +45,7 @@ public enum FieldShader {
     // draws the rings alone, as every pass bound before the looks existed.
     struct Look { float primary; float partner; float blend; float phaseOffset;
                   float soundHz; float dishK; float dishStrength; float dishHex;
-                  float moireK1; float moireK2; float moirePhase; };
+                  float moireK1; float moireK2; float moirePhase; float filmK; float filmPhase; };
     // The weave (BarWeave.words): how far the newest row has come in, its light (flash-guarded on
     // the CPU), two spare words, then each row on screen, newest first, as its low and high 32
     // bits. All zero is an empty, dark weave.
@@ -363,9 +363,39 @@ public enum FieldShader {
         return fieldColour(u) * (ambient + (1.0 - ambient) * energy);
     }
 
+    // The thin film (FieldLook.filmThickness and filmColour, exactly): its own colours, from the
+    // interference of the light its two faces reflect, lit by the level and the vignette.
+    float3 filmColour(VOut in, constant Uniforms& u, constant Look& l) {
+        float2 p = float2((in.uv.x - 0.5) * 2.0 * u.aspect, (in.uv.y - 0.5) * 2.0);
+        float level = clamp(u.levelLight, 0.0, 1.0);
+        float t = l.filmPhase * 6.2831853;
+        float drained = smoothstep(1.2, -1.2, p.y);
+        float d = \(FieldLook.filmThinnest) + (\(FieldLook.filmThickest - FieldLook.filmThinnest)) * drained * drained;
+        d += \(FieldLook.filmSwirlDepth) * (0.6 * sin(1.7 * p.x + 0.9 * p.y + t) + 0.4 * sin(2.3 * p.y - 1.3 * p.x - t));
+        d += \(FieldLook.filmRippleDepth) * level * sin(l.filmK * length(p) - t);
+        d = max(d, 0.0);
+        float3 sum = float3(0.0);
+        float3 white = float3(0.0);
+        for (int i = 0; i < \(FieldLook.filmWavelengthCount); i++) {
+            float wl = \(FieldLook.filmFirstWavelength) + float(i) * \(FieldLook.filmWavelengthStep);
+            float3 s = wavelengthToRGB(wl);
+            float r = sin(6.2831853 * \(FieldLook.filmIndex) * d / wl);
+            sum += s * (r * r);
+            white += s;
+        }
+        float3 film = clamp(sum / max(white, float3(1e-6)) * \(FieldLook.filmGain), 0.0, 1.0);
+        float2 uv = in.uv;
+        uv.x *= u.aspect;
+        float vignette = smoothstep(1.6, 0.0, distance(uv, float2(0.5 * u.aspect, 0.5)));
+        float energy = clamp(vignette * (0.35 + 0.65 * level), 0.0, 1.0);
+        float ambient = \(FieldPulse.ambientLiteral);
+        return film * (ambient + (1.0 - ambient) * energy);
+    }
+
     float3 lookColour(float look, VOut in, constant Uniforms& u, constant Chladni& c, constant Look& l,
                       constant Weave& w, float turns) {
         if (look < 0.5) return ringsColour(in, u, turns);
+        if (look > 7.5 && look < 8.5) return filmColour(in, u, l);
         if (look < 1.5) return chladniColour(in, u, c);
         if (look > 5.5 && look < 6.5) return moireColour(in, u, l);
         if (look > 6.5 && look < 7.5) return weaveColour(in, u, w);
