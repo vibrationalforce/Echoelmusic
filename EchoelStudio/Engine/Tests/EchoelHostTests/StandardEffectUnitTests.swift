@@ -40,6 +40,15 @@ final class StandardEffectUnitTests: XCTestCase {
                              "only a standard effect's id makes one")
     }
 
+    /// A host reads the one channel layout the unit plays — stereo to stereo — before it offers
+    /// the insert, instead of guessing and getting a refusal at load.
+    func testEachStandardEffectDeclaresStereoInStereoOut() throws {
+        for effect in StandardEffect.allCases {
+            let u = try unit(effect)
+            XCTAssertEqual(u.channelCapabilities?.map(\.intValue), [2, 2], "\(effect)")
+        }
+    }
+
     /// A named choice reaches a host as an indexed parameter with its names.
     func testANamedChoiceIsAnIndexedParameterWithItsNames() throws {
         let u = try unit(.harmonizer)
