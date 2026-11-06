@@ -3,7 +3,7 @@ import Foundation
 /// A three-band clipper: the sound split into low, mid and high at two crossovers, each band
 /// driven into a clipper at the ceiling on its own, the bands summed and clipped once more at the
 /// same ceiling — so a kick can be squared off without the vocal above it breaking up, and the
-/// master gets louder without a limiter's pumping. Written new for Echoel Studio, as a value of
+/// master gets louder with less pumping than a full-band limiter. Written new for Echoel Studio, as a value of
 /// settings and a render-thread processor like `MultibandCompressor`.
 ///
 /// **Crossovers.** Linkwitz-Riley of the fourth order, two Butterworth `ZDFStage`s in a row per
@@ -31,6 +31,14 @@ import Foundation
 /// `guardWindow` samples: the lowest gain any sample of the window needs, held over the window and
 /// averaged over it again, which is never above what the delayed sample needs, and returns over
 /// 10 ms. Under the ceiling it is exactly 1. A clamp at the ceiling after it catches rounding.
+/// It IS a full-band look-ahead limiter on what the clipping leaves over the ceiling: measured in
+/// the review simulation, up to about 3.8 dB at 44.1/48 kHz (4.5 dB at 96 kHz) on bright, hard-
+/// driven material, heard as about 1 dB of pumping on high transients — the price of a hard
+/// true-sample ceiling without folding the harmonics back. The fold-back is measured at two bins
+/// at +12 dB (−58 dB); the broadband alias floor rises with drive (−22 … −45 dB in the review).
+///
+/// **Mix** blends the wet sound with the input as it came in, before Input — aligned, never
+/// clipped: at Mix < 1 the dry part adds to the ceiling unclipped.
 ///
 /// **Latency** `latencySamples` = 85 at every rate: 2·24 + 5 + 1 = 54 for the halfband chain
 /// (one 4× sample of padding makes it whole) and 31 for the guard. The dry sound runs through the
@@ -97,6 +105,11 @@ public final class MultibandClipper: @unchecked Sendable {
         didSet {
             settings = settings.clamped
             update()
+            // Set before the first block, a value takes effect at once: the effect loads as stored.
+            if !hasRun {
+                now = targets
+                increments = Values()
+            }
         }
     }
 
@@ -150,6 +163,8 @@ public final class MultibandClipper: @unchecked Sendable {
     // Values as the sound plays them: targets, and where the glide has got to.
     private var targets = Values()
     private var now = Values()
+    /// Whether a block has run since the start or the last `reset`.
+    private var hasRun = false
     private var increments = Values()
     private var stepPhase = 0
     private let stepPole: Float
@@ -288,6 +303,7 @@ public final class MultibandClipper: @unchecked Sendable {
         now = targets
         increments = Values()
         stepPhase = 0
+        hasRun = false
     }
 
     /// One glide step: the values the next `step` samples move to.
@@ -329,7 +345,7 @@ public final class MultibandClipper: @unchecked Sendable {
     /// One side of one sample: the wet sound before the guard, and the dry sound through the same
     /// allpasses. `base` is the side's first stage, `channel` 0 (left) or 1.
     @inline(__always)
-    private func channelSample(_ input: Float, base: Int, channel: Int) -> (wet: Float, dry: Float) {
+    private func channelSample(_ input: Float, dryInput: Float, base: Int, channel: Int) -> (wet: Float, dry: Float) {
         let k = ZDFStage.butterworth
         let g1 = now.g1, g2 = now.g2
         let first = stages[base].process(input, g: g1, k: k)
@@ -339,7 +355,7 @@ public final class MultibandClipper: @unchecked Sendable {
         let midBand = stages[base + 4].process(second.low, g: g2, k: k).low
         let highBand = stages[base + 5].process(second.high, g: g2, k: k).high
         let lowAligned = lowBand - 2 * k * stages[base + 6].process(lowBand, g: g2, k: k).band
-        let dryFirst = input - 2 * k * stages[base + 7].process(input, g: g1, k: k).band
+        let dryFirst = dryInput - 2 * k * stages[base + 7].process(dryInput, g: g1, k: k).band
         let dry = dryFirst - 2 * k * stages[base + 8].process(dryFirst, g: g2, k: k).band
 
         let ceiling = now.ceiling, inverse = 1 / now.ceiling, softness = now.softness
@@ -387,6 +403,7 @@ public final class MultibandClipper: @unchecked Sendable {
     /// Processes `frames` samples in place.
     public func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
         guard frames > 0 else { return }
+        hasRun = true
         let window = Self.guardWindow, mask = Self.guardWindow - 1
         var bad = false
         for i in 0..<frames {
@@ -399,11 +416,15 @@ public final class MultibandClipper: @unchecked Sendable {
             now.mix += increments.mix
 
             // The boundary: a sample that is not a number is silence.
-            var inLeft = left[i] * now.input, inRight = right[i] * now.input
+            // The dry sound is the input as it came in, before Input: Mix never adds gain unclipped.
+            var rawLeft = left[i], rawRight = right[i]
+            if !rawLeft.isFinite { rawLeft = 0 }
+            if !rawRight.isFinite { rawRight = 0 }
+            var inLeft = rawLeft * now.input, inRight = rawRight * now.input
             if !inLeft.isFinite { inLeft = 0 }
             if !inRight.isFinite { inRight = 0 }
-            let l = channelSample(inLeft, base: 0, channel: 0)
-            let r = channelSample(inRight, base: 9, channel: 1)
+            let l = channelSample(inLeft, dryInput: rawLeft, base: 0, channel: 0)
+            let r = channelSample(inRight, dryInput: rawRight, base: 9, channel: 1)
 
             // The guard: linked, so a side that needs less never shifts the image.
             let ceiling = now.ceiling
@@ -416,7 +437,9 @@ public final class MultibandClipper: @unchecked Sendable {
             heldSum += Double(lowest) - Double(held[guardPosition])
             held[guardPosition] = lowest
             let average = Float(heldSum / Double(window))
-            guardGain = Swift.min(average, guardGain + guardRelease * (average - guardGain))
+            // Snaps home once the glide stops moving, so the gain returns to exactly 1.
+            let glided = guardGain + guardRelease * (average - guardGain)
+            guardGain = average - guardGain < 1e-6 ? average : Swift.min(average, glided)
             let late = (guardPosition + 1) & mask
             let wetLeft = waiting[late] * guardGain, wetRight = waiting[window + late] * guardGain
             waiting[guardPosition] = l.wet

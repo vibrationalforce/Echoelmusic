@@ -172,6 +172,20 @@ final class MultibandClipperTests: XCTestCase {
         XCTAssertEqual(decibels(rms(Array(dry.suffix(4_800))) / rms(Array(tone.suffix(4_800)))), 0, accuracy: 0.01)
     }
 
+    /// The dry sound is the input as it came in, before Input: a +12 dB Input at Mix 0 leaves the
+    /// level as it was, and at Mix 0.5 the output's peak is half the dry peak plus at most half the
+    /// ceiling — never the raised input unclipped.
+    func testTheDrySoundIsTheInputBeforeTheInputGain() {
+        let tone = sine(1_000, amplitude: 0.5)
+        let dryOnly = run(MultibandClipper(sampleRate: rate, settings: MultibandClipper.Settings(inputGain: 12, mix: 0)), tone)
+        XCTAssertEqual(decibels(rms(Array(dryOnly.suffix(4_800))) / rms(Array(tone.suffix(4_800)))), 0, accuracy: 0.01)
+        let settings = MultibandClipper.Settings(inputGain: 24, ceiling: -0.3, mix: 0.5)
+        let half = run(MultibandClipper(sampleRate: rate, settings: settings), tone)
+        let peak = Array(half.suffix(4_800)).map { (sample: Float) -> Float in Swift.abs(sample) }.max() ?? 0
+        let ceiling = Float(Foundation.pow(10, -0.3 / 20))
+        XCTAssertLessThanOrEqual(peak, 0.5 * 0.5 + 0.5 * ceiling + 1e-3)
+    }
+
     /// Half dry, half clipped, under the ceiling: the level of the input — even on the crossovers,
     /// where a dry path that was only delayed would cancel half of it.
     func testHalfMixUnderTheCeilingKeepsTheLevel() {
