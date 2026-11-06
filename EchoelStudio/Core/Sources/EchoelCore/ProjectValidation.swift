@@ -133,6 +133,12 @@ extension Project {
             if let input = track.input, track.kind != .audio || !(0..<Track.inputChannelLimit).contains(input) {
                 throw Self.invalid("input", "only an audio track records, from input 0…\(Track.inputChannelLimit - 1)")
             }
+            if let width = track.inputChannels {
+                guard track.kind == .audio, (1...Track.maximumInputChannels).contains(width),
+                      (track.input ?? 0) + width <= Track.inputChannelLimit else {
+                    throw Self.invalid("inputChannels", "an audio track records 1 or \(Track.maximumInputChannels) inputs, within the first \(Track.inputChannelLimit)")
+                }
+            }
             if track.monitor != .auto, track.kind != .audio { throw Self.invalid("monitor", "only an audio track has an input") }
             if let arpeggio = track.arpeggio {
                 guard track.kind == .instrument else { throw Self.invalid("arpeggio", "only an instrument track arpeggiates") }

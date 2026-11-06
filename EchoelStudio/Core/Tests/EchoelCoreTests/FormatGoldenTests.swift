@@ -603,6 +603,42 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4 with an audio track recording from an input pair (2026-11-06): an optional track
+    /// field added inside format 4, so an earlier format-4 build opens the file and records mono
+    /// from the pair's first input. The second audio track records mono and writes no new key.
+    private let formatFourStereoInput = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Room",
+      "tempo": 100,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-000000000011",
+          "name": "Room",
+          "kind": "audio",
+          "colorIndex": 0,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "input": 2,
+          "inputChannels": 2
+        },
+        {
+          "id": "7A000000-0000-4000-8000-000000000012",
+          "name": "Voice",
+          "kind": "audio",
+          "colorIndex": 1,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "input": 1
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     /// Format 4 with markers on the timeline (PRO-W1, 2026-11-04): an optional song field added
     /// inside format 4, so an earlier format-4 build opens the file and shows no markers.
     private let formatFourMarkers = Data("""
@@ -822,7 +858,7 @@ final class FormatGoldenTests: XCTestCase {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
                      formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes, formatFourLighting,
                      formatFourTexture, formatFourBake, formatFourMotion, formatFourGrade, formatFourSubtitles,
-                     formatFourDDSPProfile, Self.formatFourFromTheFuture] {
+                     formatFourDDSPProfile, formatFourStereoInput, Self.formatFourFromTheFuture] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -1291,6 +1327,44 @@ final class FormatGoldenTests: XCTestCase {
             let broken = String(decoding: formatFourDDSPProfile, as: UTF8.self).replacingOccurrences(of: from, with: to)
             XCTAssertNotEqual(Data(broken.utf8), formatFourDDSPProfile, "the replacement must land")
             XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), to)
+        }
+    }
+
+    func testAnAudioTrackOpensWithItsInputPairAndAMonoOneWritesNoKey() throws {
+        let project = try ProjectCodec.decode(formatFourStereoInput)
+        XCTAssertEqual(project.tracks.map(\.input), [2, 1])
+        XCTAssertEqual(project.tracks.map(\.inputChannels), [2, nil])
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let tracks = try XCTUnwrap(root["tracks"] as? [[String: Any]])
+        XCTAssertEqual(tracks.first?["inputChannels"] as? Int, 2)
+        XCTAssertNil(tracks.last?["inputChannels"], "a mono track writes no key")
+        for data in [earliest, current, formatTwo, formatTwoMedia, formatThree, formatFour, formatFourRegionEdits, formatFourTakes] {
+            let older = try ProjectCodec.decode(data)
+            XCTAssertTrue(older.tracks.allSatisfy { $0.inputChannels == nil }, "an older song records mono")
+            let written = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(older)) as? [String: Any])
+            for track in try XCTUnwrap(written["tracks"] as? [[String: Any]]) {
+                XCTAssertNil(track["inputChannels"], "and writes no key")
+            }
+        }
+        // A width past a pair, a pair past the last input, or one on another kind refuses the song.
+        let text = String(decoding: formatFourStereoInput, as: UTF8.self)
+        // Each case is the edits that break it, applied in order; the last one also drops the input,
+        // so only the pair's own rule can refuse it.
+        let cases: [[(String, String)]] = [
+            [("\"inputChannels\": 2", "\"inputChannels\": 3")],
+            [("\"inputChannels\": 2", "\"inputChannels\": 0")],
+            [("\"input\": 2,\n      \"inputChannels\": 2", "\"input\": 63,\n      \"inputChannels\": 2")],
+            [("\"kind\": \"audio\",\n      \"colorIndex\": 0", "\"kind\": \"instrument\",\n      \"colorIndex\": 0"),
+             ("\"input\": 2,\n      \"inputChannels\": 2", "\"inputChannels\": 2")],
+        ]
+        for edits in cases {
+            var broken = text
+            for (from, to) in edits {
+                let next = broken.replacingOccurrences(of: from, with: to)
+                XCTAssertNotEqual(next, broken, "the replacement must land: \(to)")
+                broken = next
+            }
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), edits.last?.1 ?? "")
         }
     }
 

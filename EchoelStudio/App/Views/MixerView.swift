@@ -317,7 +317,10 @@ struct InputMenu: View {
         }
     }
 
+    /// The menu offers single inputs; picking the one a stored pair starts at keeps the pair, so
+    /// choosing what the menu shows as chosen changes nothing.
     private func set(_ channel: Int) {
-        try? store.perform(.setInput(track.id, channel: channel == 0 ? nil : channel))
+        let keepsPair = track.inputChannels == Track.maximumInputChannels && channel == (track.input ?? 0)
+        try? store.perform(.setInput(track.id, channel: channel == 0 ? nil : channel, stereo: keepsPair))
     }
 }

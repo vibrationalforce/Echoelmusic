@@ -274,6 +274,10 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     /// The interface input an audio track records from, 0-based; nil is the first. A channel the
     /// interface lacks is kept, and the track records the first until it is back.
     public var input: Int?
+    /// How many inputs an audio track records from, `input` first (optional inside format 4,
+    /// 2026-11-06): nil is one — mono, the default, stored as before; 2 records `input` and the
+    /// next one as left and right. An interface without the pair records as `input` does.
+    public var inputChannels: Int?
     /// When an audio track hears its input; other kinds keep `auto` and ignore it. A mode this
     /// build does not know reads as `auto` and is kept under its own name until one is chosen.
     public var monitor: MonitorMode {
@@ -310,6 +314,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     /// Interface channels a track may name; the device decides how many exist.
     public static let outputChannelLimit = 64
     public static let inputChannelLimit = 64
+    /// The most inputs one track records from: a stereo pair.
+    public static let maximumInputChannels = 2
 
     public init(
         id: TrackID = TrackID(),
@@ -345,6 +351,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         case arpeggio
         case monitorName = "monitor"
         case storedTakeGroups = "takeGroups"
+        case inputChannels
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -368,6 +375,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         sends = try c.decodeIfPresent([Send].self, forKey: .sends) ?? []
         output = try c.decodeIfPresent(Int.self, forKey: .output)
         input = try c.decodeIfPresent(Int.self, forKey: .input)
+        inputChannels = try c.decodeIfPresent(Int.self, forKey: .inputChannels)
         monitorName = try c.decodeIfPresent(String.self, forKey: .monitorName) ?? MonitorMode.auto.rawValue
         arpeggio = try c.decodeIfPresent(Arpeggio.self, forKey: .arpeggio)
         let groups = try c.decodeIfPresent([TakeGroup].self, forKey: .storedTakeGroups) ?? []

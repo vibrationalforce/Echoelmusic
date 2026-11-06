@@ -34,6 +34,7 @@ public enum RegionBake {
         track.mixer = MixerStrip()
         track.output = nil
         track.input = nil
+        track.inputChannels = nil
         let inserts = Set(track.inserts.map(\.id))
         var cut = song
         cut.tracks = [track]

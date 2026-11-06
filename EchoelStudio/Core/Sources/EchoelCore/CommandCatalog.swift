@@ -394,9 +394,10 @@ public enum CommandCatalog {
                                             P("channel", .integer, "First channel of the pair, 0-based and even, from 2 (outputs 3/4); omit for the master.", optional: true)])
         case .setInput:
             return CommandSpec(name: "track.input", title: "Track Input",
-                               summary: "Chooses which input of the audio interface an audio track records from.",
+                               summary: "Chooses which input of the audio interface an audio track records from, or which pair.",
                                parameters: [P("track", .trackID, "The audio track."),
-                                            P("channel", .integer, "The input, 0-based (0 is input 1); omit for the first.", optional: true)])
+                                            P("channel", .integer, "The input, 0-based (0 is input 1); omit for the first.", optional: true),
+                                            P("stereo", .boolean, "True records the input and the next one as left and right; false records the one input.")])
         case .setMonitor:
             return CommandSpec(name: "track.monitor", title: "Track Monitoring",
                                summary: "Chooses when an audio track plays its input through its channel strip.",

@@ -90,8 +90,9 @@ public enum Command: Codable, Equatable, Sendable {
     /// Plays a track on a stereo pair of the interface (its first channel, 0-based and even, at
     /// least 2), or into the master with nil.
     case setOutput(TrackID, channel: Int?)
-    /// The interface input an audio track records from (0-based), or the first with nil.
-    case setInput(TrackID, channel: Int?)
+    /// The interface input an audio track records from (0-based), or the first with nil; with
+    /// `stereo`, that input and the next one as left and right. One step: both are set together.
+    case setInput(TrackID, channel: Int?, stereo: Bool)
     /// When an audio track plays its input through its strip.
     case setMonitor(TrackID, MonitorMode)
     /// An instrument track's arpeggiator: its settings (switched on or off), or nil to remove it.
@@ -817,17 +818,17 @@ extension Command {
             }
             project.tracks[t].output = channel
 
-        case let .setInput(id, channel):
+        case let .setInput(id, channel, stereo):
             let t = try project.requireTrack(id)
             guard project.tracks[t].kind == .audio else {
                 throw CommandError.invalidValue(parameter: "track", reason: "only audio tracks record")
             }
-            if let channel {
-                guard (0..<Track.inputChannelLimit).contains(channel) else {
-                    throw CommandError.invalidValue(parameter: "channel", reason: "0…\(Track.inputChannelLimit - 1)")
-                }
+            let width = stereo ? Track.maximumInputChannels : 1
+            guard (0...(Track.inputChannelLimit - width)).contains(channel ?? 0) else {
+                throw CommandError.invalidValue(parameter: "channel", reason: "0…\(Track.inputChannelLimit - width)")
             }
             project.tracks[t].input = channel
+            project.tracks[t].inputChannels = stereo ? width : nil
 
         case let .setMonitor(id, mode):
             let t = try project.requireTrack(id)

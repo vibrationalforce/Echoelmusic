@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import EchoelCore
 
@@ -74,17 +75,43 @@ final class TrackOutputTests: XCTestCase {
         let vocal = TrackID(), keys = TrackID()
         try Command.addTrack(id: vocal, name: "Vocal", kind: .audio, index: nil).apply(to: &p)
         try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &p)
-        try Command.setInput(vocal, channel: 3).apply(to: &p)
+        try Command.setInput(vocal, channel: 3, stereo: false).apply(to: &p)
         XCTAssertEqual(p.track(vocal)?.input, 3)
         let before = p
         for bad in [-1, Track.inputChannelLimit] {
-            XCTAssertThrowsError(try Command.setInput(vocal, channel: bad).apply(to: &p), "\(bad)")
+            XCTAssertThrowsError(try Command.setInput(vocal, channel: bad, stereo: false).apply(to: &p), "\(bad)")
         }
-        XCTAssertThrowsError(try Command.setInput(keys, channel: 0).apply(to: &p), "an instrument track does not record")
+        XCTAssertThrowsError(try Command.setInput(keys, channel: 0, stereo: false).apply(to: &p), "an instrument track does not record")
         XCTAssertEqual(p, before)
         XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(p)).track(vocal)?.input, 3)
-        try Command.setInput(vocal, channel: nil).apply(to: &p)
+        try Command.setInput(vocal, channel: nil, stereo: false).apply(to: &p)
         XCTAssertNil(p.track(vocal)?.input)
+    }
+
+    /// A pair: the input and the next one, set in one step; the last pair starts one before the
+    /// last input; mono clears the pair and stores as before.
+    func testAnAudioTrackRecordsFromAnInputPair() throws {
+        var p = Project()
+        let room = TrackID(), keys = TrackID()
+        try Command.addTrack(id: room, name: "Room", kind: .audio, index: nil).apply(to: &p)
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &p)
+        try Command.setInput(room, channel: Track.inputChannelLimit - 2, stereo: true).apply(to: &p)
+        XCTAssertEqual(p.track(room)?.input, Track.inputChannelLimit - 2)
+        XCTAssertEqual(p.track(room)?.inputChannels, 2)
+        let before = p
+        XCTAssertThrowsError(try Command.setInput(room, channel: Track.inputChannelLimit - 1, stereo: true).apply(to: &p),
+                             "the last input has no partner")
+        XCTAssertThrowsError(try Command.setInput(keys, channel: nil, stereo: true).apply(to: &p), "an instrument track does not record")
+        XCTAssertEqual(p, before, "a refused pair leaves the song as it was")
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(p)).track(room)?.inputChannels, 2)
+        try Command.setInput(room, channel: nil, stereo: true).apply(to: &p)
+        XCTAssertNil(p.track(room)?.input, "inputs 1/2")
+        XCTAssertEqual(p.track(room)?.inputChannels, 2)
+        try Command.setInput(room, channel: 4, stereo: false).apply(to: &p)
+        XCTAssertNil(p.track(room)?.inputChannels, "mono stores no pair")
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(p)) as? [String: Any])
+        let tracks = try XCTUnwrap(root["tracks"] as? [[String: Any]])
+        XCTAssertTrue(tracks.allSatisfy { $0["inputChannels"] == nil })
     }
 
     func testAnAudioTrackChoosesWhenItHearsItsInput() throws {

@@ -114,7 +114,11 @@ slot, not a colour), `mixer`, `clips`, `placements` (`{id, clip, start}` on the 
 `slots` (`{scene, clip}` in the session grid: a scene of the song and a clip of this track, one
 per scene) — all required; optional: `instrument`, `regions`
 (audio on the timeline), `inserts`, `sends` (`{target, levelDB}` into a return track), `output`
-(first channel of an interface stereo pair, absent = master), `input`, `monitor`
+(first channel of an interface stereo pair, absent = master), `input` (the interface input an
+audio track records from, 0-based, absent = the first; one the interface lacks is kept, and the
+track records the first), `inputChannels` (added inside format 4, 2026-11-06: 1 or 2, absent = 1;
+2 records `input` and the next input as left and right, within the first 64; an earlier format-4
+build ignores it and records mono from `input`), `monitor`
 (`auto` · `in` · `off`; another name is kept and behaves as `auto`), `arpeggio` (an instrument
 track's arpeggiator, absent = none: `on` (bool, absent = true), `rate` (`quarter` `eighth`
 `sixteenth` `thirtySecond` `quarterTriplet` `eighthTriplet` `sixteenthTriplet` `thirtySecondTriplet`,
