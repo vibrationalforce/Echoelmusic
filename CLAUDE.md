@@ -62,8 +62,8 @@ Ein Zeiger auf einen Abschnitt „von `CLAUDE.md`" — in Code, Wächtern, Skrip
   2.3-Ablehnung. Scope ist keine Behauptung.
 - **Sprache.** Nie Wellness, Meditation, Entspannung, Schlaf, Fokus, Therapie, Medizin, Heilfrequenzen,
   Solfeggio, Chakren, Binaural oder 40 Hz (CLAIMS §2, Produktgesetz §4). „KI/AI" nur, wo ein Modell
-  läuft; „MPE" nur als MPE-Ausgang; „pitch correction", nie „Autotune" (eine Marke); „Eeolee" steht in
-  keinem Echoelmusic-Text (§4c).
+  läuft; „MPE" nur als MPE-Ausgang; „pitch correction", nie „Autotune" (eine Marke); Namen aus der privaten
+  Namensliste (echoelmusic-intern) stehen in keinem Echoelmusic-Text (§4c).
 NEVER use "BLAB", "Vibrational Force", legacy bio-wellness/soundscape branding, or esoteric terminology ("healing frequencies", chakras, Solfeggio) in user-facing copy.
 - **Founder-gegatet — berichten, nicht editieren:** `.github/workflows/**`, `project.yml` (beide),
   `Resources/iOS/Info.plist`, `.claude/settings.json`, `.mcp.json` — Hook
