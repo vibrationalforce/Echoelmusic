@@ -51,4 +51,57 @@ final class InstrumentPresetsTests: XCTestCase {
             }
         }
     }
+
+    private struct Unreadable: Error {}
+
+    private func menuItem(_ number: Int, _ name: String) -> AUAudioUnitPreset {
+        let item = AUAudioUnitPreset()
+        item.number = number
+        item.name = name
+        return item
+    }
+
+    /// A user preset (negative number) is the unit's saved state, read back; the factory list is
+    /// not consulted. One that cannot be read is not chosen.
+    func testAUserPresetRestoresItsSavedStateAndAnUnreadableOneIsNotChosen() {
+        let kernel = SynthKernel(sampleRate: 48_000, maximumFrames: 256)
+        let parameters = tree(over: kernel)
+        var restored: [Int] = []
+        let mine = menuItem(-3, "Mine")
+        let chosen = InstrumentPresets.choose(mine, from: SynthKernel.factoryPresets, tree: parameters) { item in
+            restored.append(item.number)
+        }
+        XCTAssertTrue(chosen)
+        XCTAssertEqual(restored, [-3])
+        let unreadable = InstrumentPresets.choose(mine, from: SynthKernel.factoryPresets, tree: parameters) { _ in
+            throw Unreadable()
+        }
+        XCTAssertFalse(unreadable)
+    }
+
+    /// A factory preset is set through the tree without touching the user branch; a number past
+    /// the list leaves every value where it was.
+    func testAFactoryPresetIsSetAndANumberPastTheListChangesNothing() throws {
+        let kernel = SynthKernel(sampleRate: 48_000, maximumFrames: 256)
+        let parameters = tree(over: kernel)
+        let presets = SynthKernel.factoryPresets
+        let pluck = try XCTUnwrap(presets.firstIndex { $0.name == "Pluck" })
+        var restored = 0
+        let chosen = InstrumentPresets.choose(menuItem(pluck, "Pluck"), from: presets, tree: parameters) { _ in
+            restored += 1
+        }
+        XCTAssertTrue(chosen)
+        XCTAssertEqual(restored, 0)
+        for (address, value) in presets[pluck].values.enumerated() {
+            XCTAssertEqual(kernel.parameter(address), value, "address \(address)")
+        }
+        let later = InstrumentPresets.choose(menuItem(presets.count, "Later"), from: presets, tree: parameters) { _ in
+            restored += 1
+        }
+        XCTAssertFalse(later)
+        XCTAssertEqual(restored, 0)
+        for (address, value) in presets[pluck].values.enumerated() {
+            XCTAssertEqual(kernel.parameter(address), value, "still Pluck, address \(address)")
+        }
+    }
 }

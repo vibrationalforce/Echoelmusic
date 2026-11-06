@@ -137,9 +137,14 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     /// sampler, which have none in the app either.
     override var factoryPresets: [AUAudioUnitPreset]? { presetMenu }
 
+    /// A host may save the musician's own sounds as user presets: the system keeps each as this
+    /// unit's `fullState` (the parameters, and the sampler's sample), the state a session keeps.
+    override var supportsUserPresets: Bool { true }
+
     /// A host chooses a preset from its own interface, never on the render thread. A factory
-    /// preset sets every value through the parameter tree, so the host's controls follow; a number
-    /// this build does not list changes nothing and keeps the preset chosen before.
+    /// preset sets every value through the parameter tree, so the host's controls follow; a user
+    /// preset restores the state it was saved with. A number this build does not list, or a user
+    /// preset that cannot be read, changes nothing and keeps the preset chosen before.
     override var currentPreset: AUAudioUnitPreset? {
         get { selectedPreset }
         set {
@@ -147,9 +152,14 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
                 selectedPreset = nil
                 return
             }
-            guard let preset = InstrumentPresets.factory(newValue.number, in: presets), let tree else { return }
-            InstrumentPresets.apply(preset, to: tree)
-            selectedPreset = newValue
+            let chosen = InstrumentPresets.choose(newValue, from: presets, tree: tree) { preset in
+                fullState = try presetState(for: preset)
+            }
+            if chosen {
+                selectedPreset = newValue
+            } else {
+                log.error("preset \(newValue.number, privacy: .public) not chosen")
+            }
         }
     }
 

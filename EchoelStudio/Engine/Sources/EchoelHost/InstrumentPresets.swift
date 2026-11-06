@@ -23,6 +23,26 @@ public enum InstrumentPresets {
         return presets[number]
     }
 
+    /// Chooses `preset` for a unit: a factory preset is set through `tree`; a user preset (a
+    /// negative number, saved by the host through `saveUserPreset`) is handed to `restoreUser`,
+    /// which reads it back into the unit's `fullState` — the parameters and the sampler's sample,
+    /// the same state a host's session keeps. Returns whether it was chosen: a number this build
+    /// does not list, and a user preset that cannot be read, leave the unit as it was.
+    public static func choose(_ preset: AUAudioUnitPreset, from presets: [InstrumentKernelPreset],
+                              tree: AUParameterTree?, restoreUser: (AUAudioUnitPreset) throws -> Void) -> Bool {
+        if preset.number < 0 {
+            do {
+                try restoreUser(preset)
+                return true
+            } catch {
+                return false
+            }
+        }
+        guard let listed = factory(preset.number, in: presets), let tree else { return false }
+        apply(listed, to: tree)
+        return true
+    }
+
     /// Sets every value of `preset` through the tree, so the kernel (the tree's implementor), the
     /// host's controls and its automation all see it. Off the render thread: a host chooses a
     /// preset from its own interface.
