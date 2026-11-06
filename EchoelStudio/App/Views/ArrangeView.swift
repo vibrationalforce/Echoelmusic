@@ -16,6 +16,11 @@ import SwiftUI
 /// the bar, and Place at Next Hit moves one to the next hit.
 /// Its body reads no playhead, so nothing here rebuilds while the song plays: the playhead line
 /// over the lanes is a leaf of its own (`PlayheadLine`), the one view on this page that polls it.
+/// Two fingers spread or narrow the song's time (`ArrangeZoom`), and Zoom Out / Zoom In under the
+/// lanes do the same one step at a time, so one finger is enough. The ruler, the lanes and the
+/// playhead line sit in ONE horizontal scroll view and draw with ONE ticks-per-point, so they
+/// never drift apart at any zoom; a drag spans as many ticks as the points it covers at that zoom.
+/// The zoom is kept on this device, never in the song, and is not an edit.
 struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(StudioRouter.self) private var router
@@ -30,18 +35,28 @@ struct ArrangeView: View {
     let importAudio: (TrackID, Tick) -> Void
 
     @ScaledMetric(relativeTo: .body) private var nameWidth: CGFloat = 96
-    /// Points per bar; the horizontal zoom.
-    private let pointsPerBar = CGFloat(TimelineGeometry.pointsPerBar)
+    /// The horizontal zoom at rest, kept on this device (`ArrangeZoom.level` reads a broken one
+    /// as the standard zoom).
+    @AppStorage(ArrangeZoom.storageKey) private var zoom = ArrangeZoom.base
+    /// The live factor of a pinch in progress; it resets itself on release or when a scroll takes
+    /// the touch, and the zoom changes once, when the fingers lift.
+    @GestureState private var pinch: CGFloat = 1
     /// Empty bars drawn past the song's end, so there is always room to place the next clip.
     private static let spareBars = 8
+
+    /// The zoom shown now: the one at rest times the pinch under the fingers.
+    private var shownZoom: Double { ArrangeZoom.zoomed(zoom, by: Double(pinch)) }
 
     var body: some View {
         let project = store.project
         let bars = Arranging.songBars(of: project) + Self.spareBars
         // The first bar is `pointsPerBar` wide; every later one as wide as its ticks (a 7/8 bar
-        // after 4/4 is narrower), so x stays proportional to musical time.
+        // after 4/4 is narrower), so x stays proportional to musical time. One scale for the
+        // ruler, every lane and the playhead line.
         let meter = project.meterMap
-        let ticksPerPoint = TimelineGeometry.ticksPerPoint(meter: meter, pointsPerBar: Double(pointsPerBar))
+        let shown = shownZoom
+        let pointsPerBar = CGFloat(ArrangeZoom.pointsPerBar(shown))
+        let ticksPerPoint = ArrangeZoom.ticksPerPoint(shown, meter: meter)
         let laneWidth = CGFloat(Double(meter.tick(ofBar: Int64(bars))) / ticksPerPoint)
         let files = videoHits?.files ?? [:]
         let hits = Hits.ticks(in: project, files: files)
@@ -110,6 +125,7 @@ struct ArrangeView: View {
                         PlayheadLine(ticksPerPoint: ticksPerPoint)
                     }
                 }
+                .simultaneousGesture(pinchGesture)
             }
             if project.tracks.isEmpty {
                 Text("Add a track on the Tracks page to start arranging.")
@@ -119,10 +135,49 @@ struct ArrangeView: View {
             }
         }
         .background(Theme.Color.background)
+        .safeAreaInset(edge: .bottom, spacing: 0) { zoomBar }
         // A video file added to the song is searched for its hits once, off the main thread.
         .task(id: videoMedia(of: project)) {
             videoHits?.find(in: store.project) { documents.mediaURL($0) }
         }
+    }
+
+    /// Two fingers zoom the song's time; the zoom is written once, when they lift.
+    private var pinchGesture: some Gesture {
+        MagnifyGesture()
+            .updating($pinch) { value, state, _ in state = value.magnification }
+            .onEnded { value in zoom = ArrangeZoom.zoomed(zoom, by: Double(value.magnification)) }
+    }
+
+    /// Zoom Out and Zoom In under the lanes: the pinch is a shortcut, never the only way.
+    private var zoomBar: some View {
+        HStack(spacing: Theme.Space.s) {
+            Spacer()
+            zoomButton("Zoom Out", systemImage: "minus.magnifyingglass",
+                       enabled: ArrangeZoom.canZoomOut(zoom)) { zoom = ArrangeZoom.zoomedOut(zoom) }
+            zoomButton("Zoom In", systemImage: "plus.magnifyingglass",
+                       enabled: ArrangeZoom.canZoomIn(zoom)) { zoom = ArrangeZoom.zoomedIn(zoom) }
+        }
+        .padding(.horizontal, Theme.Space.s)
+        .background(Theme.Color.surface)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Theme.Color.border).frame(height: 1)
+        }
+    }
+
+    private func zoomButton(_ title: String, systemImage: String, enabled: Bool,
+                            action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(Theme.Font.label)
+                .foregroundStyle(enabled ? Theme.Color.text : Theme.Color.textTertiary)
+                .frame(width: Theme.Size.touch, height: Theme.Size.touch)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel(title)
+        .accessibilityValue(ArrangeZoom.spoken(zoom))
     }
 
     private func videoMedia(of project: Project) -> [MediaID] {
@@ -184,10 +239,10 @@ struct SnapPicker: View {
 extension SnapGrid {
     /// Where a block dragged from `start` by `translation` points shows while the finger is down:
     /// on the magnet's line, so what lifts is what was seen.
+    /// The rule is `ArrangeZoom.previewPoints`, the same one the drop commits with.
     func previewOffset(from start: Tick, translation: CGFloat, ticksPerPoint: Double, meter: MeterMap) -> CGFloat {
-        guard self != .off, ticksPerPoint.isFinite, ticksPerPoint > 0 else { return translation }
-        let target = nearest(start + Tick((Double(translation) * ticksPerPoint).rounded()), meter: meter)
-        return CGFloat(Double(target - start) / ticksPerPoint)
+        CGFloat(ArrangeZoom.previewPoints(from: start, dragged: Double(translation), ticksPerPoint: ticksPerPoint,
+                                          snap: self, meter: meter))
     }
 }
 
@@ -455,7 +510,7 @@ private struct ArrangeLane: View {
 
     /// The first bar is `pointsPerBar` wide; x is proportional to ticks from there on.
     private var ticksPerPoint: Double {
-        Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar)
+        TimelineGeometry.ticksPerPoint(meter: meter, pointsPerBar: Double(pointsPerBar))
     }
 
     /// While snapping is on, a faint line at each hit in every lane but the video's own: where a
@@ -597,7 +652,7 @@ private struct PlacementBlock: View {
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
-    private var ticksPerPoint: Double { Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar) }
+    private var ticksPerPoint: Double { TimelineGeometry.ticksPerPoint(meter: meter, pointsPerBar: Double(pointsPerBar)) }
     private var startBar: Int { Int(clamping: meter.bar(at: placement.start)) + 1 }
     private var lengthBars: Int {
         Int(clamping: meter.bar(at: meter.nextBarLine(atOrAfter: placement.start + clip.length)) - meter.bar(at: placement.start))
@@ -658,7 +713,7 @@ private struct PlacementBlock: View {
 
     /// Where the block shows while the finger moves: on a hit as soon as one is within reach.
     private func dragOffset(_ translation: CGFloat) -> CGFloat {
-        let tick = placement.start + Tick((Double(translation) * ticksPerPoint).rounded())
+        let tick = placement.start + ArrangeZoom.ticks(dragged: Double(translation), ticksPerPoint: ticksPerPoint)
         guard let hit = ArrangeView.hit(near: tick, in: hits, ticksPerPoint: ticksPerPoint, snapping: snapsToHits) else {
             return snap.previewOffset(from: placement.start, translation: translation, ticksPerPoint: ticksPerPoint, meter: meter)
         }
@@ -668,7 +723,7 @@ private struct PlacementBlock: View {
     /// One undo step: onto the hit within reach, else onto the magnet's nearest line (to the tick
     /// with it off).
     private func drop(movedBy translation: CGFloat) {
-        let delta = Tick((Double(translation) * ticksPerPoint).rounded())
+        let delta = ArrangeZoom.ticks(dragged: Double(translation), ticksPerPoint: ticksPerPoint)
         if let hit = ArrangeView.hit(near: placement.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
                                      snapping: snapsToHits) {
             if let command = Hits.placed(placement, in: track, at: hit) { try? store.perform(command) }
@@ -806,7 +861,7 @@ private struct RegionBlock: View {
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
-    private var ticksPerPoint: Double { Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar) }
+    private var ticksPerPoint: Double { TimelineGeometry.ticksPerPoint(meter: meter, pointsPerBar: Double(pointsPerBar)) }
     private var startBar: Int { Int(clamping: meter.bar(at: region.start)) + 1 }
     private var seconds: Double { file.sampleRate > 0 ? Double(region.length) / file.sampleRate : 0 }
     private var spokenLabel: String {
@@ -924,7 +979,7 @@ private struct RegionBlock: View {
     /// Where the block shows while the finger moves: an audio region on a hit as soon as one is
     /// within reach.
     private func dragOffset(_ translation: CGFloat) -> CGFloat {
-        let tick = region.start + Tick((Double(translation) * ticksPerPoint).rounded())
+        let tick = region.start + ArrangeZoom.ticks(dragged: Double(translation), ticksPerPoint: ticksPerPoint)
         guard let hit = ArrangeView.hit(near: tick, in: hits, ticksPerPoint: ticksPerPoint, snapping: snapsHere) else {
             return snap.previewOffset(from: region.start, translation: translation, ticksPerPoint: ticksPerPoint, meter: meter)
         }
@@ -933,7 +988,7 @@ private struct RegionBlock: View {
 
     /// One undo step: onto the hit within reach, else to the nearest bar.
     private func drop(movedBy translation: CGFloat) {
-        let delta = Tick((Double(translation) * ticksPerPoint).rounded())
+        let delta = ArrangeZoom.ticks(dragged: Double(translation), ticksPerPoint: ticksPerPoint)
         if let hit = ArrangeView.hit(near: region.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
                                      snapping: snapsHere) {
             if let command = Hits.placed(region, in: track, at: hit) { try? store.perform(command) }
@@ -1039,12 +1094,16 @@ private struct RegionBlock: View {
             .highPriorityGesture(
                 DragGesture(minimumDistance: 2, coordinateSpace: .named(ArrangeLane.space))
                     .onChanged { value in
-                        if edge == .start { trimLeft = value.translation.width } else { trimRight = value.translation.width }
+                        // On the magnet's line the release trims to, at this zoom.
+                        let from = edge == .start ? region.start : region.start + length
+                        let shown = snap.previewOffset(from: from, translation: value.translation.width,
+                                                       ticksPerPoint: ticksPerPoint, meter: meter)
+                        if edge == .start { trimLeft = shown } else { trimRight = shown }
                     }
                     .onEnded { value in
                         trimLeft = 0
                         trimRight = 0
-                        let delta = Tick((Double(value.translation.width) * ticksPerPoint).rounded())
+                        let delta = ArrangeZoom.ticks(dragged: Double(value.translation.width), ticksPerPoint: ticksPerPoint)
                         apply(edge, byTicks: delta, snap: snap)
                     }
             )
