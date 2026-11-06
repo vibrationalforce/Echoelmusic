@@ -25,6 +25,28 @@ final class VideoTakeLifecycleTests: XCTestCase {
         XCTAssertTrue(life.canRecord, "the next take may begin")
     }
 
+    func testAFirstFrameReportedAfterAQuickStopStillPlacesTheTake() {
+        var life = readyCamera()
+        life.record()
+        XCTAssertTrue(life.stop())
+        XCTAssertTrue(life.handle(.started, stamped: life.generation),
+                      "a quick Stop must not throw away where the take begins")
+        XCTAssertEqual(life.phase, .finishing)
+        XCTAssertTrue(life.handle(.fileClosed(usable: true), stamped: life.generation))
+        XCTAssertFalse(life.handle(.started, stamped: life.generation), "a landed take is placed already")
+    }
+
+    func testAFirstFrameReportedAfterAnInterruptionStillPlacesTheTake() {
+        var life = readyCamera()
+        life.record()
+        let stamp = life.generation
+        life.handle(.interruptionBegan, stamped: stamp)
+        XCTAssertEqual(life.phase, .finishing)
+        XCTAssertTrue(life.handle(.started, stamped: stamp))
+        life.close()
+        XCTAssertFalse(life.handle(.started, stamped: stamp), "a stale first frame places nothing")
+    }
+
     func testAnInterruptedTakeLandsWithItsPartialFileAndSaysItWasCutShort() {
         var life = readyCamera()
         life.record()

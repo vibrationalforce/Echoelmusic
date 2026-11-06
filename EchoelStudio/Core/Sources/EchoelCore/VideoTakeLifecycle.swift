@@ -31,7 +31,8 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
     public enum Event: Equatable, Sendable {
         /// The camera is open and running.
         case opened
-        /// The take's first frame is in.
+        /// The take's first frame is in. It may arrive after the take was already stopped or cut
+        /// short, and still places the take.
         case started
         /// iOS took the camera (a call, Siri, Control Centre, another app).
         case interruptionBegan
@@ -125,7 +126,9 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
             guard phase == .opening else { return false }
             phase = isInterrupted ? .interrupted : .ready
         case .started:
-            return phase == .recording
+            // The first frame can be reported after Stop, a call or an error already ended the
+            // take: it still says where the take begins, so it counts while the file closes too.
+            return phase == .recording || phase == .finishing
         case .interruptionBegan:
             guard !isInterrupted else { return false }
             isInterrupted = true
