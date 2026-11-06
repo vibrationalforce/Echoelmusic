@@ -325,6 +325,56 @@ final class ClickHuntTests: XCTestCase {
         XCTAssertGreaterThan(moved.difference, 0.01, "the route is heard")
     }
 
+    /// The volume route's jumps again, now off the song's 64-frame gain grid: device buffers of 470
+    /// frames, the jumps 4,813 samples apart, and a moving master pan, so every lane follows the
+    /// grid. Each jump still ramps over 64 frames, wherever on the grid it falls.
+    func testAVolumeJumpOffTheGainGridDoesNotClick() throws {
+        var song = try instrumentSong([Note(pitch: 45, velocity: 100, start: 0, length: 4 * bar)],
+                                      settings: [(.waveform, 0)])
+        try Command.setModRoute(ModulationRoute(source: .breath, target: .volume(song.track), depth: 0.8))
+            .apply(to: &song.project)
+        try Command.setModRoute(ModulationRoute(source: .lfo1, target: .masterPan, depth: 0.3, polarity: .bipolar))
+            .apply(to: &song.project)
+        let inputs = ModulationInputs()
+        let engine = self.core()
+        publish(song.project, to: engine, modulation: inputs)
+        engine.play()
+        var out = render(engine, frames: 4_813, block: 470)
+        for value in [1.0, 0, 1, 0, 0.2, 0.9, 0, 1] {
+            inputs.set(.breath, value)
+            let piece = render(engine, frames: 4_813, block: 470)
+            out.left += piece.left
+            out.right += piece.right
+        }
+        assertNoClicks(out, "volume jumps off the gain grid", detector: .forSine(hertz: 115, amplitude: 0.5))
+    }
+
+    /// A loop whose end falls off the gain grid (one bar at 140 BPM), the track's volume falling
+    /// one tick after it: the loop never plays the fall, so it plays exactly as without it.
+    func testALoopEndingOffTheGainGridNeverHearsTheVolumeAfterIt() throws {
+        let notes = [Note(pitch: 45, velocity: 100, start: 0, length: 4 * bar)]
+        let plain = try instrumentSong(notes, settings: [(.waveform, 0)], tempo: 140)
+        var falling = try instrumentSong(notes, settings: [(.waveform, 0)], tempo: 140)
+        try Command.setAutomation(.volume(falling.track), points: [AutomationPoint(tick: 0, value: 0),
+                                                                   AutomationPoint(tick: bar, value: 0),
+                                                                   AutomationPoint(tick: bar + 1, value: -60)])
+            .apply(to: &falling.project)
+        func looped(_ project: Project) -> (left: [Float], right: [Float]) {
+            let engine = self.core()
+            publish(project, to: engine)
+            engine.setLoop(0..<bar)
+            engine.play()
+            return render(engine, frames: 3 * 82_286 + 1_000, block: 470)
+        }
+        let heard = looped(falling.project), expected = looped(plain.project)
+        var worst: Float = 0
+        for i in heard.left.indices {
+            worst = Swift.max(worst, Swift.abs(heard.left[i] - expected.left[i]), Swift.abs(heard.right[i] - expected.right[i]))
+        }
+        XCTAssertGreaterThan(expected.left.map { Swift.abs($0) }.max() ?? 0, 0.01, "the note sounds")
+        XCTAssertLessThan(worst, 1e-5, "the loop plays its own bar only")
+    }
+
     /// Steep automation on the level and the cutoff: a ramp and a jump between two points.
     func testSteepInstrumentAutomationDoesNotClick() throws {
         var song = try instrumentSong([Note(pitch: 45, velocity: 100, start: 0, length: 4 * bar)],

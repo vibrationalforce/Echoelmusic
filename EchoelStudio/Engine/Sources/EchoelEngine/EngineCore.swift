@@ -245,6 +245,9 @@ public final class EngineCore: @unchecked Sendable {
     /// `gainSegment` frames counted from the song's first sample, not from the chunk's, so a
     /// buffer of any size follows a curve through the same points as an export.
     private var mixSample: Int64 = 0
+    /// The chunk being mixed ends where the song loop wraps: its end takes the curve's own value
+    /// there, not the line towards a grid point after it, which the loop never plays.
+    private var mixEndsAtWrap = false
     /// Stopped: the song position the mix's curves stay at — where it was heard when it stopped,
     /// although Stop sends the playhead home — so release and effect tails ring out at the gains
     /// they were playing at, not at bar 1's (audit 2026-10-23). A seek while stopped and Play
@@ -965,6 +968,7 @@ public final class EngineCore: @unchecked Sendable {
         mixFrom = snapshot.time.position(atSample: playhead)
         mixTo = snapshot.time.position(atSample: blockEnd)
         mixSample = playhead
+        mixEndsAtWrap = loopSeek >= 0
         mixLanes(frames: frames)
         renderAudio(snapshot, frames: frames)
         mixReturns(frames: frames)
@@ -1779,29 +1783,56 @@ public final class EngineCore: @unchecked Sendable {
     /// Frames between two evaluations of a moving gain: a bent lane is followed within 1.3 ms.
     static let gainSegment = 64
 
-    /// Where the moving-gain segment that starts `start` frames into the chunk ends, and the gains
-    /// there: at the next point of the song's gain grid (`mixSample`), or at the chunk's end when
-    /// that comes first — then on the line between the two grid points around it, where the next
-    /// chunk carries on. Every buffer size thus plays the same line through the same points; a
-    /// curve with a corner between two of them (the master's balance at centre) no longer
-    /// depends on where the device's buffers fall.
-    private func segmentEnd<Curve: GainCurve>(from start: Int, frames: Int, curve: Curve) -> (end: Int, gains: (Float, Float)) {
+    /// The song's gain grid at `offset` frames into the chunk: the curve itself at a point of the
+    /// grid (`mixSample`), and between two points the straight line between their values — so
+    /// every buffer size plays the same line through the same points, and a curve with a corner
+    /// between two of them (the master's balance) does not depend on where the device's buffers
+    /// fall. At the end of a chunk the loop wraps after, the curve's own value.
+    private func gridGains<Curve: GainCurve>(at offset: Int, frames: Int, curve: Curve) -> (Float, Float) {
+        if mixEndsAtWrap, offset == frames { return curve.gains(at: tick(at: offset, of: frames)) }
+        let step = Int64(Self.gainSegment)
+        let sample = mixSample + Int64(offset)
+        let below = (sample >= 0 ? sample : sample - step + 1) / step * step
+        let atBelow = curve.gains(at: tick(at: Int(below - mixSample), of: frames))
+        guard sample != below else { return atBelow }
+        let atAbove = curve.gains(at: tick(at: Int(below + step - mixSample), of: frames))
+        let t = Float(sample - below) / Float(step)
+        return (atBelow.0 + (atAbove.0 - atBelow.0) * t, atBelow.1 + (atAbove.1 - atBelow.1) * t)
+    }
+
+    /// Where the moving-gain segment that starts `start` frames into the chunk ends: at the next
+    /// point of the song's grid or the chunk's end, and — while a jump is being ramped out
+    /// (`ramping`) — at the end of the chunk's first `gainSegment` frames.
+    private func segmentEnd(from start: Int, frames: Int, ramping: Bool) -> Int {
         let step = Int64(Self.gainSegment)
         let sample = mixSample + Int64(start)
-        let gridPoint = (sample >= 0 ? sample : sample - step + 1) / step * step
-        let next = Int(gridPoint + step - mixSample)
-        let atNext = curve.gains(at: tick(at: next, of: frames))
-        guard next > frames else { return (next, atNext) }
-        let previous = next - Self.gainSegment
-        let atPrevious = curve.gains(at: tick(at: previous, of: frames))
-        let t = Float(frames - previous) / Float(Self.gainSegment)
-        return (frames, (atPrevious.0 + (atNext.0 - atPrevious.0) * t, atPrevious.1 + (atNext.1 - atPrevious.1) * t))
+        let below = (sample >= 0 ? sample : sample - step + 1) / step * step
+        var end = Swift.min(Int(below + step - mixSample), frames)
+        if ramping, start < Self.gainSegment { end = Swift.min(end, Self.gainSegment) }
+        return end
+    }
+
+    /// What the gains a chunk starts from (`memory`) hold off the grid line: a seek, a loop's wrap,
+    /// a new snapshot or a body source's jump since the last chunk. Ramped out over the chunk's
+    /// first `gainSegment` frames, on top of the line, so a jump never steps faster than that; a
+    /// chunk shorter than that leaves the rest for the next one. Under −120 dB it is rounding.
+    private static func offGrid(from previous: (Float, Float)?, to line: (Float, Float)) -> (Float, Float)? {
+        guard let previous else { return nil }
+        let jump = (previous.0 - line.0, previous.1 - line.1)
+        return Swift.abs(jump.0) > 1e-6 || Swift.abs(jump.1) > 1e-6 ? jump : nil
+    }
+
+    /// The gains at the end of a segment: the grid line, plus what is left of a jump there.
+    private static func ramped(_ line: (Float, Float), _ jump: (Float, Float)?, at end: Int) -> (Float, Float) {
+        guard let jump else { return line }
+        let left = Swift.max(0, 1 - Float(end) / Float(gainSegment))
+        return (line.0 + jump.0 * left, line.1 + jump.1 * left)
     }
 
     /// Adds a stereo source into a destination at gains that may move. Fixed gains ramp from
-    /// where `memory` ended the last chunk; a lane's gains are evaluated every 64 frames of the
-    /// song (`segmentEnd(from:frames:curve:)`) and ramped between, so a curve is followed and
-    /// nothing steps. `memory` then holds the end.
+    /// where `memory` ended the last chunk; a lane's gains follow the song's 64-frame grid
+    /// (`gridGains`), and a jump off it is ramped out over 64 frames (`offGrid`), so a curve is
+    /// followed and nothing steps. `memory` then holds the end.
     private func mix<Curve: GainCurve>(_ sourceLeft: UnsafeMutablePointer<Float>, _ sourceRight: UnsafeMutablePointer<Float>,
                                        into left: UnsafeMutablePointer<Float>, _ right: UnsafeMutablePointer<Float>,
                                        frames: Int, curve: Curve?, fixed: (Float, Float),
@@ -1816,16 +1847,19 @@ public final class EngineCore: @unchecked Sendable {
         let startGains = previous
         var last = fixed
         if let curve, mixFrom != mixTo {
+            let line = gridGains(at: 0, frames: frames, curve: curve)
+            let jump = Self.offGrid(from: previous, to: line)
+            var from = previous ?? line
             var start = 0
             while start < frames {
-                let (end, to) = segmentEnd(from: start, frames: frames, curve: curve)
-                let from = previous ?? curve.gains(at: tick(at: start, of: frames))
+                let end = segmentEnd(from: start, frames: frames, ramping: jump != nil)
+                let to = Self.ramped(gridGains(at: end, frames: frames, curve: curve), jump, at: end)
                 add(sourceLeft + start, sourceRight + start, into: left + start, right + start, frames: end - start,
                     Ramp(left0: from.0, right0: from.1, left1: to.0, right1: to.1))
-                previous = to
+                from = to
                 start = end
             }
-            last = previous ?? fixed
+            last = from
         } else {
             let target = curve?.gains(at: mixFrom) ?? fixed
             let from = previous ?? target
@@ -1861,16 +1895,22 @@ public final class EngineCore: @unchecked Sendable {
         let startGains = previous
         var last = fixed
         if let curve, mixFrom != mixTo {
+            // The same grid and the same ramp as `mix`. The spatializer is placed once per segment,
+            // so a segment split at a buffer's edge places it once more on the way: close to an
+            // export, not exact (the stereo path is).
+            let line = gridGains(at: 0, frames: frames, curve: curve)
+            let jump = Self.offGrid(from: previous, to: line)
+            var from = previous ?? line
             var start = 0
             while start < frames {
-                let (end, to) = segmentEnd(from: start, frames: frames, curve: curve)
-                let from = previous ?? curve.gains(at: tick(at: start, of: frames))
+                let end = segmentEnd(from: start, frames: frames, ramping: jump != nil)
+                let to = Self.ramped(gridGains(at: end, frames: frames, curve: curve), jump, at: end)
                 addSpatial(sourceLeft + start, sourceRight + start, into: left + start, right + start,
                            frames: end - start, from: from, to: to, point: point)
-                previous = to
+                from = to
                 start = end
             }
-            last = previous ?? fixed
+            last = from
         } else {
             let target = curve?.gains(at: mixFrom) ?? fixed
             addSpatial(sourceLeft, sourceRight, into: left, right, frames: frames, from: previous ?? target, to: target,

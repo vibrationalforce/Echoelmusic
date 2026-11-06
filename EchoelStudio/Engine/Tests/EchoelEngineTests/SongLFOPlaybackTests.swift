@@ -85,9 +85,9 @@ final class SongLFOPlaybackTests: XCTestCase {
 
     /// Live is the export, at device buffers on the 64-frame gain grid and off it alike. A moving
     /// mixer value is evaluated every 64 frames of the song and ramped between; the grid used to
-    /// start at each buffer, and the master's balance has a corner at centre, so a buffer whose
-    /// grid missed the corner drew a different line across it: 8.6e-5 at 470 frames (CI
-    /// 2026-11-05), while 100 frames hit the corner at the half bar and stayed below 1e-5.
+    /// start at each buffer, and the gains have corners — the master's balance at centre, the pan
+    /// where the route holds it at a side — so a buffer whose grid missed a corner drew a
+    /// different line across it: 8.6e-5 at 470 frames (CI 2026-11-05), below 1e-5 at 100.
     func testLiveIsTheExportAtEveryBlockSize() throws {
         let project = try song(routes: routes)
         let frames = 2 * 96_000
