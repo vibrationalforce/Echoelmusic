@@ -20,6 +20,28 @@ final class CameraArbitrationTests: XCTestCase {
         XCTAssertEqual(none, [], "no take to end")
     }
 
+    /// A take on either lens is the one camera: turning to the front lens keeps the pulse
+    /// suspended, and ending the take still gives the camera back.
+    func testATakeOnEitherLensSuspendsThePulseAndResumesItOnEnd() {
+        var camera = CameraArbitration()
+        var take = VideoTakeLifecycle()
+        _ = camera.choosePulse()
+        let began = camera.beginTake()
+        XCTAssertEqual(began, [.suspendPulse, .openTake])
+        let holder = camera.generation
+        take.open()
+        take.handle(.opened, stamped: take.generation)
+        XCTAssertTrue(take.changeLens(), "front lens")
+        take.handle(.opened, stamped: take.generation)
+        XCTAssertEqual(camera.holder, .take, "the lens is the take's; the camera stays with it")
+        XCTAssertTrue(camera.isCurrent(holder), "a change of lens is no change of holder")
+        let again = camera.choosePulse()
+        XCTAssertEqual(again, [], "the pulse is chosen already and waits")
+        let ended = camera.endTake()
+        XCTAssertEqual(ended, [.closeTake, .resumePulse])
+        XCTAssertEqual(camera.holder, .pulse)
+    }
+
     func testAPulseChosenDuringATakeWaitsForIt() {
         var camera = CameraArbitration()
         let began = camera.beginTake()
