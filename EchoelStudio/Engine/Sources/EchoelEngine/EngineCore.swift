@@ -241,6 +241,10 @@ public final class EngineCore: @unchecked Sendable {
     /// Ticks at the start and end of the chunk being mixed; automated gains ramp between them.
     private var mixFrom: Double = 0
     private var mixTo: Double = 0
+    /// The song sample the chunk being mixed starts at: moving gains are evaluated on the grid of
+    /// `gainSegment` frames counted from the song's first sample, not from the chunk's, so a
+    /// buffer of any size follows a curve through the same points as an export.
+    private var mixSample: Int64 = 0
     /// Stopped: the song position the mix's curves stay at — where it was heard when it stopped,
     /// although Stop sends the playhead home — so release and effect tails ring out at the gains
     /// they were playing at, not at bar 1's (audit 2026-10-23). A seek while stopped and Play
@@ -960,6 +964,7 @@ public final class EngineCore: @unchecked Sendable {
         renderUnits(frames: frames)
         mixFrom = snapshot.time.position(atSample: playhead)
         mixTo = snapshot.time.position(atSample: blockEnd)
+        mixSample = playhead
         mixLanes(frames: frames)
         renderAudio(snapshot, frames: frames)
         mixReturns(frames: frames)
@@ -1774,9 +1779,29 @@ public final class EngineCore: @unchecked Sendable {
     /// Frames between two evaluations of a moving gain: a bent lane is followed within 1.3 ms.
     static let gainSegment = 64
 
+    /// Where the moving-gain segment that starts `start` frames into the chunk ends, and the gains
+    /// there: at the next point of the song's gain grid (`mixSample`), or at the chunk's end when
+    /// that comes first — then on the line between the two grid points around it, where the next
+    /// chunk carries on. Every buffer size thus plays the same line through the same points; a
+    /// curve with a corner between two of them (the master's balance at centre) no longer
+    /// depends on where the device's buffers fall.
+    private func segmentEnd<Curve: GainCurve>(from start: Int, frames: Int, curve: Curve) -> (end: Int, gains: (Float, Float)) {
+        let step = Int64(Self.gainSegment)
+        let sample = mixSample + Int64(start)
+        let gridPoint = (sample >= 0 ? sample : sample - step + 1) / step * step
+        let next = Int(gridPoint + step - mixSample)
+        let atNext = curve.gains(at: tick(at: next, of: frames))
+        guard next > frames else { return (next, atNext) }
+        let previous = next - Self.gainSegment
+        let atPrevious = curve.gains(at: tick(at: previous, of: frames))
+        let t = Float(frames - previous) / Float(Self.gainSegment)
+        return (frames, (atPrevious.0 + (atNext.0 - atPrevious.0) * t, atPrevious.1 + (atNext.1 - atPrevious.1) * t))
+    }
+
     /// Adds a stereo source into a destination at gains that may move. Fixed gains ramp from
-    /// where `memory` ended the last chunk; a lane's gains are evaluated every 64 frames and
-    /// ramped between, so a curve is followed and nothing steps. `memory` then holds the end.
+    /// where `memory` ended the last chunk; a lane's gains are evaluated every 64 frames of the
+    /// song (`segmentEnd(from:frames:curve:)`) and ramped between, so a curve is followed and
+    /// nothing steps. `memory` then holds the end.
     private func mix<Curve: GainCurve>(_ sourceLeft: UnsafeMutablePointer<Float>, _ sourceRight: UnsafeMutablePointer<Float>,
                                        into left: UnsafeMutablePointer<Float>, _ right: UnsafeMutablePointer<Float>,
                                        frames: Int, curve: Curve?, fixed: (Float, Float),
@@ -1793,8 +1818,7 @@ public final class EngineCore: @unchecked Sendable {
         if let curve, mixFrom != mixTo {
             var start = 0
             while start < frames {
-                let end = Swift.min(start + Self.gainSegment, frames)
-                let to = curve.gains(at: tick(at: end, of: frames))
+                let (end, to) = segmentEnd(from: start, frames: frames, curve: curve)
                 let from = previous ?? curve.gains(at: tick(at: start, of: frames))
                 add(sourceLeft + start, sourceRight + start, into: left + start, right + start, frames: end - start,
                     Ramp(left0: from.0, right0: from.1, left1: to.0, right1: to.1))
@@ -1839,8 +1863,7 @@ public final class EngineCore: @unchecked Sendable {
         if let curve, mixFrom != mixTo {
             var start = 0
             while start < frames {
-                let end = Swift.min(start + Self.gainSegment, frames)
-                let to = curve.gains(at: tick(at: end, of: frames))
+                let (end, to) = segmentEnd(from: start, frames: frames, curve: curve)
                 let from = previous ?? curve.gains(at: tick(at: start, of: frames))
                 addSpatial(sourceLeft + start, sourceRight + start, into: left + start, right + start,
                            frames: end - start, from: from, to: to, point: point)
@@ -1917,7 +1940,8 @@ public final class EngineCore: @unchecked Sendable {
         return level.isFinite ? level : 0
     }
 
-    /// The song position `offset` frames into the chunk being mixed.
+    /// The song position `offset` frames into the chunk being mixed — on either side of it too,
+    /// for the grid points around a chunk's ends (exact at a steady tempo, as across the chunk).
     private func tick(at offset: Int, of frames: Int) -> Double {
         guard frames > 0 else { return mixFrom }
         return mixFrom + (mixTo - mixFrom) * Double(offset) / Double(frames)
