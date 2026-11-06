@@ -273,6 +273,14 @@ public struct EngineSnapshot: Sendable {
     /// The master's loaded, active insert effects in order, run on the master pair after
     /// everything is mixed into it.
     public let masterEffects: [any HostedProcessor]
+    /// How long each track and return waits so that every lane lines up behind the latency of its
+    /// instrument and effects (`DelayCompensation`), from the latencies the units report as this
+    /// snapshot is compiled. A unit whose latency changes is compensated from the next snapshot.
+    public private(set) var compensation: DelayCompensation
+    /// The return buses each track's sends lead into, whatever its mute, solo or send level: what
+    /// the plan counts as fed, so a mute, a solo or a send pulled to silence never moves the
+    /// others in time (`DelayCompensation`).
+    private let feeds: [TrackID: [Int]]
 
     /// `samples` holds the loaded buffer of every media file a sampler track may play; a
     /// file that is missing or not yet loaded leaves its track silent.
@@ -345,6 +353,10 @@ public struct EngineSnapshot: Sendable {
                               output: output, mix: quiet ? nil : moving(track, output < 0))
         }
         let soloedReturns = Set(returnTracks.filter(\.mixer.isSoloed).map(\.id))
+        let topology = Dictionary(project.tracks.map { (track: Track) -> (TrackID, [Int]) in
+            (track.id, track.sends.compactMap { busOf[$0.target] })
+        }, uniquingKeysWith: { first, _ in first })
+        feeds = topology
         /// Post-fader, post-pan: the track's own gains (without the master) times the send level.
         /// A track silenced by someone else's solo still feeds a soloed return; a muted one feeds none.
         let sends = { (track: Track, audible: Bool) -> [SendTap] in
@@ -458,6 +470,8 @@ public struct EngineSnapshot: Sendable {
                   range.lowerBound.isFinite, range.upperBound.isFinite else { return nil }
             return UnitAutomation(unit: unit, address: parameter.address, range: range, lane: lane)
         }
+        compensation = Self.compensate(lanes: compiled, audioLanes: audioLanes, returns: returns, master: masterChain,
+                                       feeds: topology)
     }
 
     /// This snapshot without lanes whose slot is outside `0..<capacity` and without return
@@ -469,7 +483,38 @@ public struct EngineSnapshot: Sendable {
             copy.audioLanes[index].slot = -1
         }
         copy.returns.removeAll { $0.bus < 0 || $0.bus >= returnCapacity }
+        copy.compensation = Self.compensate(lanes: copy.lanes, audioLanes: copy.audioLanes, returns: copy.returns,
+                                            master: copy.masterEffects, feeds: copy.feeds)
         return copy
+    }
+
+    /// The delay compensation of these lanes: each chain's latency from its plugin instrument and
+    /// its active inserts, as they report it now. Main thread, like the rest of the snapshot.
+    /// `feeds` is the send topology, not the taps that sound now: the taps leave out the sends of a
+    /// muted or soloed-away track and a send at silence, and counting only those would move every
+    /// other track in time whenever one of them changes.
+    static func compensate(lanes: [Lane], audioLanes: [AudioLane], returns: [ReturnLane],
+                           master: [any HostedProcessor], feeds: [TrackID: [Int]]) -> DelayCompensation {
+        let latency = { (chain: [any HostedProcessor]) -> [Int] in
+            chain.filter { !$0.isBypassed }.map { (unit: any HostedProcessor) -> Int in unit.latencyFrames }
+        }
+        let present = Set(returns.map(\.bus))
+        let fed = { (track: TrackID) -> [Int] in (feeds[track] ?? []).filter { present.contains($0) } }
+        var tracks = lanes.map { (lane: Lane) -> DelayCompensation.TrackChain in
+            let instrument: Int = lane.unit?.latencyFrames ?? 0
+            let units: [Int] = [instrument] + latency(lane.inserts)
+            return DelayCompensation.TrackChain(track: lane.track, latency: DelayCompensation.chain(units),
+                                                buses: fed(lane.track), ownOutput: lane.output >= 0)
+        }
+        tracks += audioLanes.map { (lane: AudioLane) -> DelayCompensation.TrackChain in
+            DelayCompensation.TrackChain(track: lane.track, latency: DelayCompensation.chain(latency(lane.inserts)),
+                                         buses: fed(lane.track), ownOutput: lane.output >= 0)
+        }
+        let chains = returns.map { (lane: ReturnLane) -> DelayCompensation.ReturnChain in
+            DelayCompensation.ReturnChain(track: lane.track, bus: lane.bus, latency: DelayCompensation.chain(latency(lane.inserts)),
+                                          ownOutput: lane.output >= 0)
+        }
+        return DelayCompensation(tracks: tracks, returns: chains, master: DelayCompensation.chain(latency(master)))
     }
 
     /// Nil when the file is not loaded or nothing of the region falls inside the loaded file

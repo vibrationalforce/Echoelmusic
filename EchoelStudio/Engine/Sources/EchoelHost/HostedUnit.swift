@@ -33,6 +33,13 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     private let failures = Atomic<Int>(0)
     public var renderFailures: Int { failures.load(ordering: .relaxed) }
 
+    /// The unit's own latency (`AUAudioUnit.latency`), asked each time a snapshot is compiled on
+    /// the main thread, never on the render thread.
+    public var latencyFrames: Int {
+        guard let unit = owner as? AUAudioUnit else { return 0 }
+        return PluginLatency.frames(seconds: unit.latency, sampleRate: sampleRate)
+    }
+
     /// `parameterRanges` holds the unit's writable parameters that automation may move, by
     /// address; `scheduleParameter` moves them.
     public init(render: @escaping AURenderBlock, scheduleMIDI: AUScheduleMIDIEventBlock?, sampleRate: Double,

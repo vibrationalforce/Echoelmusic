@@ -47,6 +47,14 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     private let failures = Atomic<Int>(0)
     public var renderFailures: Int { failures.load(ordering: .relaxed) }
 
+    /// The unit's own latency (`AUAudioUnit.latency`), asked each time a snapshot is compiled on
+    /// the main thread, so a unit whose latency follows its settings is compensated as it is
+    /// now; 0 while bypassed, because the engine then skips it.
+    public var latencyFrames: Int {
+        guard !isBypassed, let unit = owner as? AUAudioUnit else { return 0 }
+        return PluginLatency.frames(seconds: unit.latency, sampleRate: sampleRate)
+    }
+
     public init(render: @escaping AURenderBlock, sampleRate: Double, maximumFrames: Int, isBypassed: Bool = false,
                 owner: AnyObject?, insert: InsertID? = nil, scheduleParameter: AUScheduleParameterBlock? = nil,
                 parameterRanges: [UInt64: ClosedRange<Float>] = [:], clock: HostClock? = nil) {

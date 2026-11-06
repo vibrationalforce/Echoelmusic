@@ -71,6 +71,10 @@ public protocol HostedInstrument: ParameterScheduling {
     /// sound belonged. Any thread; an export reads it after its render to fail instead of saving
     /// a file with holes (Codex handover S6).
     var renderFailures: Int { get }
+    /// How many frames the unit's sound sits behind the notes it is given (`AUAudioUnit.latency`
+    /// at `sampleRate`). Read on the main thread when a snapshot is compiled, into its delay
+    /// compensation — never on the render thread.
+    var latencyFrames: Int { get }
 }
 
 /// An effect on an insert chain, processed inside the engine's own render pass.
@@ -93,13 +97,31 @@ public protocol HostedProcessor: ParameterScheduling {
     func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>)
     /// The blocks the effect refused to process since it was made (see `HostedInstrument`).
     var renderFailures: Int { get }
+    /// How many frames the effect's output sits behind its input (`AUAudioUnit.latency` at
+    /// `sampleRate`). Read on the main thread when a snapshot is compiled, into its delay
+    /// compensation — never on the render thread.
+    var latencyFrames: Int { get }
+}
+
+/// A unit's latency in frames at `sampleRate`: rounded, 0 for anything not finite or not
+/// positive, and at most one second — a unit that reports more is compensated for one second,
+/// so the delay lines the engine sizes from it stay bounded. Pure.
+public enum PluginLatency {
+    public static func frames(seconds: Double, sampleRate: Double) -> Int {
+        guard seconds.isFinite, seconds > 0, sampleRate.isFinite, sampleRate > 0 else { return 0 }
+        // A rate past any real one would not fit an Int: bounded before the conversion traps.
+        let frames = (Swift.min(seconds, 1) * Swift.min(sampleRate, 1_000_000)).rounded()
+        return Int(frames)
+    }
 }
 
 /// Units that keep no time of their own — the built-in kernels, a test's stand-in — ignore it,
-/// and units that cannot refuse a block report no failures.
+/// units that cannot refuse a block report no failures, and units that are not Audio Units
+/// play without latency.
 extension HostedInstrument {
     public func follow(_ transport: HostTransport) {}
     public var renderFailures: Int { 0 }
+    public var latencyFrames: Int { 0 }
 }
 
 extension HostedProcessor {
@@ -107,4 +129,5 @@ extension HostedProcessor {
     /// A unit that is not one of Echoel's effects knows no song key.
     public func follow(key: SongKey) {}
     public var renderFailures: Int { 0 }
+    public var latencyFrames: Int { 0 }
 }
