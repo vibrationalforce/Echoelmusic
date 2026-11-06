@@ -1,17 +1,15 @@
-11.0.0 — the engine measures its render load; the rig goes dark before the app sleeps
+11.0.0 — a multiband clipper for loudness without a limiter's pumping
 
-What is new since 10061. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10062. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Diagnostics: every ten seconds of play the diagnostics log records how much of its time the
-  engine's render used (peak, and how many callbacks used more than half, three quarters and all
-  of it) and how often the render's sample time jumped — an error line where one did.
-- Lights: when the song is paused from outside in the background (a call), every light output
-  leaves its rig dark before the engine stops, not on its next tick.
-- Song menu, Concert Pitch: the six historical and orchestral standards; a song keeps any pitch
-  it already stores.
+- Effects: Multiband Clipper — three bands (Low Crossover, High Crossover), a drive per band
+  (Low/Mid/High Drive), Softness, Ceiling, Input and Mix; it clips at four times the sample rate
+  and holds every sample at or below the Ceiling. It plays 85 samples behind its input and
+  reports that delay to the host.
+- Audio Unit: the same effect as "Echoel: Multiband Clipper" in the extension, free.
 
-Previous: 11.0.0 (10061) — a kaleidoscope for the Field, a light cue that walks the Bar Weave;
-10060 — the Field under three flashes a second at full level. Earlier: git history.
+Previous: 11.0.0 (10062) — the engine measures its render load; the rig goes dark before the app
+sleeps; 10061 — a kaleidoscope for the Field. Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -19,12 +17,11 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Play a dense song for two minutes, then About, Share Diagnostics: does the log hold lines
-   "engine: render load" with a peak below 1 and gaps 0? (Send the file.)
-2. Same song with a Bluetooth headset or an AirPlay output: do the render-load lines still show
-   no gaps, or do they name where it stuttered?
-3. Light show (or Art-Net into a visualizer) playing, app in the background, receive a call: does
-   every fixture go dark at once?
-4. Song menu, Concert Pitch: six entries, and a song set to 432 earlier still shows its value?
-5. Play for a minute with the Field open on Water and the Kaleidoscope on 6: any crackle in the
-   sound, any flicker in the picture?
+1. A drum loop with Multiband Clipper, Low Drive 12 dB: louder and denser low end, and the
+   cymbals above it stay clean?
+2. Ceiling -1 dB, all three drives at 18 dB: does the meter after it never pass -1 dB?
+3. Snare or hi-hat with High Drive 12 dB: any audible pumping or ducking on each hit?
+4. AUM or GarageBand: "Echoel: Multiband Clipper" loads as an effect at 44.1 and at 48 kHz and
+   sounds like in the app?
+5. Dense song with the clipper on two tracks for two minutes, then About, Share Diagnostics:
+   lines "engine: render load" with a peak below 1 and gaps 0? (Send the file.)
