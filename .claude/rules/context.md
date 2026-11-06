@@ -108,8 +108,9 @@ widening the slice.
 
 ## 3. Reading CI
 
-`Xcode Compile Check` builds `Sources/` **only**. CI/CD reports `failure` on **every** push
-because of #396, so the conclusion alone says nothing — read the **job steps**. The full
+`Xcode Compile Check` builds `Sources/` **only**. CI/CD reports `failure` on almost every push
+because of #396 (97 of 100 on 2026-11-06: `gh run list --workflow ci.yml --event push --limit 100
+--json conclusion`), so the conclusion alone says nothing — read the **job steps**. The full
 discriminator (`Build for Testing` / `TEST EXECUTE FAILED` / `TEST BUILD FAILED`, and #445 on
 what a missing test name does and does not prove) lives in **`Tests/CISmoke/CLAUDE.md` §5**;
 it is not repeated here (#416).

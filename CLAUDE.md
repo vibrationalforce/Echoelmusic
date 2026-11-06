@@ -125,19 +125,32 @@ Priority: Build errors → Test failures → Crash code → Task → Cleanup
 
 ### Active Workflows (.github/workflows/)
 
-| Workflow | Purpose |
-|----------|---------|
-| `testflight.yml` | TestFlight der früheren App (ID: 225043686) — lädt seit 2026-10-20 nur mit `legacy_upload=LEGACY` hoch |
-| `ci.yml` | Main CI (SwiftPM build, test, lint) |
-| `xcode-compile-check.yml` | XcodeGen + `xcodebuild` compile gate (catches Xcode/AUv3-only errors) |
-| `quick-test.yml` | Fast test suite |
-| `pr-check.yml` | PR validation |
-| `auto-merge-claude.yml` | **Entscheidet, was `main` erreicht** — siehe den Absatz direkt unter dieser Tabelle |
-| `studio.yml` · `studio-testflight.yml` · `studio-linux.yml` | **Echoel Studio**: Tests und Builds (Gate des Merges seit 2026-10-20) · TestFlight beim Bump von `EchoelStudio/RELEASE` · Linux-Portabilität von Core/DSP |
+Eine Zeile je Datei; App: S = Studio, F = frühere App. Gate = liest `auto-merge-claude.yml` vor dem Merge.
+
+| Workflow | Auslöser | App | Gate |
+|---|---|---|---|
+| `auto-merge-claude.yml` | Push `claude/**` auf Code-Pfade | beide | **entscheidet, was `main` erreicht** (Absatz unten) |
+| `xcode-compile-check.yml` | Push `Sources/` `Tests/` `project.yml` … | F | ja (Conclusion) |
+| `ci.yml` | Push `claude/**` `main` … auf `Sources/` `Tests/` … | F | ja (Schritt `Build for Testing`) |
+| `studio.yml` | Push/PR `EchoelStudio/**` | S | ja (Conclusion) |
+| `studio-linux.yml` | Push/PR `EchoelStudio/{Core,DSP,Engine}/**` | S | nein |
+| `studio-testflight.yml` | Änderung `EchoelStudio/RELEASE` | S | nein — lädt hoch |
+| `studio-signing-probe.yml` | `EchoelStudio/SIGNING_PROBE`, Hand | S | nein |
+| `testflight.yml` | nur Hand; lädt nur mit `legacy_upload=LEGACY` | F | nein |
+| `deploy-on-tag.yml` | Zweig `deploy`, Tag `deploy-*` → `testflight.yml` | F | nein |
+| `trigger-testflight.yml` | nur Hand → `testflight.yml` | F | nein |
+| `full-tests.yml` | Push `main` `develop` | F | nein |
+| `benchmark.yml` | Push `main` | F | nein |
+| `pr-check.yml` | Pull Request | F | nein |
+| `quick-test.yml` | Push `claude/**` auf Swift — nur ein Secret-Grep | beide | nein |
+| `auto-merge-docs.yml` | Push `claude/**` auf `docs/**` | Website | nein |
+| `pages.yml` | Push `main` auf `docs/**` | Website | nein |
+| `fetch-samples.yml` | `.deploy/fetch-samples` | — | nein |
+| `community-triage.yml` | Issues | — | nein |
 
 ⭐ **DER MERGE NACH `main` WARTET SEIT #1405 AUF ZWEI GATES** (Founder 2026-09-21: „auto-merge-claude.yml du hast das alles unter Kontrolle und machste das klar"). Vier Monate lang tat er es nicht, und diese Tabelle nannte den entscheidenden Workflow gar nicht erst (#683) — genau die Register-Lücke, die diese Datei an anderer Stelle „teurer als eine falsche Zahl" nennt, weil sie nie als Frage auftaucht.
 
-**Was das Gate liest, und warum es ein POLL ist statt eines `needs:` — die Unterscheidung entscheidet jede künftige Änderung daran.** `Xcode Compile Check` wird über seine **Conclusion** gelesen (er baut `Sources/` allein, und seine Conclusion ist ehrlich). Die CI/CD-Pipeline wird über **einen SCHRITT** gelesen, `Build for Testing` — ihre eigene Conclusion ist wegen #396 auf JEDEM Push `failure`, trägt also null Information, und ein `needs:` darauf blockierte jeden Merge für immer. Eine Schritt-Conclusion ist aus `needs:` nicht erreichbar; sie muss abgefragt werden. **Abwesenheit ist Ablehnung, nie Zustimmung:** `never-ran` und `timeout` merged nicht.
+**Was das Gate liest, und warum es ein POLL ist statt eines `needs:` — die Unterscheidung entscheidet jede künftige Änderung daran.** `Xcode Compile Check` wird über seine **Conclusion** gelesen (er baut `Sources/` allein, und seine Conclusion ist ehrlich). Die CI/CD-Pipeline wird über **einen SCHRITT** gelesen, `Build for Testing` — ihre eigene Conclusion ist wegen #396 auf fast jedem Push `failure` (`gh run list --workflow ci.yml --event push --limit 100 --json conclusion`: 97 von 100 am 2026-11-06), trägt also keine Information, und ein `needs:` darauf blockierte jeden Merge für immer. Eine Schritt-Conclusion ist aus `needs:` nicht erreichbar; sie muss abgefragt werden. **Abwesenheit ist Ablehnung, nie Zustimmung:** `never-ran` und `timeout` merged nicht.
 
 ⭐ **SEIT 2026-10-20 IST ECHOEL STUDIO EIN EIGENES GATE-GEBIET** (Founder: „Die Echoelmusic CI übernehmen“). `EchoelStudio/**` startet den Merge, und ein Merge, der Studio-Code bringt, wartet auf `Echoel Studio` (Conclusion). Vorher erreichte eine reine Studio-Änderung `main` nie, und Studio-Code lief durch zwei Alt-App-Gates, die ihn nie bauen. Ein nötiges Gate ohne Lauf auf dem Commit wird EINMAL per Dispatch gestartet; ist der Zweig inzwischen weiter, endet der Job als `superseded`, ohne zu mergen. Wächter-Anspruch 8.
 
