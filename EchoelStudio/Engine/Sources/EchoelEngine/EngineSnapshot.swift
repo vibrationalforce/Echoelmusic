@@ -273,6 +273,10 @@ public struct EngineSnapshot: Sendable {
     /// The master's loaded, active insert effects in order, run on the master pair after
     /// everything is mixed into it.
     public let masterEffects: [any HostedProcessor]
+    /// How long each track and return waits so that every lane lines up behind the latency of its
+    /// instrument and effects (`DelayCompensation`), from the latencies the units report as this
+    /// snapshot is compiled. A unit whose latency changes is compensated from the next snapshot.
+    public private(set) var compensation: DelayCompensation
 
     /// `samples` holds the loaded buffer of every media file a sampler track may play; a
     /// file that is missing or not yet loaded leaves its track silent.
@@ -458,6 +462,7 @@ public struct EngineSnapshot: Sendable {
                   range.lowerBound.isFinite, range.upperBound.isFinite else { return nil }
             return UnitAutomation(unit: unit, address: parameter.address, range: range, lane: lane)
         }
+        compensation = Self.compensate(lanes: compiled, audioLanes: audioLanes, returns: returns, master: masterChain)
     }
 
     /// This snapshot without lanes whose slot is outside `0..<capacity` and without return
@@ -469,7 +474,35 @@ public struct EngineSnapshot: Sendable {
             copy.audioLanes[index].slot = -1
         }
         copy.returns.removeAll { $0.bus < 0 || $0.bus >= returnCapacity }
+        copy.compensation = Self.compensate(lanes: copy.lanes, audioLanes: copy.audioLanes, returns: copy.returns,
+                                            master: copy.masterEffects)
         return copy
+    }
+
+    /// The delay compensation of these lanes: each chain's latency from its plugin instrument and
+    /// its active inserts, as they report it now. Main thread, like the rest of the snapshot.
+    static func compensate(lanes: [Lane], audioLanes: [AudioLane], returns: [ReturnLane],
+                           master: [any HostedProcessor]) -> DelayCompensation {
+        let latency = { (chain: [any HostedProcessor]) -> [Int] in
+            chain.filter { !$0.isBypassed }.map { (unit: any HostedProcessor) -> Int in unit.latencyFrames }
+        }
+        let present = Set(returns.map(\.bus))
+        let fed = { (sends: [SendTap]) -> [Int] in sends.map(\.bus).filter { present.contains($0) } }
+        var tracks = lanes.map { (lane: Lane) -> DelayCompensation.TrackChain in
+            let instrument: Int = lane.unit?.latencyFrames ?? 0
+            let units: [Int] = [instrument] + latency(lane.inserts)
+            return DelayCompensation.TrackChain(track: lane.track, latency: DelayCompensation.chain(units),
+                                                buses: fed(lane.sends), ownOutput: lane.output >= 0)
+        }
+        tracks += audioLanes.map { (lane: AudioLane) -> DelayCompensation.TrackChain in
+            DelayCompensation.TrackChain(track: lane.track, latency: DelayCompensation.chain(latency(lane.inserts)),
+                                         buses: fed(lane.sends), ownOutput: lane.output >= 0)
+        }
+        let chains = returns.map { (lane: ReturnLane) -> DelayCompensation.ReturnChain in
+            DelayCompensation.ReturnChain(track: lane.track, bus: lane.bus, latency: DelayCompensation.chain(latency(lane.inserts)),
+                                          ownOutput: lane.output >= 0)
+        }
+        return DelayCompensation(tracks: tracks, returns: chains, master: DelayCompensation.chain(latency(master)))
     }
 
     /// Nil when the file is not loaded or nothing of the region falls inside the loaded file

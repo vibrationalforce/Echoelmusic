@@ -83,6 +83,21 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertEqual(try unit(.equalizer).latency, 0)
     }
 
+    /// The engine's delay compensation reads the unit's latency through the effect it plays.
+    func testTheHostedEffectReportsItsUnitsLatencyInFramesAndNoneWhileBypassed() throws {
+        let tuned = try unit(.pitchCorrection)
+        let effect = HostedEffect(render: tuned.renderBlock, sampleRate: 48_000, maximumFrames: 4_096, owner: tuned)
+        XCTAssertEqual(effect.latencyFrames, PluginLatency.frames(seconds: tuned.latency, sampleRate: 48_000))
+        XCTAssertEqual(Double(effect.latencyFrames), 912, accuracy: 24, "about 19 ms at 48 kHz")
+        let bypassed = HostedEffect(render: tuned.renderBlock, sampleRate: 48_000, maximumFrames: 4_096, isBypassed: true,
+                                    owner: tuned)
+        XCTAssertEqual(bypassed.latencyFrames, 0)
+        let flat = try unit(.equalizer)
+        XCTAssertEqual(HostedEffect(render: flat.renderBlock, sampleRate: 48_000, maximumFrames: 4_096, owner: flat).latencyFrames, 0)
+        XCTAssertEqual(HostedEffect(render: flat.renderBlock, sampleRate: 48_000, maximumFrames: 4_096, owner: nil).latencyFrames, 0,
+                       "without its unit there is nothing to ask")
+    }
+
     func testTheExtensionCopyIsTheSameEffectAndPlaysAsADemoUntilUnlocked() throws {
         let paid = try StandardEffectUnit(componentDescription: StandardEffectUnit.audioComponent(StandardEffect.equalizer.extensionComponent))
         try paid.allocateRenderResources()
