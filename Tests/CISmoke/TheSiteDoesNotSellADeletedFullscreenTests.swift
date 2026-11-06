@@ -104,7 +104,9 @@ final class TheSiteDoesNotSellADeletedFullscreenTests: XCTestCase {
             support.contains("<strong>Audio latency</strong>"),
             "support.html no longer names the `Audio latency` row in the Master panel. That "
             + "control was restored by #1331; before it, the page's advice could not be "
-            + "followed at all.")
+            + "followed at all. Since 2026-11-06 the answer sits in the collapsed "
+            + "\"Earlier app (10.79)\" section, under the Echoel Studio answers; it is the "
+            + "earlier app's control, so it stays there.")
         XCTAssertFalse(
             support.contains("Reduce buffer size in Audio Settings"),
             "support.html still sends the reader to an \"Audio Settings\" screen. No such "
