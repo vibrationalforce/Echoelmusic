@@ -70,8 +70,10 @@ public enum RegionWarp {
     }
 
     /// The stretched frames of a warped or transposed region, at the file's rate. Nil when there is
-    /// nothing to stretch. Allocates and takes time: never on the render thread, nor in a view body.
-    public static func render(_ region: AudioRegion, in project: Project, buffer: SampleBuffer) -> SampleBuffer? {
+    /// nothing to stretch, or when a buffer it makes on the way would pass `limit` frames per
+    /// channel. Allocates and takes time: never on the render thread, nor in a view body.
+    public static func render(_ region: AudioRegion, in project: Project, buffer: SampleBuffer,
+                              limit: Int = maximumFrames) -> SampleBuffer? {
         guard region.offset >= 0, region.offset < buffer.frameCount else { return nil }
         let rate = buffer.sampleRate
         let length = Swift.min(region.length, buffer.frameCount - region.offset)
@@ -105,7 +107,7 @@ public enum RegionWarp {
             mode = .tones
             readAt = { (frame: Double) -> Double in frame }
         }
-        guard outputCount > 0, outputCount <= maximumFrames else { return nil }
+        guard outputCount > 0, outputCount <= limit else { return nil }
         let splice = Swift.max(1, Int((spliceSeconds * rate).rounded()))
         guard cents != 0 else {
             switch mode {
@@ -127,9 +129,15 @@ public enum RegionWarp {
         }
         // W-4: stretched by the pitch ratio with the timing the mode gives, then read back faster
         // or slower by the same ratio — the pitch moves, every frame still sounds where it did.
+        // The stretched buffer is up to four times the region (two octaves up) and is held to the
+        // same limit as the region's own output, so a transposition never makes it four times
+        // the memory an untransposed stretch may take.
         let ratio = Foundation.pow(2, cents / 1_200)
-        let longer = Int((Double(outputCount) * ratio).rounded(.up)) + 2
-        guard ratio.isFinite, ratio > 0, longer > 2, longer <= 4 * maximumFrames + 2,
+        guard ratio.isFinite, ratio > 0 else { return nil }
+        let wanted = (Double(outputCount) * ratio).rounded(.up) + 2
+        guard wanted.isFinite, wanted <= Double(limit) else { return nil }
+        let longer = Int(wanted)
+        guard longer > 2,
               let sides = buffer.sides(offset: region.offset, length: length) else { return nil }
         let stretcher = WSOLAStretcher()
         let timed: [[Float]]

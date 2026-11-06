@@ -292,6 +292,21 @@ final class RegionWarpPlaybackTests: XCTestCase {
         }
     }
 
+    func testATranspositionUpIsHeldToTheSameLimitAsTheRegion() throws {
+        // One second: 48,000 frames. An octave up stretches it to twice that before it is read
+        // back, so a limit between the two refuses the octave up and still renders the rest.
+        var s = try plainSong(try sine(hertz: 440, seconds: 1), tempo: 120)
+        let limit = 60_000
+        try Command.setRegionTranspose(track: s.track, s.region, cents: 1_200).apply(to: &s.project)
+        let up = try XCTUnwrap(s.project.track(s.track)?.regions.first)
+        let buffer = try XCTUnwrap(s.samples[up.media])
+        XCTAssertNil(RegionWarp.render(up, in: s.project, buffer: buffer, limit: limit), "twice the region passes the limit")
+        XCTAssertEqual(RegionWarp.render(up, in: s.project, buffer: buffer)?.frameCount, 48_000)
+        try Command.setRegionTranspose(track: s.track, s.region, cents: -1_200).apply(to: &s.project)
+        let down = try XCTUnwrap(s.project.track(s.track)?.regions.first)
+        XCTAssertEqual(RegionWarp.render(down, in: s.project, buffer: buffer, limit: limit)?.frameCount, 48_000)
+    }
+
     func testTransposeZeroIsTheSongAsBefore() throws {
         for warp in [false, true] {
             let tone = try sine(hertz: 330, seconds: 1)
