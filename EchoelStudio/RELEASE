@@ -1,23 +1,19 @@
-11.0.0 — Weave and Moiré Beat in the Field, phase and partials meters, Revoice by Octaves
+11.0.0 — the Field's looks in exported video and in the live stream, Bar Weave
 
-What is new since 10054. Each line is code that the Echoel Studio run builds and tests; nothing
+What is new since 10055. Each line is code that the Echoel Studio run builds and tests; nothing
 here is device-verified yet.
-- Field menu, Pattern: "Moiré Beat" — two line gratings spaced by the song's third as its tone
-  system tunes it: a pure third stands still, a tempered one drifts at its beat (under 2 Hz).
-- Field menu, Pattern: "Weave" — the song's key woven one row per bar (rule 90, a cellular
-  automaton), started from the key's notes. A jump, a loop's wrap or a new key fades through dark.
-- Field menu, Show: "Phase" — the master's stereo phase as a goniometer, its correlation as a
-  number and a bar; "Partials" — the master's partials as ratios to the lowest, labelled.
-- Sound, Engine "DDSP": a "Profile" choice of ten partial shapes (Character, Metallic, Hollow,
-  Bell, Flat, Bowed, Brass, Low Bowed, Reed, Double Reed).
-- Piano roll, Chords: "Revoice by Octaves" — moves the upper notes of your chords (three or more
-  notes together) by octaves so the voices travel less; one undo step, and it says what it did.
-- Mixer: a moving fader or pan (automation, a route, the Bar LFO) plays the same at any device
-  buffer as in an export, and a jump after a seek, a loop's wrap or an edit glides over 64 samples.
+- Exported video with the Field Layer on, and the Field Layer (Alpha) export: the film draws the
+  pattern the Field window shows and the one blended over it — Rings, Moiré Beat, Weave, and the
+  looks that listen to the sound (Chladni Plate, Dish, Water, Aurora, Depth), which now hear the
+  mix as it played. The video window's preview draws the same.
+- Go Live: the stream draws the Field window's looks too, not only the rings.
+- Modulate (a track's or the master's menu): a new source "Bar Weave" — each bar a value from the
+  Weave of the song's key, glided into over the bar's first eighth; an export moves as playback
+  does.
 
-Previous: 11.0.0 (10054) — Bar LFO, lights left dark when the app lets go, MTC chase over a
-looping song. Earlier: git history. The import of earlier songs (the app group is in the app's
-entitlements since a14e1960a) has not been seen on a device yet.
+Previous: 11.0.0 (10055) — Moiré Beat and Weave in the Field, phase and partials meters, DDSP
+profiles, Revoice by Octaves. Earlier: git history. The import of earlier songs (the app group
+is in the app's entitlements since a14e1960a) has not been seen on a device yet.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -25,15 +21,13 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Clicks: give a track a volume lane with a step, loop the bars before the step, play; jump,
-   pause and play; drag the fader while it plays; set "Bar LFO → Pan". No click anywhere?
-2. Field menu, Show "Phase", play a stereo song, then pan a sound hard left. Does the figure lean
-   left, and does the number stay near +1 for a centred sound? Show "Partials" with the Synth:
-   do you read 1, 2, 3 …?
-3. Field menu, Pattern "Weave" in C major: seven cells at the bottom and a new row each bar? Loop
-   one bar at a fast tempo and change the key: does it fade, never flicker? "Moiré Beat": does
-   "Just intonation, major" stand still and "12 equal (standard)" drift slowly?
-4. Sound, Engine "DDSP", Profile: do the ten profiles sound different, with no click when you
-   switch while a note holds?
-5. In a clip write C3 E4 G4, then a bar later F3 A4 C5; Chords → "Revoice by Octaves". Does the C5
-   come down to C4, does it say "11 semitones instead of 15", and does one Undo bring it back?
+1. Field window, Pattern "Weave"; export a video with a video part and the Field Layer on
+   (Screen). Does the film show the Weave over the picture, as the video window showed it?
+2. Pattern "Chladni Plate" with a song that plays chords; export the video again. Does the plate
+   in the film change its figure with the music, as in the Field window?
+3. Song menu, "Export Field Layer (Alpha)", Landscape, with "Dish". Does the movie open in Final
+   Cut or Resolve with the dish on a transparent ground?
+4. Go Live (or a test stream) with "Moiré Beat" chosen. Does the stream show the moiré, not
+   rings?
+5. A track's Modulate, Cutoff, "Bar Weave", play eight bars. Does the sound change on each bar
+   line, gliding, with no click?
