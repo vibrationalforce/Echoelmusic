@@ -66,7 +66,8 @@ final class RevoiceTests: XCTestCase {
             [[48, 64, 67], [53, 69, 72], [55, 59, 74]],
             [[45, 60, 64], [50, 65, 69, 74], [43, 59, 62], [48, 55, 76]],
             [[36, 52, 55, 59], [41, 57, 72], [43, 47, 62, 65]],
-            [[60, 64], [62, 77], [55, 71, 74]],
+            [[38, 47, 59], [38, 46, 59], [43, 57, 64]],
+            [[48, 60, 60], [48, 48, 60], [53, 57, 72]],
         ]
         for chords in progressions {
             let written = clip(chords)
@@ -90,37 +91,85 @@ final class RevoiceTests: XCTestCase {
         }
     }
 
+    /// Equal totals: the path that moves the fewest notes wins.
+    func testAmongEqualTotalsTheFewestNotesMove() {
+        let written = clip([[38, 47, 59], [38, 46, 59], [43, 57, 64]])
+        let result = Revoice.revoiced(written)
+        XCTAssertEqual(result.writtenMovement, 22)
+        XCTAssertEqual(result.revoicedMovement, 12)
+        guard case .updateNotes(_, let changed)? = result.command else { return XCTFail("something moves") }
+        XCTAssertEqual(changed.count, 1, "one note an octave down reaches the least total")
+        XCTAssertEqual(changed.first?.pitch, 45)
+    }
+
+    /// What the command writes is what the search reports: the chords after it travel exactly
+    /// the reported total.
+    func testTheWrittenNotesTravelTheReportedTotal() {
+        for chords in [[[48, 64, 67], [41, 69, 72, 76], [43, 71, 74], [48, 76, 79]],
+                       [[45, 60, 64], [50, 65, 69, 74], [43, 59, 62], [48, 55, 76]]] {
+            let written = clip(chords)
+            let result = Revoice.revoiced(written)
+            let after = Revoice.chords(in: apply(result, to: written)).map { $0.map(\.pitch) }
+            var total = 0
+            for k in 1..<after.count { total += Revoice.movement(after[k - 1], after[k]) }
+            XCTAssertEqual(total, result.revoicedMovement, "\(chords)")
+        }
+    }
+
     func testNothingToMoveIsNoCommand() {
         XCTAssertNil(Revoice.revoiced(clip([])).command)
         XCTAssertNil(Revoice.revoiced(clip([[48, 64, 67]])).command, "one chord")
         XCTAssertNil(Revoice.revoiced(clip([[60], [64], [67]])).command, "single notes are no chords")
+        XCTAssertNil(Revoice.revoiced(clip([[36, 64], [41, 72], [36, 76]])).command, "a bass under a melody is no chord")
         XCTAssertNil(Revoice.revoiced(clip([[48, 64, 67], [48, 64, 67]])).command, "already the least")
+        XCTAssertTrue(Revoice.message(Revoice.revoiced(clip([[48, 64, 67]]))).hasPrefix("Revoice needs two chords"))
+        XCTAssertTrue(Revoice.message(Revoice.revoiced(clip([[48, 64, 67], [48, 64, 67]]))).hasPrefix("No octave move"))
+        XCTAssertTrue(Revoice.message(Revoice.revoiced(clip([[48, 64, 67], [53, 69, 72]])))
+                        .contains("11 semitones instead of 15"))
     }
 
-    func testEdgesStayInsideTheRangeAndAboveTheBass() {
-        let high = clip([[100, 124, 127], [101, 125, 116]])
-        let after = apply(Revoice.revoiced(high), to: high)
-        XCTAssertTrue(after.notes.allSatisfy { Note.pitchRange.contains($0.pitch) })
-        let low = clip([[0, 4, 7], [5, 21, 12]])
-        for chord in Revoice.chords(in: apply(Revoice.revoiced(low), to: low)) {
-            let bass = chord.map(\.pitch).min() ?? 0
-            XCTAssertEqual(chord.filter { $0.pitch == bass }.count, 1, "no upper note falls to or below the bass")
+    /// An upper note never falls to or below its bass, never lands on a pitch its chord holds
+    /// (a written unison stays, none is made), and a doubled bass stays.
+    func testTheBassStaysBelowAndNoUnisonIsMade() {
+        // 57 an octave down (45) would fall below the bass 53: it is not allowed.
+        let below = clip([[60, 64, 67], [53, 57, 72]])
+        for chord in Revoice.chords(in: apply(Revoice.revoiced(below), to: below)) {
+            let pitches = chord.map(\.pitch)
+            XCTAssertTrue(pitches.dropFirst().allSatisfy { $0 > (pitches.first ?? 0) }, "\(pitches)")
         }
-        // A unison the musician wrote stays allowed; no new one is made.
-        let unison = clip([[48, 60, 60], [53, 72, 69]])
-        let chords = Revoice.chords(in: apply(Revoice.revoiced(unison), to: unison))
-        XCTAssertGreaterThanOrEqual(Set(chords[1].map(\.pitch)).count, 3)
+        // A doubled bass (48, 48) and a written duplicate: no note moves onto a held pitch.
+        let doubled = clip([[48, 60, 60], [48, 48, 60]])
+        XCTAssertNil(Revoice.revoiced(doubled).command, "the second 48 is bass, 60 cannot go to 48 or onto itself")
+        let high = clip([[100, 124, 127], [101, 125, 116]])
+        XCTAssertTrue(apply(Revoice.revoiced(high), to: high).notes.allSatisfy { Note.pitchRange.contains($0.pitch) })
     }
 
-    /// A humanized chord (starts a few ticks apart) is one chord; a chord of six upper notes is
-    /// left as written and counted.
+    /// A note outside the chords that sounds at the same time keeps its pitch to itself: an upper
+    /// note does not move onto it (playback would cut one of the two).
+    func testANoteOutsideTheChordIsNotLandedOn() {
+        var written = clip([[48, 64, 67], [53, 60, 81]])
+        // Without the melody, 81 would come down to 69.
+        let free = apply(Revoice.revoiced(written), to: written)
+        XCTAssertTrue(Revoice.chords(in: free)[1].map(\.pitch).contains(69))
+        written.notes.append(Note(pitch: 69, start: bar + bar / 8, length: bar / 8))
+        let after = apply(Revoice.revoiced(written), to: written)
+        XCTAssertFalse(Revoice.chords(in: after)[1].map(\.pitch).contains(69), "the melody's A4 sounds then")
+    }
+
+    /// A humanized chord (starts a few ticks apart, one press at its widest) is one chord; a
+    /// chord of six upper notes after the first is left as written, counted and said.
     func testHumanizedStartsAndBigChords() {
         var humanized = clip([[48, 64, 67], [53, 69, 72]])
+        let spread: [Tick] = [-60, 60, 0]
+        var seen = 0
         for index in humanized.notes.indices where humanized.notes[index].start > 0 {
-            humanized.notes[index].start += Tick(index * 7)
+            humanized.notes[index].start += spread[seen % spread.count]
+            seen += 1
         }
-        XCTAssertEqual(Revoice.chords(in: humanized).count, 2)
-        let big = clip([[36, 48, 52, 55, 59, 62, 65], [41, 53, 57, 60, 64, 67, 70], [43, 55, 59, 62]])
-        XCTAssertEqual(Revoice.revoiced(big).keptAsWritten, 2)
+        XCTAssertEqual(Revoice.chords(in: humanized).count, 2, "120 ticks apart is still one chord")
+        let big = clip([[36, 48, 52, 55], [41, 53, 57, 60, 64, 67, 70], [43, 55, 59, 62, 65, 69, 72]])
+        let result = Revoice.revoiced(big)
+        XCTAssertEqual(result.keptAsWritten, 2)
+        XCTAssertTrue(Revoice.message(result).contains("2 chords of more than 5 notes left as written"))
     }
 }

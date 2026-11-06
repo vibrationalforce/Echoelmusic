@@ -214,6 +214,9 @@ struct PianoRoll: View {
     /// single tap never deletes (a slip took a note away, CI audit 2026-10-31): a tap chooses, a
     /// double tap or Delete Note removes.
     @State private var selected: NoteID?
+    /// What the last Revoice said, with the notes it left: shown in the Chords menu for sighted
+    /// players while the clip still holds exactly those notes, so it never describes an edit since.
+    @State private var revoiceNote: (text: String, notes: [Note])?
     /// Quantize's swing, kept on this device: 0, 0.25, 0.5 or 0.75.
     @AppStorage(PianoRoll.swingKey) private var swing = 0.0
 
@@ -419,8 +422,12 @@ struct PianoRoll: View {
                     }
                 }
             }
-            Section("Your chords") {
+            Section("Your chords — three or more notes together") {
                 Button("Revoice by Octaves") { revoice() }
+                if let revoiceNote, revoiceNote.notes.count == clip.notes.count,
+                   revoiceNote.notes.allSatisfy({ clip.notes.contains($0) }) {
+                    Text(revoiceNote.text)
+                }
             }
         } label: {
             Label("Chords", systemImage: "pianokeys")
@@ -428,7 +435,7 @@ struct PianoRoll: View {
         .menuStyle(.button)
         .buttonStyle(ToolButtonStyle())
         .accessibilityLabel("Chords")
-        .accessibilityHint("Suggests chords that fit after the last note.")
+        .accessibilityHint("Suggests chords that fit after the last note, or revoices your chords by octaves.")
     }
 
     private static let suggestedChords = 6
@@ -437,13 +444,23 @@ struct PianoRoll: View {
     /// as few semitones as the placements allow (`Revoice`); one undo step.
     private func revoice() {
         let result = Revoice.revoiced(clip)
+        let text = Revoice.message(result)
         guard let command = result.command else {
-            return announce("The chords already move as little as octaves allow.")
+            revoiceNote = (text, clip.notes)
+            return announce(text)
         }
         do {
             try store.perform([command], title: "Revoice")
-            announce("Revoiced: the voices move \(result.revoicedMovement) semitones instead of \(result.writtenMovement).")
+            var after = clip.notes
+            if case .updateNotes(_, let changed) = command {
+                for note in changed {
+                    if let index = after.firstIndex(where: { $0.id == note.id }) { after[index] = note }
+                }
+            }
+            revoiceNote = (text, after)
+            announce(text)
         } catch {
+            revoiceNote = nil
             announce("The chords could not be revoiced.", urgent: true)
         }
     }
