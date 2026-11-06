@@ -4,8 +4,9 @@ import SwiftUI
 import UIKit
 
 /// A loaded plugin's own interface, inside the page that shows it rather than in a sheet of its
-/// own (one presentation slot, law 7). It is drawn at the largest size the unit reports that fits
-/// the page; Full Size grows it in place, never into a second sheet. A unit without an interface of
+/// own (one presentation slot, law 7). It is drawn the full width of the page at the unit's
+/// preferred height, or at the unit's full size where that fits and is larger; Full Size raises the
+/// height ceiling in place, never into a second sheet. A unit without an interface of
 /// its own shows its parameters as value fields instead. Leaving it stores the plugin's settings in
 /// the song as one step.
 struct PluginInterfaceSection: View {

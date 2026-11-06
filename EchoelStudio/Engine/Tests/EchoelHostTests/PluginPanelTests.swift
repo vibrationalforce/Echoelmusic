@@ -60,17 +60,30 @@ final class PluginPanelTests: XCTestCase {
 
     // MARK: - Size
 
-    /// A tablet's area takes the full-size interface; a phone's takes the compact one, whichever
-    /// order the unit reports them in.
-    func testTheLargestReportedSizeThatFitsIsChosen() {
-        let reported = [PluginViewSize.compact, PluginViewSize.expanded]
+    /// A small size a unit reports stands for the most a unit accepts by default, not for what it
+    /// needs: a size is drawn only where it fits the page and is at least as large as the
+    /// full-width interface at the unit's preferred height. The full size wins on an expanded
+    /// tablet page, whichever order the unit reports it in.
+    func testAReportedSizeIsDrawnOnlyWhereItFitsAndBeatsTheFullWidth() {
+        let small = CGSize(width: 320, height: 240)
+        let reported = [small, PluginViewSize.expanded]
         XCTAssertEqual(PluginViewSize.choose(reported: reported, available: CGSize(width: 1100, height: 760), preferredHeight: 0),
                        .configuration(index: 1, size: CGSize(width: 1024, height: 700)))
-        XCTAssertEqual(PluginViewSize.choose(reported: reported, available: CGSize(width: 390, height: 560), preferredHeight: 0),
-                       .configuration(index: 0, size: CGSize(width: 320, height: 240)))
-        XCTAssertEqual(PluginViewSize.choose(reported: [PluginViewSize.expanded, PluginViewSize.compact], available: CGSize(width: 1024, height: 700),
-                                             preferredHeight: 0),
+        XCTAssertEqual(PluginViewSize.choose(reported: [PluginViewSize.expanded, small], available: CGSize(width: 1024, height: 700),
+                                             preferredHeight: 0, ceiling: 700),
                        .configuration(index: 0, size: CGSize(width: 1024, height: 700)), "an exact fit fits")
+        for width: CGFloat in [390, 820, 1000] {
+            for ceiling: CGFloat in [PluginViewSize.compactCeiling, 760] {
+                XCTAssertEqual(PluginViewSize.choose(reported: [PluginViewSize.expanded, small],
+                                                     available: CGSize(width: width, height: ceiling),
+                                                     preferredHeight: 500, ceiling: ceiling),
+                               .height(500), "width \(width), ceiling \(ceiling): a phone or narrow page is never capped at the small size")
+            }
+        }
+        XCTAssertEqual(PluginViewSize.choose(reported: [PluginViewSize.expanded], available: CGSize(width: 1100, height: 760),
+                                             preferredHeight: 760, ceiling: 760),
+                       .height(760), "a full width taller than the full size draws the full width")
+        XCTAssertEqual(PluginViewSize.offered, [PluginViewSize.expanded], "no small size is offered, so none can be accepted by default")
     }
 
     /// No reported size — or none that fits — keeps the unit's preferred height between 240 and
@@ -84,7 +97,7 @@ final class PluginPanelTests: XCTestCase {
         XCTAssertEqual(PluginViewSize.choose(reported: [], available: phone, preferredHeight: .nan), .height(360))
         XCTAssertEqual(PluginViewSize.choose(reported: [PluginViewSize.expanded], available: phone, preferredHeight: 300),
                        .height(300))
-        XCTAssertEqual(PluginViewSize.choose(reported: [PluginViewSize.compact], available: CGSize(width: CGFloat.nan, height: 500),
+        XCTAssertEqual(PluginViewSize.choose(reported: [CGSize(width: 320, height: 240)], available: CGSize(width: CGFloat.nan, height: 500),
                                              preferredHeight: 300), .height(300))
         XCTAssertEqual(PluginViewSize.choose(reported: [CGSize(width: 0, height: 0)], available: phone, preferredHeight: 300),
                        .height(300))
