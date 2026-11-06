@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 @testable import EchoelKernels
 import XCTest
 @testable import EchoelEngine
@@ -38,7 +39,26 @@ private final class LateInstrument: HostedInstrument, @unchecked Sendable {
                 gainLeft: Float, gainRight: Float) {}
 }
 
-/// Plugin delay compensation, slice 1: the plan of how long each lane waits (WS-PDC).
+/// One of Echoel's effect kernels on an insert chain, reporting its latency as its Audio Unit does.
+private final class LatentKernelInsert: HostedProcessor, @unchecked Sendable {
+    let kernel: EffectKernel
+    let isBypassed = false
+    let insert: InsertID? = nil
+    let parameterRanges: [UInt64: ClosedRange<Float>] = [:]
+    var sampleRate: Double { kernel.sampleRate }
+    var latencyFrames: Int { PluginLatency.frames(seconds: kernel.latencySeconds, sampleRate: kernel.sampleRate) }
+
+    init(_ kernel: EffectKernel) { self.kernel = kernel }
+
+    func schedule(address: UInt64, value: Float, offset: Int, ramp: Int) {}
+
+    func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+        kernel.process(left: left, right: right, frames: frames)
+    }
+}
+
+/// Plugin delay compensation (WS-PDC): slice 1, the plan of how long each lane waits; slice 2, the
+/// render waiting it.
 final class DelayCompensationTests: XCTestCase {
     private let rate = 48_000.0
 
@@ -232,5 +252,320 @@ final class DelayCompensationTests: XCTestCase {
                             slots: slots.slots)
         XCTAssertEqual(shot.compensation.delay(of: keys)?.latency, 100)
         XCTAssertEqual(shot.compensation.delay(of: drums)?.delay, 100)
+    }
+
+    // MARK: - The render
+
+    /// One beat at 120 BPM, in frames: where each test region starts.
+    private let beat = 24_000
+    /// The multiband clipper's latency at 48 kHz.
+    private let clipperLatency = 85
+    /// A tone half a period off at the clipper's latency: 85 frames are one and a half periods, so
+    /// a track left 85 frames ahead of its twin cancels it instead of doubling it.
+    private var tone: Double { rate * 1.5 / 85 }
+
+    private struct Tones {
+        var project: Project
+        var tracks: [TrackID]
+        var media: MediaFile
+        var buffer: SampleBuffer
+        var samples: [MediaID: SampleBuffer] { [media.id: buffer] }
+    }
+
+    /// One audio track per name, each playing the same second of `tone` from the song's second beat.
+    private func tones(_ names: [String]) throws -> Tones {
+        var project = Project(tempo: 120)
+        let media = MediaFile(name: "Tone", path: "Media/tone.wav", frameCount: 48_000, sampleRate: rate)
+        try Command.addMedia(media).apply(to: &project)
+        var tracks: [TrackID] = []
+        for name in names {
+            let track = TrackID()
+            try Command.addTrack(id: track, name: name, kind: .audio, index: nil).apply(to: &project)
+            try Command.placeAudio(track: track, id: RegionID(), media: media.id, start: MusicalTime.ticksPerQuarter)
+                .apply(to: &project)
+            tracks.append(track)
+        }
+        let hertz = tone, sampleRate = rate
+        let wave = (0..<48_000).map { (index: Int) -> Float in
+            let phase = 2 * Double.pi * hertz * Double(index) / sampleRate
+            return Float(0.25 * sin(phase))
+        }
+        let buffer = try XCTUnwrap(SampleBuffer(samples: wave, sampleRate: rate))
+        return Tones(project: project, tracks: tracks, media: media, buffer: buffer)
+    }
+
+    /// The multiband clipper at Mix 0: only its dry sound, which it keeps aligned with what it
+    /// clips — 85 frames late, through its crossovers' allpass (low 40 Hz, high 10 kHz).
+    private func clipper() -> LatentKernelInsert {
+        let kernel = EffectKernel(effect: .multibandClipper, sampleRate: rate)
+        kernel.setParameter(1, 40)        // low crossover, Hz
+        kernel.setParameter(2, 10_000)    // high crossover, Hz
+        kernel.setParameter(8, 0)         // mix
+        return LatentKernelInsert(kernel)
+    }
+
+    private func export(_ song: Tones, effects: [TrackID: [any HostedProcessor]], isolating: TrackID? = nil) -> [Float] {
+        OfflineRender.render(song.project, sampleRate: rate, tailSeconds: 0.5, ringOutSeconds: 0, samples: song.samples,
+                             effects: effects, isolating: isolating).left
+    }
+
+    private func correlation(_ a: ArraySlice<Float>, _ b: ArraySlice<Float>) -> Double {
+        var ab = 0.0, aa = 0.0, bb = 0.0
+        for (x, y) in zip(a, b) {
+            ab += Double(x) * Double(y)
+            aa += Double(x) * Double(x)
+            bb += Double(y) * Double(y)
+        }
+        guard aa > 0, bb > 0 else { return 0 }
+        return ab / (aa * bb).squareRoot()
+    }
+
+    private func peak(_ samples: ArraySlice<Float>) -> Float {
+        samples.reduce(Float(0)) { (loudest: Float, sample: Float) -> Float in Swift.max(loudest, Swift.abs(sample)) }
+    }
+
+    /// How many frames of `delayed` differ from `original` played `latency` frames earlier — the
+    /// first `latency` frames count unless they are silence.
+    private func mismatches(_ delayed: [Float], _ original: [Float], latency: Int) -> Int {
+        var count = 0
+        for index in 0..<Swift.min(latency, delayed.count) where delayed[index] != 0 { count += 1 }
+        for index in latency..<Swift.min(delayed.count, original.count + latency) where delayed[index] != original[index - latency] {
+            count += 1
+        }
+        return count
+    }
+
+    func testTwoIdenticalTracksStayInPhaseBehindAMultibandClipper() throws {
+        let song = try tones(["Clipped", "Plain"])
+        let clipped = song.tracks[0], plain = song.tracks[1]
+        XCTAssertEqual(clipper().latencyFrames, clipperLatency)
+        let effects = { () -> [TrackID: [any HostedProcessor]] in [clipped: [self.clipper()]] }
+        let clippedAlone = export(song, effects: effects(), isolating: clipped)
+        let plainAlone = export(song, effects: effects(), isolating: plain)
+        let both = export(song, effects: effects())
+        // No latency anywhere: the plain track as it played before compensation.
+        let uncompensated = export(song, effects: [:], isolating: plain)
+        XCTAssertEqual(plainAlone.count, uncompensated.count)
+        XCTAssertEqual(mismatches(plainAlone, uncompensated, latency: clipperLatency), 0,
+                       "the plain track plays exactly as before, 85 frames later")
+
+        let window = (beat + 4_800)..<(beat + 40_000)
+        XCTAssertGreaterThan(correlation(clippedAlone[window], plainAlone[window]), 0.98, "compensated: in phase")
+        XCTAssertLessThan(correlation(clippedAlone[window], uncompensated[window]), -0.9,
+                          "without compensation the two would cancel")
+        XCTAssertGreaterThan(peak(both[window]), 1.95 * peak(plainAlone[window]), "the sum doubles")
+    }
+
+    func testATracksDrySoundWaitsForTheClipperOnItsReturnAndItsSendArrivesInTime() throws {
+        var song = try tones(["Voice"])
+        let voice = song.tracks[0], verb = TrackID()
+        try Command.addTrack(id: verb, name: "Return", kind: .returnTrack, index: nil).apply(to: &song.project)
+        try Command.setSend(track: voice, to: verb, db: 0).apply(to: &song.project)
+        let effects = { () -> [TrackID: [any HostedProcessor]] in [verb: [self.clipper()]] }
+        let dry = export(song, effects: effects(), isolating: voice)
+        let wet = export(song, effects: effects(), isolating: verb)
+        let before = export(song, effects: [:], isolating: voice)
+        XCTAssertEqual(mismatches(dry, before, latency: clipperLatency), 0, "the dry sound waits the return's chain")
+        let window = (beat + 4_800)..<(beat + 40_000)
+        XCTAssertGreaterThan(correlation(dry[window], wet[window]), 0.98, "dry and return meet in phase")
+        XCTAssertLessThan(correlation(before[window], wet[window]), -0.9)
+    }
+
+    func testWithoutLatencyTheMixIsTheSameSampleForSample() throws {
+        var song = try tones(["A", "B"])
+        let verb = TrackID()
+        try Command.addTrack(id: verb, name: "Return", kind: .returnTrack, index: nil).apply(to: &song.project)
+        try Command.setSend(track: song.tracks[0], to: verb, db: -6).apply(to: &song.project)
+        let bare = OfflineRender.render(song.project, sampleRate: rate, tailSeconds: 0.5, ringOutSeconds: 0, samples: song.samples)
+        let effects: [TrackID: [any HostedProcessor]] = [song.tracks[0]: [LateInsert(latency: 0)], verb: [LateInsert(latency: 0)]]
+        let passed = OfflineRender.render(song.project, sampleRate: rate, tailSeconds: 0.5, ringOutSeconds: 0,
+                                          samples: song.samples, effects: effects)
+        XCTAssertEqual(bare.left, passed.left)
+        XCTAssertEqual(bare.right, passed.right)
+        XCTAssertTrue(CompensationLines(snapshot(song.project, effects: effects), reusing: nil).entries.isEmpty,
+                      "no line at all")
+    }
+
+    /// The export renders in blocks of 4,096; the device in whatever it asks for. Every delay line
+    /// runs sample by sample, so each plays the same.
+    func testALiveRenderInAnyBlockSizePlaysWhatTheExportPlays() throws {
+        let song = try tones(["Clipped", "Plain"])
+        let exported = export(song, effects: [song.tracks[0]: [clipper()]])
+        for block in [256, 333, 4_096] {
+            let engine = EngineCore(sampleRate: rate)
+            engine.setClickEnabled(false)
+            var slots = SlotAssigner(capacity: engine.slotCapacity)
+            slots.update(for: song.project)
+            engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: song.project), project: song.project, slots: slots.slots,
+                                          sampleRate: rate, generation: 1, samples: song.samples,
+                                          effects: [song.tracks[0]: [clipper()]]))
+            engine.play()
+            var left = [Float](repeating: 0, count: exported.count)
+            var right = [Float](repeating: 0, count: exported.count)
+            var start = 0
+            while start < exported.count {
+                let count = Swift.min(block, exported.count - start)
+                left.withUnsafeMutableBufferPointer { (l: inout UnsafeMutableBufferPointer<Float>) in
+                    right.withUnsafeMutableBufferPointer { (r: inout UnsafeMutableBufferPointer<Float>) in
+                        guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                        engine.render(frameCount: count, left: lp + start, right: rp + start)
+                    }
+                }
+                start += count
+            }
+            var worst: Float = 0
+            for (live, file) in zip(left, exported) { worst = Swift.max(worst, Swift.abs(live - file)) }
+            XCTAssertLessThan(worst, 1e-6, "block \(block)")
+        }
+    }
+
+    func testALineIsHandedOnWhileItsDelayStaysAndMadeAnewWhenItChanges() throws {
+        var song = try tones(["Clipped", "Plain"])
+        let clipped = song.tracks[0], plain = song.tracks[1]
+        let late = LateInsert(latency: 85)
+        let first = snapshot(song.project, effects: [clipped: [late]])
+        let lines = CompensationLines(first, reusing: nil)
+        let at = try XCTUnwrap(first.audioLanes.firstIndex { $0.track == plain })
+        let own = try XCTUnwrap(first.audioLanes.firstIndex { $0.track == clipped })
+        XCTAssertEqual(lines.audioPre[at]?.delay, 85)
+        XCTAssertNil(lines.audioPre[own], "the late track waits for nobody")
+        XCTAssertNil(lines.audioDirect[at], "no return, no wait after the sends")
+
+        try Command.setVolume(.track(plain), db: -6).apply(to: &song.project)
+        let louder = CompensationLines(snapshot(song.project, effects: [clipped: [late]]), reusing: lines)
+        XCTAssertTrue(louder.audioPre[at] === lines.audioPre[at], "a fader move keeps the line and what it holds")
+
+        late.latency = 40
+        let shorter = CompensationLines(snapshot(song.project, effects: [clipped: [late]]), reusing: louder)
+        XCTAssertEqual(shorter.audioPre[at]?.delay, 40)
+        XCTAssertFalse(shorter.audioPre[at] === louder.audioPre[at])
+    }
+
+    private func run(_ line: DelayLine, _ input: [Float], block: Int) -> [Float] {
+        var left = input
+        var right = input.map { (sample: Float) -> Float in -sample }
+        var start = 0
+        while start < input.count {
+            let count = Swift.min(block, input.count - start)
+            left.withUnsafeMutableBufferPointer { (l: inout UnsafeMutableBufferPointer<Float>) in
+                right.withUnsafeMutableBufferPointer { (r: inout UnsafeMutableBufferPointer<Float>) in
+                    guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                    line.process(left: lp + start, right: rp + start, frames: count)
+                }
+            }
+            start += count
+        }
+        XCTAssertEqual(right, left.map { (sample: Float) -> Float in -sample }, "both sides alike")
+        return left
+    }
+
+    func testADelayLineDelaysByItsFramesAtAnyBlockSize() {
+        let input = (0..<1_000).map { (index: Int) -> Float in Float(index + 1) }
+        for block in [1, 7, 64, 1_000] {
+            let out = run(DelayLine(delay: 85), input, block: block)
+            XCTAssertTrue(out.prefix(85).allSatisfy { (sample: Float) -> Bool in sample == 0 }, "block \(block)")
+            XCTAssertEqual(Array(out.dropFirst(85)), Array(input.prefix(1_000 - 85)), "block \(block)")
+        }
+    }
+
+    func testANewDelayPlaysOnFromWhatTheOldLineHeld() {
+        let input = (0..<1_000).map { (index: Int) -> Float in Float(index + 1) }
+        let old = DelayLine(delay: 85)
+        _ = run(old, input, block: 333)
+        XCTAssertFalse(old.isDrained)
+
+        let shorter = DelayLine(delay: 40)
+        shorter.takeOver(old)
+        let expectedShorter: [Float] = (961...1_000).map { (value: Int) -> Float in Float(value) }
+        XCTAssertEqual(run(shorter, [Float](repeating: 0, count: 40), block: 16), expectedShorter, "its newest 40 frames")
+        XCTAssertTrue(shorter.isDrained, "40 silent frames later it holds silence")
+
+        let longer = DelayLine(delay: 100)
+        longer.takeOver(old)
+        let expectedLonger: [Float] = [Float](repeating: 0, count: 15) + (916...1_000).map { (value: Int) -> Float in Float(value) }
+        XCTAssertEqual(run(longer, [Float](repeating: 0, count: 100), block: 100), expectedLonger,
+                       "all 85 it held, after silence for the 15 frames it never had")
+
+        let capped = DelayLine(delay: 100)
+        XCTAssertEqual(capped.takeOver(old, upTo: 10), 10, "no more than it may copy")
+        let expectedCapped: [Float] = [Float](repeating: 0, count: 90) + (991...1_000).map { (value: Int) -> Float in Float(value) }
+        XCTAssertEqual(run(capped, [Float](repeating: 0, count: 100), block: 100), expectedCapped,
+                       "the newest 10 frames, silence before them")
+    }
+
+    /// The swap pairs each new line with the old one on the main thread, and copies within one
+    /// budget on the render thread, whatever the latencies.
+    func testASnapshotsNewLinesTakeOverOnlyFromTheLinesTheyWereMadeAgainst() throws {
+        let song = try tones(["Clipped", "Plain"])
+        let clipped = song.tracks[0], plain = song.tracks[1]
+        let late = LateInsert(latency: 85)
+        let first = snapshot(song.project, effects: [clipped: [late]])
+        let lines = CompensationLines(first, reusing: nil)
+        let at = try XCTUnwrap(first.audioLanes.firstIndex { $0.track == plain })
+        let held = try XCTUnwrap(lines.audioPre[at])
+        _ = run(held, (0..<1_000).map { (index: Int) -> Float in Float(index + 1) }, block: 256)
+
+        late.latency = 40
+        let next = snapshot(song.project, effects: [clipped: [late]])
+        let shorter = CompensationLines(next, reusing: lines)
+        shorter.takeOver(from: lines)
+        let line = try XCTUnwrap(shorter.audioPre[at])
+        XCTAssertEqual(run(line, [Float](repeating: 0, count: 40), block: 40), (961...1_000).map { (value: Int) -> Float in Float(value) },
+                       "the new line plays on from the old one")
+
+        let elsewhere = CompensationLines(next, reusing: lines)
+        elsewhere.takeOver(from: CompensationLines(first, reusing: nil))
+        let unpaired = try XCTUnwrap(elsewhere.audioPre[at])
+        XCTAssertTrue(unpaired.isDrained, "made against other lines: it starts silent")
+    }
+
+    /// A muted track that waits in a delay line keeps its line playing, so when it is unmuted its
+    /// fader rises over that sound: no step from silence to the tone at full level.
+    func testUnmutingATrackThatWaitsInALineFadesInWithoutAClick() throws {
+        var song = try tones(["Clipped", "Plain"])
+        let clipped = song.tracks[0], plain = song.tracks[1]
+        try Command.setMute(clipped, true).apply(to: &song.project)
+        var muted = song.project
+        try Command.setMute(plain, true).apply(to: &muted)
+        let unmuteAt = beat + 4_800, length = beat + 9_600
+        let samples = song.samples, sampleRate = rate, unmuted = song.project
+        for block in [64, 128] {
+            let engine = EngineCore(sampleRate: rate)
+            engine.setClickEnabled(false)
+            var slots = SlotAssigner(capacity: engine.slotCapacity)
+            slots.update(for: song.project)
+            let assigned = slots.slots
+            let publish = { (project: Project, generation: UInt64) in
+                engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project, slots: assigned,
+                                              sampleRate: sampleRate, generation: generation, samples: samples,
+                                              effects: [clipped: [LateInsert(latency: 85)]]))
+            }
+            publish(muted, 1)
+            engine.play()
+            var left = [Float](repeating: 0, count: length)
+            var right = [Float](repeating: 0, count: length)
+            var start = 0
+            while start < length {
+                if start == unmuteAt { publish(unmuted, 2) }
+                let count = Swift.min(block, length - start)
+                left.withUnsafeMutableBufferPointer { (l: inout UnsafeMutableBufferPointer<Float>) in
+                    right.withUnsafeMutableBufferPointer { (r: inout UnsafeMutableBufferPointer<Float>) in
+                        guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                        engine.render(frameCount: count, left: lp + start, right: rp + start)
+                    }
+                }
+                start += count
+            }
+            XCTAssertTrue(left[..<unmuteAt].allSatisfy { (sample: Float) -> Bool in sample == 0 }, "block \(block): muted")
+            let largestStep = { (range: Range<Int>) -> Float in
+                var worst: Float = 0
+                for index in range { worst = Swift.max(worst, Swift.abs(left[index] - left[index - 1])) }
+                return worst
+            }
+            let steady = largestStep((length - 2_048)..<length)
+            XCTAssertGreaterThan(steady, 0.01, "block \(block): the tone plays after the unmute")
+            XCTAssertLessThan(largestStep(unmuteAt..<(length - 2_048)), 1.3 * steady,
+                              "block \(block): the unmute fades in, it does not step")
+        }
     }
 }

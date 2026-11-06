@@ -22,6 +22,14 @@ import Foundation
 ///
 /// A muted or soloed-away track still counts in 1: muting a track never moves the others in time.
 /// `total` is how late the engine plays behind its sources.
+///
+/// `EngineCore` applies the plan on the render thread through one `DelayLine` per wait
+/// (`CompensationLines`, made with the snapshot on the main thread): instrument tracks — built-in
+/// or plugin, arrangement or session — audio tracks — regions, session clips and a monitored input
+/// alike — their sends, the returns, and lanes on their own output pair, spatialized or not.
+/// Not lined up with it yet: the metronome's click and what goes out as MIDI (clock, notes,
+/// timecode) play `total` frames ahead of the mix, and an export starts `total` frames late
+/// without growing by them.
 public struct DelayCompensation: Equatable, Sendable {
     /// What a track brings: its chain latency, the return buses its sends feed, and whether it
     /// plays on its own output pair instead of the master.

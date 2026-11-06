@@ -15,7 +15,8 @@ import Synchronization
 ///   alive until the render thread has acknowledged a newer one, so the render thread never
 ///   frees memory.
 /// - **Render thread:** `render` only. No locks, no allocation, no Objective-C, no I/O: every
-///   buffer and synth is allocated in `init`.
+///   buffer and synth is allocated in `init`, and every delay line of a snapshot's delay
+///   compensation in `publish`, with its snapshot (`CompensationLines`).
 ///
 /// Editing a track's notes while playing releases that track's sounding notes and re-seeks, so
 /// a deleted note can never hang; a mix change keeps every note. A note that already sounded is
@@ -480,7 +481,11 @@ public final class EngineCore: @unchecked Sendable {
     public func publish(_ snapshot: EngineSnapshot) {
         inputs.want(snapshot.audioLanes.flatMap { [$0.monitor, $0.monitorRight] }.filter { $0 >= 0 })
         // A lane outside the preallocated slots would index past them on the render thread.
-        let box = SnapshotBox(snapshot.limited(toSlots: slotCapacity, returnCapacity: Self.returnCapacity))
+        let limited = snapshot.limited(toSlots: slotCapacity, returnCapacity: Self.returnCapacity)
+        // The delay lines of its compensation plan, made here and freed here with the box: the
+        // render thread never sizes, allocates or frees one. A line the last published box has at
+        // the same place and delay is handed on, so it plays on through the swap.
+        let box = SnapshotBox(limited, lines: CompensationLines(limited, reusing: published.last?.lines))
         published.append(box)
         if let unseen = pending.exchange(Unmanaged.passUnretained(box).toOpaque(), ordering: .acquiringAndReleasing) {
             // The render thread never took this one and now never can; without this, every
@@ -1238,6 +1243,8 @@ public final class EngineCore: @unchecked Sendable {
         let previous = current.map { Unmanaged.passUnretained($0) }
         current = Unmanaged<SnapshotBox>.fromOpaque(pointer).takeUnretainedValue()
         guard let snapshot = current?.snapshot else { return }
+        // Before the acknowledgement, while the main thread still keeps the previous box alive.
+        if let previous, let box = current { takeOverLines(into: box, from: previous.takeUnretainedValue()) }
         var recountBeats = true
         if let previous { recountBeats = followTempo(from: previous.takeUnretainedValue(), to: snapshot) }
         if let previous { followRegionGains(from: previous.takeUnretainedValue().snapshot, to: snapshot) }
@@ -1375,6 +1382,15 @@ public final class EngineCore: @unchecked Sendable {
         }
         resync(keeping: true, recountingBeats: recountBeats)
         acknowledged.store(snapshot.generation, ordering: .releasing)
+    }
+
+    /// Each delay line the new box brings takes over what the previous box's line at its place
+    /// holds (`CompensationLines.takeOver`). Its own function, so every reference it reads of the
+    /// previous box is let go of before `takePendingSnapshot` acknowledges the new one.
+    @inline(never)
+    private func takeOverLines(into box: SnapshotBox, from previous: SnapshotBox) {
+        guard box !== previous else { return }
+        box.lines.takeOver(from: previous.lines)
     }
 
     /// A new tempo keeps the song where it is: bar 33 stays bar 33, only the time to the next
@@ -1738,20 +1754,29 @@ public final class EngineCore: @unchecked Sendable {
 
     /// Every lane's bus through its inserts, then into the mix at its gains, then cleared. Runs
     /// for silent lanes too, so an effect's tail rings out after the last note.
+    ///
+    /// Delay compensation (WS-PDC): the bus waits its `pre` line after the inserts, before the send
+    /// taps and the fader, and its `direct` line after the send taps, before the fader — the sends
+    /// read the bus before the direct line, so they are mixed first. Without a line the lane plays
+    /// as it always did.
     private func mixLanes(frames: Int) {
-        guard let snapshot = current?.snapshot else { return }
-        for lane in snapshot.lanes {
+        guard let box = current else { return }
+        let snapshot = box.snapshot
+        let lines = box.lines
+        for (index, lane) in snapshot.lanes.enumerated() {
             let (left, right) = pair(lane.output)
             let l = bus(lane.slot, busLeft), r = bus(lane.slot, busRight)
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
+            CompensationLines.at(lines.instrumentPre, index)?.process(left: l, right: r, frames: frames)
             let held = (mixFrom, mixTo)
             if stoppedAt != nil, lane.slot >= 0, lane.slot < slotCapacity, liveSinceStop[lane.slot] {
                 mixFrom = snapshot.time.position(atSample: playhead)
                 mixTo = mixFrom
             }
+            send(lane.sends, from: lane.slot, frames: frames, left: l, right: r)
+            CompensationLines.at(lines.instrumentDirect, index)?.process(left: l, right: r, frames: frames)
             mix(l, r, into: left, right, frames: frames, curve: lane.mix, fixed: (lane.gainLeft, lane.gainRight),
                 memory: memory(point: lane.slot), meter: lane.slot, spatial: left == outputs[0] ? lane.slot : -1)
-            send(lane.sends, from: lane.slot, frames: frames, left: l, right: r)
             (mixFrom, mixTo) = held
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
@@ -2119,11 +2144,15 @@ public final class EngineCore: @unchecked Sendable {
     /// Every return bus through its effects, into the mix at its fader, then cleared — every
     /// block, so a reverb's tail rings out after the transport stops.
     private func mixReturns(frames: Int) {
-        guard let snapshot = current?.snapshot else { return }
-        for lane in snapshot.returns {
+        guard let box = current else { return }
+        let snapshot = box.snapshot
+        let lines = box.lines
+        for (index, lane) in snapshot.returns.enumerated() {
             let (left, right) = pair(lane.output)
             let l = returnLeft + lane.bus * Self.maximumFrames, r = returnRight + lane.bus * Self.maximumFrames
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
+            // Delay compensation: the return waits after its chain, before its fader.
+            CompensationLines.at(lines.returns, index)?.process(left: l, right: r, frames: frames)
             let point = slotCapacity + Self.smoothedAudioTracks + lane.bus
             mix(l, r, into: left, right, frames: frames, curve: lane.mix, fixed: (lane.gainLeft, lane.gainRight),
                 memory: memory(point: point), meter: point)
@@ -2150,10 +2179,16 @@ public final class EngineCore: @unchecked Sendable {
         for group in snapshot.inputGroups {
             inputs.read(group: group, into: heard, stride: Self.maximumFrames, frames: frames)
         }
+        // Delay compensation: the lines of the box whose snapshot this is (see `mixLanes`).
+        let lines = current?.lines
         for (index, lane) in snapshot.audioLanes.enumerated() {
             let point = index < Self.smoothedAudioTracks ? slotCapacity + index : -1
-            // A track that renders nothing this chunk still lets its reading fall.
-            if !playing, lane.monitor < 0, fadingFrom == nil, lane.inserts.isEmpty {
+            let pre = lines.flatMap { CompensationLines.at($0.audioPre, index) }
+            let direct = lines.flatMap { CompensationLines.at($0.audioDirect, index) }
+            // A track that renders nothing this chunk still lets its reading fall — unless its
+            // delay lines still hold sound: then it renders silence through them until they are out.
+            if !playing, lane.monitor < 0, fadingFrom == nil, lane.inserts.isEmpty,
+               pre?.isDrained ?? true, direct?.isDrained ?? true {
                 meters.record(point, left: 0, right: 0, fall: meterFall)
                 continue
             }
@@ -2163,8 +2198,12 @@ public final class EngineCore: @unchecked Sendable {
             let session = lane.slot >= 0 && lane.slot < slotCapacity
             // A track silenced by someone else's solo still feeds a soloed return: the snapshot gives
             // it sends only then, so a lane with sends renders even when its own output is quiet.
+            // A lane that waits in delay lines renders too, at its silent gains, as an instrument
+            // lane does: when it is unmuted its fader then rises over the sound its lines hold.
+            // Skipped, its lines would come back empty, and the fade-in would pass over their
+            // silence while the audio arrives `delay` frames later at full level - a click.
             guard lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil
-                || !lane.sends.isEmpty || fading else {
+                || !lane.sends.isEmpty || fading || pre != nil || direct != nil else {
                 meters.record(point, left: 0, right: 0, fall: meterFall)
                 // Silent, but a launch still happens on its bar.
                 if playing, session, !sessions[lane.slot].isIdle,
@@ -2261,6 +2300,7 @@ public final class EngineCore: @unchecked Sendable {
                 }
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
+            pre?.process(left: audioLeft, right: audioRight, frames: frames)
             // A monitored input is new sound too: after the block that stops, it is heard at the
             // playhead's gains, not at the ones the song's tails ring out at.
             let held = (mixFrom, mixTo)
@@ -2268,10 +2308,11 @@ public final class EngineCore: @unchecked Sendable {
                 mixFrom = snapshot.time.position(atSample: playhead)
                 mixTo = mixFrom
             }
+            send(lane.sends, from: point, frames: frames, left: audioLeft, right: audioRight)
+            direct?.process(left: audioLeft, right: audioRight, frames: frames)
             mix(audioLeft, audioRight, into: left, right, frames: frames, curve: lane.mix,
                 fixed: (lane.gainLeft, lane.gainRight), memory: memory(point: point), meter: point,
                 spatial: left == outputs[0] ? point : -1)
-            send(lane.sends, from: point, frames: frames, left: audioLeft, right: audioRight)
             (mixFrom, mixTo) = held
         }
     }
@@ -2536,5 +2577,11 @@ private struct Ramp {
 /// A snapshot with an identity, so it can cross threads behind one pointer.
 final class SnapshotBox: Sendable {
     let snapshot: EngineSnapshot
-    init(_ snapshot: EngineSnapshot) { self.snapshot = snapshot }
+    /// The delay lines of its compensation plan; freed with the box, on the main thread.
+    let lines: CompensationLines
+
+    init(_ snapshot: EngineSnapshot, lines: CompensationLines) {
+        self.snapshot = snapshot
+        self.lines = lines
+    }
 }
