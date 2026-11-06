@@ -83,17 +83,17 @@ final class SongLFOPlaybackTests: XCTestCase {
         XCTAssertEqual(export(try song(routes: routes), frames: 96_000).left, moving.left, "and two exports agree")
     }
 
-    /// Live is the export. On a buffer on the 32-frame automation grid the difference is rounding
-    /// (a moving mixer value is evaluated every 64 frames at a tick interpolated across its block,
-    /// as a fader lane is). A device buffer off that grid leaves a small residue: 8.6e-5 at 470
-    /// frames, about −81 dBFS, measured in CI 2026-11-05 (cause not yet found; 100 frames stays
-    /// below 1e-5). The bound for those is −74 dBFS, so a real divergence still fails here.
+    /// Live is the export, at device buffers on the 64-frame gain grid and off it alike. A moving
+    /// mixer value is evaluated every 64 frames of the song and ramped between; the grid used to
+    /// start at each buffer, and the master's balance has a corner at centre, so a buffer whose
+    /// grid missed the corner drew a different line across it: 8.6e-5 at 470 frames (CI
+    /// 2026-11-05), while 100 frames hit the corner at the half bar and stayed below 1e-5.
     func testLiveIsTheExportAtEveryBlockSize() throws {
         let project = try song(routes: routes)
         let frames = 2 * 96_000
         let exported = export(project, frames: frames)
         XCTAssertGreaterThan(exported.peak, 0.01, "the note sounds")
-        for (block, bound) in [(64, Float(1e-5)), (256, 1e-5), (4_096, 1e-5), (100, 2e-4), (470, 2e-4)] {
+        for (block, bound) in [(64, Float(1e-5)), (256, 1e-5), (4_096, 1e-5), (100, 1e-5), (470, 1e-5), (333, 1e-5)] {
             let played = live(project, frames: frames, block: block)
             XCTAssertEqual(played.left.count, exported.left.count)
             var largest: Float = 0
