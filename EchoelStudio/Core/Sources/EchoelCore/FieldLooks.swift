@@ -95,12 +95,14 @@ public enum FaradayDish {
 ///
 /// The rates that move a look are its `phase` multipliers on the song's bar phase (capped at
 /// `FieldPulse.maximumRateHz` turns a second): Dish 0.4, Water 0.4 (its fastest wave 1.7× that),
-/// Aurora 0.35, Depth 0.30 — each under one hertz of drift, and none squares its phase.
+/// Aurora 0.25, Depth 0.30 — each under one hertz of drift, and none squares its phase.
 public enum FieldLook {
     /// Shader literals: written from these numbers so the GPU cannot drift from the CPU mirror.
     public static let dishPhaseRate = 0.4
     public static let waterPhaseRate = 0.4
-    public static let auroraPhaseRate = 0.35
+    /// 0.35 until 2026-11-06: at full level the curtains' sway alone flashed a point seven times
+    /// a second (simulated per pixel); at 0.25 it is five, and 0.25 · 100 turns is still whole.
+    public static let auroraPhaseRate = 0.25
     public static let depthPhaseRate = 0.30
     /// How much water the window shows edge to edge, metres: a macro view of the dish (a choice).
     public static let dishWindowMetres = 0.024
@@ -111,7 +113,9 @@ public enum FieldLook {
     public static let anchorHz = 261.63
     /// Depth caustics: the focus number at a full lattice, the intensity ceiling, three depths.
     public static let depthFocusNumber = 3.0
-    public static let depthIntensityCeiling = 8.0
+    /// The ceiling equals `depthFullBright` (8 until 2026-11-06): a focus peak then reaches full
+    /// light instead of spiking eight times past it and clipping, which flashed under a breath.
+    public static let depthIntensityCeiling = 2.5
     public static let depthFullBright = 2.5
     public static let depthFocusRatios = SIMD3<Double>(1.0, 1.7, 2.89)
     public static let depthWeights = SIMD3<Double>(1.0, 0.55, 0.30)
@@ -134,12 +138,26 @@ public enum FieldLook {
     public static let filmSwirlDepth = 40.0
     public static let filmRippleDepth = 35.0
     public static let filmPhaseRate = 0.15
-    /// The ripple's wavenumber range (radians per unit) and how fast it may change: at the
-    /// picture's farthest point (`filmFarthest` units from the centre) a ripple band then moves
-    /// at most 0.8 bands a second when the pitch changes — slow enough that no point flashes.
-    public static let filmKRange: ClosedRange<Double> = 3...24
-    public static let filmFarthest = 2.5
-    public static let filmKRate = 0.8 * 2 * Double.pi / filmFarthest
+    /// The water's net and the thin film's ripple: their wavenumber range (radians per unit) and
+    /// how fast it may change — at the picture's farthest point (`rippleFarthest` units from the
+    /// centre) a band then moves at most 0.8 bands a second when the pitch changes, slow enough
+    /// that no point flashes. The dish's lattice (`FieldLookMotion.Shown.dishK`) moves at most
+    /// as fast. Before 2026-11-06 the water's net and the lattice followed the pitch's 0.3 s and
+    /// 0.4 s glides: at full level a jump of the pitch swept 20 to 45 bands a second across a
+    /// point (simulated per pixel).
+    public static let rippleKRange: ClosedRange<Double> = 3...24
+    public static let rippleFarthest = 2.5
+    public static let rippleKRate = 0.8 * 2 * Double.pi / rippleFarthest
+    /// The aurora's ray count range and how fast it may change, rays a second (the heard pitch's,
+    /// 3·f / 261.63): a faster re-spacing slid the rays across a point many times a second.
+    public static let auroraRayRange: ClosedRange<Double> = 2...14
+    public static let auroraRayRate = 0.5
+
+    /// The aurora's ray count for a pitch.
+    public static func auroraRays(toneHz: Double) -> Double {
+        let hertz = toneHz.isFinite ? Swift.max(toneHz, 20) : anchorHz
+        return clamp(3 * hertz / anchorHz, auroraRayRange.lowerBound, auroraRayRange.upperBound)
+    }
     /// The wavelengths the light is summed over, nanometres, and the gain that balances a thick
     /// film to a pale grey.
     public static let filmFirstWavelength = 410.0
@@ -173,15 +191,15 @@ public enum FieldLook {
         return SIMD3(clamp(c.x, 0, 1), clamp(c.y, 0, 1), clamp(c.z, 0, 1))
     }
 
-    /// The ripple's wavenumber for a pitch, as the water's spacing (k ∝ f^⅔), in `filmKRange`.
-    public static func filmK(toneHz: Double) -> Double {
+    /// The ripple's wavenumber for a pitch, as the water's spacing (k ∝ f^⅔), in `rippleKRange`.
+    public static func rippleK(toneHz: Double) -> Double {
         let hertz = toneHz.isFinite ? Swift.max(toneHz, 20) : anchorHz
-        return clamp(5.5 * pow(hertz / anchorHz, 0.6666667), filmKRange.lowerBound, filmKRange.upperBound)
+        return clamp(5.5 * pow(hertz / anchorHz, 0.6666667), rippleKRange.lowerBound, rippleKRange.upperBound)
     }
 
     /// The film's thickness in nanometres at (`x`, `y`) in the shader's coordinate (y up): it
     /// drains, so it is thinnest at the top; two slow swirls move it; a ring ripple of wavenumber
-    /// `k` (the sounding pitch's, rate-limited: `FieldLookMotion.Shown.filmK`) is as deep as the
+    /// `k` (the sounding pitch's, rate-limited: `FieldLookMotion.Shown.rippleK`) is as deep as the
     /// level. `phase` is the film's own (radians); every term turns a whole number of times per
     /// 2π, so the wrap of `filmPhase` never shows. Never below zero.
     public static func filmThickness(x: Double, y: Double, k: Double, phase: Double, level: Double) -> Double {
@@ -251,10 +269,11 @@ public enum FieldLook {
 
     /// Crossing wave trains on a pool floor; spacing ∝ f^⅔ (the capillary branch), anchored at
     /// middle C; the breath is the drive's amplitude, the coherence sharpens the filaments.
-    public static func water(x: Double, y: Double, toneHz: Double, phase: Double,
+    /// `k` is the net's spacing: the heard pitch's, rate-limited (`FieldLookMotion.Shown.rippleK`).
+    public static func water(x: Double, y: Double, k: Double, phase: Double,
                              coherence: Double, breath: Double) -> Double {
         let t = phase * waterPhaseRate
-        let scale = clamp(5.5 * pow(Swift.max(toneHz, 20) / anchorHz, 0.6666667), 3, 24)
+        let scale = clamp(k, rippleKRange.lowerBound, rippleKRange.upperBound)
         var wave = sin(x * scale + t) * cos(y * (scale * 0.818) - t * 0.7)
         wave += sin((x * x + y * y).squareRoot() * (scale * 1.545) - t * 1.1)
         wave += sin((x + y) * (scale * 0.727) + t * 0.5)
@@ -269,7 +288,8 @@ public enum FieldLook {
     }
 
     /// Two curtains with a sharp lower edge; rays spaced by the pitch; the breath swells them.
-    public static func aurora(x: Double, y: Double, toneHz: Double, phase: Double,
+    /// `rays` is the ray count: the heard pitch's, rate-limited (`FieldLookMotion.Shown.auroraRays`).
+    public static func aurora(x: Double, y: Double, rays: Double, phase: Double,
                               coherence: Double, breath: Double) -> Double {
         let t = phase * auroraPhaseRate
         let wave = sin(x * 2.2 + t) * 0.35 + sin(x * 4.7 - t * 0.6) * 0.15
@@ -277,8 +297,7 @@ public enum FieldLook {
         let curtain = chapman((y - wave) / height)
         let wave2 = sin(x * 3.1 - t * 0.8) * 0.30
         let curtain2 = chapman((y + 0.4 - wave2) / (height * 1.35))
-        let rays = clamp(3.0 * Swift.max(toneHz, 20) / anchorHz, 2, 14)
-        let ray = 0.72 + 0.28 * cos(x * rays * 6.2831853)
+        let ray = 0.72 + 0.28 * cos(x * clamp(rays, auroraRayRange.lowerBound, auroraRayRange.upperBound) * 6.2831853)
         let swell = 0.80 + 0.20 * clamp(breath, 0, 1)
         return clamp((curtain + curtain2 * 0.6) * ray * swell, 0, 1)
     }
@@ -325,7 +344,7 @@ public enum FieldLook {
             return ambient + (1 - ambient) * energy
         case .film:
             // Its light is its colour's luminance (Rec. 709), lit as the shader lights it.
-            let c = film(u: u, v: v, aspect: aspect, k: look.filmK, filmPhase: look.filmPhase, level: field.levelLight)
+            let c = film(u: u, v: v, aspect: aspect, k: look.rippleK, filmPhase: look.filmPhase, level: field.levelLight)
             let luminance = 0.2126 * c.x + 0.7152 * c.y + 0.0722 * c.z
             let d = ((u * aspect - 0.5 * aspect) * (u * aspect - 0.5 * aspect) + (v - 0.5) * (v - 0.5)).squareRoot()
             let energy = clamp(smoothstep(1.6, 0, d) * (0.35 + 0.65 * clamp(field.levelLight, 0, 1)), 0, 1)
@@ -344,8 +363,8 @@ public enum FieldLook {
             let value: Double = switch pattern {
             case .dish: dish(x: x, y: y, k: look.dishK, strength: look.dishStrength, hex: look.dishHex,
                              phase: phase, coherence: coherence)
-            case .water: water(x: x, y: y, toneHz: look.soundHz, phase: phase, coherence: coherence, breath: breath)
-            case .aurora: aurora(x: x, y: y, toneHz: look.soundHz, phase: phase, coherence: coherence, breath: breath)
+            case .water: water(x: x, y: y, k: look.rippleK, phase: phase, coherence: coherence, breath: breath)
+            case .aurora: aurora(x: x, y: y, rays: look.auroraRays, phase: phase, coherence: coherence, breath: breath)
             default: depth(x: x, y: y, phase: phase, coherence: coherence, breath: breath,
                            k: look.dishK, strength: look.dishStrength)
             }
@@ -359,26 +378,24 @@ public enum FieldLook {
     /// The rings' energy (`field_fragment`'s rings branch), for the blend's flash measure.
     static func ringsEnergy(u: Double, v: Double, aspect: Double, field: FieldMotion.Shown, turns: Double) -> Double {
         let d = ((u * aspect - 0.5 * aspect) * (u * aspect - 0.5 * aspect) + (v - 0.5) * (v - 0.5)).squareRoot()
-        let coherence = clamp(field.coherence, 0, 1)
-        let density = clamp(field.density, 4, 120)
+        let coherence = clamp(field.ringsCoherence, 0, 1)
         let spread = 0.85 + 0.35 * clamp(field.breath, 0, 1)
         let phase = turns * 2 * Double.pi
         let vignette = smoothstep(0.9 + 0.5 * spread, 0, d)
-        let pitchK = clamp(Swift.max(field.toneHz, 20) / 261.63, 0.5, 2.0)
-        let k = clamp(density * pitchK, 4, 120)
+        let k = clamp(field.ringsK, 4, 120)
         let p = phase * FieldPulse.foldDamping
         let w1 = sin(d * k - p), w2 = sin(d * k * mix(1.6, 1.02, coherence) - p * 0.5)
         let interference = (w1 + w2) * 0.5
         let rings = pow(interference * interference, mix(1.0, 2.6, coherence))
         let ringRadius = (0.12 + 0.40 * clamp(field.beatPhase, 0, 1)) * spread
         let ringT = (d - ringRadius) / 0.012
-        let ring = exp(-ringT * ringT) * clamp(field.beatLight, 0, 1)
+        let ring = exp(-ringT * ringT) * FieldPulse.beatRingGain * clamp(field.beatLight, 0, 1)
         let beat = (0.5 - 0.5 * cos(field.pulsePhase * 2 * Double.pi)) * (field.hasPulse ? 1 : 0)
         let restGlow = 0.05 + 0.18 * clamp(field.centreLight, 0, 1)
         let bloomEdge = (0.34 + 0.18 * beat) * spread
         let bloom = restGlow * (0.80 + FieldPulse.bloomSwing * beat) * smoothstep(bloomEdge, 0, d)
         let haloT = (d - (0.30 + 0.15 * coherence) * spread) / 0.010
-        let halo = exp(-haloT * haloT) * 0.22 * (field.hasCoherence ? 1 : 0)
+        let halo = exp(-haloT * haloT) * FieldPulse.haloGain * (field.hasCoherence ? 1 : 0)
         return clamp(rings * vignette * (0.35 + 0.65 * clamp(field.levelLight, 0, 1)) + bloom + ring + halo, 0, 1)
     }
 
@@ -459,16 +476,20 @@ public struct FieldLookMotion: Equatable, Sendable {
         public var weaveSeed = BarWeave.seed(keyMask: 0)
         /// The weave's light, 0 … 1, flash-guarded: it fades through dark to a place it cannot glide to.
         public var weaveLight = 1.0
-        /// The thin film's ripple wavenumber: the heard pitch's (`FieldLook.filmK`), moving at
-        /// most `FieldLook.filmKRate` a second, held while still.
-        public var filmK = FieldLook.filmK(toneHz: FieldFrame.middleC)
+        /// The water's net and the thin film's ripple, their wavenumber: the heard pitch's
+        /// (`FieldLook.rippleK`), moving at
+        /// most `FieldLook.rippleKRate` a second, held while still.
+        public var rippleK = FieldLook.rippleK(toneHz: FieldFrame.middleC)
+        /// The aurora's ray count: the heard pitch's (`FieldLook.auroraRays`), moving at most
+        /// `FieldLook.auroraRayRate` a second, held while still.
+        public var auroraRays = FieldLook.auroraRays(toneHz: FieldFrame.middleC)
         /// The thin film's own phase, turns 0 … 1: the song's drift at `FieldLook.filmPhaseRate`,
         /// counted on across the song phase's wraps (the shared `turns` jumps back at each, which
         /// a share of it would show as a jump of the whole film), held while still.
         public var filmPhase = 0.0
         /// The looks' phase in turns, 0 … `driftPeriod`: the song's drift (at the blend's share
         /// while two looks show), counted on across the song phase's wraps. The rings and the
-        /// dish, water, aurora and depth turn their terms at fractions of it (0.5, 0.4, 0.35 …);
+        /// dish, water, aurora and depth turn their terms at fractions of it (0.5, 0.4, 0.25 …);
         /// on a phase that wrapped every turn each wrap jumped the whole picture — up to 2.5 times
         /// a second at the song's fastest drift (found in review, 2026-11-06). Every such
         /// fraction lands on a whole turn at `driftPeriod`, so its own wrap never shows.
@@ -482,15 +503,19 @@ public struct FieldLookMotion: Equatable, Sendable {
         /// This frame with what no look on screen draws set to rest, so two frames that draw the
         /// same picture compare equal (a renderer rests on it): the moiré's gratings without the
         /// moiré, the weave without the weave, the dish's lattice without the dish or the depth,
-        /// the heard pitch without the water or the aurora, the film's ripple without the film, the partner and its share without a blend.
+        /// the heard pitch always (no look draws it), the ripple without the water or the film, the rays
+        /// without the aurora, the partner and its share without a blend.
         public var onScreen: Shown {
             var out = self
             let looks = isBlending ? [primary, partner] : [primary]
             if !looks.contains(.moire) { out.moireK1 = 0; out.moireK2 = 0; out.moirePhase = 0 }
             if !looks.contains(.weave) { out.weavePosition = 0; out.weaveSeed = 0; out.weaveLight = 0 }
             if !looks.contains(where: { $0 == .dish || $0 == .depth }) { out.dishK = 0; out.dishStrength = 0; out.dishHex = 0 }
-            if !looks.contains(where: { $0 == .water || $0 == .aurora }) { out.soundHz = 0 }
-            if !looks.contains(.film) { out.filmK = 0; out.filmPhase = 0 }
+            // No look draws the heard pitch itself any more: each draws its own rate-limited spacing.
+            out.soundHz = 0
+            if !looks.contains(.film) { out.filmPhase = 0 }
+            if !looks.contains(where: { $0 == .water || $0 == .film }) { out.rippleK = 0 }
+            if !looks.contains(.aurora) { out.auroraRays = 0 }
             if !looks.contains(where: { [.rings, .dish, .water, .aurora, .depth].contains($0) }) { out.turns = 0 }
             if !isBlending { out.partner = primary; out.mix = 0 }
             return out
@@ -500,8 +525,8 @@ public struct FieldLookMotion: Equatable, Sendable {
     /// The share of the song's drift two mixed looks move at.
     public static let blendPhaseShare = 0.5
     /// The turns `Shown.turns` wraps at: a whole number of turns of every rate a look turns at
-    /// (`FieldLook.dishPhaseRate` 0.4, `auroraPhaseRate` 0.35, `depthPhaseRate` 0.3, and the
-    /// multiples inside them, down to 0.21 = 21/100), measured in `FieldLookTests`.
+    /// (`FieldLook.dishPhaseRate` 0.4, `auroraPhaseRate` 0.25, `depthPhaseRate` 0.3, and the
+    /// multiples inside them, down to 0.15 = 15/100), measured in `FieldLookTests`.
     public static let driftPeriod = 100.0
     /// Under this the shader draws the primary alone.
     public static let blendThreshold = 0.001
@@ -563,7 +588,8 @@ public struct FieldLookMotion: Equatable, Sendable {
             shown.primary = primary
             shown.partner = partner ?? primary
             shown.soundHz = wanted
-            shown.filmK = FieldLook.filmK(toneHz: wanted)
+            shown.rippleK = FieldLook.rippleK(toneHz: wanted)
+            shown.auroraRays = FieldLook.auroraRays(toneHz: wanted)
             shown.dishK = Self.lattice(dish, ceiling: ceiling)
             shown.dishHex = FaradayDish.latticeHexagonality(capillaryFraction: dish?.capillaryFraction ?? 1)
             strengthLight = FlashLimit(value: dish?.patternStrength ?? 0)
@@ -599,10 +625,16 @@ public struct FieldLookMotion: Equatable, Sendable {
         // The sound: pitch and lattice glide (held while still), the lattice's light is guarded.
         if !still {
             shown.soundHz = Self.glideLog(shown.soundHz, wanted, tau: Self.pitchGlideSeconds, seconds: elapsed)
-            let reach = FieldLook.filmKRate * elapsed
-            shown.filmK += Swift.min(Swift.max(FieldLook.filmK(toneHz: wanted) - shown.filmK, -reach), reach)
-            shown.dishK = Self.glideLog(shown.dishK, Self.lattice(dish, ceiling: ceiling),
-                                        tau: Self.latticeGlideSeconds, seconds: elapsed)
+            let reach = FieldLook.rippleKRate * elapsed
+            shown.rippleK += Swift.min(Swift.max(FieldLook.rippleK(toneHz: wanted) - shown.rippleK, -reach), reach)
+            let rayReach = FieldLook.auroraRayRate * elapsed
+            shown.auroraRays += Swift.min(Swift.max(FieldLook.auroraRays(toneHz: wanted) - shown.auroraRays, -rayReach), rayReach)
+            // The log glide's shape, capped at the ripple's speed (`FieldLook.rippleKRate`).
+            let glided = Self.glideLog(shown.dishK, Self.lattice(dish, ceiling: ceiling),
+                                       tau: Self.latticeGlideSeconds, seconds: elapsed)
+            shown.dishK += Swift.min(Swift.max(glided - shown.dishK, -reach), reach)
+            // A lower detail is not a pitch: the lattice never stays finer than it allows.
+            shown.dishK = Swift.min(shown.dishK, ceiling)
             shown.dishHex = FieldMotion.ease(shown.dishHex,
                                              FaradayDish.latticeHexagonality(capillaryFraction: dish?.capillaryFraction ?? 1),
                                              tau: Self.hexGlideSeconds, seconds: elapsed)
