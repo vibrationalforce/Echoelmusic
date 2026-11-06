@@ -56,15 +56,6 @@ final class DelayLine: @unchecked Sendable {
         quiet = silent
     }
 
-    /// Render thread: forgets what it holds. A drained line is left as it is.
-    func clear() {
-        guard !isDrained else { return }
-        left.update(repeating: 0, count: delay)
-        right.update(repeating: 0, count: delay)
-        cursor = 0
-        quiet = delay
-    }
-
     /// Render thread, while a snapshot is taken up: the newest frames `other` holds — as many as
     /// both lines take, and at most `budget` — become this line's newest, and anything older is
     /// silence, so a lane whose delay changes plays on from what it held instead of falling silent

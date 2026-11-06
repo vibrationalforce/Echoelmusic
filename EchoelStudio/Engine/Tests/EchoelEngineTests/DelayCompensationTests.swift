@@ -491,12 +491,6 @@ final class DelayCompensationTests: XCTestCase {
         let expectedCapped: [Float] = [Float](repeating: 0, count: 90) + (991...1_000).map { (value: Int) -> Float in Float(value) }
         XCTAssertEqual(run(capped, [Float](repeating: 0, count: 100), block: 100), expectedCapped,
                        "the newest 10 frames, silence before them")
-
-        let cleared = DelayLine(delay: 85)
-        cleared.takeOver(old)
-        cleared.clear()
-        XCTAssertTrue(cleared.isDrained)
-        XCTAssertEqual(run(cleared, [Float](repeating: 0, count: 85), block: 85), [Float](repeating: 0, count: 85))
     }
 
     /// The swap pairs each new line with the old one on the main thread, and copies within one
@@ -523,5 +517,55 @@ final class DelayCompensationTests: XCTestCase {
         elsewhere.takeOver(from: CompensationLines(first, reusing: nil))
         let unpaired = try XCTUnwrap(elsewhere.audioPre[at])
         XCTAssertTrue(unpaired.isDrained, "made against other lines: it starts silent")
+    }
+
+    /// A muted track that waits in a delay line keeps its line playing, so when it is unmuted its
+    /// fader rises over that sound: no step from silence to the tone at full level.
+    func testUnmutingATrackThatWaitsInALineFadesInWithoutAClick() throws {
+        var song = try tones(["Clipped", "Plain"])
+        let clipped = song.tracks[0], plain = song.tracks[1]
+        try Command.setMute(clipped, true).apply(to: &song.project)
+        var muted = song.project
+        try Command.setMute(plain, true).apply(to: &muted)
+        let unmuteAt = beat + 4_800, length = beat + 9_600
+        let samples = song.samples, sampleRate = rate, unmuted = song.project
+        for block in [64, 128] {
+            let engine = EngineCore(sampleRate: rate)
+            engine.setClickEnabled(false)
+            var slots = SlotAssigner(capacity: engine.slotCapacity)
+            slots.update(for: song.project)
+            let assigned = slots.slots
+            let publish = { (project: Project, generation: UInt64) in
+                engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project, slots: assigned,
+                                              sampleRate: sampleRate, generation: generation, samples: samples,
+                                              effects: [clipped: [LateInsert(latency: 85)]]))
+            }
+            publish(muted, 1)
+            engine.play()
+            var left = [Float](repeating: 0, count: length)
+            var right = [Float](repeating: 0, count: length)
+            var start = 0
+            while start < length {
+                if start == unmuteAt { publish(unmuted, 2) }
+                let count = Swift.min(block, length - start)
+                left.withUnsafeMutableBufferPointer { (l: inout UnsafeMutableBufferPointer<Float>) in
+                    right.withUnsafeMutableBufferPointer { (r: inout UnsafeMutableBufferPointer<Float>) in
+                        guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                        engine.render(frameCount: count, left: lp + start, right: rp + start)
+                    }
+                }
+                start += count
+            }
+            XCTAssertTrue(left[..<unmuteAt].allSatisfy { (sample: Float) -> Bool in sample == 0 }, "block \(block): muted")
+            let largestStep = { (range: Range<Int>) -> Float in
+                var worst: Float = 0
+                for index in range { worst = Swift.max(worst, Swift.abs(left[index] - left[index - 1])) }
+                return worst
+            }
+            let steady = largestStep((length - 2_048)..<length)
+            XCTAssertGreaterThan(steady, 0.01, "block \(block): the tone plays after the unmute")
+            XCTAssertLessThan(largestStep(unmuteAt..<(length - 2_048)), 1.3 * steady,
+                              "block \(block): the unmute fades in, it does not step")
+        }
     }
 }

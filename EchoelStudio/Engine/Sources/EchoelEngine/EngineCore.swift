@@ -2198,13 +2198,13 @@ public final class EngineCore: @unchecked Sendable {
             let session = lane.slot >= 0 && lane.slot < slotCapacity
             // A track silenced by someone else's solo still feeds a soloed return: the snapshot gives
             // it sends only then, so a lane with sends renders even when its own output is quiet.
+            // A lane that waits in delay lines renders too, at its silent gains, as an instrument
+            // lane does: when it is unmuted its fader then rises over the sound its lines hold.
+            // Skipped, its lines would come back empty, and the fade-in would pass over their
+            // silence while the audio arrives `delay` frames later at full level - a click.
             guard lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil
-                || !lane.sends.isEmpty || fading else {
+                || !lane.sends.isEmpty || fading || pre != nil || direct != nil else {
                 meters.record(point, left: 0, right: 0, fall: meterFall)
-                // Nothing of the lane is heard or sent: what its lines hold went by unheard, and
-                // must not play when its fader comes back up.
-                pre?.clear()
-                direct?.clear()
                 // Silent, but a launch still happens on its bar.
                 if playing, session, !sessions[lane.slot].isIdle,
                    snapshot.time.sample(at: sessions[lane.slot].pendingTick) < blockEnd { fireAudio(lane) }
