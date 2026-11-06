@@ -122,7 +122,100 @@ public enum FieldLook {
     /// How bright the two gratings light together, over the ambient.
     public static let moireGain = 0.45
 
+    /// The thin film (`FieldPattern.film`): water's refractive index; its thickness in nanometres
+    /// from the top of the picture to the bottom, the swirls' and the sound's ripple's depth
+    /// (the ripple at full level); the share of the song's drift it moves at
+    /// (`FieldLookMotion.Shown.filmPhase`). Measured in a simulation of the shader at full level,
+    /// the song's fastest drift and the ripple sweeping (aspect 1 to 2.4): at most three light
+    /// transitions a second at any point, against the law's six.
+    public static let filmIndex = 1.33
+    public static let filmThinnest = 10.0
+    public static let filmThickest = 700.0
+    public static let filmSwirlDepth = 40.0
+    public static let filmRippleDepth = 35.0
+    public static let filmPhaseRate = 0.15
+    /// The ripple's wavenumber range (radians per unit) and how fast it may change: at the
+    /// picture's farthest point (`filmFarthest` units from the centre) a ripple band then moves
+    /// at most 0.8 bands a second when the pitch changes — slow enough that no point flashes.
+    public static let filmKRange: ClosedRange<Double> = 3...24
+    public static let filmFarthest = 2.5
+    public static let filmKRate = 0.8 * 2 * Double.pi / filmFarthest
+    /// The wavelengths the light is summed over, nanometres, and the gain that balances a thick
+    /// film to a pale grey.
+    public static let filmFirstWavelength = 410.0
+    public static let filmWavelengthStep = 40.0
+    public static let filmWavelengthCount = 8
+    public static var filmWavelengths: [Double] {
+        (0..<filmWavelengthCount).map { filmFirstWavelength + Double($0) * filmWavelengthStep }
+    }
+    public static let filmGain = 1.0
+
     // MARK: - The looks, as the shader writes them
+
+    /// A wavelength's colour in linear sRGB, 0 … 1 (the shader's `wavelengthToRGB`: the CIE 1931
+    /// observer's analytic fit, Wyman/Sloan/Shirley 2013, to XYZ, to sRGB D65).
+    static func spectrum(_ wavelength: Double) -> SIMD3<Double> {
+        func lobe(_ x: Double, _ mu: Double, _ s1: Double, _ s2: Double) -> Double {
+            let t = (x - mu) / (x < mu ? s1 : s2)
+            return exp(-0.5 * t * t)
+        }
+        let x = Swift.max(0, 1.056 * lobe(wavelength, 599.8, 37.9, 31.0) + 0.362 * lobe(wavelength, 442.0, 16.0, 26.7)
+            - 0.065 * lobe(wavelength, 501.1, 20.4, 26.2))
+        let y = Swift.max(0, 0.821 * lobe(wavelength, 568.8, 46.9, 40.5) + 0.286 * lobe(wavelength, 530.9, 16.3, 31.1))
+        let z = Swift.max(0, 1.217 * lobe(wavelength, 437.0, 11.8, 36.0) + 0.681 * lobe(wavelength, 459.0, 26.0, 13.8))
+        var c = SIMD3<Double>(3.2406 * x - 1.5372 * y - 0.4986 * z,
+                              -0.9689 * x + 1.8758 * y + 0.0415 * z,
+                              0.0557 * x - 0.2040 * y + 1.0570 * z)
+        let w = Swift.min(0, Swift.min(c.x, Swift.min(c.y, c.z)))
+        c -= SIMD3(repeating: w)
+        let m = Swift.max(c.x, Swift.max(c.y, c.z))
+        if m > 1 { c /= m }
+        return SIMD3(clamp(c.x, 0, 1), clamp(c.y, 0, 1), clamp(c.z, 0, 1))
+    }
+
+    /// The ripple's wavenumber for a pitch, as the water's spacing (k ∝ f^⅔), in `filmKRange`.
+    public static func filmK(toneHz: Double) -> Double {
+        let hertz = toneHz.isFinite ? Swift.max(toneHz, 20) : anchorHz
+        return clamp(5.5 * pow(hertz / anchorHz, 0.6666667), filmKRange.lowerBound, filmKRange.upperBound)
+    }
+
+    /// The film's thickness in nanometres at (`x`, `y`) in the shader's coordinate (y up): it
+    /// drains, so it is thinnest at the top; two slow swirls move it; a ring ripple of wavenumber
+    /// `k` (the sounding pitch's, rate-limited: `FieldLookMotion.Shown.filmK`) is as deep as the
+    /// level. `phase` is the film's own (radians); every term turns a whole number of times per
+    /// 2π, so the wrap of `filmPhase` never shows. Never below zero.
+    public static func filmThickness(x: Double, y: Double, k: Double, phase: Double, level: Double) -> Double {
+        let t = phase
+        let drained = smoothstep(1.2, -1.2, y)
+        var d = filmThinnest + (filmThickest - filmThinnest) * drained * drained
+        d += filmSwirlDepth * (0.6 * sin(1.7 * x + 0.9 * y + t) + 0.4 * sin(2.3 * y - 1.3 * x - t))
+        d += filmRippleDepth * clamp(level, 0, 1) * sin(k * (x * x + y * y).squareRoot() - t)
+        return Swift.max(0, d)
+    }
+
+    /// The colour a film `nanometres` thick reflects at normal incidence: each wavelength by
+    /// sin²(2π·n·d/λ) — the reflection off the back face is half a wave behind the front's, so a
+    /// film far thinner than light is black — summed over `filmWavelengths` and balanced per
+    /// channel, so a thick film averages a pale grey (each channel near `filmGain` / 2).
+    public static func filmColour(nanometres: Double) -> SIMD3<Double> {
+        var sum = SIMD3<Double>(repeating: 0), white = SIMD3<Double>(repeating: 0)
+        for wavelength in filmWavelengths {
+            let s = spectrum(wavelength)
+            let r = sin(2 * Double.pi * filmIndex * Swift.max(0, nanometres) / wavelength)
+            sum += s * (r * r)
+            white += s
+        }
+        let c = sum / SIMD3(Swift.max(white.x, 1e-6), Swift.max(white.y, 1e-6), Swift.max(white.z, 1e-6)) * filmGain
+        return SIMD3(clamp(c.x, 0, 1), clamp(c.y, 0, 1), clamp(c.z, 0, 1))
+    }
+
+    /// The film's colour at (`u`, `v`) before the level's light and the ambient (the shader's
+    /// `filmColour`).
+    static func film(u: Double, v: Double, aspect: Double, k: Double, filmPhase: Double, level: Double) -> SIMD3<Double> {
+        let x = (u - 0.5) * 2 * aspect, y = (v - 0.5) * 2
+        let d = filmThickness(x: x, y: y, k: k, phase: filmPhase * 2 * Double.pi, level: level)
+        return filmColour(nanometres: d)
+    }
 
     /// Two thin line gratings, spatial frequencies `k1` and `k2` (radians per unit), the second
     /// tilted and moved by `phase` turns of its own period: where the lines fall together the
@@ -230,6 +323,13 @@ public enum FieldLook {
             let energy = BarWeave.light(u: u, v: v, aspect: aspect, position: look.weavePosition, seed: look.weaveSeed,
                                         level: field.levelLight, strength: look.weaveLight)
             return ambient + (1 - ambient) * energy
+        case .film:
+            // Its light is its colour's luminance (Rec. 709), lit as the shader lights it.
+            let c = film(u: u, v: v, aspect: aspect, k: look.filmK, filmPhase: look.filmPhase, level: field.levelLight)
+            let luminance = 0.2126 * c.x + 0.7152 * c.y + 0.0722 * c.z
+            let d = ((u * aspect - 0.5 * aspect) * (u * aspect - 0.5 * aspect) + (v - 0.5) * (v - 0.5)).squareRoot()
+            let energy = clamp(smoothstep(1.6, 0, d) * (0.35 + 0.65 * clamp(field.levelLight, 0, 1)), 0, 1)
+            return luminance * (ambient + (1 - ambient) * energy)
         case .moire:
             let d = ((u * aspect - 0.5 * aspect) * (u * aspect - 0.5 * aspect) + (v - 0.5) * (v - 0.5)).squareRoot()
             let x = (u - 0.5) * 2 * aspect, y = (v - 0.5) * 2
@@ -361,6 +461,13 @@ public struct FieldLookMotion: Equatable, Sendable {
         public var weaveSeed = BarWeave.seed(keyMask: 0)
         /// The weave's light, 0 … 1, flash-guarded: it fades through dark to a place it cannot glide to.
         public var weaveLight = 1.0
+        /// The thin film's ripple wavenumber: the heard pitch's (`FieldLook.filmK`), moving at
+        /// most `FieldLook.filmKRate` a second, held while still.
+        public var filmK = FieldLook.filmK(toneHz: FieldFrame.middleC)
+        /// The thin film's own phase, turns 0 … 1: the song's drift at `FieldLook.filmPhaseRate`,
+        /// counted on across the song phase's wraps (the shared `turns` jumps back at each, which
+        /// a share of it would show as a jump of the whole film), held while still.
+        public var filmPhase = 0.0
 
         public init() {}
 
@@ -378,7 +485,7 @@ public struct FieldLookMotion: Equatable, Sendable {
         /// This frame with what no look on screen draws set to rest, so two frames that draw the
         /// same picture compare equal (a renderer rests on it): the moiré's gratings without the
         /// moiré, the weave without the weave, the dish's lattice without the dish or the depth,
-        /// the heard pitch without the water or the aurora, the partner and its share without a blend.
+        /// the heard pitch without the water or the aurora, the film's ripple without the film, the partner and its share without a blend.
         public var onScreen: Shown {
             var out = self
             let looks = isBlending ? [primary, partner] : [primary]
@@ -386,6 +493,7 @@ public struct FieldLookMotion: Equatable, Sendable {
             if !looks.contains(.weave) { out.weavePosition = 0; out.weaveSeed = 0; out.weaveLight = 0 }
             if !looks.contains(where: { $0 == .dish || $0 == .depth }) { out.dishK = 0; out.dishStrength = 0; out.dishHex = 0 }
             if !looks.contains(where: { $0 == .water || $0 == .aurora }) { out.soundHz = 0 }
+            if !looks.contains(.film) { out.filmK = 0; out.filmPhase = 0 }
             if !isBlending { out.partner = primary; out.mix = 0 }
             return out
         }
@@ -453,6 +561,7 @@ public struct FieldLookMotion: Equatable, Sendable {
             shown.primary = primary
             shown.partner = partner ?? primary
             shown.soundHz = wanted
+            shown.filmK = FieldLook.filmK(toneHz: wanted)
             shown.dishK = Self.lattice(dish, ceiling: ceiling)
             shown.dishHex = FaradayDish.latticeHexagonality(capillaryFraction: dish?.capillaryFraction ?? 1)
             strengthLight = FlashLimit(value: dish?.patternStrength ?? 0)
@@ -477,12 +586,18 @@ public struct FieldLookMotion: Equatable, Sendable {
             if step < 0 { step += 1 }
             if shown.isBlending { shown.phaseOffset -= step * (1 - Self.blendPhaseShare) }
             shown.phaseOffset -= shown.phaseOffset.rounded(.down)
+            if !still {
+                shown.filmPhase += step * FieldLook.filmPhaseRate * (shown.isBlending ? Self.blendPhaseShare : 1)
+                shown.filmPhase -= shown.filmPhase.rounded(.down)
+            }
         }
         previousFieldPhase = fieldPhase
 
         // The sound: pitch and lattice glide (held while still), the lattice's light is guarded.
         if !still {
             shown.soundHz = Self.glideLog(shown.soundHz, wanted, tau: Self.pitchGlideSeconds, seconds: elapsed)
+            let reach = FieldLook.filmKRate * elapsed
+            shown.filmK += Swift.min(Swift.max(FieldLook.filmK(toneHz: wanted) - shown.filmK, -reach), reach)
             shown.dishK = Self.glideLog(shown.dishK, Self.lattice(dish, ceiling: ceiling),
                                         tau: Self.latticeGlideSeconds, seconds: elapsed)
             shown.dishHex = FieldMotion.ease(shown.dishHex,

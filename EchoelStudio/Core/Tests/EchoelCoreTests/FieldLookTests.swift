@@ -203,7 +203,7 @@ final class FieldLookTests: XCTestCase {
     }
 
     func testNoLookFlashesMoreThanThreeTimesASecond() {
-        for look in [FieldPattern.dish, .water, .aurora, .depth, .moire, .weave] {
+        for look in [FieldPattern.dish, .water, .aurora, .depth, .moire, .weave, .film] {
             assertAtMostThreeFlashesASecond(lightSeries(primary: look, partner: nil, mixes: { _ in 0 }), look.title)
         }
     }
@@ -233,6 +233,84 @@ final class FieldLookTests: XCTestCase {
             assertAtMostThreeFlashesASecond([series], "moiré at (\(u), \(v))")
             XCTAssertEqual(Set(held), [0], "held still, the gratings do not move")
         }
+    }
+
+    /// The thin film at every point of a grid, wide and square, at full level and the song's
+    /// fastest drift (the bar slammed ahead every frame, the Field caps it), its ripple sweeping
+    /// between the lowest and the highest pitch: its bands move with the thickness, and no point
+    /// may change its light more than three flashes a second — a mean over a quarter could hide a
+    /// band racing across one point. (The review of the first draft measured 12 a second here:
+    /// its drift was a share of the wrapped song phase, so the whole film jumped at each wrap.)
+    func testTheThinFilmFlashesAtNoPixelMoreThanThreeTimesASecond() {
+        let rate = 60.0
+        for aspect in [1.0, 16.0 / 9] {
+            var field = FieldMotion(), looks = FieldLookMotion()
+            var series = [[Double]](repeating: [], count: 100)
+            for frame in 0..<Int(8 * rate) {
+                let loud = FieldFrame(beatPhase: 0, barPhase: Double(frame % 3) / 3, tonicHz: 220, level: 1, pulse: 1,
+                                      coherence: 0.5, breath: 0.5, isPlaying: true)
+                let shown = field.step(loud, after: 1 / rate, still: false, patternScale: 1)
+                let hertz = (frame / Int(2 * rate)) % 2 == 0 ? 6_000.0 : 55.0
+                let look = looks.step(primary: .film, partner: nil, mix: 0, hertz: hertz, drive: 0.8,
+                                      tonicHz: shown.toneHz, fieldPhase: shown.fieldPhase, after: 1 / rate,
+                                      still: false, patternScale: 1)
+                for i in 0..<10 {
+                    for j in 0..<10 {
+                        series[i * 10 + j].append(FieldLook.light(.film, u: (Double(i) + 0.5) / 10, v: (Double(j) + 0.5) / 10,
+                                                                  aspect: aspect, field: shown, look: look,
+                                                                  plate: ChladniMotion.Shown(), turns: 0))
+                    }
+                }
+            }
+            XCTAssertGreaterThan(series.flatMap { $0 }.max() ?? 0, 0.3, "the film is lit, not dark")
+            assertAtMostThreeFlashesASecond(series, "thin film at aspect \(aspect)")
+        }
+    }
+
+    func testAThinFilmIsBlackWhereItIsThinnestAndColouredByItsThickness() {
+        XCTAssertEqual(FieldLook.filmColour(nanometres: 0), SIMD3(repeating: 0), "far thinner than light: black")
+        // First order: a film reflects most where four times its optical thickness is the wavelength.
+        let blue = FieldLook.filmColour(nanometres: 450 / (4 * FieldLook.filmIndex))
+        let red = FieldLook.filmColour(nanometres: 650 / (4 * FieldLook.filmIndex))
+        XCTAssertGreaterThan(red.x / Swift.max(red.z, 1e-6), blue.x / Swift.max(blue.z, 1e-6),
+                             "the thicker film reflects the redder light")
+        for d in stride(from: 0.0, through: 1_200, by: 7) {
+            let c = FieldLook.filmColour(nanometres: d)
+            XCTAssertTrue((0...1).contains(c.x) && (0...1).contains(c.y) && (0...1).contains(c.z), "\(d) nm")
+        }
+        let top = FieldLook.filmThickness(x: 0, y: 1, k: 9, phase: 0, level: 0)
+        let bottom = FieldLook.filmThickness(x: 0, y: -1, k: 9, phase: 0, level: 0)
+        XCTAssertLessThan(top, bottom, "it drains: thin at the top, thick below")
+        XCTAssertEqual(FieldLook.filmThickness(x: 0.4, y: 0.2, k: 4, phase: 1, level: 0),
+                       FieldLook.filmThickness(x: 0.4, y: 0.2, k: 20, phase: 1, level: 0),
+                       "silent, the ripple is gone")
+        XCTAssertNotEqual(FieldLook.filmThickness(x: 0.4, y: 0.2, k: 4, phase: 1, level: 1),
+                          FieldLook.filmThickness(x: 0.4, y: 0.2, k: 20, phase: 1, level: 1),
+                          "loud, the ripple's spacing shows")
+        XCTAssertLessThan(FieldLook.filmK(toneHz: 110), FieldLook.filmK(toneHz: 880), "a higher pitch, a finer ripple")
+        XCTAssertTrue(FieldPattern.film.listensToSound)
+    }
+
+    func testTheThinFilmsRippleFollowsThePitchSlowlyAndRestsOffScreen() {
+        var a = FieldLookMotion.Shown(), b = FieldLookMotion.Shown()
+        a.primary = .film; b.primary = .film
+        a.filmK = 6; b.filmK = 12
+        XCTAssertNotEqual(a.onScreen, b.onScreen, "the film reads its ripple")
+        a.primary = .rings; b.primary = .rings
+        XCTAssertEqual(a.onScreen, b.onScreen, "the rings do not")
+
+        var looks = FieldLookMotion()
+        var last = looks.step(primary: .film, partner: nil, mix: 0, hertz: 220, drive: 0.5, tonicHz: FieldFrame.middleC,
+                              fieldPhase: 0, after: 1.0 / 60, still: false, patternScale: 1).filmK
+        XCTAssertGreaterThan(last, FieldLook.filmKRange.lowerBound, "220 Hz lies inside the range, not on its floor")
+        XCTAssertEqual(last, FieldLook.filmK(toneHz: 220), accuracy: 1e-9, "the first frame starts at the pitch")
+        for _ in 0..<720 {   // 3 to 24 at the capped rate: about ten and a half seconds
+            let k = looks.step(primary: .film, partner: nil, mix: 0, hertz: 6_000, drive: 0.5, tonicHz: FieldFrame.middleC,
+                               fieldPhase: 0, after: 1.0 / 60, still: false, patternScale: 1).filmK
+            XCTAssertLessThanOrEqual(abs(k - last), FieldLook.filmKRate / 60 + 1e-12)
+            last = k
+        }
+        XCTAssertEqual(last, FieldLook.filmK(toneHz: 6_000), accuracy: 1e-9, "and arrives")
     }
 
     /// The moiré drifts at the blend's share the moment a second look comes in, not after its
@@ -463,7 +541,7 @@ final class FieldLookTests: XCTestCase {
         XCTAssertEqual(FieldPattern.blend(stored: "water"), .water)
         XCTAssertNil(FieldPattern.blend(stored: ""))
         XCTAssertNil(FieldPattern.blend(stored: nil))
-        XCTAssertEqual(FieldPattern.allCases.map(\.shaderIndex), [0, 1, 2, 3, 4, 5, 6, 7])
+        XCTAssertEqual(FieldPattern.allCases.map(\.shaderIndex), [0, 1, 2, 3, 4, 5, 6, 7, 8])
     }
 
     /// The frames where the light has moved by `step` or more against the last extreme in the

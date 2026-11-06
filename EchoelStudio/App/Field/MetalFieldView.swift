@@ -197,7 +197,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     }
 
     /// The looks' numbers, read by the shader at buffer 2 — mirrored by BYTE LAYOUT in the MSL
-    /// `Look` struct (eleven `float`): changed in both places in one commit. All zero draws the
+    /// `Look` struct (thirteen `float`): changed in both places in one commit. All zero draws the
     /// rings alone; the video layer binds the film's looks (`FieldExport.film`).
     private struct LookUniforms {
         var primary: Float = 0
@@ -211,6 +211,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         var moireK1: Float = 0
         var moireK2: Float = 0
         var moirePhase: Float = 0
+        var filmK: Float = 0
+        var filmPhase: Float = 0
 
         init() {}
 
@@ -227,6 +229,8 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             moireK1 = Float(shown.moireK1)
             moireK2 = Float(shown.moireK2)
             moirePhase = Float(shown.moirePhase)
+            filmK = Float(shown.filmK)
+            filmPhase = Float(shown.filmPhase)
         }
     }
 
