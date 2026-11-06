@@ -38,6 +38,9 @@ public final class StandardEffectUnit: AUAudioUnit {
         /// Raised by `reset()` on the host's thread; the render drains it and empties the tails
         /// at the start of its next block, so the kernel's buffers have one writer.
         let resetRequested = Atomic<Bool>(false)
+        /// The dry path a bypass plays through, as long as the effect's latency; made only in
+        /// `allocateRenderResources`, never in the render.
+        var bypassLine = LatencyLine(frames: 0)
         var demoFrame: Int64 = 0
         /// In another app's host (the extension's ids) the output ends in `OutputSafety`. In Echoel
         /// the unit is an insert inside a float mix whose end has its own guard, so it does not
@@ -46,6 +49,69 @@ public final class StandardEffectUnit: AUAudioUnit {
         init(kernel: EffectKernel, guardsOutput: Bool) {
             self.kernel = kernel
             self.guardsOutput = guardsOutput
+        }
+    }
+
+    /// The dry sound `length` frames late, both sides, so a bypassed unit keeps the latency it
+    /// reports and a host that compensates it keeps the track in time. Fed while the effect plays
+    /// too, so switching to bypass continues the dry sound where the wet one stood instead of
+    /// replaying old samples. Length 0 passes through. Its buffers are allocated once, here.
+    final class LatencyLine: @unchecked Sendable {
+        let length: Int
+        private let heldLeft: UnsafeMutablePointer<Float>
+        private let heldRight: UnsafeMutablePointer<Float>
+        private var position = 0
+
+        init(frames: Int) {
+            length = Swift.max(0, frames)
+            let capacity = Swift.max(1, length)
+            heldLeft = .allocate(capacity: capacity)
+            heldLeft.initialize(repeating: 0, count: capacity)
+            heldRight = .allocate(capacity: capacity)
+            heldRight.initialize(repeating: 0, count: capacity)
+        }
+
+        deinit {
+            heldLeft.deallocate()
+            heldRight.deallocate()
+        }
+
+        /// Render thread: replaces `frames` of the input with the input `length` frames earlier.
+        func pass(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
+            guard length > 0 else { return }
+            var index = position
+            for frame in 0..<frames {
+                let earlierLeft = heldLeft[index]
+                let earlierRight = heldRight[index]
+                heldLeft[index] = left[frame]
+                heldRight[index] = right[frame]
+                left[frame] = earlierLeft
+                right[frame] = earlierRight
+                index += 1
+                if index == length { index = 0 }
+            }
+            position = index
+        }
+
+        /// Render thread: remembers `frames` of the input and leaves the buffers as they are.
+        func feed(left: UnsafePointer<Float>, right: UnsafePointer<Float>, frames: Int) {
+            guard length > 0 else { return }
+            var index = position
+            for frame in 0..<frames {
+                heldLeft[index] = left[frame]
+                heldRight[index] = right[frame]
+                index += 1
+                if index == length { index = 0 }
+            }
+            position = index
+        }
+
+        /// Render thread: silence, as after a host's reset.
+        func clear() {
+            guard length > 0 else { return }
+            heldLeft.update(repeating: 0, count: length)
+            heldRight.update(repeating: 0, count: length)
+            position = 0
         }
     }
 
@@ -188,7 +254,9 @@ public final class StandardEffectUnit: AUAudioUnit {
         set { render.unlocked.store(newValue, ordering: .releasing) }
     }
 
-    /// A host's bypass (GarageBand's or AUM's switch): the input passes through unchanged, and
+    /// A host's bypass (GarageBand's or AUM's switch): the input passes through unchanged — as
+    /// late as the effect's `latency`, which does not change, so a host that compensates it keeps
+    /// the bypassed track in time (pitch correction, multiband clipper; the others pass at 0) — and
     /// parameter changes still reach the kernel, so the effect comes back as the host left it. In
     /// the app the engine drops a bypassed insert from its chain instead (`HostedEffect`), so only
     /// other hosts set this (review 2026-10-23).
@@ -209,15 +277,20 @@ public final class StandardEffectUnit: AUAudioUnit {
     /// another host has no song key to give.
     public var key: SongKey { render.kernel.key }
 
+    /// Stereo in and out at ONE sample rate: the kernel plays at the output's rate and has no
+    /// resampler, so a host that sets the input at 44.1 kHz and the output at 48 kHz is refused
+    /// here (before the base class allocates anything) rather than played at the wrong pitch.
     public override func allocateRenderResources() throws {
-        try super.allocateRenderResources()
         guard let format = outputBus?.format, format.channelCount == 2,
-              inputBus?.format.channelCount == 2 else {
+              let input = inputBus?.format, input.channelCount == 2,
+              input.sampleRate == format.sampleRate, format.sampleRate > 0 else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_FormatNotSupported))
         }
+        try super.allocateRenderResources()
         let old = render.kernel
         render.kernel = EffectKernel(effect: effect, sampleRate: format.sampleRate, values: old.allValues)
         render.kernel.follow(key: old.key)
+        render.bypassLine = LatencyLine(frames: Int((render.kernel.latencySeconds * format.sampleRate).rounded()))
         render.maximumFrames = Int(maximumFramesToRender)
         render.demoFrame = 0
         render.resetRequested.store(false, ordering: .releasing)
@@ -246,8 +319,14 @@ public final class StandardEffectUnit: AUAudioUnit {
                   let left = buffers[0].mData?.assumingMemoryBound(to: Float.self),
                   let right = buffers[1].mData?.assumingMemoryBound(to: Float.self) else { return noErr }
             let kernel = state.kernel
-            if state.resetRequested.exchange(false, ordering: .acquiringAndReleasing) { kernel.reset() }
+            let line = state.bypassLine
+            if state.resetRequested.exchange(false, ordering: .acquiringAndReleasing) {
+                kernel.reset()
+                line.clear()
+            }
             let bypassed = state.bypassed.load(ordering: .relaxed)
+            // Playing, the dry line still hears the input, so a bypass picks it up in time.
+            if !bypassed { line.feed(left: left, right: right, frames: frames) }
             let start = AUEventSampleTime(timestamp.pointee.mSampleTime)
             var done = 0
             var event = eventList
@@ -264,7 +343,12 @@ public final class StandardEffectUnit: AUAudioUnit {
                 }
                 event = UnsafePointer(header.next)
             }
-            guard !bypassed else { return noErr }
+            guard !bypassed else {
+                line.pass(left: left, right: right, frames: frames)
+                // The late dry sound may still ring out of a silent input.
+                if line.length > 0 { flags.pointee.remove(.unitRenderAction_OutputIsSilence) }
+                return noErr
+            }
             if done < frames { kernel.process(left: left + done, right: right + done, frames: frames - done) }
             // A flanger at feedback −0.9 still rings above full scale (audit 2026-11-04).
             if state.guardsOutput { OutputSafety.apply(left: left, right: right, frames: frames) }

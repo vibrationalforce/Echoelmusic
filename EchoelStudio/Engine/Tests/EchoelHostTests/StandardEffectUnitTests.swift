@@ -128,6 +128,54 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertEqual(tree.parameter(withAddress: 2)?.value, 1, "the tree reads what the kernel holds")
     }
 
+    private func stereo(_ rate: Double) throws -> AVAudioFormat {
+        try XCTUnwrap(AVAudioFormat(standardFormatWithSampleRate: rate, channels: 2))
+    }
+
+    /// The delay at a host's rate: 10 ms is 441 frames at 44.1 kHz and 480 at 48 kHz, and the
+    /// values in its tree survive resources made again at another rate.
+    func testTheDelayPlaysAtTheHostsRateAndKeepsItsValuesAcrossARateChange() throws {
+        let delay = try StandardEffectUnit(componentDescription: StandardEffectUnit.audioComponent(StandardEffect.delay.component))
+        try delay.inputBusses[0].setFormat(try stereo(44_100))
+        try delay.outputBusses[0].setFormat(try stereo(44_100))
+        try delay.allocateRenderResources()
+        let tree = try XCTUnwrap(delay.parameterTree)
+        tree.parameter(withAddress: 0)?.value = 0.01 // time
+        tree.parameter(withAddress: 1)?.value = 0 // feedback
+        tree.parameter(withAddress: 2)?.value = 1 // mix
+        var impulse = [Float](repeating: 0, count: 2_000)
+        impulse[0] = 1
+        let slow = render(delay, impulse)
+        XCTAssertEqual(slow[441], 1, accuracy: 0.05, "10 ms at 44.1 kHz")
+        XCTAssertEqual(slow[480], 0, accuracy: 0.05, "not at the 48 kHz frame")
+
+        delay.deallocateRenderResources()
+        try delay.inputBusses[0].setFormat(try stereo(48_000))
+        try delay.outputBusses[0].setFormat(try stereo(48_000))
+        try delay.allocateRenderResources()
+        let time = try XCTUnwrap(tree.parameter(withAddress: 0)?.value)
+        XCTAssertEqual(time, 0.01, accuracy: 1e-6, "the time survives the new rate")
+        XCTAssertEqual(tree.parameter(withAddress: 2)?.value, 1, "and the mix")
+        let fast = render(delay, impulse)
+        XCTAssertEqual(fast[480], 1, accuracy: 0.05, "10 ms at 48 kHz")
+        XCTAssertEqual(fast[441], 0, accuracy: 0.05, "not at the 44.1 kHz frame")
+    }
+
+    /// Input and output at different rates are refused with the format error, not played at the
+    /// wrong pitch; the same unit allocates once both sides agree.
+    func testDifferentInputAndOutputRatesAreRefused() throws {
+        let equalizer = try StandardEffectUnit(componentDescription: StandardEffectUnit.audioComponent(StandardEffect.equalizer.component))
+        try equalizer.inputBusses[0].setFormat(try stereo(44_100))
+        try equalizer.outputBusses[0].setFormat(try stereo(48_000))
+        XCTAssertThrowsError(try equalizer.allocateRenderResources()) { error in
+            let failure = error as NSError
+            XCTAssertEqual(failure.domain, NSOSStatusErrorDomain)
+            XCTAssertEqual(failure.code, Int(kAudioUnitErr_FormatNotSupported))
+        }
+        try equalizer.outputBusses[0].setFormat(try stereo(44_100))
+        XCTAssertNoThrow(try equalizer.allocateRenderResources(), "one rate on both sides")
+    }
+
     /// A host's reset empties the tail: an impulse that would repeat 10 ms later is gone once the
     /// host resets the unit, while a unit that is not reset still plays the repeat.
     func testAResetEmptiesTheDelaysTail() throws {
@@ -170,6 +218,40 @@ final class StandardEffectUnitTests: XCTestCase {
         let played = render(delay, impulse)
         XCTAssertEqual(played[0], 0, accuracy: 1e-6, "on again: fully wet")
         XCTAssertEqual(played[480], 1, accuracy: 0.05, "and the repeat is back")
+    }
+
+    /// A bypassed unit keeps the latency it reports: the dry impulse emerges exactly that many
+    /// frames late, so a host that compensates the latency (Logic, AUM) keeps the bypassed track in
+    /// time. An effect without latency passes at 0.
+    func testABypassedImpulseEmergesAtTheReportedLatency() throws {
+        for effect in [StandardEffect.pitchCorrection, .multibandClipper, .equalizer] {
+            let u = try unit(effect)
+            let lag = Int((u.latency * 48_000).rounded())
+            u.shouldBypassEffect = true
+            var impulse = [Float](repeating: 0, count: 2_000)
+            impulse[0] = 1
+            let out = render(u, impulse)
+            var expected = [Float](repeating: 0, count: 2_000)
+            expected[lag] = 1
+            XCTAssertEqual(out, expected, "\(effect): the input, \(lag) frames late")
+            XCTAssertEqual(u.latency, Double(lag) / 48_000, accuracy: 1.0 / 48_000, "\(effect): bypass does not change the latency")
+        }
+        XCTAssertEqual(Int((try unit(.pitchCorrection).latency * 48_000).rounded()), 912)
+        XCTAssertEqual(Int((try unit(.multibandClipper).latency * 48_000).rounded()), 85)
+    }
+
+    /// The dry line hears the input while the effect plays, so a bypass switched on after an
+    /// impulse still plays it at the latency, not late by the time it was on.
+    func testSwitchingToBypassKeepsTheDrySoundInTime() throws {
+        let clipper = try unit(.multibandClipper)
+        var impulse = [Float](repeating: 0, count: 64)
+        impulse[0] = 1
+        _ = render(clipper, impulse)
+        clipper.shouldBypassEffect = true
+        let out = render(clipper, [Float](repeating: 0, count: 512))
+        XCTAssertEqual(out[85 - 64], 1, "the impulse 85 frames after it arrived")
+        let others = out.enumerated().filter { $0.offset != 85 - 64 }.map { abs($0.element) }
+        XCTAssertEqual(others.max() ?? 1, 0, "and nothing else of the dry sound")
     }
 
     /// An upstream that reports silence does not silence a tail: once the unit has processed, the
