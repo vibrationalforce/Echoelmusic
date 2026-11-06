@@ -58,7 +58,7 @@ final class FieldSpectrum: @unchecked Sendable {
         return MeterReading(bands: Array(UnsafeBufferPointer(start: bands, count: Self.bandCount)),
                             trace: Array(UnsafeBufferPointer(start: trace, count: Self.traceLength)),
                             phase: Array(UnsafeBufferPointer(start: phase, count: 2 * Self.phasePairs)),
-                            correlation: correlation)
+                            correlation: correlation, peaks: latest)
     }
 
     struct MeterReading {
@@ -66,6 +66,9 @@ final class FieldSpectrum: @unchecked Sendable {
         var trace: [Float]
         var phase: [Float]
         var correlation: Float?
+        var peaks: SpectralPeaks = .silent
+        /// The partials meter's held reading (`FieldMeterListener`), not the raw analysis.
+        var partials: PartialRatios = .silent
     }
 
     /// The newest partials; silence before the first block and after `reset`.
