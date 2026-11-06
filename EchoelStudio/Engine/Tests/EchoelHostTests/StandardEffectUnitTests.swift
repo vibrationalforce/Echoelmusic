@@ -342,4 +342,15 @@ final class StandardEffectUnitTests: XCTestCase {
         wait(for: [loaded], timeout: 10)
         XCTAssertTrue(found is StandardEffectUnit)
     }
+
+    /// A host reads the tail from the unit: the reverb's grows with its decay as the tree sets it,
+    /// an EQ has none.
+    func testTheUnitReportsItsKernelsTail() throws {
+        let reverb = try unit(.reverb)
+        let before = reverb.tailTime
+        XCTAssertGreaterThan(before, 0)
+        reverb.parameterTree?.parameter(withAddress: 1)?.value = 12 // decay
+        XCTAssertGreaterThan(reverb.tailTime, before)
+        XCTAssertEqual(try unit(.equalizer).tailTime, 0)
+    }
 }

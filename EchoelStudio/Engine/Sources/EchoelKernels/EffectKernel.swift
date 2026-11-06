@@ -198,6 +198,61 @@ public final class EffectKernel: @unchecked Sendable {
         }
     }
 
+    /// The longest tail a kernel reports: a 2 s delay at feedback 0.95 would ring for minutes, and a
+    /// host that waits that long after the input stops has a sound that is long inaudible.
+    public static let longestTailSeconds = 30.0
+
+    /// How long the output goes on after the input stops, in seconds (what an Audio Unit reports as
+    /// its `tailTime`), from the values set now. Any thread: it reads the parameters' atomics and
+    /// nothing the render thread owns. The reverb rings for its decay in its mode, plus pre-delay
+    /// and one line; the delay repeats until its feedback has fallen by 60 dB; the chorus, flanger
+    /// (with its feedback), phaser and tape for their longest line; the granulator as far back as a
+    /// grain reads, plus a grain; the pitch correction and the harmonizer their heads' reach; the
+    /// multiband clipper its look-ahead. Every other effect stops with its input: 0. Never more
+    /// than `longestTailSeconds`, never negative, never NaN.
+    public var tailSeconds: Double {
+        func held(_ address: Int) -> Double { Double(parameter(address)) }
+        let tail: Double
+        switch effect {
+        case .reverb:
+            tail = Reverb.Settings(size: held(0), decay: held(1), damping: held(2), predelay: held(3), mix: held(4),
+                                   mode: Reverb.Settings.Mode(index: held(5))).tailSeconds
+        case .delay:
+            tail = held(0) * (1 + Self.repeatsUntilSilent(feedback: held(1)))
+        case .chorus:
+            tail = Chorus.centreSeconds + Chorus.spreadSeconds
+        case .flanger:
+            tail = (Flanger.centreSeconds + Flanger.spreadSeconds) * (1 + Self.repeatsUntilSilent(feedback: Swift.abs(held(2))))
+        case .phaser:
+            // No delay line: each pass through the six allpasses is at most about their group delay
+            // at the lowest sweep, 1/(π·f) apiece, and the feedback sends it round again.
+            let pass = Double(Phaser.stages) / (Double.pi * Phaser.lowestHz)
+            tail = pass * (1 + Self.repeatsUntilSilent(feedback: held(2)))
+        case .tape:
+            tail = Tape.baseSeconds + Tape.wowSeconds + Tape.flutterSeconds
+        case .granular:
+            tail = Swift.min(held(3) + held(4), Granulator.memorySeconds) + held(0)
+        case .pitchCorrection:
+            tail = PitchCorrector.tailSeconds
+        case .harmonizer:
+            tail = Harmonizer.tailSeconds
+        case .multibandClipper:
+            tail = latencySeconds
+        default:
+            tail = 0
+        }
+        guard tail.isFinite else { return 0 }
+        return Swift.min(Swift.max(tail, 0), Self.longestTailSeconds)
+    }
+
+    /// How many times a loop with `feedback` goes round before it has fallen by 60 dB; 0 without
+    /// feedback.
+    static func repeatsUntilSilent(feedback: Double) -> Double {
+        guard feedback.isFinite, feedback > 0 else { return 0 }
+        let gain = Swift.min(feedback, 0.999)
+        return (Foundation.log(0.001) / Foundation.log(gain)).rounded(.up)
+    }
+
     /// Every value, in address order, to carry into a new kernel.
     public var allValues: [Float] { parameters.indices.map(parameter) }
 

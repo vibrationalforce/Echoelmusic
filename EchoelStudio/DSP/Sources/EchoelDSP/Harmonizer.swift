@@ -118,6 +118,9 @@ public final class Harmonizer: @unchecked Sendable {
     /// How long without a pitch before the ison forgets its octave, in seconds: a breath between
     /// phrases, not a consonant.
     public static let isonPause = 0.25
+    /// How long the voices go on after the input stops, in seconds: the farthest a voice's head
+    /// reads behind the newest sample, and one cross-fade.
+    public static var tailSeconds: Double { SpliceHead.farthest + SpliceHead.fadeSeconds }
 
     public let sampleRate: Double
     private let tracker: PitchTracker

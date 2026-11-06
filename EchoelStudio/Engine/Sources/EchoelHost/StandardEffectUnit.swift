@@ -245,6 +245,13 @@ public final class StandardEffectUnit: AUAudioUnit {
         render.kernel.latencySeconds
     }
 
+    /// How long the output rings after the input stops (`EffectKernel.tailSeconds`), from the values
+    /// set now: a host that stops pulling a silent track (Logic, AUM, an offline bounce) keeps the
+    /// reverb's and the delay's tails instead of cutting them. 0 for an EQ or a compressor.
+    public override var tailTime: TimeInterval {
+        render.kernel.tailSeconds
+    }
+
     /// Unlocked, the unit always plays. Locked, it plays as a demo: two seconds of silence every
     /// thirty. Every unit starts unlocked, and no shell locks an effect: the effects are free in
     /// the app and in other hosts (founder 2026-10-18). The instruments' demo lives in their own
