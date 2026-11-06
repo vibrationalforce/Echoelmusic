@@ -47,6 +47,52 @@ final class RegionWarpTests: XCTestCase {
         }
     }
 
+    func testFollowingARegionWithNoTempoStartsFromTheHeardOneInOneUndoStep() async throws {
+        let (p, audio, region) = try song(tempo: 90)
+        let plain = try XCTUnwrap(p.track(audio)?.regions.first)
+        XCTAssertFalse(plain.hasNativeBPM)
+        let start = plain.warpStart(heard: 127.63, songBPM: 90)
+        XCTAssertEqual(start.bpm, 127.63)
+        XCTAssertEqual(start.source, .heard)
+        try await MainActor.run {
+            let store = ProjectStore(project: p)
+            try store.perform(.setRegionWarp(track: audio, region, nativeBPM: start.bpm, followsTempo: true))
+            XCTAssertEqual(store.project.track(audio)?.regions.first?.warpBPM, 127.63)
+            store.undo()
+            XCTAssertEqual(store.project, p, "one step undoes it")
+        }
+
+        // Nothing heard, or nothing usable: the song's tempo, held to the range.
+        for heard in [nil, Double.nan, 0, 1_000] as [Double?] {
+            let fallback = plain.warpStart(heard: heard, songBPM: 90)
+            XCTAssertEqual(fallback.bpm, 90, "\(String(describing: heard))")
+            XCTAssertEqual(fallback.source, .song)
+        }
+        XCTAssertEqual(plain.warpStart(heard: nil, songBPM: .nan).bpm, 120)
+        XCTAssertEqual(plain.warpStart(heard: nil, songBPM: 5).bpm, AudioRegion.nativeBPMRange.lowerBound)
+
+        // A set tempo is never overruled by a detection.
+        var set = plain
+        set.nativeBPM = 100
+        XCTAssertTrue(set.hasNativeBPM)
+        XCTAssertEqual(set.warpStart(heard: 128, songBPM: 90).bpm, 100)
+        XCTAssertEqual(set.warpStart(heard: 128, songBPM: 90).source, .stored)
+    }
+
+    func testAHeardTempoRidesAlongOnImportWithWarpOff() throws {
+        var (p, audio, region) = try song(tempo: 90)
+        let heard = try XCTUnwrap(AudioRegion.nativeBPM(heard: 128))
+        XCTAssertNil(AudioRegion.nativeBPM(heard: nil))
+        XCTAssertNil(AudioRegion.nativeBPM(heard: .infinity))
+        let before = try XCTUnwrap(Arranging.end(of: try XCTUnwrap(p.track(audio)?.regions.first), in: p))
+        try Command.setRegionWarp(track: audio, region, nativeBPM: heard, followsTempo: false).apply(to: &p)
+        let placed = try XCTUnwrap(p.track(audio)?.regions.first)
+        XCTAssertEqual(placed.nativeBPM, 128)
+        XCTAssertNil(placed.warpBPM, "it plays as imported")
+        XCTAssertEqual(Arranging.end(of: placed, in: p), before)
+        XCTAssertEqual(placed.warpStart(heard: nil, songBPM: 90).bpm, 128, "Follow Song Tempo starts from it")
+    }
+
     func testSplitTrimAndDuplicateCountAWarpedRegionInBeats() throws {
         var (p, audio, region) = try song(tempo: 60)
         try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: true).apply(to: &p)
