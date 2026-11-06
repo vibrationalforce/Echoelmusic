@@ -399,6 +399,29 @@ final class ClickHuntTests: XCTestCase {
         XCTAssertLessThan(worst, 2 * quiet, "the gain stays at −60 dB across the seek")
     }
 
+    /// The Bar Weave on the track's volume at full depth: its value changes on every bar line,
+    /// by up to most of the fader's travel, and glides there — no click at a bar line.
+    func testTheBarWeaveOnTheVolumeDoesNotClick() throws {
+        var song = try instrumentSong([Note(pitch: 45, velocity: 100, start: 0, length: 8 * bar)],
+                                      settings: [(.waveform, 0)])
+        song.project.context = MusicalContext(root: 0, scale: .major)
+        try Command.setModRoute(ModulationRoute(source: .weave1, target: .volume(song.track), depth: 1))
+            .apply(to: &song.project)
+        let engine = self.core()
+        publish(song.project, to: engine)
+        engine.play()
+        let out = render(engine, frames: 8 * 96_000, block: 470)
+        assertNoClicks(out, "Bar Weave on the volume", detector: .forSine(hertz: 115, amplitude: 0.5))
+        var quiet = try instrumentSong([Note(pitch: 45, velocity: 100, start: 0, length: 8 * bar)], settings: [(.waveform, 0)])
+        quiet.project.context = song.project.context
+        let still = self.core()
+        publish(quiet.project, to: still)
+        still.play()
+        let plain = render(still, frames: 8 * 96_000, block: 470)
+        let difference = zip(out.left, plain.left).map { Swift.abs($0 - $1) }.max() ?? 0
+        XCTAssertGreaterThan(difference, 0.01, "the route is heard")
+    }
+
     /// Steep automation on the level and the cutoff: a ramp and a jump between two points.
     func testSteepInstrumentAutomationDoesNotClick() throws {
         var song = try instrumentSong([Note(pitch: 45, velocity: 100, start: 0, length: 4 * bar)],

@@ -19,6 +19,11 @@ public enum ModulationSource: String, Codable, Sendable, CaseIterable {
     case motionTiltY = "body.motion.tiltY"
     case motionRotation = "body.motion.rotation"
     case motionEnergy = "body.motion.energy"
+    /// The song's Weave (`BarWeave`): in each bar, the share of the lit cells in that bar's row of
+    /// the Weave (its generation is the bar's number), glided into over the bar's first eighth.
+    /// Read from the song position and the key, like `lfo.1`, so an export moves exactly as
+    /// playback does — whatever the Field look shows. Added inside format 4, 2026-11-06.
+    case weave1 = "weave.1"
 }
 
 /// One route: a source moves one parameter by `depth` (−1 … 1) through a curve. Wave W2. Stored
@@ -118,5 +123,34 @@ public enum Modulation {
         guard length > 0 else { return nil }
         let phase = (tick - Double(meter.barStart(at: whole))) / Double(length)
         return 0.5 + 0.5 * sin(2 * Double.pi * phase)
+    }
+
+    /// The reading of `weave.1` at song position `tick`: the share of the lit cells, 0 … 1, in the
+    /// Weave's row for the bar the position is in, the weave started from `seed` (`BarWeave.seed`
+    /// of the song's key). From the previous bar's share it glides into it over the bar's first
+    /// eighth — at least a sixteenth note, the whole of a shorter bar — along a smoothstep, so a
+    /// fader moved by it never jumps; then it holds to the bar's end. The first bar starts at its
+    /// own share. Nil for a position that is not finite or beyond any song. Arithmetic only,
+    /// render-safe.
+    public static func songWeave(at tick: Double, meter: MeterMap, seed: UInt64) -> Double? {
+        guard tick.isFinite, Swift.abs(tick) < 4.0e18 else { return nil }
+        let whole = Tick(tick.rounded(.down))
+        let bar = meter.bar(at: whole)
+        let share = weaveShare(bar, seed: seed)
+        let length = Double(meter.ticksPerBar(at: whole))
+        guard bar > 0, length > 0 else { return share }
+        let glide = Swift.max(length * weaveGlideShare, Swift.min(length, Double(MusicalTime.ticksPerQuarter) / 4))
+        let into = Swift.max(0, (tick - Double(meter.barStart(at: whole))) / glide)
+        guard into < 1 else { return share }
+        let previous = weaveShare(bar - 1, seed: seed)
+        return previous + (share - previous) * into * into * (3 - 2 * into)
+    }
+
+    /// The share of a bar the Bar Weave glides over into its value.
+    public static let weaveGlideShare = 0.125
+
+    /// The share of the lit cells in the Weave's row for `bar`.
+    static func weaveShare(_ bar: Int64, seed: UInt64) -> Double {
+        Double(BarWeave.row(bar, seed: seed).nonzeroBitCount) / Double(BarWeave.width)
     }
 }

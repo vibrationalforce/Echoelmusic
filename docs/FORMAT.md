@@ -347,7 +347,9 @@ required. `source` one of `body.heartRate` `body.hrv` `body.coherence` `body.bre
 `body.motion.tiltX` `body.motion.tiltY` `body.motion.rotation` `body.motion.energy` (sideways tilt
 and forward tilt, 0.5 lying flat; turning, 0.5 at rest; movement without gravity, 0 lying still).
 A format-4 build from before that date refuses a song with one of these four, as it refused any
-source it did not know until 2026-11-05; `target` a parameter address in its text form; `depth` −1 … 1; `curve`
+source it did not know until 2026-11-05; and — added inside format 4 (2026-11-06) — `weave.1`,
+which a build from 2026-11-05 (when unknown sources began to be kept) to that date keeps inactive
+and an earlier format-4 build refuses with the song; `target` a parameter address in its text form; `depth` −1 … 1; `curve`
 `linear` or `square` (signed: `u·|u|`); `polarity` `unipolar` (the source's 0 … 1 as is) or
 `bipolar` (centred, −1 … 1); `enabled` true or false. A route is never guessed: since 2026-11-05
 a route with an unknown source, curve or polarity, or on a parameter this build does not know, is
@@ -357,7 +359,13 @@ order of the route ids, clamped to the parameter's range once, after the last ro
 that is not measured at the moment adds nothing. `lfo.1` is measured from the song position, not
 from the world: a sine over each bar of the song's meter at that position, 0.5 on the bar line,
 1 a quarter of the way through the bar, 0 at three quarters; while the song stands it adds nothing
-to an instrument value, and a mixer value keeps the reading at the position where the song stands. A song stores the routes, never a measured
+to an instrument value, and a mixer value keeps the reading at the position where the song stands.
+`weave.1` is measured from the song position and the key in the same way: in each bar of the
+meter, the share of the lit cells in that bar's row of the Weave — rule 90 on a ring of 61 cells,
+started from the key's pitch classes as twelve cells at 24 … 35 (C at 24), one generation per bar
+counted from the song's first bar. From the previous bar's share it glides into the bar's own over
+the bar's first eighth (at least a sixteenth note, all of a shorter bar), along a smoothstep, and
+holds it to the bar's end; the first bar starts at its own. A song stores the routes, never a measured
 value: what a body did during a take is not in the file.
 
 ## Reading newer songs
