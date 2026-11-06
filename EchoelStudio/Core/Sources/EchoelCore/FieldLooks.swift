@@ -305,7 +305,7 @@ public enum FieldLook {
 
     /// The light at (`u`, `v`) — the picture's own coordinates, 0 … 1 from the bottom left — of
     /// `pattern` in a frame of `aspect`, before the tone's colour: what the flash law measures.
-    /// `turns` is the look's phase (`FieldLookMotion.Shown.turns(fieldPhase:)`). The plate's
+    /// `turns` is the look's phase (`FieldLookMotion.Shown.turns`). The plate's
     /// mirror is its continuous sand (the shader's grains sample it).
     public static func light(_ pattern: FieldPattern, u: Double, v: Double, aspect: Double,
                              field: FieldMotion.Shown, look: FieldLookMotion.Shown,
@@ -443,8 +443,6 @@ public struct FieldLookMotion: Equatable, Sendable {
         public var partner = FieldPattern.rings
         /// How much of `partner` shows, 0 … 1, flash-guarded.
         public var mix = 0.0
-        /// Added to the song's field phase (turns): the blend's slower drift, accumulated.
-        public var phaseOffset = 0.0
         /// The pitch the looks hear, hertz.
         public var soundHz = FieldFrame.middleC
         /// The dish lattice in shader units, its strength (guarded) and its hexagonality.
@@ -468,16 +466,15 @@ public struct FieldLookMotion: Equatable, Sendable {
         /// counted on across the song phase's wraps (the shared `turns` jumps back at each, which
         /// a share of it would show as a jump of the whole film), held while still.
         public var filmPhase = 0.0
+        /// The looks' phase in turns, 0 … `driftPeriod`: the song's drift (at the blend's share
+        /// while two looks show), counted on across the song phase's wraps. The rings and the
+        /// dish, water, aurora and depth turn their terms at fractions of it (0.5, 0.4, 0.35 …);
+        /// on a phase that wrapped every turn each wrap jumped the whole picture — up to 2.5 times
+        /// a second at the song's fastest drift (found in review, 2026-11-06). Every such
+        /// fraction lands on a whole turn at `driftPeriod`, so its own wrap never shows.
+        public var turns = 0.0
 
         public init() {}
-
-        /// The looks' phase in turns for a frame whose song phase is `fieldPhase`.
-        public func turns(fieldPhase: Double) -> Double {
-            let sum = fieldPhase + phaseOffset
-            guard sum.isFinite else { return 0 }
-            let wrapped = sum - sum.rounded(.down)
-            return wrapped >= 1 ? 0 : wrapped
-        }
 
         /// Whether two looks are on screen at once.
         public var isBlending: Bool { mix > FieldLookMotion.blendThreshold && primary != partner }
@@ -494,6 +491,7 @@ public struct FieldLookMotion: Equatable, Sendable {
             if !looks.contains(where: { $0 == .dish || $0 == .depth }) { out.dishK = 0; out.dishStrength = 0; out.dishHex = 0 }
             if !looks.contains(where: { $0 == .water || $0 == .aurora }) { out.soundHz = 0 }
             if !looks.contains(.film) { out.filmK = 0; out.filmPhase = 0 }
+            if !looks.contains(where: { [.rings, .dish, .water, .aurora, .depth].contains($0) }) { out.turns = 0 }
             if !isBlending { out.partner = primary; out.mix = 0 }
             return out
         }
@@ -501,6 +499,10 @@ public struct FieldLookMotion: Equatable, Sendable {
 
     /// The share of the song's drift two mixed looks move at.
     public static let blendPhaseShare = 0.5
+    /// The turns `Shown.turns` wraps at: a whole number of turns of every rate a look turns at
+    /// (`FieldLook.dishPhaseRate` 0.4, `auroraPhaseRate` 0.35, `depthPhaseRate` 0.3, and the
+    /// multiples inside them, down to 0.21 = 21/100), measured in `FieldLookTests`.
+    public static let driftPeriod = 100.0
     /// Under this the shader draws the primary alone.
     public static let blendThreshold = 0.001
     /// How fast the heard pitch and the lattice glide (seconds): a note change sweeps the picture.
@@ -569,6 +571,7 @@ public struct FieldLookMotion: Equatable, Sendable {
             previousFieldPhase = fieldPhase
             shown.weavePosition = Self.weaveTarget(bars)
             shown.weaveSeed = BarWeave.seed(keyMask: keyMask)
+            shown.turns = fieldPhase.isFinite ? fieldPhase - fieldPhase.rounded(.down) : 0
         }
         shown.primary = primary
 
@@ -584,8 +587,8 @@ public struct FieldLookMotion: Equatable, Sendable {
         if let previous = previousFieldPhase, fieldPhase.isFinite, previous.isFinite {
             var step = fieldPhase - previous
             if step < 0 { step += 1 }
-            if shown.isBlending { shown.phaseOffset -= step * (1 - Self.blendPhaseShare) }
-            shown.phaseOffset -= shown.phaseOffset.rounded(.down)
+            shown.turns += step * (shown.isBlending ? Self.blendPhaseShare : 1)
+            shown.turns -= Self.driftPeriod * (shown.turns / Self.driftPeriod).rounded(.down)
             if !still {
                 shown.filmPhase += step * FieldLook.filmPhaseRate * (shown.isBlending ? Self.blendPhaseShare : 1)
                 shown.filmPhase -= shown.filmPhase.rounded(.down)

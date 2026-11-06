@@ -43,9 +43,9 @@ public enum FieldShader {
     // The looks (FieldLookMotion): which two patterns (FieldPattern.shaderIndex), how much of the
     // second, the blend's phase offset in turns, the heard pitch and the dish's solve. All zero
     // draws the rings alone, as every pass bound before the looks existed.
-    struct Look { float primary; float partner; float blend; float phaseOffset;
+    struct Look { float primary; float partner; float blend;
                   float soundHz; float dishK; float dishStrength; float dishHex;
-                  float moireK1; float moireK2; float moirePhase; float filmK; float filmPhase; };
+                  float moireK1; float moireK2; float moirePhase; float filmK; float filmPhase; float turns; };
     // The weave (BarWeave.words): how far the newest row has come in, its light (flash-guarded on
     // the CPU), two spare words, then each row on screen, newest first, as its low and high 32
     // bits. All zero is an empty, dark weave.
@@ -406,7 +406,9 @@ public enum FieldShader {
     fragment float4 field_fragment(VOut in [[stage_in]], constant Uniforms& u [[buffer(0)]],
                                    constant Chladni& plate [[buffer(1)]], constant Look& look [[buffer(2)]],
                                    constant Weave& weave [[buffer(3)]]) {
-        float turns = fract(u.fieldPhase + look.phaseOffset);
+        // Counted on across the song phase's wraps (FieldLookMotion.Shown.turns): fract() of it
+        // here would jump every look that turns at a fraction of it, at every wrap.
+        float turns = look.turns;
         float3 col = lookColour(look.primary, in, u, plate, look, weave, turns);
         float share = clamp(look.blend, 0.0, 1.0);
         if (share > \(FieldLookMotion.blendThreshold) && abs(look.partner - look.primary) > 0.5) {
