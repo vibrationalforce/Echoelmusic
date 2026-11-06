@@ -23,10 +23,12 @@ public struct FieldFrame: Equatable, Sendable {
     /// Lungs empty (0) … full (1), where a source measures the breath.
     public var breath: Double?
     public var isPlaying: Bool
+    /// The song's third as its tone system tunes it, as a beat (`TuningBeat`): the Moiré look.
+    public var tuningBeat: TuningBeat
 
     public init(beatPhase: Double = 0, barPhase: Double = 0, keyHue: Double = 0, tonicHz: Double = FieldFrame.middleC,
                 level: Double = 0, pulse: Double? = nil, hrv: Double? = nil, coherence: Double? = nil,
-                breath: Double? = nil, isPlaying: Bool = false) {
+                breath: Double? = nil, isPlaying: Bool = false, tuningBeat: TuningBeat = .unison) {
         self.beatPhase = Self.unit(beatPhase)
         self.barPhase = Self.unit(barPhase)
         self.keyHue = Self.unit(keyHue)
@@ -37,6 +39,7 @@ public struct FieldFrame: Equatable, Sendable {
         self.coherence = coherence.flatMap(Self.reading)
         self.breath = breath.flatMap(Self.reading)
         self.isPlaying = isPlaying
+        self.tuningBeat = tuningBeat
     }
 
     /// Middle C at A = 440 Hz: the tonic of the default song, and what a bad pitch falls back to.
@@ -63,7 +66,8 @@ public struct FieldFrame: Equatable, Sendable {
         return FieldFrame(beatPhase: beat > 0 ? (position - Double(meter.beatStart(at: whole))) / beat : 0,
                           barPhase: bar > 0 ? (position - Double(meter.barStart(at: whole))) / bar : 0,
                           keyHue: keyHue(root: context.root), tonicHz: tonicHz(of: context), level: level,
-                          pulse: pulse, hrv: hrv, coherence: coherence, breath: breath, isPlaying: isPlaying)
+                          pulse: pulse, hrv: hrv, coherence: coherence, breath: breath, isPlaying: isPlaying,
+                          tuningBeat: TuningBeat.of(context))
     }
 
     /// C at 0, G a twelfth on, D two twelfths: the circle of fifths.

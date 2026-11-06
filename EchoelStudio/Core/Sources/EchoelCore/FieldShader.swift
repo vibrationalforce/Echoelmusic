@@ -44,7 +44,8 @@ public enum FieldShader {
     // second, the blend's phase offset in turns, the heard pitch and the dish's solve. All zero
     // draws the rings alone, as every pass bound before the looks existed.
     struct Look { float primary; float partner; float blend; float phaseOffset;
-                  float soundHz; float dishK; float dishStrength; float dishHex; };
+                  float soundHz; float dishK; float dishStrength; float dishHex;
+                  float moireK1; float moireK2; float moirePhase; };
 
     // Wavelength (nm) -> linear sRGB through the CIE 1931 colour-matching functions (the
     // Wyman/Sloan/Shirley 2013 analytic fit) -> XYZ -> linear sRGB (D65).
@@ -308,9 +309,32 @@ public enum FieldShader {
         return fieldColour(u) * (ambient + (1.0 - ambient) * energy);
     }
 
+    // The moiré (FieldLook.moire): two thin gratings, the second tilted and drifting at the
+    // tuning's beat (capped on the CPU). Not scaled by the level: it shows the tuning, not the sound.
+    float moireLine(float coordinate, float k, float shift) {
+        float t = coordinate * k / 6.2831853 - shift;
+        float f = fract(t);
+        float distance = min(f, 1.0 - f);
+        return 1.0 - smoothstep(0.0, \(FieldLook.moireLineWidth), distance);
+    }
+    float3 moireColour(VOut in, constant Uniforms& u, constant Look& l) {
+        float2 uv = in.uv;
+        uv.x *= u.aspect;
+        float d = distance(uv, float2(0.5 * u.aspect, 0.5));
+        float2 p = float2((in.uv.x - 0.5) * 2.0 * u.aspect, (in.uv.y - 0.5) * 2.0);
+        float tilted = p.x * cos(\(FieldLook.moireTilt)) + p.y * sin(\(FieldLook.moireTilt));
+        float lines = clamp(\(FieldLook.moireGain) * (moireLine(p.x, l.moireK1, 0.0) + moireLine(tilted, l.moireK2, l.moirePhase)),
+                            0.0, 1.0);
+        float vignette = smoothstep(1.6, 0.0, d);
+        float energy = clamp(lines * vignette, 0.0, 1.0);
+        float ambient = \(FieldPulse.ambientLiteral);
+        return fieldColour(u) * (ambient + (1.0 - ambient) * energy);
+    }
+
     float3 lookColour(float look, VOut in, constant Uniforms& u, constant Chladni& c, constant Look& l, float turns) {
         if (look < 0.5) return ringsColour(in, u, turns);
         if (look < 1.5) return chladniColour(in, u, c);
+        if (look > 5.5 && look < 6.5) return moireColour(in, u, l);
         return lookFieldColour(look, in, u, l, turns);
     }
 
