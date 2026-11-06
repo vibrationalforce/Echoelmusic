@@ -310,6 +310,92 @@ final class LightShowTests: XCTestCase {
         }
     }
 
+    /// Every built-in profile, driven by a 10 Hz square on every attribute it has (SAF-3): a slot
+    /// Echoel holds fixed — a fixture's own strobe or shutter rate — never leaves its safe value 0,
+    /// and every slot that makes light passes the flash limit: at most three flashes in any second,
+    /// never more than the limit's rate between two frames. Position is not light and is not
+    /// limited; it is the only attribute that is not.
+    func testNoProfileStrobesAndEveryLightChannelPassesTheFlashLimit() {
+        XCTAssertEqual(LightAttribute.allCases.filter { !$0.isBrightness }, [.pan, .tilt],
+                       "an attribute that is not position makes light and goes through the guard")
+        let rate = 100.0
+        let squareSeconds = 10.0
+        let holdSeconds = 2.0
+        for profile in FixtureProfile.allCases {
+            let lamp = fixture(profile, address: 1)
+            let lighting = Lighting(fixtures: [lamp])
+            var guardRail = RigFlashGuard()
+            var series: [[UInt8]] = Array(repeating: [], count: profile.footprint)
+            let frameCount = Int(((squareSeconds + holdSeconds) * rate).rounded())
+            for frame in 0..<frameCount {
+                let seconds = Double(frame) / rate
+                // 10 Hz: full on for 50 ms, full off for 50 ms; then held on, so the channel shows it lights.
+                let on = seconds >= squareSeconds || Int((seconds * 20).rounded(.down)) % 2 == 0
+                var values: [LightAttribute: Double] = [:]
+                for attribute in profile.attributes { values[attribute] = on ? 1 : 0 }
+                let sent = guardRail.next(towards: [lamp.id: values], after: 1 / rate)
+                let slots = lighting.universes(sent)[1] ?? []
+                for offset in 0..<profile.footprint where slots.indices.contains(offset) {
+                    series[offset].append(slots[offset])
+                }
+            }
+            for (offset, slot) in profile.layout.enumerated() {
+                let bytes = series[offset]
+                XCTAssertEqual(bytes.count, frameCount, "\(profile) slot \(offset + 1) is on the wire every frame")
+                switch slot {
+                case .fixed(let held):
+                    XCTAssertEqual(held, 0, "\(profile) holds its own strobe rate off")
+                    XCTAssertTrue(bytes.allSatisfy { $0 == 0 }, "\(profile) slot \(offset + 1) never leaves 0")
+                case .single(let attribute), .coarse(let attribute):
+                    guard attribute.isBrightness else { continue }
+                    let square = bytes.prefix(Int(squareSeconds * rate)).map { (byte: UInt8) -> Double in Double(byte) / 255 }
+                    let flashes = Self.flashTimes(Array(square), rate: rate)
+                    for start in stride(from: 0.0, to: squareSeconds - 1, by: 0.1) {
+                        let inSecond = flashes.filter { $0 >= start && $0 < start + 1 }.count
+                        XCTAssertLessThanOrEqual(inSecond, 3, "\(profile) \(attribute) flashes more than three times from \(start) s")
+                    }
+                    for (a, b) in zip(bytes, bytes.dropFirst()) {
+                        let step = abs(Double(b) - Double(a)) / 255
+                        XCTAssertLessThanOrEqual(step, FlashLimit.maximumRate / rate + 1.0 / 255 + 1e-9,
+                                                 "\(profile) \(attribute) jumps past the flash limit")
+                    }
+                    XCTAssertGreaterThan(Double(bytes.last ?? 0) / 255, 0.5,
+                                         "\(profile) \(attribute) lights when held on: the slot is the attribute's")
+                case .fine:
+                    continue
+                }
+            }
+        }
+    }
+
+    /// The moments a series of brightnesses 0 … 1 completes a flash: a rise and a fall of at least
+    /// `FlashLimit.flashStep` between turning points.
+    private static func flashTimes(_ values: [Double], rate: Double) -> [Double] {
+        var flashes: [Double] = []
+        var anchor = values.first ?? 0
+        var rising = true
+        var extreme = anchor
+        for (index, value) in values.enumerated() {
+            if rising {
+                if value > extreme { extreme = value }
+                if extreme - value >= FlashLimit.flashStep && extreme - anchor >= FlashLimit.flashStep {
+                    flashes.append(Double(index) / rate)
+                    anchor = extreme
+                    extreme = value
+                    rising = false
+                }
+            } else {
+                if value < extreme { extreme = value }
+                if value - extreme >= FlashLimit.flashStep {
+                    anchor = extreme
+                    extreme = value
+                    rising = true
+                }
+            }
+        }
+        return flashes
+    }
+
     func testTheGuardLeavesPositionAloneAndSlowsTheLight() {
         let head = fixture(.movingHead, address: 1)
         var guardRail = RigFlashGuard()
