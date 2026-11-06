@@ -51,6 +51,66 @@ final class LightShowTests: XCTestCase {
         XCTAssertThrowsError(try Command.addCue(LightCue(name: "B", fade: .nan), index: nil).apply(to: &project))
     }
 
+    func testRenamingAFixtureTrimsItsNameAndRefusesNoneOrAnUnknownFixture() throws {
+        var project = Project()
+        let par = fixture(.dimmer, address: 1, name: "Par")
+        try Command.addFixture(par).apply(to: &project)
+        try Command.renameFixture(par.id, name: "  Front Wash \n").apply(to: &project)
+        XCTAssertEqual(project.lighting.fixture(par.id)?.name, "Front Wash")
+        let before = project
+        XCTAssertThrowsError(try Command.renameFixture(par.id, name: "   ").apply(to: &project))
+        XCTAssertThrowsError(try Command.renameFixture(FixtureID(), name: "Back").apply(to: &project))
+        XCTAssertEqual(project, before, "a refused rename leaves the song as it was")
+    }
+
+    func testSettingACueReplacesItWholeAndRefusesWhatTheSongCouldNotOpen() throws {
+        var project = Project()
+        let par = fixture(.dimmer, address: 1)
+        try Command.addFixture(par).apply(to: &project)
+        let cue = LightCue(name: "A", fade: 1)
+        try Command.addCue(cue, index: nil).apply(to: &project)
+        var changed = cue.setting(.dimmer, of: par.id, to: 0.7)
+        changed.name = " Verse "
+        changed.fade = 2.5
+        changed.look = LightCue.weaveLook
+        try Command.setCue(changed).apply(to: &project)
+        let stored = try XCTUnwrap(project.lighting.cue(cue.id))
+        XCTAssertEqual(stored.name, "Verse")
+        XCTAssertEqual(stored.fade, 2.5)
+        XCTAssertEqual(stored.value(.dimmer, of: par.id), 0.7)
+        XCTAssertTrue(stored.followsWeave)
+        let before = project
+        XCTAssertThrowsError(try Command.setCue(LightCue(name: "Ghost")).apply(to: &project), "no such cue")
+        var bright = changed
+        bright.values = [CueFixtureValues(fixture: par.id, values: ["dimmer": 1.5])]
+        XCTAssertThrowsError(try Command.setCue(bright).apply(to: &project), "a value past the channel's travel")
+        var slow = changed
+        slow.fade = LightCue.fadeRange.upperBound + 1
+        XCTAssertThrowsError(try Command.setCue(slow).apply(to: &project), "a fade past its range")
+        var stranger = changed
+        stranger.values = [CueFixtureValues(fixture: FixtureID(), values: ["dimmer": 0.5])]
+        XCTAssertThrowsError(try Command.setCue(stranger).apply(to: &project), "a fixture the rig lacks")
+        var nameless = changed
+        nameless.name = ""
+        XCTAssertThrowsError(try Command.setCue(nameless).apply(to: &project))
+        XCTAssertEqual(project, before, "every refusal leaves the song as it was")
+    }
+
+    func testRemovingAPlacementTakesOnlyTheCueStartingThere() throws {
+        var project = Project()
+        let a = LightCue(name: "A"), b = LightCue(name: "B")
+        try Command.addCue(a, index: nil).apply(to: &project)
+        try Command.addCue(b, index: nil).apply(to: &project)
+        try Command.placeCue(a.id, at: 0).apply(to: &project)
+        try Command.placeCue(b.id, at: 1_920).apply(to: &project)
+        try Command.removeCuePlacement(at: 0).apply(to: &project)
+        XCTAssertEqual(project.lighting.placements, [CuePlacement(tick: 1_920, cue: b.id)])
+        XCTAssertEqual(project.lighting.cues.count, 2, "the cue itself stays")
+        let before = project
+        XCTAssertThrowsError(try Command.removeCuePlacement(at: 0).apply(to: &project), "no cue starts there now")
+        XCTAssertEqual(project, before)
+    }
+
     // MARK: - Layout
 
     func testEveryProfileLaysOutItsChannelsInOrder() {
