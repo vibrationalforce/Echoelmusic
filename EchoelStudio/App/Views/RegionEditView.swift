@@ -3,8 +3,9 @@ import EchoelDSP
 import SwiftUI
 
 /// One audio region's fades, level and warp (AUD-2): the fade-in and fade-out in milliseconds with
-/// a curve each, the region's own gain in dB before the track's fader, and whether it follows the
-/// song's tempo from the tempo its file was played at. Every change is a
+/// a curve each, the region's own gain in dB before the track's fader, whether it follows the
+/// song's tempo from the tempo its file was played at and how it is stretched (W-3), and its
+/// transposition (W-4). Every change is a
 /// command through the store; a drag of one field is one undo step. Opened from the region's
 /// hold menu ("Fades & Gain…") through the one sheet slot.
 struct RegionEditView: View {
@@ -95,7 +96,28 @@ struct RegionEditView: View {
             }
             warp(region)
                 .padding(.top, Theme.Space.m)
+            transpose(region)
+                .padding(.top, Theme.Space.m)
         }
+    }
+
+    /// Transpose (W-4): the region's pitch in semitones with two decimals — hundredths of a
+    /// semitone are cents — its timing unchanged, warped or not. Typed or stepped, never dragged:
+    /// every value renders the region anew.
+    private func transpose(_ region: AudioRegion) -> some View {
+        SettingField(title: "Transpose", value: Self.cents(region.playedTransposeCents),
+                     range: Self.cents(AudioRegion.transposeRange.lowerBound)...Self.cents(AudioRegion.transposeRange.upperBound),
+                     unit: "st", decimals: 2, standard: 0, spokenUnit: "semitones", drags: false) { typed in
+            store.endGesture()
+            try? store.perform(.setRegionTranspose(track: trackID, regionID, cents: Double(typed)))
+        }
+        .accessibilityHint("Moves the region's pitch without changing its timing.")
+    }
+
+    /// A transposition as the field's whole number of cents.
+    static func cents(_ value: Double) -> Int {
+        guard value.isFinite else { return 0 }
+        return Int(Swift.min(Swift.max(value, AudioRegion.transposeRange.lowerBound), AudioRegion.transposeRange.upperBound).rounded())
     }
 
     /// Follow Song Tempo and the tempo the file was played at. The tempo is typed or stepped, never
@@ -135,7 +157,32 @@ struct RegionEditView: View {
                                               followsTempo: region.followsTempo == true))
         }
         .disabled(region.followsTempo != true)
+        warpModePicker(region)
         fitToBars(region)
+    }
+
+    /// How the region is stretched while it follows the song's tempo (W-3). Kept while warp is off.
+    private func warpModePicker(_ region: AudioRegion) -> some View {
+        Picker("Warp Mode", selection: Binding(get: { region.warpMode }, set: { mode in
+            store.endGesture()
+            try? store.perform(.setRegionWarpMode(track: trackID, regionID, mode: mode))
+        })) {
+            ForEach(WarpMode.allCases, id: \.self) { option in
+                Text(Self.name(option)).tag(option)
+            }
+        }
+        .pickerStyle(.menu)
+        .disabled(region.followsTempo != true)
+        .accessibilityLabel("Warp Mode")
+        .accessibilityHint("Beats keeps every attack on its beat, Tones keeps the pitch of held sound, Re-Pitch changes pitch with the tempo.")
+    }
+
+    static func name(_ mode: WarpMode) -> String {
+        switch mode {
+        case .beats: "Beats"
+        case .tones: "Tones"
+        case .rePitch: "Re-Pitch"
+        }
     }
 
     /// Fit to Bars (W-2): the native tempo at which the whole region spans a chosen number of bars,
