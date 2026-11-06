@@ -125,11 +125,11 @@ final class FieldLookTests: XCTestCase {
             shown = motion.step(primary: .water, partner: .aurora, mix: 0.5, hertz: nil, drive: 0, tonicHz: 261.63,
                                 fieldPhase: phase, after: 1.0 / 60, still: false, patternScale: 1)
         }
-        let before = shown.turns(fieldPhase: phase)
+        let before = shown.turns
         phase += 0.01
         shown = motion.step(primary: .water, partner: .aurora, mix: 0.5, hertz: nil, drive: 0, tonicHz: 261.63,
                             fieldPhase: phase, after: 1.0 / 60, still: false, patternScale: 1)
-        var step = shown.turns(fieldPhase: phase) - before
+        var step = shown.turns - before
         if step < 0 { step += 1 }
         XCTAssertEqual(step, 0.005, accuracy: 1e-9)
     }
@@ -167,7 +167,7 @@ final class FieldLookTests: XCTestCase {
                                   after: 1 / rate, still: false, patternScale: 1, beat: beat,
                                   bars: Double(frame) * 3 / rate, keyMask: Self.weaveKey)
             let figure = plate.step(towards: plateFigures[frame % plateFigures.count], after: 1 / rate, still: false)
-            let turns = look.turns(fieldPhase: shown.fieldPhase)
+            let turns = look.turns
             for quarter in 0..<4 {
                 let u0 = Double(quarter % 2) * 0.5, v0 = Double(quarter / 2) * 0.5
                 var sum = 0.0
@@ -264,6 +264,37 @@ final class FieldLookTests: XCTestCase {
             }
             XCTAssertGreaterThan(series.flatMap { $0 }.max() ?? 0, 0.3, "the film is lit, not dark")
             assertAtMostThreeFlashesASecond(series, "thin film at aspect \(aspect)")
+        }
+    }
+
+    /// The looks that turn at fractions of the drift (the rings at 0.5 and 0.25, the dish at 0.4,
+    /// the water's 0.4 · 0.7 …, the aurora's 0.35 · 0.6 …, the depth's 0.3) draw the same picture
+    /// at the drift's wrap as just before it, so the wrap is no jump; and the drift counts on
+    /// across the song phase's own wraps.
+    func testTheLooksDoNotJumpWhereTheirDriftWraps() {
+        var field = FieldMotion(), looks = FieldLookMotion()
+        let frame = FieldFrame(beatPhase: 0.3, barPhase: 0.4, tonicHz: 330, level: 1, pulse: 1, coherence: 0.6,
+                               breath: 0.4, isPlaying: true)
+        let shown = field.step(frame, after: 1.0 / 60, still: false, patternScale: 1)
+        let look = looks.step(primary: .dish, partner: nil, mix: 0, hertz: 330, drive: 0.9, tonicHz: 330,
+                              fieldPhase: shown.fieldPhase, after: 1.0 / 60, still: false, patternScale: 1)
+        for pattern in [FieldPattern.rings, .dish, .water, .aurora, .depth] {
+            for (u, v) in [(0.5, 0.5), (0.2, 0.7), (0.81, 0.33), (0.4, 0.05)] {
+                let at = { (turns: Double) in
+                    FieldLook.light(pattern, u: u, v: v, aspect: 1.4, field: shown, look: look,
+                                    plate: ChladniMotion.Shown(), turns: turns)
+                }
+                XCTAssertEqual(at(0), at(FieldLookMotion.driftPeriod), accuracy: 1e-6, "\(pattern.title) at (\(u), \(v))")
+            }
+        }
+        var counted = FieldLookMotion()
+        var phase = 0.0, last = 0.0
+        for frame in 0..<300 {
+            phase = (phase + 0.05).truncatingRemainder(dividingBy: 1)
+            let turns = counted.step(primary: .water, partner: nil, mix: 0, hertz: nil, drive: 0, tonicHz: 261.63,
+                                     fieldPhase: phase, after: 1.0 / 60, still: false, patternScale: 1).turns
+            if frame > 0 { XCTAssertEqual(turns - last, 0.05, accuracy: 1e-9, "no step back at the song phase's wrap") }
+            last = turns
         }
     }
 
