@@ -25,6 +25,7 @@ struct FieldMeterView: View {
                     switch meter {
                     case .scope: FieldMeterView.drawScope(reading.trace, in: &canvas, size: size)
                     case .phase: FieldMeterView.drawPhase(reading.phase, in: &canvas, size: size)
+                    case .partials: FieldMeterView.drawPartials(PartialRatios.of(reading.peaks), in: &canvas, size: size)
                     default: FieldMeterView.drawSpectrum(reading.bands, in: &canvas, size: size)
                     }
                 }
@@ -37,7 +38,8 @@ struct FieldMeterView: View {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Self.accessibilityTitle(meter))
-            .accessibilityValue(meter == .phase ? PhaseCorrelationBar.spoken(reading.correlation) : "")
+            .accessibilityValue(meter == .phase ? PhaseCorrelationBar.spoken(reading.correlation)
+                                : meter == .partials ? PartialRatios.of(reading.peaks).spoken : "")
         }
         .background(Theme.Color.background)
         .onAppear { listener.listen(to: engine) }
@@ -48,6 +50,7 @@ struct FieldMeterView: View {
         switch meter {
         case .scope: "Oscilloscope of the master output"
         case .phase: "Stereo phase of the master output"
+        case .partials: "Partials of the master output, as ratios to the lowest"
         default: "Spectrum of the master output"
         }
     }
@@ -90,6 +93,45 @@ struct FieldMeterView: View {
             dots.addRect(CGRect(x: point.x - 0.75, y: point.y - 0.75, width: 1.5, height: 1.5))
         }
         canvas.fill(dots, with: .color(Theme.Color.accent))
+    }
+
+    /// The partials on a log axis of ratios 1 … 16, the whole numbers as faint grid lines so an
+    /// inharmonic partial stands visibly beside its harmonic; each partial a thin line as tall as
+    /// its level, labelled with its ratio and its distance from the nearest whole number in cents.
+    private static func drawPartials(_ ratios: PartialRatios, in canvas: inout GraphicsContext, size: CGSize) {
+        let inset: CGFloat = 16
+        let labelRoom: CGFloat = 34
+        let width = size.width - 2 * inset, height = size.height - 2 * inset - labelRoom
+        guard width > 0, height > 0 else { return }
+        let top = 16.0
+        func x(_ ratio: Double) -> CGFloat {
+            inset + width * CGFloat(Foundation.log2(Swift.min(Swift.max(ratio, 1), top)) / Foundation.log2(top))
+        }
+        let base = inset + labelRoom + height
+        var grid = Path()
+        for whole in 1...Int(top) {
+            grid.move(to: CGPoint(x: x(Double(whole)), y: base))
+            grid.addLine(to: CGPoint(x: x(Double(whole)), y: base - (whole <= 4 ? height : height * 0.25)))
+        }
+        canvas.stroke(grid, with: .color(Theme.Color.border), lineWidth: 1)
+        guard !ratios.entries.isEmpty else {
+            canvas.draw(Text("—").font(Theme.Font.value).foregroundStyle(Theme.Color.textSecondary),
+                        at: CGPoint(x: size.width / 2, y: size.height / 2))
+            return
+        }
+        var lines = Path()
+        for entry in ratios.entries where entry.ratio <= top {
+            let px = x(entry.ratio)
+            let tip = base - height * CGFloat(Swift.min(Swift.max(entry.level, 0), 1))
+            lines.move(to: CGPoint(x: px, y: base))
+            lines.addLine(to: CGPoint(x: px, y: tip))
+            let cents = Int(entry.cents.rounded())
+            let offset = cents == 0 ? "" : (cents > 0 ? " +\(cents)¢" : " \u{2212}\(-cents)¢")
+            canvas.draw(Text(String(format: "%.2f", entry.ratio) + offset)
+                            .font(Theme.Font.caption).monospacedDigit().foregroundStyle(Theme.Color.text),
+                        at: CGPoint(x: px, y: tip - 10))
+        }
+        canvas.stroke(lines, with: .color(Theme.Color.accent), lineWidth: 1.5)
     }
 
     private static func drawSpectrum(_ bands: [Double], in canvas: inout GraphicsContext, size: CGSize) {

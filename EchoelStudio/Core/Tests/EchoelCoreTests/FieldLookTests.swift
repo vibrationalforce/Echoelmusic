@@ -229,7 +229,7 @@ final class FieldLookTests: XCTestCase {
     }
 
     func testTheMeterNamesAreStoredAndOrdered() {
-        XCTAssertEqual(FieldMeter.allCases.map(\.rawValue), ["off", "spectrum", "scope", "phase"])
+        XCTAssertEqual(FieldMeter.allCases.map(\.rawValue), ["off", "spectrum", "scope", "phase", "partials"])
         XCTAssertEqual(FieldMeter(stored: "scope"), .scope)
         XCTAssertEqual(FieldMeter(stored: "phase"), .phase)
         XCTAssertEqual(FieldMeter(stored: nil), .off)

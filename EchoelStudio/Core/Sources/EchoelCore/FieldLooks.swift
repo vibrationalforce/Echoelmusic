@@ -427,6 +427,9 @@ public enum FieldMeter: String, CaseIterable, Sendable {
     /// The master's stereo phase: a goniometer (mid up, side across) and the correlation, +1 mono,
     /// 0 unrelated, −1 cancelling in mono (`StereoPhase`).
     case phase
+    /// The master's strongest partials as ratios to the lowest, each labelled with the nearest
+    /// whole number and its distance in cents (`PartialRatios`): harmonic or inharmonic, measured.
+    case partials
 
     public static let storageKey = "field.meter"
 
@@ -436,6 +439,7 @@ public enum FieldMeter: String, CaseIterable, Sendable {
         case .spectrum: "Spectrum"
         case .scope: "Scope"
         case .phase: "Phase"
+        case .partials: "Partials"
         }
     }
 
