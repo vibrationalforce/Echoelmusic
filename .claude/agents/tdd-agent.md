@@ -62,9 +62,8 @@ went 2026-07-24 (#121 Slice 2). A test written from that pattern would not compi
 repo has no local compiler to say so before CI.
 
 ⛔ AND THE FIX THAT REPLACED IT WENT STALE THE SAME WAY (2026-09-12, #1302). It said the one
-`AUAudioUnit` in the tree is `MonitorInsertAudioUnit` and told you to copy
-`Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift`; both were deleted with the
-audio input. **There is no `AUAudioUnit` in `Sources/` any more** —
+`AUAudioUnit` in the tree is `MonitorInsertAudioUnit` and told you to copy its guard; both
+were deleted with the audio input. **There is no `AUAudioUnit` in `Sources/` any more** —
 `git grep -nE ": *AUAudioUnit\b" -- Sources` → 0. Two retractions in one paragraph is the
 point: a replacement citation is a claim with an expiry date, so name the measuring command
 beside it, never the name alone.
