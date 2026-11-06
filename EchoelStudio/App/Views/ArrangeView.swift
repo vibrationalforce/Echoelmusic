@@ -1247,12 +1247,14 @@ private struct RegionWaveform: View {
     @State private var overview: WaveformOverview?
 
     var body: some View {
-        // Read in `body`, not only in the renderer, so the landing read re-renders the leaf.
-        let overview = self.overview
+        // Read in `body`, not only in the renderer, so the landing read re-renders the leaf. A
+        // different name than the property: the task below writes `overview`, and a local of
+        // the same name would shadow it as a constant.
+        let picture = self.overview
         let offset = self.offset, length = self.length, level = self.level, tint = self.tint
         Canvas { context, size in
-            guard let overview, size.width > 0, size.height > 0 else { return }
-            let columns = overview.window(offset: offset, length: length,
+            guard let picture, size.width > 0, size.height > 0 else { return }
+            let columns = picture.window(offset: offset, length: length,
                                           columns: Self.columnCount(forWidth: Double(size.width)))
             guard !columns.isEmpty else { return }
             let mid = size.height / 2
