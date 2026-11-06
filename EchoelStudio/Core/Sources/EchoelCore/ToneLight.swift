@@ -208,6 +208,69 @@ public enum ToneLight {
         return Contrast.ratio(black, fill) >= Contrast.ratio(white, fill) ? black : white
     }
 
+    // MARK: - A spectrum as a line of light
+
+    /// The spectrum meter's colours: unlike `colour(forToneHz:)`, NOT folded by octaves — the
+    /// audible range laid along the visible band on a log axis, so every band of a spectrum,
+    /// fundamental and overtone alike, reads as its own colour: `lineLowestHz` and below at the red
+    /// edge (640 nm), `lineHighestHz` and above at the violet edge (420 nm). The well-visible span
+    /// rather than the full 700 … 400 nm, whose ends the eye barely sees and would draw near black.
+    public static let lineLowestHz = 30.0
+    public static let lineHighestHz = 16_000.0
+
+    /// Where `frequency` sits on the line, nanometres (640 … 420, falling as the pitch rises); nil
+    /// for a frequency that is not a positive, finite number.
+    public static func lineWavelength(forFrequency frequency: Double) -> Double? {
+        guard frequency.isFinite, frequency > 0 else { return nil }
+        let place = unit(Foundation.log(frequency / lineLowestHz) / Foundation.log(lineHighestHz / lineLowestHz))
+        return redEdgeNanometres - place * (redEdgeNanometres - violetEdgeNanometres)
+    }
+
+    /// The colour of `frequency` on the line; neutral for an invalid one.
+    public static func line(forFrequency frequency: Double) -> RGB {
+        guard let nanometres = lineWavelength(forFrequency: frequency) else { return neutral }
+        return spectrum(nanometres: nanometres)
+    }
+
+    /// The centre (geometric mean of its edges) of band `band` of `count` spaced evenly on a log
+    /// axis from `lowest` to `highest` hertz — the spacing of the Field's spectrum meter
+    /// (`SpectrumAnalyzer.bandLevels`). nil outside the bands or for invalid edges.
+    public static func bandCentre(_ band: Int, of count: Int, lowest: Double = 20, highest: Double = 20_000) -> Double? {
+        guard count > 0, (0..<count).contains(band), lowest.isFinite, highest.isFinite, lowest > 0, highest > lowest else {
+            return nil
+        }
+        return lowest * Foundation.exp(Foundation.log(highest / lowest) * (Double(band) + 0.5) / Double(count))
+    }
+
+    // MARK: - The readout
+
+    /// The physics of one pitch, written out: "A4 · 440 Hz · 40 octaves · 484 THz · 620 nm" — the
+    /// note, its frequency at `concertPitch`, how many octaves up it reaches light, that light's
+    /// frequency and wavelength. nil for a pitch outside MIDI's 0 … 127.
+    public static func readout(pitch: Int, concertPitch: Double) -> String? {
+        guard let parts = readoutParts(pitch: pitch, concertPitch: concertPitch) else { return nil }
+        return "\(parts.name) · \(parts.hertz) Hz · \(parts.octaves) octaves · \(parts.terahertz) THz · \(parts.nanometres) nm"
+    }
+
+    /// The same, as VoiceOver says it.
+    public static func spokenReadout(pitch: Int, concertPitch: Double) -> String? {
+        guard let parts = readoutParts(pitch: pitch, concertPitch: concertPitch) else { return nil }
+        return "\(parts.name), \(parts.hertz) hertz, \(parts.octaves) octaves up, "
+            + "\(parts.terahertz) terahertz, \(parts.nanometres) nanometres"
+    }
+
+    private static func readoutParts(pitch: Int, concertPitch: Double)
+        -> (name: String, hertz: String, octaves: Int, terahertz: String, nanometres: String)? {
+        guard (0...127).contains(pitch) else { return nil }
+        let tone = ToneLight.hertz(ofPitch: pitch, concertPitch: concertPitch)
+        guard let up = ToneLight.octaves(forToneHz: tone), let light = ToneLight.lightHertz(forToneHz: tone),
+              let length = ToneLight.wavelength(forToneHz: tone) else { return nil }
+        var shownHertz = String(format: "%.1f", tone)
+        if shownHertz.hasSuffix(".0") { shownHertz.removeLast(2) }
+        return (NoteEditing.name(of: pitch), shownHertz, up,
+                String(format: "%.0f", light / 1e12), String(format: "%.0f", length))
+    }
+
     // MARK: - Helpers
 
     /// log2(f_anchor / f): how many octaves below the light octave's bottom the tone sits.

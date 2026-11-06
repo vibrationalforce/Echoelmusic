@@ -180,6 +180,51 @@ final class ToneLightTests: XCTestCase {
         XCTAssertEqual(ToneLight.RGB(encodedRed: 0.7354, green: 0, blue: 0).red, 0.5, accuracy: 1e-3)
     }
 
+    /// The spectrum meter's line: not folded, the audible range along the visible band — a 30 Hz
+    /// band at the red end, a 16 kHz band at the violet end, the wavelength falling all the way.
+    func testTheSpectrumLineRunsFromRedToVioletWithoutTurningBack() throws {
+        XCTAssertEqual(try XCTUnwrap(ToneLight.lineWavelength(forFrequency: 30)), ToneLight.redEdgeNanometres, accuracy: 1e-9)
+        XCTAssertEqual(try XCTUnwrap(ToneLight.lineWavelength(forFrequency: 16_000)), ToneLight.violetEdgeNanometres, accuracy: 1e-9)
+        XCTAssertEqual(ToneLight.lineWavelength(forFrequency: 10), ToneLight.redEdgeNanometres, "below the line, its red end")
+        XCTAssertEqual(ToneLight.lineWavelength(forFrequency: 20_000), ToneLight.violetEdgeNanometres, "above, its violet end")
+        let red = ToneLight.line(forFrequency: 30), violet = ToneLight.line(forFrequency: 16_000)
+        XCTAssertGreaterThan(red.red, red.green)
+        XCTAssertGreaterThan(red.red, red.blue)
+        XCTAssertGreaterThan(violet.blue, violet.green)
+        XCTAssertGreaterThan(violet.blue, violet.red)
+        var previous = Double.infinity
+        for step in 0...200 {
+            let hertz = 30 * Foundation.pow(16_000 / 30, Double(step) / 200)
+            let nanometres = try XCTUnwrap(ToneLight.lineWavelength(forFrequency: hertz))
+            XCTAssertLessThan(nanometres, previous + 1e-9, "\(hertz) Hz")
+            previous = nanometres
+            XCTAssertGreaterThan(ToneLight.line(forFrequency: hertz).peak, 0.3, "no band is drawn dark: \(hertz) Hz")
+        }
+        XCTAssertNotEqual(ToneLight.line(forFrequency: 440), ToneLight.line(forFrequency: 880), "an octave is another colour here")
+        XCTAssertEqual(ToneLight.line(forFrequency: .nan), ToneLight.neutral)
+        XCTAssertEqual(ToneLight.line(forFrequency: -1), ToneLight.neutral)
+    }
+
+    func testTheMetersBandsAreCentredOnTheirLogSpacing() throws {
+        XCTAssertEqual(try XCTUnwrap(ToneLight.bandCentre(0, of: 30)), 20 * Foundation.pow(1_000, 0.5 / 30), accuracy: 1e-9)
+        XCTAssertEqual(try XCTUnwrap(ToneLight.bandCentre(29, of: 30)), 20 * Foundation.pow(1_000, 29.5 / 30), accuracy: 1e-6)
+        XCTAssertNil(ToneLight.bandCentre(30, of: 30))
+        XCTAssertNil(ToneLight.bandCentre(0, of: 0))
+        XCTAssertNil(ToneLight.bandCentre(0, of: 30, lowest: 100, highest: 50))
+    }
+
+    func testTheReadoutWritesOutThePhysics() {
+        XCTAssertEqual(ToneLight.readout(pitch: 69, concertPitch: 440), "A4 · 440 Hz · 40 octaves · 484 THz · 620 nm")
+        XCTAssertEqual(ToneLight.readout(pitch: 81, concertPitch: 440), "A5 · 880 Hz · 39 octaves · 484 THz · 620 nm")
+        XCTAssertEqual(ToneLight.readout(pitch: 60, concertPitch: 440), "C4 · 261.6 Hz · 41 octaves · 575 THz · 521 nm")
+        XCTAssertEqual(ToneLight.spokenReadout(pitch: 69, concertPitch: 440),
+                       "A4, 440 hertz, 40 octaves up, 484 terahertz, 620 nanometres")
+        XCTAssertNil(ToneLight.readout(pitch: 128, concertPitch: 440))
+        XCTAssertNil(ToneLight.readout(pitch: -1, concertPitch: 440))
+        XCTAssertEqual(ToneLight.readout(pitch: 69, concertPitch: .nan), ToneLight.readout(pitch: 69, concertPitch: 440),
+                       "a bad concert pitch counts as 440")
+    }
+
     func testAColourHoldsItsChannelsToUnit() {
         XCTAssertEqual(ToneLight.RGB(red: 2, green: -1, blue: .nan), ToneLight.RGB(red: 1, green: 0, blue: 0))
         XCTAssertEqual(ToneLight.RGB(grey: 0.5).scaled(by: 0.5), ToneLight.RGB(grey: 0.25))

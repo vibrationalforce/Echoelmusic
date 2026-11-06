@@ -152,6 +152,13 @@ struct FieldMeterView: View {
         }
     }
 
+    /// Each band's colour on the spectrum line (`ToneLight.line`): the audible range laid along the
+    /// visible band, low bands red, high bands violet. Fixed per band, so no reading changes a colour.
+    private static let bandColours: [Color] = (0..<FieldSpectrum.bandCount).map { (band: Int) -> Color in
+        let centre = ToneLight.bandCentre(band, of: FieldSpectrum.bandCount) ?? ToneLight.lineLowestHz
+        return Theme.Color.linear(ToneLight.line(forFrequency: centre))
+    }
+
     private static func drawSpectrum(_ bands: [Double], in canvas: inout GraphicsContext, size: CGSize) {
         guard bands.count > 1 else { return }
         let inset: CGFloat = 12
@@ -166,13 +173,18 @@ struct FieldMeterView: View {
             grid.addLine(to: CGPoint(x: inset + width, y: y))
         }
         canvas.stroke(grid, with: .color(Theme.Color.border), lineWidth: 1)
-        var line = Path()
-        for (index, level) in bands.enumerated() {
-            let x = inset + width * CGFloat(index) / CGFloat(bands.count - 1)
-            let y = inset + height * CGFloat(1 - Swift.min(Swift.max(level, 0), 1))
-            if index == 0 { line.move(to: CGPoint(x: x, y: y)) } else { line.addLine(to: CGPoint(x: x, y: y)) }
+        // One thin segment a band, in the band's colour: still a line, never a filled area.
+        func point(_ index: Int) -> CGPoint {
+            CGPoint(x: inset + width * CGFloat(index) / CGFloat(bands.count - 1),
+                    y: inset + height * CGFloat(1 - Swift.min(Swift.max(bands[index], 0), 1)))
         }
-        canvas.stroke(line, with: .color(Theme.Color.accent), lineWidth: 1.5)
+        for index in 1..<bands.count {
+            var segment = Path()
+            segment.move(to: point(index - 1))
+            segment.addLine(to: point(index))
+            let colour = index < bandColours.count ? bandColours[index] : Theme.Color.accent
+            canvas.stroke(segment, with: .color(colour), lineWidth: 1.5)
+        }
     }
 
     private static func drawScope(_ trace: [Float], in canvas: inout GraphicsContext, size: CGSize) {

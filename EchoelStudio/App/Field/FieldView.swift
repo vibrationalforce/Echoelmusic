@@ -39,6 +39,10 @@ struct FieldView: View {
             FieldMeterView(meter: meter, reduceMotion: motionReduced)
         } else {
             picture
+                .overlay(alignment: .bottomLeading) {
+                    // The audience's screen shows the picture alone.
+                    if !onStage { FieldToneReadout() }
+                }
         }
     }
 
@@ -69,6 +73,33 @@ struct FieldView: View {
         #else
         FieldCanvasView()
         #endif
+    }
+}
+
+/// The physics under the picture's colour, written out for the key's tonic: "A4 · 440 Hz ·
+/// 40 octaves · 484 THz · 620 nm" — the pitch, how many octaves up it reaches light, that light's
+/// frequency and wavelength (`ToneLight.readout`). It changes only with the song's key or concert
+/// pitch, never with the playhead.
+private struct FieldToneReadout: View {
+    @Environment(ProjectStore.self) private var store
+
+    var body: some View {
+        let context = store.project.context
+        let tonic = 60 + ((context.root % 12) + 12) % 12
+        if let text = ToneLight.readout(pitch: tonic, concertPitch: context.concertPitch) {
+            Text(text)
+                .font(Theme.Font.caption)
+                .monospacedDigit()
+                .foregroundStyle(Theme.Color.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.horizontal, Theme.Space.s)
+                .padding(.vertical, Theme.Space.xs)
+                .background(Theme.Color.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.small))
+                .padding(Theme.Space.s)
+                .allowsHitTesting(false)
+                .accessibilityLabel(ToneLight.spokenReadout(pitch: tonic, concertPitch: context.concertPitch) ?? text)
+        }
     }
 }
 
