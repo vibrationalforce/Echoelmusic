@@ -214,6 +214,6 @@ final class ConnectionsMessagesTests: XCTestCase {
         XCTAssertEqual(slew.current, step)
         var settled = LightSlew()
         for _ in 0..<60 { _ = settled.next(towards: LightFixture.Look(dimmer: 0.4, red: 0.2, green: 0.2, blue: 0.2), after: 0.1) }
-        assertLook(settled.current, 0.4, 0.2, 0.2, 0.2, "a steady look arrives")
+        assertLook(settled.current, 0.4, ToneLight.RGB(grey: 0.2), "a steady look arrives")
     }
 }
