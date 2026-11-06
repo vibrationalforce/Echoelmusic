@@ -147,7 +147,7 @@ public final class StandardEffectUnit: AUAudioUnit {
         outputBus = output
         inputs = AUAudioUnitBusArray(audioUnit: self, busType: .input, busses: [input])
         outputs = AUAudioUnitBusArray(audioUnit: self, busType: .output, busses: [output])
-        tree = Self.makeTree(render.kernel.parameters)
+        tree = Self.makeTree(effect, render.kernel.parameters)
         let state = render
         tree?.implementorValueObserver = { parameter, value in
             state.kernel.setParameter(Int(parameter.address), value)
@@ -158,7 +158,10 @@ public final class StandardEffectUnit: AUAudioUnit {
         maximumFramesToRender = 4_096
     }
 
-    private static func makeTree(_ parameters: [EffectParameter]) -> AUParameterTree {
+    /// The tree a host reaches: `.flag_CanRamp` exactly where the kernel runs a host's ramp over
+    /// its frames (`EffectKernel.canRamp`) — never on a named choice or a switch. A host ramps the
+    /// others by sending values, which a ramp event taken at its end value would skip.
+    private static func makeTree(_ effect: StandardEffect, _ parameters: [EffectParameter]) -> AUParameterTree {
         let children = parameters.map { parameter in
             let unit: AudioUnitParameterUnit = switch parameter.unit {
             case .seconds: .seconds
@@ -169,12 +172,13 @@ public final class StandardEffectUnit: AUAudioUnit {
             case .boolean: .boolean
             case .choice: .indexed
             }
+            var flags: AudioUnitParameterOptions = [.flag_IsReadable, .flag_IsWritable]
+            if EffectKernel.canRamp(effect, parameter.address) { flags.insert(.flag_CanRamp) }
             let node = AUParameterTree.createParameter(
                 withIdentifier: parameter.identifier, name: parameter.title,
                 address: AUParameterAddress(parameter.address),
                 min: parameter.range.lowerBound, max: parameter.range.upperBound, unit: unit, unitName: nil,
-                // No `.flag_CanRamp`: a ramp event is taken as its end value, so the host ramps (A9).
-                flags: [.flag_IsReadable, .flag_IsWritable],
+                flags: flags,
                 // A named choice reaches a host as its names: GarageBand and AUM show a menu.
                 valueStrings: parameter.choices.isEmpty ? nil : parameter.choices,
                 dependentParameters: nil)
@@ -344,9 +348,19 @@ public final class StandardEffectUnit: AUAudioUnit {
                     if !bypassed { kernel.process(left: left + done, right: right + done, frames: offset - done) }
                     done = offset
                 }
-                if header.eventType == .parameter || header.eventType == .parameterRamp {
+                if header.eventType == .parameter {
                     let parameter = current.pointee.parameter
                     kernel.setParameter(Int(parameter.parameterAddress), parameter.value)
+                } else if header.eventType == .parameterRamp {
+                    // The ramp runs over its frames where the kernel can (`canRamp`); bypassed, the
+                    // kernel does not play, so it takes the end value and comes back there.
+                    let parameter = current.pointee.parameter
+                    if bypassed {
+                        kernel.setParameter(Int(parameter.parameterAddress), parameter.value)
+                    } else {
+                        kernel.rampParameter(Int(parameter.parameterAddress), to: parameter.value,
+                                             frames: Int(parameter.rampDurationSampleFrames))
+                    }
                 }
                 event = UnsafePointer(header.next)
             }

@@ -352,4 +352,58 @@ final class EffectKernelTests: XCTestCase {
         XCTAssertGreaterThan(out[300..<700].map { abs($0) }.max() ?? 0, 0.5, "the first repeat")
         XCTAssertLessThan(out[(tailFrames + 50)...].map { abs($0) }.max() ?? 1, 0.001)
     }
+
+    /// A host's ramp runs over its frames exactly where the kernel says it can: a number moves in a
+    /// straight line — a tenth of the way after a tenth of a one-second ramp — and a named choice,
+    /// a switch and the delay's time (which glides itself) take the end value at once.
+    func testAHostsRampRunsOverItsFramesExactlyWhereTheKernelCanRamp() {
+        let silence = [Float](repeating: 0, count: 256)
+        let tenth = [Float](repeating: 0, count: 4_800)
+        for effect in StandardEffect.allCases {
+            for p in EffectKernel.parameters(for: effect) {
+                let kernel = EffectKernel(effect: effect, sampleRate: rate)
+                _ = process(kernel, silence)
+                let start = kernel.playingValue(p.address)
+                let end = p.defaultValue - p.range.lowerBound > p.range.upperBound - p.defaultValue
+                    ? p.range.lowerBound : p.range.upperBound
+                kernel.rampParameter(p.address, to: end, frames: 48_000)
+                XCTAssertEqual(kernel.parameter(p.address), end, "\(effect) \(p.identifier) is set to its end")
+                _ = process(kernel, tenth)
+                let now = kernel.playingValue(p.address)
+                let label = "\(effect) \(p.identifier)"
+                if EffectKernel.canRamp(effect, p.address) {
+                    XCTAssertEqual(now, start + (end - start) * 0.1, accuracy: abs(end - start) * 1e-3, label)
+                } else {
+                    XCTAssertEqual(now, end, label)
+                }
+                if p.unit == .choice || p.unit == .boolean {
+                    XCTAssertFalse(EffectKernel.canRamp(effect, p.address), "\(label) never ramps")
+                }
+            }
+        }
+        XCTAssertFalse(EffectKernel.canRamp(.delay, 0), "the delay's time glides itself")
+        XCTAssertTrue(EffectKernel.canRamp(.reverb, 1))
+        XCTAssertFalse(EffectKernel.canRamp(.reverb, 99))
+    }
+
+    /// A ramp shorter than a glide is stretched to one, so a host's 32-frame step still glides; a
+    /// value set during a ramp replaces it; a ramp before the first block is taken at once.
+    func testAShortRampGlidesAndANewValueReplacesARamp() {
+        let kernel = EffectKernel(effect: .equalizer, sampleRate: rate)
+        kernel.rampParameter(10, to: 12, frames: 4_800)
+        _ = process(kernel, [Float](repeating: 0, count: 32))
+        XCTAssertEqual(kernel.playingValue(10), 12, "before the first block the song's value is taken at once")
+
+        kernel.rampParameter(10, to: -12, frames: 32)
+        _ = process(kernel, [Float](repeating: 0, count: 64))
+        XCTAssertGreaterThan(kernel.playingValue(10), 0, "64 frames into a 32-frame ramp of 24 dB it is still on its way")
+        _ = process(kernel, [Float](repeating: 0, count: 960))
+        XCTAssertEqual(kernel.playingValue(10), -12, "after the glide it is there")
+
+        kernel.rampParameter(10, to: 12, frames: 48_000)
+        _ = process(kernel, [Float](repeating: 0, count: 480))
+        kernel.setParameter(10, -6)
+        _ = process(kernel, [Float](repeating: 0, count: 9_600))
+        XCTAssertEqual(kernel.playingValue(10), -6, accuracy: 1e-3, "the newer value wins over the ramp")
+    }
 }

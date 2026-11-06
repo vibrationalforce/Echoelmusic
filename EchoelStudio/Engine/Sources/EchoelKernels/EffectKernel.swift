@@ -57,6 +57,16 @@ public final class EffectKernel: @unchecked Sendable {
     /// close to its value it counts as there.
     private let glides: UnsafeMutablePointer<Bool>
     private let arrived: UnsafeMutablePointer<Float>
+    /// Render thread, per parameter: a host's ramp (`rampParameter`) — the frames it still runs, the
+    /// step per frame and the value it ends on. A ramp whose end is no longer the set value (a newer
+    /// value came) gives way to the ordinary glide.
+    private let rampLeft: UnsafeMutablePointer<Int>
+    private let rampStep: UnsafeMutablePointer<Float>
+    private let rampEnd: UnsafeMutablePointer<Float>
+    /// The shortest ramp the kernel runs, in frames: one glide's time constant. A host's shorter
+    /// ramp — the engine's automation sends one every 32 frames — is stretched to it, so a step
+    /// in a lane still glides as the click hunt asked instead of jumping in 32 frames.
+    private let shortestRamp: Int
     private var isGliding = false
     private var hasProcessed = false
     /// Frames between two settings while a value glides: 0.67 ms at 48 kHz.
@@ -99,11 +109,18 @@ public final class EffectKernel: @unchecked Sendable {
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
         self.effect = effect
         self.sampleRate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
+        shortestRamp = Swift.max(1, Int((Double(Self.glideSeconds) * self.sampleRate).rounded()))
         parameters = Self.parameters(for: effect)
         values = .allocate(capacity: parameters.count)
         playing = .allocate(capacity: parameters.count)
         glides = .allocate(capacity: parameters.count)
         arrived = .allocate(capacity: parameters.count)
+        rampLeft = .allocate(capacity: parameters.count)
+        rampLeft.initialize(repeating: 0, count: parameters.count)
+        rampStep = .allocate(capacity: parameters.count)
+        rampStep.initialize(repeating: 0, count: parameters.count)
+        rampEnd = .allocate(capacity: parameters.count)
+        rampEnd.initialize(repeating: 0, count: parameters.count)
         for (index, parameter) in parameters.enumerated() {
             let value = index < from.count && from[index].isFinite ? from[index] : parameter.defaultValue
             (values + index).initialize(to: Atomic(Self.clamp(value, parameter).bitPattern))
@@ -148,6 +165,9 @@ public final class EffectKernel: @unchecked Sendable {
         playing.deallocate()
         glides.deallocate()
         arrived.deallocate()
+        rampLeft.deallocate()
+        rampStep.deallocate()
+        rampEnd.deallocate()
     }
 
     /// Whether the kernel glides `parameter`: every number, but not a named choice or a switch,
@@ -156,6 +176,16 @@ public final class EffectKernel: @unchecked Sendable {
     private static func glidesHere(_ effect: StandardEffect, _ parameter: EffectParameter) -> Bool {
         guard parameter.unit != .choice, parameter.unit != .boolean else { return false }
         return !(effect == .delay && parameter.identifier == "time")
+    }
+
+    /// Whether `rampParameter` runs a host's ramp of `address` over its frames — what an Audio Unit
+    /// tells a host with `.flag_CanRamp`. Exactly the parameters the kernel glides: every number,
+    /// never a named choice or a switch, and not the delay's time, which glides itself. A host
+    /// ramps the others by sending values.
+    public static func canRamp(_ effect: StandardEffect, _ address: Int) -> Bool {
+        let list = parameters(for: effect)
+        guard address >= 0, address < list.count else { return false }
+        return glidesHere(effect, list[address])
     }
 
     private static func clamp(_ value: Float, _ parameter: EffectParameter) -> Float {
@@ -173,6 +203,30 @@ public final class EffectKernel: @unchecked Sendable {
     public func parameter(_ address: Int) -> Float {
         guard address >= 0, address < parameters.count else { return 0 }
         return Float(bitPattern: values[address].load(ordering: .relaxed))
+    }
+
+    /// Render thread, between two `process` calls: a host's parameter ramp — `address` moves in a
+    /// straight line from where the sound stands to `value` over the next `frames` frames (at least
+    /// `glideSeconds`), set again every `glideFrames`. Where the kernel does not glide (`canRamp`
+    /// false), before the first block and for a ramp of no frames, it is `setParameter`: a choice
+    /// or a switch changes at once, a number glides as for any new value.
+    public func rampParameter(_ address: Int, to value: Float, frames: Int) {
+        guard address >= 0, address < parameters.count else { return }
+        let end = Self.clamp(value, parameters[address])
+        setParameter(address, end)
+        rampLeft[address] = 0
+        guard frames > 0, hasProcessed, glides[address], playing[address] != end else { return }
+        guard (end - playing[address]).isFinite else { return }
+        let length = Swift.max(frames, shortestRamp)
+        rampLeft[address] = length
+        rampStep[address] = (end - playing[address]) / Float(length)
+        rampEnd[address] = end
+    }
+
+    /// What the sound plays now for `address` (the set value, or where a glide or a ramp has got
+    /// to). Render thread, or a test between two blocks.
+    func playingValue(_ address: Int) -> Float {
+        address >= 0 && address < parameters.count ? playing[address] : 0
     }
 
     /// Any thread, the render thread included (the engine hands every insert the snapshot's key at
@@ -327,6 +381,22 @@ public final class EffectKernel: @unchecked Sendable {
         for index in 0..<parameters.count where glides[index] {
             let target = Float(bitPattern: values[index].load(ordering: .relaxed))
             var now = playing[index]
+            if rampLeft[index] > 0 {
+                if rampEnd[index] == target {
+                    let run = Swift.min(frames, rampLeft[index])
+                    rampLeft[index] -= run
+                    now = rampLeft[index] == 0 ? target : now + rampStep[index] * Float(run)
+                    if !now.isFinite {
+                        now = target
+                        rampLeft[index] = 0
+                    }
+                    if rampLeft[index] > 0 { moving = true }
+                    playing[index] = now
+                    continue
+                }
+                // A newer value replaced the ramp's end: glide to it as to any other.
+                rampLeft[index] = 0
+            }
             guard now != target else { continue }
             now = target + (now - target) * pole
             if Swift.abs(now - target) <= arrived[index] || !now.isFinite {

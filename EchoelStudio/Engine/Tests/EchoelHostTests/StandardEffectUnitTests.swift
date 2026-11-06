@@ -353,4 +353,74 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertGreaterThan(reverb.tailTime, before)
         XCTAssertEqual(try unit(.equalizer).tailTime, 0)
     }
+
+    /// The tree tells a host `.flag_CanRamp` exactly where the kernel runs a ramp, and never on an
+    /// indexed choice or a switch.
+    func testTheTreeSaysCanRampExactlyWhereTheKernelRamps() throws {
+        for effect in StandardEffect.allCases {
+            let tree = try XCTUnwrap(try unit(effect).parameterTree)
+            for node in tree.allParameters {
+                let label = "\(effect) \(node.identifier)"
+                XCTAssertEqual(node.flags.contains(.flag_CanRamp), EffectKernel.canRamp(effect, Int(node.address)), label)
+                if node.unit == .indexed || node.unit == .boolean {
+                    XCTAssertFalse(node.flags.contains(.flag_CanRamp), "\(label) never ramps")
+                }
+            }
+        }
+        let reverb = try XCTUnwrap(try unit(.reverb).parameterTree)
+        XCTAssertTrue(reverb.parameter(withAddress: 1)?.flags.contains(.flag_CanRamp) ?? false, "the decay ramps")
+    }
+
+    /// A host's scheduled ramp moves the value over the ramp's length: the width, ramped from 1.4 to
+    /// 0 over 8,192 frames, is about half way after 4,096 — a ramp taken as its end value would have
+    /// narrowed a pure side signal to silence within a few milliseconds.
+    func testAScheduledRampMovesTheValueOverItsLength() throws {
+        let width = try unit(.stereoWidth)
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4_096),
+              let channels = buffer.floatChannelData else {
+            return XCTFail("no stereo buffer")
+        }
+        let side: AURenderPullInputBlock = { _, _, frames, _, list in
+            for (index, channel) in UnsafeMutableAudioBufferListPointer(list).enumerated() {
+                guard let data = channel.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                for frame in 0..<Int(frames) { data[frame] = index == 0 ? 0.5 : -0.5 }
+            }
+            return noErr
+        }
+        let block = width.internalRenderBlock
+        var stamp = AudioTimeStamp()
+        stamp.mFlags = .sampleTimeValid
+        var flags = AudioUnitRenderActionFlags()
+        buffer.frameLength = 256
+        XCTAssertEqual(block(&flags, &stamp, 256, 0, buffer.mutableAudioBufferList, nil, side), noErr)
+        XCTAssertEqual(channels[0][255], 0.7, accuracy: 0.01, "width 1.4 on a side of 0.5")
+
+        stamp.mSampleTime += 256
+        var ramp = AUParameterEvent()
+        ramp.eventSampleTime = AUEventSampleTime(stamp.mSampleTime)
+        ramp.eventType = .parameterRamp
+        ramp.rampDurationSampleFrames = 8_192
+        ramp.parameterAddress = 0
+        ramp.value = 0
+        var event = AURenderEvent()
+        event.parameter = ramp
+        buffer.frameLength = 4_096
+        flags = AudioUnitRenderActionFlags()
+        let played = withUnsafePointer(to: event) { list in
+            block(&flags, &stamp, 4_096, 0, buffer.mutableAudioBufferList, list, side)
+        }
+        XCTAssertEqual(played, noErr)
+        XCTAssertGreaterThan(channels[0][1_024], channels[0][3_072], "it narrows as it goes")
+        XCTAssertGreaterThan(channels[0][4_095], 0.3, "half way, not at the end")
+        XCTAssertLessThan(channels[0][4_095], 0.45)
+
+        stamp.mSampleTime += 4_096
+        flags = AudioUnitRenderActionFlags()
+        XCTAssertEqual(block(&flags, &stamp, 4_096, 0, buffer.mutableAudioBufferList, nil, side), noErr)
+        stamp.mSampleTime += 4_096
+        flags = AudioUnitRenderActionFlags()
+        XCTAssertEqual(block(&flags, &stamp, 4_096, 0, buffer.mutableAudioBufferList, nil, side), noErr)
+        XCTAssertLessThan(channels[0][4_095], 0.01, "the ramp has arrived")
+    }
 }
