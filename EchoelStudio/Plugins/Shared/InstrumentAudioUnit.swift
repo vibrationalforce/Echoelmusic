@@ -18,6 +18,10 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     private var busArray: AUAudioUnitBusArray?
     private var tree: AUParameterTree?
     private let render: RenderState
+    /// The kernel's starting sounds, and the menu a host shows for them (`factoryPresets`).
+    private let presets: [InstrumentKernelPreset]
+    private let presetMenu: [AUAudioUnitPreset]
+    private var selectedPreset: AUAudioUnitPreset?
     private let log = Logger(subsystem: "com.echoelmusic.studio.plugins", category: "instrument")
 
     /// The sample a sampler kernel plays, kept here so a new kernel (a new sample rate) and the
@@ -77,6 +81,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         self.title = title
         self.help = help
         render = RenderState(kernel: kernel.init(sampleRate: 48_000, maximumFrames: 4_096))
+        presets = kernel.factoryPresets
+        presetMenu = InstrumentPresets.menu(presets)
         try super.init(componentDescription: componentDescription, options: options)
         guard let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2) else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_FormatNotSupported))
@@ -94,6 +100,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             state.kernel.parameter(Int(parameter.address))
         }
         maximumFramesToRender = 4_096
+        // The tree starts at the parameters' defaults, which is the first preset ("Init").
+        selectedPreset = presetMenu.first
     }
 
     private static func makeTree(_ parameters: [InstrumentKernelParameter]) -> AUParameterTree {
@@ -123,6 +131,26 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     override var parameterTree: AUParameterTree? {
         get { tree }
         set { tree = newValue }
+    }
+
+    /// The app's presets for this instrument, numbered by their place; none for the drums and the
+    /// sampler, which have none in the app either.
+    override var factoryPresets: [AUAudioUnitPreset]? { presetMenu }
+
+    /// A host chooses a preset from its own interface, never on the render thread. A factory
+    /// preset sets every value through the parameter tree, so the host's controls follow; a number
+    /// this build does not list changes nothing and keeps the preset chosen before.
+    override var currentPreset: AUAudioUnitPreset? {
+        get { selectedPreset }
+        set {
+            guard let newValue else {
+                selectedPreset = nil
+                return
+            }
+            guard let preset = InstrumentPresets.factory(newValue.number, in: presets), let tree else { return }
+            InstrumentPresets.apply(preset, to: tree)
+            selectedPreset = newValue
+        }
     }
 
     override var outputBusses: AUAudioUnitBusArray {

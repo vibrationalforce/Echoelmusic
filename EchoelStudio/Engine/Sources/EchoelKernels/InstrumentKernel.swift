@@ -40,6 +40,8 @@ public struct InstrumentKernelParameter: Sendable, Equatable {
 /// `render` only from the render thread, and neither may allocate.
 public protocol InstrumentKernel: AnyObject, Sendable {
     static var parameters: [InstrumentKernelParameter] { get }
+    /// The starting sounds a host lists as factory presets, numbered by their place. None by default.
+    static var factoryPresets: [InstrumentKernelPreset] { get }
     init(sampleRate: Double, maximumFrames: Int)
     var sampleRate: Double { get }
     func setParameter(_ address: Int, _ value: Float)
@@ -53,6 +55,8 @@ public protocol InstrumentKernel: AnyObject, Sendable {
 }
 
 extension InstrumentKernel {
+    public static var factoryPresets: [InstrumentKernelPreset] { [] }
+
     public func rampParameter(_ address: Int, to value: Float, frames: Int) { setParameter(address, value) }
 
     /// Render thread: one MIDI 1.0 channel message as a host delivers it, `length` bytes. Channel
@@ -111,6 +115,9 @@ extension SynthKernel: InstrumentKernel {
     public static var parameters: [InstrumentKernelParameter] {
         InstrumentDevice.synth.parameters.map(InstrumentKernelParameter.init)
     }
+
+    /// The synth's presets of the app (`InstrumentPreset.all`).
+    public static var factoryPresets: [InstrumentKernelPreset] { InstrumentKernelPreset.factory(for: .synth) }
 }
 
 extension SynthKernel: EngineInstrumentKernel {}
