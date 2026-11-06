@@ -44,7 +44,20 @@ public final class EngineCore: @unchecked Sendable {
     /// Whether the render thread writes each loop wrap into `loopWraps` (Loop record): on only while
     /// a take records, so the ring never fills while nothing reads it.
     private let wrapFlag = Atomic<Bool>(false)
+    /// A count-in to start (`CountIn.packed`), `countInCancel` to call one off, 0 for nothing. The
+    /// main thread stores, the render thread drains it with `exchange`.
+    private let countInRequest = Atomic<UInt64>(0)
+    private static let countInCancel = UInt64.max
     // Render → main.
+    /// A count-in clicks: from before the render thread drains its request until its downbeat or
+    /// its cancel. Written by the render thread only.
+    private let countingIn = Atomic<Bool>(false)
+    /// Samples left before the count-in's downbeat, at the end of the last chunk.
+    private let countInLeftShown = Atomic<Int64>(0)
+    /// Frames of the last render call that came before a count-in's downbeat inside it; 0 in a
+    /// call the transport played whole or not at all. An input block that arrives with that call
+    /// records from the downbeat on (`countInLead`).
+    private let countInLeadWord = Atomic<Int64>(0)
     private let acknowledged = Atomic<UInt64>(0)
     private let position = Atomic<Int64>(0)
     /// Frames rendered while playing since the core was made: a clock that never jumps — not at a
@@ -197,6 +210,14 @@ public final class EngineCore: @unchecked Sendable {
     private let clickLeft: UnsafeMutablePointer<Float>
     private let clickRight: UnsafeMutablePointer<Float>
     private var metronome: Metronome
+    /// The count-in's own click: it sounds whether or not the song's click is on.
+    private var countClick: Metronome
+    /// Render thread: the running count-in, the samples it has clicked and those left before its
+    /// downbeat; and, within one render call, the frames before a downbeat reached in it.
+    private var countIn: CountIn?
+    private var countInDone: Int64 = 0
+    private var countInLeft: Int64 = 0
+    private var countInLead: Int64 = 0
     /// The live output's guard (AUD, 2026-11-01): a brick-wall limiter on every output pair, the
     /// last thing before the device, so no sample reaches the converter above `outputCeilingDB`.
     /// A dense song on the starter's own presets peaked at +2.6 dBFS — 95 samples in eight seconds
@@ -412,6 +433,7 @@ public final class EngineCore: @unchecked Sendable {
         outputs = .allocate(capacity: Track.outputChannelLimit)
         outputs.initialize(repeating: monoRight, count: Track.outputChannelLimit)
         metronome = Metronome(sampleRate: Float(rate))
+        countClick = Metronome(sampleRate: Float(rate))
         arps = LiveArpeggiators(slots: self.slotCapacity)
         let ceiling = Limiter.Settings(gain: 0, ceiling: Self.outputCeilingDB, release: 0.06)
         guards = (0..<Swift.max(1, Track.outputChannelLimit / 2)).map { _ in Limiter(sampleRate: rate, settings: ceiling) }
@@ -500,6 +522,37 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     public func play() { isPlayingFlag.store(true, ordering: .releasing) }
+
+    /// Main thread: clicks `countIn` from the next chunk and starts the transport on the sample
+    /// after its last beat — the downbeat, where the playhead stands now. Then `play()`: the
+    /// transport is held until the downbeat, whatever the buffer size. Ignored while playing.
+    public func startCountIn(_ countIn: CountIn) {
+        countInRequest.store(countIn.packed, ordering: .releasing)
+        isPlayingFlag.store(true, ordering: .releasing)
+    }
+
+    /// Main thread: a count-in still clicking stops, and the transport with it, where it stands:
+    /// nothing played, nothing recorded. Harmless without one.
+    public func cancelCountIn() {
+        isPlayingFlag.store(false, ordering: .releasing)
+        countInRequest.store(Self.countInCancel, ordering: .releasing)
+    }
+
+    /// Whether a count-in was asked for and neither its downbeat nor a cancel has come yet. Any
+    /// thread: the input recorder records nothing while it holds.
+    public var countsIn: Bool {
+        // The request first: the render thread marks the count-in before it drains the request.
+        let word = countInRequest.load(ordering: .acquiring)
+        guard word != Self.countInCancel else { return false }
+        return word != 0 || countingIn.load(ordering: .acquiring)
+    }
+
+    /// Samples left before the running count-in's downbeat; 0 without one. For a leaf view.
+    public var countInSamplesLeft: Int64 { countInLeftShown.load(ordering: .relaxed) }
+
+    /// Frames at the start of the last render call that came before a count-in's downbeat: the
+    /// input block of that call holds them before the take's first sample. 0 otherwise. Any thread.
+    public var countInLeadFrames: Int64 { countInLeadWord.load(ordering: .acquiring) }
 
     /// Whether the transport has been asked to play (`play`) and not since to stop. Any thread.
     public var transportPlays: Bool { isPlayingFlag.load(ordering: .acquiring) }
@@ -679,6 +732,7 @@ public final class EngineCore: @unchecked Sendable {
     public func render(frameCount: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
                        hostTime: UInt64 = 0) {
         callHostTime = hostTime
+        countInLead = 0
         var done = 0
         while done < frameCount {
             chunkStart = done
@@ -693,6 +747,7 @@ public final class EngineCore: @unchecked Sendable {
             guardOutput(frames: rendered)
             done += rendered
         }
+        countInLeadWord.store(countInLead, ordering: .releasing)
         publishAnchor(frames: frameCount)
     }
 
@@ -703,6 +758,7 @@ public final class EngineCore: @unchecked Sendable {
                        hostTime: UInt64 = 0) {
         guard channelCount > 0 else { return }
         callHostTime = hostTime
+        countInLead = 0
         let used = Swift.min(channelCount, Track.outputChannelLimit)
         for c in used..<channelCount { channels[c].update(repeating: 0, count: frameCount) }
         var done = 0
@@ -723,6 +779,7 @@ public final class EngineCore: @unchecked Sendable {
             }
             done += rendered
         }
+        countInLeadWord.store(countInLead, ordering: .releasing)
         publishAnchor(frames: frameCount)
     }
 
@@ -764,9 +821,18 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     /// Renders up to `requested` frames and says how many it did: fewer only when the song loop
-    /// ends inside them, so the wrap falls on its exact sample and the next chunk starts there.
+    /// or a count-in ends inside them, so the wrap or the downbeat falls on its exact sample and
+    /// the next chunk starts there.
     private func renderChunk(frames requested: Int) -> Int {
+        // The transport the main thread asks for, read BEFORE the count-in's request: a Play stored
+        // after its count-in then never starts without it. A cancel stops the transport too.
+        var asked = isPlayingFlag.load(ordering: .acquiring)
+        if takeCountIn() { asked = false }
         var frames = requested
+        // A count-in ends on its downbeat's exact sample: the chunk stops there, the next plays.
+        if countIn != nil { frames = Int(Swift.min(Int64(requested), Swift.max(countInLeft, 1))) }
+        // Held while a count-in clicks; it starts on the chunk after the last count-in sample.
+        let transportAsked = asked && countIn == nil
         meterFall = MeterBank.fall(frames: frames, sampleRate: sampleRate)
         for c in 0..<outputCount { outputs[c].update(repeating: 0, count: frames) }
         clickLeft.update(repeating: 0, count: frames)
@@ -815,7 +881,7 @@ public final class EngineCore: @unchecked Sendable {
         // values, and setting them here again would make the sound depend on the block size.
         let patchesMoved = patchesReset || seek >= 0 || !wasPlaying
         patchesReset = false
-        if patchesMoved, isPlayingFlag.load(ordering: .acquiring), let snapshot = current?.snapshot, snapshot.automatesPatches {
+        if patchesMoved, transportAsked, let snapshot = current?.snapshot, snapshot.automatesPatches {
             applyPatchAutomation(snapshot, at: snapshot.time.position(atSample: playhead))
         }
         // Routes on instrument values follow the body every chunk, playing or not (W2). While a
@@ -823,13 +889,13 @@ public final class EngineCore: @unchecked Sendable {
         // a start or a seek: a chunk's first sample is the device's buffer edge, and setting the
         // clock's value there would make the sound depend on the buffer size, as with lanes.
         if let snapshot = current?.snapshot, snapshot.modulatesPatches {
-            let playing = isPlayingFlag.load(ordering: .acquiring)
+            let playing = transportAsked
             if !(playing && snapshot.clocksPatches && !patchesMoved) {
                 applyPatchModulation(snapshot, at: snapshot.time.position(atSample: playhead), playing: playing)
             }
         }
         playLiveEvents()
-        let playing = isPlayingFlag.load(ordering: .acquiring)
+        let playing = transportAsked
         let clocking = clockFlag.load(ordering: .relaxed)
         if clocking { sendTransport(playing: playing, sought: seek >= 0) }
         let timecoding = sendTimecodeTransport(playing: playing, sought: seek >= 0)
@@ -871,6 +937,11 @@ public final class EngineCore: @unchecked Sendable {
             mixTo = held
             if let snapshot = current?.snapshot { follow(snapshot, playing: false, changed: transportMoved) }
             renderStopped(frames: frames)
+            if countIn != nil {
+                advanceCountIn(frames: frames)
+            } else {
+                countClick.render(left: clickLeft, right: clickRight, range: 0..<frames)
+            }
             renderUnits(frames: frames)
             mixLanes(frames: frames)
             if let snapshot = current?.snapshot {
@@ -969,6 +1040,8 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         renderVoices(rendered..<frames)
+        // The last count-in click's tail, when a beat is shorter than the click.
+        countClick.render(left: clickLeft, right: clickRight, range: 0..<frames)
         // Counted on with clock out off too, so switching it on mid-song sends no burst.
         sendClocks(snapshot, blockEnd: blockEnd, emitting: clocking)
         if timecoding {
@@ -992,6 +1065,57 @@ public final class EngineCore: @unchecked Sendable {
         playedCount += Int64(frames)
         played.store(playedCount, ordering: .releasing)
         return frames
+    }
+
+    /// Render thread: takes a count-in asked for, or its cancel. True when one was called off.
+    private func takeCountIn() -> Bool {
+        guard countInRequest.load(ordering: .acquiring) != 0 else { return false }
+        // Marked before the request is drained, so `countsIn` never reads false in between.
+        countingIn.store(true, ordering: .releasing)
+        let word = countInRequest.exchange(0, ordering: .acquiringAndReleasing)
+        guard word != Self.countInCancel, !wasPlaying, let asked = CountIn(packed: word) else {
+            endCountIn()
+            return word == Self.countInCancel
+        }
+        countIn = asked
+        countInDone = 0
+        countInLeft = asked.preRollSamples
+        countInLeftShown.store(countInLeft, ordering: .relaxed)
+        return false
+    }
+
+    /// Render thread: no count-in clicks any more.
+    private func endCountIn() {
+        countIn = nil
+        countInDone = 0
+        countInLeft = 0
+        countInLeftShown.store(0, ordering: .relaxed)
+        countingIn.store(false, ordering: .releasing)
+    }
+
+    /// Render thread: `frames` of the running count-in, each beat's click on its exact sample. The
+    /// chunk never runs past the downbeat (`renderChunk`), so the transport starts with the next.
+    private func advanceCountIn(frames: Int) {
+        guard let counting = countIn else { return }
+        var at = 0
+        var beat = Int((countInDone + counting.beatSamples - 1) / counting.beatSamples)
+        while beat < counting.beats {
+            let onset = Int64(beat) * counting.beatSamples - countInDone
+            guard onset < Int64(frames) else { break }
+            let offset = Swift.max(Int(onset), at)
+            countClick.render(left: clickLeft, right: clickRight, range: at..<offset)
+            countClick.trigger(accent: counting.isAccented(beat: beat))
+            at = offset
+            beat += 1
+        }
+        countClick.render(left: clickLeft, right: clickRight, range: at..<frames)
+        countInDone += Int64(frames)
+        countInLeft -= Int64(frames)
+        countInLeftShown.store(Swift.max(0, countInLeft), ordering: .relaxed)
+        if countInLeft <= 0 {
+            countInLead = Int64(chunkStart + frames)
+            endCountIn()
+        }
     }
 
     /// The loop's start and end as samples of this snapshot's time; nil while it is off.

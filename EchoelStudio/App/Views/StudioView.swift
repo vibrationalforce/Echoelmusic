@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelEngine
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -353,6 +354,7 @@ struct TransportBar: View {
             Toggle(isOn: Binding(get: { clickOn }, set: { clickOn = $0; engine.setClickEnabled($0) })) {
                 Label("Click", systemImage: "metronome")
             }
+            countInPicker
             Toggle(isOn: Binding(get: { midi.isLearning }, set: { midi.setLearning($0) })) {
                 Label("MIDI Learn", systemImage: "slider.horizontal.2.square")
             }
@@ -413,6 +415,17 @@ struct TransportBar: View {
         }
     }
 
+    /// Off, one or two bars of click before Record starts a stopped song; a setting of this device.
+    private var countInPicker: some View {
+        Picker(selection: Binding(get: { engine.countInLength }, set: { engine.setCountInLength($0) })) {
+            ForEach(CountIn.Length.allCases, id: \.self) { length in
+                Text(length.title).tag(length)
+            }
+        } label: {
+            Label("Count-in", systemImage: "metronome")
+        }
+    }
+
     /// The switches: click, MIDI Learn, keys, Field window, automation writing.
     private var switchesGroup: some View {
         HStack(spacing: Theme.Space.s) {
@@ -423,8 +436,11 @@ struct TransportBar: View {
                 Image(systemName: "metronome")
             }
             .buttonStyle(ToolButtonStyle(isActive: clickOn))
+            // Held: how many bars Record counts in before a stopped song starts.
+            .contextMenu { countInPicker }
             .accessibilityLabel("Click")
             .accessibilityValue(clickOn ? "On" : "Off")
+            .accessibilityHint("Touch and hold to choose the count-in before Record.")
 
             MIDILearnButton()
 
@@ -481,6 +497,8 @@ struct TransportBar: View {
             // What the fingertip on the camera should do (wave W1); its own leaf, so this strip
             // never observes the camera.
             TransportCueLine()
+            // The beats a count-in still clicks before Record's downbeat; its own leaf.
+            CountInLine()
             // "Loop Record · take N" while a take is cut into passes; its own leaf.
             LoopRecordLine()
             // Hosting, following, or the host lost (W16); its own leaf too.
@@ -714,6 +732,28 @@ private struct TransportCueLine: View {
                 .font(Theme.Font.label)
                 .foregroundStyle(Theme.Color.textSecondary)
                 .padding(.bottom, Theme.Space.xs)
+        }
+    }
+}
+
+/// "Count-in 3" under the transport while Record counts in, the beats still to click. Its own leaf
+/// (Law 6): the beats are polled ten times a second here and observed nowhere else. The number
+/// changes once a beat and nothing blinks, far under the 3 Hz flash ceiling.
+private struct CountInLine: View {
+    @Environment(AudioEngine.self) private var engine
+
+    var body: some View {
+        if engine.runningCountIn != nil {
+            TimelineView(.periodic(from: .now, by: 0.1)) { _ in
+                let left = engine.countInBeatsLeft
+                if left > 0 {
+                    Text("Count-in \(left)")
+                        .font(Theme.Font.label.monospacedDigit())
+                        .foregroundStyle(Theme.Color.record)
+                        .padding(.bottom, Theme.Space.xs)
+                        .accessibilityLabel("Count-in, \(left) beats")
+                }
+            }
         }
     }
 }

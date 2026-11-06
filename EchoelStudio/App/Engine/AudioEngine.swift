@@ -257,6 +257,29 @@ final class AudioEngine {
     }
     private static let keysFollowScaleKey = "keysFollowScale"
 
+    /// Bars of click before Record starts a stopped song: off, one or two. Kept on this device,
+    /// never in the song (Law 3), like the loop switch.
+    private(set) var countInLength = CountIn.Length(rawValue: UserDefaults.standard.integer(forKey: AudioEngine.countInKey)) ?? .off
+    private static let countInKey = "countInBars"
+    /// The count-in Record started and no stop has ended yet: its leaf polls the beats left
+    /// (`countInBeatsLeft`) while it is set. Observed by that leaf only.
+    private(set) var runningCountIn: CountIn?
+
+    func setCountInLength(_ length: CountIn.Length) {
+        countInLength = length
+        UserDefaults.standard.set(length.rawValue, forKey: Self.countInKey)
+    }
+
+    /// Whether a count-in clicks now, before its downbeat.
+    var countsIn: Bool { core?.countsIn ?? false }
+
+    /// Beats the running count-in still clicks — 4, 3, 2, 1 — and 0 once the song plays. For its
+    /// leaf view, never a view body.
+    var countInBeatsLeft: Int {
+        guard let runningCountIn, let core else { return 0 }
+        return runningCountIn.beatsLeft(remaining: core.countInSamplesLeft)
+    }
+
     func setKeysFollowScale(_ on: Bool) {
         keysFollowScale = on
         UserDefaults.standard.set(on, forKey: Self.keysFollowScaleKey)
@@ -910,6 +933,7 @@ final class AudioEngine {
                 slots = SlotAssigner(capacity: current.slotCapacity)
                 heard = nil                  // a new core plays nothing yet, so nothing to fade
                 isPlaying = false
+                runningCountIn = nil
                 if let project { publish(project) }
             }
 
@@ -1221,6 +1245,40 @@ final class AudioEngine {
     }
 
     func play() {
+        start(countingIn: nil)
+    }
+
+    /// Record's start of a stopped song: after the count-in this device is set to, counted in the
+    /// render clock, so the song starts on the downbeat's sample (`EngineCore.startCountIn`). A plain
+    /// Play without one, while a clock is followed (its Start starts the song), or while playing.
+    func playForRecording() {
+        guard !isPlaying, !followsExternalClock, let core, let project else {
+            if !isPlaying { play() }
+            return
+        }
+        let song = playing(project)
+        start(countingIn: CountIn(bars: countInLength.rawValue, at: restingTick, tempoMap: song.tempoMap,
+                                  meterMap: song.meterMap, sampleRate: core.sampleRate))
+    }
+
+    /// A count-in still clicking stops, and the song stays where it stands: nothing played.
+    func cancelCountIn() {
+        guard runningCountIn != nil else { return }
+        runningCountIn = nil
+        core?.cancelCountIn()
+        // The playhead waited where it rests for the downbeat — unless that came just now.
+        isPlaying = false
+        if let project { rest(at: playheadTick(in: project)) }
+    }
+
+    /// Any stop ends the count-in's display; a count-in still clicking is called off in the core.
+    private func endCountIn() {
+        guard runningCountIn != nil else { return }
+        runningCountIn = nil
+        if core?.countsIn == true { core?.cancelCountIn() }
+    }
+
+    private func start(countingIn countIn: CountIn?) {
         let standing = (notice, plugins.notice)
         // A heal that failed leaves nothing rendering. The transport must not run over it: a
         // retry that succeeds later (the call ended) would start the song by itself.
@@ -1231,7 +1289,12 @@ final class AudioEngine {
         if plugins.notice == standing.1 { plugins.clearNotice() }
         onPlay?()
         playingWhenServicesLost = false
-        core.play()
+        if let countIn {
+            runningCountIn = countIn
+            core.startCountIn(countIn)
+        } else {
+            core.play()
+        }
         isPlaying = true
         startLoadWindow()
         watchRendering()
@@ -1252,6 +1315,7 @@ final class AudioEngine {
 
     /// Stops where it is (an external clock's Stop; Continue goes on from here).
     func pause() {
+        endCountIn()
         core?.pause()
         isPlaying = false
         if let project { rest(at: playheadTick(in: project)) }
@@ -1344,6 +1408,7 @@ final class AudioEngine {
     /// the input calls it — never the musician's second Stop (`transportStop()`), so arming or
     /// disarming a track after a locate leaves the cue and the playhead where the musician put them.
     func stop() {
+        endCountIn()
         isPlaying = false
         halt(at: cue.returnTick)
     }
@@ -1352,6 +1417,7 @@ final class AudioEngine {
     /// the cue, or bar 1 without one; already stopped — the second Stop — back to bar 1, and the cue
     /// is forgotten (`PlayStartCue`).
     func transportStop() {
+        endCountIn()
         let target = cue.stop(whilePlaying: isPlaying)
         isPlaying = false
         halt(at: target)
