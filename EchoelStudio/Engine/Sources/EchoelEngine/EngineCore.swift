@@ -179,7 +179,7 @@ public final class EngineCore: @unchecked Sendable {
     /// The interface inputs, from the input callback; a monitoring audio lane plays one.
     public let inputs = InputMonitor()
     /// The inputs of the chunk being rendered, `maximumFrames` each, read once per chunk so
-    /// two tracks can monitor the same input.
+    /// two tracks can monitor the same input, a pair's two sides together (`inputGroups`).
     private let heard: UnsafeMutablePointer<Float>
     /// The right half of the mix when the device has one channel.
     private let monoRight: UnsafeMutablePointer<Float>
@@ -475,7 +475,7 @@ public final class EngineCore: @unchecked Sendable {
     // MARK: - Main thread
 
     public func publish(_ snapshot: EngineSnapshot) {
-        inputs.want(snapshot.audioLanes.map(\.monitor).filter { $0 >= 0 })
+        inputs.want(snapshot.audioLanes.flatMap { [$0.monitor, $0.monitorRight] }.filter { $0 >= 0 })
         // A lane outside the preallocated slots would index past them on the render thread.
         let box = SnapshotBox(snapshot.limited(toSlots: slotCapacity, returnCapacity: Self.returnCapacity))
         published.append(box)
@@ -2141,7 +2141,9 @@ public final class EngineCore: @unchecked Sendable {
     /// `fadingFrom` fades out over a few milliseconds instead of being cut.
     private func renderAudio(_ snapshot: EngineSnapshot, frames: Int, playing: Bool = true, fadingFrom: Int64? = nil) {
         let blockEnd = playhead + Int64(frames)
-        var fetched: UInt32 = 0
+        for group in snapshot.inputGroups {
+            inputs.read(group: group, into: heard, stride: Self.maximumFrames, frames: frames)
+        }
         for (index, lane) in snapshot.audioLanes.enumerated() {
             let point = index < Self.smoothedAudioTracks ? slotCapacity + index : -1
             // A track that renders nothing this chunk still lets its reading fall.
@@ -2240,17 +2242,16 @@ public final class EngineCore: @unchecked Sendable {
                playhead + Int64(frames) >= regionGainStart[index] + regionGainGlide {
                 regionGainRegion[index] = -1
             }
-            // The input, through the same inserts, fader and pan as what the track plays.
+            // The input, through the same inserts, fader and pan as what the track plays: one input
+            // in both sides, or a pair's left on the left and its right on the right, so the pan
+            // is a balance on it as on a stereo region.
             if lane.monitor >= 0, lane.monitor < InputMonitor.channelLimit {
                 let input = heard + lane.monitor * Self.maximumFrames
-                let bit: UInt32 = 1 << UInt32(lane.monitor)
-                if fetched & bit == 0 {
-                    inputs.read(channel: lane.monitor, into: input, frames: frames)
-                    fetched |= bit
-                }
+                let paired = lane.monitorRight >= 0 && lane.monitorRight < InputMonitor.channelLimit
+                let inputRight = paired ? heard + lane.monitorRight * Self.maximumFrames : input
                 for i in 0..<frames {
                     audioLeft[i] += input[i]
-                    audioRight[i] += input[i]
+                    audioRight[i] += inputRight[i]
                 }
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
