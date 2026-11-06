@@ -1,4 +1,5 @@
 import AVFoundation
+import EchoelCore
 import Foundation
 import os
 
@@ -6,6 +7,8 @@ import os
 /// no microphone — the take's sound is the song's mix, never the room. Its own serial queue does
 /// every session call; the two recording callbacks come back stamped with the take's generation,
 /// so the owner drops one that arrives after a newer take began. Holds the camera only while open.
+/// Each take is turned the way the phone is held when it begins (`TakeOrientation`, read from the
+/// lens's `AVCaptureDevice.RotationCoordinator`) and keeps that angle until it ends.
 final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecordingDelegate {
     enum Event: Sendable {
         /// The file is being written: the first frame is in.
@@ -25,6 +28,9 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
     private let onEvent: @Sendable (Event) -> Void
     private let lock = NSLock()
     private var current: UInt64 = 0
+    /// Queue-only: the lens's rotation coordinator and the angle the next take is written at.
+    private var rotation: AVCaptureDevice.RotationCoordinator?
+    private var orientation = TakeOrientation()
     private let log = Logger(subsystem: "com.echoelmusic.studio", category: "video")
 
     init(onEvent: @escaping @Sendable (Event) -> Void) {
@@ -61,10 +67,17 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
         }
         session.addInput(input)
         session.addOutput(output)
-        // The app stands upright: the take does too.
-        if let connection = output.connection(with: .video), connection.isVideoRotationAngleSupported(90) {
-            connection.videoRotationAngle = 90
-        }
+        rotation = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: nil)
+    }
+
+    /// Queue-only: the take is turned the way the phone is held now, and stays so while it runs.
+    /// Without a coordinator reading the last angle stands (upright at first).
+    private func turnUpright() {
+        if let rotation { orientation.captured(angle: Double(rotation.videoRotationAngleForHorizonLevelCapture)) }
+        orientation.beginTake()
+        guard let connection = output.connection(with: .video) else { return }
+        let angle = CGFloat(orientation.angle)
+        if connection.isVideoRotationAngleSupported(angle) { connection.videoRotationAngle = angle }
     }
 
     /// Starts writing `url` for the take numbered `generation`.
@@ -75,6 +88,7 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
                 onEvent(.finished(generation: generation, url: url, usable: false))
                 return
             }
+            turnUpright()
             output.startRecording(to: url, recordingDelegate: self)
         }
     }
@@ -111,5 +125,6 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
             log.warning("take ended with an error: \(error.localizedDescription, privacy: .public)")
         }
         onEvent(.finished(generation: lock.withLock { current }, url: outputFileURL, usable: usable))
+        queue.async { [self] in orientation.endTake() }
     }
 }
