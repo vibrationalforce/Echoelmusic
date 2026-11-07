@@ -316,13 +316,38 @@ final class RegionWarpPlaybackTests: XCTestCase {
             try Command.setRegionWarpMode(track: s.track, s.region, mode: mode).apply(to: &s.project)
             songs.append(s)
         }
-        for (index, element) in songs.enumerated() {
-            var s = element
-            try Command.setRegionTranspose(track: s.track, s.region, cents: 700).apply(to: &s.project)
+        // Transposed and not: an untransposed warped region (cents 0, the usual case) is cancelled
+        // just the same. The unwarped song makes no buffer at all without a transposition.
+        for cents in [0.0, 700] {
+            for (index, element) in songs.enumerated() where cents != 0 || index > 0 {
+                var s = element
+                if cents != 0 {
+                    try Command.setRegionTranspose(track: s.track, s.region, cents: cents).apply(to: &s.project)
+                }
+                let region = try XCTUnwrap(s.project.track(s.track)?.regions.first)
+                let buffer = try XCTUnwrap(s.samples[region.media])
+                XCTAssertNil(RegionWarp.render(region, in: s.project, buffer: buffer, isCancelled: { true }), "\(cents) song \(index)")
+                XCTAssertNotNil(RegionWarp.render(region, in: s.project, buffer: buffer, isCancelled: { false }), "\(cents) song \(index)")
+            }
+        }
+    }
+
+    func testAnUntransposedStretchIsCancelledWhileItWorks() throws {
+        // Tones and Beats stretch by WSOLA: asked once per hop, a stop part-way is nil, and
+        // nothing more is asked once it said stop.
+        for mode in [WarpMode.tones, .beats] {
+            var s = try song(try sine(hertz: 330, seconds: 1), tempo: 100, native: 120)
+            try Command.setRegionWarpMode(track: s.track, s.region, mode: mode).apply(to: &s.project)
             let region = try XCTUnwrap(s.project.track(s.track)?.regions.first)
             let buffer = try XCTUnwrap(s.samples[region.media])
-            XCTAssertNil(RegionWarp.render(region, in: s.project, buffer: buffer, isCancelled: { true }), "song \(index)")
-            XCTAssertNotNil(RegionWarp.render(region, in: s.project, buffer: buffer, isCancelled: { false }), "song \(index)")
+            var asks = 0
+            let whole = RegionWarp.render(region, in: s.project, buffer: buffer, isCancelled: { asks += 1; return false })
+            XCTAssertNotNil(whole, "\(mode)")
+            XCTAssertGreaterThan(asks, 50, "\(mode): 57,600 frames are over a hundred hops")
+            asks = 0
+            let stopped = RegionWarp.render(region, in: s.project, buffer: buffer, isCancelled: { asks += 1; return asks >= 10 })
+            XCTAssertNil(stopped, "\(mode)")
+            XCTAssertEqual(asks, 10, "\(mode)")
         }
     }
 

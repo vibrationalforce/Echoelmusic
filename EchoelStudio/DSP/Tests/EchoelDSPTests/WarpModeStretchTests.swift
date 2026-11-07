@@ -41,4 +41,33 @@ final class WarpModeStretchTests: XCTestCase {
         let peaks = out[0].indices.filter { abs(out[0][$0]) > 0.5 }
         XCTAssertEqual(peaks, hits.map { $0 * 2 })
     }
+
+    func testACancelledStretchStopsPartWayAndMakesNothing() {
+        let input = ramp(48_000)
+        var hits = [Float](repeating: 0, count: 48_000)
+        for hit in [12_000, 24_000, 36_000] { hits[hit] = 1 }
+        let stretcher = WSOLAStretcher()
+        let map = { (frame: Int) -> Double in Double(frame) * 0.75 }
+        // Never cancelled, it is the stretch it always was.
+        XCTAssertEqual(stretcher.stretch([input], outputCount: 64_000, isCancelled: { false }, position: map),
+                       stretcher.stretch([input], outputCount: 64_000, position: map))
+        XCTAssertEqual(stretcher.stretch([hits], outputCount: 64_000, anchors: [12_000, 24_000, 36_000], splice: 96,
+                                         isCancelled: { false }, position: map),
+                       stretcher.stretch([hits], outputCount: 64_000, anchors: [12_000, 24_000, 36_000], splice: 96, position: map))
+        // It is asked while it works, once per hop, not only before it starts: a stop on the
+        // fifth ask is nil, and an uncancelled run asks far more often than that.
+        var asks = 0
+        let whole = stretcher.stretch([input], outputCount: 64_000, isCancelled: { asks += 1; return false }, position: map)
+        XCTAssertNotNil(whole)
+        XCTAssertGreaterThan(asks, 100, "a 64,000-frame stretch has 124 hops")
+        asks = 0
+        let stopped = stretcher.stretch([input], outputCount: 64_000, isCancelled: { asks += 1; return asks >= 5 }, position: map)
+        XCTAssertNil(stopped)
+        XCTAssertEqual(asks, 5, "nothing is asked, or made, after the stop")
+        asks = 0
+        let stoppedBeats = stretcher.stretch([hits], outputCount: 64_000, anchors: [12_000, 24_000, 36_000], splice: 96,
+                                             isCancelled: { asks += 1; return asks >= 5 }, position: map)
+        XCTAssertNil(stoppedBeats)
+        XCTAssertEqual(asks, 5)
+    }
 }

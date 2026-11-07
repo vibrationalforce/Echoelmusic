@@ -32,7 +32,14 @@ public struct WSOLAStretcher: Sendable {
     /// read at the same offsets. Input shorter than a frame is read straight at the mapped
     /// positions (linear interpolation). Empty input or no output gives empty channels.
     public func stretch(_ channels: [[Float]], outputCount: Int, position: (Int) -> Double) -> [[Float]] {
-        stretch(channels, outputCount: outputCount, earliest: 0, position: position)
+        stretch(channels, outputCount: outputCount, earliest: 0, isCancelled: { false }, position: position) ?? []
+    }
+
+    /// `stretch`, asking `isCancelled` once per synthesis hop and between channels: nil as soon as
+    /// it says yes, so a stretch nobody needs any more stops working and holds no output.
+    public func stretch(_ channels: [[Float]], outputCount: Int, isCancelled: () -> Bool,
+                        position: (Int) -> Double) -> [[Float]]? {
+        stretch(channels, outputCount: outputCount, earliest: 0, isCancelled: isCancelled, position: position)
     }
 
     /// Beats (W-3): `channels` stretched as `stretch` does, but in pieces cut at `anchors` — input
@@ -45,6 +52,14 @@ public struct WSOLAStretcher: Sendable {
     /// to splice are left out; no anchors is one piece, which is `stretch`.
     public func stretch(_ channels: [[Float]], outputCount: Int, anchors: [Int], splice: Int,
                         position: (Int) -> Double) -> [[Float]] {
+        stretch(channels, outputCount: outputCount, anchors: anchors, splice: splice,
+                isCancelled: { false }, position: position) ?? []
+    }
+
+    /// Beats `stretch`, asking `isCancelled` between pieces and within each piece's stretch: nil
+    /// as soon as it says yes.
+    public func stretch(_ channels: [[Float]], outputCount: Int, anchors: [Int], splice: Int,
+                        isCancelled: () -> Bool, position: (Int) -> Double) -> [[Float]]? {
         guard let first = channels.first, !first.isEmpty, outputCount > 0,
               channels.allSatisfy({ $0.count == first.count }) else {
             return channels.map { _ in [] }
@@ -64,7 +79,9 @@ public struct WSOLAStretcher: Sendable {
             guard low - last.output > 2 * join, outputCount - low > 2 * join else { continue }
             cuts.append((anchor, low))
         }
-        guard cuts.count > 1 else { return stretch(channels, outputCount: outputCount, position: position) }
+        guard cuts.count > 1 else {
+            return stretch(channels, outputCount: outputCount, earliest: 0, isCancelled: isCancelled, position: position)
+        }
         var result = channels.map { _ in [Float](repeating: 0, count: outputCount) }
         for index in cuts.indices {
             let cut = cuts[index]
@@ -75,12 +92,14 @@ public struct WSOLAStretcher: Sendable {
             let toOutput = isLast ? outputCount : cuts[index + 1].output
             let pieceCount = toOutput - fromOutput
             guard pieceCount > 0, toInput > fromInput else { continue }
+            guard !isCancelled() else { return nil }
             let piece = channels.map { Array($0[fromInput..<toInput]) }
             // The lead and the attack play straight from the piece's first frame; past them the
             // song's mapping, and no frame after the first reads before the attack's end.
-            let out = stretch(piece, outputCount: pieceCount, earliest: lead + join) { (frame: Int) -> Double in
+            guard let out = stretch(piece, outputCount: pieceCount, earliest: lead + join,
+                                    isCancelled: isCancelled, position: { (frame: Int) -> Double in
                 frame <= lead ? Double(frame) : position(fromOutput + frame) - Double(fromInput)
-            }
+            }) else { return nil }
             let tail = isLast ? 0 : join
             for (channel, samples) in out.enumerated() where channel < result.count {
                 for frame in 0..<Swift.min(pieceCount, samples.count) {
@@ -95,8 +114,10 @@ public struct WSOLAStretcher: Sendable {
         return result
     }
 
-    /// `stretch`, where no frame after the first starts reading before input frame `earliest`.
-    private func stretch(_ channels: [[Float]], outputCount: Int, earliest: Int, position: (Int) -> Double) -> [[Float]] {
+    /// `stretch`, where no frame after the first starts reading before input frame `earliest`;
+    /// nil once `isCancelled` says yes.
+    private func stretch(_ channels: [[Float]], outputCount: Int, earliest: Int, isCancelled: () -> Bool,
+                         position: (Int) -> Double) -> [[Float]]? {
         guard let first = channels.first, !first.isEmpty, outputCount > 0,
               channels.allSatisfy({ $0.count == first.count }) else {
             return channels.map { _ in [] }
@@ -114,13 +135,22 @@ public struct WSOLAStretcher: Sendable {
                 mono[i] = sum * scale
             }
         }
-        let offsets = chosenOffsets(mono, outputCount: outputCount, earliest: earliest, position: position)
-        return channels.map { render($0, offsets: offsets, outputCount: outputCount) }
+        guard let offsets = chosenOffsets(mono, outputCount: outputCount, earliest: earliest,
+                                          isCancelled: isCancelled, position: position) else { return nil }
+        var result: [[Float]] = []
+        result.reserveCapacity(channels.count)
+        for channel in channels {
+            guard !isCancelled() else { return nil }
+            result.append(render(channel, offsets: offsets, outputCount: outputCount))
+        }
+        return result
     }
 
     // MARK: - Search
 
-    private func chosenOffsets(_ signal: [Float], outputCount: Int, earliest: Int, position: (Int) -> Double) -> [Int] {
+    /// The read offset of every synthesis frame; nil once `isCancelled` (asked each hop) says yes.
+    private func chosenOffsets(_ signal: [Float], outputCount: Int, earliest: Int, isCancelled: () -> Bool,
+                               position: (Int) -> Double) -> [Int]? {
         let n = frameSize, hop = n / 2
         let last = signal.count - n
         let frames = Swift.max(1, (outputCount - n) / hop + 2)
@@ -128,9 +158,14 @@ public struct WSOLAStretcher: Sendable {
         offsets.reserveCapacity(frames)
         var chosen = Self.clamp(Int(position(0).rounded()), 0, last)
         offsets.append(chosen)
+        var cancelled = false
         signal.withUnsafeBufferPointer { buffer in
             guard let base = buffer.baseAddress else { return }
             for k in 1..<frames {
+                if isCancelled() {
+                    cancelled = true
+                    return
+                }
                 let natural = chosen + hop
                 let nominal = position(k * hop)
                 let center = nominal.isFinite ? Int(nominal.rounded()) : natural
@@ -170,7 +205,7 @@ public struct WSOLAStretcher: Sendable {
                 offsets.append(chosen)
             }
         }
-        return offsets
+        return cancelled ? nil : offsets
     }
 
     private static func similarity(_ a: UnsafePointer<Float>, _ b: UnsafePointer<Float>, count: Int, stride: Int) -> Float {
