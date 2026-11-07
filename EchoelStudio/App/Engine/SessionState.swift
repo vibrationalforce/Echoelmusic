@@ -10,6 +10,8 @@ import Observation
 final class SessionState {
     private(set) var playing: [TrackID: ClipID] = [:]
     private(set) var queued: [TrackID: ClipID] = [:]
+    /// The tick each queued clip launches on, as the render thread fixed it when queueing.
+    private(set) var launchTicks: [TrackID: Tick] = [:]
     /// Tracks the session took over; their arrangement is silent until Back to Arrangement.
     private(set) var detached: Set<TrackID> = []
     /// How long a launch waits: nil one bar, 0 none, otherwise ticks.
@@ -18,17 +20,25 @@ final class SessionState {
     func apply(_ report: LaunchReport, to track: TrackID) {
         switch report.state {
         case .queued:
-            if let clip = report.clip { queued[track] = clip }
+            if let clip = report.clip {
+                queued[track] = clip
+                launchTicks[track] = report.tick
+            }
         case .playing:
             queued[track] = nil
+            launchTicks[track] = nil
             playing[track] = report.clip
             detached.insert(track)
         case .stopped:
             if playing[track] == report.clip || report.clip == nil { playing[track] = nil }
-            if queued[track] == report.clip { queued[track] = nil }
+            if queued[track] == report.clip {
+                queued[track] = nil
+                launchTicks[track] = nil
+            }
         case .arrangement:
             playing[track] = nil
             queued[track] = nil
+            launchTicks[track] = nil
             detached.remove(track)
         }
     }
@@ -42,6 +52,8 @@ final class SessionState {
         if keptPlaying.count != playing.count { playing = keptPlaying }
         let keptQueued = queued.filter { tracks.contains($0.key) }
         if keptQueued.count != queued.count { queued = keptQueued }
+        let keptTicks = launchTicks.filter { tracks.contains($0.key) }
+        if keptTicks.count != launchTicks.count { launchTicks = keptTicks }
         if !detached.isSubset(of: tracks) { detached.formIntersection(tracks) }
     }
 
@@ -49,6 +61,7 @@ final class SessionState {
     func reset() {
         playing = [:]
         queued = [:]
+        launchTicks = [:]
         detached = []
     }
 }

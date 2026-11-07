@@ -61,10 +61,17 @@ final class InputRecorder: @unchecked Sendable {
         guard frames > 0 else { return }
         monitor(list, frames: frames)
         guard armed.load(ordering: .acquiring) else { return }
+        // While a count-in clicks nothing is recorded: the take starts on its downbeat.
+        guard !core.countsIn else { return }
+        var lead = 0
         if start.load(ordering: .relaxed) < 0 {
+            // The frames of this block before a count-in's downbeat inside it are no part of the
+            // take; 0 without a count-in.
+            lead = Int(Swift.min(Swift.max(core.countInLeadFrames, 0), Int64(frames)))
             // The playhead has already moved past the block that plays with this input block.
-            startPlayedFrames.store(core.playedFrames - Int64(frames), ordering: .releasing)
-            start.store(Swift.max(0, core.positionSample - Int64(frames)), ordering: .releasing)
+            let taken = Int64(frames - lead)
+            startPlayedFrames.store(core.playedFrames - taken, ordering: .releasing)
+            start.store(Swift.max(0, core.positionSample - taken), ordering: .releasing)
         }
         let buffers = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: list))
         let wanted = channel.load(ordering: .acquiring)
@@ -76,14 +83,17 @@ final class InputRecorder: @unchecked Sendable {
                                              buffers: buffers.count, channelsPerBuffer: perBuffer),
               let left = source(buffers, lanes.left, frames: frames) else { return }
         guard pair else {
-            copy(left.data, lane: left.lane, stride: left.stride, held: left.held) { ring.write($0, count: $1) }
+            guard left.held > lead else { return }
+            copy(left.data + lead * left.stride, lane: left.lane, stride: left.stride, held: left.held - lead) {
+                ring.write($0, count: $1)
+            }
             return
         }
         guard let right = source(buffers, lanes.right, frames: frames) else { return }
         // Left and right side by side; a frame is written whole or not at all.
         let whole = Swift.min(left.held, right.held)
         let step = Self.scratchFrames / 2
-        var done = 0
+        var done = lead
         while done < whole {
             let n = Swift.min(whole - done, step)
             for i in 0..<n {

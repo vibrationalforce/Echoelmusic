@@ -147,7 +147,8 @@ final class RecordController {
             midiTrack = track
             isRecording = true
             beginLoopStatus()
-            if !engine.isPlaying { engine.play() }
+            // Notes played during a count-in land on its downbeat: the playhead waits there.
+            if !engine.isPlaying { engine.playForRecording() }
             return
         }
         guard let file = documents.newTakeTarget() else { return }
@@ -162,11 +163,18 @@ final class RecordController {
         target = (track, file)
         isRecording = true
         beginLoopStatus()
-        if !engine.isPlaying { engine.play() }
+        // The recorder records nothing until the count-in's downbeat (`EngineCore.countsIn`).
+        if !engine.isPlaying { engine.playForRecording() }
     }
 
     func stopRecording() async {
         guard isRecording else { return }
+        // Record or Stop pressed while the count-in still clicks: nothing was recorded, and the
+        // song does not start.
+        if engine.countsIn {
+            await callOffCountIn()
+            return
+        }
         if midiTrack != nil {
             endMIDITake()
             return
@@ -186,6 +194,24 @@ final class RecordController {
         // across each change, and so the take's start sample names a later tick under the later
         // map, bars off on a long set (review 2026-10-28, 2.2).
         await documents.commitTake(take, target: pending.file, onto: pending.track, tempoMap: take.tempoMap)
+    }
+
+    /// The take Record began before its count-in's downbeat is dropped whole — an audio take's
+    /// recorder never started, so its empty file goes — and the song stays where it stood.
+    private func callOffCountIn() async {
+        engine.cancelCountIn()
+        isRecording = false
+        isLoopRecording = false
+        if midiTrack != nil {
+            midiTrack = nil
+            _ = engine.live.stopCapture()
+            _ = engine.endLoopCapture()
+            return
+        }
+        let pending = target
+        target = nil
+        _ = await engine.endTake()
+        if let pending { documents.takeAbandoned(pending.file) }
     }
 
     /// The take that just began shows "Loop Record · take N" while it is cut into passes.
@@ -241,8 +267,14 @@ final class RecordController {
 
     /// The transport's Stop: ends a take first, so the take never outlives the song playing.
     func stopTransport() async {
+        // During a count-in this Stop calls it off and leaves the cue: it is no second Stop.
+        let countedIn = engine.countsIn
         await stopRecording()
-        engine.transportStop()
+        if countedIn {
+            engine.cancelCountIn()
+        } else {
+            engine.transportStop()
+        }
         await inputFollowsSong()
     }
 

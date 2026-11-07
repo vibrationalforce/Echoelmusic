@@ -31,6 +31,9 @@ public struct LaunchReport: Sendable, Equatable {
     /// The clip the state is about; nil for a stop or the arrangement.
     public let clip: ClipID?
     public let state: State
+    /// For `queued`, the tick the render thread will launch it on, fixed when it was queued (the
+    /// boundary of the quantum then); 0 for every other state.
+    public var tick: Tick = 0
 }
 
 /// Render-thread state of one slot's session clip.

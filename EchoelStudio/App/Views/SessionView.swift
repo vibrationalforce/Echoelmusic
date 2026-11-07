@@ -162,6 +162,10 @@ struct SessionCell: View {
                     .foregroundStyle(Theme.Color.text)
                     .lineLimit(1)
                 Spacer(minLength: 0)
+                // What is left until it starts, its own leaf: only it reads the playhead.
+                if isQueued, let launch = engine.session.launchTicks[track.id] {
+                    LaunchCountdownLabel(launch: launch)
+                }
             }
             .padding(.horizontal, Theme.Space.s)
             .frame(width: SessionView.columnWidth, height: Theme.Size.trackRowHeight)
@@ -240,6 +244,38 @@ struct SessionCell: View {
                                .setSlot(track: track.id, scene: scene.id, clip: clip)], title: "New Clip")
             open(track.id, clip)
         } catch {}
+    }
+}
+
+/// "3 beats" on a queued clip: what is left until the tick the render thread fixed for its launch,
+/// from where the song is heard — bars while more than one is left, then beats. Its own leaf
+/// (Law 6): it polls the playhead ten times a second while the clip waits, and only then. The
+/// number steps down once a beat in the same colour and size; nothing blinks.
+private struct LaunchCountdownLabel: View {
+    let launch: Tick
+    @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
+
+    var body: some View {
+        // Read outside the timeline: a stop redraws it.
+        let playing = engine.isPlaying
+        TimelineView(.periodic(from: .now, by: 0.1)) { _ in
+            if playing, let text = countdown() {
+                Text(text)
+                    .font(Theme.Font.caption.monospacedDigit())
+                    .foregroundStyle(Theme.Color.accent)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .accessibilityLabel("Starts in \(text)")
+            }
+        }
+    }
+
+    private func countdown() -> String? {
+        let project = store.project
+        let heard = engine.heardTick(in: project)
+        let meter = engine.playedMeterMap(of: project)
+        return LaunchCountdown.text(LaunchCountdown.remaining(until: launch, from: heard, meter: meter))
     }
 }
 
