@@ -1,7 +1,7 @@
 {
   "name": "Echoel",
   "short_name": "Echoel",
-  "description": "Create from Within. Echoel is the bio-reactive instrument: heartbeat and breath play sound, light and space in real time — over MIDI, OSC, ADM-OSC, Art-Net and sACN.",
+  "description": "Echoel Studio, a music workstation for iPhone and iPad, is in TestFlight. The site also documents the earlier bio-reactive app (10.79, frozen).",
   "start_url": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
@@ -11,7 +11,7 @@
   "scope": "/",
   "lang": "en",
   "dir": "ltr",
-  "categories": ["music", "health", "productivity", "entertainment"],
+  "categories": ["music", "productivity"],
   "icons": [
     {
       "src": "favicon.svg",

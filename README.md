@@ -8,7 +8,7 @@ An immersive, iPhone-first instrument for **Installation · Event · Content · 
 [![Swift](https://img.shields.io/badge/Swift-5.10%20tools%20%C2%B7%20strict%20concurrency-orange.svg)](https://swift.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> Shipping to TestFlight. Development happens on a feature branch — run `git branch --show-current` rather than trusting a name written here; the pinned literal in this file was wrong for months. Project doctrine, current state and the open-work ledger live in [`CLAUDE.md`](./CLAUDE.md).
+> Echoel Studio is in TestFlight (beta, nothing device-verified unless stated). Development happens on a feature branch — run `git branch --show-current` rather than trusting a name written here; the pinned literal in this file was wrong for months. Project doctrine, current state and the open-work ledger live in [`CLAUDE.md`](./CLAUDE.md).
 
 ---
 
@@ -16,8 +16,8 @@ An immersive, iPhone-first instrument for **Installation · Event · Content · 
 
 | | Where | What it is | State |
 |---|---|---|---|
-| **Echoel Studio** (new) | [`EchoelStudio/`](EchoelStudio/) — three dependency-free Swift packages `EchoelCore` · `EchoelDSP` · `EchoelEngine`, plus `App/` and `Plugins/` | the music workstation being built since 2026-10-17: open JSON song format ([`docs/FORMAT.md`](docs/FORMAT.md)), own AUv3 instruments and effects, on-device agent, no account, no telemetry | CI on macOS (`studio.yml`); TestFlight pending an App Group fix; Linux build is planned, not measured |
-| **Echoelmusic** (legacy app) | [`Sources/Echoelmusic/`](Sources/Echoelmusic/) — the root `Package.swift` | the bio-reactive instrument described below: camera pulse (rPPG), Bluetooth heart-rate straps, HealthKit; OSC · ADM-OSC · Art-Net · sACN out; the egress policy that decides which body data may leave the device | on TestFlight today; the guards in `Tests/CISmoke` pin it |
+| **Echoel Studio** (the app) | [`EchoelStudio/`](EchoelStudio/) — three Swift packages `EchoelCore` · `EchoelDSP` · `EchoelEngine`, plus `App/` and `Plugins/` | the music workstation: open JSON song format ([`docs/FORMAT.md`](docs/FORMAT.md)), own Audio Unit instruments and effects, no account, no telemetry. What may be said about it: the Studio section of [`ContentPipeline/CLAIMS.md`](ContentPipeline/CLAIMS.md) | in TestFlight since 2026-10-19 as version 11.0.0; tests and builds in `studio.yml` (macOS), Core · DSP · Engine also in `studio-linux.yml` (Linux); a build uploads through `studio-testflight.yml` when `EchoelStudio/RELEASE` changes |
+| **Echoelmusic 10.x** (earlier app, frozen) | [`Sources/Echoelmusic/`](Sources/Echoelmusic/) — the root `Package.swift` | the bio-reactive instrument described below: camera pulse (rPPG), Bluetooth heart-rate straps, HealthKit; OSC · ADM-OSC · Art-Net · sACN out; the egress policy that decides which body data may leave the device | frozen since Studio took over TestFlight; the guards in `Tests/CISmoke` still pin it. `testflight.yml` uploads it only when dispatched with `legacy_upload=LEGACY` |
 
 They share one licence (MIT, [`LICENSE`](LICENSE)) and one repository, not one build. Depend on the packages, not on the app: `EchoelStudio/Core/Package.swift`, `EchoelStudio/DSP/Package.swift`, `EchoelStudio/Engine/Package.swift`. The rest of this README describes the **legacy app**; Studio's own rules are in [`EchoelStudio/CLAUDE.md`](EchoelStudio/CLAUDE.md), the song format in [`docs/FORMAT.md`](docs/FORMAT.md). How to contribute: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
@@ -97,17 +97,12 @@ swift build                                              # SPM library only
 
 `swift test` builds `Tests/EchoelmusicTests`, which is the large exploratory suite and is *not* what gates a merge — no workflow runs it under SwiftPM, and it is allowed to be red. The blocking bundle is `Tests/CISmoke`, built and run by the `Echoelmusic CI/CD Pipeline` workflow through the Xcode scheme.
 
-TestFlight runs from `.github/workflows/testflight.yml`, three ways:
+TestFlight carries **Echoel Studio**. A change to `EchoelStudio/RELEASE` on a branch uploads a build through `.github/workflows/studio-testflight.yml`, which first waits for the `Echoel Studio` run on that commit.
+
+The earlier app's `.github/workflows/testflight.yml` no longer uploads by itself: the `.deploy/release` trigger is off since 2026-10-18, and a dispatch uploads only with the word `LEGACY`:
 
 ```bash
-# Explicit dispatch
-gh workflow run testflight.yml -f platform=ios -f build_only=false
-
-# Or tokenless: bumping `.deploy/release` on any branch triggers an iOS deploy.
-# Ordinary code pushes never deploy — only an explicit bump of that file.
-
-# Or by ref: a push to the `deploy` / `deploy-dryrun` branch or a `deploy-*` tag
-# dispatches the same workflow (`.github/workflows/deploy-on-tag.yml`).
+gh workflow run testflight.yml -f platform=ios -f legacy_upload=LEGACY
 ```
 
 ---

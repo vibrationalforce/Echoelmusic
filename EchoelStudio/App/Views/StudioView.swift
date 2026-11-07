@@ -91,6 +91,8 @@ struct StudioView: View {
             flow.attach(engine: engine, store: store, strap: strap, camera: camera, midi: midi, jam: jam)
         }
         .onChange(of: store.project) { _, project in engine.update(project) }
+        // Another song: Play starts and Stop returns at its bar 1, not at the last song's cue.
+        .onChange(of: store.documentGeneration) { engine.forgetCue() }
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
         .onChange(of: scenePhase) { _, phase in connections.scene(sceneID, is: ScenePresence.Phase(phase)) }
         .onDisappear { connections.sceneLeft(sceneID) }
@@ -251,7 +253,8 @@ struct StudioView: View {
 }
 
 /// Play/Stop, tempo, click, undo/redo. Reads only cold state (tempo, flags), never the
-/// playhead, so an open menu elsewhere is never rebuilt by the clock.
+/// playhead, so an open menu elsewhere is never rebuilt by the clock: the song position beside
+/// Play is its own leaf (`PositionReadout`).
 struct TransportBar: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -405,6 +408,8 @@ struct TransportBar: View {
                 .accessibilityLabel("Loop")
                 .accessibilityValue(engine.loopsSong ? (engine.timecodeRuns ? "On, resting while timecode runs" : "On") : "Off")
                 .accessibilityHint("Plays the song from bar 1 again after its last bar.")
+
+            PositionReadout()
         }
     }
 
@@ -630,6 +635,49 @@ struct TransportBar: View {
         }
         if report.truePeak > -1 { text += " — peaks above −1 dBTP may distort when encoded" }
         return text
+    }
+}
+
+/// The song position beside the transport as bar.beat.sixteenth ("2.3.1"), in the bars the
+/// engine counts. Its own leaf (Law 6): it polls 15 times a second while the song plays, and its
+/// timeline is paused while it is stopped, when it reads where the transport rests.
+/// A tap while stopped is the second Stop: back to bar 1, and the ruler's cue is forgotten.
+private struct PositionReadout: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
+    @Environment(RecordController.self) private var recording
+    @Environment(DocumentController.self) private var documents
+
+    var body: some View {
+        // Both read here, outside the timeline: a Stop or a locate redraws the resting position.
+        let playing = engine.isPlaying
+        let resting = Double(engine.restingTick)
+        let project = store.project
+        TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: !playing)) { _ in
+            let position = TimelineGeometry.position(atPosition: playing ? engine.heardTick(in: project) : resting,
+                                                     meter: engine.playedMeterMap(of: project))
+            Button { backToStart() } label: {
+                Text(position.text)
+                    .font(Theme.Font.value)
+                    .foregroundStyle(Theme.Color.text)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .frame(minWidth: 72, minHeight: Theme.Size.touch, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Position")
+            .accessibilityValue(position.spoken)
+            .accessibilityHint(playing ? "" : "Goes back to bar 1.")
+        }
+    }
+
+    /// Only while stopped — while playing the transport's Stop is the first Stop — and never while
+    /// a take records or an export is written.
+    private func backToStart() {
+        guard !engine.isPlaying,
+              TimelineGeometry.mayLocate(recording: recording.isRecording, exporting: documents.isExporting) else { return }
+        engine.transportStop()
     }
 }
 

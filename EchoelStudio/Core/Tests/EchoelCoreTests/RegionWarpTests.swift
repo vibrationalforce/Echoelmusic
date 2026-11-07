@@ -47,6 +47,106 @@ final class RegionWarpTests: XCTestCase {
         }
     }
 
+    func testFollowingARegionWithNoTempoStartsFromTheHeardOneInOneUndoStep() async throws {
+        let (p, audio, region) = try song(tempo: 90)
+        let plain = try XCTUnwrap(p.track(audio)?.regions.first)
+        XCTAssertFalse(plain.hasNativeBPM)
+        let start = plain.warpStart(heard: 127.63, songBPM: 90)
+        XCTAssertEqual(start.bpm, 127.63)
+        XCTAssertEqual(start.source, .heard)
+        try await MainActor.run {
+            let store = ProjectStore(project: p)
+            try store.perform(.setRegionWarp(track: audio, region, nativeBPM: start.bpm, followsTempo: true))
+            XCTAssertEqual(store.project.track(audio)?.regions.first?.warpBPM, 127.63)
+            store.undo()
+            XCTAssertEqual(store.project, p, "one step undoes it")
+        }
+
+        // Nothing heard, or nothing usable: the song's tempo, held to the range.
+        for heard in [nil, Double.nan, 0, 1_000] as [Double?] {
+            let fallback = plain.warpStart(heard: heard, songBPM: 90)
+            XCTAssertEqual(fallback.bpm, 90, "\(String(describing: heard))")
+            XCTAssertEqual(fallback.source, .song)
+        }
+        XCTAssertEqual(plain.warpStart(heard: nil, songBPM: .nan).bpm, 120)
+        XCTAssertEqual(plain.warpStart(heard: nil, songBPM: 5).bpm, AudioRegion.nativeBPMRange.lowerBound)
+
+        // A set tempo is never overruled by a detection.
+        var set = plain
+        set.nativeBPM = 100
+        XCTAssertTrue(set.hasNativeBPM)
+        XCTAssertEqual(set.warpStart(heard: 128, songBPM: 90).bpm, 100)
+        XCTAssertEqual(set.warpStart(heard: 128, songBPM: 90).source, .stored)
+    }
+
+    func testAHeardTempoRidesAlongOnImportWithWarpOff() throws {
+        var (p, audio, region) = try song(tempo: 90)
+        let heard = try XCTUnwrap(AudioRegion.nativeBPM(heard: 128))
+        XCTAssertNil(AudioRegion.nativeBPM(heard: nil))
+        XCTAssertNil(AudioRegion.nativeBPM(heard: .infinity))
+        let before = try XCTUnwrap(Arranging.end(of: try XCTUnwrap(p.track(audio)?.regions.first), in: p))
+        try Command.setRegionWarp(track: audio, region, nativeBPM: heard, followsTempo: false).apply(to: &p)
+        let placed = try XCTUnwrap(p.track(audio)?.regions.first)
+        XCTAssertEqual(placed.nativeBPM, 128)
+        XCTAssertNil(placed.warpBPM, "it plays as imported")
+        XCTAssertEqual(Arranging.end(of: placed, in: p), before)
+        XCTAssertEqual(placed.warpStart(heard: nil, songBPM: 90).bpm, 128, "Follow Song Tempo starts from it")
+    }
+
+    func testAFractionalNativeTempoRoundTripsThroughTheSongFile() throws {
+        var (p, audio, region) = try song(tempo: 120)
+        try Command.setRegionWarp(track: audio, region, nativeBPM: 127.63, followsTempo: true).apply(to: &p)
+        let decoded = try ProjectCodec.decode(ProjectCodec.encode(p))
+        XCTAssertEqual(decoded, p)
+        XCTAssertEqual(decoded.track(audio)?.regions.first?.nativeBPM, 127.63)
+        XCTAssertEqual(decoded.track(audio)?.regions.first?.warpBPM, 127.63)
+    }
+
+    func testFittingALoopToItsBarsEndsItOnTheBarLineAtAnySongTempo() throws {
+        // A 4-bar loop at 128 BPM: 7.5 s at 48 kHz, at bar 1.
+        let loop = MediaFile(name: "Loop", path: "Media/loop128.wav", frameCount: 360_000, sampleRate: 48_000)
+        for tempo in [60.0, 97.3, 128, 174] {
+            var p = Project(tempo: tempo)
+            let audio = TrackID(), region = RegionID()
+            try Command.addTrack(id: audio, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+            try Command.addMedia(loop).apply(to: &p)
+            try Command.placeAudio(track: audio, id: region, media: loop.id, start: 0).apply(to: &p)
+            let placed = try XCTUnwrap(p.track(audio)?.regions.first)
+            let fitted = try XCTUnwrap(placed.nativeBPM(forBars: 4, sampleRate: loop.sampleRate))
+            XCTAssertEqual(fitted, 128, "exactly")
+            try Command.setRegionWarp(track: audio, region, nativeBPM: fitted, followsTempo: true).apply(to: &p)
+            let warped = try XCTUnwrap(p.track(audio)?.regions.first)
+            let bar5 = 4 * MusicalTime.ticksPerBar(p.timeSignature)
+            XCTAssertEqual(Arranging.end(of: warped, in: p), bar5, "at \(tempo) BPM the loop ends on bar 5")
+        }
+
+        // A length that is no whole number of anything: one bar of 4/4 and one of 3/4 at 44.1 kHz,
+        // where the tempo and back land a hair under the bar line.
+        for (frames, quarters) in [(115_952, 4.0), (103_988, 3.0)] {
+            let odd = MediaFile(name: "Odd", path: "Media/odd.wav", frameCount: frames, sampleRate: 44_100)
+            var p = Project(tempo: 120)
+            let audio = TrackID(), region = RegionID()
+            try Command.addTrack(id: audio, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+            try Command.addMedia(odd).apply(to: &p)
+            try Command.placeAudio(track: audio, id: region, media: odd.id, start: 0).apply(to: &p)
+            let placed = try XCTUnwrap(p.track(audio)?.regions.first)
+            let fitted = try XCTUnwrap(placed.nativeBPM(forBars: 1, sampleRate: odd.sampleRate, quartersPerBar: quarters))
+            try Command.setRegionWarp(track: audio, region, nativeBPM: fitted, followsTempo: true).apply(to: &p)
+            let warped = try XCTUnwrap(p.track(audio)?.regions.first)
+            XCTAssertEqual(Arranging.end(of: warped, in: p), Tick(quarters) * MusicalTime.ticksPerQuarter,
+                           "\(frames) frames fitted to one bar of \(Int(quarters)) quarters end on its bar line")
+        }
+
+        let plain = AudioRegion(media: loop.id, start: 0, length: 360_000)
+        XCTAssertEqual(plain.nativeBPM(forBars: 2, sampleRate: 48_000), 64)
+        XCTAssertEqual(plain.nativeBPM(forBars: 3, sampleRate: 48_000, quartersPerBar: 3), 72, "3/4")
+        XCTAssertNil(plain.nativeBPM(forBars: 0, sampleRate: 48_000))
+        XCTAssertNil(plain.nativeBPM(forBars: 4, sampleRate: .nan))
+        XCTAssertNil(plain.nativeBPM(forBars: 4, sampleRate: 0))
+        XCTAssertNil(plain.nativeBPM(forBars: 4, sampleRate: 48_000, quartersPerBar: .infinity))
+        XCTAssertNil(plain.nativeBPM(forBars: 1_000, sampleRate: 48_000), "past the range")
+    }
+
     func testSplitTrimAndDuplicateCountAWarpedRegionInBeats() throws {
         var (p, audio, region) = try song(tempo: 60)
         try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: true).apply(to: &p)

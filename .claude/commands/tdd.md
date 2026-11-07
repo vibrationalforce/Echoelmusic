@@ -33,9 +33,8 @@ until #1306):
   `Tests/CISmoke/TheBodyVibeKnobsMoveTheSoundTests.swift` (rendered audio per knob) or
   `Tests/CISmoke/TheHostValueIsAdmittedOnceTests.swift` (host values → one admission rule).
 - ⛔ The 2026-08 repair named `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`) and told
-  you to copy a guard that was deleted with it —
-  `Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift` was removed by #1302
-  (founder 2026-09-12) together with the audio input. ⛔ "No `AUAudioUnit` remains in
+  you to copy its guard; both were removed by #1302 (2026-09-12) together with the audio
+  input. ⛔ "No `AUAudioUnit` remains in
   `Sources/` … → 0" stood here and is stale since #1385: the grep returns 1, the AUv3 (above).
 - The live render is an `AVAudioSourceNode` closure. Copy
   `Tests/CISmoke/TheDDSPRenderIsDeterministicAndBoundedTests.swift` (asserts on rendered

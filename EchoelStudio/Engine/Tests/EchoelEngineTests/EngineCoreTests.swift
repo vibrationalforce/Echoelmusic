@@ -586,6 +586,32 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(playing.downbeat, Double(bar + 3_360) / Double(MusicalTime.ticksPerQuarter), accuracy: 1e-9)
     }
 
+    /// While the song loops, a hosted unit is told the loop as its cycle, in beats; once the loop
+    /// is off, no cycle.
+    func testAHostedUnitIsToldTheSongLoopAsItsCycle() throws {
+        let s = try song([[]])
+        let recorder = TransportRecorder(sampleRate: rate)
+        let engine = core()
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: s.project)
+        engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                      sampleRate: rate, generation: 1, masterEffects: [recorder]))
+        let quarter = MusicalTime.ticksPerQuarter
+        engine.setLoop((4 * quarter)..<(8 * quarter))
+        engine.play()
+        _ = render(engine, frames: 4_800)
+        let looping = try XCTUnwrap(recorder.last)
+        XCTAssertTrue(looping.isCycling)
+        XCTAssertEqual(looping.cycleStart, 4)
+        XCTAssertEqual(looping.cycleEnd, 8)
+
+        engine.setLoop(nil)
+        _ = render(engine, frames: 256)
+        let free = try XCTUnwrap(recorder.last)
+        XCTAssertFalse(free.isCycling)
+        XCTAssertEqual(free.cycleEnd, 0)
+    }
+
     /// A new snapshot while a ramp plays — a note added, the same map — leaves the playhead
     /// where it is; a ramp edited mid-way keeps the bar and beat, as a step change does.
     func testANewSnapshotInsideARampIsNotATempoJump() throws {
