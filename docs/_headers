@@ -7,8 +7,8 @@
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-  # microphone=() since #1302: the marketing site never used it, and the app it describes
-  # has no microphone feature at all. camera=() was already closed for the same reason.
+  # The website itself never uses the camera, microphone, location, payment or device APIs,
+  # so every one of them is closed here. This says nothing about what the app may ask for.
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   X-DNS-Prefetch-Control: on
@@ -63,11 +63,6 @@
   Cache-Control: public, max-age=86400
 /robots.txt
   Cache-Control: public, max-age=86400
-
-# Apple app site association - cache 1 hour, allow cross-origin
-/.well-known/*
-  Cache-Control: public, max-age=3600
-  Access-Control-Allow-Origin: *
 
 # Screenshots - cache 1 week
 /screenshots/*

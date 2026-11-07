@@ -80,9 +80,8 @@ date,decision,reasoning,expected_outcome,review_date,status
   product that does not exist — `e2e-test-agent` carries the same retraction since 2026-08-12.
 - ⛔ AND THE REPLACEMENT THAT STOOD HERE IS ITSELF GONE (2026-09-12, #1302). It named
   `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`) as "the only AudioUnit shape to plan
-  against" and pointed at a guard that was deleted with it — the path
-  `Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift` was deleted in that commit.
-  A planner reading the old text went looking for two files that are not there. The founder
+  against" and pointed at its guard; both files were deleted in that commit. A planner
+  reading the old text went looking for two files that are not there. The founder
   removed the whole microphone monitor rail, so **there is no `AUAudioUnit` in `Sources/` at
   all**: `git grep -nE ": *AUAudioUnit\b" -- Sources` → 0.
 - ⭐ **AND BOTH ⛔ BLOCKS ABOVE ARE STALE SINCE #1385 (2026-09-20; noted 2026-09-25).** The AUv3

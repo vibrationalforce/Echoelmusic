@@ -3,11 +3,13 @@ import EchoelCore
 import SwiftUI
 import UIKit
 
-/// The camera take, in the one sheet slot (wave W7, C4): the rear camera's picture, Record and
-/// Stop. Record plays the song from where it stands and films with it; Stop ends both, and the
-/// take lands on the video track at the tick its first frame was heard. While the camera is open
+/// The camera take, in the one sheet slot (wave W7, C4): the camera's picture, the lens (back or
+/// front, changed only while no take runs), Record and Stop. Record plays the song from where it
+/// stands and films with it; Stop ends both, and the take lands on the video track at the tick its
+/// first frame was heard. While the camera is open
 /// the pulse camera waits; it comes back when this sheet closes. The sheet cannot be swiped away
-/// while a take is being written, so no take is ever lost to a gesture.
+/// while a take is being written, so no take is ever lost to a gesture. A call or Siri mid-take
+/// ends it: the take lands with what was filmed, and the caption says it was cut short.
 struct CameraTakeView: View {
     /// The video track the take lands on; nil makes one.
     let track: TrackID?
@@ -30,6 +32,7 @@ struct CameraTakeView: View {
                     .buttonStyle(ToolButtonStyle())
                     .disabled(isBusy)
                 Spacer(minLength: 0)
+                lensButton
                 recordButton
             }
         }
@@ -61,8 +64,21 @@ struct CameraTakeView: View {
             Label(recorder.state == .recording ? "Stop" : "Record", systemImage: recorder.state == .recording ? "stop.fill" : "record.circle")
         }
         .buttonStyle(ToolButtonStyle(isActive: recorder.state == .recording, activeColor: Theme.Color.record))
-        .disabled(recorder.state != .ready && recorder.state != .recording)
+        .disabled(!recorder.canRecord && recorder.state != .recording)
         .accessibilityHint("Plays the song and films with it; Stop ends both.")
+    }
+
+    private var lensButton: some View {
+        Button {
+            recorder.flipLens()
+        } label: {
+            Image(systemName: "arrow.triangle.2.circlepath.camera")
+        }
+        .buttonStyle(ToolButtonStyle())
+        .disabled(!recorder.canRecord)
+        .accessibilityLabel("Switch Camera")
+        .accessibilityValue(recorder.lens == .back ? "Back camera" : "Front camera")
+        .accessibilityHint("Films through the other lens. Not while a take is filmed.")
     }
 
     private var isBusy: Bool { recorder.state == .recording || recorder.state == .finishing }
@@ -70,9 +86,15 @@ struct CameraTakeView: View {
     private var caption: String {
         switch recorder.state {
         case .closed, .opening: "Opening the camera…"
+        case .ready where recorder.life.lostLastTake: "The last take could not be saved. Record films a new one."
         case .ready: "Record plays the song and films with it. The take has no sound of its own: the song's mix is its sound."
         case .recording: "Filming. Stop ends the take and the song."
         case .finishing: "Saving the take…"
+        case .landed(cutShort: true): "The take was cut short by a call or another app. It is on the song with what was filmed."
+        case .landed(cutShort: false): "The take is on the song. Record films the next one."
+        case .interrupted where recorder.life.lostLastTake: "The take was cut short and could not be saved. The picture comes back when the call or other app lets go of the camera."
+        case .interrupted: "Another app or a call is using the camera. The picture comes back when it lets go."
+        case .failed: "The camera stopped with an error. Close and open it again."
         case .denied: "Camera access is off for Echoel. Turn it on in Settings › Privacy › Camera."
         case .unavailable(let reason): reason
         }
