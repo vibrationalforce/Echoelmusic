@@ -91,9 +91,10 @@ final class AudioEngine {
     @ObservationIgnored private var project: Project?
     @ObservationIgnored private var samples: [MediaID: SampleBuffer] = [:]
     /// Every warped region's stretch the song needs, made off the main actor and off the render
-    /// thread (`RegionWarp`), and the ones being made (AUD-2).
+    /// thread (`RegionWarp`), and the ones being made (AUD-2), each with its task so a stretch the
+    /// song no longer needs is cancelled instead of left holding its memory.
     @ObservationIgnored private var warped: [RegionWarp.Key: SampleBuffer] = [:]
-    @ObservationIgnored private var warping: Set<RegionWarp.Key> = []
+    @ObservationIgnored private var warping: [RegionWarp.Key: Task<Void, Never>] = [:]
     /// Every synth's wavetable the song cuts from its files, made off the main actor and off the
     /// render thread (`Wavetables`), and the ones being made.
     @ObservationIgnored private var tables: [WavetableSource: WavetableBank] = [:]
@@ -1637,16 +1638,19 @@ final class AudioEngine {
 
     /// The stretches the song's warped regions need that are ready, starting the ones that are not:
     /// each is made in a detached task, and the song is sent again when it is in. Until then the
-    /// region is silent — never heard at the wrong speed. Stretches no region needs any more go.
+    /// region is silent — never heard at the wrong speed. Stretches no region needs any more go,
+    /// and the ones still being made for them are cancelled: each typed Transpose value is a new
+    /// key, and without this every earlier one would keep rendering beside the newest.
     private func stretches(for project: Project) -> [RegionWarp.Key: SampleBuffer] {
         let pending = RegionWarp.pending(in: project, samples: samples)
         let needed = Set(pending.map(\.0))
         warped = warped.filter { needed.contains($0.key) }
-        for (key, region, buffer) in pending where warped[key] == nil && !warping.contains(key) {
-            warping.insert(key)
+        for (key, task) in warping where !needed.contains(key) { task.cancel() }
+        warping = warping.filter { needed.contains($0.key) }
+        for (key, region, buffer) in pending where warped[key] == nil && warping[key] == nil {
             let song = project
-            Task.detached(priority: .userInitiated) { [weak self] in
-                let stretched = RegionWarp.render(region, in: song, buffer: buffer)
+            warping[key] = Task.detached(priority: .userInitiated) { [weak self] in
+                let stretched = RegionWarp.render(region, in: song, buffer: buffer, isCancelled: { Task.isCancelled })
                 await self?.storeStretch(stretched, for: key)
             }
         }
@@ -1678,7 +1682,9 @@ final class AudioEngine {
     }
 
     private func storeStretch(_ stretched: SampleBuffer?, for key: RegionWarp.Key) {
-        warping.remove(key)
+        // A cancelled task's key was already let go, and may belong to a newer task by now.
+        guard !Task.isCancelled else { return }
+        warping[key] = nil
         guard let stretched else { return }
         warped[key] = stretched
         if bridgeTask == nil, let heard { send(heard) }

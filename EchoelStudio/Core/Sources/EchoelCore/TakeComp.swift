@@ -368,7 +368,8 @@ extension Track {
     static func continues(_ previous: AudioRegion, into next: AudioRegion, at tick: Tick, in project: Project) -> Bool {
         previous.media == next.media && previous.offset + previous.length == next.offset
             && next.start == tick && Arranging.end(of: previous, in: project).map { Swift.abs($0 - tick) <= 1 } == true
-            && previous.warpBPM == next.warpBPM
+            && previous.warpBPM == next.warpBPM && previous.warpMode == next.warpMode
+            && previous.playedTransposeCents == next.playedTransposeCents
     }
 
     /// Half a crossfade at `tick`, in ticks of the tempo there; at least one.

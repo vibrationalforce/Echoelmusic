@@ -54,6 +54,7 @@ extension Command {
         case placeVideo, splitRegion
         case splitPlacement, consolidatePlacements, consolidateRegions
         case setRegionFades, setRegionGain, setRegionWarp
+        case setRegionWarpMode, setRegionTranspose
         case setRegionGrade
         case bakeRegion, revertRegionBake
         case addScene, removeScene, renameScene, setSlot
@@ -146,6 +147,8 @@ extension Command {
         case .setRegionFades: .setRegionFades
         case .setRegionGain: .setRegionGain
         case .setRegionWarp: .setRegionWarp
+        case .setRegionWarpMode: .setRegionWarpMode
+        case .setRegionTranspose: .setRegionTranspose
         case .setRegionGrade: .setRegionGrade
         case .bakeRegion: .bakeRegion
         case .revertRegionBake: .revertRegionBake
@@ -553,6 +556,16 @@ public enum CommandCatalog {
                                parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
                                             P("nativeBPM", .number, "The tempo the file was played at."),
                                             P("followsTempo", .boolean, "True: the region follows the song's tempo.")])
+        case .setRegionWarpMode:
+            return CommandSpec(name: "audio.warpMode", title: "Set Warp Mode",
+                               summary: "Sets how an audio region is stretched when it follows the song's tempo: beats (each attack copied once, on its beat), tones (one continuous stretch, pitch unchanged) or rePitch (faster or slower like a record, pitch with it).",
+                               parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
+                                            P("mode", .string, "beats, tones or rePitch.")])
+        case .setRegionTranspose:
+            return CommandSpec(name: "audio.transpose", title: "Transpose Region",
+                               summary: "Transposes an audio region in cents (100 to a semitone, -2400 to +2400) without changing its timing or length, whether it follows the song's tempo or not. 0 plays the file at its own pitch.",
+                               parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
+                                            P("cents", .number, "The transposition in cents.")])
         case .setRegionGrade:
             return CommandSpec(name: "video.color", title: "Color",
                                summary: "Sets a video part's colour correction: exposure (EV, -3 to 3), contrast (0 to 2), saturation (0 to 2), temperature and tint (-1 to 1), and lift (-0.5 to 0.5), gamma (0.25 to 4) and gain (0 to 2) on the luma. The standard values show the file as it is.",

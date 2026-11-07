@@ -186,6 +186,10 @@ extension Project {
                 if let bpm = region.nativeBPM, !(bpm.isFinite && AudioRegion.nativeBPMRange.contains(bpm)) {
                     throw Self.invalid("regions", "a region's native tempo is outside \(AudioRegion.nativeBPMRange) BPM")
                 }
+                // A transposition (W-4, optional inside format 4): the range the editor keeps.
+                if let cents = region.transposeCents, !(cents.isFinite && AudioRegion.transposeRange.contains(cents)) {
+                    throw Self.invalid("regions", "a region's transposition is outside \(AudioRegion.transposeRange) cents")
+                }
                 // A colour correction (COLOR, optional inside format 4) belongs to a video part, every value in range.
                 if let grade = region.grade {
                     guard track.kind == .video, grade.isValid else {

@@ -32,6 +32,13 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
     public var nativeBPM: Double?
     /// The region follows the song's tempo (needs `nativeBPM`); nil is false.
     public var followsTempo: Bool?
+    /// The stored warp mode name (W-3); nil — the key absent — is Tones, the stretch every earlier
+    /// build played. A name this build does not know is kept and saved back unchanged and plays as
+    /// Tones. Kept while warp is off, so switching it back on finds it.
+    private var warpModeName: String?
+    /// The region's transposition in cents (W-4): its pitch moves, its timing does not — warped or
+    /// not. Nil is none; stored within `transposeRange`.
+    public var transposeCents: Double?
     /// The bake that made the file it plays (W3, `RegionBaking`); nil for a region that plays its
     /// file as imported or recorded.
     public var bake: RegionBaking?
@@ -41,6 +48,8 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
 
     public static let gainRange: ClosedRange<Double> = -60...24
     public static let nativeBPMRange: ClosedRange<Double> = 20...999
+    /// Two octaves either way, in cents.
+    public static let transposeRange: ClosedRange<Double> = -2_400...2_400
 
     public init(id: RegionID = RegionID(), media: MediaID, start: Tick, offset: Int = 0, length: Int) {
         self.id = id
@@ -58,6 +67,19 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
     public var fadeOutCurve: FadeCurve {
         get { fadeOutCurveName.flatMap(FadeCurve.init(rawValue:)) ?? .linear }
         set { fadeOutCurveName = newValue == .linear ? nil : newValue.rawValue }
+    }
+
+    /// How warp stretches the region (W-3); Tones for a region without one or with a name this
+    /// build does not know.
+    public var warpMode: WarpMode {
+        get { warpModeName.flatMap(WarpMode.init(rawValue:)) ?? .tones }
+        set { warpModeName = newValue == .tones ? nil : newValue.rawValue }
+    }
+
+    /// The stored warp mode name when this build does not know it, kept and saved back unchanged.
+    public var unrecognizedWarpMode: String? {
+        guard let warpModeName, WarpMode(rawValue: warpModeName) == nil else { return nil }
+        return warpModeName
     }
 
     /// The stored curve names this build does not know, kept and saved back unchanged.
@@ -80,6 +102,13 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
         return Foundation.pow(10, Swift.min(Swift.max(gainDB, Self.gainRange.lowerBound), Self.gainRange.upperBound) / 20)
     }
 
+    /// The transposition that plays, in cents: 0 for none or for one that is not a number, else
+    /// held to `transposeRange`.
+    public var playedTransposeCents: Double {
+        guard let transposeCents, transposeCents.isFinite else { return 0 }
+        return Swift.min(Swift.max(transposeCents, Self.transposeRange.lowerBound), Self.transposeRange.upperBound)
+    }
+
     /// The native tempo warp stretches from, when the region follows the song's tempo.
     public var warpBPM: Double? {
         guard followsTempo == true, let nativeBPM, nativeBPM.isFinite, Self.nativeBPMRange.contains(nativeBPM) else { return nil }
@@ -90,6 +119,8 @@ public struct AudioRegion: Codable, Equatable, Sendable, Identifiable {
         case id, media, start, offset, length, fadeIn, fadeOut
         case fadeInCurveName = "fadeInCurve", fadeOutCurveName = "fadeOutCurve"
         case gainDB, nativeBPM, followsTempo, bake, grade
+        case warpModeName = "warpMode"
+        case transposeCents
     }
 }
 
@@ -116,6 +147,18 @@ public enum FadeCurve: String, Codable, CaseIterable, Sendable {
         case .sCurve: return x * x * (3 - 2 * x)
         }
     }
+}
+
+/// How a warped region is stretched to the song's tempo (W-3). Stored by name; absent is Tones. A
+/// new mode goes at the end and into `StoredNamesTests`.
+public enum WarpMode: String, Codable, CaseIterable, Sendable {
+    /// Each attack where the song's beat puts it, copied once: the stretch restarts at every onset
+    /// heard in the region, so drums and plucks stay sharp.
+    case beats
+    /// One continuous stretch, the pitch unchanged: for held and melodic sound.
+    case tones
+    /// Played faster or slower like a record: tempo and pitch change together.
+    case rePitch
 }
 
 /// Where Follow Song Tempo starts from (W-1).
@@ -183,6 +226,10 @@ extension Arranging {
         if let gain = region.gainDB, gain != 0 { commands.append(.setRegionGain(track: track.id, copy, gainDB: gain)) }
         if let native = region.nativeBPM, native.isFinite, AudioRegion.nativeBPMRange.contains(native) {
             commands.append(.setRegionWarp(track: track.id, copy, nativeBPM: native, followsTempo: region.followsTempo == true))
+        }
+        if region.warpMode != .tones { commands.append(.setRegionWarpMode(track: track.id, copy, mode: region.warpMode)) }
+        if region.playedTransposeCents != 0 {
+            commands.append(.setRegionTranspose(track: track.id, copy, cents: region.playedTransposeCents))
         }
         return commands
     }

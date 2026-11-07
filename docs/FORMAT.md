@@ -211,6 +211,12 @@ build played it, and an earlier build that meets them ignores them:
 - `nativeBPM` (20 … 999) and `followsTempo` (true or false, absent false) — warp: with both set,
   the region follows the song's tempo, its pitch unchanged, stretched from `nativeBPM`. Echoel sets
   warp on audio regions only. `nativeBPM` is kept while warp is off, so switching it back on finds it.
+- `warpMode` — how a warped region stretches (added 2026-11-06): `beats` (each attack is kept on
+  its beat and played once), `tones` (absent; the stretch every earlier build played) or `rePitch`
+  (tempo and pitch move together, like tape). A name a reader does not know is kept, saved back
+  unchanged and plays `tones`. Kept while warp is off.
+- `transposeCents` — the region's pitch in cents, −2400 … +2400, its timing unchanged, warped or
+  not (added 2026-11-06); absent is 0. Echoel writes it only when it is not 0.
 
 - `bake` — the region plays a file Echoel rendered from another file of the song (W3, added
   2026-11-04): `{source, sourceOffset, pitchCorrection?, texture?}`. `source` is the media id of

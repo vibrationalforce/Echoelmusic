@@ -41,6 +41,8 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(TempoCurve.allCases.map(\.rawValue), ["step", "linear"])
         // A region stores its fade curves by name; absent is linear (AUD-2).
         XCTAssertEqual(FadeCurve.allCases.map(\.rawValue), ["linear", "equalPower", "exponential", "sCurve"])
+        // A region stores its warp mode by name; absent is tones (W-3).
+        XCTAssertEqual(WarpMode.allCases.map(\.rawValue), ["beats", "tones", "rePitch"])
         // A take folder stores its fields by these names (Recovery 4); it names its takes by id.
         let folder = TakeGroup(takes: [UUID(), UUID()], comp: [CompSegment(start: 0, end: 960, take: UUID())])
         if let data = try? JSONEncoder().encode(folder),

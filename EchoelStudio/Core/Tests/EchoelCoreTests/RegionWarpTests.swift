@@ -179,4 +179,98 @@ final class RegionWarpTests: XCTestCase {
         XCTAssertNil(region.nativeBPM)
         XCTAssertTrue(CommandCatalog.all.map(\.name).contains("audio.warp"))
     }
+
+    /// W-3: the warp mode is one validated, undoable step, kept while warp is off, saved by name,
+    /// and carried by a duplicate; Tones is stored as no key at all.
+    func testTheWarpModeIsOneUndoStepAndRoundTripsByName() async throws {
+        let (initial, audio, region) = try song(tempo: 90)
+        var p = initial
+        XCTAssertEqual(p.track(audio)?.regions.first?.warpMode, .tones, "absent is Tones")
+        XCTAssertThrowsError(try Command.setRegionWarpMode(track: audio, RegionID(), mode: .beats).apply(to: &p))
+        XCTAssertThrowsError(try Command.setRegionWarpMode(track: TrackID(), region, mode: .beats).apply(to: &p))
+        let before = p
+        try await MainActor.run {
+            let store = ProjectStore(project: before)
+            try store.perform(.setRegionWarpMode(track: audio, region, mode: .rePitch))
+            XCTAssertEqual(store.project.track(audio)?.regions.first?.warpMode, .rePitch)
+            store.undo()
+            XCTAssertEqual(store.project, before)
+        }
+        try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: true).apply(to: &p)
+        try Command.setRegionWarpMode(track: audio, region, mode: .beats).apply(to: &p)
+        try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: false).apply(to: &p)
+        XCTAssertEqual(p.track(audio)?.regions.first?.warpMode, .beats, "kept while warp is off")
+        let decoded = try ProjectCodec.decode(ProjectCodec.encode(p))
+        XCTAssertEqual(decoded, p)
+        XCTAssertEqual(decoded.track(audio)?.regions.first?.warpMode, .beats)
+
+        let placed = try XCTUnwrap(p.track(audio)?.regions.first)
+        let stored = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(placed)) as? [String: Any])
+        XCTAssertEqual(stored["warpMode"] as? String, "beats")
+        var tones = placed
+        tones.warpMode = .tones
+        let plain = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(tones)) as? [String: Any])
+        XCTAssertNil(plain["warpMode"], "Tones writes no key, as every earlier song")
+
+        let track = try XCTUnwrap(p.track(audio))
+        let copies = try XCTUnwrap(Arranging.duplicated(placed, in: track, project: p))
+        for command in copies { try command.apply(to: &p) }
+        XCTAssertEqual(p.track(audio)?.regions.last?.warpMode, .beats, "the copy stretches as the region does")
+        XCTAssertTrue(CommandCatalog.all.map(\.name).contains("audio.warpMode"))
+    }
+
+    /// A mode name a later build wrote is kept and saved back unchanged, and plays as Tones.
+    func testAnUnknownWarpModeIsKeptAndPlaysAsTones() throws {
+        let region = AudioRegion(media: file.id, start: 0, length: 48_000)
+        var stored = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(region)) as? [String: Any])
+        stored["warpMode"] = "complexPro"
+        let read = try JSONDecoder().decode(AudioRegion.self, from: JSONSerialization.data(withJSONObject: stored))
+        XCTAssertEqual(read.warpMode, .tones)
+        XCTAssertEqual(read.unrecognizedWarpMode, "complexPro")
+        let saved = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(read)) as? [String: Any])
+        XCTAssertEqual(saved["warpMode"] as? String, "complexPro")
+        XCTAssertNil(region.unrecognizedWarpMode)
+    }
+
+    /// W-4: a transposition is validated at the door, one undo step, saved, carried by a duplicate,
+    /// and never moves where the region ends; 0 stores nothing, so the song is as before.
+    func testATranspositionIsValidatedAndLeavesTheRegionsEndAlone() async throws {
+        let (initial, audio, region) = try song(tempo: 90)
+        var p = initial
+        let untouched = p
+        for cents in [Double.nan, .infinity, -2_400.5, 2_401] {
+            XCTAssertThrowsError(try Command.setRegionTranspose(track: audio, region, cents: cents).apply(to: &p), "\(cents)")
+        }
+        XCTAssertThrowsError(try Command.setRegionTranspose(track: audio, RegionID(), cents: 100).apply(to: &p))
+        XCTAssertEqual(p, untouched)
+        try Command.setRegionTranspose(track: audio, region, cents: 0).apply(to: &p)
+        XCTAssertEqual(p, untouched, "0 is no transposition, stored as nothing")
+
+        try Command.setRegionWarp(track: audio, region, nativeBPM: 120, followsTempo: true).apply(to: &p)
+        let end = try XCTUnwrap(Arranging.end(of: try XCTUnwrap(p.track(audio)?.regions.first), in: p))
+        let warped = p
+        try await MainActor.run {
+            let store = ProjectStore(project: warped)
+            try store.perform(.setRegionTranspose(track: audio, region, cents: -700))
+            XCTAssertEqual(store.project.track(audio)?.regions.first?.transposeCents, -700)
+            store.undo()
+            XCTAssertEqual(store.project, warped)
+        }
+        try Command.setRegionTranspose(track: audio, region, cents: -700).apply(to: &p)
+        let transposed = try XCTUnwrap(p.track(audio)?.regions.first)
+        XCTAssertEqual(transposed.playedTransposeCents, -700)
+        XCTAssertEqual(Arranging.end(of: transposed, in: p), end, "-700 cents keeps the end tick")
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(p)), p)
+
+        let track = try XCTUnwrap(p.track(audio))
+        for command in try XCTUnwrap(Arranging.duplicated(transposed, in: track, project: p)) { try command.apply(to: &p) }
+        XCTAssertEqual(p.track(audio)?.regions.last?.transposeCents, -700)
+
+        // A song file that holds a transposition out of range is refused, as every other value.
+        var bad = p
+        let index = try XCTUnwrap(bad.trackIndex(audio))
+        bad.tracks[index].regions[0].transposeCents = 5_000
+        XCTAssertThrowsError(try ProjectCodec.decode(ProjectCodec.encode(bad)))
+        XCTAssertTrue(CommandCatalog.all.map(\.name).contains("audio.transpose"))
+    }
 }
