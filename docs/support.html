@@ -77,37 +77,64 @@
     <main id="main" class="subpage">
         <div class="subpage-hero">
             <h1>Support</h1>
-            <p class="subtitle"><strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a new music workstation for iPhone and iPad, still being tested on devices. Its questions are answered first in the <a href="faq.html" style="color:var(--text); border-bottom:1px solid var(--border);">FAQ</a>, its data handling is on the <a href="privacy.html#studio" style="color:var(--text); border-bottom:1px solid var(--border);">Privacy</a> page, and what it holds is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>. The questions below describe the earlier app (10.79.515), which is frozen.</p>
+            <p class="subtitle"><strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a music workstation for iPhone and iPad, still being tested on devices. More answers are in the <a href="faq.html">FAQ</a>, its data handling is on the <a href="privacy.html#studio">Privacy</a> page, and what it holds is on the <a href="roadmap.html">Roadmap</a>.</p>
         </div>
 
         <div class="contact-box">
             <h2>Contact</h2>
-            <p>We'll respond as soon as possible.</p>
+            <p>Write to us with your device and what you did; we answer as soon as we can.</p>
             <a href="mailto:echoel@tropicaldrones.com">echoel@tropicaldrones.com</a>
         </div>
 
         <section>
-            <h2>Frequently Asked Questions</h2>
+            <h2>Echoel Studio</h2>
             <div class="support-faq">
-                <strong>Apple Watch data not appearing?</strong>
-                <p>Watch data arrives via Apple Health with a few seconds’ delay. Go to Settings > Privacy > Health and grant permission to Echoelmusic. For live readings use the camera pulse or a Bluetooth strap.</p>
+                <strong>When does Echoel ask for the microphone?</strong>
+                <p>Only when you arm an audio track to record, or set one to hear its input. Echoel records mono audio from the microphone or one interface input onto the armed track, and the takes stay on the device. If you said no, allow the microphone for Echoel in the Settings app.</p>
             </div>
             <div class="support-faq">
-                <strong>Audio latency issues?</strong>
-                <p>Open the <strong>Master</strong> panel and set <strong>Audio latency</strong> to Low or Ultra. The tiers are buffer sizes &mdash; Normal is about 10.7&nbsp;ms, Low about 5.3&nbsp;ms, Ultra about 2.7&nbsp;ms at 48&nbsp;kHz &mdash; so a smaller one responds sooner and costs more CPU. iOS may refuse a tier, hardest over Bluetooth, and the row then shows the one it granted. The <strong>Audio timing</strong> line just below reports late blocks, so you can see whether a tier holds on your device.</p>
+                <strong>How do I use a Bluetooth heart-rate strap?</strong>
+                <p>Put the strap on, then in the Song menu choose <strong>Body Source</strong> and <strong>Heart Rate Strap</strong>. Only then does iOS ask for Bluetooth. You do not pair it in the Settings app: Echoel finds a strap that speaks the standard heart-rate service. The strap moves only what you route it to, and an export never reads it.</p>
             </div>
             <div class="support-faq">
-                <strong>Biofeedback not responding?</strong>
-                <p>Check HealthKit permissions in Settings. Health-sourced data (Watch, ring) is delayed by design — the camera pulse and BLE straps are the live sources.</p>
+                <strong>Do Echoel&rsquo;s Audio Units work in other apps?</strong>
+                <p>Echoel&rsquo;s instruments and effects are also Audio Units, but they have not yet been tested in a host app on a device, and they are not on sale yet. Tell us what you see if you try one.</p>
             </div>
             <div class="support-faq">
-                <strong>How do I export my creations?</strong>
-                <p>In the earlier app, the Share button in any session exported a .wav render, a Standard MIDI File (.mid) or the project itself to Files, iCloud or other apps; it had no video export, because recording the visual was removed. Echoel Studio exports a WAV, stems or a MIDI file &mdash; see the <a href="faq.html">FAQ</a>.</p>
+                <strong>How do I export, and where are my songs?</strong>
+                <p>Export the arrangement as a 24-bit, 48&nbsp;kHz stereo WAV with its loudness (LUFS) and true peak reported, as stems (one WAV per track, before the master effects), or as a Standard MIDI File. Songs save automatically as .echoel files that the Files app shows, and a song sent by AirDrop opens in Echoel. The format is open and documented.</p>
             </div>
             <div class="support-faq">
-                <strong>Is my data safe?</strong>
-                <p>Yes. All biometric data stays on your device. We don't collect or store any personal data. See our <a href="privacy.html">Privacy Policy</a>.</p>
+                <strong>How do I restore a purchase?</strong>
+                <p>Open the Song menu, choose <strong>Echoel Plugins</strong> and tap <strong>Restore Purchases</strong>. Without a network, Echoel reads the purchase record already on the device.</p>
             </div>
+        </section>
+
+        <section>
+            <details>
+                <summary>Earlier app (10.79)</summary>
+                <p>These answers describe the earlier app (10.79.515), which is frozen.</p>
+                <div class="support-faq">
+                    <strong>Apple Watch data not appearing?</strong>
+                    <p>Watch data arrives via Apple Health with a few seconds’ delay. Go to Settings > Privacy > Health and grant permission to Echoelmusic. For live readings use the camera pulse or a Bluetooth strap.</p>
+                </div>
+                <div class="support-faq">
+                    <strong>Audio latency issues?</strong>
+                    <p>Open the <strong>Master</strong> panel and set <strong>Audio latency</strong> to Low or Ultra. The tiers are buffer sizes &mdash; Normal is about 10.7&nbsp;ms, Low about 5.3&nbsp;ms, Ultra about 2.7&nbsp;ms at 48&nbsp;kHz &mdash; so a smaller one responds sooner and costs more CPU. iOS may refuse a tier, hardest over Bluetooth, and the row then shows the one it granted. The <strong>Audio timing</strong> line just below reports late blocks, so you can see whether a tier holds on your device.</p>
+                </div>
+                <div class="support-faq">
+                    <strong>Biofeedback not responding?</strong>
+                    <p>Check HealthKit permissions in Settings. Health-sourced data (Watch, ring) is delayed by design — the camera pulse and BLE straps are the live sources.</p>
+                </div>
+                <div class="support-faq">
+                    <strong>How do I export my creations?</strong>
+                    <p>In the earlier app, the Share button in any session exported a .wav render, a Standard MIDI File (.mid) or the project itself to Files, iCloud or other apps; it had no video export, because recording the visual was removed. Echoel Studio exports a WAV, stems or a MIDI file &mdash; see the <a href="faq.html">FAQ</a>.</p>
+                </div>
+                <div class="support-faq">
+                    <strong>Is my data safe?</strong>
+                    <p>Yes. All biometric data stays on your device. We don't collect or store any personal data. See our <a href="privacy.html">Privacy Policy</a>.</p>
+                </div>
+            </details>
         </section>
     </main>
 
