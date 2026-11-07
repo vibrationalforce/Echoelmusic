@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import SwiftUI
 
 /// The song on a bar timeline: one lane per track, its clips and audio laid out where they
@@ -16,6 +17,11 @@ import SwiftUI
 /// the bar, and Place at Next Hit moves one to the next hit.
 /// Its body reads no playhead, so nothing here rebuilds while the song plays: the playhead line
 /// over the lanes is a leaf of its own (`PlayheadLine`), the one view on this page that polls it.
+/// Two fingers spread or narrow the song's time (`ArrangeZoom`), and Zoom Out / Zoom In under the
+/// lanes do the same one step at a time, so one finger is enough. The ruler, the lanes and the
+/// playhead line sit in ONE horizontal scroll view and draw with ONE ticks-per-point, so they
+/// never drift apart at any zoom; a drag spans as many ticks as the points it covers at that zoom.
+/// The zoom is kept on this device, never in the song, and is not an edit.
 struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(StudioRouter.self) private var router
@@ -30,86 +36,36 @@ struct ArrangeView: View {
     let importAudio: (TrackID, Tick) -> Void
 
     @ScaledMetric(relativeTo: .body) private var nameWidth: CGFloat = 96
-    /// Points per bar; the horizontal zoom.
-    private let pointsPerBar = CGFloat(TimelineGeometry.pointsPerBar)
+    /// The horizontal zoom at rest, kept on this device (`ArrangeZoom.level` reads a broken one
+    /// as the standard zoom).
+    @AppStorage(ArrangeZoom.storageKey) private var zoom = ArrangeZoom.base
+    /// The live factor of a pinch in progress; it resets itself on release or when a scroll takes
+    /// the touch, and the zoom changes once, when the fingers lift.
+    @GestureState private var pinch: CGFloat = 1
     /// Empty bars drawn past the song's end, so there is always room to place the next clip.
     private static let spareBars = 8
+
+    /// The zoom shown now: the one at rest times the pinch under the fingers.
+    private var shownZoom: Double { ArrangeZoom.zoomed(zoom, by: Double(pinch)) }
 
     var body: some View {
         let project = store.project
         let bars = Arranging.songBars(of: project) + Self.spareBars
         // The first bar is `pointsPerBar` wide; every later one as wide as its ticks (a 7/8 bar
-        // after 4/4 is narrower), so x stays proportional to musical time.
+        // after 4/4 is narrower), so x stays proportional to musical time. One scale for the
+        // ruler, every lane and the playhead line.
         let meter = project.meterMap
-        let ticksPerPoint = TimelineGeometry.ticksPerPoint(meter: meter, pointsPerBar: Double(pointsPerBar))
+        let shown = shownZoom
+        let pointsPerBar = CGFloat(ArrangeZoom.pointsPerBar(shown))
+        let ticksPerPoint = ArrangeZoom.ticksPerPoint(shown, meter: meter)
         let laneWidth = CGFloat(Double(meter.tick(ofBar: Int64(bars))) / ticksPerPoint)
         let files = videoHits?.files ?? [:]
         let hits = Hits.ticks(in: project, files: files)
         ScrollView(.vertical) {
             HStack(alignment: .top, spacing: 0) {
-                VStack(spacing: Theme.Space.hairline) {
-                    Text("\(Arranging.songBars(of: project)) bars")
-                        .font(Theme.Font.caption)
-                        .foregroundStyle(Theme.Color.textSecondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .frame(height: Self.rulerRowHeight)
-                        .accessibilityLabel("Song length \(Arranging.songBars(of: project)) bars")
-                        .contextMenu {
-                            AutomateMenu(owner: .master)
-                            ModulateMenu(owner: .master)
-                        }
-                    ForEach(project.tracks) { track in
-                        Text(track.name)
-                            .font(Theme.Font.label)
-                            .foregroundStyle(Theme.Color.text)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                            .padding(.horizontal, Theme.Space.s)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .frame(height: Theme.Size.trackRowHeight)
-                            .background(Theme.Color.surface)
-                            .contextMenu { trackMenu(track, showsHits: !hits.isEmpty) }
-                            .accessibilityHidden(true)
-                        ForEach(TakeLanes.rows(of: track)) { row in TakeLaneName(row: row) }
-                        ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
-                            AutomationName(lane: lane)
-                        }
-                    }
-                    ForEach(Self.lanes(of: .master, in: project), id: \.target) { lane in
-                        AutomationName(lane: lane)
-                    }
-                }
-                .frame(width: nameWidth)
-                ScrollView(.horizontal) {
-                    VStack(alignment: .leading, spacing: Theme.Space.hairline) {
-                        RulerLocator(bars: bars, meter: meter, ticksPerPoint: ticksPerPoint, width: laneWidth)
-                            .overlay(alignment: .bottomLeading) {
-                                MarkerStrip(markers: project.markers, meter: meter, ticksPerPoint: ticksPerPoint)
-                            }
-                            .contextMenu { MarkerAddButton() }
-                        ForEach(project.tracks) { track in
-                            ArrangeLane(track: track, project: project, pointsPerBar: pointsPerBar,
-                                        open: open, importAudio: importAudio, files: files, hits: hits)
-                                .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
-                            ForEach(TakeLanes.rows(of: track)) { row in
-                                TakeLane(track: track, project: project, row: row, pointsPerBar: pointsPerBar)
-                                    .frame(width: laneWidth, height: TakeLanes.rowHeight)
-                            }
-                            ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
-                                AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
-                                    .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
-                            }
-                        }
-                        ForEach(Self.lanes(of: .master, in: project), id: \.target) { lane in
-                            AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
-                                .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
-                        }
-                    }
-                    .overlay(alignment: .topLeading) {
-                        PlayheadLine(ticksPerPoint: ticksPerPoint)
-                    }
-                }
+                nameColumn(project, hits: hits)
+                laneColumn(project, bars: bars, pointsPerBar: pointsPerBar, ticksPerPoint: ticksPerPoint,
+                           laneWidth: laneWidth, files: files, hits: hits)
             }
             if project.tracks.isEmpty {
                 Text("Add a track on the Tracks page to start arranging.")
@@ -119,10 +75,124 @@ struct ArrangeView: View {
             }
         }
         .background(Theme.Color.background)
+        .safeAreaInset(edge: .bottom, spacing: 0) { zoomBar }
         // A video file added to the song is searched for its hits once, off the main thread.
         .task(id: videoMedia(of: project)) {
             videoHits?.find(in: store.project) { documents.mediaURL($0) }
         }
+    }
+
+    /// The names on the left: the song's length over the ruler, then every track and its lanes.
+    /// Apart from `body` so each expression stays small enough to type-check.
+    private func nameColumn(_ project: Project, hits: [Tick]) -> some View {
+        VStack(spacing: Theme.Space.hairline) {
+            Text("\(Arranging.songBars(of: project)) bars")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .frame(height: Self.rulerRowHeight)
+                .accessibilityLabel("Song length \(Arranging.songBars(of: project)) bars")
+                .contextMenu {
+                    AutomateMenu(owner: .master)
+                    ModulateMenu(owner: .master)
+                }
+            ForEach(project.tracks) { track in
+                Text(track.name)
+                    .font(Theme.Font.label)
+                    .foregroundStyle(Theme.Color.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .padding(.horizontal, Theme.Space.s)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(height: Theme.Size.trackRowHeight)
+                    .background(Theme.Color.surface)
+                    .contextMenu { trackMenu(track, showsHits: !hits.isEmpty) }
+                    .accessibilityHidden(true)
+                ForEach(TakeLanes.rows(of: track)) { row in TakeLaneName(row: row) }
+                ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
+                    AutomationName(lane: lane)
+                }
+            }
+            ForEach(Self.lanes(of: .master, in: project), id: \.target) { lane in
+                AutomationName(lane: lane)
+            }
+        }
+        .frame(width: nameWidth)
+    }
+
+    /// The ruler, every lane and the playhead line in ONE horizontal scroll view, at one scale.
+    private func laneColumn(_ project: Project, bars: Int, pointsPerBar: CGFloat, ticksPerPoint: Double,
+                            laneWidth: CGFloat, files: [MediaID: Hits.FileHits], hits: [Tick]) -> some View {
+        let meter = project.meterMap
+        return ScrollView(.horizontal) {
+            VStack(alignment: .leading, spacing: Theme.Space.hairline) {
+                RulerLocator(bars: bars, meter: meter, ticksPerPoint: ticksPerPoint, width: laneWidth)
+                    .overlay(alignment: .bottomLeading) {
+                        MarkerStrip(markers: project.markers, meter: meter, ticksPerPoint: ticksPerPoint)
+                    }
+                    .contextMenu { MarkerAddButton() }
+                ForEach(project.tracks) { track in
+                    ArrangeLane(track: track, project: project, pointsPerBar: pointsPerBar,
+                                open: open, importAudio: importAudio, files: files, hits: hits)
+                        .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
+                    ForEach(TakeLanes.rows(of: track)) { row in
+                        TakeLane(track: track, project: project, row: row, pointsPerBar: pointsPerBar)
+                            .frame(width: laneWidth, height: TakeLanes.rowHeight)
+                    }
+                    ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
+                        AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
+                            .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
+                    }
+                }
+                ForEach(Self.lanes(of: .master, in: project), id: \.target) { lane in
+                    AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
+                        .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
+                }
+            }
+            .overlay(alignment: .topLeading) {
+                PlayheadLine(ticksPerPoint: ticksPerPoint)
+            }
+        }
+        .simultaneousGesture(pinchGesture)
+    }
+
+    /// Two fingers zoom the song's time; the zoom is written once, when they lift.
+    private var pinchGesture: some Gesture {
+        MagnifyGesture()
+            .updating($pinch) { value, state, _ in state = value.magnification }
+            .onEnded { value in zoom = ArrangeZoom.zoomed(zoom, by: Double(value.magnification)) }
+    }
+
+    /// Zoom Out and Zoom In under the lanes: the pinch is a shortcut, never the only way.
+    private var zoomBar: some View {
+        HStack(spacing: Theme.Space.s) {
+            Spacer()
+            zoomButton("Zoom Out", systemImage: "minus.magnifyingglass",
+                       enabled: ArrangeZoom.canZoomOut(zoom)) { zoom = ArrangeZoom.zoomedOut(zoom) }
+            zoomButton("Zoom In", systemImage: "plus.magnifyingglass",
+                       enabled: ArrangeZoom.canZoomIn(zoom)) { zoom = ArrangeZoom.zoomedIn(zoom) }
+        }
+        .padding(.horizontal, Theme.Space.s)
+        .background(Theme.Color.surface)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Theme.Color.border).frame(height: 1)
+        }
+    }
+
+    private func zoomButton(_ title: String, systemImage: String, enabled: Bool,
+                            action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(Theme.Font.label)
+                .foregroundStyle(enabled ? Theme.Color.text : Theme.Color.textTertiary)
+                .frame(width: Theme.Size.touch, height: Theme.Size.touch)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel(title)
+        .accessibilityValue(ArrangeZoom.spoken(zoom))
     }
 
     private func videoMedia(of project: Project) -> [MediaID] {
@@ -184,10 +254,10 @@ struct SnapPicker: View {
 extension SnapGrid {
     /// Where a block dragged from `start` by `translation` points shows while the finger is down:
     /// on the magnet's line, so what lifts is what was seen.
+    /// The rule is `ArrangeZoom.previewPoints`, the same one the drop commits with.
     func previewOffset(from start: Tick, translation: CGFloat, ticksPerPoint: Double, meter: MeterMap) -> CGFloat {
-        guard self != .off, ticksPerPoint.isFinite, ticksPerPoint > 0 else { return translation }
-        let target = nearest(start + Tick((Double(translation) * ticksPerPoint).rounded()), meter: meter)
-        return CGFloat(Double(target - start) / ticksPerPoint)
+        CGFloat(ArrangeZoom.previewPoints(from: start, dragged: Double(translation), ticksPerPoint: ticksPerPoint,
+                                          snap: self, meter: meter))
     }
 }
 
@@ -455,7 +525,7 @@ private struct ArrangeLane: View {
 
     /// The first bar is `pointsPerBar` wide; x is proportional to ticks from there on.
     private var ticksPerPoint: Double {
-        Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar)
+        TimelineGeometry.ticksPerPoint(meter: meter, pointsPerBar: Double(pointsPerBar))
     }
 
     /// While snapping is on, a faint line at each hit in every lane but the video's own: where a
@@ -597,7 +667,7 @@ private struct PlacementBlock: View {
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
-    private var ticksPerPoint: Double { Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar) }
+    private var ticksPerPoint: Double { TimelineGeometry.ticksPerPoint(meter: meter, pointsPerBar: Double(pointsPerBar)) }
     private var startBar: Int { Int(clamping: meter.bar(at: placement.start)) + 1 }
     private var lengthBars: Int {
         Int(clamping: meter.bar(at: meter.nextBarLine(atOrAfter: placement.start + clip.length)) - meter.bar(at: placement.start))
@@ -658,7 +728,7 @@ private struct PlacementBlock: View {
 
     /// Where the block shows while the finger moves: on a hit as soon as one is within reach.
     private func dragOffset(_ translation: CGFloat) -> CGFloat {
-        let tick = placement.start + Tick((Double(translation) * ticksPerPoint).rounded())
+        let tick = placement.start + ArrangeZoom.ticks(dragged: Double(translation), ticksPerPoint: ticksPerPoint)
         guard let hit = ArrangeView.hit(near: tick, in: hits, ticksPerPoint: ticksPerPoint, snapping: snapsToHits) else {
             return snap.previewOffset(from: placement.start, translation: translation, ticksPerPoint: ticksPerPoint, meter: meter)
         }
@@ -668,7 +738,7 @@ private struct PlacementBlock: View {
     /// One undo step: onto the hit within reach, else onto the magnet's nearest line (to the tick
     /// with it off).
     private func drop(movedBy translation: CGFloat) {
-        let delta = Tick((Double(translation) * ticksPerPoint).rounded())
+        let delta = ArrangeZoom.ticks(dragged: Double(translation), ticksPerPoint: ticksPerPoint)
         if let hit = ArrangeView.hit(near: placement.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
                                      snapping: snapsToHits) {
             if let command = Hits.placed(placement, in: track, at: hit) { try? store.perform(command) }
@@ -779,7 +849,8 @@ private struct PlacementBlock: View {
 }
 
 /// A placed audio region: the file's name over its length. Drag moves it onto the magnet, one
-/// undo step on release; drag an edge to trim it onto the magnet; hold for Duplicate, Split at
+/// undo step on release; drag an edge to trim it onto the magnet, a top corner's grip to set its
+/// fade (one undo step each); hold for Duplicate, Split at
 /// Playhead (on the magnet), Consolidate (pieces of one file only), Bake Effects and Delete. A video part
 /// shows its hits (CUT); an audio region lands on one within reach and moves to the next on Place
 /// at Next Hit.
@@ -803,10 +874,12 @@ private struct RegionBlock: View {
     /// Live drag of the left and right edge, in points, until the finger lifts.
     @State private var trimLeft: CGFloat = 0
     @State private var trimRight: CGFloat = 0
+    /// The fade a grip is dragging, in frames, until the finger lifts.
+    @State private var fadeDrag: (edge: Arranging.Edge, frames: Int)?
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
-    private var ticksPerPoint: Double { Double(meter.ticksPerBar(at: 0)) / Double(pointsPerBar) }
+    private var ticksPerPoint: Double { TimelineGeometry.ticksPerPoint(meter: meter, pointsPerBar: Double(pointsPerBar)) }
     private var startBar: Int { Int(clamping: meter.bar(at: region.start)) + 1 }
     private var seconds: Double { file.sampleRate > 0 ? Double(region.length) / file.sampleRate : 0 }
     private var spokenLabel: String {
@@ -844,43 +917,99 @@ private struct RegionBlock: View {
     }
 
     /// The block itself: shape, name, size, position and the move drag.
+    /// Built in three steps — the face, the marks and grips over it, its place in the lane — so
+    /// each chain stays small enough to type-check.
     private var block: some View {
         let color = Theme.Color.track(track.colorIndex)
-        let width = Swift.max(8, CGFloat(Double(length) / ticksPerPoint) - trimLeft + trimRight)
+        let width: CGFloat = blockWidth
+        let marked = grips(marks(face(color: color)), width: width)
+        return placed(marked, width: width)
+    }
+
+    /// Drawn width: the region's length at this zoom, with an edge drag in progress, never under 8 pt.
+    private var blockWidth: CGFloat {
+        let drawn = CGFloat(Double(length) / ticksPerPoint)
+        return Swift.max(8, drawn - trimLeft + trimRight)
+    }
+
+    /// The fill, the outline, the waveform and the file's name.
+    private func face(color: Color) -> some View {
+        let outline = RoundedRectangle(cornerRadius: Theme.Radius.small).stroke(color, lineWidth: 1)
         return RoundedRectangle(cornerRadius: Theme.Radius.small)
             .fill(color.opacity(0.25))
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.small).stroke(color, lineWidth: 1)
-            )
-            .overlay(alignment: .topLeading) {
-                Label(file.name, systemImage: file.kind == .video ? "film" : "waveform")
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.text)
-                    .lineLimit(1)
-                    .padding(Theme.Space.xs)
-            }
+            .overlay(outline)
+            .overlay { waveform(tint: color) }
+            .overlay(alignment: .topLeading) { nameLabel }
+    }
+
+    private var nameLabel: some View {
+        let symbol = file.kind == .video ? "film" : "waveform"
+        return Label(file.name, systemImage: symbol)
+            .font(Theme.Font.caption)
+            .foregroundStyle(Theme.Color.text)
+            .lineLimit(1)
+            .padding(Theme.Space.xs)
+    }
+
+    /// The fades' curve and a video part's hits, drawn over the face.
+    private func marks(_ view: some View) -> some View {
+        view
             .overlay { fadeMarks }
             .overlay { hitMarks }
+    }
+
+    /// The trim handles on the edges and the fade grips on the top corners.
+    private func grips(_ view: some View, width: CGFloat) -> some View {
+        view
             .overlay(alignment: .leading) { edgeHandle(.start) }
             .overlay(alignment: .trailing) { edgeHandle(.end) }
-            .frame(width: width, height: Theme.Size.trackRowHeight - Theme.Space.s)
-            .offset(x: CGFloat(Double(region.start) / ticksPerPoint) + dragX + trimLeft, y: Theme.Space.xs)
-            .opacity(dragX == 0 && trimLeft == 0 && trimRight == 0 ? 1 : 0.8)
-            .gesture(
-                DragGesture(minimumDistance: 6, coordinateSpace: .named(ArrangeLane.space))
-                    .onChanged { dragX = dragOffset($0.translation.width) }
-                    .onEnded { value in
-                        dragX = 0
-                        drop(movedBy: value.translation.width)
-                    }
-            )
+            .overlay(alignment: .topLeading) { fadeGrip(.start, width: width) }
+            .overlay(alignment: .topLeading) { fadeGrip(.end, width: width) }
+    }
+
+    /// Size, place in the lane (following a move or a left-edge drag), and the move drag.
+    private func placed(_ view: some View, width: CGFloat) -> some View {
+        let height: CGFloat = Theme.Size.trackRowHeight - Theme.Space.s
+        let x: CGFloat = CGFloat(Double(region.start) / ticksPerPoint) + dragX + trimLeft
+        let isDragging = dragX != 0 || trimLeft != 0 || trimRight != 0
+        let opacity: Double = isDragging ? 0.8 : 1
+        return view
+            .frame(width: width, height: height)
+            .offset(x: x, y: Theme.Space.xs)
+            .opacity(opacity)
+            .gesture(moveGesture)
+    }
+
+    /// The move drag: the block follows the finger onto the magnet or a hit, one undo step on release.
+    private var moveGesture: some Gesture {
+        DragGesture(minimumDistance: 6, coordinateSpace: .named(ArrangeLane.space))
+            .onChanged { value in dragX = dragOffset(value.translation.width) }
+            .onEnded { value in
+                dragX = 0
+                drop(movedBy: value.translation.width)
+            }
+    }
+
+    /// An audio region's file as it sounds over the stretch the region plays: drawn from the
+    /// file's picture, read once (`WaveformCache`), at the region's own level. A video part has none.
+    @ViewBuilder private func waveform(tint: Color) -> some View {
+        if file.kind == .audio {
+            RegionWaveform(url: documents.mediaURL(file), offset: region.offset, length: region.length,
+                           level: Float(region.linearGain), tint: tint)
+        }
+    }
+
+    /// The fades as they play, or as a grip drags one until the finger lifts.
+    private var shownFades: (fadeIn: Int, fadeOut: Int) {
+        guard let fadeDrag else { return region.effectiveFades }
+        return Arranging.fadeLengths(region, edge: fadeDrag.edge, toFrames: fadeDrag.frames)
     }
 
     /// The region's fades over it, drawn as the curve they play: a line from the bottom corner
-    /// rising to the top over the fade-in, falling to the bottom over the fade-out. Drawn, never
-    /// touched; the hold menu's Fades & Gain sets them.
+    /// rising to the top over the fade-in, falling to the bottom over the fade-out. The grips on
+    /// the top corners drag them; the hold menu's Fades & Gain sets them by number.
     private var fadeMarks: some View {
-        let fades = region.effectiveFades
+        let fades = shownFades
         let total = Double(Swift.max(region.length, 1))
         let inShare = Double(fades.fadeIn) / total, outShare = Double(fades.fadeOut) / total
         let inCurve = region.fadeInCurve, outCurve = region.fadeOutCurve
@@ -924,7 +1053,7 @@ private struct RegionBlock: View {
     /// Where the block shows while the finger moves: an audio region on a hit as soon as one is
     /// within reach.
     private func dragOffset(_ translation: CGFloat) -> CGFloat {
-        let tick = region.start + Tick((Double(translation) * ticksPerPoint).rounded())
+        let tick = region.start + ArrangeZoom.ticks(dragged: Double(translation), ticksPerPoint: ticksPerPoint)
         guard let hit = ArrangeView.hit(near: tick, in: hits, ticksPerPoint: ticksPerPoint, snapping: snapsHere) else {
             return snap.previewOffset(from: region.start, translation: translation, ticksPerPoint: ticksPerPoint, meter: meter)
         }
@@ -933,7 +1062,7 @@ private struct RegionBlock: View {
 
     /// One undo step: onto the hit within reach, else to the nearest bar.
     private func drop(movedBy translation: CGFloat) {
-        let delta = Tick((Double(translation) * ticksPerPoint).rounded())
+        let delta = ArrangeZoom.ticks(dragged: Double(translation), ticksPerPoint: ticksPerPoint)
         if let hit = ArrangeView.hit(near: region.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
                                      snapping: snapsHere) {
             if let command = Hits.placed(region, in: track, at: hit) { try? store.perform(command) }
@@ -1008,13 +1137,24 @@ private struct RegionBlock: View {
         Task { await documents.bakeEffects(region: region, on: track, plugins: plugins) }
     }
 
+    /// VoiceOver's region: one element, its label, and every action the hold menu and the grips
+    /// offer, in this order. Split in groups so each chain stays small enough to type-check.
     private func accessible(_ view: some View) -> some View {
-        view
+        let element = view
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenLabel)
+        return fadeActions(trimActions(editActions(moveActions(element))))
+    }
+
+    private func moveActions(_ view: some View) -> some View {
+        view
             .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
             .accessibilityAction(named: "Place at Next Hit") { placeAtNextHit() }
+    }
+
+    private func editActions(_ view: some View) -> some View {
+        view
             .accessibilityAction(named: "Fades, Gain and Warp") { editFades() }
             .accessibilityAction(named: "Pitch and Texture") { editPitchTexture() }
             .accessibilityAction(named: "Duplicate") { duplicate() }
@@ -1022,9 +1162,21 @@ private struct RegionBlock: View {
             .accessibilityAction(named: "Consolidate") { consolidate() }
             .accessibilityAction(named: "Bake Effects") { if canBake { bake() } }
             .accessibilityAction(named: "Delete") { remove() }
+    }
+
+    private func trimActions(_ view: some View) -> some View {
+        view
             .accessibilityAction(named: "Trim Start One Beat Later") { trim(.start, beats: 1) }
             .accessibilityAction(named: "Trim End One Beat Earlier") { trim(.end, beats: -1) }
             .accessibilityAction(named: "Extend End One Beat") { trim(.end, beats: 1) }
+    }
+
+    private func fadeActions(_ view: some View) -> some View {
+        view
+            .accessibilityAction(named: "Fade In One Beat Longer") { fade(.start, beats: 1) }
+            .accessibilityAction(named: "Fade In One Beat Shorter") { fade(.start, beats: -1) }
+            .accessibilityAction(named: "Fade Out One Beat Longer") { fade(.end, beats: 1) }
+            .accessibilityAction(named: "Fade Out One Beat Shorter") { fade(.end, beats: -1) }
     }
 
     /// A grip along one edge; it wins over the move drag. It looks narrow (a 4-pt stripe with
@@ -1036,20 +1188,95 @@ private struct RegionBlock: View {
             .frame(width: Theme.Space.xs)
             .padding(.horizontal, Theme.Space.s)
             .contentShape(Rectangle().inset(by: -Theme.Space.m))
-            .highPriorityGesture(
-                DragGesture(minimumDistance: 2, coordinateSpace: .named(ArrangeLane.space))
-                    .onChanged { value in
-                        if edge == .start { trimLeft = value.translation.width } else { trimRight = value.translation.width }
-                    }
-                    .onEnded { value in
-                        trimLeft = 0
-                        trimRight = 0
-                        let delta = Tick((Double(value.translation.width) * ticksPerPoint).rounded())
-                        apply(edge, byTicks: delta, snap: snap)
-                    }
-            )
+            .highPriorityGesture(trimGesture(edge))
             .accessibilityHidden(true)
     }
+
+    /// An edge drag: the edge shows on the magnet's line the release trims to, at this zoom, and
+    /// trims once when the finger lifts.
+    private func trimGesture(_ edge: Arranging.Edge) -> some Gesture {
+        DragGesture(minimumDistance: 2, coordinateSpace: .named(ArrangeLane.space))
+            .onChanged { value in
+                let from: Tick = edge == .start ? region.start : region.start + length
+                let shown = snap.previewOffset(from: from, translation: value.translation.width,
+                                               ticksPerPoint: ticksPerPoint, meter: meter)
+                if edge == .start { trimLeft = shown } else { trimRight = shown }
+            }
+            .onEnded { value in
+                trimLeft = 0
+                trimRight = 0
+                let delta = ArrangeZoom.ticks(dragged: Double(value.translation.width), ticksPerPoint: ticksPerPoint)
+                apply(edge, byTicks: delta, snap: snap)
+            }
+    }
+
+    /// A grip on one top corner — the fade-in's on the left, the fade-out's on the right — that
+    /// sits where its fade ends and drags it longer or shorter; it wins over the move drag. It
+    /// looks small (an 8-pt square just inside the top) and takes a 44-pt touch target centred on
+    /// it, so the lower part of each edge stays the trim handle. The fade follows the finger and
+    /// is set ONCE when it lifts: one command, one undo step. Audio regions only.
+    @ViewBuilder private func fadeGrip(_ edge: Arranging.Edge, width: CGFloat) -> some View {
+        if file.kind == .audio {
+            let centre: CGFloat = gripCentre(edge, width: width)
+            let inset: CGFloat = Self.gripInset
+            let half: CGFloat = Self.gripTarget / 2
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Theme.Color.text)
+                .frame(width: Self.gripSize, height: Self.gripSize)
+                .frame(width: Self.gripTarget, height: Self.gripTarget)
+                .contentShape(Rectangle())
+                .offset(x: centre - half, y: inset - half)
+                .highPriorityGesture(fadeGesture(edge))
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// Where a fade grip's centre sits: at the end of its fade, held just inside the block.
+    private func gripCentre(_ edge: Arranging.Edge, width: CGFloat) -> CGFloat {
+        let fades = shownFades
+        let total = CGFloat(Swift.max(region.length, 1))
+        let frames: Int = edge == .start ? fades.fadeIn : fades.fadeOut
+        let share = CGFloat(frames) / total
+        let fadeEndX: CGFloat = edge == .start ? share * width : width - share * width
+        let inset = Self.gripInset
+        return Swift.max(inset, Swift.min(fadeEndX, width - inset))
+    }
+
+    /// A fade grip's drag: the fade follows the finger and is set once, when it lifts.
+    private func fadeGesture(_ edge: Arranging.Edge) -> some Gesture {
+        let drawnWidth = Double(length) / ticksPerPoint
+        return DragGesture(minimumDistance: 2, coordinateSpace: .named(ArrangeLane.space))
+            .onChanged { value in
+                let frames = Arranging.fadeFrames(region, edge: edge, dragged: Double(value.translation.width),
+                                                  widthPoints: drawnWidth)
+                fadeDrag = (edge: edge, frames: frames)
+            }
+            .onEnded { value in
+                fadeDrag = nil
+                let frames = Arranging.fadeFrames(region, edge: edge, dragged: Double(value.translation.width),
+                                                  widthPoints: drawnWidth)
+                setFade(edge, toFrames: frames)
+            }
+    }
+
+    /// One command, one undo step.
+    private func setFade(_ edge: Arranging.Edge, toFrames frames: Int) {
+        guard let command = Arranging.faded(region, edge: edge, toFrames: frames, in: track) else { return }
+        try? store.perform([command], title: edge == .start ? "Fade In" : "Fade Out")
+    }
+
+    /// VoiceOver's fades by one beat: the same command a grip sets.
+    private func fade(_ edge: Arranging.Edge, beats: Int) {
+        guard file.kind == .audio,
+              let command = Arranging.faded(region, edge: edge, byBeats: beats, in: track, project: store.project) else { return }
+        try? store.perform([command], title: edge == .start ? "Fade In" : "Fade Out")
+    }
+
+    /// The fade grip as it shows, and the touch it takes.
+    private static let gripSize: CGFloat = 8
+    private static let gripTarget: CGFloat = 44
+    /// How far a grip's centre stays inside the block's edges and top.
+    private static let gripInset: CGFloat = gripSize / 2 + 2
 
     /// VoiceOver's trims by one beat, on the beat whatever the magnet says.
     private func trim(_ edge: Arranging.Edge, beats: Tick) {
@@ -1090,4 +1317,82 @@ private struct RegionBlock: View {
     private func consolidate() {
         if let command = Arranging.consolidated(region, in: track, project: store.project) { try? store.perform(command) }
     }
+}
+
+/// The waveform inside an audio region: each column's lowest-to-highest sample in the track's hue,
+/// softened, with its RMS over it, a flat hairline for silence. The file's picture is read once,
+/// off the main thread and cancellable (`WaveformCache`), and lands in `@State` once per file: a
+/// cold image. It reads no playhead and no clock, so it redraws only when its size or its window
+/// changes (a zoom, a trim, a gain edit). It takes no touches and says nothing: a tap or hold
+/// reaches the block, and the block speaks for the region.
+private struct RegionWaveform: View {
+    let url: URL?
+    /// The first frame of the file the region plays, and how many.
+    let offset: Int
+    let length: Int
+    /// The region's own level as a factor.
+    let level: Float
+    let tint: Color
+
+    /// The file's picture: nil while it is read, and for a file that cannot be read (the block
+    /// then stays plain).
+    @State private var overview: WaveformOverview?
+
+    var body: some View {
+        // Read in `body`, not only in the renderer, so the landing read re-renders the leaf. A
+        // different name than the property: the task below writes `overview`, and a local of
+        // the same name would shadow it as a constant.
+        let picture = self.overview
+        let offset = self.offset, length = self.length, level = self.level, tint = self.tint
+        Canvas { context, size in
+            guard let picture, size.width > 0, size.height > 0 else { return }
+            let columns = picture.window(offset: offset, length: length,
+                                          columns: Self.columnCount(forWidth: Double(size.width)))
+            guard !columns.isEmpty else { return }
+            let mid = size.height / 2
+            let width = size.width / CGFloat(columns.count)
+            var peaks = Path()
+            var bodies = Path()
+            for (index, column) in columns.enumerated() {
+                let x = CGFloat(index) * width
+                let top = mid - Self.drawn(column.max, level) * mid
+                let bottom = mid - Self.drawn(column.min, level) * mid
+                peaks.addRect(CGRect(x: x, y: top, width: width, height: Swift.max(Self.hairline, bottom - top)))
+                let rms = Swift.max(0, Self.drawn(column.rms, level)) * mid
+                bodies.addRect(CGRect(x: x, y: mid - rms, width: width, height: rms * 2))
+            }
+            // Peaks behind, the RMS body in front: the extremes stay visible, the energy reads.
+            context.fill(peaks, with: .color(tint.opacity(Self.peakOpacity)))
+            context.fill(bodies, with: .color(tint.opacity(Self.bodyOpacity)))
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .task(id: url) {
+            overview = nil
+            guard let url else { return }
+            let read = await WaveformCache.shared.overview(of: url)
+            // A read for a file the region no longer plays must not land over the newer one.
+            guard !Task.isCancelled else { return }
+            overview = read
+        }
+    }
+
+    /// One column per two points, at least one, at most 1 024 at any zoom; none for no width.
+    private nonisolated static func columnCount(forWidth width: Double) -> Int {
+        guard width.isFinite, width > 0 else { return 0 }
+        return Int(Swift.min(width / 2, 1_024).rounded(.up))
+    }
+
+    /// A sample at the region's level, held to the block (±1); a value that is not a number is silence.
+    private nonisolated static func drawn(_ value: Float, _ level: Float) -> CGFloat {
+        let scaled = value * level
+        guard scaled.isFinite else { return 0 }
+        return CGFloat(Swift.min(Swift.max(scaled, -1), 1))
+    }
+
+    /// The thinnest a column is drawn — silence is a line, not nothing.
+    private nonisolated static let hairline: CGFloat = 0.5
+    /// Muted: the wave sits behind the name and the fades, in the track's hue, never brighter than them.
+    private nonisolated static let peakOpacity: Double = 0.35
+    private nonisolated static let bodyOpacity: Double = 0.6
 }
