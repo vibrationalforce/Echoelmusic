@@ -62,7 +62,7 @@ public struct WSOLAStretcher: Sendable {
                         isCancelled: () -> Bool, position: (Int) -> Double) -> [[Float]]? {
         guard let first = channels.first, !first.isEmpty, outputCount > 0,
               channels.allSatisfy({ $0.count == first.count }) else {
-            return channels.map { _ in [] }
+            return channels.map { (_: [Float]) -> [Float] in [] }
         }
         let count = first.count
         let join = Swift.max(1, splice)
@@ -120,7 +120,7 @@ public struct WSOLAStretcher: Sendable {
                          position: (Int) -> Double) -> [[Float]]? {
         guard let first = channels.first, !first.isEmpty, outputCount > 0,
               channels.allSatisfy({ $0.count == first.count }) else {
-            return channels.map { _ in [] }
+            return channels.map { (_: [Float]) -> [Float] in [] }
         }
         let count = first.count
         guard count > frameSize, outputCount > frameSize else {
