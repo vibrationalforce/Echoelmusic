@@ -19,8 +19,8 @@ Disallow: /
 User-agent: ClaudeBot
 Disallow: /
 
-# /dev/ holds internal engineering notes (incl. superseded plans) — public by
-# GitHub-Pages necessity, but not for search/press (brand audit 2026-08-28).
+# /dev/ holds engineering notes for contributors (status registers, glossary,
+# product law). They are public, but they are not product copy: keep them out of search.
 User-agent: *
 Disallow: /dev/
 Allow: /

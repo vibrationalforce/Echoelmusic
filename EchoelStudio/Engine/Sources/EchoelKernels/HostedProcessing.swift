@@ -29,9 +29,13 @@ public struct HostTransport: Equatable, Sendable {
     public var samplesToNextBeat: Int
     /// The song position in samples.
     public var sample: Double
+    /// The beats the song loops over while its loop runs — the cycle, as Audio Units call it;
+    /// both 0 while it does not.
+    public var cycleStart: Double
+    public var cycleEnd: Double
 
     public init(isPlaying: Bool, changed: Bool, tempo: Double, numerator: Int, denominator: Int, beat: Double,
-                downbeat: Double, samplesToNextBeat: Int, sample: Double) {
+                downbeat: Double, samplesToNextBeat: Int, sample: Double, cycleStart: Double = 0, cycleEnd: Double = 0) {
         self.isPlaying = isPlaying
         self.changed = changed
         self.tempo = tempo
@@ -41,6 +45,13 @@ public struct HostTransport: Equatable, Sendable {
         self.downbeat = downbeat
         self.samplesToNextBeat = samplesToNextBeat
         self.sample = sample
+        self.cycleStart = cycleStart
+        self.cycleEnd = cycleEnd
+    }
+
+    /// The loop runs: a cycle with a real length.
+    public var isCycling: Bool {
+        cycleStart.isFinite && cycleEnd.isFinite && cycleStart >= 0 && cycleEnd > cycleStart
     }
 }
 

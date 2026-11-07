@@ -1768,11 +1768,14 @@ def section_d() -> Section:
     # so a naive "every backticked path must exist" sweep would be a permanent flood — the failure
     # mode this whole skill warns about. Restricted to the four trees where a mention is always a
     # live pointer and never an obituary.
+    PRIVATE_PREFIXES = ("memory/", "scratchpads/", "docs/dev/")
     routable = re.compile(r"`((?:memory|scripts|\.claude|docs)/[^`\s]+|[A-Za-z][\w/]*/CLAUDE\.md)`")
     missing: dict[str, list[str]] = {}
-    # ⚠️ 2026-11-05: `memory/` lives in the private working repository under the same path, and
-    # the map says a pointer there resolves there. It is checked there when that checkout sits
-    # beside this one; otherwise it is COUNTED as unchecked, never passed as resolved.
+    # ⚠️ 2026-11-05: `memory/`, `scratchpads/` and the private half of `docs/dev/` live in the
+    # private working repository under the same paths, and the map says a pointer there resolves
+    # there. A target that exists in this tree (the public `docs/dev/` files) resolves here; any
+    # other is checked there when that checkout sits beside this one, and otherwise COUNTED as
+    # unchecked, never passed as resolved and never reported as missing.
     private = ROOT.parent / "echoelmusic-intern"
     unchecked = 0
     for name, text in laws:
@@ -1781,7 +1784,9 @@ def section_d() -> Section:
                 target = hit.rstrip(".,;:)")
                 if "*" in target or "…" in target:
                     continue
-                if target.startswith("memory/"):
+                if target.startswith(PRIVATE_PREFIXES):
+                    if (ROOT / target).exists():
+                        continue
                     if not private.is_dir():
                         unchecked += 1
                     elif not (private / target).exists():
@@ -1791,7 +1796,7 @@ def section_d() -> Section:
                     missing.setdefault(target, []).append(f"{name}:{i + 1}")
     if unchecked:
         sec.findings.append(Finding(
-            INFO, f"{unchecked} pointer(s) into the private memory/ not checked",
+            INFO, f"unchecked {unchecked} pointer(s) into the private memory/, scratchpads/ or docs/dev/",
             ["the private working repository (../echoelmusic-intern) is not attached"],
             "Attach it beside this checkout to resolve them; they are not counted as resolved."))
     # ⛔ THE FIRST VERSION REPORTED `.claude/settings.local.json` THREE TIMES, and that file is

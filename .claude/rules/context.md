@@ -108,18 +108,18 @@ widening the slice.
 
 ## 3. Reading CI
 
-`Xcode Compile Check` builds `Sources/` **only**. CI/CD reports `failure` on **every** push
-because of #396, so the conclusion alone says nothing — read the **job steps**. The full
+`Xcode Compile Check` builds `Sources/` **only**. CI/CD reports `failure` on almost every push
+because of #396 (97 of 100 on 2026-11-06: `gh run list --workflow ci.yml --event push --limit 100
+--json conclusion`), so the conclusion alone says nothing — read the **job steps**. The full
 discriminator (`Build for Testing` / `TEST EXECUTE FAILED` / `TEST BUILD FAILED`, and #445 on
 what a missing test name does and does not prove) lives in **`Tests/CISmoke/CLAUDE.md` §5**;
 it is not repeated here (#416).
 
 **`.github/workflows/**`, `project.yml` and `Resources/iOS/Info.plist` are founder-gated:
-report, do not edit.** Since 2026-09-28 these three ask before the
-Claude writes that `permissions.ask` + a Bash hook recognise (measured: Claude Code 2.1.283,
-`default`/`auto`, nested `claude -p`). In `auto` the Bash hook DENIES (an "ask" there was
-emitted and the command still ran, resolver unknown); a phone release is proven in no mode.
-Scope, measurements, limits: `.claude/hooks/README.md`. `.deploy/release` is NOT gated since
+report, do not edit.** Since 2026-10-17 the hook and `permissions.ask` mechanically protect
+only `.claude/settings.json` and `.mcp.json` (`PROTECTED_FILES` in
+`.claude/hooks/protect-founder-gated.py`); the other gated paths hold as law, not as mechanism.
+In `auto` the hook DENIES. Scope, measurements, limits: `.claude/hooks/README.md`. `.deploy/release` is NOT gated since
 2026-10-01 (founder: "Nur Deploy frei") — bump it and ship.
 
 ## 4. Handling large tool output

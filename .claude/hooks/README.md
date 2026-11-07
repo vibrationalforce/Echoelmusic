@@ -1,9 +1,13 @@
 # Schutz der founder-gesperrten Pfade
 
-Geschützt sind genau drei Pfade, keine weiteren:
-`.github/workflows/**` · `project.yml` · `Resources/iOS/Info.plist`.
+⭐ **Seit 2026-10-17 schützen Hook und `permissions.ask` mechanisch nur `.claude/settings.json`
+und `.mcp.json`** (`PROTECTED_FILES` in `protect-founder-gated.py`, `permissions.ask` in
+`.claude/settings.json`). Die übrigen founder-gesperrten Pfade — `.github/workflows/**`, beide
+`project.yml`, `Resources/iOS/Info.plist` — gelten als Gesetz, nicht als Mechanik: berichten,
+nicht editieren. Alles unten über `project.yml`, `Info.plist` und Workflows beschreibt den Stand
+vom 2026-09-28 und bleibt als Messprotokoll stehen.
 
-⭐ **`.deploy/release` ist seit 2026-10-01 FREI** (Founder, wörtlich: „Nur Deploy frei“). Der Agent hebt die Version und löst den TestFlight-Deploy selbst aus. Die drei übrigen Pfade bleiben gesperrt, weil ein Fehler dort den Build oder die App-Store-Prüfung bricht. Alles unten über „vier Pfade“ und die Tabellenzeilen mit `.deploy/release` beschreibt den Stand vom 2026-09-28 und bleibt als Messprotokoll stehen.
+⭐ **`.deploy/release` ist seit 2026-10-01 FREI** (Founder, wörtlich: „Nur Deploy frei“). Der Agent hebt die Version und löst den TestFlight-Deploy selbst aus. Die übrigen Pfade bleiben gesperrt (als Gesetz), weil ein Fehler dort den Build oder die App-Store-Prüfung bricht. Alles unten über „vier Pfade“ und die Tabellenzeilen mit `.deploy/release` beschreibt den Stand vom 2026-09-28 und bleibt als Messprotokoll stehen.
 
 > **Geltungsbereich aller Aussagen hier: Claude Code 2.1.283** (`claude --version`, gemessen
 > 2026-09-28), Modi `default` und `auto`, ausgelöst über `claude -p` im Wegwerf-Repo. Für eine

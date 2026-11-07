@@ -20,6 +20,8 @@ public final class HostClock: Sendable {
     private let downbeat = Atomic<UInt64>(Double(0).bitPattern)
     private let toNextBeat = Atomic<Int>(0)
     private let sample = Atomic<UInt64>(Double(0).bitPattern)
+    private let cycleStart = Atomic<UInt64>(Double(0).bitPattern)
+    private let cycleEnd = Atomic<UInt64>(Double(0).bitPattern)
 
     public init() {}
 
@@ -34,6 +36,9 @@ public final class HostClock: Sendable {
         downbeat.store(transport.downbeat.bitPattern, ordering: .relaxed)
         toNextBeat.store(transport.samplesToNextBeat, ordering: .relaxed)
         sample.store(transport.sample.bitPattern, ordering: .relaxed)
+        let cycling = transport.isCycling
+        cycleStart.store((cycling ? transport.cycleStart : 0).bitPattern, ordering: .relaxed)
+        cycleEnd.store((cycling ? transport.cycleEnd : 0).bitPattern, ordering: .relaxed)
     }
 
     /// For `AUAudioUnit.musicalContextBlock`.
@@ -49,17 +54,22 @@ public final class HostClock: Sendable {
         }
     }
 
-    /// For `AUAudioUnit.transportStateBlock`. The song has no cycle; "changed" is reported once
-    /// after each start, stop or jump.
+    /// For `AUAudioUnit.transportStateBlock`. While the song loops, the loop is the cycle, in
+    /// beats; without one the cycle is 0 to 0 and not reported. "changed" is reported once after
+    /// each start, stop or jump. The two cycle words are read apart, so a unit asking during a loop
+    /// edit can see one old and one new end for one call — the next call has both.
     public var transportStateBlock: AUHostTransportStateBlock {
         { [self] flagsOut, sampleOut, cycleStartOut, cycleEndOut in
             var flags: AUHostTransportStateFlags = []
             if changed.exchange(false, ordering: .relaxed) { flags.insert(.changed) }
             if playing.load(ordering: .relaxed) { flags.insert(.moving) }
+            let start = Double(bitPattern: cycleStart.load(ordering: .relaxed))
+            let end = Double(bitPattern: cycleEnd.load(ordering: .relaxed))
+            if end > start { flags.insert(.cycling) }
             flagsOut?.pointee = flags
             sampleOut?.pointee = Double(bitPattern: sample.load(ordering: .relaxed))
-            cycleStartOut?.pointee = 0
-            cycleEndOut?.pointee = 0
+            cycleStartOut?.pointee = start
+            cycleEndOut?.pointee = end
             return true
         }
     }
