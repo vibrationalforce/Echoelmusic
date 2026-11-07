@@ -150,16 +150,16 @@ final class RegionWarpPlaybackTests: XCTestCase {
 
     // MARK: - Warp modes (W-3)
 
-    /// `seconds` of silence with a one-sample click of 0.9 on every beat of `bpm`, over an optional
-    /// quiet sine.
-    private func clickTrain(bpm: Double, seconds: Double, under hertz: Double? = nil) throws -> SampleBuffer {
+    /// `seconds` of silence with a one-sample click of 0.9 on every beat of `bpm`, the first one
+    /// `leadIn` seconds in, over an optional quiet sine.
+    private func clickTrain(bpm: Double, seconds: Double, leadIn: Double = 0, under hertz: Double? = nil) throws -> SampleBuffer {
         let count = Int(seconds * rate)
         var samples = [Float](repeating: 0, count: count)
         if let hertz {
             for i in 0..<count { samples[i] = Float(0.1 * sin(2 * Double.pi * hertz * Double(i) / 48_000)) }
         }
         let beat = Int((60 / bpm * rate).rounded())
-        var at = 0
+        var at = Int((leadIn * rate).rounded())
         while at < count {
             samples[at] = 0.9
             at += beat
@@ -169,19 +169,21 @@ final class RegionWarpPlaybackTests: XCTestCase {
 
     func testBeatsKeepsEveryHitOnItsBeatAndPlaysItOnce() throws {
         // Eight clicks at 120 BPM played at 90: a beat is 0.5 s in the file and 2/3 s in the song.
-        var s = try song(try clickTrain(bpm: 120, seconds: 4), tempo: 90, native: 120)
+        // The train starts half a beat in, so no click sits in the 64 frames every region fades in
+        // over (the engine's edge declick); in the song the clicks land half a beat after each beat.
+        var s = try song(try clickTrain(bpm: 120, seconds: 4.25, leadIn: 0.25), tempo: 90, native: 120)
         try Command.setRegionWarpMode(track: s.track, s.region, mode: .beats).apply(to: &s.project)
         let warped = RegionWarp.prepare(s.project, samples: s.samples)
         XCTAssertEqual(warped.count, 1)
         let beat = 60 / 90.0 * rate
-        let out = live(s, frames: Int(8 * beat) + 4_800, warped: warped).left
+        let out = live(s, frames: Int(8.5 * beat) + 4_800, warped: warped).left
         let peaks = out.indices.filter { abs(out[$0]) > 0.3 }
         XCTAssertEqual(peaks.count, 8, "every click once, none doubled: \(peaks)")
         for (k, peak) in peaks.enumerated() {
-            XCTAssertEqual(Double(peak), Double(k) * beat, accuracy: rate / 1_000, "click \(k) within 1 ms of its beat")
+            XCTAssertEqual(Double(peak), (Double(k) + 0.5) * beat, accuracy: rate / 1_000, "click \(k) within 1 ms of its place")
         }
         let sounding = out.lastIndex { abs($0) > 1e-4 } ?? 0
-        XCTAssertLessThanOrEqual(Double(sounding), 8 * beat + 64, "ends on its eighth beat")
+        XCTAssertLessThanOrEqual(Double(sounding), 8.5 * beat + 64, "nothing sounds past the region's end")
     }
 
     func testRePitchChangesTempoAndPitchTogether() throws {
