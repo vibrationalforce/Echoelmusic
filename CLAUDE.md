@@ -48,6 +48,9 @@ Ein Zeiger auf einen Abschnitt „von `CLAUDE.md`" — in Code, Wächtern, Skrip
 
 - **⭐ PRODUCT LAW (canonical since 2026-09-24 — read `docs/dev/FOUNDER_PRODUCT_LAW.md` before ANY scope decision; entry + timeline = `ECHOEL_VISION_2026-10-19.md`, Studio order = NEUPLANUNG §5, both private).** Echoelmusic is a full professional **DMMW** (distributed multidimensional multimedia workstation) — audio, MIDI/MPE, instruments, FX, recording, arrangement, mixing, mastering, automation, video, visual, light, spatial/XR, streaming, collaboration, AI. *Own the complete creative workflow, integrate the complete professional ecosystem* — never rebuild specialist infrastructure (codecs, Dante, NDI, CDNs, plugin SDKs).
   **CURRENT PRODUCT LAW SUPERSEDES HISTORICAL PRODUCT CUTS — a historical deletion revokes an IMPLEMENTATION, not the capability.** Every ⛔ „gestrichen / CUT / reines Instrument" in this file and in `decisions.csv` is PHASE HISTORY: its ENGINEERING warning stays law (#1302 input graph, #299 refcount, black-screen chain, hot-state), its SCOPE verdict does not. Recovery ports the proven core into today's owners — never copy a subsystem back; what existed, whether it worked and its recovery class: `HISTORY_ARCHIVE.md` (privat). ⚠️ **Scope is not a claim:** store, website and content still claim only what ships (`docs/dev/FEATURE_STATUS.md`, `ContentPipeline/CLAIMS.md`).
+- **Scope ändert sich nur im Wochenlauf** (Founder 2026-11-08): `WEEKLY.md` im privaten Repo
+  `echoelmusic-intern`. Eine Sitzung schreibt einen Scope-Vorschlag dorthin für die nächste Woche,
+  statt ihn zu bauen; Fixes und freigegebene Scheiben laufen weiter.
 - **§4b — keine Waffen, keine Überwachung, kein Targeting** (Founder 2026-11-01): nie gebaut, nie
   integriert, nie als Beitrag angenommen; einmal in `decisions.csv` (privat) verbucht und nicht wieder geöffnet.
 - **§4c — nicht beim Steuern:** niemand spielt Echoelmusic beim Fahren, Steuern oder Bedienen einer
