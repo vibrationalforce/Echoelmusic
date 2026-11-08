@@ -127,8 +127,8 @@ struct StudioView: View {
                         .padding(Theme.Space.m)
                         .transition(.opacity)
                 }
-                // `isLive`/`isStarting` change only at Go Live and Stop; the clock ticks in the badge.
-                if streaming.isLive || streaming.isStarting {
+                // `isOn` changes only at Go Live and Stop; the clock ticks in the badge.
+                if streaming.isOn {
                     StreamLiveBadge(open: { router.sheet = .streaming })
                         .padding(Theme.Space.m)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)

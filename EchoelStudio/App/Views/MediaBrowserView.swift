@@ -100,7 +100,7 @@ struct MediaBrowserView: View {
             EchoelSection {
                 kindPicker(counts: MediaBrowser.counts(all), total: all.count)
                 if let message = model.message { NoteText(message, tone: .problem) }
-                if streaming.isLive || streaming.isStarting {
+                if streaming.isOn {
                     NoteText("Listening is off while the stream is live: the stream would carry it.")
                 }
             }
@@ -197,7 +197,7 @@ struct MediaBrowserView: View {
     @ViewBuilder private func listenButton(_ item: MediaBrowser.Item) -> some View {
         if item.canListen {
             ListenButton(name: item.name, take: model.listening?.id == item.id ? model.listening?.take : nil,
-                         player: engine.preview, enabled: engine.isUp && !streaming.isLive && !streaming.isStarting) {
+                         player: engine.preview, enabled: engine.isUp && !streaming.isOn) {
                 model.listen(item, url: url(of: item), loaded: item.media.flatMap { documents.samples[$0] },
                              player: engine.preview)
             }

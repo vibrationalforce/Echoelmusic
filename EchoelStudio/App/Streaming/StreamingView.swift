@@ -34,7 +34,7 @@ struct StreamingView: View {
 
     @ViewBuilder private var liveSection: some View {
         EchoelSection(footer: "Picture: the Field. Sound: the master mix. Nothing else leaves the phone, and nothing at all until Go Live.") {
-            if streaming.isLive || streaming.isStarting {
+            if streaming.isOn {
                 StreamLiveReadout()
                 Button(role: .destructive) {
                     Task { await streaming.stop() }
@@ -42,6 +42,7 @@ struct StreamingView: View {
                     Label("Stop Stream", systemImage: "stop.fill")
                 }
                 .buttonStyle(EchoelRowButtonStyle())
+                .disabled(!streaming.lifecycle.canStop)
             } else {
                 Button {
                     Task { await streaming.goLive(store: store, engine: engine) }
@@ -79,7 +80,7 @@ struct StreamingView: View {
                     .foregroundStyle(Theme.Color.text)
                     .frame(minHeight: Theme.Size.touch)
             }
-            .disabled(streaming.isLive || streaming.isStarting)
+            .disabled(streaming.isOn)
         }
     }
 
@@ -98,7 +99,7 @@ struct StreamingView: View {
                         .lineLimit(2)
                 }
             }
-            .disabled(streaming.isLive || streaming.isStarting)
+            .disabled(streaming.isOn)
             Button {
                 editing = target
             } label: {
@@ -108,7 +109,7 @@ struct StreamingView: View {
             }
             .buttonStyle(.borderless)
             .accessibilityLabel("Edit \(target.name)")
-            .disabled(streaming.isLive || streaming.isStarting)
+            .disabled(streaming.isOn)
         }
     }
 
@@ -123,7 +124,7 @@ struct StreamingView: View {
             SettingField(title: "Destinations at Once", value: streaming.plan.simultaneousLimit,
                          range: StreamPlan.limitRange,
                          standard: StreamPlan.limitRange.lowerBound) { streaming.setSimultaneousLimit($0) }
-                .disabled(streaming.isLive || streaming.isStarting)
+                .disabled(streaming.isOn)
             ValueRow("Upload Needed", value: Self.megabits(streaming.plan.uploadKbps))
             if let refusal = streaming.plan.refusal, refusal != .noTarget {
                 NoteText(refusal.explanation, tone: .problem)
@@ -155,7 +156,7 @@ struct StreamLiveReadout: View {
                 ValueRow("On Air", value: Self.duration(context.date.timeIntervalSince(started)))
             }
         } else {
-            ValueRow("On Air", value: "Connecting")
+            ValueRow("On Air", value: streaming.lifecycle.phase == .stopping ? "Stopping" : "Connecting")
         }
         ForEach(streaming.plan.enabledTargets) { target in
             let report = streaming.reports[target.id]
@@ -307,7 +308,7 @@ struct StreamLiveBadge: View {
                         Text("Live " + StreamLiveReadout.duration(context.date.timeIntervalSince(started)))
                     }
                 } else {
-                    Text("Connecting")
+                    Text(streaming.lifecycle.phase == .stopping ? "Stopping" : "Connecting")
                 }
             }
             .font(Theme.Font.caption.monospacedDigit())

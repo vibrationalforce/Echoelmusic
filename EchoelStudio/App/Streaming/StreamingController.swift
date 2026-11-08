@@ -19,10 +19,12 @@ import os
 @Observable
 final class StreamingController {
     private(set) var plan: StreamPlan
-    private(set) var isLive = false
-    private(set) var isStarting = false
-    /// When the current stream went live; nil while off.
-    private(set) var startedAt: Date?
+    /// Off, starting, live or closing — one value, so no two of them can hold at once.
+    private(set) var lifecycle = StreamLifecycle()
+    /// A stream is starting, live or closing: the destinations stay as they are.
+    var isOn: Bool { lifecycle.isOn }
+    /// When the current stream went live; nil unless it is live.
+    var startedAt: Date? { lifecycle.startedAt }
     /// Why the last stream did not start or ended by itself, until the next Go Live.
     private(set) var notice: String?
     /// Each destination's reading while live. Changes about once a second: read it in a leaf.
@@ -96,7 +98,7 @@ final class StreamingController {
 
     /// Opens every turned-on destination with the Field and the master mix.
     func goLive(store: ProjectStore, engine: AudioEngine) async {
-        guard !isLive, !isStarting else { return }
+        guard lifecycle.phase == .off else { return }
         notice = nil
         if let refusal = plan.refusal {
             notice = refusal.explanation
@@ -119,7 +121,8 @@ final class StreamingController {
             notice = "This device cannot draw the Field for a stream, because it has no Metal graphics."
             return
         }
-        isStarting = true
+        guard let attempt = lifecycle.begin() else { return }
+        reports = [:]
         DiagnosticLog.app.note("stream: go live", [("destinations", Double(addresses.count))])
         let sound = MasterAudioTap()
         self.picture = picture
@@ -151,16 +154,15 @@ final class StreamingController {
             } catch {
                 log.error("stream: \(target.redactedServer, privacy: .public) refused")
             }
-            // Stop was pressed (or the app left) while this destination connected.
-            guard isStarting else { return }
+            // Stop was pressed (or the app left) while this destination connected — and a newer
+            // Go Live since then is not this attempt.
+            guard lifecycle.isStarting(attempt) else { return }
         }
-        isStarting = false
         guard opened > 0 else {
             await end(because: notice ?? "No destination accepted the stream. Check each destination's server address and key.")
             return
         }
-        isLive = true
-        startedAt = Date()
+        guard lifecycle.wentLive(attempt, at: Date()) else { return }
         DiagnosticLog.app.note("stream: live", [("destinations", Double(opened))])
     }
 
@@ -170,11 +172,10 @@ final class StreamingController {
     }
 
     private func end(because reason: String?) async {
-        guard isLive || isStarting || picture != nil else { return }
+        // Closing until everything below is done, so a Go Live meanwhile waits instead of having
+        // its update handler removed by this Stop.
+        guard lifecycle.beginStopping() else { return }
         if reason == nil { DiagnosticLog.app.note("stream: stop") } else { DiagnosticLog.app.note("stream: ended") }
-        isStarting = false
-        isLive = false
-        startedAt = nil
         if let reason { notice = reason }
         picture?.stop()
         picture = nil
@@ -185,15 +186,19 @@ final class StreamingController {
         pumps = []
         await publisher.closeAll()
         await publisher.setOnUpdate(nil)
+        reports = [:]
+        lifecycle.stopped()
     }
 
     private func received(_ id: UUID, _ report: StreamPublisher.Report) {
+        // A reading that hops over after the last stream closed belongs to no stream.
+        guard lifecycle.isOn else { return }
         reports[id] = report
         if case .failed(let reason) = report.state, let name = plan.targets.first(where: { $0.id == id })?.name {
             notice = "\(name): \(reason)"
         }
         // Every destination that was live has dropped: the stream is over.
-        guard isLive else { return }
+        guard lifecycle.isLive else { return }
         let stillLive = reports.values.contains { $0.state == .live || $0.state == .connecting }
         if !stillLive { Task { await end(because: notice ?? "The stream ended.") } }
     }
@@ -205,7 +210,7 @@ final class StreamingController {
         observers.append(center.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil,
                                             queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, self.isLive || self.isStarting else { return }
+                guard let self, self.lifecycle.canStop else { return }
                 Task { await self.end(because: "The stream ended: Echoel left the screen, and iOS stops video in the background.") }
             }
         })
@@ -214,7 +219,7 @@ final class StreamingController {
             let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
             let began = raw.flatMap(AVAudioSession.InterruptionType.init(rawValue:)) == .began
             MainActor.assumeIsolated {
-                guard began, let self, self.isLive || self.isStarting else { return }
+                guard began, let self, self.lifecycle.canStop else { return }
                 Task { await self.end(because: "The stream ended: a call or another app took the audio.") }
             }
         })
