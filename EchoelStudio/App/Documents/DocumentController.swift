@@ -1044,13 +1044,56 @@ final class DocumentController {
             isExporting = false
             followRenamedSong()
         }
+        switch await renderMix(plugins: plugins, loudness: loudness, headphoneSpatial: headphoneSpatial) {
+        case .rendered(let file, let report, let without):
+            lastExportLoudness = report
+            lastExportIsNews = true
+            lastError = without
+            return file
+        case .silent(let why):
+            lastExportIsNews = false
+            lastError = why
+            return nil
+        case .failed(let message):
+            // The loudness of an earlier export must not stand under this failure as its result.
+            lastExportIsNews = false
+            lastError = message
+            return nil
+        case .stopped:
+            return nil
+        }
+    }
+
+    /// How the render of the mix ended — one value where `exportWAV` answered nil for every ending
+    /// but one. The two movie exports render the mix first and read each nil as "the song has no
+    /// sound": a render that failed went on to a film without sound, whose own success then cleared
+    /// the failure's line, and the line naming what the mix was rendered without went the same way.
+    private enum MixRender {
+        /// The file, how loud it came out, and the line naming what it was rendered without (nil
+        /// when it lacks nothing).
+        case rendered(file: URL, report: MixLoudness.Report, without: String?)
+        /// The arrangement renders no sound; `why` is the line that says what is missing.
+        case silent(why: String)
+        /// The render failed and no file is left; `message` is the line for the musician.
+        case failed(message: String)
+        /// Another song was opened meanwhile; `exportStopped` has said so.
+        case stopped
+    }
+
+    /// The render behind `exportWAV`, for a caller that holds the export (`isExporting`). It writes
+    /// the file and answers how that went; the status line and the loudness line are the caller's,
+    /// because a movie export renders the mix on its way and that file is not its result.
+    private func renderMix(plugins: PluginHost, loudness: ExportLoudness, headphoneSpatial: Bool) async -> MixRender {
         let rate = 48_000.0
         let exportedSong = songsOpened
         let songName = openSongName
         // The song's audio files decode after it opens. A render before they arrive left its
         // sampler and audio parts silent, with no word about it (review 2026-10-19).
         await mediaLoaded(for: exportedSong)
-        guard exportedSong == songsOpened else { return exportStopped(songName) }
+        guard exportedSong == songsOpened else {
+            _ = exportStopped(songName)
+            return .stopped
+        }
         plugins.store(into: store)
         // The song and its audio are taken together, with no wait between them: a song opened
         // while the plugins load must not lend this one its buffers (review 2026-10-22).
@@ -1104,32 +1147,46 @@ final class DocumentController {
         // one, and its loudness and missing plugins are not that song's news.
         guard exportedSong == songsOpened else {
             if case .success = result { try? FileManager.default.removeItem(at: url) }
-            return exportStopped(songName)
+            _ = exportStopped(songName)
+            return .stopped
         }
         switch result {
         case .success(let rendered) where rendered.frames == 0:
             try? FileManager.default.removeItem(at: url)
-            lastExportIsNews = false
-            lastError = Self.nothingToExport(audio: unread)
-            return nil
+            return .silent(why: Self.nothingToExport(audio: unread))
         case .success(let rendered):
-            lastExportLoudness = rendered.report
-            lastExportIsNews = true
-            lastError = Self.exportedWithout(plugins: offline.missing, audio: unread)
-            return url
+            return .rendered(file: url, report: rendered.report,
+                             without: Self.exportedWithout(plugins: offline.missing, audio: unread))
         case .failure(let error):
             log.error("export failed — \(error.localizedDescription, privacy: .private)")
-            // The loudness of an earlier export must not stand under this failure as its result.
-            lastExportIsNews = false
             // The float file a target renders to holds three hours where the 24-bit file holds four.
             let tooLong = !loudness.changesMix
                 ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz). Shorten the arrangement and export again."
                 : "The song is too long to bring to a loudness (about three hours at 48 kHz). Set WAV Loudness to Off, or shorten the arrangement, and export again."
-            lastError = error is PluginRenderFailed
+            let message: String = error is PluginRenderFailed
                 ? "A plugin stopped rendering during the export, so the file would have had gaps. Nothing was saved."
                 : error as? WAVWriter.WriteError == .tooLong
                 ? tooLong
                 : "Could not export the song. Try again; if it fails again, share the diagnostics from About Echoelmusic."
+            return .failed(message: message)
+        }
+    }
+
+    /// What a film export makes of its mix: the file — nil for a song without sound, whose film
+    /// goes without — and the line naming what the mix was rendered without. Nil when there is no
+    /// film to make: the render failed, which is said here, or another song was opened.
+    private func filmMix(_ mixed: MixRender) -> (file: URL?, without: String?)? {
+        switch mixed {
+        case .rendered(let file, _, let without):
+            return (file: file, without: without)
+        case .silent:
+            return (file: nil, without: nil)
+        case .failed(let message):
+            // The loudness of an earlier export must not stand under this failure as its result.
+            lastExportIsNews = false
+            lastError = message
+            return nil
+        case .stopped:
             return nil
         }
     }
@@ -1841,17 +1898,18 @@ final class DocumentController {
         }
         let exportedSong = songsOpened
         let songName = openSongName
-        let mix = await exportWAV(plugins: plugins, loudness: .off)
-        guard exportedSong == songsOpened else { return exportStopped(songName) }
-        guard !isExporting else { return nil }
+        // One export from the mix to the film: the slot is held across both.
         isExporting = true
-        exportProgress = "Drawing the Field…"
         defer {
             isExporting = false
             exportProgress = nil
             followRenamedSong()
-            if let mix { try? FileManager.default.removeItem(at: mix) }
         }
+        let mixRender = await renderMix(plugins: plugins, loudness: .off, headphoneSpatial: false)
+        guard let sound = filmMix(mixRender) else { return nil }
+        let mix = sound.file
+        defer { if let mix { try? FileManager.default.removeItem(at: mix) } }
+        exportProgress = "Drawing the Field…"
         let project = store.project
         let look = FieldLookChoice.onThisDevice
         let mixSeconds = mix.flatMap { try? AVAudioFile(forReading: $0) }.map { Double($0.length) / $0.processingFormat.sampleRate } ?? 0
@@ -1896,10 +1954,14 @@ final class DocumentController {
         }
         switch result {
         case .success:
-            lastError = nil
+            // The film has no sound, so no loudness is its result; what the mix that moves the
+            // Field was rendered without is said.
+            lastExportIsNews = false
+            lastError = sound.without
             return url
         case .failure(let error):
             log.error("field alpha export failed — \(error.localizedDescription, privacy: .private)")
+            lastExportIsNews = false
             lastError = (error as? LocalizedError)?.errorDescription ?? "Could not export the Field video. Try again."
             return nil
         }
@@ -2170,17 +2232,18 @@ final class DocumentController {
         let layerPass = fieldPass
         let exportedSong = songsOpened
         let songName = openSongName
-        let mix = await exportWAV(plugins: plugins)
-        guard exportedSong == songsOpened else { return exportStopped(songName) }
-        guard !isExporting else { return nil }
+        // One export from the mix to the film: the slot is held across both.
         isExporting = true
-        exportProgress = "Writing the video…"
         defer {
             isExporting = false
             exportProgress = nil
             followRenamedSong()
-            if let mix { try? FileManager.default.removeItem(at: mix) }
         }
+        let mixRender = await renderMix(plugins: plugins, loudness: .exportDefault, headphoneSpatial: false)
+        guard let sound = filmMix(mixRender) else { return nil }
+        let mix = sound.file
+        defer { if let mix { try? FileManager.default.removeItem(at: mix) } }
+        exportProgress = "Writing the video…"
         let project = store.project
         let mixSeconds = mix.flatMap { try? AVAudioFile(forReading: $0) }.map { Double($0.length) / $0.processingFormat.sampleRate } ?? 0
         let span: (from: Double, to: Double)
@@ -2238,8 +2301,12 @@ final class DocumentController {
             if let loudness {
                 lastExportLoudness = loudness
                 lastExportIsNews = true
+            } else {
+                // A film without sound has no loudness, and an earlier export's is not its result.
+                lastExportIsNews = false
             }
-            lastError = nil
+            // What the mix was rendered without, the film is without too.
+            lastError = sound.without
             return url
         case .failure(let error):
             log.error("video export failed — \(error.localizedDescription, privacy: .private)")
