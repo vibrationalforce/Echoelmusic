@@ -124,7 +124,7 @@ final class TheHomePageLeadsWithTheMechanismTests: XCTestCase {
     func testThePlayableClaimStillHasItsMount() throws {
         let window = try text("Sources/Echoelmusic/Studio/FloatingVisualWindow.swift")
         XCTAssertTrue(window.contains("TouchInstrumentView("),
-                      "`TouchInstrumentView` is no longer mounted — pull the playable sentences from index.html, overview.html and the FAQ in the same commit (#1238, #456)")
+                      "`TouchInstrumentView` is no longer mounted — pull the playable sentences from earlier-app.html, overview.html and earlier-app-faq.html in the same commit (#1238, #456)")
     }
 
     private func repoRoot() -> URL {

@@ -37,9 +37,10 @@ group "Archive": `overview.html`, `earlier-app.html` (the earlier-app sections t
 until that day, moved verbatim), `earlier-app-faq.html` (the earlier-app questions of the FAQ and of
 Support, moved verbatim), `tools.html`, `architecture.html`, `brainstorming.html`, `integrations.html`
 and its four spokes. A sentence about the earlier app belongs in the archive, never on a visitor page;
-the guards that pin earlier-app wording read the archive files. Home, FAQ, Consulting and Support are
-GENERATED from one list of facts each (the FAQ page and its FAQPage JSON-LD from the same list), so
-edit the text in both places or regenerate — the two must not drift.
+the guards that pin earlier-app wording read the archive files. Home, FAQ, Consulting and Support were
+written in one pass on 2026-11-09 and are plain HTML files since: every FAQ answer stands TWICE in
+`faq.html` (the visible answer and the FAQPage JSON-LD in the head), and an edit changes both or the two
+drift. `<title>`, meta description, `og:` and `twitter:` descriptions are four more copies of one sentence.
 
 **Page parts.** Visitor pages are built from: a head that reads from the left (`.subpage-hero`, on the
 home page `.hero`), blocks divided by one hairline (`.block`), cards on the app's surface colour
