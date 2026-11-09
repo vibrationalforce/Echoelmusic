@@ -41,7 +41,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Synth</string>
 					<key>description</key>
-					<string>Subtractive synthesizer from Echoel</string>
+					<string>Subtractive synthesizer from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -61,7 +61,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Drums</string>
 					<key>description</key>
-					<string>Synthesized drum kit from Echoel</string>
+					<string>Synthesized drum kit from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -81,7 +81,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Sampler</string>
 					<key>description</key>
-					<string>Sampler from Echoel</string>
+					<string>Sampler from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -101,7 +101,7 @@
 					<key>name</key>
 					<string>Echoelmusic: EQ</string>
 					<key>description</key>
-					<string>Five-band parametric EQ from Echoel</string>
+					<string>Five-band parametric EQ from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -121,7 +121,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Compressor</string>
 					<key>description</key>
-					<string>Compressor from Echoel</string>
+					<string>Compressor from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -141,7 +141,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Delay</string>
 					<key>description</key>
-					<string>Stereo delay from Echoel</string>
+					<string>Stereo delay from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -161,7 +161,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Reverb</string>
 					<key>description</key>
-					<string>Reverb from Echoel</string>
+					<string>Reverb from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -181,7 +181,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Chorus</string>
 					<key>description</key>
-					<string>Chorus from Echoel</string>
+					<string>Chorus from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -201,7 +201,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Phaser</string>
 					<key>description</key>
-					<string>Phaser from Echoel</string>
+					<string>Phaser from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -221,7 +221,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Flanger</string>
 					<key>description</key>
-					<string>Flanger from Echoel</string>
+					<string>Flanger from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -241,7 +241,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Limiter</string>
 					<key>description</key>
-					<string>Limiter from Echoel</string>
+					<string>Limiter from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -261,7 +261,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Saturation</string>
 					<key>description</key>
-					<string>Saturation from Echoel</string>
+					<string>Saturation from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -281,7 +281,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Tremolo</string>
 					<key>description</key>
-					<string>Tremolo from Echoel</string>
+					<string>Tremolo from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -301,7 +301,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Bitcrusher</string>
 					<key>description</key>
-					<string>Bitcrusher from Echoel</string>
+					<string>Bitcrusher from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -321,7 +321,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Tape</string>
 					<key>description</key>
-					<string>Tape from Echoel</string>
+					<string>Tape from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -341,7 +341,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Stereo Width</string>
 					<key>description</key>
-					<string>Stereo Width from Echoel</string>
+					<string>Stereo Width from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -361,7 +361,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Ring Modulator</string>
 					<key>description</key>
-					<string>Ring Modulator from Echoel</string>
+					<string>Ring Modulator from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -381,7 +381,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Frequency Shifter</string>
 					<key>description</key>
-					<string>Frequency Shifter from Echoel</string>
+					<string>Frequency Shifter from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -401,7 +401,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Pitch Correction</string>
 					<key>description</key>
-					<string>Pitch Correction from Echoel</string>
+					<string>Pitch Correction from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -421,7 +421,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Harmonizer</string>
 					<key>description</key>
-					<string>Harmonizer from Echoel</string>
+					<string>Harmonizer from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -441,7 +441,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Granular</string>
 					<key>description</key>
-					<string>Granular from Echoel</string>
+					<string>Granular from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -461,7 +461,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Formant Filter</string>
 					<key>description</key>
-					<string>Formant Filter from Echoel</string>
+					<string>Formant Filter from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -481,7 +481,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Transient Designer</string>
 					<key>description</key>
-					<string>Transient Designer from Echoel</string>
+					<string>Transient Designer from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -501,7 +501,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Mid/Side</string>
 					<key>description</key>
-					<string>Mid/Side from Echoel</string>
+					<string>Mid/Side from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -521,7 +521,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Multiband Compressor</string>
 					<key>description</key>
-					<string>Multiband Compressor from Echoel</string>
+					<string>Multiband Compressor from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -541,7 +541,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Dynamic EQ</string>
 					<key>description</key>
-					<string>Dynamic EQ from Echoel</string>
+					<string>Dynamic EQ from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -561,7 +561,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Multiband Clipper</string>
 					<key>description</key>
-					<string>Multiband Clipper from Echoel</string>
+					<string>Multiband Clipper from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -581,7 +581,7 @@
 					<key>name</key>
 					<string>Echoelmusic: De-Esser</string>
 					<key>description</key>
-					<string>De-Esser from Echoel</string>
+					<string>De-Esser from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -601,7 +601,7 @@
 					<key>name</key>
 					<string>Echoelmusic: Synth (earlier sessions)</string>
 					<key>description</key>
-					<string>Opens sessions saved with the earlier Echoelmusic instrument; plays Echoel Synth from Echoel</string>
+					<string>Opens sessions saved with the earlier Echoelmusic instrument; plays Echoel Synth from Echoelmusic</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>

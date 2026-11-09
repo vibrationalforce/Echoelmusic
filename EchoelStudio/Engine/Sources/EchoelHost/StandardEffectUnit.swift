@@ -17,7 +17,7 @@ public final class StandardEffectUnit: AUAudioUnit {
     public static func register() {
         for effect in StandardEffect.allCases {
             AUAudioUnit.registerSubclass(StandardEffectUnit.self, as: audioComponent(effect.component),
-                                         name: "Echoel: \(effect.title)", version: 1)
+                                         name: "Echoelmusic: \(effect.title)", version: 1)
         }
     }
 

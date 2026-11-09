@@ -57,7 +57,7 @@ final class DocumentController {
             let shown = importUnsaved.prefix(3).map { "\u{201C}\($0)\u{201D}" }.joined(separator: ", ")
             let more = importUnsaved.count > 3 ? " and \(importUnsaved.count - 3) more" : ""
             let songs = importUnsaved.count == 1 ? "The earlier song \(shown) could" : "The earlier songs \(shown)\(more) could"
-            lines.append("\(songs) not be saved here; Echoelmusic tries again \(importRetriesOnReturn ? "once Echoel is back in front" : "at the next start").")
+            lines.append("\(songs) not be saved here; Echoelmusic tries again \(importRetriesOnReturn ? "once Echoelmusic is back in front" : "at the next start").")
         }
         return lines.isEmpty ? nil : (lines + [Self.earlierFilesKept]).joined(separator: " ")
     }

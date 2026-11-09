@@ -40,7 +40,7 @@ struct TimecodeMenu: View {
         }
     }
 
-    /// The virtual source "Echoel Timecode" always carries it; these are the outputs besides it.
+    /// The virtual source "Echoelmusic Timecode" always carries it; these are the outputs besides it.
     private var outputsMenu: some View {
         Menu("Also Send To") {
             ForEach(engine.timecode.destinations) { destination in

@@ -11,7 +11,7 @@ import os
 /// stop. Off until switched on in the Song menu (Connect, Timecode). The render thread times every
 /// message from the engine's sample counter (`EngineCore.timecodeOut`); a 2 ms pump here only
 /// schedules them at their host time plus the output latency, as the MIDI clock does. Out through
-/// a virtual source, "Echoel Timecode", that any app on the device can listen to, and through the
+/// a virtual source, "Echoelmusic Timecode", that any app on the device can listen to, and through the
 /// outputs picked. The rate and the start (01:00:00:00 by default, where the EDL starts) are kept
 /// on this device; the chase reads the same start.
 @MainActor
@@ -103,17 +103,17 @@ final class MTCOutput {
     /// The client, the port and the virtual source — made only when MTC out is switched on.
     private func open() {
         if client == 0 {
-            let status = MIDIClientCreateWithBlock("Echoel Timecode" as CFString, &client) { @Sendable notification in
+            let status = MIDIClientCreateWithBlock("Echoelmusic Timecode" as CFString, &client) { @Sendable notification in
                 guard notification.pointee.messageID == .msgSetupChanged else { return }
                 Task { @MainActor [weak self] in self?.refresh() }
             }
             guard status == noErr else { return fail("client", status) }
-            let portStatus = MIDIOutputPortCreate(client, "Echoel Timecode Out" as CFString, &port)
+            let portStatus = MIDIOutputPortCreate(client, "Echoelmusic Timecode Out" as CFString, &port)
             guard portStatus == noErr else { return fail("port", portStatus) }
         }
         if source == 0 {
             var made = MIDIEndpointRef()
-            let status = MIDISourceCreateWithProtocol(client, "Echoel Timecode" as CFString, ._1_0, &made)
+            let status = MIDISourceCreateWithProtocol(client, "Echoelmusic Timecode" as CFString, ._1_0, &made)
             guard status == noErr else { return fail("source", status) }
             source = made
         }
