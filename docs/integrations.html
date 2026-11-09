@@ -20,10 +20,10 @@
     Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
     </script>
 
-    <title>Integrations: OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoelmusic</title>
+    <title>Integrations of the earlier app (10.79): OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoelmusic</title>
     <meta name="description" content="Every address, port and DMX channel the earlier app (10.79) sent: OSC on UDP 8000, ADM-OSC on 4001, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
     <meta name="theme-color" content="#000000">
-    <meta property="og:title" content="Integrations: OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoelmusic">
+    <meta property="og:title" content="Integrations of the earlier app (10.79): OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoelmusic">
     <meta property="og:description" content="Every address, port and DMX channel the earlier Echoelmusic app (10.79) sent: OSC on UDP 8000, ADM-OSC on 4001, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
     <meta property="og:url" content="https://echoelmusic.com/integrations.html">
     <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
@@ -33,7 +33,7 @@
     <meta property="og:site_name" content="Echoelmusic">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Integrations: OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoelmusic">
+    <meta name="twitter:title" content="Integrations of the earlier app (10.79): OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoelmusic">
     <meta name="twitter:description" content="Every address, port and DMX channel the earlier Echoelmusic app (10.79) sent: OSC on UDP 8000, ADM-OSC on 4001, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
     <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -43,7 +43,7 @@
     <link rel="alternate" hreflang="en" href="https://echoelmusic.com/integrations.html">
     
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Integrations","item":"https://echoelmusic.com/integrations.html"}]}</script>
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Earlier Echoelmusic app (10.79) integrations — OSC, ADM-OSC, MIDI, Art-Net and sACN address book","description":"Every address, port and channel the earlier Echoelmusic app (10.79) sends: OSC bio feed on UDP 8000, ADM-OSC objects on 4001, a virtual MIDI source, Art-Net on 6454 and sACN on 5568.","author":{"@type":"Organization","name":"Echoelmusic"},"publisher":{"@type":"Organization","name":"Echoelmusic"},"mainEntityOfPage":"https://echoelmusic.com/integrations.html"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Earlier Echoelmusic app (10.79) integrations — OSC, ADM-OSC, MIDI, Art-Net and sACN address book","description":"Every address, port and channel the earlier Echoelmusic app (10.79) sent: OSC bio feed on UDP 8000, ADM-OSC objects on 4001, a virtual MIDI source, Art-Net on 6454 and sACN on 5568.","author":{"@type":"Organization","name":"Echoelmusic"},"publisher":{"@type":"Organization","name":"Echoelmusic"},"mainEntityOfPage":"https://echoelmusic.com/integrations.html"}</script>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why does an OSC address not appear in my receiver?","acceptedAnswer":{"@type":"Answer","text":"The earlier app sends a bio address only while that channel is measured. Silence means not measured, never measured as zero. Coherence needs sixteen accepted beats and is the last address to appear on a take."}},{"@type":"Question","name":"Which ports did the earlier Echoelmusic app use?","acceptedAnswer":{"@type":"Answer","text":"OSC on UDP 8000 by default, ADM-OSC on UDP 4001 by default (both configurable in Routing), Art-Net on UDP 6454 and sACN on UDP 5568, all unicast to the IP you enter."}},{"@type":"Question","name":"Did the earlier Echoelmusic app receive OSC?","acceptedAnswer":{"@type":"Answer","text":"Only control cues and track positions, and only when you switch OSC input on in Routing (off by default): a whitelist of /echoelmusic/ctrl/ addresses — bpm while the BPM is locked, key, scale, genre, visualStyle, blackout — plus ADM-OSC /adm/obj/n/ positions from a spatial controller, which move track n in its scene and its outgoing ADM-OSC stream, on UDP 8001, from this device only until you list sender IPs, and never over cellular. No bio value, no play/stop and no bidirectional session: the body still goes out one way."}}]}</script>
     <link rel="stylesheet" href="shared.css?v=10.30.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>

@@ -21,10 +21,10 @@
     </script>
 
     <title>What we do not claim — Echoelmusic</title>
-    <meta name="description" content="Thirteen things Echoelmusic deliberately does not claim, each with the reason. The public half of our internal claims register.">
+    <meta name="description" content="What Echoelmusic in TestFlight does not claim today, and thirteen things the earlier app (10.79) did not claim, each with the reason.">
     <meta name="theme-color" content="#000000">
     <meta property="og:title" content="What we do not claim — Echoelmusic">
-    <meta property="og:description" content="Thirteen things Echoelmusic deliberately does not claim, each with the reason.">
+    <meta property="og:description" content="What Echoelmusic does not claim today, and thirteen things the earlier app (10.79) did not claim, each with the reason.">
     <meta property="og:url" content="https://echoelmusic.com/claims.html">
     <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
     <meta property="og:image:width" content="1200">
@@ -34,7 +34,7 @@
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="What we do not claim — Echoelmusic">
-    <meta name="twitter:description" content="Thirteen things Echoelmusic deliberately does not claim, each with the reason.">
+    <meta name="twitter:description" content="What Echoelmusic does not claim today, and thirteen things the earlier app (10.79) did not claim, each with the reason.">
     <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
@@ -75,14 +75,22 @@
     <main id="main" class="subpage subpage--wider">
         <div class="subpage-hero">
             <h1>What we do not claim</h1>
-            <p class="subtitle">Most software tells you what it does. This page tells you what Echoelmusic deliberately does <em>not</em> do &mdash; thirteen entries, each with the reason. It is the public half of a register we keep internally and check on every build.</p>
+            <p class="subtitle">Most software tells you what it does. This page tells you what we deliberately do <em>not</em> claim: first for Echoelmusic as it is in TestFlight today, then thirteen entries about the earlier app (10.79), each with the reason. It is the public half of a register we keep internally.</p>
         </div>
 
-        <section>
-            <div class="warning-box">
-                <h2>Which app this page describes</h2>
-                <p>The entries below describe the earlier Echoelmusic app (10.79), which is frozen. Since 19 October 2026, TestFlight carries Echoelmusic, a new music workstation, and none of the entries below describes it. Several of them read the other way round for it: it records audio from a microphone or an interface onto an audio track you arm, and the take stays on your device; it has drums and a sampler; it takes notes and chords from a MIDI keyboard; and it has an assistant that changes the song when you ask. It also reads a Bluetooth heart-rate strap as a modulation source, sends OSC, ADM-OSC, Art-Net and sACN from its Connections page, sends MPE out to the MIDI outputs you pick, and streams the picture and the master mix to a service you choose once you press Go Live &mdash; these last three in TestFlight and not yet checked on a device. Its own instruments for other apps are planned as a one-time purchase but are not on sale yet. The <a href="roadmap.html">Roadmap</a> lists what it holds.</p>
-            </div>
+        <section id="today">
+            <h2>Echoelmusic today (in TestFlight)</h2>
+            <p>Echoelmusic is a music workstation for iPhone and iPad. What the build holds is on the <a href="roadmap.html">Roadmap</a>. This is what we do not claim for it:</p>
+            <ul>
+                <li id="today-app-store"><strong>Not in the App&nbsp;Store.</strong> There is TestFlight only, and no store link or badge until the first release is approved.</li>
+                <li id="today-devices"><strong>Not finished.</strong> The build is in TestFlight and still being tested on devices; we call nothing in it proven until a device has shown it.</li>
+                <li id="today-hosts"><strong>Not &ldquo;works in AUM, Logic Pro or GarageBand&rdquo;.</strong> Its own instruments and effects exist as Audio Units, but none has been run in a host app on a device yet.</li>
+                <li id="today-purchase"><strong>Nothing to buy: no price, no &ldquo;Pro&rdquo;, no trial.</strong> The app is free. A one-time purchase for its own instrument plugins is planned and not yet on sale; there is no subscription.</li>
+                <li id="today-export"><strong>Not mastering, and not a normalised export.</strong> The export measures loudness and true peak and reports them; it does not change the level for you.</li>
+                <li id="today-assistant"><strong>Not an AI that writes your song.</strong> The assistant appears only on devices with Apple Intelligence. It changes tempo, tracks, sounds, the mix and simple patterns when you ask; it does not compose, and it has not been run on a device yet.</li>
+                <li id="today-voice"><strong>Not &ldquo;Autotune&rdquo;, voice cloning or an AI voice.</strong> Pitch correction is an effect on a track, nothing more.</li>
+                <li id="today-body"><strong>Not a health product.</strong> A heart-rate strap is a modulation source: we describe what it moves, never an effect on you, and nothing here is a medical device or a diagnosis.</li>
+            </ul>
         </section>
 
         <section>
@@ -93,83 +101,90 @@
         </section>
 
         <section>
-            <h2>Where it runs</h2>
+            <div class="warning-box">
+                <h2>The earlier app (10.79): thirteen things it did not claim</h2>
+                <p>The entries below describe the earlier Echoelmusic app (10.79), an instrument played by the body, which TestFlight carried until October&nbsp;2026 and which is frozen. None of them describes Echoelmusic as it is today, and several read the other way round for it: today&rsquo;s app records audio onto a track you arm, has drums and a sampler, takes notes and chords from a MIDI keyboard, and links one third-party package for the stream that starts when you press Go Live.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Where it ran</h2>
             <div class="platform-grid">
                 <div class="platform-card" id="claim-1">
-                    <h3>It is an Audio Unit &mdash; but we only claim the host we tested</h3>
-                    <p>Echoelmusic is an AUv3 instrument, and it has been confirmed loading and sounding in <strong>AUM on a device</strong>. Logic Pro, GarageBand and Ableton Live are <strong>not tested yet</strong>, and we claim none of them until each one has been run and measured. One host is one host. And in the other direction: loading <em>other</em> people&rsquo;s instrument plugins inside Echoelmusic is in testing and <strong>not</strong> confirmed on a device yet, so we do not claim it.</p>
+                    <h3>It was an Audio Unit &mdash; and we claimed only the host we tested</h3>
+                    <p>The earlier app (10.79) was an AUv3 instrument, and it was confirmed loading and sounding in <strong>AUM on a device</strong>. Logic Pro, GarageBand and Ableton Live were <strong>never tested</strong>, and we claimed none of them. One host is one host. In the other direction, loading <em>other</em> people&rsquo;s instrument plugins inside it was in testing and <strong>not</strong> confirmed on a device, so we did not claim it.</p>
                 </div>
                 <div class="platform-card" id="claim-3">
-                    <h3>The Apple&nbsp;Watch does not measure for it, and does not control it</h3>
-                    <p>A watch app exists as a <em>display</em>. It reads what the iPhone writes; it does not send a pulse back, and the transport for that direction is not built. Even if it were, watch heart rate arrives with roughly four to five seconds of latency &mdash; usable for a trend, never for beat sync. The real sensor is your finger on the phone camera.</p>
+                    <h3>The Apple&nbsp;Watch did not measure for it, and did not control it</h3>
+                    <p>In the earlier app (10.79), the watch app was a <em>display</em>. It read what the iPhone wrote; it did not send a pulse back, and the transport for that direction was never built. Watch heart rate also arrives roughly four to five seconds late &mdash; usable for a trend, never for beat sync. That app&rsquo;s real sensor was a finger on the phone camera.</p>
                 </div>
                 <div class="platform-card" id="claim-4">
                     <h3>It is not in the App Store yet</h3>
-                    <p>Today there is TestFlight only. Any &ldquo;download on the App&nbsp;Store&rdquo; badge or store link you see elsewhere is premature, and we will change this line on the day the first release is approved &mdash; not before.</p>
+                    <p>The earlier app (10.79) was never released on the App&nbsp;Store, and Echoelmusic is not there yet either: today there is TestFlight only. Any &ldquo;download on the App&nbsp;Store&rdquo; badge or store link you see elsewhere is premature, and we will change this line on the day the first release is approved &mdash; not before.</p>
                 </div>
             </div>
         </section>
 
         <section>
-            <h2>What it is not</h2>
+            <h2>What it was not</h2>
             <div class="platform-grid">
                 <div class="platform-card" id="claim-2">
                     <h3>Not wellness, meditation, sleep, focus, stress relief, longevity or &ldquo;HealthTech&rdquo;</h3>
-                    <p>Biofeedback here is a <em>control signal</em>, the way a keyboard or a breath controller is. We describe the mechanism &mdash; a calmer pulse makes different music &mdash; and never an effect on you. We do not claim it calms you, helps you sleep, or improves any health marker. The app itself says its data is for self-observation, not medical diagnosis, and the marketing is not allowed to say something the app contradicts.</p>
+                    <p>In the earlier app (10.79), biofeedback was a <em>control signal</em>, the way a keyboard or a breath controller is. We described the mechanism &mdash; a calmer pulse made different music &mdash; and never an effect on you. We did not claim it calmed you, helped you sleep, or improved any health marker. The app itself said its data was for self-observation, not medical diagnosis, and the marketing was not allowed to say something the app contradicted. The same rule holds for Echoelmusic today.</p>
                 </div>
                 <div class="platform-card" id="claim-9">
                     <h3>Not &ldquo;biohacking&rdquo;</h3>
-                    <p>Same reason as above, and it gets its own line because it once slipped past that one. It is the word that files this instrument under self-optimisation culture, which is exactly where it does not belong. It appears in no script, caption, hashtag or title.</p>
+                    <p>The earlier app (10.79) was not &ldquo;biohacking&rdquo; either: same reason as above, and the word gets its own line because it once slipped past that one. It is the word that files an instrument under self-optimisation culture, which is exactly where this one did not belong. It appears in no script, caption, hashtag or title, then or now.</p>
                 </div>
                 <div class="platform-card" id="claim-10">
-                    <h3>It does not post anything anywhere</h3>
-                    <p>Echoelmusic has no social-media integration. It does not publish to TikTok, YouTube or Instagram, automatically or otherwise, and there is no AI agent or tool protocol running inside the app. What you export, you export yourself.</p>
+                    <h3>It did not post anything anywhere</h3>
+                    <p>The earlier app (10.79) had no social-media integration. It did not publish to TikTok, YouTube or Instagram, automatically or otherwise, and there was no AI agent or tool protocol running inside the app. What you exported, you exported yourself.</p>
                 </div>
             </div>
         </section>
 
         <section>
-            <h2>Features that are gone, or were never there</h2>
+            <h2>Features that were gone, or were never there</h2>
             <div class="platform-grid">
                 <div class="platform-card" id="claim-5">
                     <h3>No drums, video editing, livestream or audio recorder</h3>
-                    <p>All of these were either removed or never wired up, and none is claimed until it ships. There is no drum machine, no video capture or editing, no livestreaming (RTMP was scoped and never built), and no audio recorder &mdash; the app has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, mixes them (level, pan, mute, solo), imports .mid and audio files, loads one sample per track, edits MIDI notes and records MIDI takes from a controller. It records MIDI, never sound. Until October&nbsp;2026 this entry also denied a &ldquo;sampler instrument&rdquo;; a sampler per track ships now, so the denial is gone.</p>
+                    <p>In the earlier app (10.79), all of these had either been removed or were never wired up, and none was claimed. It had no drum machine, no video capture or editing, no livestreaming (RTMP was scoped and never built), and no audio recorder &mdash; it had no microphone input. What its Workstation did have was new and still being tested on devices when the app was frozen: it arranged parts on tracks, mixed them (level, pan, mute, solo), imported .mid and audio files, loaded one sample per track, edited MIDI notes and recorded MIDI takes from a controller. It recorded MIDI, never sound. Until October&nbsp;2026 this entry also denied a &ldquo;sampler instrument&rdquo;; the last builds had a sampler per track, so that denial was dropped.</p>
                 </div>
                 <div class="platform-card" id="claim-11">
                     <h3>No microphone: no voice recording, cloning, AI voice, text-to-speech or pitch correction</h3>
-                    <p>The audio input path was removed entirely. Nothing in the app listens. There is no pitch correction on your voice, no harmoniser, no vocoder, no voice model of any kind. What the app records is its own output.</p>
+                    <p>In the earlier app (10.79), the audio input path had been removed entirely. Nothing in that app listened. It had no pitch correction on your voice, no harmoniser, no vocoder, no voice model of any kind. What it recorded was its own output.</p>
                 </div>
                 <div class="platform-card" id="claim-7">
                     <h3>No subscription, no paywall, nothing to buy</h3>
-                    <p>Version 1.0 is free and complete. There is no &ldquo;Pro&rdquo; tier you can purchase today, no monthly or annual access, and no recurring revenue to report. Later versions may introduce paid tiers; when they do, this line changes first.</p>
+                    <p>The earlier app (10.79) was free and complete, and it showed no purchase screen. There was no &ldquo;Pro&rdquo; tier to buy, no monthly or annual access, and no recurring revenue to report. That is still so for Echoelmusic today: the app is free, there is no subscription, and the one-time purchase planned for its own instrument plugins is not on sale yet.</p>
                 </div>
             </div>
         </section>
 
         <section>
-            <h2>Precision about what the body actually drives</h2>
+            <h2>Precision about what the body actually drove</h2>
             <div class="platform-grid">
                 <div class="platform-card" id="claim-12">
-                    <h3>Breath depth and LF/HF are measured, but they do not shape the sound</h3>
-                    <p>Both are pinned to a neutral value everywhere they reach the synthesis engine, so neither currently changes what you hear &mdash; and both sound impressive in a caption, which is precisely why they are listed here. What <em>is</em> real: coherence, heart rate, heart-rate variability and breath phase each drive audible parameters, and the coherence <em>trend</em> morphs the timbre as it rises or falls.</p>
+                    <h3>Breath depth and LF/HF were measured, but they did not shape the sound</h3>
+                    <p>In the earlier app (10.79), both were pinned to a neutral value everywhere they reached the synthesis engine, so neither changed what you heard &mdash; and both sound impressive in a caption, which is precisely why they are listed here. What <em>was</em> real: coherence, heart rate, heart-rate variability and breath phase each drove audible parameters, and the coherence <em>trend</em> morphed the timbre as it rose or fell.</p>
                 </div>
                 <div class="platform-card" id="claim-6">
-                    <h3>MPE goes out, not in</h3>
-                    <p>Echoelmusic can send MPE to your rig, as a switch you turn on. It does not receive MPE: the input parses the traffic but does not distinguish zones, so per-note expression arriving from a controller is not separated per note. Pitch bend, pressure and slide all sound &mdash; on one voice.</p>
+                    <h3>MPE went out, not in</h3>
+                    <p>The earlier app (10.79) could send MPE to your rig, as a switch you turned on. It did not receive MPE: the input parsed the traffic but did not distinguish zones, so per-note expression arriving from a controller was not separated per note. Pitch bend, pressure and slide all sounded &mdash; on one voice.</p>
                 </div>
                 <div class="platform-card" id="claim-6b">
-                    <h3>An external controller plays the body voice &mdash; singular</h3>
-                    <p>Plug in a MIDI controller and it sounds immediately, ahead of the breath envelope. But exactly one voice consumes those events and it is monophonic. We do not say &ldquo;plays the voices&rdquo;, &ldquo;play chords&rdquo; or &ldquo;polyphonic&rdquo; about that path.</p>
+                    <h3>An external controller played the body voice &mdash; singular</h3>
+                    <p>In the earlier app (10.79), a plugged-in MIDI controller sounded immediately, ahead of the breath envelope. But exactly one voice consumed those events and it was monophonic. We did not say &ldquo;plays the voices&rdquo;, &ldquo;play chords&rdquo; or &ldquo;polyphonic&rdquo; about that path.</p>
                 </div>
             </div>
         </section>
 
         <section>
-            <h2>What it is built on</h2>
+            <h2>What it was built on</h2>
             <div class="platform-grid">
                 <div class="platform-card" id="claim-8">
                     <h3>Zero external dependencies &mdash; so also zero of the usual suspects</h3>
-                    <p>Echoelmusic ships with no third-party packages at all. That means no Composable Architecture, no RevenueCat, no SwiftData, no VideoToolbox and no HaishinKit &mdash; several of which have been attributed to it. It is Swift, SwiftUI, and Apple frameworks, plus open standards on the wire: OSC, ADM-OSC, Art-Net, sACN and MIDI.</p>
+                    <p>The earlier app (10.79) shipped with no third-party packages at all. That meant no Composable Architecture, no RevenueCat, no SwiftData, no VideoToolbox and no HaishinKit &mdash; several of which had been attributed to it. It was Swift, SwiftUI, and Apple frameworks, plus open standards on the wire: OSC, ADM-OSC, Art-Net, sACN and MIDI. Echoelmusic today links one package, HaishinKit, for the stream that starts when you press Go Live.</p>
                 </div>
             </div>
         </section>

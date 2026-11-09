@@ -36,7 +36,7 @@ AUFNAHME, MIX, EXPORT
 - Automation für Lautstärke, Pan, Sends, Synth- und Plugin-Parameter zeichnen oder beim Abspielen durch Bewegen des Bedienelements aufnehmen.
 - Ein Bluetooth-Herzfrequenz-Brustgurt kann Modulationsquelle sein: Herzfrequenz, HRV oder Kohärenz auf Fader, Pan, Send oder Synth-Parameter legen, mit Tiefe und Umkehrung je Route. Ohne Gurt bleibt das Bedienelement, wo es steht; ein Export liest den Gurt nie.
 - Export des Arrangements als Stereo-WAV (24 Bit, 48 kHz) mit gemeldeter Lautheit (LUFS) und True Peak, als Stems (eine WAV je Spur, vor den Master-Effekten) oder als Standard-MIDI-Datei.
-- Songs speichern sich selbst als .echoel-Dateien (offenes, dokumentiertes JSON), sichtbar in der Dateien-App; ein per AirDrop gesendeter Song öffnet sich in Echoel.
+- Songs speichern sich selbst als .echoel-Dateien (offenes, dokumentiertes JSON), sichtbar in der Dateien-App; ein per AirDrop gesendeter Song öffnet sich in Echoelmusic.
 
 
 Kein Konto, keine Werbung, kein Tracking, kein Server von uns.

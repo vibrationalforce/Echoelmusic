@@ -20,7 +20,8 @@ git ls-files 'docs/*.html' 'docs/**/*.html' …    → 24 pages, 395,873 B
 project, the repository and the domain are all **Echoelmusic**; **Echoel** is the artist (Michael
 Terbuyken), and the artist page keeps that name in its body. Page chrome follows: the nav mark is the
 E-with-three-waves plus the wordmark "Echoelmusic" as written (no uppercase, no letter-spacing), every
-`<title>` ends "— Echoelmusic", the footer says "© 2026 Echoelmusic · in TestFlight". ⛔ The rule that
+`<title>` ends "— Echoelmusic" (two exceptions: the home page leads with the name, and `artist.html` is
+titled for the person), the footer says "© 2026 Echoelmusic · in TestFlight". ⛔ The rule that
 stood here (brand Echoel, app "Echoel Studio") is struck; "Echoel Studio" survives only as the NAME OF
 THE CI WORKFLOW (`studio.yml`, read by the merge gates — never rename it from the site's side). The
 navigation is three entries (App · Consulting · Support, plus the button "Request TestFlight access" —
@@ -149,6 +150,8 @@ I told the founder twice that **"8 of 10 `_redirects` aliases have no backing fi
 there are **8** aliases and **all 8 targets exist** (`/app`, `/download` → `overview.html`;
 `/datenschutz`, `/agb`, `/hilfe`, `/barrierefreiheit`, `/gesundheit`, `/sicherheit` → their
 `.html`). Neither half of that pair was right. Recorded here so the wrong pair is not re-quoted.
+⚠️ A date, not a fact: since 2026-11-09 `/app` and `/download` go to `/` (the home page is the app's
+page) and `/beratung` was added. Count and targets: `grep -c ' 30[12]$' docs/_redirects`.
 
 ## 4. The site version is ONE number in three files — and moving it is part of a CSS fix
 
