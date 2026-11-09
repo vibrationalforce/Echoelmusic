@@ -5,13 +5,16 @@ Gesetze überall gelten, wohin man für den Rest geht. Das Gesetz der früheren 
 **wörtlich** in `Sources/CLAUDE.md` und lädt beim Arbeiten dort. Größe und Decke beider Dateien:
 `python3 scripts/doctor.py --section D`, gepinnt von `TheLawFileStaysUnderItsCeilingTests`.
 
-## Identität — drei Namen, drei Dinge
+## Identität — ein Name (Founder 2026-11-09: „Die App heißt Echoelmusic“, „überall“)
 
-- **Echoel** — die Marke.
-- **Echoel Studio** — die App. TestFlight trägt sie seit 2026-10-18/19 (Version 11.0.0); Code und
-  Gesetz: `EchoelStudio/` und `EchoelStudio/CLAUDE.md`. Bundles `com.echoelmusic.app` plus die eine
-  AUv3-Erweiterung `com.echoelmusic.app.auv3` (gemessen in `EchoelStudio/project.yml`).
-- **Echoelmusic** — das Projekt: dieses Repo, die Domain, die Website `docs/`.
+- **Echoelmusic** — die App, das Projekt, dieses Repo, die Domain, die Website `docs/`. Unter dem
+  Symbol, in Siri, im Store und in fremden Hosts („Echoelmusic: EQ“). TestFlight trägt sie seit
+  2026-10-18/19 (Version 11.0.0); Code und Gesetz: `EchoelStudio/` und `EchoelStudio/CLAUDE.md`.
+  Bundles `com.echoelmusic.app` plus die eine AUv3-Erweiterung `com.echoelmusic.app.auv3`.
+- **Echoel** — der Künstler (Michael Terbuyken); `docs/artist.html`. Als Marke der App gestrichen.
+- **„Echoel Studio“** — nur noch der Name des Verzeichnisses `EchoelStudio/` und des CI-Workflows
+  `studio.yml`, den die Merge-Gates lesen; nie umbenennen. Gespeicherte Namen in Songs („Echoel EQ“)
+  bleiben (Gesetz 3 in `EchoelStudio/CLAUDE.md`).
 - **Die frühere App** (10.x, das Bio-Instrument) — `Sources/`, `Tests/`, `Package.swift`, das
   root-`project.yml`; eingefroren, seit Studio TestFlight trägt. Ihr Gesetz: `Sources/CLAUDE.md`.
 
