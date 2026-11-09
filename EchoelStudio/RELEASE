@@ -1,31 +1,30 @@
-11.0.0 — warp modes, a playhead you can move, zoom and waveforms, plugins at full size
+11.0.0 — one name, Echoelmusic; a stream and a take finish stopping before the next begins
 
-What is new since 10064 (10065 and 10066 never reached TestFlight). Each line is code that the
-Echoel Studio run builds and tests; nothing here is device-verified yet.
-- Arrange: a playhead line moves with the song, and the position (bar.beat.sixteenth) shows
-  beside Play. Tap or drag the ruler to locate; Stop returns to where you started, a second
-  Stop to bar 1. Pinch or Zoom Out / Zoom In for time; audio regions show their waveform;
-  drag a region's fades from its top corners.
-- Warping: an imported loop and a region switched to Follow Song Tempo listen for the tempo
-  the file was played at; Native Tempo takes two decimals; "Fit to Bars…". Warp Mode: Beats
-  (each hit kept on its beat), Tones, Re-Pitch (tempo and pitch together). Transpose in cents,
-  the timing unchanged.
-- Recording: the Click button's hold menu offers a count-in before Record. Hardware keyboard:
-  space plays, R records, L loops, comma and period move a bar. Session grid: a queued clip
-  counts the bars to its launch.
-- Audio Units in the app: a preset menu for an installed plugin ("Save Preset"), "Full Size"
-  for its interface, value fields for a plugin without one, a plugin list to search, and the
-  song loop reported to the plugin as its cycle. A track behind an effect that plays late is
-  lined up with the others.
-- Vocal chain: four fields — De-Ess, Level, Air, Space. Effects as Audio Units in other apps:
-  delay and reverb report their tail; host ramps glide.
-- Colour: the key's colour comes from its pitch raised by octaves into visible light, the same
-  in the Field, the keys, the piano roll and the light outputs; the Field names it in Hz, THz
-  and nm.
-- Video takes: stored the way the phone was held, kept when a call cuts them short, "Switch
-  Camera" between back and front.
+What is new since 10067. Each line is code that the Echoel Studio run builds; only the stream's
+four states have tests of their own, and nothing here is device-verified yet.
+- Name: the name under the app's icon is Echoelmusic (it was Echoel). The app's messages, the
+  About page ("About Echoelmusic"), the purchase page ("Echoelmusic Plugins"), the Siri
+  examples on the Learn page ("Play Echoelmusic") and the permission questions iOS asks say
+  the same.
+- Audio Units in other apps: the 29 units are registered as "Echoelmusic: Synth",
+  "Echoelmusic: EQ" and so on. Type, subtype and manufacturer code are unchanged.
+- MIDI and lights: the MIDI 2.0 source another app sees is "Echoelmusic MPE (MIDI 2.0)", the
+  timecode source "Echoelmusic Timecode", the sACN source name "Echoelmusic" — choose them
+  again once where a routing was saved.
+- Go Live: Stop Stream closes every destination before Go Live is offered again; the page says
+  "Stopping" meanwhile. A destination that answers after Stop no longer brings the stream back.
+- Background: with nothing playing the audio stops when the app leaves the screen, as before.
+  The app now also counts its input as closed there, so a song that stops needing the input
+  while away comes back without the microphone.
+- Recording: after a take is stopped, Record is unavailable until the take's file is closed,
+  instead of starting a take that had to be thrown away.
+- Export Video and Export Field Layer (Alpha): when the mix cannot be rendered — a plugin
+  stops, or the song is too long — the export stops and says why, instead of writing a film
+  without sound. A film says what its mix was exported without, and a Field layer no longer
+  shows a loudness.
 
-Previous: 11.0.0 (10064) — a de-esser, vocal chains, reverb modes; 10063 — a multiband clipper.
+Previous: 11.0.0 (10067) — warp modes, a playhead you can move, zoom and waveforms; 10064 — a
+de-esser, vocal chains, reverb modes.
 Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -34,14 +33,15 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Arrange: play, tap the ruler at bar 5, then Stop twice: does the playhead jump to bar 5,
-   the first Stop return to where you started and the second to bar 1?
-2. Import a drum loop that is not at the song tempo, Fades, Gain & Warp, Follow Song Tempo,
-   Warp Mode Beats: does Native Tempo show its real tempo, and at 20 BPM slower do the hits
-   stay tight and in time with the click?
-3. Pinch the arrangement in and out with that loop: does it zoom smoothly, does the waveform
-   show, and can you drag a fade from a region's top corner?
-4. An installed plugin on a track: does its preset menu change the sound, does "Full Size"
-   fill the page, and does a saved preset come back after reopening the song?
-5. Hold Click, choose a one-bar count-in, arm a track and press Record: four clicks, then the
-   take starts exactly on bar 1?
+1. Home Screen after the update: does the name under the icon read "Echoelmusic" in full, not
+   cut off?
+2. AUM or GarageBand: are the units listed as "Echoelmusic: Synth", "Echoelmusic: EQ" and so
+   on, and does a session saved with the build before still open with its sound?
+3. Go Live to a destination, wait for the On Air clock, press Stop Stream, and press Go Live
+   again as soon as it is offered: does the page say "Stopping" in between, and does the
+   second stream arrive at the destination?
+4. Arm an audio track, leave the song stopped, go to the Home Screen for ten seconds and come
+   back: does the orange microphone dot go out while you are away, and can you record a take
+   at once without arming again?
+5. Record an audio take of a minute or more, press Record to end it and Record again at once:
+   does a second take start, and are both takes on the track afterwards?
