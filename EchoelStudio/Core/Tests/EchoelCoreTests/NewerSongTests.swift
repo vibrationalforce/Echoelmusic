@@ -47,7 +47,7 @@ final class NewerSongTests: XCTestCase {
         XCTAssertEqual(project.modRoutes.map(\.source), [.heartRate])
         XCTAssertFalse(project.modRoutes.contains { $0.id == unknownRoute })
         // The kept inserts are not on any chain the engine plays: the master keeps its EQ only.
-        XCTAssertEqual(project.masterInserts.map(\.plugin.name), ["Echoelmusic EQ"])
+        XCTAssertEqual(project.masterInserts.map(\.plugin.name), ["Echoel EQ"])
         XCTAssertEqual(project.tracks.first?.inserts, [])
     }
 
