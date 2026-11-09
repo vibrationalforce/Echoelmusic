@@ -526,6 +526,10 @@
         .archive-head { max-width: var(--max-w); margin: 0 auto; padding: 112px 24px 8px; }
         .archive-head h1 { font-size: clamp(30px, 5.2vw, 44px); line-height: 1.1; letter-spacing: -1px; margin-bottom: 16px; }
         .archive-head p { color: var(--dim); max-width: 680px; line-height: 1.7; margin-bottom: 12px; }
+        .archive-list { max-width: 720px; margin: 0 auto; color: var(--dim); line-height: 1.7; }
+        .archive-list ul { padding-left: 20px; margin-bottom: 16px; }
+        .archive-list li { margin-bottom: 8px; }
+        .archive-list a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
         .archive-head a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
         footer { flex-direction: column; align-items: stretch; gap: 24px; border-top: 1px solid var(--border); margin-top: 48px; }
         .footer-links { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
@@ -751,6 +755,25 @@
                     <div class="spec-val">Open Standards</div>
                     <div class="spec-label">OSC &middot; ADM-OSC &middot; MIDI &middot; Art-Net &middot; sACN</div>
                 </div>
+            </div>
+        </div>
+
+
+        <div id="press-summary" class="section">
+            <h2 class="section-title">What the earlier app did</h2>
+            <p class="section-sub">The summary the press kit carried until 9 November 2026.</p>
+            <div class="archive-list">
+                <ul>
+                    <li>Pulse from the camera (fingertip photoplethysmography), any standard Bluetooth heart-rate strap (Polar, Wahoo, Garmin and more), or Apple Health — plus an instant demo mode.</li>
+                    <li>Real HRV coherence from research-grade frequency analysis (Lomb-Scargle, Welch) — numbers first, always visible.</li>
+                    <li>One-tap generative composition: forty-one curated genres, 57 scales, your key, concert pitch A4 freely settable 380–500&nbsp;Hz, tempo locked or flowing with the heart.</li>
+                    <li>A real instrument: polyphonic synth with a live patch editor and preset library, sub-bass voice, loop cutter, production FX chain.</li>
+                    <li>Studio handoff: stamped WAV export (artist · date · key · BPM · tuning) <em>and</em> MIDI file export (.mid, carrying tempo, 4/4 and the key signature, spanning whole bars). Live MIDI: <em>input</em> from an external controller including pitch bend and CC&nbsp;74, and <em>note</em> output to your rig (MIDI&nbsp;1.0, switched on in the routing panel), including <strong>MPE output</strong> &mdash; two further switches spread the notes over member channels 2&ndash;16 with Glide, Slide and Press per note. MPE <em>input</em> zone handling was on the roadmap, not in that build.</li>
+                    <li>Immersive GPU visuals, flash-safe (≤3&nbsp;Hz) and Reduce-Motion aware, on the phone or on an external screen.</li>
+                    <li>Open-standard stage I/O: OSC, ADM-OSC immersive objects, Art-Net and sACN lighting.</li>
+                    <li>Nearby session sharing between two iPhones (peer-to-peer, no server).</li>
+                </ul>
+                <p>Not in the earlier app: video editing, audio recording (it had no microphone input) and live broadcast &mdash; video editing was built and then removed in July&nbsp;2026, and live broadcast was never built. Its last builds added a Workstation that arranged parts on tracks, with a note editor and .mid and audio import; playing installed Audio&nbsp;Unit instruments on a Workstation track was never confirmed on a device, so it is not claimed. The <a href="architecture.html">Architecture</a> page records that app&rsquo;s status at the freeze.</p>
             </div>
         </div>
 

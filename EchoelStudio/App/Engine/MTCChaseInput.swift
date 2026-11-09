@@ -81,13 +81,13 @@ final class MTCChaseInput {
 
     private func open() {
         if client == 0 {
-            let status = MIDIClientCreateWithBlock("Echoel Timecode In" as CFString, &client) { @Sendable notification in
+            let status = MIDIClientCreateWithBlock("Echoelmusic Timecode In" as CFString, &client) { @Sendable notification in
                 guard notification.pointee.messageID == .msgSetupChanged else { return }
                 Task { @MainActor [weak self] in self?.refresh() }
             }
             guard status == noErr else { return fail("client", status) }
             let inbox = self.inbox, reader = self.reader
-            let portStatus = MIDIInputPortCreateWithProtocol(client, "Echoel Timecode In" as CFString, ._1_0, &port) {
+            let portStatus = MIDIInputPortCreateWithProtocol(client, "Echoelmusic Timecode In" as CFString, ._1_0, &port) {
                 @Sendable [weak self] list, _ in
                 guard Self.receive(list, inbox: inbox, reader: reader) else { return }
                 Task { @MainActor in self?.drain() }

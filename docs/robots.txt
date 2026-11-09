@@ -19,10 +19,12 @@ Disallow: /
 User-agent: ClaudeBot
 Disallow: /
 
-# /dev/ holds engineering notes for contributors (status registers, glossary,
-# product law). They are public, but they are not product copy: keep them out of search.
+# /dev/, /adr/ and /research/ are working files of the repository, not part of the website
+# (docs/_config.yml `exclude`, docs/_redirects). Keep them out of search as well.
 User-agent: *
 Disallow: /dev/
+Disallow: /adr/
+Disallow: /research/
 Allow: /
 
 # Sitemap

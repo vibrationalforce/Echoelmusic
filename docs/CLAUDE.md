@@ -20,7 +20,8 @@ git ls-files 'docs/*.html' 'docs/**/*.html' …    → 24 pages, 395,873 B
 project, the repository and the domain are all **Echoelmusic**; **Echoel** is the artist (Michael
 Terbuyken), and the artist page keeps that name in its body. Page chrome follows: the nav mark is the
 E-with-three-waves plus the wordmark "Echoelmusic" as written (no uppercase, no letter-spacing), every
-`<title>` ends "— Echoelmusic", the footer says "© 2026 Echoelmusic · in TestFlight". ⛔ The rule that
+`<title>` ends "— Echoelmusic" (two exceptions: the home page leads with the name, and `artist.html` is
+titled for the person), the footer says "© 2026 Echoelmusic · in TestFlight". ⛔ The rule that
 stood here (brand Echoel, app "Echoel Studio") is struck; "Echoel Studio" survives only as the NAME OF
 THE CI WORKFLOW (`studio.yml`, read by the merge gates — never rename it from the site's side). The
 navigation is three entries (App · Consulting · Support, plus the button "Request TestFlight access" —
@@ -36,9 +37,10 @@ group "Archive": `overview.html`, `earlier-app.html` (the earlier-app sections t
 until that day, moved verbatim), `earlier-app-faq.html` (the earlier-app questions of the FAQ and of
 Support, moved verbatim), `tools.html`, `architecture.html`, `brainstorming.html`, `integrations.html`
 and its four spokes. A sentence about the earlier app belongs in the archive, never on a visitor page;
-the guards that pin earlier-app wording read the archive files. Home, FAQ, Consulting and Support are
-GENERATED from one list of facts each (the FAQ page and its FAQPage JSON-LD from the same list), so
-edit the text in both places or regenerate — the two must not drift.
+the guards that pin earlier-app wording read the archive files. Home, FAQ, Consulting and Support were
+written in one pass on 2026-11-09 and are plain HTML files since: every FAQ answer stands TWICE in
+`faq.html` (the visible answer and the FAQPage JSON-LD in the head), and an edit changes both or the two
+drift. `<title>`, meta description, `og:` and `twitter:` descriptions are four more copies of one sentence.
 
 **Page parts.** Visitor pages are built from: a head that reads from the left (`.subpage-hero`, on the
 home page `.hero`), blocks divided by one hairline (`.block`), cards on the app's surface colour
@@ -149,6 +151,8 @@ I told the founder twice that **"8 of 10 `_redirects` aliases have no backing fi
 there are **8** aliases and **all 8 targets exist** (`/app`, `/download` → `overview.html`;
 `/datenschutz`, `/agb`, `/hilfe`, `/barrierefreiheit`, `/gesundheit`, `/sicherheit` → their
 `.html`). Neither half of that pair was right. Recorded here so the wrong pair is not re-quoted.
+⚠️ A date, not a fact: since 2026-11-09 `/app` and `/download` go to `/` (the home page is the app's
+page) and `/beratung` was added. Count and targets: `grep -c ' 30[12]$' docs/_redirects`.
 
 ## 4. The site version is ONE number in three files — and moving it is part of a CSS fix
 

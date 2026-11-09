@@ -69,7 +69,7 @@ final class TheSiteDoesNotSellADeletedFullscreenTests: XCTestCase {
         let faq = try Self.text("docs/earlier-app-faq.html")   // the earlier-app questions, moved verbatim 2026-11-09
         XCTAssertFalse(
             faq.contains("live streaming are <strong>not planned</strong> &mdash; they were built and removed"),
-            "faq.html says live streaming was built and removed. It was NEVER built: "
+            "earlier-app-faq.html says live streaming was built and removed. It was NEVER built: "
             + "`BroadcastPublisher` is a `#if canImport(HaishinKit)` scaffold and "
             + "`Package.swift` carries an empty `dependencies` array. The same page states the "
             + "video dates correctly three answers below, so this sentence also contradicts "
@@ -104,14 +104,13 @@ final class TheSiteDoesNotSellADeletedFullscreenTests: XCTestCase {
         let support = try Self.text("docs/earlier-app-faq.html")
         XCTAssertTrue(
             support.contains("<strong>Audio latency</strong>"),
-            "support.html no longer names the `Audio latency` row in the Master panel. That "
-            + "control was restored by #1331; before it, the page's advice could not be "
-            + "followed at all. Since 2026-11-06 the answer sits in the collapsed "
-            + "\"Earlier app (10.79)\" section, under the Echoel Studio answers; it is the "
-            + "earlier app's control, so it stays there.")
+            "earlier-app-faq.html no longer names the `Audio latency` row in the Master panel. "
+            + "That control was restored by #1331; before it, the page's advice could not be "
+            + "followed at all. Since 2026-11-09 the answer sits in the archive FAQ, section "
+            + "\"Support (earlier app)\"; it is the earlier app's control, so it stays there.")
         XCTAssertFalse(
             support.contains("Reduce buffer size in Audio Settings"),
-            "support.html still sends the reader to an \"Audio Settings\" screen. No such "
+            "earlier-app-faq.html still sends the reader to an \"Audio Settings\" screen. No such "
             + "screen exists — the tier lives in Master → Audio latency.")
     }
 

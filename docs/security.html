@@ -78,7 +78,7 @@
             <p class="date">Updated: November 2026</p>
             <span class="hero-badge">Privacy-First Design</span>
         </div>
-        <div class="subpage-summary"><strong>Local-first, and no servers.</strong> Echoelmusic stores and processes your data on your device, protected by Apple's on-device Data Protection. No accounts, no tracking, nothing sent to us. Anything that leaves the device does so only over a connection you switch on yourself; for Echoelmusic, the app in TestFlight, the full list is in its section of the <a href="privacy.html#studio">Privacy Policy</a>. In the earlier app (10.79), biosignal values left the device only over OSC/ADM-OSC, lighting output or nearby session sharing, and Apple Health data was excluded from those; the first two are plain UDP and unencrypted by design, while nearby sharing is encrypted device-to-device.</div>
+        <div class="subpage-summary"><strong>Local-first, and no servers.</strong> Echoelmusic stores and processes your data on your device, protected by Apple's on-device Data Protection. No accounts, no tracking, nothing sent to us. Apart from the App Store purchase check at launch, which Apple handles, anything that leaves the device does so only over a connection you switch on yourself; for Echoelmusic, the app in TestFlight, the full list is in its section of the <a href="privacy.html#studio">Privacy Policy</a>. In the earlier app (10.79), biosignal values left the device only over OSC/ADM-OSC, lighting output or nearby session sharing, and Apple Health data was excluded from those; the first two are plain UDP and unencrypted by design, while nearby sharing is encrypted device-to-device.</div>
 
         <section>
             <h2>Local-First Architecture</h2>
@@ -87,24 +87,24 @@
                 <li><strong>No user accounts:</strong> No registration, no passwords to leak</li>
                 <li><strong>No data collection:</strong> we never collect or receive your personal data &mdash; nothing is sent to us</li>
                 <li><strong>No analytics tracking:</strong> No third-party analytics or ad SDKs</li>
-                <li><strong>No analytics or tracking SDKs:</strong> the instrument is built on Apple native frameworks</li>
+                <li><strong>No analytics or tracking SDKs:</strong> the app is built on Apple native frameworks plus one open-source streaming library, which collects nothing</li>
             </ul>
         </section>
 
         <section>
             <h2>Encryption &amp; Data at Rest</h2>
             <ul>
-                <li><strong>Apple Data Protection:</strong> On-device files are encrypted at rest by iOS Data Protection (hardware-backed), unlocked only while the device is.</li>
+                <li><strong>Apple Data Protection:</strong> On-device files are encrypted at rest by iOS Data Protection (hardware-backed). Echoelmusic uses the iOS default: files become readable after the first unlock following a restart and stay readable until the next restart, which is what lets a song keep playing with the screen locked.</li>
                 <li><strong>No servers:</strong> we operate none, so your data is never sent to us and there is no account or database to breach.</li>
-                <li><strong>What you switch on does travel:</strong> if you explicitly enable OSC / ADM-OSC output or Art-Net / sACN lighting, biosignal values leave the device <strong>unencrypted</strong> to a destination you choose &mdash; plain UDP, because those open standards define no encryption, and that is the point of those features. Treat that network as you would any stage or studio LAN. <strong>Nearby session sharing is different:</strong> it runs device-to-device over Apple's MultipeerConnectivity with encryption <em>required</em>, so it is not on that list. In all cases, values read from Apple Health or Apple Watch are excluded and never leave. In Echoelmusic, body values go out on the Connections page only while you allow it there, and a live stream started with Go Live sends the Field&rsquo;s picture and the master mix &mdash; no body measurement &mdash; to the streaming service you entered.</li>
+                <li><strong>What you switch on does travel:</strong> if you explicitly enable OSC / ADM-OSC output or Art-Net / sACN lighting, biosignal values leave the device <strong>unencrypted</strong> to a destination you choose &mdash; plain UDP, because those open standards define no encryption, and that is the point of those features. Treat that network as you would any stage or studio LAN. <strong>Nearby session sharing is different:</strong> it runs device-to-device over Apple's MultipeerConnectivity with encryption <em>required</em>, so it is not on that list. In all cases, values read from Apple Health or Apple Watch are excluded and never leave. In Echoelmusic, body values go out only where you send them: on the Connections page while you allow it there, as MPE pressure and slide to a MIDI output you choose, and as movement in the Field&rsquo;s picture during a live stream. A live stream started with Go Live sends that picture and the master mix to the streaming service you entered, encrypted over RTMPS and unencrypted over plain RTMP.</li>
             </ul>
         </section>
 
         <section>
             <h2>No Accounts, No Login</h2>
             <ul>
-                <li><strong>Nothing to sign into:</strong> Echoelmusic has no user accounts, no passwords, and stores no credentials &mdash; so there is nothing to authenticate or leak.</li>
-                <li><strong>You hold the keys:</strong> Access to the camera, the microphone, Bluetooth, the local network and your location &mdash; and, in the earlier app, HealthKit &mdash; is gated entirely by the iOS permission prompts you grant, and can be revoked any time in Settings. Echoelmusic asks for the microphone only when you arm an audio track or set one to hear its input; the earlier app (10.79) does not use it.</li>
+                <li><strong>Nothing to sign into:</strong> Echoelmusic has no user accounts and no passwords of its own. The one secret it keeps is a stream key you enter for a live stream: it stays in the iOS Keychain on this device, is not synced to iCloud, and is gone when you tap Remove Key.</li>
+                <li><strong>You hold the keys:</strong> Access to the camera, the microphone, Bluetooth, the local network, your location, speech recognition, Apple Health and adding to your photo library is gated entirely by the iOS permission prompts you grant, and can be revoked any time in Settings. Echoelmusic asks for the microphone only when you arm an audio track or set one to hear its input; the earlier app (10.79) does not use it.</li>
             </ul>
         </section>
 
@@ -117,7 +117,7 @@
                 <li><strong>Not stored permanently:</strong> Session data exists only during active use</li>
                 <li><strong>User-controlled:</strong> Biometric access requires explicit permission and can be revoked at any time</li>
             </ul>
-            <p>In Echoelmusic, heart rate, HRV and coherence derived from a Bluetooth chest strap stay on the device and are not written to a file; a song stores only which source moves which value. They leave the device only if you allow body sharing on the Connections page. Apple Health is not in Echoelmusic.</p>
+            <p>In Echoelmusic, heart rate, HRV, coherence and a breathing value derived from a Bluetooth chest strap or the camera, and a heart rate read from Apple Health, are processed on the device and are never written into a song; a song stores only which source moves which value. They leave the device only over an output you switch on, each named in the <a href="privacy.html#studio">Privacy Policy</a>. A heart rate read from Apple Health is kept out of Connections and MPE Out.</p>
             <p>Echoelmusic is <strong>not a medical device</strong>. Biometric readings are used for creative and entertainment purposes only. See our <a href="health.html">Health Disclaimer</a>.</p>
         </section>
 
@@ -125,7 +125,7 @@
             <h2>Privacy by Design</h2>
             <ul>
                 <li><strong>Minimal data, by design:</strong> The app collects no personal data, has no analytics, and shares nothing with third parties &mdash; the practical foundation of GDPR and CCPA is achieved by collecting essentially nothing.</li>
-                <li><strong>Nothing sold or shared:</strong> No personal information is ever sold, rented, or transmitted off your device.</li>
+                <li><strong>Nothing sold or shared:</strong> No personal information is ever sold or rented, and nothing is transmitted off your device unless you switch an output on yourself.</li>
                 <li><strong>Local processing:</strong> Data minimization and on-device processing are core architectural principles, not afterthoughts.</li>
             </ul>
             <p>For full details on data handling, see our <a href="privacy.html">Privacy Policy</a>.</p>
@@ -133,7 +133,7 @@
 
         <section>
             <h2>Open Source &amp; Transparency</h2>
-            <p>The earlier app is built on native Apple frameworks only (Core Audio, HealthKit, Metal, AVFoundation, CoreMIDI). Echoelmusic adds one open-source library, HaishinKit (BSD-3), for its live stream. Neither includes analytics, advertising or tracking SDKs.</p>
+            <p>The earlier app is built on native Apple frameworks only (Core Audio, HealthKit, Metal, AVFoundation, CoreMIDI). Echoelmusic adds one open-source library, HaishinKit (BSD-3), with its logging dependency Logboard (BSD-3), for its live stream. Neither includes analytics, advertising or tracking SDKs.</p>
             <p>We believe transparency builds trust. If you have questions about our security practices, we are happy to discuss them.</p>
         </section>
 

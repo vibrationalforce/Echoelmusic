@@ -386,7 +386,7 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
         XCTAssertFalse(swift.isEmpty, """
             `Sources/EchoelmusicAUv3/` holds no Swift file, so Echoelmusic is not an AUv3 \
             instrument any more — but the website still says it is. Pages that claim it \
-            today: architecture.html, faq.html, overview.html, claims.html. Revert each to a \
+            today: architecture.html, earlier-app-faq.html, overview.html, claims.html. Revert each to a \
             denial in THIS commit, and rewrite `ContentPipeline/CLAIMS.md` §1a, which is the \
             register those pages are derived from.
             """)
@@ -1250,8 +1250,8 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
             XCTAssertFalse(names.isEmpty, """
                 `Sources/**` constructs a visual recorder \(constructed) time(s) again and not \
                 one published page mentions recording at all. The ban above lifted itself; say \
-                what ships, and re-word the "built and removed" sentences on `index.html`, \
-                `overview.html` and `faq.html` in the SAME commit (#456).
+                what ships, and re-word the "built and removed" sentences on `earlier-app.html`, \
+                `overview.html` and `earlier-app-faq.html` in the SAME commit (#456).
                 """)
             return
         }

@@ -104,26 +104,26 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UIBackgroundModes: audio
-        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Echoel reads the heart rate of a Bluetooth chest strap when you turn the strap on as a body source."
-        INFOPLIST_KEY_NSCameraUsageDescription: "Echoel measures your pulse from the rear camera when you choose Camera as a body source, and films a video take when you record one. Pulse frames are never stored; a take is saved only in your song, and nothing leaves the device."
-        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Echoel saves a video you export to your photo library when you choose Save Video."
-        INFOPLIST_KEY_NSMicrophoneUsageDescription: "Echoel records your microphone or audio interface onto the audio track you arm."
-        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "Echoel turns the speech in a part you choose to transcribe into subtitles. Recognition runs on this device; the audio does not leave it."
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Echoel uses your approximate location once to draw the sky above you in the Sky view. It stays on this device."
-        INFOPLIST_KEY_NSMotionUsageDescription: "Echoel uses the phone's orientation to turn the Sky view with the direction you point the phone, and, when you turn on Phone Motion as a body source, the phone's tilt, turning and movement to modulate sound. The readings are never stored in your song."
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Echoelmusic reads the heart rate of a Bluetooth chest strap when you turn the strap on as a body source."
+        INFOPLIST_KEY_NSCameraUsageDescription: "Echoelmusic measures your pulse from the rear camera when you choose Camera as a body source, and films a video take when you record one. Pulse frames are never stored; a take is saved only in your song, and nothing leaves the device."
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Echoelmusic saves a video you export to your photo library when you choose Save Video."
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "Echoelmusic records your microphone or audio interface onto the audio track you arm."
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "Echoelmusic turns the speech in a part you choose to transcribe into subtitles. Recognition runs on this device; the audio does not leave it."
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Echoelmusic uses your approximate location once to draw the sky above you in the Sky view. It stays on this device."
+        INFOPLIST_KEY_NSMotionUsageDescription: "Echoelmusic uses the phone's orientation to turn the Sky view with the direction you point the phone, and, when you turn on Phone Motion as a body source, the phone's tilt, turning and movement to modulate sound. The readings are never stored in your song."
         # Apple Health (REC-1): read heart rate only, when the musician chooses Apple Health as the
         # body source. Nothing is written to Health and the value never leaves the device. The
         # entitlement is in Support/App/EchoelStudio.entitlements. App Store Connect still requires
         # NSHealthUpdateUsageDescription whenever the HealthKit entitlement is present (upload of
         # 30b1753ed failed validation without it, 2026-11-04), so it is declared and says the truth.
-        INFOPLIST_KEY_NSHealthShareUsageDescription: "Echoel reads your heart rate from Apple Health, for example from your Apple Watch, when you choose Apple Health as a body source. It uses it only to modulate sound and picture on this device; it never writes to Health and never sends the readings anywhere."
-        INFOPLIST_KEY_NSHealthUpdateUsageDescription: "Echoel does not write anything to Apple Health. It only reads your heart rate, when you choose Apple Health as a body source."
+        INFOPLIST_KEY_NSHealthShareUsageDescription: "Echoelmusic reads your heart rate from Apple Health, for example from your Apple Watch, when you choose Apple Health as a body source. It uses it only to modulate sound and picture on this device; it never writes to Health and never sends the readings anywhere."
+        INFOPLIST_KEY_NSHealthUpdateUsageDescription: "Echoelmusic does not write anything to Apple Health. It only reads your heart rate, when you choose Apple Health as a body source."
         # Network MIDI (CoreMIDI's RTP-MIDI session): the prompt shows the first time it is
         # turned on. NSBonjourServices is an array, which the generated plist cannot carry, so
         # it comes from the small Info.plist below and the two are merged. So do the song type
         # (com.echoelmusic.song, a package: Files shows a song as one file) and the document type
         # that opens a tapped song in the app (E4).
-        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Echoel sends and receives MIDI over your local network when you turn on Network MIDI, sends OSC, ADM-OSC, Art-Net or sACN to the devices you enter when you switch a connection on, and shares the tempo, Play and Stop with phones nearby when you host or join a Jam."
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Echoelmusic sends and receives MIDI over your local network when you turn on Network MIDI, sends OSC, ADM-OSC, Art-Net or sACN to the devices you enter when you switch a connection on, and shares the tempo, Play and Stop with phones nearby when you host or join a Jam."
         INFOPLIST_FILE: Support/Info.plist
         INFOPLIST_KEY_UIFileSharingEnabled: YES
         INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES

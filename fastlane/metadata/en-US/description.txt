@@ -36,7 +36,7 @@ RECORD, MIX, EXPORT
 - Draw automation for volume, pan, sends, synth and plugin parameters, or record it by moving the control while the song plays.
 - A Bluetooth heart-rate chest strap can be a modulation source: route heart rate, HRV or coherence to a fader, pan, send or synth parameter, with depth and inversion per route. With no strap, the control stays where you set it, and an export never reads the strap.
 - Export the arrangement as a 24-bit, 48 kHz stereo WAV with its loudness (LUFS) and true peak reported, as stems (one WAV per track, before the master effects), or as a Standard MIDI file (.mid).
-- Songs save automatically as .echoel files, an open and documented JSON format. The Files app shows them, and a song sent by AirDrop opens in Echoel.
+- Songs save automatically as .echoel files, an open and documented JSON format. The Files app shows them, and a song sent by AirDrop opens in Echoelmusic.
 
 
 No account, no ads, no tracking, no server of ours.
