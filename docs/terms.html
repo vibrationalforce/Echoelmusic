@@ -75,7 +75,7 @@
     <main id="main" class="subpage">
         <div class="subpage-hero">
             <h1>Terms of Service</h1>
-            <p class="date">Updated: February 2026</p>
+            <p class="date">Updated: November 2026</p>
         </div>
         <div class="subpage-summary"><strong>Summary:</strong> Free to use. You own your creations. Not a medical device. German law applies.</div>
 
@@ -92,7 +92,7 @@
 
         <section>
             <h2>3. Description of Service</h2>
-            <p>Echoelmusic is a bio-reactive audio-visual creative platform available on iPhone (iOS); further Apple platforms may follow. The App reads biometric signals (heart rate, HRV) from compatible devices and uses them to modulate audio synthesis, visuals, and lighting in real time. Additional platforms (Android, Web, Windows, Linux) may follow in the future.</p>
+            <p>Echoelmusic is a music workstation for iPhone and iPad (iOS 18 or later); further Apple platforms may follow. If you turn on a body source, the App reads body signals (heart rate, HRV and values derived from them, from a Bluetooth chest strap or the camera, or heart rate from Apple Health) and uses them to modulate sound, picture and light in real time. Additional platforms (Android, Web, Windows, Linux) may follow in the future.</p>
             <p>Version 1.0 of the App is <strong>free</strong>. We reserve the right to introduce paid features, subscriptions, or pricing changes in the future with advance notice.</p>
         </section>
 
@@ -108,7 +108,7 @@
                 <li>Personal and commercial creative use</li>
                 <li>Live performances and DJ sets</li>
                 <li>Publishing, distributing, and selling your music and visuals</li>
-                <li>Real-time collaboration with a nearby device, device to device (Live Colabo)</li>
+                <li>Playing in time with phones nearby, device to device (Jam: tempo, Play and Stop)</li>
                 <li>Educational and research purposes</li>
             </ul>
         </section>
@@ -128,7 +128,7 @@
 
         <div class="warning-box">
             <p><strong>Health &amp; Medical Disclaimer:</strong> Echoelmusic is <strong>NOT a medical device</strong> and is not intended to diagnose, treat, cure, or prevent any disease or medical condition. Biofeedback features (heart rate, HRV, coherence scores) are provided for <strong>creative and self-observation purposes only</strong> and must not be relied upon for medical decisions.</p>
-            <p>The App does not provide medical advice. Coherence scores, breathing guides, and relaxation features are subjective self-observation tools, not clinically validated measurements. <strong>Always consult a qualified healthcare professional</strong> before making health decisions. If you experience discomfort, dizziness, seizures, or any adverse reaction, stop using the App immediately and seek medical attention.</p>
+            <p>The App does not provide medical advice. Coherence scores and the other body readings are approximate self-observation values, not clinically validated measurements. <strong>Always consult a qualified healthcare professional</strong> before making health decisions. If you experience discomfort, dizziness, seizures, or any adverse reaction, stop using the App immediately and seek medical attention.</p>
             <p>Users with epilepsy, photosensitivity, heart conditions, or other medical conditions should consult their doctor before using visual or biofeedback features. See our <a href="health.html">Health Disclaimer</a> for full details.</p>
         </div>
 
@@ -172,14 +172,14 @@
 
         <section>
             <h2>10. Third-Party Services &amp; Hardware</h2>
-            <p>Echoelmusic may integrate with third-party services and hardware including Apple HealthKit, Apple Watch, Bluetooth heart-rate devices, MIDI controllers, Art-Net/sACN lighting rigs, and software that receives OSC or ADM-OSC. We are not responsible for the availability, accuracy, or security of third-party services.</p>
+            <p>Echoelmusic may integrate with third-party services and hardware including Apple HealthKit, Apple Watch, Bluetooth heart-rate devices, MIDI controllers, Art-Net/sACN lighting rigs, software that receives OSC or ADM-OSC, Audio Units from other makers, and streaming services you send a live stream to. We are not responsible for the availability, accuracy, or security of third-party services.</p>
             <p>Your use of third-party services is governed by their respective terms and privacy policies. We do not endorse and are not liable for any third-party products or services.</p>
         </section>
 
         <section>
             <h2>11. Data &amp; Privacy</h2>
             <p>We respect your privacy. The App processes biometric and audio data <strong>locally on your device</strong>. We do not operate servers that collect your personal data. For details, see our <a href="privacy.html">Privacy Policy</a>.</p>
-            <p>Four things send your body outward, each off until you switch it on: <strong>OSC / ADM-OSC</strong> output, <strong>Art-Net or sACN</strong> lighting output, and <strong>Live Colabo</strong> session sharing with a nearby device. All three of the first kind carry real biosignal values — over OSC as named values, over ADM-OSC and DMX as positions and channel levels derived from them by a published formula, which a receiver can invert. They are plain UDP on the network you choose and therefore <strong>unencrypted</strong>; Live Colabo instead runs directly device-to-device over Apple's MultipeerConnectivity and <strong>is encrypted</strong>. In every case, values read from Apple Health or Apple Watch are excluded and never leave your device. What happens on the receiving device or rig is outside our control.</p>
+            <p>In the earlier app (10.79), four things sent your body outward, each off until you switched it on: <strong>OSC / ADM-OSC</strong> output, <strong>Art-Net or sACN</strong> lighting output, and <strong>Live Colabo</strong> session sharing with a nearby device. All three of the first kind carry real biosignal values — over OSC as named values, over ADM-OSC and DMX as positions and channel levels derived from them by a published formula, which a receiver can invert. They are plain UDP on the network you choose and therefore <strong>unencrypted</strong>; Live Colabo instead runs directly device-to-device over Apple's MultipeerConnectivity and <strong>is encrypted</strong>. In every case, values read from Apple Health or Apple Watch are excluded and never leave your device. In Echoelmusic, body values leave the device only over OSC while Share Body Data is on (unencrypted UDP, where a measured coherence also changes the light sent over Art-Net or sACN), as MPE pressure and slide to a MIDI output you choose, and as movement in the Field's picture during a live stream. A heart rate read from Apple Health is kept out of the first two. What happens on the receiving device or rig is outside our control.</p>
         </section>
 
         <section>
@@ -192,7 +192,7 @@
             <h2>13. Governing Law &amp; Jurisdiction</h2>
             <p>These Terms are governed by and construed in accordance with the <strong>laws of the Federal Republic of Germany</strong>, without regard to conflict of law principles. The exclusive jurisdiction for any disputes is <strong>Hamburg, Germany</strong>.</p>
             <p>If you are a consumer within the European Union, you also enjoy the protection of mandatory provisions of the law of your country of residence. Nothing in these Terms affects your rights as a consumer under applicable EU law.</p>
-            <p>The European Commission provides an Online Dispute Resolution platform: <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener">https://ec.europa.eu/consumers/odr/</a>. We are not obligated to participate in dispute resolution proceedings before a consumer arbitration board.</p>
+            <p>The EU Online Dispute Resolution (ODR) platform was discontinued by the European Commission on 20 July 2025. We are neither obligated to nor willing to participate in dispute-resolution proceedings before a consumer arbitration board (§ 36 VSBG).</p>
         </section>
 
         <section>

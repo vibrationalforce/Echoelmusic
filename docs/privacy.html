@@ -76,7 +76,7 @@
     <main id="main" class="subpage">
         <div class="subpage-hero">
             <h1>Privacy Policy</h1>
-            <p class="date">Updated: 19 October 2026</p>
+            <p class="date">Updated: 9 November 2026</p>
         </div>
 
         <div class="subpage-summary">
@@ -105,17 +105,20 @@
                 <li><strong>Purchases:</strong> Echoelmusic's own instruments are to be bought through the App Store; they are not on sale yet. At every launch the app asks the App Store whether your Apple account bought them and keeps that answer on this device, in a container only Echoelmusic and its own Audio Units can read. When you open the store screen, it asks for the price, and Restore Purchases asks for your past purchases. If no answer is stored yet, an Echoelmusic Audio Unit in another app asks the App Store itself. Apple handles any payment; we receive no personal data from it.</li>
                 <li><strong>Audio Units from other makers:</strong> an instrument or effect from another app that you load on a track runs under its maker's own terms and privacy policy, not ours.</li>
                 <li><strong>The assistant:</strong> runs on the device's own language model where there is one. What you type is not sent anywhere.</li>
-                <li><strong>Heart-rate strap:</strong> if you turn a Bluetooth chest strap on as a body source, Echoelmusic reads its beat intervals and derives heart rate, HRV and coherence on the device, to move the values you route them to and to show them. iOS asks for Bluetooth the first time. Nothing of it is written to a file or sent anywhere; a song stores only which source moves which value, never the measurements. Turn the strap off and the values are gone.</li>
-                <li><strong>Camera (pulse):</strong> if you choose Camera as a body source, Echoelmusic uses the rear camera and its light to measure your pulse from a fingertip. iOS asks for the camera the first time. Each frame is reduced to a few brightness numbers on the device and discarded; no image or video is stored or sent, and nothing of it is written into a song. Choose Off and the camera and its light stop.</li>
-                <li><strong>Camera (video take):</strong> asked for only when you open the camera to film a video take of the performance (the same camera permission as the pulse). The rear camera films while the song plays; no sound is recorded, the take's sound is the song's mix. A take you record is stored only inside your song on this device and is sent nowhere unless you export it or stream it yourself. While a take is filmed, the camera pulse pauses.</li>
+                <li><strong>Heart-rate strap:</strong> if you turn a Bluetooth chest strap on as a body source, Echoelmusic reads its beat intervals and derives heart rate, HRV, coherence and a breathing value on the device, to move the values you route them to and to show them. iOS asks for Bluetooth the first time. A song stores only which source moves which value, never the measurements, and the values go nowhere unless you switch on one of the outputs listed under &ldquo;Body values that can leave&rdquo; below. Turn the strap off and the values are gone.</li>
+                <li><strong>Camera (pulse):</strong> if you choose Camera as a body source, Echoelmusic uses the rear camera and its light to measure your pulse from a fingertip, and derives HRV, coherence and a breathing value from it, as with the strap. iOS asks for the camera the first time. Each frame is reduced to a few brightness numbers on the device and discarded; no image or video is stored or sent, and nothing of it is written into a song. Choose Off and the camera and its light stop.</li>
+                <li><strong>Camera (video take):</strong> asked for only when you open the camera to film a video take of the performance (the same camera permission as the pulse). The rear camera, or the front camera if you tap Switch Camera, films while the song plays; no sound is recorded, the take's sound is the song's mix. A take you record is stored only inside your song on this device and is sent nowhere unless you export it or stream it yourself. While a take is filmed, the camera pulse pauses.</li>
                 <li><strong>Photos (add only):</strong> asked for only when you export a video and choose Save Video in the share sheet. Echoelmusic can add that file to your photo library; it does not read your library. A video you import onto a track comes through the system photo picker, which hands over only the videos you pick.</li>
-                <li><strong>Live stream (off until you press Go Live):</strong> on the Live Stream page you can send the Field's picture and the master mix to a streaming service you choose (for example YouTube or Twitch) over RTMP or RTMPS. Only that picture and that sound leave the device, and only to the addresses you entered; no camera, no microphone, no body measurement is part of the stream. Stream keys are kept in the iOS Keychain on this device only and are never written into a song. What the service does with your stream is governed by its own terms and privacy policy.</li>
-                <li><strong>Connections (OSC, ADM-OSC, Art-Net, sACN; each off until you switch it on):</strong> on the Connections page you can send the song's position, levels and light cues to devices on your local network, unencrypted, as these protocols are. iOS asks for local-network access the first time. Body values (heart rate, HRV, coherence) are sent only if you also allow it on that page, and only from a measured source; nothing is sent to the internet by these connections.</li>
+                <li><strong>Live stream (off until you press Go Live):</strong> on the Live Stream page you can send the Field's picture and the master mix to a streaming service you choose (for example YouTube or Twitch) over RTMP or RTMPS. Only that picture and that sound leave the device, and only to the addresses you entered. The stream opens neither the camera nor the microphone and sends no body number. Two things are part of it all the same: an input you are monitoring (a microphone or interface on a track set to hear its input) is in the master mix, and the Field's picture moves with a body source that is on. From Go Live on, a stream over plain RTMP travels unencrypted, its key included; RTMPS is encrypted. Stream keys are kept in the iOS Keychain on this device only and are never written into a song. What the service does with your stream is governed by its own terms and privacy policy.</li>
+                <li><strong>Connections (OSC, ADM-OSC, Art-Net, sACN; each off until you switch it on):</strong> on the Connections page you can send the song's tempo, key, beat, levels and light cues to the address you enter for each connection, unencrypted, as these protocols are. Echoelmusic does not check where that address is: enter one on your own network, because a public address would carry the same packets over the internet. iOS asks for local-network access the first time. Body values (the chest strap's pulse, HRV and coherence) are sent only while Share Body Data is on on that page.</li>
                 <li><strong>Jam (off until you host or join):</strong> from Song menu, Jam, phones in the same room can play to one tempo. A phone that asks to join is let in only when the host taps Let In; nobody joins by asking alone. They talk to each other directly over Apple's MultipeerConnectivity (peer-to-peer Wi-Fi or Bluetooth, encrypted; no router, no internet, no server). Only timing travels: the host's tempo, time signature, Play and Stop and where its bars begin, and each phone's device name so the others see who is in the jam. No audio, no song and no body value is sent. Leave, and the connection ends.</li>
                 <li><strong>Location and motion (Sky view):</strong> to draw the sky above you, Echoelmusic asks once for your approximate location while you use it and stores it on this device only, rounded to about ten kilometres; it uses the phone's orientation to turn the view. Neither leaves the device. If you decline, you can choose a city from a list. The rear camera can appear behind the drawn sky only if you already allowed the camera (for the pulse or a video take); the Sky view never asks for it itself, and its frames are not stored.</li>
                 <li><strong>Speech recognition (subtitles):</strong> asked for only when you choose to transcribe the speech in a part into subtitles. Recognition runs on this device; the audio does not leave it, and only the text you keep is stored, inside your song.</li>
                 <li><strong>Motion (Phone Motion as a body source):</strong> if you turn on Phone Motion, Echoelmusic reads the phone's tilt, turning and movement to move the values you route them to. The readings are used as they arrive and are never stored in your song or sent anywhere; turn the source off and they stop.</li>
-                <li><strong>Not in Echoelmusic today:</strong> Apple Health. When it arrives in a build, this page says so in the same update, before you can turn it on.</li>
+                <li><strong>Apple Health (heart rate, read only):</strong> if you choose Apple Health as a body source, iOS asks whether Echoelmusic may read your heart rate from Apple Health, for example what an Apple Watch measured. It asks for heart rate and nothing else, reads only readings from the last two minutes onward, never your history, and never writes to Apple Health. A reading arrives seconds late, so it moves the values you route it to slowly and never sets the tempo. It is not stored, not written into a song, never used for advertising, and not sent over Connections or MPE Out. Choose another source or Off and the reading is gone.</li>
+                <li><strong>Body values that can leave (each off until you choose it):</strong> (1) Connections with Share Body Data on: the strap's pulse, HRV and coherence go to the OSC receiver you entered, and a measured coherence changes the brightness of the light output. (2) MPE Out, once you pick a MIDI output: pressure and slide follow two body sources from the strap or the camera, breath and coherence unless you change them. (3) Go Live: the Field's picture moves with the body source that is on, its centre at the rate of your pulse; no number is sent, the picture is. (4) Tempo lock Flow: the song's tempo follows your pulse in small steps; MIDI clock, a Jam and the OSC connection carry that tempo, and each step is noted with the pulse in the diagnostics log on this device, which leaves only if you share it. A heart rate read from Apple Health is kept out of (1), (2) and (4).</li>
+                <li><strong>Diagnostics log:</strong> a log stays on this device: what the audio and the app did, and how earlier runs ended as iOS reports it. It holds numbers only, never a name you typed, and with the tempo lock on Flow the pulse that moved the tempo. It is left out of device backups and leaves only when you share it.</li>
+                <li><strong>Your songs:</strong> songs, with their audio and video takes, are files in the app's Documents folder. The Files app shows them, and an iCloud or computer backup of your device includes them, as for any app.</li>
             </ul>
             <p>The sections below describe the earlier Echoelmusic app (version 10.79), which is frozen.</p>
         </section>
@@ -136,7 +139,7 @@
         </section>
 
         <section>
-            <h2>Data Processing</h2>
+            <h2>Earlier app (10.79): Data Processing</h2>
             <p>All data processing occurs locally on your device:</p>
             <p><strong>Biometric Data:</strong> Heart rate variability (HRV), heart rate, and breathing patterns from Apple Watch or HealthKit are processed in real-time on your device to influence audio, visuals, and lighting. Individual readings are not stored, and none of this is transmitted by the app.</p>
             <p><strong>Your performer signature:</strong> So that the same preset does not compose the same-sounding piece for everyone, Echoelmusic keeps one small summary on your device — coarse averages of your resting heart rate, variability, breathing rate and coherence, learned slowly while you play. It is used for a single purpose: to seed the music generator, so what the instrument creates carries your musical handwriting. It is never shown as a health reading, never used for advertising, never compared with other users, and never transmitted. It is stored in the app's own preferences, so it is included in an iCloud or encrypted local device backup of your phone. <strong>You can erase it at any time:</strong> open <em>Save &amp; Export</em> and tap <em>Default sound</em>, which clears it together with the instrument's other settings. Deleting the app also removes it.</p>
@@ -147,7 +150,7 @@
         </section>
 
         <section>
-            <h2>HealthKit Data</h2>
+            <h2>Earlier app (10.79): HealthKit Data</h2>
             <p>Echoelmusic integrates with Apple HealthKit to access heart rate and HRV data for bio-reactive features. This integration is governed by Apple's strict privacy requirements:</p>
             <ul>
                 <li>HealthKit data is <strong>never shared with third parties</strong></li>
@@ -160,7 +163,7 @@
         </section>
 
         <section>
-            <h2>Camera & Sensors</h2>
+            <h2>Earlier app (10.79): Camera &amp; Sensors</h2>
             <p>Echoelmusic requests camera and sensor permissions for the following features:</p>
             <p><strong>Camera Access:</strong> Used for two things. (1) To estimate your pulse from a fingertip on the rear camera (rPPG): frames are analysed on the device and not stored. (2) Only when you choose &ldquo;Record Video&rdquo; in the Workstation: to record video parts into your piece, from the rear camera or from the rear and front cameras together, without sound. Those recordings are saved in the app on this device and are never uploaded. No face tracking or AR.</p>
             <p><strong>Microphone Access:</strong> Echoelmusic asks for it the first time you arm an audio track or set one to hear its input, as described <a href="#studio">above</a>. The earlier app (10.79) does not request it: its audio-input path was removed on 2026-09-12.</p>
@@ -168,7 +171,7 @@
         </section>
 
         <section>
-            <h2>Local Network (OSC / Art-Net / MIDI)</h2>
+            <h2>Earlier app (10.79): Local Network (OSC / Art-Net / MIDI)</h2>
             <p>If you explicitly enable it, Echoelmusic can send one-way control data over your local network or to connected gear:</p>
             <ul>
                 <li>OSC and ADM-OSC messages, Art-Net / sACN lighting, and MIDI you initiate</li>
@@ -177,12 +180,12 @@
                 <li>It is plain UDP on your local network, so it is not encrypted — treat that network as you would any studio or stage LAN</li>
                 <li>Nothing is sent to our servers (we operate none)</li>
                 <li>You choose the target device/address; it stays on your network</li>
-                <li><strong>OSC input (off by default):</strong> if you switch it on in Routing, the app opens one UDP port and accepts a short whitelist of control cues (tempo while locked, key, scale, genre, visual look, blackout) and ADM-OSC track positions from a spatial controller, only from this device until you list sender IPs, and never over a cellular connection. No bio value and no audio is accepted from the network, and nothing is answered back</li>
+                <li><strong>OSC input (off by default):</strong> the earlier app (10.79) only. Switched on in its Routing panel, that app opened one UDP port and accepted a short whitelist of control cues (tempo while locked, key, scale, genre, visual look, blackout) and ADM-OSC track positions from a spatial controller, only from the same device until sender IPs were listed, and never over a cellular connection. It accepted no bio value and no audio from the network and answered nothing back. Echoelmusic, the app in TestFlight, has no OSC input: it opens no port that listens for OSC</li>
             </ul>
         </section>
 
         <section>
-            <h2>Nearby Session Sharing (peer-to-peer)</h2>
+            <h2>Earlier app (10.79): Nearby Session Sharing (peer-to-peer)</h2>
             <p>Echoelmusic can share a live session with someone next to you, device to device. It is <strong>off until you start or accept a session</strong>, and there is no server involved — the connection runs directly between the two devices over Apple's MultipeerConnectivity.</p>
             <p>While a session is active, these values are sent to the other person's device about twice per second:</p>
             <ul>
@@ -208,7 +211,7 @@
         <section>
             <h2>Children's Privacy</h2>
             <p>Echoelmusic does not knowingly collect any data from anyone, including children under 13. The app is designed to function entirely offline with no data collection, making it safe for all ages.</p>
-            <p>Parents and guardians should be aware that the app uses biometric sensors (heart rate) for creative expression. Data is processed locally and never sent to us &mdash; we operate no servers. It leaves the device only if someone switches on one of the outputs described above (local-network OSC/lighting, or nearby session sharing), each of which is off until enabled and sends only to a destination you pick.</p>
+            <p>Parents and guardians should be aware that the app uses biometric sensors (heart rate) for creative expression. Data is processed locally and never sent to us &mdash; we operate no servers. It leaves the device only if someone switches on one of the outputs described above (in Echoelmusic: Connections with Share Body Data, MPE Out, or a live stream; in the earlier app: local-network OSC or lighting, or nearby session sharing), each of which is off until enabled and sends only to a destination you pick.</p>
         </section>
 
         <section>
@@ -242,12 +245,12 @@
 
         <section>
             <h2>California Privacy (CCPA / CPRA)</h2>
-            <p>We do not collect, sell, or share personal information, and have not done so in the preceding 12 months. There is nothing to opt out of, because no personal information ever leaves your device. California residents' rights to know, delete, correct, and to non-discrimination are all satisfied by our collecting nothing.</p>
+            <p>We do not collect, sell, or share personal information, and have not done so in the preceding 12 months. There is nothing to opt out of, because we receive no personal information: what leaves your device goes only where you send it yourself. California residents' rights to know, delete, correct, and to non-discrimination are all satisfied by our collecting nothing.</p>
         </section>
 
         <section>
             <h2>International Users</h2>
-            <p>Echoelmusic is available worldwide. Because all processing happens locally on your device and no data is transmitted to us or any third party, there are no international data transfers to safeguard. This policy is written in American English.</p>
+            <p>Echoelmusic is available worldwide. Because all processing happens locally on your device and no data is transmitted to us, and to a third party only when you send it yourself (a live stream, a connection you switch on, an export you share), there are no international data transfers of ours to safeguard. This policy is written in American English.</p>
         </section>
 
         <section>
