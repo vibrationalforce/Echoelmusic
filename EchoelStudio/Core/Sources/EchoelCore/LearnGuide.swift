@@ -349,8 +349,8 @@ public enum LearnGuide {
             id: "siri", title: "Siri and Shortcuts",
             summary: "Play, stop and change the open song by voice or with a shortcut.",
             paragraphs: [
-                "Echoel's actions are in the Shortcuts app and work with Siri, Spotlight and the Action button: “Play”, “Stop”, “Set Tempo”, “Add Track”, “Launch Scene”, “Set Key”, “Mute or Unmute Track” and “Export Stems”.",
-                "Say, for example, \"Play Echoel\", \"Set the tempo in Echoel\" or \"Export stems in Echoel\". Each change to the song is one undo step, and finished stems come up in the share sheet.",
+                "Echoelmusic's actions are in the Shortcuts app and work with Siri, Spotlight and the Action button: “Play”, “Stop”, “Set Tempo”, “Add Track”, “Launch Scene”, “Set Key”, “Mute or Unmute Track” and “Export Stems”.",
+                "Say, for example, \"Play Echoelmusic\", \"Set the tempo in Echoelmusic\" or \"Export stems in Echoelmusic\". Each change to the song is one undo step, and finished stems come up in the share sheet.",
             ],
             paths: [[.songMenu, .exportSection, .exportStems]],
             keywords: ["siri", "shortcuts", "voice", "spotlight", "action button"]),

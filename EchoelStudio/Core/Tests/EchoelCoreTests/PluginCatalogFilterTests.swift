@@ -28,7 +28,7 @@ final class PluginCatalogFilterTests: XCTestCase {
     func testEchoelComesFirstThenTheMakersAlphabetically() {
         let sections = PluginCatalogFilter.sections(installed: [shimmer, amp, crusher, echo], own: [echoelEQ, echoelDelay],
                                                     recents: [], query: "")
-        XCTAssertEqual(titles(sections), ["Echoel", "Alpha Labs", "Beta", "Zeta Audio"])
+        XCTAssertEqual(titles(sections), ["Echoelmusic", "Alpha Labs", "Beta", "Zeta Audio"])
         XCTAssertEqual(names(sections.first), ["Echoel EQ", "Echoel Delay"], "Echoel's own keep their order")
         XCTAssertEqual(names(sections.last), ["Crusher", "Shimmer"])
         let kinds: [PluginCatalogFilter.Section.Kind] = [.own, .maker("Alpha Labs"), .maker("Beta"), .maker("Zeta Audio")]
@@ -47,7 +47,7 @@ final class PluginCatalogFilterTests: XCTestCase {
         XCTAssertEqual(names(byMaker.first), ["Crusher", "Shimmer"])
 
         XCTAssertEqual(names(PluginCatalogFilter.sections(installed: all, recents: [], query: "echoes").first), ["Échoes"])
-        XCTAssertEqual(titles(PluginCatalogFilter.sections(installed: all, own: [echoelEQ], recents: [], query: "eq")), ["Echoel"])
+        XCTAssertEqual(titles(PluginCatalogFilter.sections(installed: all, own: [echoelEQ], recents: [], query: "eq")), ["Echoelmusic"])
         XCTAssertTrue(PluginCatalogFilter.sections(installed: all, own: [echoelEQ], recents: [], query: "zeta amp").isEmpty,
                       "every word must match one unit")
         XCTAssertTrue(PluginCatalogFilter.matches(amp, query: "alpha room"))
@@ -77,7 +77,7 @@ final class PluginCatalogFilterTests: XCTestCase {
         renamed.name = "Shimmer (old name)"
         let sections = PluginCatalogFilter.sections(installed: [shimmer, amp, crusher], own: [echoelEQ],
                                                     recents: [crusher, gone, renamed, echoelEQ], query: "")
-        XCTAssertEqual(titles(sections), ["Echoel", "Recent", "Alpha Labs", "Zeta Audio"])
+        XCTAssertEqual(titles(sections), ["Echoelmusic", "Recent", "Alpha Labs", "Zeta Audio"])
         XCTAssertEqual(names(sections[1]), ["Crusher", "Shimmer", "Echoel EQ"])
         XCTAssertEqual(names(sections[3]), ["Crusher", "Shimmer"])
 
@@ -96,7 +96,7 @@ final class PluginCatalogFilterTests: XCTestCase {
         let nameless = PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code("nnmd"),
                                        manufacturer: PluginComponent.code("Anon"), name: "Plain", manufacturerName: " ")
         let sections = PluginCatalogFilter.sections(installed: [echoelDelay, nameless], own: [echoelEQ], recents: [], query: "")
-        XCTAssertEqual(titles(sections), ["Echoel", "Other"])
+        XCTAssertEqual(titles(sections), ["Echoelmusic", "Other"])
         XCTAssertEqual(names(sections.first), ["Echoel EQ", "Echoel Delay"])
         XCTAssertEqual(PluginCatalogFilter.makerName(nameless), "Other")
     }

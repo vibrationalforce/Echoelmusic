@@ -85,7 +85,7 @@ public enum E131Packet {
     public static let streamTerminatedOption: UInt8 = 0x40
     public static let defaultPriority: UInt8 = 100
     /// The name a console shows in its source list; 64 bytes in every packet.
-    public static let sourceName = "Echoel Studio"
+    public static let sourceName = "Echoelmusic"
     public static let length = 638
     /// Where the first DMX slot sits in the packet, after the start code.
     public static let firstSlotOffset = 126

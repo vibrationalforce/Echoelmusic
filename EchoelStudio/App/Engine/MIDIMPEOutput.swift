@@ -21,7 +21,7 @@ import os
 /// This is MPE OUT only — Studio reads no MPE zone from an input.
 ///
 /// A second source, off by default (Song menu, Connect, "MIDI 2.0 Out (UMP)"): a virtual
-/// source "Echoel MPE (MIDI 2.0)" that sends the same zone over the MIDI 2.0 protocol, values
+/// source "Echoelmusic MPE (MIDI 2.0)" that sends the same zone over the MIDI 2.0 protocol, values
 /// scaled up and each note's bend as its per-note pitch bend (`MIDI2Translator`). The MIDI 1.0
 /// output above is untouched by it. No MIDI-CI, no Property Exchange: the receiver must be set
 /// to MIDI 2.0 by hand.
@@ -79,12 +79,12 @@ final class MIDIMPEOutput {
 
     func start() {
         guard client == 0 else { return }
-        let status = MIDIClientCreateWithBlock("Echoel MPE" as CFString, &client) { @Sendable notification in
+        let status = MIDIClientCreateWithBlock("Echoelmusic MPE" as CFString, &client) { @Sendable notification in
             guard notification.pointee.messageID == .msgSetupChanged else { return }
             Task { @MainActor [weak self] in self?.refresh() }
         }
         guard status == noErr else { return fail("client", status) }
-        let portStatus = MIDIOutputPortCreate(client, "Echoel MPE Out" as CFString, &port)
+        let portStatus = MIDIOutputPortCreate(client, "Echoelmusic MPE Out" as CFString, &port)
         guard portStatus == noErr else { return fail("port", portStatus) }
         pump.start(port: port)
         if midi2Enabled { openMIDI2Source() }
@@ -110,7 +110,7 @@ final class MIDIMPEOutput {
     private func openMIDI2Source() {
         guard midi2Source == 0 else { return }
         var source = MIDIEndpointRef()
-        let status = MIDISourceCreateWithProtocol(client, "Echoel MPE (MIDI 2.0)" as CFString, ._2_0, &source)
+        let status = MIDISourceCreateWithProtocol(client, "Echoelmusic MPE (MIDI 2.0)" as CFString, ._2_0, &source)
         guard status == noErr else { return fail("midi 2.0 source", status) }
         midi2Source = source
         pump.openMIDI2Source(source)

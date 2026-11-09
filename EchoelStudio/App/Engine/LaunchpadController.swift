@@ -38,11 +38,11 @@ final class LaunchpadController {
 
     func start() {
         guard client == 0 else { return }
-        let status = MIDIClientCreateWithBlock("Echoel Grid" as CFString, &client) { @Sendable notification in
+        let status = MIDIClientCreateWithBlock("Echoelmusic Grid" as CFString, &client) { @Sendable notification in
             guard notification.pointee.messageID == .msgSetupChanged else { return }
             Task { @MainActor [weak self] in self?.refresh() }
         }
-        guard status == noErr, MIDIOutputPortCreate(client, "Echoel Grid Out" as CFString, &port) == noErr else {
+        guard status == noErr, MIDIOutputPortCreate(client, "Echoelmusic Grid Out" as CFString, &port) == noErr else {
             log.error("midi: grid port failed \(status, privacy: .public)")
             return
         }

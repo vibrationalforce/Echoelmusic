@@ -34,7 +34,7 @@ public enum PluginCatalogFilter {
 
         public var title: String {
             switch kind {
-            case .own: "Echoel"
+            case .own: "Echoelmusic"
             case .recent: "Recent"
             case .maker(let name): name
             }

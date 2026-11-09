@@ -7,7 +7,7 @@ extension DiagnosticLog {
     /// packages only, so the folder is never taken for a song.
     static let app = DiagnosticLog(url: DocumentController.defaultDirectory
         .appendingPathComponent("Diagnostics", isDirectory: true)
-        .appendingPathComponent("Echoel diagnostics.log"))
+        .appendingPathComponent("Echoelmusic diagnostics.log"))
 
     /// Starts this run's log with the app's version and build, before anything else at launch.
     /// The folder stays out of backups: what it says is about this device.

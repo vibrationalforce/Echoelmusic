@@ -129,7 +129,7 @@ public enum EDLExport {
     public static func text(for project: Project, title: String, rate: FrameRate, recordStart: Int? = nil,
                             fileNames: [MediaID: String] = [:]) -> String {
         let start = recordStart ?? defaultRecordStart(rate)
-        var lines = ["TITLE: \(clean(title, fallback: "Echoel"))", "FCM: NON-DROP FRAME", ""]
+        var lines = ["TITLE: \(clean(title, fallback: "Echoelmusic"))", "FCM: NON-DROP FRAME", ""]
         for event in events(for: project, rate: rate, recordStart: start).prefix(999) {
             let number = String(format: "%03d", event.number)
             let channel = event.channel.padding(toLength: 6, withPad: " ", startingAt: 0)

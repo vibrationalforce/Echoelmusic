@@ -141,7 +141,7 @@ final class ConnectionsPacketTests: XCTestCase {
         let packet = Array(E131Packet.packet(universe: 0x0102, sequence: 7, cid: cid, channels: [], options: 0x40))
         XCTAssertEqual(Array(packet[38..<40]), [0x72, 0x58], "flags 0x7, length 600 = 638 - 38")
         XCTAssertEqual(Array(packet[40..<44]), [0x00, 0x00, 0x00, 0x02], "VECTOR_E131_DATA_PACKET")
-        let name = Array("Echoel Studio".utf8)
+        let name = Array("Echoelmusic".utf8)
         XCTAssertEqual(Array(packet[44..<(44 + name.count)]), name)
         XCTAssertEqual(Array(packet[(44 + name.count)..<108]), [UInt8](repeating: 0, count: 64 - name.count), "64 bytes, zero-filled")
         XCTAssertEqual(packet[108], 100, "priority")
