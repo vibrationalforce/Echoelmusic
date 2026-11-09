@@ -48,7 +48,10 @@ a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-v
 /* The page you are on, in the nav: the one place the site has a "selected" state, so the one
    place it uses the accent — the same rule as the app. Colour is not the only cue: the link
    also carries aria-current, which a screen reader announces. */
-.nav-links a[aria-current="page"], .menu-overlay a[aria-current="page"] { color: var(--accent); }
+/* (0,3,1): `.nav-links a:link` below is (0,2,1) and later, so the bare (0,2,1) form lost to it
+   and no page ever showed the accent (measured 2026-11-09 on six pages). */
+.nav-links a[aria-current="page"], .nav-links a[aria-current="page"]:link, .nav-links a[aria-current="page"]:visited,
+.menu-overlay a[aria-current="page"], .menu-overlay a[aria-current="page"]:link, .menu-overlay a[aria-current="page"]:visited { color: var(--accent); }
 ::selection { background: rgba(224,224,224,0.3); color: #fff; }
 
 /* ===== SKIP LINK ===== */
