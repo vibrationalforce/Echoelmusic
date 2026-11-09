@@ -1,4 +1,4 @@
-Echoel ist eine Musik-Workstation für iPhone und iPad: Instrumente, Effekte, Pianorolle, Drum-Raster, Arrangement, Session-Raster für Live-Sets, Audio- und MIDI-Aufnahme, Mischen, Automation und Export. Songs sind offene Dateien auf deinem Gerät; die App braucht kein Konto. Die Oberfläche ist auf Englisch.
+Echoelmusic ist eine Musik-Workstation für iPhone und iPad: Instrumente, Effekte, Pianorolle, Drum-Raster, Arrangement, Session-Raster für Live-Sets, Audio- und MIDI-Aufnahme, Mischen, Automation und Export. Songs sind offene Dateien auf deinem Gerät; die App braucht kein Konto. Die Oberfläche ist auf Englisch.
 
 
 SPUREN UND KLANG
@@ -8,8 +8,8 @@ SPUREN UND KLANG
 - Ein synthetisches Schlagzeug mit acht Teilen auf den General-MIDI-Notennummern.
 - Ein Sampler spielt eine importierte Audiodatei (bis zu zehn Minuten) über die Tastatur, in Originalhöhe auf C4.
 - Installierte Audio-Unit-Instrumente anderer Hersteller (Stereo) mit eigener Oberfläche; ihre Einstellungen speichert der Song.
-- Je Spur und am Master eine Insert-Kette mit bis zu acht Effekten: Echoel EQ, Compressor, Delay, Reverb, Chorus, Phaser und Flanger oder installierte Stereo-Audio-Unit-Effekte.
-- Die sieben Echoel-Effekte gibt es auch als Audio Units für andere Apps.
+- Je Spur und am Master eine Insert-Kette mit bis zu acht Effekten: EQ, Compressor, Delay, Reverb, Chorus, Phaser und Flanger oder installierte Stereo-Audio-Unit-Effekte.
+- Die sieben eingebauten Effekte gibt es auch als Audio Units für andere Apps.
 
 
 SPIELEN UND ARRANGIEREN
@@ -41,4 +41,4 @@ AUFNAHME, MIX, EXPORT
 
 Kein Konto, keine Werbung, kein Tracking, kein Server von uns.
 
-Echoel ist in aktiver Entwicklung. Feedback willkommen: echoel@tropicaldrones.com
+Echoelmusic ist in aktiver Entwicklung. Feedback willkommen: echoel@tropicaldrones.com

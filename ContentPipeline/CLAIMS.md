@@ -10,6 +10,12 @@ entfernte zwölf falsche Behauptungen aus dem App-Store-Text — dort ist eine f
 Behauptung ein 2.3-Ablehnungsgrund („Accurate Metadata"). Ein Skript, das eine
 gestrichene Behauptung wieder einführt, macht diese Arbeit rückgängig.
 
+⭐ **NAME SEIT 2026-11-09 (Founder: „Die App heißt Echoelmusic“, „Überall Echoelmusic“):** App, Projekt,
+Repository und Domain heißen **Echoelmusic**; **Echoel** ist der Künstler (Michael Terbuyken). Jede neue Kopie
+schreibt Echoelmusic, wo unten „Echoel Studio“ oder die Marke „Echoel“ steht — die Sätze unten bleiben als Datum
+stehen, ihre BEHAUPTUNGEN gelten unverändert. Ausnahme: die Audio-Unit-Namen im Build heißen bis zur App-Scheibe
+„Echoel: EQ“ usw. (`EchoelStudio/Plugins/AUv3/Info.plist`); eine Kopie nennt die Effekte deshalb ohne Präfix.
+
 ⭐ **SEIT 2026-10-19 TRÄGT TESTFLIGHT ECHOEL STUDIO (`EchoelStudio/`, Version 11.0.0), und dieses Register
 beschreibt bis auf die vier Nachträge unten die eingefrorene Alt-App (10.79.515).** Für Studio-Kopie gilt
 der eigene Abschnitt „Echoel Studio 11.0.0“ direkt vor der Alt-App-Tabelle: behauptet wird nur, was dort steht,
