@@ -335,7 +335,9 @@ final class RecordController {
             return
         }
         seenGeneration = store.documentGeneration
-        guard engine.isInputOpen else { return }
+        // Also while suspended in the background: an input that would reopen at the return is
+        // closed for a song that no longer wants it.
+        guard engine.holdsInput else { return }
         if let armed = armedTrack, store.project.track(armed)?.kind == .audio { return }
         engine.closeInput()
     }

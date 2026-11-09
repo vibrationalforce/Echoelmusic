@@ -729,6 +729,10 @@ final class AudioEngine {
         suspendedInput = wantsInput
         engine.stop()
         isRunning = false
+        // A stopped graph hears no input: said here like every other stop (`configure`,
+        // `replaceEngine`). It stood open while suspended, so `closeInput` rebuilt — and started —
+        // the graph in the background, and `wake` then reopened the input it had just closed.
+        isInputOpen = false
         step("session: deactivate")
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
@@ -750,6 +754,8 @@ final class AudioEngine {
     /// The input can be opened now: the audio runs, and the app is in front — iOS does not let an
     /// app start recording from the background, so the foreground return opens it (`onAudioBack`).
     var canOpenInputNow: Bool { isUp && !isInBackground }
+    /// The input is open, or opens again when the app returns from the background suspended with it.
+    var holdsInput: Bool { isInputOpen || suspendedInput == true }
 
     /// Opens the input for recording, asking for microphone permission first. False when it is
     /// denied or the interface cannot be used; playback keeps running either way.
@@ -767,6 +773,13 @@ final class AudioEngine {
     }
 
     private func openInput(keepingPosition: Bool) async -> Bool {
+        // Suspended in the background: the graph stays down, and iOS does not let an app start
+        // recording from there. An input that was open comes back at the return (`wake`); a closed
+        // one stays closed until it is asked for in front.
+        if let suspended = suspendedInput {
+            if suspended { wantsInput = true }
+            return suspended
+        }
         if isInputOpen {
             wantsInput = true
             return true
@@ -803,6 +816,12 @@ final class AudioEngine {
 
     func closeInput() {
         wantsInput = false
+        // Suspended in the background: the return builds the graph without the input, instead of
+        // a rebuild — and a start — in the background now.
+        if suspendedInput != nil {
+            suspendedInput = false
+            return
+        }
         guard isInputOpen else { return }
         stop()
         configure(input: false)
