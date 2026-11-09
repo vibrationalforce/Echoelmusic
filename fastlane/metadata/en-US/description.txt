@@ -1,4 +1,4 @@
-Echoel is a music workstation for iPhone and iPad: instruments, effects, a piano roll and a drum grid, an arrangement timeline, a session grid for live sets, audio and MIDI recording, mixing, automation and export. Your songs are files on your device in an open, documented format, and the app needs no account.
+Echoelmusic is a music workstation for iPhone and iPad: instruments, effects, a piano roll and a drum grid, an arrangement timeline, a session grid for live sets, audio and MIDI recording, mixing, automation and export. Your songs are files on your device in an open, documented format, and the app needs no account.
 
 
 TRACKS AND SOUND
@@ -8,8 +8,8 @@ TRACKS AND SOUND
 - A synthesized eight-piece drum kit (kick, snare, clap, two toms, closed and open hi-hat, crash) on General MIDI drum note numbers.
 - A sampler that plays an imported audio file (mixed to mono, up to ten minutes) across the keyboard, at its original pitch on C4.
 - Installed third-party Audio Unit instruments (stereo), with their own interface on the track's Sound page; their settings are saved with the song.
-- An insert chain of up to eight effects on every track and the master: Echoel EQ, Compressor, Delay, Reverb, Chorus, Phaser and Flanger, or installed stereo Audio Unit effects.
-- The seven Echoel effects are also available as Audio Units for other apps.
+- An insert chain of up to eight effects on every track and the master: EQ, Compressor, Delay, Reverb, Chorus, Phaser and Flanger, or installed stereo Audio Unit effects.
+- The seven built-in effects are also available as Audio Units for other apps.
 
 
 PLAY, WRITE AND ARRANGE
@@ -41,4 +41,4 @@ RECORD, MIX, EXPORT
 
 No account, no ads, no tracking, no server of ours.
 
-Echoel is in active development. Feedback welcome: echoel@tropicaldrones.com
+Echoelmusic is in active development. Feedback welcome: echoel@tropicaldrones.com

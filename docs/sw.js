@@ -6,7 +6,7 @@
  * Background Sync, Push Notifications
  */
 
-const CACHE_NAME = 'echoelmusic-v10.28.0';
+const CACHE_NAME = 'echoelmusic-v10.29.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

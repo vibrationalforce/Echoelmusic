@@ -1,4 +1,4 @@
-Echoel 11 ist eine neue App, neu gebaut als Musik-Workstation für iPhone und iPad. Die Oberfläche ist auf Englisch.
+Echoelmusic 11 ist eine neue App, neu gebaut als Musik-Workstation für iPhone und iPad. Die Oberfläche ist auf Englisch.
 
 - Sechs Synth-Engines, ein Drumkit und ein Sampler; installierte Audio-Unit-Instrumente und -Effekte auf Spuren
 - Pianorolle, Drum-Step-Raster, Arrangement-Zeitleiste und ein Session-Raster für Live-Sets
@@ -7,6 +7,6 @@ Echoel 11 ist eine neue App, neu gebaut als Musik-Workstation für iPhone und iP
 - Mixer mit Sends und Return-Spuren, Automation und ein Bluetooth-Herzfrequenz-Gurt als Modulationsquelle
 - Export als 24-Bit-WAV, Stems oder Standard-MIDI-Datei; Songs sind offene .echoel-Dateien
 
-Songs früherer Echoel-Versionen werden von dieser Version nicht importiert.
+Songs früherer Echoelmusic-Versionen werden von dieser Version nicht importiert.
 
-Echoel ist in aktiver Entwicklung. Feedback willkommen: echoel@tropicaldrones.com
+Echoelmusic ist in aktiver Entwicklung. Feedback willkommen: echoel@tropicaldrones.com

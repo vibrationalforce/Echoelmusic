@@ -195,9 +195,9 @@ final class TheStoreFrontLinesSellTheRigTests: XCTestCase {
         XCTAssertTrue(de.contains("Takes bleiben auf dem Gerät."), "the de-DE recording bullet must keep its privacy half (CLAIMS §11)")
         let notesEN = try text("fastlane/metadata/en-US/release_notes.txt")
         let notesDE = try text("fastlane/metadata/de-DE/release_notes.txt")
-        XCTAssertTrue(notesEN.contains("Songs from earlier versions of Echoel are not imported by this version."),
+        XCTAssertTrue(notesEN.contains("Songs from earlier versions of Echoelmusic are not imported by this version."),
                       "the en-US release notes no longer tell an earlier-app user that their songs are not imported (F17)")
-        XCTAssertTrue(notesDE.contains("Songs früherer Echoel-Versionen werden von dieser Version nicht importiert."),
+        XCTAssertTrue(notesDE.contains("Songs früherer Echoelmusic-Versionen werden von dieser Version nicht importiert."),
                       "the de-DE release notes no longer tell an earlier-app user that their songs are not imported (F17)")
     }
 

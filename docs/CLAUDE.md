@@ -16,13 +16,16 @@ git ls-files 'docs/*.html' 'docs/**/*.html' …    → 24 pages, 395,873 B
 
 ## 0. One identity with the app (2026-10-31, CI-OUT)
 
-**Names.** The brand is **Echoel**; the app TestFlight carries is **Echoel Studio**; the project,
-the repository and the domain are **Echoelmusic**. Page chrome follows that: the nav mark reads
-"Echoel", every `<title>` ends "— Echoel", the footer says "© 2026 Echoel · Echoel Studio in
-TestFlight". `Echoelmusic` stays where it IS the thing: the domain, the repo, OSC addresses
-(`/echoelmusic/…`), the sACN/MIDI source names of the earlier app, and sentences about the earlier
-app (10.79), whose App Store record is still named Echoelmusic. Measure, do not recite:
-`grep -o 'Echoelmusic' docs/*.html | wc -l`.
+**Names (founder 2026-11-09: „Die App heißt Echoelmusic“, „Überall Echoelmusic“).** The app, the
+project, the repository and the domain are all **Echoelmusic**; **Echoel** is the artist (Michael
+Terbuyken), and the artist page keeps that name in its body. Page chrome follows: the nav mark is the
+E-with-three-waves plus the wordmark "Echoelmusic" as written (no uppercase, no letter-spacing), every
+`<title>` ends "— Echoelmusic", the footer says "© 2026 Echoelmusic · in TestFlight". ⛔ The rule that
+stood here (brand Echoel, app "Echoel Studio") is struck; "Echoel Studio" survives only as the NAME OF
+THE CI WORKFLOW (`studio.yml`, read by the merge gates — never rename it from the site's side). The
+navigation is three entries (App · Consulting · Support, plus the TestFlight button) and a footer in
+three groups (App · Echoel · Legal); a page left out of both must be linked from a page's body, or
+`testNoPageIsAnOrphan` goes red. Measure, do not recite: `grep -o 'Echoel Studio' docs/*.html | wc -l` → 0.
 
 **Look.** `shared.css` `:root` (and its inline twin in `index.html`, §6) is
 `EchoelStudio/App/Design/Theme.swift` written as CSS: `--surface`, `--surface-raised`,

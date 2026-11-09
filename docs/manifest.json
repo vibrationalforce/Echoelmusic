@@ -1,7 +1,7 @@
 {
-  "name": "Echoel",
-  "short_name": "Echoel",
-  "description": "Echoel Studio, a music workstation for iPhone and iPad, is in TestFlight. The site also documents the earlier bio-reactive app (10.79, frozen).",
+  "name": "Echoelmusic",
+  "short_name": "Echoelmusic",
+  "description": "Echoelmusic, a music workstation for iPhone and iPad, is in TestFlight. The site also documents the earlier bio-reactive app (10.79, frozen).",
   "start_url": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
@@ -44,7 +44,7 @@
       "sizes": "1024x1024",
       "type": "image/svg+xml",
       "form_factor": "wide",
-      "label": "Echoel bio-reactive interface"
+      "label": "Echoelmusic bio-reactive interface"
     }
   ],
   "shortcuts": [
