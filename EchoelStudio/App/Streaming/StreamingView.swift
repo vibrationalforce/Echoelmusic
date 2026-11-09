@@ -135,7 +135,7 @@ struct StreamingView: View {
     private var aboutSection: some View {
         EchoelSection {
             NoteText("Stream keys stay in this device's keychain: never in a song, a backup of the app's settings or the diagnostic log.")
-            NoteText("Streaming stops when Echoel leaves the screen or a call takes the audio; iOS does not encode video in the background.")
+            NoteText("Streaming stops when Echoelmusic leaves the screen or a call takes the audio; iOS does not encode video in the background.")
         }
     }
 

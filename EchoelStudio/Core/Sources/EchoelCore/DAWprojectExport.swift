@@ -130,7 +130,7 @@ public enum DAWprojectExport {
     /// `metadata.xml`: the song's name as the title.
     public static func metadataXML(title: String) -> String {
         var out = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-        XML("MetaData", [], [XML("Title", text: EDLExport.clean(title, fallback: "Echoel"))]).write(into: &out, indent: 0)
+        XML("MetaData", [], [XML("Title", text: EDLExport.clean(title, fallback: "Echoelmusic"))]).write(into: &out, indent: 0)
         return out
     }
 

@@ -52,11 +52,11 @@ enum AudioFileImport {
 
         var errorDescription: String? {
             switch self {
-            case .unreadable: "This file is not an audio format Echoel can read."
+            case .unreadable: "This file is not an audio format Echoelmusic can read."
             case .empty: "This file holds no audio."
             case .noMemory: "There is not enough free memory to load this file right now."
             case .tooLong(let seconds) where seconds < AudioFileImport.maximumSeconds:
-                "This file is longer than \(AudioFileImport.spoken(seconds)), the longest Echoel keeps at its sample rate."
+                "This file is longer than \(AudioFileImport.spoken(seconds)), the longest Echoelmusic keeps at its sample rate."
             case .tooLong: "This file is longer than ten minutes."
             }
         }

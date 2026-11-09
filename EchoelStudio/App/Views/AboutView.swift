@@ -14,14 +14,14 @@ struct AboutView: View {
     var body: some View {
         NavigationStack {
             List {
-                EchoelSection("Echoel") {
+                EchoelSection("Echoelmusic") {
                     ParagraphText("A music workstation for iPhone and iPad: instruments, effects, arrangement, a session view for live sets, mixing and export.")
                     ParagraphText("Around the music: the Field, a picture that moves with the song; the Sky, the stars above you computed for your place and time; Connections, which send OSC, ADM-OSC, Art-Net and sACN to devices you name; and Body, a heart rate strap or the rear camera as a source for modulation.")
-                    ParagraphText("Body readings are for self-observation, not a medical diagnosis. Echoel is a tool for making music. It is not a medical product.")
+                    ParagraphText("Body readings are for self-observation, not a medical diagnosis. Echoelmusic is a tool for making music. It is not a medical product.")
                 }
                 EchoelSection("Your Data") {
                     ParagraphText("No account, no ads, no tracking, no server of ours. Songs are files on this device, in an open, documented format.")
-                    ParagraphText("Echoel uses the network only for the App Store (at launch, to check whether you bought Echoel Plugins, and when you open the store: prices, buying, Restore Purchases), for Network MIDI when you turn it on, for each connection you turn on in Connections, to the address you type, and for a live stream, from Go Live to Stop, to the servers you enter.")
+                    ParagraphText("Echoelmusic uses the network only for the App Store (at launch, to check whether you bought Echoelmusic Plugins, and when you open the store: prices, buying, Restore Purchases), for Network MIDI when you turn it on, for each connection you turn on in Connections, to the address you type, and for a live stream, from Go Live to Stop, to the servers you enter.")
                     ParagraphText("A diagnostics log stays on this device: what the audio and the app did, and how earlier runs ended as iOS reports it — numbers only, never a name you typed. It leaves only when you share it.")
                     // The share comes up once this page has closed: the one sheet slot waits for it.
                     Button("Share Diagnostics") {
@@ -36,7 +36,7 @@ struct AboutView: View {
                     if let url = Self.siteURL { Link("echoelmusic.com", destination: url) }
                 }
                 EchoelSection("Acknowledgments") {
-                    ParagraphText("Echoel Studio contains the work of others. Each license, in full:")
+                    ParagraphText("Echoelmusic contains the work of others. Each license, in full:")
                     ForEach(Acknowledgment.all) { acknowledgment in
                         NavigationLink {
                             AcknowledgmentView(acknowledgment: acknowledgment)
@@ -58,7 +58,7 @@ struct AboutView: View {
                 }
             }
             .echoelList()
-            .navigationTitle("About Echoel")
+            .navigationTitle("About Echoelmusic")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
         }

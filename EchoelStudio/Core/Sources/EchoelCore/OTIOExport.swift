@@ -180,7 +180,7 @@ public enum OTIOExport {
         let timeline: JSON = .object([
             ("OTIO_SCHEMA", .string("Timeline.1")),
             ("metadata", .object([])),
-            ("name", .string(EDLExport.clean(title, fallback: "Echoel"))),
+            ("name", .string(EDLExport.clean(title, fallback: "Echoelmusic"))),
             ("global_start_time", time(Double(start), rate: r)),
             ("tracks", .object([
                 ("OTIO_SCHEMA", .string("Stack.1")),

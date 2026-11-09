@@ -34,7 +34,7 @@ enum FieldAlphaExport {
             switch self {
             case .noEncoder: "This device cannot encode video with transparency (ProRes 4444 or HEVC with alpha)."
             case .noFieldLayer: "This device cannot draw the Field into a video."
-            case .stopped: "The Field could not be drawn into the video. Keep Echoel open while it exports, and export again."
+            case .stopped: "The Field could not be drawn into the video. Keep Echoelmusic open while it exports, and export again."
             case .failed(let reason): "The Field video could not be written (\(reason)). Check the free space and export again."
             }
         }

@@ -211,7 +211,7 @@ final class StreamingController {
                                             queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, self.lifecycle.canStop else { return }
-                Task { await self.end(because: "The stream ended: Echoel left the screen, and iOS stops video in the background.") }
+                Task { await self.end(because: "The stream ended: Echoelmusic left the screen, and iOS stops video in the background.") }
             }
         })
         observers.append(center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil,

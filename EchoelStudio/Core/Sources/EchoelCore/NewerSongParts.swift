@@ -138,7 +138,7 @@ extension Project {
         let count = keptFromNewerBuild
         guard count > 0 else { return nil }
         let items = count == 1 ? "1 item is" : "\(count) items are"
-        return "This song was saved by a newer Echoel Studio. \(items) kept but inactive until you update."
+        return "This song was saved by a newer Echoelmusic. \(items) kept but inactive until you update."
     }
 
     /// Routes kept from a newer build. They count against `Modulation.routeLimit` with the others.

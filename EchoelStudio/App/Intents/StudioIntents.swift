@@ -22,12 +22,12 @@ final class StudioIntentBridge {
 
     /// The open song's store, or the reason there is none yet.
     func requireStore() throws -> ProjectStore {
-        guard let store else { throw IntentFailure("Echoel Studio is still opening. Try again in a moment.") }
+        guard let store else { throw IntentFailure("Echoelmusic is still opening. Try again in a moment.") }
         return store
     }
 
     func requireEngine() throws -> AudioEngine {
-        guard let engine else { throw IntentFailure("Echoel Studio is still opening. Try again in a moment.") }
+        guard let engine else { throw IntentFailure("Echoelmusic is still opening. Try again in a moment.") }
         return engine
     }
 
@@ -344,7 +344,7 @@ struct ExportStemsIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let bridge = StudioIntentBridge.shared
-        guard let documents = bridge.documents else { throw IntentFailure("Echoel Studio is still opening. Try again in a moment.") }
+        guard let documents = bridge.documents else { throw IntentFailure("Echoelmusic is still opening. Try again in a moment.") }
         let engine = try bridge.requireEngine()
         guard let folder = await documents.exportStems(plugins: engine.plugins) else {
             throw IntentFailure(documents.lastError ?? "The stems could not be exported.")

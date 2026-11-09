@@ -42,7 +42,7 @@ struct ArpeggiatorSection: View {
         .pickerStyle(.menu)
         .accessibilityLabel("Order")
         if let later = settings.unrecognizedOrder ?? settings.unrecognizedRate {
-            Text("“\(later)” comes from a later version of Echoel Studio and plays as Up, 1/16 here.")
+            Text("“\(later)” comes from a later version of Echoelmusic and plays as Up, 1/16 here.")
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
         }

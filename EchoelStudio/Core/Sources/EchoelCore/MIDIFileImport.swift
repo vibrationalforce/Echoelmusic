@@ -30,11 +30,11 @@ public enum MIDIFileImport {
         public var explanation: String {
             switch self {
             case .notAMIDIFile: "The file is not a MIDI file."
-            case .tooLarge: "The MIDI file is larger than Echoel reads."
+            case .tooLarge: "The MIDI file is larger than Echoelmusic reads."
             case .unsupportedFormat(let format): "MIDI files of format \(format) are not read; formats 0 and 1 are."
             case .timecodeDivision: "The MIDI file counts in timecode frames, not beats."
             case .damaged: "The MIDI file is damaged."
-            case .tooManyNotes: "The MIDI file holds more notes than Echoel reads at once."
+            case .tooManyNotes: "The MIDI file holds more notes than Echoelmusic reads at once."
             case .noNotes: "The MIDI file plays no notes."
             case let .tooManyTracks(needed, free):
                 "The file has \(needed) tracks with notes; the song has room for \(free) more instrument tracks."

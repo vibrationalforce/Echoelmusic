@@ -37,7 +37,7 @@ final class NewerSongTests: XCTestCase {
         XCTAssertEqual(project.keptMasterInsertCount, 1)
         XCTAssertEqual(project.tracks.first?.keptInsertCount, 1)
         XCTAssertEqual(project.newerBuildNotice,
-                       "This song was saved by a newer Echoel Studio. 5 items are kept but inactive until you update.")
+                       "This song was saved by a newer Echoelmusic. 5 items are kept but inactive until you update.")
         XCTAssertNil(Project().newerBuildNotice, "a song with nothing kept says nothing")
     }
 
@@ -47,7 +47,7 @@ final class NewerSongTests: XCTestCase {
         XCTAssertEqual(project.modRoutes.map(\.source), [.heartRate])
         XCTAssertFalse(project.modRoutes.contains { $0.id == unknownRoute })
         // The kept inserts are not on any chain the engine plays: the master keeps its EQ only.
-        XCTAssertEqual(project.masterInserts.map(\.plugin.name), ["Echoel EQ"])
+        XCTAssertEqual(project.masterInserts.map(\.plugin.name), ["Echoelmusic EQ"])
         XCTAssertEqual(project.tracks.first?.inserts, [])
     }
 

@@ -74,7 +74,7 @@ final class StandardEffectUnitTests: XCTestCase {
         try u.allocateRenderResources()
         XCTAssertEqual(u.key, gMajor, "a new kernel keeps the key")
         HostedEffect(render: u.renderBlock, sampleRate: 48_000, maximumFrames: 4_096, owner: nil).follow(key: SongKey())
-        XCTAssertEqual(u.key, gMajor, "a host without Echoel's unit passes nothing on")
+        XCTAssertEqual(u.key, gMajor, "a host without Echoelmusic's unit passes nothing on")
     }
 
     func testOnlyThePitchCorrectionReportsALatency() throws {

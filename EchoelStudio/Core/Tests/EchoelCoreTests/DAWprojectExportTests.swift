@@ -114,7 +114,7 @@ extension DAWprojectExportTests {
     static let golden = """
     <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
     <Project version="1.0">
-      <Application name="Echoel Studio" version="11.0.0"/>
+      <Application name="Echoelmusic" version="11.0.0"/>
       <Transport>
         <Tempo max="999" min="20" unit="bpm" value="120.0" id="tempo" name="Tempo"/>
         <TimeSignature denominator="4" numerator="4" id="signature"/>

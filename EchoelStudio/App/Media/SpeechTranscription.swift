@@ -33,11 +33,11 @@ enum SpeechTranscription {
         var message: String {
             switch self {
             case .notAllowed:
-                "Speech recognition is not allowed for Echoel. Allow it in Settings, Privacy & Security, Speech Recognition."
+                "Speech recognition is not allowed for Echoelmusic. Allow it in Settings, Privacy & Security, Speech Recognition."
             case .notOnDevice(let language):
-                "This device cannot recognize \(language) without a server, and Echoel transcribes only on the device. Nothing was sent anywhere. Choose another language, or add \(language) to the device's dictation languages in Settings and try again."
+                "This device cannot recognize \(language) without a server, and Echoelmusic transcribes only on the device. Nothing was sent anywhere. Choose another language, or add \(language) to the device's dictation languages in Settings and try again."
             case .unreadable:
-                "The file has no sound Echoel can read."
+                "The file has no sound Echoelmusic can read."
             case .tooLong:
                 "Transcribe takes at most an hour at once. Split the part and transcribe each piece."
             case .recognizer:

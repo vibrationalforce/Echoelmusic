@@ -198,14 +198,14 @@ final class JamSession {
         case .newer:
             guard role != .hosting else { return }
             leave()
-            problem = "This jam runs a newer Echoel. Update Echoel on this phone to join it."
+            problem = "This jam runs a newer Echoelmusic. Update Echoelmusic on this phone to join it."
         case .waiting(let peers):
             let shown = role == .hosting ? peers : []
             if waiting != shown { waiting = shown }
         case .refused(let error):
             DiagnosticLog.app.note("jam: refused", error: error)
             leave()
-            problem = "Echoel cannot reach phones nearby. Allow Local Network for Echoel in Settings, Privacy & Security, then try again."
+            problem = "Echoelmusic cannot reach phones nearby. Allow Local Network for Echoelmusic in Settings, Privacy & Security, then try again."
         }
     }
 
