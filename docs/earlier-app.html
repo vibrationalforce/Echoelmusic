@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Cache Control: never cache HTML in browser -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
+    <script>
+    (function(){var V='10.30.0',K='echoel-nuke';try{
+    var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
+    fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+    if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
+    if('caches' in window)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
+    if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
+    Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
+    </script>
+
+    <title>The earlier app (10.79) — Echoelmusic</title>
+    <meta name="description" content="Archive: the earlier Echoelmusic app (10.79, frozen), an instrument played by the body. Today Echoelmusic is a music workstation in TestFlight.">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:title" content="The earlier app (10.79) — Echoelmusic">
+    <meta property="og:description" content="Archive: the earlier Echoelmusic app (10.79, frozen), an instrument played by the body. Today Echoelmusic is a music workstation in TestFlight.">
+    <meta property="og:url" content="https://echoelmusic.com/earlier-app.html">
+    <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Echoelmusic">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="The earlier app (10.79) — Echoelmusic">
+    <meta name="twitter:description" content="Archive: the earlier Echoelmusic app (10.79, frozen), an instrument played by the body. Today Echoelmusic is a music workstation in TestFlight.">
+    <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
+    <link rel="canonical" href="https://echoelmusic.com/earlier-app.html">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Earlier app (10.79)","item":"https://echoelmusic.com/earlier-app.html"}]}</script>
+    <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+        @font-face {
+            font-family: 'Atkinson Hyperlegible';
+            src: url('fonts/atkinson-regular.woff2') format('woff2');
+            font-weight: 400; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'Atkinson Hyperlegible';
+            src: url('fonts/atkinson-bold.woff2') format('woff2');
+            font-weight: 700; font-style: normal; font-display: swap;
+        }
+
+        /* The app's design system (EchoelStudio/App/Design/Theme.swift), value for value — the
+           same block as docs/shared.css, repeated because this page loads no shared.css. */
+        :root {
+            --text: #e0e0e0;
+            --dim: rgba(224,224,224,0.65);
+            --bg: #000;
+            --surface: #0e0e12;
+            --surface-raised: #1a1a1e;
+            --glass: var(--surface);
+            --border: rgba(224,224,224,0.10);
+            --border-strong: rgba(224,224,224,0.45);
+            --accent: #4dd98c;
+            --radius-s: 4px; --radius-m: 8px; --radius-l: 12px;
+            --motion-quick: 120ms; --motion-standard: 180ms;
+            --max-w: 1120px;
+            --font: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; overflow-x: hidden; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg); color: var(--text);
+            -webkit-font-smoothing: antialiased; line-height: 1.6;
+            overflow-x: hidden; max-width: 100vw; font-size: 16px;
+        }
+
+        a, a:visited, a:active { color: inherit; text-decoration: none; }
+        a:focus-visible, button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+        .nav-links a[aria-current="page"], .nav-links a[aria-current="page"]:link, .nav-links a[aria-current="page"]:visited,
+.menu-overlay a[aria-current="page"], .menu-overlay a[aria-current="page"]:link, .menu-overlay a[aria-current="page"]:visited { color: var(--accent); }
+
+        .skip-link {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: var(--text); color: #000; padding: 10px 20px; border-radius: 8px;
+            z-index: 10001; transition: top 0.3s; font-weight: 700;
+        }
+        .skip-link:focus { top: 16px; }
+
+        /* ============ NAV ============ */
+        /* PROPHYLACTIC HERE, LOAD-BEARING IN `shared.css` — and the difference is measured,
+            not assumed (#1397, 2026-09-20). A `position: fixed` bar with `left: 0; right: 0`
+            resolves against the initial containing block, and that block grows to the widest
+            content on the page whenever `body`'s `overflow-x: hidden` propagates to the viewport
+            (which it does: `html` leaves overflow `visible`). On the 20 pages that load
+            `shared.css` that really happened — one unclassed <table> on integrations.html was
+            531 px wide in a 390 px viewport, the nav stretched with it, and the burger button
+            landed at x = 467…507, entirely off-screen with no way to open the menu on a phone.
+            THIS page never could: `body` above already carries `max-width: 100vw`, so injecting
+            a 900 px element leaves the nav at 390 px with or without this line (measured both
+            ways in headless Chromium). It is written anyway so the two copies of `.nav` say the
+            same thing — docs/CLAUDE.md §6 is about exactly this file drifting from the shared
+            one. Do not cite this line as the repair; the repair is the table plus shared.css. */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 0 24px;
+            max-width: 100vw;
+            background: rgba(0,0,0,0);
+            transition: background 0.3s ease, border-color 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .nav.scrolled {
+            background: rgba(0,0,0,0.92);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-bar {
+            max-width: var(--max-w); margin: 0 auto; height: 64px;
+            display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+        }
+        .nav-logo, .nav-logo:visited, .nav-logo:active, .nav-logo:link {
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 700; z-index: 1001;
+            color: var(--text); text-decoration: none;
+            font-size: clamp(1.25rem, 2vw, 1.5rem);
+        }
+        .nav-logo svg { width: 28px; height: 28px; flex-shrink: 0; }
+        .nav-logo span {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 17px; letter-spacing: 0; text-transform: none;
+        }
+
+        .nav-links { display: none; align-items: center; justify-content: flex-end; gap: 4px; }
+        .nav-links a, .nav-links a:visited, .nav-links a:active, .nav-links a:link {
+            font-weight: 500; color: var(--dim);
+            padding: 7px 14px; border-radius: var(--radius-m); transition: color var(--motion-quick), background var(--motion-quick);
+            text-decoration: none;
+        }
+        .nav-links a:hover { color: var(--text); background: var(--surface-raised); }
+        /* `:link` is the state an UNVISITED link is in, and leaving it out cost the primary
+           call-to-action its contrast: `.nav-links a:link` above is (0,2,1) and this rule was
+           (0,2,0), so "Join the TestFlight" rendered rgba(224,224,224,0.55) on #e0e0e0 —
+           ratio 1.00. `shared.css` already carries the four-state list here; this inline copy
+           did not, which is exactly the two-places trap docs/CLAUDE.md §6 names. */
+        .nav-links .nav-cta, .nav-links .nav-cta:link, .nav-links .nav-cta:visited, .nav-links .nav-cta:active {
+            background: var(--text); color: #000; font-weight: 700;
+            padding: 8px 20px; border-radius: var(--radius-m); margin-left: 8px;
+            transition: opacity var(--motion-quick);
+        }
+        .nav-links .nav-cta:hover { opacity: 0.85; color: #000; background: var(--text); }
+        .nav-cta--soon, .nav-links .nav-cta--soon {
+            background: transparent; color: var(--dim);
+            border: 1px solid var(--border); font-weight: 600;
+            cursor: default;
+        }
+        .nav-cta--soon:hover { opacity: 1; background: transparent; color: var(--dim); }
+
+        @media (min-width: 900px) {
+            .nav-links { display: flex; }
+            /* The word sits beside the mark here; centred, it ran into the links at 1024 px. */
+            .nav-logo span { position: static; transform: none; }
+            .burger { display: none !important; }
+        }
+
+        .burger {
+            width: 40px; height: 40px; background: none; border: none;
+            cursor: pointer; z-index: 1001; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            grid-column: 3; justify-self: end;
+        }
+        .burger span {
+            display: block; width: 20px; height: 1.5px; background: var(--text);
+            position: absolute; transition: opacity var(--motion-standard);
+        }
+        .burger span:nth-child(1) { transform: translateY(-6px); }
+        .burger span:nth-child(3) { transform: translateY(6px); }
+        .burger.active span:nth-child(1) { transform: rotate(45deg); }
+        .burger.active span:nth-child(2) { opacity: 0; }
+        .burger.active span:nth-child(3) { transform: rotate(-45deg); }
+
+        /* ============ OVERLAY MENU ============ */
+        .menu-overlay {
+            position: fixed; inset: 0; z-index: 999;
+            background: var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden;
+            transition: opacity var(--motion-standard), visibility var(--motion-standard);
+        }
+        .menu-overlay.open { opacity: 1; visibility: visible; }
+        .menu-overlay nav { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .menu-overlay a, .menu-overlay a:visited, .menu-overlay a:active, .menu-overlay a:link {
+            font-size: clamp(20px, 4vw, 30px); font-weight: 700; letter-spacing: -0.5px;
+            color: var(--dim); padding: 8px 20px; border-radius: var(--radius-l);
+            opacity: 0; text-decoration: none;
+            transition: color var(--motion-quick), background var(--motion-quick), opacity var(--motion-standard);
+        }
+        .menu-overlay.open a { opacity: 1; }
+        .menu-overlay.open a:nth-child(1) { transition-delay: 0.03s; }
+        .menu-overlay.open a:nth-child(2) { transition-delay: 0.06s; }
+        .menu-overlay.open a:nth-child(3) { transition-delay: 0.09s; }
+        .menu-overlay.open a:nth-child(4) { transition-delay: 0.12s; }
+        .menu-overlay.open a:nth-child(5) { transition-delay: 0.15s; }
+        .menu-overlay.open a:nth-child(6) { transition-delay: 0.18s; }
+        .menu-overlay.open a:nth-child(7) { transition-delay: 0.21s; }
+        .menu-overlay.open a:nth-child(8) { transition-delay: 0.24s; }
+        .menu-overlay.open a:nth-child(9) { transition-delay: 0.27s; }
+        .menu-overlay.open a:nth-child(10) { transition-delay: 0.30s; }
+        .menu-overlay a:hover { color: var(--text); background: var(--surface-raised); }
+
+        /* ============ HERO ============ */
+        .hero {
+            position: relative;
+            min-height: 100vh; min-height: 100dvh;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 80px 24px 60px; overflow: hidden;
+        }
+        .hero-content { position: relative; z-index: 2; max-width: 960px; margin: 0 auto; text-align: center; }
+
+        .hero h1 { margin-bottom: 28px; line-height: 1; }
+        .h1-line { display: block; opacity: 0; }
+        .h1-create {
+            font-size: clamp(60px, 15vw, 150px); font-weight: 700;
+            letter-spacing: -5px; line-height: 0.9;
+            animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+        }
+        .h1-from {
+            font-size: clamp(20px, 4vw, 36px); font-weight: 300;
+            font-style: italic; color: var(--dim);
+            letter-spacing: 2px; margin: 12px 0 8px;
+            animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 0.45s forwards;
+        }
+        .h1-within {
+            font-size: clamp(60px, 15vw, 150px); font-weight: 700;
+            letter-spacing: -5px; line-height: 0.9;
+            animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 0.7s forwards;
+        }
+
+        .hero-claim {
+            font-size: clamp(17px, 2.5vw, 24px); font-style: italic;
+            font-weight: 400; color: var(--dim); margin-bottom: 20px;
+            opacity: 0; animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 0.95s forwards;
+        }
+
+        .hero-sub {
+            font-size: clamp(15px, 2.2vw, 18px); color: var(--dim);
+            max-width: 520px; margin: 0 auto 24px; line-height: 1.7;
+            font-weight: 400;
+            opacity: 0; animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 1.15s forwards;
+        }
+        .hero-sub strong { color: var(--text); font-weight: 600; }
+        /* A link in running text is underlined: colour alone is not a cue (WCAG 1.4.1). */
+        .hero-sub a { text-decoration: underline; text-underline-offset: 2px; }
+
+        .hero-category {
+            font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+            color: var(--dim); font-weight: 600; line-height: 2.2;
+            margin-bottom: 32px; max-width: 500px; margin-left: auto; margin-right: auto;
+            opacity: 0; animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 1.35s forwards;
+        }
+
+        .hero-cta-group {
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            opacity: 0; animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 1.55s forwards;
+        }
+        .hero-cta, .hero-cta:visited, .hero-cta:active, .hero-cta:link {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: var(--text); color: #000; padding: 16px 36px; border-radius: var(--radius-l);
+            font-weight: 700; text-decoration: none;
+            transition: opacity var(--motion-quick);
+        }
+        .hero-cta:hover { opacity: 0.85; }
+        .hero-cta--soon, .hero-cta--soon:hover {
+            background: transparent; color: var(--text);
+            border: 1px solid var(--border);
+            cursor: default; opacity: 1;
+        }
+        .hero-cta .apple-logo { flex-shrink: 0; }
+        .hero-urgency {
+            color: var(--text); font-weight: 600;
+            font-size: 13px; letter-spacing: 0.5px;
+            opacity: 0.7;
+        }
+        .hero-platforms { color: var(--dim); }
+
+        /* ============ CAPABILITY MAP ============ */
+        .cap-map {
+            width: 100%; max-width: 900px; margin: 64px auto 0;
+            opacity: 0; animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 1.75s forwards;
+        }
+        .cap-flow {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 0;
+            position: relative;
+        }
+        .cap-flow::before {
+            content: ''; position: absolute; top: 28px; left: 10%; right: 10%;
+            height: 1px; background: var(--border);
+        }
+        .cap-node {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 10px; padding: 0 8px; position: relative; z-index: 1;
+        }
+        .cap-icon {
+            width: 56px; height: 56px; border-radius: var(--radius-l);
+            background: var(--surface); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--dim);
+            transition: border-color var(--motion-standard), color var(--motion-standard);
+        }
+        .cap-node:hover .cap-icon { border-color: var(--border-strong); color: var(--text); }
+        .cap-icon svg { width: 22px; height: 22px; }
+        .cap-label { font-weight: 700; color: var(--dim); letter-spacing: 0.5px; text-transform: uppercase; }
+        .cap-detail { color: var(--dim); text-align: center; line-height: 1.5; }
+        @media (max-width: 600px) {
+            .cap-flow { grid-template-columns: repeat(3, 1fr); gap: 24px 0; }
+            .cap-flow::before { display: none; }
+        }
+        @media (max-width: 380px) {
+            .cap-flow { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @keyframes h-rise {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* ============ SECTION COMMON ============ */
+        .section {
+            max-width: var(--max-w); margin: 0 auto;
+            padding: 48px 24px;
+            position: relative; z-index: 1;
+        }
+        .section-title {
+            font-size: clamp(29px, 5.5vw, 49px); font-weight: 700;
+            letter-spacing: -2px; text-align: center; margin-bottom: 14px; line-height: 1.05;
+        }
+        .section-sub {
+            color: var(--dim); text-align: center;
+            max-width: 560px; margin: 0 auto 40px; line-height: 1.7;
+        }
+
+        /* ============ ECHOEL STUDIO ============ */
+        .studio-list {
+            max-width: 640px; margin: 0 auto; padding: 0; list-style: none;
+            display: grid; gap: 8px;
+        }
+        .studio-list li {
+            color: var(--dim); line-height: 1.6;
+            padding: 12px 16px; background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius-m);
+        }
+
+        /* ============ HOW IT WORKS ============ */
+        .steps {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+        }
+        .step {
+            text-align: center; padding: 32px 24px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-l);
+            position: relative; overflow: hidden;
+        }
+        .step-num {
+            font-size: clamp(33px, 5vw, 45px); font-weight: 700; letter-spacing: -2px;
+            color: var(--dim);
+            margin-bottom: 12px; line-height: 1;
+        }
+        .step h3 { font-weight: 700; margin-bottom: 8px; }
+        .step p { color: var(--dim); line-height: 1.6; }
+
+        /* ============ BENTO FEATURES ============ */
+        .bento {
+            display: grid; gap: 14px;
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .bento-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-l);
+            padding: 32px 28px;
+            position: relative; overflow: hidden;
+        }
+        .bento-card.span2 { grid-column: span 2; }
+
+        .bento-icon {
+            margin-bottom: 16px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--dim);
+        }
+
+        .bento-card h3 {
+            font-size: clamp(16px, 2vw, 20px); font-weight: 700; letter-spacing: -0.5px;
+            margin-bottom: 8px; line-height: 1.2; text-align: center;
+        }
+        .bento-card p { color: var(--dim); line-height: 1.6; text-align: center; }
+
+        /* ============ PERSONAS ============ */
+        .persona-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+        }
+        .persona-card {
+            padding: 28px 20px; text-align: center;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-l);
+        }
+        .persona-icon {
+            margin-bottom: 14px; display: block; margin-left: auto; margin-right: auto;
+            color: var(--dim);
+        }
+        .persona-card h3 { font-weight: 700; margin-bottom: 6px; }
+        .persona-card p { color: var(--dim); line-height: 1.5; font-size: 14px; }
+
+        /* ============ TECH SPECS ============ */
+        .specs-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+        }
+        .spec-item {
+            padding: 16px 20px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-l);
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; gap: 4px;
+        }
+        .spec-val {
+            font-size: clamp(16px, 2vw, 18px); font-weight: 700; color: var(--text);
+            letter-spacing: -0.5px; white-space: nowrap;
+        }
+        .spec-label { color: var(--dim); font-size: 14px; }
+
+        /* ============ SOCIAL ============ */
+        .social {
+            display: flex; justify-content: center; gap: 12px; padding: 32px 24px;
+            position: relative; z-index: 1;
+        }
+        .social a, .social a:visited, .social a:active, .social a:link {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--dim); transition: color var(--motion-quick); text-decoration: none;
+        }
+        .social a:hover { color: var(--text); }
+        .social a svg { width: 18px; height: 18px; }
+
+        /* ============ FOOTER ============ */
+        footer {
+            padding: 28px 24px;
+            max-width: var(--max-w); margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 16px;
+            position: relative; z-index: 1;
+        }
+        .footer-copy { color: var(--dim); }
+        .footer-links { display: flex; gap: 40px; flex-wrap: wrap; align-items: flex-start; }
+        .footer-group { display: flex; flex-direction: column; gap: 6px; }
+        .footer-head { color: var(--text); font-weight: 700; margin-bottom: 2px; }
+        .footer-links a, .footer-links a:visited, .footer-links a:active, .footer-links a:link { color: var(--dim); transition: color var(--motion-quick); text-decoration: none; }
+        .footer-links a:hover { color: var(--text); }
+
+        /* ============ SCROLL ANIMATIONS ============ */
+        .reveal {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        .reveal.visible { opacity: 1; }
+        .reveal-stagger > * {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        .reveal-stagger.visible > * { opacity: 1; }
+        .reveal-stagger.visible > *:nth-child(1) { transition-delay: 0.05s; }
+        .reveal-stagger.visible > *:nth-child(2) { transition-delay: 0.1s; }
+        .reveal-stagger.visible > *:nth-child(3) { transition-delay: 0.15s; }
+        .reveal-stagger.visible > *:nth-child(4) { transition-delay: 0.2s; }
+        .reveal-stagger.visible > *:nth-child(5) { transition-delay: 0.25s; }
+        .reveal-stagger.visible > *:nth-child(6) { transition-delay: 0.3s; }
+        .reveal-stagger.visible > *:nth-child(7) { transition-delay: 0.35s; }
+        .reveal-stagger.visible > *:nth-child(8) { transition-delay: 0.4s; }
+        .reveal-stagger.visible > *:nth-child(9) { transition-delay: 0.45s; }
+        .reveal-stagger.visible > *:nth-child(10) { transition-delay: 0.5s; }
+        .reveal-stagger.visible > *:nth-child(11) { transition-delay: 0.55s; }
+        .reveal-stagger.visible > *:nth-child(12) { transition-delay: 0.6s; }
+        .reveal-stagger.visible > *:nth-child(13) { transition-delay: 0.65s; }
+        .reveal-stagger.visible > *:nth-child(14) { transition-delay: 0.7s; }
+        .reveal-stagger.visible > *:nth-child(15) { transition-delay: 0.75s; }
+        .reveal-stagger.visible > *:nth-child(16) { transition-delay: 0.8s; }
+        .reveal-stagger.visible > *:nth-child(17) { transition-delay: 0.85s; }
+        .reveal-stagger.visible > *:nth-child(18) { transition-delay: 0.9s; }
+        .reveal-stagger.visible > *:nth-child(19) { transition-delay: 0.95s; }
+        .reveal-stagger.visible > *:nth-child(20) { transition-delay: 1.0s; }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 900px) {
+            .persona-grid { grid-template-columns: repeat(2, 1fr); }
+            .bento { grid-template-columns: 1fr; }
+            .bento-card.span2 { grid-column: span 1; }
+            .specs-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .h1-create, .h1-within { letter-spacing: -3px; }
+            .hero-category { letter-spacing: 3px; font-size: 10px; }
+            .steps { grid-template-columns: 1fr; gap: 12px; }
+            footer { flex-direction: column; text-align: center; }
+            .footer-links { justify-content: center; } .footer-group { align-items: center; }
+        }
+        @media (max-width: 480px) {
+            .persona-grid { grid-template-columns: 1fr; }
+            .specs-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+            .reveal, .reveal-stagger > * { opacity: 1 !important; transform: none !important; }
+            .h1-line, .hero-claim, .hero-sub, .hero-category, .hero-cta-group, .cap-map { opacity: 1 !important; transform: none !important; }
+        }
+        @media (prefers-contrast: high) {
+            :root { --dim: rgba(224,224,224,0.9); --border: rgba(224,224,224,0.2); }
+        }
+        @media (max-width: 320px) {
+            body { font-size: 16px; }
+            .h1-create, .h1-within { font-size: clamp(48px, 14vw, 80px); letter-spacing: -2px; }
+        }
+            /* Archive page: the scroll-reveal script is gone, so nothing may wait for it. */
+        .reveal, .reveal-stagger > * { opacity: 1 !important; }
+        .nav { background: rgba(0,0,0,0.92); border-bottom: 1px solid var(--border); }
+        .archive-head { max-width: var(--max-w); margin: 0 auto; padding: 112px 24px 8px; }
+        .archive-head h1 { font-size: clamp(30px, 5.2vw, 44px); line-height: 1.1; letter-spacing: -1px; margin-bottom: 16px; }
+        .archive-head p { color: var(--dim); max-width: 680px; line-height: 1.7; margin-bottom: 12px; }
+        .archive-head a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+        footer { flex-direction: column; align-items: stretch; gap: 24px; border-top: 1px solid var(--border); margin-top: 48px; }
+        .footer-links { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+        @media (max-width: 640px) { .footer-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .footer-group { align-items: flex-start; } footer { text-align: left; } }
+    </style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <header class="nav" id="mainNav">
+        <div class="nav-bar">
+            <a href="/" class="nav-logo" aria-label="Echoelmusic home">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
+                <span>Echoelmusic</span>
+            </a>
+            <nav class="nav-links" aria-label="Main">
+                <a href="/">App</a>
+                <a href="consulting.html">Consulting</a>
+                <a href="support.html">Support</a>
+                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoelmusic%20%E2%80%94%20TestFlight%20access&amp;body=Device%20%28for%20example%20iPhone%2015%2C%20iPad%20Air%29%3A%0AiOS%20version%3A%0A">Request TestFlight access</a>
+            </nav>
+            <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+        </div>
+    </header>
+    <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
+        <nav>
+            <a href="/">App</a>
+            <a href="consulting.html">Consulting</a>
+            <a href="support.html">Support</a>
+            <a href="mailto:echoel@tropicaldrones.com?subject=Echoelmusic%20%E2%80%94%20TestFlight%20access&amp;body=Device%20%28for%20example%20iPhone%2015%2C%20iPad%20Air%29%3A%0AiOS%20version%3A%0A">Request TestFlight access</a>
+        </nav>
+    </div>
+
+    <main id="main">
+        <div class="archive-head">
+            <h1>The earlier app (10.79)</h1>
+            <p>This page is an archive. It keeps the description of the earlier Echoelmusic app, version 10.79.515, an instrument played by the body, as the home page carried it until 9 November 2026. That app is frozen.</p>
+            <p>Echoelmusic today is a <a href="/">music workstation for iPhone and iPad</a>, in TestFlight. More of the archive: the <a href="overview.html">complete overview</a>, the <a href="tools.html">tools</a>, the <a href="architecture.html">architecture</a>, the <a href="integrations.html">integrations</a> and the <a href="earlier-app-faq.html">FAQ</a> of the earlier app.</p>
+        </div>
+
+        <!-- ========== HOW IT WORKS ========== -->
+        <div id="earlier" class="section">
+            <h2 class="section-title reveal">The earlier instrument (10.79)</h2>
+            <p class="section-sub reveal">Before Echoelmusic there was an instrument played by the body: a camera pulse reading, generative visuals and light. It is frozen at version 10.79.515 and no longer in TestFlight. The sections below describe it as it was; its parts return to Echoelmusic in the order on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>.</p>
+        </div>
+
+        <div id="how" class="section">
+            <h2 class="section-title reveal">Heartbeat to art form</h2>
+            <p class="section-sub reveal">One signal chain: your biology was the instrument, the score and the conductor.</p>
+            <div class="steps reveal reveal-stagger">
+                <div class="step">
+                    <div class="step-num">01</div>
+                    <h3>Sense</h3>
+                    <p>The iPhone camera or a Bluetooth heart-rate strap read your heartbeat in real time; the camera also estimated your breathing. Apple Health data (Watch, ring) joined with a few seconds’ delay. The camera needed no setup.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">02</div>
+                    <h3>Transform</h3>
+                    <p>Biology shaped sound, light and visuals. Coherence opened the mix. Your pulse set the tempo until you locked it.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">03</div>
+                    <h3>Radiate</h3>
+                    <p>Takes went to your DAW, your pulse to a venue&rsquo;s lights and spatial rig, and you felt it through a sub. From living room to festival stage.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SCIENCE / COHERENCE ========== -->
+        <div id="science" class="section">
+            <h2 class="section-title reveal">The science, measured &mdash; not mystified</h2>
+            <p class="section-sub reveal">Biofeedback as a real signal you can see. Shown, never promised.</p>
+
+            <div class="persona-grid reveal reveal-stagger">
+                <div class="persona-card">
+                    <h3>Measured</h3>
+                    <p>RMSSD, SDNN and pNN50 from your beat-to-beat intervals &mdash; the standard time-domain HRV metrics, computed on device from the camera or a Bluetooth strap. The earlier app did not read Apple Health&rsquo;s beat-to-beat series, so with a Watch you got Apple&rsquo;s own SDNN.</p>
+                </div>
+                <div class="persona-card">
+                    <h3>Frequency-domain coherence</h3>
+                    <p>A real spectrum of your heartbeat (Lomb&ndash;Scargle / Welch) read in the standard HRV bands. Coherence is the share of power gathered in the ~0.1&nbsp;Hz resonance peak &mdash; a number, not a vibe.</p>
+                </div>
+                <div class="persona-card">
+                    <h3>Honest limits</h3>
+                    <p>A chest strap (e.g. Polar&nbsp;H10) is ground truth; wrist and camera readings are estimates. This is for self-observation &mdash; not medical diagnosis, and no &ldquo;healing frequencies&rdquo;.</p>
+                </div>
+            </div>
+            <p class="section-sub reveal" style="margin-top:28px;">The body was a measured signal there &mdash; the math ran on device, in private. <a href="health.html" style="color:var(--text); border-bottom:1px solid var(--border);">How we treat health data &rarr;</a></p>
+        </div>
+
+        <!-- ========== FEATURES (BENTO) ========== -->
+        <div id="features" class="section">
+            <h2 class="section-title reveal">One body, many dimensions.</h2>
+            <p class="section-sub reveal">Sound, space, light and vibration &mdash; played live by your physiology, over open standards, in the earlier app.</p>
+
+            <div class="bento reveal reveal-stagger">
+                <!-- Bio-Reactive -->
+                <div class="bento-card span2">
+                    <div class="bento-icon"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
+                    <h3>Your body was the controller</h3>
+                    <p>Every heartbeat and breath shaped sound and light in real time. A MIDI controller could play one voice on top.</p>
+                </div>
+
+                <!-- Sound -->
+                <div class="bento-card">
+                    <div class="bento-icon"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
+                    <h3>Bio-generative music</h3>
+                    <p>Harmonic, melodic and rhythmic loops in any key and BPM, composed by your heartbeat and breath; a take exported to .wav or to a MIDI file (.mid) dropped straight into Logic Pro, Ableton or FL Studio.</p>
+                </div>
+
+                <!-- Visuals -->
+                <div class="bento-card">
+                    <div class="bento-icon"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg></div>
+                    <h3>Living visuals</h3>
+                    <p>A Metal GPU bio-renderer painted with your body in four generative looks &mdash; heart rate to pulse, the sounding tone to hue, breath to spread, coherence to sharpness &mdash; in a movable floating window on the phone, or full-screen on a connected display for projection. The picture was playable: touch the visual and your fingers become notes, quantized to the take&rsquo;s key. A screen connected over USB-C/HDMI or AirPlay became its own stage while the phone stayed the instrument. Flash rate held under 3&nbsp;Hz for safety.</p>
+                </div>
+
+                <!-- Video & Streaming -->
+                <div class="bento-card">
+                    <div class="bento-icon"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+                    <h3>Open spine</h3>
+                    <p>The body went anywhere it needed to go: OSC, MIDI&nbsp;2.0-ready in and MIDI&nbsp;1.0 out with MPE note output, ADM-OSC immersive objects, Art-Net and sACN. MPE input zones, Ableton Link and on-device AI were on that app&rsquo;s roadmap; it never had video editing or live streaming. Echoelmusic has video tracks and a live stream that starts only when you press Go Live (in TestFlight, not yet checked on a device).</p>
+                </div>
+
+                <!-- Light -->
+                <div class="bento-card span2">
+                    <div class="bento-icon"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></div>
+                    <h3>Your pulse became light</h3>
+                    <p>Your body streamed to stage and venue rigs over open lighting standards &mdash; native Art-Net and sACN, no vendor SDK. Your heartbeat drove the room, with flash safety built in.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== EDITIONS ========== -->
+        <div id="editions" class="section">
+            <h2 class="section-title reveal">One platform, three paths</h2>
+            <p class="section-sub reveal">The earlier instrument (10.79) played sound, visuals, light and space from one body; it is frozen, and Echoelmusic is in TestFlight now. The lab and game-engine paths are on the roadmap.</p>
+
+            <div class="persona-grid reveal reveal-stagger" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="persona-card">
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg>
+                    <h3>Creative Suite</h3>
+                    <p>Musicians, producers, performers, installation artists: Echoelmusic, in TestFlight now.</p>
+                </div>
+                <div class="persona-card">
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+                    <h3>Research Edition <span style="opacity:.55;font-weight:400">— planned</span></h3>
+                    <p>Universities and research labs. Open data export, reproducible bio-signal pipelines, OSC/MIDI integration.</p>
+                </div>
+                <div class="persona-card">
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3 7h7l-5.5 4.5 2 7L12 16l-6.5 4.5 2-7L2 9h7z"/></svg>
+                    <h3>Bio-Reactive Audio SDK <span style="opacity:.55;font-weight:400">— planned</span></h3>
+                    <p>Game developers. Unity &amp; Unreal integration. Bio-reactive audio for interactive worlds.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== WHO IT'S FOR ========== -->
+        <div id="who" class="section">
+            <h2 class="section-title reveal">Who it was for</h2>
+            <p class="section-sub reveal">Stadiums or living rooms. Beats or breath.</p>
+
+            <div class="persona-grid reveal reveal-stagger">
+                <div class="persona-card">
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg>
+                    <h3>Musicians &amp; Producers</h3>
+                    <p>An instrument that responded to your body &mdash; a dimension no plugin can reach.</p>
+                </div>
+                <div class="persona-card">
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
+                    <h3>DJs &amp; Performers</h3>
+                    <p>Your pulse controlled the lights and your heartbeat shaped the visuals.</p>
+                </div>
+                <div class="persona-card">
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <h3>Filmmakers &amp; Artists</h3>
+                    <p>Generative art from biology, driven live on device — projected, sent over Art-Net/sACN, or streamed as OSC to TouchDesigner or Resolume. In that app, video recording and video editing were both built and removed in 2026, and live streaming was never built; Echoelmusic has video tracks and Go Live (in TestFlight, not yet checked on a device).</p>
+                </div>
+                <div class="persona-card">
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+                    <h3>Installations &amp; Staging</h3>
+                    <p>Native Art-Net &amp; sACN lighting and ADM-OSC spatial audio. Bio-reactive spaces at any scale.</p>
+                </div>
+                <div class="persona-card">
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+                    <h3>Facilitators &amp; Educators</h3>
+                    <p>Biofeedback as creative expression. HRV coherence made audible and visible.</p>
+                </div>
+                <div class="persona-card">
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M18 12a6 6 0 0 0-6-6"/><path d="M6 12a6 6 0 0 0 6 6"/></svg>
+                    <h3>Accessibility</h3>
+                    <p>Sound from your pulse. Music from breath. Creative expression without barriers.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== TECH SPECS ========== -->
+        <div class="section">
+            <h2 class="section-title reveal">The earlier app, built native for iPhone.</h2>
+            <p class="section-sub reveal">Pure Apple frameworks. No wrappers. No Electron.</p>
+
+            <div class="specs-grid reveal reveal-stagger">
+                <div class="spec-item">
+                    <div class="spec-val">Low Latency</div>
+                    <div class="spec-label">Real-time audio</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">Metal GPU</div>
+                    <div class="spec-label">Bio-reactive visuals</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">Bio-Reactive</div>
+                    <div class="spec-label">Real-time control loop</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">MIDI 2.0</div>
+                    <div class="spec-label">2.0-ready in · 2.0 source out (switch)</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">On-Device</div>
+                    <div class="spec-label">Private &middot; no cloud</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">Open Standards</div>
+                    <div class="spec-label">OSC &middot; ADM-OSC &middot; MIDI &middot; Art-Net &middot; sACN</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Social -->
+        <div class="social">
+            <a href="https://instagram.com/echoelmusic" aria-label="Instagram" rel="noopener noreferrer" target="_blank">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+            <a href="https://tiktok.com/@echoelmusic" aria-label="TikTok" rel="noopener noreferrer" target="_blank">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/></svg>
+            </a>
+            <a href="https://youtube.com/@echoelmusic" aria-label="YouTube" rel="noopener noreferrer" target="_blank">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </a>
+        </div>
+    </main>
+
+    <footer>
+        <nav class="footer-links" aria-label="Site">
+            <div class="footer-group">
+                <p class="footer-head">App</p>
+                <a href="faq.html">FAQ</a>
+                <a href="roadmap.html">Roadmap</a>
+                <a href="press.html">Press</a>
+                <a href="claims.html">What we do not claim</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">About</p>
+                <a href="consulting.html">Consulting</a>
+                <a href="artist.html">Artist</a>
+                <a href="one-clock.html">One Clock</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">Archive</p>
+                <a href="overview.html">Earlier app (10.79)</a>
+                <a href="integrations.html">Integrations (10.79)</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">Legal</p>
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <a href="impressum.html">Legal Notice</a>
+                <a href="accessibility.html">Accessibility</a>
+                <a href="health.html">Health</a>
+                <a href="security.html">Security</a>
+            </div>
+        </nav>
+        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; in TestFlight</span>
+    </footer>
+
+    <script>
+    (function() {
+        'use strict';
+        var burger = document.getElementById('burger');
+        var overlay = document.getElementById('menuOverlay');
+        function toggleMenu() {
+            var open = burger.classList.toggle('active');
+            overlay.classList.toggle('open');
+            burger.setAttribute('aria-expanded', open);
+            burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+            document.body.style.overflow = open ? 'hidden' : '';
+        }
+        burger.addEventListener('click', toggleMenu);
+        overlay.querySelectorAll('a').forEach(function(a) {
+            a.addEventListener('click', function() { if (burger.classList.contains('active')) toggleMenu(); });
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && burger.classList.contains('active')) toggleMenu();
+        });
+    })();
+    </script>
+</body>
+</html>

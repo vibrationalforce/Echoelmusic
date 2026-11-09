@@ -152,9 +152,10 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
         // Counterweight (#343): the string is still the real description, so the bans above
         // cannot be a vacuous green on an emptied or renamed field.
         XCTAssertTrue(
-            description.localizedCaseInsensitiveContains("bio-reactive"),
-            "docs/manifest.json no longer describes Echoel as bio-reactive — the needles above "
-            + "then prove nothing about published copy.")
+            description.localizedCaseInsensitiveContains("music workstation"),
+            "docs/manifest.json no longer describes Echoelmusic as a music workstation — the "
+            + "needles above then prove nothing about published copy. (Until 2026-11-09 the "
+            + "counterweight was \"bio-reactive\", the earlier app's description.)")
     }
 
     // MARK: - The wire's own numbers
@@ -1560,7 +1561,7 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
     /// code, it does not outlive it.
     func testTheHueComesFromTheToneNotTheCoherence() throws {
         // Claim 1 — no present-tense page pairs coherence with hue.
-        let presentTense = ["index.html", "overview.html", "architecture.html"]
+        let presentTense = ["index.html", "earlier-app.html", "overview.html", "architecture.html"]
         let all = try pages()
         for name in presentTense {
             guard let html = all.first(where: { $0.name == name })?.html else {

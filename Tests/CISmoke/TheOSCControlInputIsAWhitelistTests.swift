@@ -226,7 +226,7 @@ final class TheOSCControlInputIsAWhitelistTests: XCTestCase {
         let hub = try text("docs/integrations.html")
         XCTAssertTrue(hub.contains("OSC control input"))
         XCTAssertTrue(hub.contains("only while the BPM is locked"), "the hub must state the T2 limit (#1255)")
-        let faq = try text("docs/faq.html")
+        let faq = try text("docs/earlier-app-faq.html")   // the earlier-app questions, moved verbatim 2026-11-09
         XCTAssertTrue(faq.contains("/echoelmusic/ctrl/"), "the FAQ no longer names the control input (#1255)")
         XCTAssertFalse(faq.contains("Bidirectional OSC and Ableton Link tempo sync are on the roadmap"),
                        "the FAQ still lists all of OSC-in as roadmap (#1255)")

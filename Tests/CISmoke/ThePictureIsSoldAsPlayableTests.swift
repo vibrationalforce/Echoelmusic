@@ -52,7 +52,7 @@ final class ThePictureIsSoldAsPlayableTests: XCTestCase {
 
     // 1 — the denial is gone. The exact sentence, not a paraphrase: it is what a reader saw.
     func testTheSiteNoLongerDeniesTheShippedSurface() throws {
-        let faq = try source("docs/faq.html")
+        let faq = try source("docs/earlier-app-faq.html")   // the earlier-app questions, moved verbatim 2026-11-09
         XCTAssertFalse(faq.contains("Dedicated touch instruments"), """
             The FAQ denies the touch surface again. `TouchInstrumentView` is mounted in \
             `FloatingVisualWindow`'s visual overlay at every size, and that window opens on \
@@ -90,7 +90,7 @@ final class ThePictureIsSoldAsPlayableTests: XCTestCase {
     // 3 — COUNTERWEIGHT against the enthusiasm this slice creates. The four pads do NOT exist;
     // only the picture does. If a future edit folds them into the shipped claim, this goes red.
     func testTheFourPadsStayOnTheRoadmap() throws {
-        let faq = try source("docs/faq.html")
+        let faq = try source("docs/earlier-app-faq.html")   // the earlier-app questions, moved verbatim 2026-11-09
         guard let range = faq.range(of: "chord pad") else {
             return XCTFail("""
                 The FAQ no longer names the chord pad as roadmap. That is allowed if the pads \

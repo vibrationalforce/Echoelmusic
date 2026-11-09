@@ -170,7 +170,7 @@ final class TheShareReadyClipIsNotSoldAnywhereTests: XCTestCase {
             worded against. A ban on the false claim is worth nothing if the pages can satisfy \
             it by saying nothing at all.
             """)
-        XCTAssertTrue(try text("docs/faq.html").contains("Video is not part of Echoelmusic"), """
+        XCTAssertTrue(try text("docs/earlier-app-faq.html").contains("Video is not part of Echoelmusic"), """
             The FAQ's flat statement that video is not part of Echoelmusic is gone. Same \
             reason as the architecture denial: silence must not be a way to pass this file.
             """)

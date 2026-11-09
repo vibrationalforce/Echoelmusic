@@ -195,16 +195,16 @@ code, kbd, samp { overflow-wrap: anywhere; }
 .subpage--wide { max-width: 800px; }
 .subpage--wider { max-width: 900px; }
 
-.subpage-hero { text-align: center; margin-bottom: 48px; }
-.subpage-hero h1 { font-size: clamp(32px, 7vw, 42px); font-weight: 700; letter-spacing: -1px; margin-bottom: 16px; }
+.subpage-hero { margin-bottom: 40px; }
+.subpage-hero h1, .subpage > h1 { font-size: clamp(30px, 5.2vw, 44px); font-weight: 700; letter-spacing: -1px; line-height: 1.1; margin-bottom: 16px; }
 .subpage-hero .date { color: var(--dim); }
-.subpage-hero .subtitle { color: var(--dim); line-height: 1.6; max-width: 600px; margin: 0 auto; }
+.subpage-hero .subtitle { color: var(--dim); line-height: 1.6; max-width: 640px; font-size: clamp(17px, 2vw, 19px); }
 .subpage-hero .hero-badge { display: inline-block; background: var(--text); color: #000; font-weight: 600; padding: 6px 16px; border-radius: var(--radius-m); margin-top: 12px; }
-.subpage-hero .badges { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+.subpage-hero .badges { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
 .subpage-hero .badges span { font-weight: 600; color: var(--dim); }
 .subpage-hero .badges span:first-child { color: var(--text); }
 
-.subpage-summary { text-align: center; margin-bottom: 40px; color: var(--dim); line-height: 1.7; }
+.subpage-summary { margin-bottom: 40px; color: var(--dim); line-height: 1.7; }
 .subpage-summary strong { color: var(--text); }
 
 .subpage section { margin-bottom: 32px; }
@@ -213,7 +213,7 @@ code, kbd, samp { overflow-wrap: anywhere; }
    transform, i.e. the promotion would silently restyle two boxes. `:not(.page-cta h2)`
    was already here and is the same idiom. */
 .subpage section h2:not(.warning-box h2):not(.contact-box h2),
-.subpage h2:not(.page-cta h2):not(.warning-box h2):not(.contact-box h2) { color: var(--text); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; font-weight: 700; }
+.subpage h2:not(.page-cta h2):not(.warning-box h2):not(.contact-box h2) { color: var(--text); font-size: clamp(20px, 2.6vw, 24px); letter-spacing: -0.3px; line-height: 1.25; margin-bottom: 12px; font-weight: 700; }
 .subpage p { color: var(--dim); line-height: 1.7; margin-bottom: 12px; }
 .subpage ul { padding-left: 20px; margin-bottom: 16px; }
 .subpage li { color: var(--dim); margin-bottom: 8px; line-height: 1.6; }
@@ -223,22 +223,23 @@ code, kbd, samp { overflow-wrap: anywhere; }
 
 /* Warning / Info boxes */
 .warning-box { margin: 24px 0; }
-.warning-box h2, .warning-box h3 { color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; font-size: 1.17em; }
+.warning-box h2, .warning-box h3 { color: var(--text); margin-bottom: 12px; font-size: 1.17em; }
 .warning-box p { color: var(--dim); line-height: 1.7; margin-bottom: 12px; }
 .warning-box strong { color: var(--text); }
 
 /* Contact box */
-.contact-box { text-align: center; margin-top: 40px; }
+.contact-box { margin: 0 0 40px; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-l); }
 .contact-box h2, .contact-box h3 { margin-bottom: 12px; font-size: 1.17em; text-transform: none; letter-spacing: normal; }
 .contact-box p { color: var(--dim); margin-bottom: 12px; line-height: 1.6; }
-.contact-box a, .contact-box a:visited { color: var(--text); text-decoration: none; font-weight: 600; }
+.contact-box a, .contact-box a:visited { color: var(--text); text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
 .contact-box a:hover { text-decoration: underline; }
 .contact-info p { margin-bottom: 4px; }
 
 /* ===== FAQ PAGE ===== */
 .faq-section { margin-bottom: 40px; }
-.faq-section h2 { font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text); margin-bottom: 20px; }
-.faq-item { margin-bottom: 2px; }
+.faq-section h2 { font-weight: 700; color: var(--text); margin-bottom: 12px; }
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-item:last-child { border-bottom: 0; }
 .faq-question {
     padding: 18px 0; cursor: pointer;
     display: flex; justify-content: space-between; align-items: center;
@@ -261,14 +262,16 @@ code, kbd, samp { overflow-wrap: anywhere; }
 
 /* Support FAQ */
 .support-faq { padding: 16px 0; border-bottom: 1px solid var(--border); }
-.support-faq strong { color: var(--text); display: block; margin-bottom: 8px; }
+.support-faq strong { color: var(--text); }
+.support-faq > strong { display: block; margin-bottom: 8px; }
+.support-faq:last-child { border-bottom: 0; }
 .support-faq p { margin: 0; color: var(--dim); line-height: 1.6; }
 
 /* CTA box */
-.cta-box { padding: 32px 0; text-align: center; margin-top: 48px; }
-.cta-box h3 { font-weight: 700; margin-bottom: 10px; }
+.cta-box { padding: 32px 0 0; margin-top: 40px; border-top: 1px solid var(--border); }
+.cta-box h2, .cta-box h3 { font-weight: 700; margin-bottom: 10px; font-size: clamp(20px, 2.6vw, 24px); letter-spacing: -0.3px; text-transform: none; }
 .cta-box p { color: var(--dim); margin-bottom: 20px; }
-.cta-box .btn { display: inline-block; background: var(--text); color: #000; padding: 12px 28px; border-radius: var(--radius-m); font-weight: 700; transition: opacity var(--motion-quick); }
+.cta-box .btn, .cta-box .btn:link, .cta-box .btn:visited { display: inline-block; background: var(--text); color: #000; padding: 12px 24px; border-radius: var(--radius-m); font-weight: 700; text-decoration: none; transition: opacity var(--motion-quick); }
 .cta-box .btn:hover { opacity: 0.85; }
 
 /* ===== ACCESSIBILITY PAGE ===== */
@@ -291,7 +294,7 @@ code, kbd, samp { overflow-wrap: anywhere; }
 
 .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
 .profile-category { padding: 20px 0; }
-.profile-category h3 { text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; color: var(--text); }
+.profile-category h3 { margin-bottom: 16px; color: var(--text); }
 .profile-category ul { list-style: none; padding: 0; }
 .profile-category li { color: var(--dim); padding: 6px 0; }
 .profile-category li strong { color: var(--text); }
@@ -323,12 +326,12 @@ code, kbd, samp { overflow-wrap: anywhere; }
 
 /* ===== FOOTER ===== */
 footer {
-    padding: 36px 24px; max-width: var(--max-w); margin: 0 auto;
-    display: flex; justify-content: space-between; align-items: center;
-    flex-wrap: wrap; gap: 16px;
+    padding: 32px 24px 40px; max-width: var(--max-w); margin: 16px auto 0;
+    border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 24px;
 }
 .footer-copy { color: var(--dim); }
-.footer-links { display: flex; gap: 40px; flex-wrap: wrap; align-items: flex-start; }
+.footer-links { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
 .footer-group { display: flex; flex-direction: column; gap: 6px; }
 .footer-head { color: var(--text); font-weight: 700; margin-bottom: 2px; }
 .footer-links a, .footer-links a:visited, .footer-links a:active, .footer-links a:link {
@@ -375,16 +378,51 @@ footer {
 .page-404 .logo-link:hover { opacity: 0.7; }
 .page-404 .logo-link svg { width: 36px; height: 36px; }
 
+/* ===== COMPACT PAGE PARTS (2026-11-09) =====
+   The visitor pages (Home, Consulting, Support, FAQ) are built from four parts: a head that
+   reads from the left, blocks divided by one hairline, cards on the app's surface colour, and
+   a fact list. Tokens only. `index.html` carries the same rules inline (docs/CLAUDE.md §6). */
+.block { border-top: 1px solid var(--border); padding: 36px 0; }
+.subpage .block { margin-bottom: 0; }
+.block > h2 { margin-bottom: 8px; }
+.block > .note { color: var(--dim); margin-bottom: 20px; max-width: 640px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-l); padding: 20px; }
+.card h3 { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.card p, .subpage .card p { color: var(--dim); line-height: 1.6; margin-bottom: 0; }
+.card p + p, .subpage .card p + p { margin-top: 8px; }
+.facts { display: grid; grid-template-columns: max-content 1fr; }
+.facts dt, .facts dd { padding: 10px 0; border-bottom: 1px solid var(--border); line-height: 1.5; }
+.facts dt { color: var(--dim); padding-right: 24px; }
+.facts dd { color: var(--text); }
+.facts dt:last-of-type, .facts dd:last-of-type { border-bottom: 0; }
+.plain-list { list-style: none; padding-left: 0; }
+.subpage .plain-list { padding-left: 0; }
+.plain-list li { padding: 12px 0; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+.plain-list li:last-child { border-bottom: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin-top: 24px; }
+.button, .button:link, .button:visited, .button:active {
+    display: inline-flex; align-items: center; background: var(--text); color: #000;
+    padding: 12px 24px; border-radius: var(--radius-m); font-weight: 700; text-decoration: none;
+    transition: opacity var(--motion-quick);
+}
+.button:hover { opacity: 0.85; }
+.text-link, .text-link:link, .text-link:visited { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.text-link:hover { text-decoration: none; }
+@media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+@media (max-width: 480px) {
+    .facts { grid-template-columns: 1fr; }
+    .facts dt { border-bottom: 0; padding-bottom: 0; }
+    .facts dd { padding-top: 2px; }
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
     .mobile-cta { display: block; }
-    footer { padding-bottom: 100px; }
-    .social { padding-bottom: 80px; }
 }
 @media (max-width: 640px) {
     .subpage, .subpage--wide, .subpage--wider { padding: 100px 16px 60px; }
-    footer { flex-direction: column; text-align: center; }
-    .footer-links { justify-content: center; } .footer-group { align-items: center; }
+    .footer-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }

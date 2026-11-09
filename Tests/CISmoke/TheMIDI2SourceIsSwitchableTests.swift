@@ -148,12 +148,14 @@ final class TheMIDI2SourceIsSwitchableTests: XCTestCase {
                       "CLAIMS.md does not list the MIDI 2.0 source — copy will either invent or deny it (#1253)")
         XCTAssertTrue(claims.contains("NIE als „natives MIDI-2.0-MPE"),
                       "the row must carry its own ceiling — per-note expression stays test-only (#1253)")
-        let faq = try text("docs/faq.html")
+        // Both sentences describe the earlier app (10.79). Since 2026-11-09 they live, verbatim,
+        // in the archive pages; `faq.html` and `index.html` describe the current app only.
+        let faq = try text("docs/earlier-app-faq.html")
         XCTAssertTrue(faq.contains("&ldquo;Echoelmusic (MIDI&nbsp;2.0)&rdquo;"),
                       "the FAQ no longer names the second source (#1253)")
         XCTAssertFalse(faq.contains("native MIDI&nbsp;2.0 out, inter-app"),
                        "the FAQ still lists MIDI 2.0 out as roadmap (#1253)")
-        let index = try text("docs/index.html")
+        let index = try text("docs/earlier-app.html")
         XCTAssertTrue(index.contains("2.0 source out (switch)"))
     }
 
