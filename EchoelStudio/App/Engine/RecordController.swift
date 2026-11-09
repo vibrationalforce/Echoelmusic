@@ -11,7 +11,18 @@ import Observation
 @Observable
 final class RecordController {
     private(set) var armedTrack: TrackID?
-    private(set) var isRecording = false
+    /// A take records now, audio or MIDI (a count-in included).
+    var isRecording: Bool {
+        switch takePhase {
+        case .audio, .midi: true
+        case .none, .committing: false
+        }
+    }
+    /// A stopped audio take is still being written out by the engine; Record waits for it.
+    var isCommitting: Bool {
+        if case .committing = takePhase { return true }
+        return false
+    }
     /// The running take is cut into passes of the loop (Loop record), for the status line.
     private(set) var isLoopRecording = false
     /// The loop's wrap count when that take began.
@@ -20,11 +31,23 @@ final class RecordController {
     @ObservationIgnored private let engine: AudioEngine
     @ObservationIgnored private let documents: DocumentController
     @ObservationIgnored private let store: ProjectStore
-    @ObservationIgnored private var target: (track: TrackID, file: DocumentController.TakeTarget)?
-    /// The instrument track a MIDI take records onto, while one does.
-    @ObservationIgnored private var midiTrack: TrackID?
-    /// Where that take began on the engine's two clocks: its passes of the loop are counted from it.
-    @ObservationIgnored private var midiStart = LoopRecording.Moment(sample: 0, played: 0)
+
+    /// The take, from Record until the engine lets go of it — one value, so a running take is
+    /// audio or MIDI, never both and never neither. It replaced a flag and three stored values
+    /// that could disagree, and it names the moment that had no name: Stop was pressed, the
+    /// engine still writes the file out (`TakeLifecycle.finishing`) and refuses a new take.
+    /// Record looked ready there, and a press made a take file only to throw it away.
+    private enum TakePhase {
+        case none
+        /// An audio take onto `track`, into `file`.
+        case audio(track: TrackID, file: DocumentController.TakeTarget)
+        /// A MIDI take onto the instrument track `track`, begun at `start` on the engine's two
+        /// clocks: its passes of the loop are counted from there.
+        case midi(track: TrackID, start: LoopRecording.Moment)
+        /// Stopped; the engine writes the audio take's file out.
+        case committing
+    }
+    private var takePhase: TakePhase = .none
     /// The song `inputFollowsSong` last saw, so it can tell an opened song from an edit.
     @ObservationIgnored private var seenGeneration: Int?
     /// `inputOpensForUnseenSong` waits for the microphone answer: the launch, the audio's return,
@@ -102,6 +125,7 @@ final class RecordController {
     /// With nothing armed, Record takes the track the keys play (`record()`), so it is ready
     /// whenever the song has an instrument track.
     var canRecord: Bool {
+        guard !isCommitting else { return false }
         guard let armedTrack else { return engine.liveTrackID(in: store.project) != nil }
         guard let track = store.project.track(armedTrack) else { return false }
         return track.kind == .instrument || engine.isInputOpen
@@ -128,7 +152,7 @@ final class RecordController {
     }
 
     func record() {
-        guard !isRecording else { return }
+        guard case .none = takePhase else { return }
         if armedTrack == nil, let live = engine.liveTrackID(in: store.project) {
             // Nothing armed: Record arms the track the keys play, as arming it would, so the take
             // goes to the track that is heard (review of the first five minutes, 2026-10-25).
@@ -142,10 +166,9 @@ final class RecordController {
         // that failed at the same rate leaves the transport playing over a stopped engine.
         guard engine.canPlay() else { return }
         if store.project.track(track)?.kind == .instrument {
-            midiStart = engine.beginLoopCapture()
+            let start = engine.beginLoopCapture()
             engine.live.startCapture()
-            midiTrack = track
-            isRecording = true
+            takePhase = .midi(track: track, start: start)
             beginLoopStatus()
             // Notes played during a count-in land on its downbeat: the playhead waits there.
             if !engine.isPlaying { engine.playForRecording() }
@@ -160,8 +183,7 @@ final class RecordController {
             documents.takeAbandoned(file)
             return
         }
-        target = (track, file)
-        isRecording = true
+        takePhase = .audio(track: track, file: file)
         beginLoopStatus()
         // The recorder records nothing until the count-in's downbeat (`EngineCore.countsIn`).
         if !engine.isPlaying { engine.playForRecording() }
@@ -175,43 +197,47 @@ final class RecordController {
             await callOffCountIn()
             return
         }
-        if midiTrack != nil {
+        guard case .audio(let track, let file) = takePhase else {
             endMIDITake()
             return
         }
-        isRecording = false
+        takePhase = .committing
         isLoopRecording = false
-        let pending = target
-        target = nil
-        guard let take = await engine.endTake(), let pending else {
+        let ended = await engine.endTake()
+        // The engine let go of the take (`TakeLifecycle.finished`): Record may begin the next one.
+        // Nothing else leaves `committing`, so the phase is still it here.
+        takePhase = .none
+        guard let take = ended else {
             // Nothing to commit, so this take no longer holds the package (a rename waits while
             // a take runs).
-            if let pending { documents.takeAbandoned(pending.file) }
+            documents.takeAbandoned(file)
             return
         }
         // Placed with the map the take began under, which the engine kept with it — never the
         // map at the stop: a followed clock drifts, the engine keeps the song's musical position
         // across each change, and so the take's start sample names a later tick under the later
         // map, bars off on a long set (review 2026-10-28, 2.2).
-        await documents.commitTake(take, target: pending.file, onto: pending.track, tempoMap: take.tempoMap)
+        await documents.commitTake(take, target: file, onto: track, tempoMap: take.tempoMap)
     }
 
     /// The take Record began before its count-in's downbeat is dropped whole — an audio take's
     /// recorder never started, so its empty file goes — and the song stays where it stood.
     private func callOffCountIn() async {
         engine.cancelCountIn()
-        isRecording = false
         isLoopRecording = false
-        if midiTrack != nil {
-            midiTrack = nil
+        switch takePhase {
+        case .midi:
+            takePhase = .none
             _ = engine.live.stopCapture()
             _ = engine.endLoopCapture()
-            return
+        case .audio(_, let file):
+            takePhase = .committing
+            _ = await engine.endTake()
+            takePhase = .none
+            documents.takeAbandoned(file)
+        case .none, .committing:
+            break
         }
-        let pending = target
-        target = nil
-        _ = await engine.endTake()
-        if let pending { documents.takeAbandoned(pending.file) }
     }
 
     /// The take that just began shows "Loop Record · take N" while it is cut into passes.
@@ -229,12 +255,11 @@ final class RecordController {
     /// Ends a running MIDI take at once and commits it. Synchronous, so it reads the rate and the
     /// position of the core the take was played on.
     private func endMIDITake() {
-        guard isRecording, let track = midiTrack else { return }
-        isRecording = false
+        guard case .midi(let track, let start) = takePhase else { return }
+        takePhase = .none
         isLoopRecording = false
-        midiTrack = nil
         let events = engine.live.stopCapture()
-        commitMIDI(events, loop: engine.endLoopCapture(), onto: track)
+        commitMIDI(events, from: start, loop: engine.endLoopCapture(), onto: track)
     }
 
     /// The notes of a MIDI take as one new clip on `track`, placed on the bar it began in —
@@ -242,7 +267,7 @@ final class RecordController {
     /// song looped while the take recorded, each pass of the loop is a clip of its own, folded
     /// with the ones before it so the newest sounds — the whole loop record still one undo step,
     /// as one take always was (Loop record, `LoopRecording`).
-    private func commitMIDI(_ captured: [LiveRouter.Captured],
+    private func commitMIDI(_ captured: [LiveRouter.Captured], from start: LoopRecording.Moment,
                             loop: (wraps: [Int64], loop: Range<Tick>?, end: LoopRecording.Moment), onto track: TrackID) {
         guard let rate = engine.sampleRate, let held = store.project.track(track) else { return }
         let time = TimeConversion(tempoMap: engine.playedTempoMap(of: store.project), sampleRate: rate)
@@ -252,7 +277,7 @@ final class RecordController {
         }
         // The bars of the meter the take was played in (a jam host's while following one).
         let meter = engine.playedMeterMap(of: store.project)
-        var passes = LoopRecording.midiPasses(events, from: midiStart, to: loop.end, wraps: loop.wraps, loop: loop.loop,
+        var passes = LoopRecording.midiPasses(events, from: start, to: loop.end, wraps: loop.wraps, loop: loop.loop,
                                               latency: engine.outputLatencySamples, time: time, meter: meter)
         guard !passes.isEmpty else { return }
         if passes.count > 1, let span = loop.loop {
