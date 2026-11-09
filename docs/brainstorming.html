@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.28.0',K='echoel-nuke';try{
+    (function(){var V='10.29.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -20,28 +20,28 @@
     Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
     </script>
 
-    <title>Brainstorming — The Earlier App and What's Next — Echoel</title>
-    <meta name="description" content="What the earlier Echoel app (10.79, frozen) could do, beside a brainstorming list of future directions across the Apple ecosystem. Ideas, not promises.">
+    <title>Brainstorming — The Earlier App and What's Next — Echoelmusic</title>
+    <meta name="description" content="What the earlier Echoelmusic app (10.79, frozen) could do, beside a brainstorming list of future directions across the Apple ecosystem. Ideas, not promises.">
     <meta name="theme-color" content="#000000">
-    <meta property="og:title" content="Brainstorming — The Earlier App and What's Next — Echoel">
-    <meta property="og:description" content="What the earlier Echoel app (10.79, frozen) could do, and a curated brainstorming of Apple-ecosystem directions. Ideas, not promises.">
+    <meta property="og:title" content="Brainstorming — The Earlier App and What's Next — Echoelmusic">
+    <meta property="og:description" content="What the earlier Echoelmusic app (10.79, frozen) could do, and a curated brainstorming of Apple-ecosystem directions. Ideas, not promises.">
     <meta property="og:url" content="https://echoelmusic.com/brainstorming.html">
     <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="en_US">
-    <meta property="og:site_name" content="Echoel">
+    <meta property="og:site_name" content="Echoelmusic">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Brainstorming — The Earlier App and What's Next — Echoel">
-    <meta name="twitter:description" content="What the earlier Echoel app could do, and where Echoel could go next across the Apple ecosystem. Ideas, not promises.">
+    <meta name="twitter:title" content="Brainstorming — The Earlier App and What's Next — Echoelmusic">
+    <meta name="twitter:description" content="What the earlier Echoelmusic app could do, and where Echoelmusic could go next across the Apple ecosystem. Ideas, not promises.">
     <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
     <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
     <link rel="canonical" href="https://echoelmusic.com/brainstorming.html">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Brainstorming","item":"https://echoelmusic.com/brainstorming.html"}]}</script>
-    <link rel="stylesheet" href="shared.css?v=10.28.0">
+    <link rel="stylesheet" href="shared.css?v=10.29.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
 
@@ -85,17 +85,15 @@
     <a href="#main" class="skip-link">Skip to main content</a>
     <header class="nav">
         <div class="nav-bar">
-            <a href="/" class="nav-logo" aria-label="Echoel home">
+            <a href="/" class="nav-logo" aria-label="Echoelmusic home">
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
-                <span>Echoel</span>
+                <span>Echoelmusic</span>
             </a>
             <nav class="nav-links" aria-label="Main">
-                <a href="overview.html">Overview</a>
-                <a href="tools.html">Tools</a>
-                <a href="faq.html">FAQ</a>
+                <a href="/">App</a>
                 <a href="consulting.html">Consulting</a>
                 <a href="support.html">Support</a>
-                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoel%20Studio%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
+                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoelmusic%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
             </nav>
             <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
                 <span></span><span></span><span></span>
@@ -104,10 +102,7 @@
     </header>
     <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
         <nav>
-            <a href="/">Home</a>
-            <a href="overview.html">Overview</a>
-            <a href="tools.html">Tools</a>
-            <a href="faq.html">FAQ</a>
+            <a href="/">App</a>
             <a href="consulting.html">Consulting</a>
             <a href="support.html">Support</a>
         </nav>
@@ -117,12 +112,12 @@
         <div class="subpage subpage--wider">
             <div class="subpage-hero">
                 <h1>Brainstorming</h1>
-                <p class="subtitle">What the earlier app could do &mdash; and where Echoel could go next. Ideas, not promises.</p>
-                <p class="subtitle" style="margin-top:8px;">Not a tester yet? <a href="mailto:echoel@tropicaldrones.com?subject=Echoel%20Studio%20%E2%80%94%20TestFlight%20access">Request TestFlight access</a>.</p>
+                <p class="subtitle">What the earlier app could do &mdash; and where Echoelmusic could go next. Ideas, not promises.</p>
+                <p class="subtitle" style="margin-top:8px;">Not a tester yet? <a href="mailto:echoel@tropicaldrones.com?subject=Echoelmusic%20%E2%80%94%20TestFlight%20access">Request TestFlight access</a>.</p>
             </div>
 
             <div class="bs-note">
-                <strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a new music workstation for iPhone and iPad. What it holds and the plan are on the <a href="roadmap.html">Roadmap</a>. The first section below describes the earlier app (10.79.515), which is frozen.<br><br><strong>How to read this page.</strong> The first section records what the earlier app could do. The second is a <strong>brainstorming</strong> of future directions chosen for real market potential in the Apple ecosystem &mdash; these are exploration, not commitments. We keep this page current rather than over-promise.<br><br><strong>&#9888; This changelog stopped being updated after build 1889 (2026-06-17) &mdash; the current TestFlight build is far newer, and several items below were later REMOVED on purpose (the drum sequencer, the piano roll, the Tools menu) &mdash; and one of them, the AUv3 plugin, was removed and then brought back. Read it as history, not as today's state; <a href="architecture.html">Architecture</a> carries the current status.</strong><br><br><strong>Build 1889 &mdash; iOS&nbsp;18+, iPhone (2026-06-17). New at the time:</strong> <strong>live MIDI/MPE OUT</strong> (a virtual &ldquo;Echoelmusic&rdquo; source any DAW can record &mdash; standard or MPE), three new <strong>character controls</strong> (Virtuosity, Syncopation, Humanize) that reshape the generated lead, and a pro <strong>sampler engine</strong> (per-pad start/end trim, reverse, pitch) as the base for sample-based instruments. Plus <strong>click-free playing</strong> &mdash; reusing or stealing a still-ringing voice now glides into the new note instead of clicking. And build 1881's <strong>controls that play + a truer visual</strong>. Every value shows its type (Hz, s, BPM, semitones) and is exact to four decimals; press a value for a <strong>transparent vertical fader</strong> (up/down = fast sweep, sideways = fine, tap = type). New <strong>Transpose</strong> (&plusmn;24 semitones; sub-bass &amp; color follow) and <strong>Visual</strong> controls (Intensity/Detail/Motion/Spread, flash-capped &lt;3&nbsp;Hz). The immersive color is now derived from the heard tone &mdash; the pitch&rsquo;s frequency transposed up whole octaves into the visible-light range (a direct frequency-to-wavelength mapping). Plus pinch-to-zoom for every eye and a realtime fix so the music re-seeds once per window, not in bursts. On build 1869's <strong>self-healing audio engine</strong> &mdash; the instrument auto-recovers from AirPods/Bluetooth connect &amp; disconnect, sample-rate switches and system audio-graph rebuilds that used to leave it silent until relaunch (de-bounced, capped restart; clear &ldquo;tap to retry&rdquo; if recovery is exhausted; render path untouched). On build 1867's <strong>three new dimensions on the one instrument</strong> &mdash; a dedicated <strong>sub-bass / LFE voice</strong> (the &ldquo;felt&rdquo; Vibration dimension) that doubles the bass an octave down with a pushable level for sub/headphones/haptics; a real <strong>Metal GPU bio-visual</strong> (heart&nbsp;rate&nbsp;&rarr;&nbsp;pulse clamped to &le;2&nbsp;Hz for flash safety, coherence&nbsp;&rarr;&nbsp;hue, breath&nbsp;&rarr;&nbsp;spread) reachable from the Tools menu and honouring Reduce&nbsp;Motion; and a fix so <strong>sound starts immediately on first open</strong> (it no longer waits for a camera pulse lock before playing). On top of build 1857's solid biofeedback (bus freshness window + BLE auto-reconnect) and build 1855's deep composition pass (real chord motion, expressive phrasing, seamless bar-boundary morph, crackle-free 8-voice synthesis).
+                <strong>Since 19 October 2026, TestFlight carries Echoelmusic</strong>, a new music workstation for iPhone and iPad. What it holds and the plan are on the <a href="roadmap.html">Roadmap</a>. The first section below describes the earlier app (10.79.515), which is frozen.<br><br><strong>How to read this page.</strong> The first section records what the earlier app could do. The second is a <strong>brainstorming</strong> of future directions chosen for real market potential in the Apple ecosystem &mdash; these are exploration, not commitments. We keep this page current rather than over-promise.<br><br><strong>&#9888; This changelog stopped being updated after build 1889 (2026-06-17) &mdash; the current TestFlight build is far newer, and several items below were later REMOVED on purpose (the drum sequencer, the piano roll, the Tools menu) &mdash; and one of them, the AUv3 plugin, was removed and then brought back. Read it as history, not as today's state; <a href="architecture.html">Architecture</a> carries the current status.</strong><br><br><strong>Build 1889 &mdash; iOS&nbsp;18+, iPhone (2026-06-17). New at the time:</strong> <strong>live MIDI/MPE OUT</strong> (a virtual &ldquo;Echoelmusic&rdquo; source any DAW can record &mdash; standard or MPE), three new <strong>character controls</strong> (Virtuosity, Syncopation, Humanize) that reshape the generated lead, and a pro <strong>sampler engine</strong> (per-pad start/end trim, reverse, pitch) as the base for sample-based instruments. Plus <strong>click-free playing</strong> &mdash; reusing or stealing a still-ringing voice now glides into the new note instead of clicking. And build 1881's <strong>controls that play + a truer visual</strong>. Every value shows its type (Hz, s, BPM, semitones) and is exact to four decimals; press a value for a <strong>transparent vertical fader</strong> (up/down = fast sweep, sideways = fine, tap = type). New <strong>Transpose</strong> (&plusmn;24 semitones; sub-bass &amp; color follow) and <strong>Visual</strong> controls (Intensity/Detail/Motion/Spread, flash-capped &lt;3&nbsp;Hz). The immersive color is now derived from the heard tone &mdash; the pitch&rsquo;s frequency transposed up whole octaves into the visible-light range (a direct frequency-to-wavelength mapping). Plus pinch-to-zoom for every eye and a realtime fix so the music re-seeds once per window, not in bursts. On build 1869's <strong>self-healing audio engine</strong> &mdash; the instrument auto-recovers from AirPods/Bluetooth connect &amp; disconnect, sample-rate switches and system audio-graph rebuilds that used to leave it silent until relaunch (de-bounced, capped restart; clear &ldquo;tap to retry&rdquo; if recovery is exhausted; render path untouched). On build 1867's <strong>three new dimensions on the one instrument</strong> &mdash; a dedicated <strong>sub-bass / LFE voice</strong> (the &ldquo;felt&rdquo; Vibration dimension) that doubles the bass an octave down with a pushable level for sub/headphones/haptics; a real <strong>Metal GPU bio-visual</strong> (heart&nbsp;rate&nbsp;&rarr;&nbsp;pulse clamped to &le;2&nbsp;Hz for flash safety, coherence&nbsp;&rarr;&nbsp;hue, breath&nbsp;&rarr;&nbsp;spread) reachable from the Tools menu and honouring Reduce&nbsp;Motion; and a fix so <strong>sound starts immediately on first open</strong> (it no longer waits for a camera pulse lock before playing). On top of build 1857's solid biofeedback (bus freshness window + BLE auto-reconnect) and build 1855's deep composition pass (real chord motion, expressive phrasing, seamless bar-boundary morph, crackle-free 8-voice synthesis).
             </div>
 
             <!-- LIVE NOW -->
@@ -142,7 +137,7 @@
                     <div class="capability"><h3>Siri &amp; Shortcuts</h3><p>Starting a session, stopping it or keeping the last loop, by voice or by automation.</p></div>
                     <div class="capability"><h3>Private &amp; accessible</h3><p>Everything on-device &mdash; no account, no ads, no tracking. Designed accessibility-first (VoiceOver, large legible readouts, 3&nbsp;Hz flash cap). For music and self-observation, not medical diagnosis.</p></div>
                 </div>
-                <p class="tool-overview" style="margin-top:16px;color:var(--dim);"><em>Deliberately not in the earlier app:</em> drums and a step sequencer, a sampler, audio recording, video editing, live RTMP streaming (scoped and cut, never built), and AUv3 plugin HOSTING. Most of these were built and then removed in July&nbsp;2026 (the arrangement timeline and note editor were too, and have come back as the Workstation) — RTMP is the exception. That app was an instrument, and each of them was a second product to maintain. Echoel Studio, in TestFlight now, has drums, a sampler and audio recording again; the <a href="roadmap.html">Roadmap</a> lists what it holds. <em>Not yet shipping:</em> the standalone Apple&nbsp;Watch app, App&nbsp;Clip, and the on-device&nbsp;AI / audio-analysis ideas listed below. The AUv3 plugin is the other exception, in the opposite direction: it was built, removed, and brought back in September&nbsp;2026.</p>
+                <p class="tool-overview" style="margin-top:16px;color:var(--dim);"><em>Deliberately not in the earlier app:</em> drums and a step sequencer, a sampler, audio recording, video editing, live RTMP streaming (scoped and cut, never built), and AUv3 plugin HOSTING. Most of these were built and then removed in July&nbsp;2026 (the arrangement timeline and note editor were too, and have come back as the Workstation) — RTMP is the exception. That app was an instrument, and each of them was a second product to maintain. Echoelmusic, in TestFlight now, has drums, a sampler and audio recording again; the <a href="roadmap.html">Roadmap</a> lists what it holds. <em>Not yet shipping:</em> the standalone Apple&nbsp;Watch app, App&nbsp;Clip, and the on-device&nbsp;AI / audio-analysis ideas listed below. The AUv3 plugin is the other exception, in the opposite direction: it was built, removed, and brought back in September&nbsp;2026.</p>
             </div>
             <hr class="tool-divider">
 
@@ -164,7 +159,7 @@
 
                 <div class="group-head">Bigger bets &mdash; premium &amp; immersive</div>
                 <div class="idea-list">
-                    <div class="idea"><h3>visionOS immersive bio-space</h3><p class="why">A spatial, bio-reactive audio-visual environment on Vision Pro (the earlier app sent ADM-OSC immersive objects; Echoel Studio&rsquo;s Connections page sends ADM-OSC too, in TestFlight and not yet checked on a device). <strong>Why:</strong> premium immersive art has few credible competitors and a high price ceiling.</p></div>
+                    <div class="idea"><h3>visionOS immersive bio-space</h3><p class="why">A spatial, bio-reactive audio-visual environment on Vision Pro (the earlier app sent ADM-OSC immersive objects; Echoelmusic&rsquo;s Connections page sends ADM-OSC too, in TestFlight and not yet checked on a device). <strong>Why:</strong> premium immersive art has few credible competitors and a high price ceiling.</p></div>
                     <div class="idea"><h3>Apple TV / large-screen installation mode</h3><p class="why">Bio-reactive visuals for galleries, venues, retail and events. <strong>Why:</strong> installations and events are a real B2B revenue line, not just consumer downloads.</p></div>
                     <div class="idea"><h3>HomeKit / Matter lighting</h3><p class="why">Drive smart home lights from your bio signal (beyond pro Art-Net/DMX). <strong>Why:</strong> consumer smart-home crossover &mdash; &ldquo;your home breathes with you&rdquo; &mdash; broadens reach beyond musicians.</p></div>
                     <div class="idea"><h3>AirPods head-tracking as a controller</h3><p class="why">Use head motion and AirPods spatial data as an expressive input. <strong>Why:</strong> a novel, hands-free control surface unique to Apple hardware.</p></div>
@@ -177,12 +172,12 @@
                     <div class="idea"><h3>Paying for it &mdash; version&nbsp;1.0 is free <span class="bs-badge bs-badge--live">Decided</span></h3><p class="why">The first release costs nothing: no account, no ads, no tracking, nothing locked behind a purchase. <strong>Why this card changed:</strong> it used to propose a one-time Pro unlock &ldquo;once, no subscription&rdquo;. That was superseded by a founder decision on 2026-07-10, so it is no longer a direction we are exploring &mdash; leaving it up would have advertised a model we had already rejected. What comes after 1.0 is decided but not announced here; this page documents directions, and pricing is not one of them.</p></div>
                     <div class="idea"><h3>Accessibility-first music creation</h3><p class="why">Make music with your heartbeat and Switch Control / eye-tracking when hands aren't an option. <strong>Why:</strong> a genuinely underserved audience, strong PR and grant potential, and on-brand.</p></div>
                     <div class="idea"><h3>Education (STEAM)</h3><p class="why">Biofeedback + music as a classroom tool. <strong>Why:</strong> a durable institutional market with its own funding.</p></div>
-                    <div class="idea"><h3>Deeper DAW handoff</h3><p class="why">Stem export arrived with Echoel Studio (one WAV per track, before the master effects; in TestFlight). Richer MIDI and Ableton Link are planned, not in the app today. <strong>Why:</strong> the more it fits real producer workflows, the stickier it gets.</p></div>
+                    <div class="idea"><h3>Deeper DAW handoff</h3><p class="why">Stem export arrived with Echoelmusic (one WAV per track, before the master effects; in TestFlight). Richer MIDI and Ableton Link are planned, not in the app today. <strong>Why:</strong> the more it fits real producer workflows, the stickier it gets.</p></div>
                 </div>
 
                 <div class="group-head">Platforms &amp; compatibility &mdash; &ldquo;Everything wires&rdquo;</div>
                 <div class="bs-note">
-                    <strong>The principle.</strong> Echoel doesn't have to look or work identically on every device. The build in TestFlight speaks <strong>open standards</strong> &mdash; MIDI with MPE out, OSC, ADM-OSC, Bluetooth Heart Rate, Art-Net and sACN, none of it checked on a device yet &mdash; so any hardware can wire into the same core, each in the form that fits it. That build is the <strong>anchor</strong>; everything below is an open construction site &mdash; documented directions, not commitments.
+                    <strong>The principle.</strong> Echoelmusic doesn't have to look or work identically on every device. The build in TestFlight speaks <strong>open standards</strong> &mdash; MIDI with MPE out, OSC, ADM-OSC, Bluetooth Heart Rate, Art-Net and sACN, none of it checked on a device yet &mdash; so any hardware can wire into the same core, each in the form that fits it. That build is the <strong>anchor</strong>; everything below is an open construction site &mdash; documented directions, not commitments.
                 </div>
                 <div class="idea-list">
                     <div class="idea"><h3>Apple &mdash; one core, many surfaces <span class="bs-badge bs-badge--live">Anchor</span></h3><p class="why">iPhone and iPad today; Mac, Apple&nbsp;Watch, Apple&nbsp;TV and Vision&nbsp;Pro as adaptive surfaces of the same engine. <strong>Why:</strong> the anchor platform &mdash; ship stable here first, expand by surface.</p></div>
@@ -200,30 +195,34 @@
 
     <!-- Footer -->
     <footer>
-        <span class="footer-copy">&copy; 2026 Echoel &middot; Echoel Studio in TestFlight</span>
+        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; in TestFlight</span>
         <nav class="footer-links" aria-label="Site">
-            <a href="overview.html">Overview</a>
-            <a href="tools.html">Tools</a>
-            <a href="faq.html">FAQ</a>
-            <a href="consulting.html">Consulting</a>
-            <a href="support.html">Support</a>
-            <a href="integrations.html">Integrations</a>
-            <a href="architecture.html">Architecture</a>
-            <a href="artist.html">Artist</a>
-            <a href="press.html">Press</a>
-            <a href="brainstorming.html" aria-current="page">Brainstorming</a>
-            <a href="roadmap.html">Roadmap</a>
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="health.html">Health</a>
-            <a href="security.html">Security</a>
-            <a href="accessibility.html">Accessibility</a>
-            <a href="claims.html">What we don&rsquo;t claim</a>
-            <a href="one-clock.html">One Clock</a>
-            <a href="impressum.html">Legal Notice</a>
+            <div class="footer-group">
+                <p class="footer-head">App</p>
+                <a href="faq.html">FAQ</a>
+                <a href="roadmap.html">Roadmap</a>
+                <a href="integrations.html">Integrations</a>
+                <a href="overview.html">Earlier app (10.79)</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">Echoel</p>
+                <a href="consulting.html">Consulting</a>
+                <a href="press.html">Press</a>
+                <a href="artist.html">Artist</a>
+                <a href="one-clock.html">One Clock</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">Legal</p>
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <a href="impressum.html">Legal Notice</a>
+                <a href="accessibility.html">Accessibility</a>
+                <a href="health.html">Health</a>
+                <a href="security.html">Security</a>
+            </div>
         </nav>
     </footer>
 
-    <script src="shared.js?v=10.28.0"></script>
+    <script src="shared.js?v=10.29.0"></script>
 </body>
 </html>

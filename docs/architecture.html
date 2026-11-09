@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.28.0',K='echoel-nuke';try{
+    (function(){var V='10.29.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -20,20 +20,20 @@
     Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
     </script>
 
-    <title>Architecture of the Earlier App (10.79) — Echoel</title>
-    <meta name="description" content="How the earlier Echoel app (10.79, frozen) is built: EngineBus signal chain, lock-free data plane, bio-DSP triad, synthesis, visuals, OSC.">
+    <title>Architecture of the Earlier App (10.79) — Echoelmusic</title>
+    <meta name="description" content="How the earlier Echoelmusic app (10.79, frozen) is built: EngineBus signal chain, lock-free data plane, bio-DSP triad, synthesis, visuals, OSC.">
     <meta name="theme-color" content="#000000">
-    <meta property="og:title" content="Architecture of the Earlier App (10.79) — Echoel">
+    <meta property="og:title" content="Architecture of the Earlier App (10.79) — Echoelmusic">
     <meta property="og:description" content="The earlier app (10.79, frozen): its bio-reactive signal chain from sensor to sound — EngineBus, SPSC data plane, MIDI, the DSP triad, synthesis, visuals, OSC.">
     <meta property="og:url" content="https://echoelmusic.com/architecture.html">
     <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="en_US">
-    <meta property="og:site_name" content="Echoel">
+    <meta property="og:site_name" content="Echoelmusic">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Architecture of the Earlier App (10.79) — Echoel">
+    <meta name="twitter:title" content="Architecture of the Earlier App (10.79) — Echoelmusic">
     <meta name="twitter:description" content="The earlier app (10.79, frozen): its bio-reactive signal chain from sensor to sound. A precise developer reference.">
     <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -41,7 +41,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
     <link rel="canonical" href="https://echoelmusic.com/architecture.html">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Architecture","item":"https://echoelmusic.com/architecture.html"}]}</script>
-    <link rel="stylesheet" href="shared.css?v=10.28.0">
+    <link rel="stylesheet" href="shared.css?v=10.29.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
 
@@ -94,27 +94,22 @@
     <a href="#main" class="skip-link">Skip to main content</a>
     <header class="nav">
         <div class="nav-bar">
-            <a href="/" class="nav-logo" aria-label="Echoel home">
+            <a href="/" class="nav-logo" aria-label="Echoelmusic home">
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
-                <span>Echoel</span>
+                <span>Echoelmusic</span>
             </a>
             <nav class="nav-links" aria-label="Main">
-                <a href="overview.html">Overview</a>
-                <a href="tools.html">Tools</a>
-                <a href="faq.html">FAQ</a>
+                <a href="/">App</a>
                 <a href="consulting.html">Consulting</a>
                 <a href="support.html">Support</a>
-                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoel%20Studio%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
+                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoelmusic%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
             </nav>
             <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
         </div>
     </header>
     <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
         <nav>
-            <a href="/">Home</a>
-            <a href="overview.html">Overview</a>
-            <a href="tools.html">Tools</a>
-            <a href="faq.html">FAQ</a>
+            <a href="/">App</a>
             <a href="consulting.html">Consulting</a>
             <a href="support.html">Support</a>
         </nav>
@@ -125,7 +120,7 @@
             <div class="subpage-hero">
                 <h1>Architecture</h1>
                 <p class="subtitle">How the earlier app (10.79) is built — one bio-reactive signal chain, from sensor to sound, on a lock-free real-time core. A precise reference for developers, audited against its source.</p>
-                <p class="subtitle" style="margin-top:8px;"><strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a new music workstation for iPhone and iPad, still being tested on devices; what it holds is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>. Its own architecture is not documented on this site yet. This page describes the earlier app (10.79.515), which is frozen and no longer in TestFlight.</p>
+                <p class="subtitle" style="margin-top:8px;"><strong>Since 19 October 2026, TestFlight carries Echoelmusic</strong>, a new music workstation for iPhone and iPad, still being tested on devices; what it holds is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>. Its own architecture is not documented on this site yet. This page describes the earlier app (10.79.515), which is frozen and no longer in TestFlight.</p>
                 <span class="status-badge">Developer reference &middot; earlier app 10.79 &middot; frozen</span>
             </div>
 
@@ -247,13 +242,13 @@
                 <h2>Generative Composition <span class="tag">LIVE</span></h2>
                 <p>Your biometrics compose harmonic and melodic material in any key and BPM — pads, chords, leads and a sub-bass voice — which you render to .wav — or export as a Standard MIDI File (.mid) — for your DAW. That app has no drum engine: percussion was built, then removed in July&nbsp;2026 (founder decision) so the instrument stayed one thing.</p>
                 <div class="data-row"><div class="k">BioComposer</div><div class="v">Bio-driven harmonic/melodic loop generation, 30–300&nbsp;BPM, 16th-note clock (step = (60/BPM)/4&nbsp;s) for key/tempo locking. Per-note velocity is <span class="tag">LIVE</span> and reaches the .mid export: a metric hierarchy accents the downbeat over the offbeats, coherence scales pad and bass level (the composer&rsquo;s breath-depth input is fed from coherence; the true breath-depth producer has no caller), and a small per-note jitter keeps repeated chops from reading as mechanical. Automation lanes and richer voice-leading are <span class="tag">ROADMAP</span>.</div></div>
-                <div class="data-row"><div class="k">Voice triggering</div><div class="v">Notes are fired lock-free via an atomic trigger counter (no allocation on the audio thread) into the bio-reactive synth voices. A drum/sampler track and a step sequencer were <strong>not planned</strong> for that app — they existed and were removed. Echoel Studio has a drum kit with a step grid and a sampler.</div></div>
+                <div class="data-row"><div class="k">Voice triggering</div><div class="v">Notes are fired lock-free via an atomic trigger counter (no allocation on the audio thread) into the bio-reactive synth voices. A drum/sampler track and a step sequencer were <strong>not planned</strong> for that app — they existed and were removed. Echoelmusic has a drum kit with a step grid and a sampler.</div></div>
             </section>
 
             <!-- STANDALONE -->
             <section id="plugin">
                 <h2>Standalone instrument <span class="tag">ALSO AUv3</span></h2>
-                <p>The earlier app (10.79) is a <strong>standalone iPhone instrument</strong>. It is also an Audio&nbsp;Unit (AUv3) instrument &mdash; confirmed loading and sounding in AUM on a device; other plugin hosts are untested. Playing installed Audio&nbsp;Unit instruments on a Workstation track is new and not yet confirmed on a device, so it is not claimed until it is. Echoel Studio, in TestFlight now, has its own instruments as Audio&nbsp;Units too; they are not yet tested in a host app on a device.</p>
+                <p>The earlier app (10.79) is a <strong>standalone iPhone instrument</strong>. It is also an Audio&nbsp;Unit (AUv3) instrument &mdash; confirmed loading and sounding in AUM on a device; other plugin hosts are untested. Playing installed Audio&nbsp;Unit instruments on a Workstation track is new and not yet confirmed on a device, so it is not claimed until it is. Echoelmusic, in TestFlight now, has its own instruments as Audio&nbsp;Units too; they are not yet tested in a host app on a device.</p>
                 <div class="data-row"><div class="k">Into a DAW</div><div class="v"><strong>WAV export</strong> today, plus live OSC / ADM-OSC and Art-Net / sACN output. A virtual CoreMIDI source exists but is created only once a MIDI route is enabled in the routing panel, and it speaks MIDI&nbsp;1.0. <strong>Standard MIDI File (.mid) export</strong> ships too, carrying tempo, 4/4 and the key signature. <strong>MPE out</strong> ships over that MIDI&nbsp;1.0 source <span class="tag">LIVE</span> &mdash; two switches in the routing panel, both off by default. MIDI&nbsp;2.0 out and .mid import are <span class="tag">ROADMAP</span>. See <a href="#formats">Formats &amp; I/O</a>.</div></div>
             </section>
 
@@ -278,8 +273,8 @@
             <section id="osc">
                 <h2>EchoelSync &mdash; OSC API <span class="tag">LIVE</span></h2>
                 <p><code>OSCSender</code> mirrors the bio frame out over UDP (Network.framework), so any visual or audio tool on the network can react to the body. OSC 1.0, big-endian 32-bit floats, ~100&nbsp;ms cadence (sent only when the frame changes). Default target <code>localhost:8000</code>; target latency &lt;5&nbsp;ms on LAN. Works with Resolume, TouchDesigner, MadMapper, Sonic Pi and TidalCycles. Ableton&nbsp;Link sync is <span class="tag">ROADMAP</span>.</p>
-                <p>An opt-in <code>ADMOSCSender</code> additionally streams the body as an audio <strong>object</strong> over <strong>ADM-OSC</strong> (the open Audio-Definition-Model-over-OSC standard): breath&nbsp;&rarr;&nbsp;azimuth, coherence&nbsp;&rarr;&nbsp;distance, HRV&nbsp;&rarr;&nbsp;elevation on <code>/adm/obj/{n}/&hellip;</code>. This makes Echoel a bio-reactive object source for object-based renderers (Adamson&nbsp;FletcherMachine, L-ISA, d&amp;b&nbsp;Soundscape) &mdash; open standard, no vendor SDK. Configured from the Routing panel; off by default. <span class="tag">NEW</span></p>
-                <div class="data-row"><div class="k"><code>/echoelmusic/bio/synthetic</code></div><div class="v">float 0 or 1 &mdash; whose body this is: 1 = the built-in demo generator, 0 = a real measured source. Sent first in every tick that carries at least one value and omitted from a silent tick, so it never arrives alone. UDP does not preserve order &mdash; latch it as state rather than reading it as a prefix. Absent while values arrive = an Echoel build that predates this address. The discrete <code>/echoelmusic/bio/event/*</code> addresses carry it too, on a different cadence: immediately before the event it describes and again only on a CHANGE of origin, latched across polls &mdash; events arrive in bursts, so repeating it per event would add traffic and no information. <span class="tag">NEW</span></div></div>
+                <p>An opt-in <code>ADMOSCSender</code> additionally streams the body as an audio <strong>object</strong> over <strong>ADM-OSC</strong> (the open Audio-Definition-Model-over-OSC standard): breath&nbsp;&rarr;&nbsp;azimuth, coherence&nbsp;&rarr;&nbsp;distance, HRV&nbsp;&rarr;&nbsp;elevation on <code>/adm/obj/{n}/&hellip;</code>. This makes Echoelmusic a bio-reactive object source for object-based renderers (Adamson&nbsp;FletcherMachine, L-ISA, d&amp;b&nbsp;Soundscape) &mdash; open standard, no vendor SDK. Configured from the Routing panel; off by default. <span class="tag">NEW</span></p>
+                <div class="data-row"><div class="k"><code>/echoelmusic/bio/synthetic</code></div><div class="v">float 0 or 1 &mdash; whose body this is: 1 = the built-in demo generator, 0 = a real measured source. Sent first in every tick that carries at least one value and omitted from a silent tick, so it never arrives alone. UDP does not preserve order &mdash; latch it as state rather than reading it as a prefix. Absent while values arrive = an Echoelmusic build that predates this address. The discrete <code>/echoelmusic/bio/event/*</code> addresses carry it too, on a different cadence: immediately before the event it describes and again only on a CHANGE of origin, latched across polls &mdash; events arrive in bursts, so repeating it per event would add traffic and no information. <span class="tag">NEW</span></div></div>
                 <div class="data-row"><div class="k"><code>/echoelmusic/bio/heart/bpm</code></div><div class="v">float [40–200]</div></div>
                 <div class="data-row"><div class="k"><code>/echoelmusic/bio/heart/hrv</code></div><div class="v">float [0–1]</div></div>
                 <div class="data-row"><div class="k"><code>/echoelmusic/bio/breath/rate</code></div><div class="v">float — a measurement, not a clamped value. It TARGETS 4–30 but is bounded only by the estimator&rsquo;s wider accept band, ≈3.77–31.8: measured excursions reach +1.4 over and 0.21 under, depending on the listener&rsquo;s pulse. Do not gate on 4 or 30.</div></div>
@@ -296,7 +291,7 @@
                 <div class="data-row"><div class="k">MIDI</div><div class="v">MIDI&nbsp;2.0-ready input (notes, pitch bend, CC&nbsp;74 slide, press, air-CC) <span class="tag">LIVE</span>; virtual MIDI&nbsp;1.0 source once a MIDI route is enabled <span class="tag">LIVE</span>. Standard MIDI File (.mid) <strong>export</strong> <span class="tag">LIVE</span> &mdash; melody, tempo, 4/4 and key signature, bar-aligned so the clip drops straight onto a DAW grid. <strong>MPE out</strong> <span class="tag">LIVE</span> &mdash; the zone is announced, notes are spread over member channels 2&ndash;16, and each carries all three per-note dimensions: Glide (14-bit pitch bend), Slide (CC&nbsp;74) and Press (channel pressure). Two switches in the routing panel, both off by default. MPE <strong>input</strong> zone handling, MIDI&nbsp;2.0 out and .mid <strong>import</strong> <span class="tag">ROADMAP</span>.</div></div>
                 <div class="data-row"><div class="k">Video</div><div class="v"><strong>Not part of the earlier app.</strong> MP4 recording of the immersive visual shipped until September&nbsp;2026 and was removed; ProRes, multi-cam, LUT grading and any editor were never planned. The take is exported as audio (WAV) or as a MIDI file.</div></div>
                 <div class="data-row"><div class="k">Visuals &amp; mapping</div><div class="v">Metal bio-visual <span class="tag">LIVE</span>; external display over USB-C/HDMI or AirPlay <span class="tag">LIVE</span>; 120&nbsp;fps richer modes + 6-pass chroma key, projection mapping (warp/edge-blend), multi-screen, NDI/Syphon <span class="tag">ROADMAP</span>.</div></div>
-                <div class="data-row"><div class="k">Lighting / streaming</div><div class="v">Art-Net (UDP 6454) + sACN / E1.31 (unicast, UDP 5568) <span class="tag">LIVE</span>; DMX-512 and HomeKit <span class="tag">ROADMAP</span>. RTMP/RTMPS broadcast was <strong>not planned</strong> for that app — <code>BroadcastPublisher</code> is a compile-guarded scaffold and HaishinKit is not linked there. Echoel Studio streams with Go Live (in TestFlight, not yet checked on a device).</div></div>
+                <div class="data-row"><div class="k">Lighting / streaming</div><div class="v">Art-Net (UDP 6454) + sACN / E1.31 (unicast, UDP 5568) <span class="tag">LIVE</span>; DMX-512 and HomeKit <span class="tag">ROADMAP</span>. RTMP/RTMPS broadcast was <strong>not planned</strong> for that app — <code>BroadcastPublisher</code> is a compile-guarded scaffold and HaishinKit is not linked there. Echoelmusic streams with Go Live (in TestFlight, not yet checked on a device).</div></div>
             </section>
 
             <!-- CONCURRENCY -->
@@ -339,7 +334,7 @@
             <!-- MODULE MAP -->
             <section id="map">
                 <h2>Module Map</h2>
-                <p>How the product surface (the 12 <a href="tools.html">Echoel engines</a>) maps onto real source modules:</p>
+                <p>How the product surface (the 12 <a href="tools.html">Echoelmusic engines</a>) maps onto real source modules:</p>
                 <div class="data-row"><div class="k">EchoelSynth <span class="tag">LIVE</span></div><div class="v"><strong>EchoelDDSP</strong> is the one that sounds in the iPhone app. <strong>EchoelCellular</strong> sounds only in the <strong>EchoelBodyVibe AUv3 plug-in</strong>, as its texture voice <span class="tag">Plug-in only</span>; no voice in the app instantiates it. <strong>EchoelModalBank</strong> compiles and is unit-tested but nothing instantiates it anywhere, so it makes no sound at all <span class="tag">Not wired</span> &mdash; its only caller was the drum voice, removed in July&nbsp;2026.</div></div>
                 <div class="data-row"><div class="k">EchoelGen <span class="tag">LIVE</span></div><div class="v">Bio-driven generative composition — harmonic, melodic &amp; rhythmic loops in any key and BPM → .wav export</div></div>
                 <div class="data-row"><div class="k">EchoelFX <span class="tag">LIVE</span></div><div class="v">EchoelVDSPKit · EchoelSVFilter · EchoelLFO · AutoMixChain · EchoelReverb (algorithmic; the DDSP convolution reverb is compiled but disabled)</div></div>
@@ -358,7 +353,7 @@
             <!-- STATUS -->
             <section id="status">
                 <h2>Implementation Status</h2>
-                <p>Honest state of the earlier app when it was frozen at 10.79.515 &mdash; it was <strong>never released</strong> to the App Store. Echoel Studio&rsquo;s state is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>.</p>
+                <p>Honest state of the earlier app when it was frozen at 10.79.515 &mdash; it was <strong>never released</strong> to the App Store. Echoelmusic&rsquo;s state is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>.</p>
                 <div class="twocol">
                     <div>
                         <h3>Live in 10.79</h3>
@@ -429,30 +424,34 @@
 
     <!-- Footer -->
     <footer>
-        <span class="footer-copy">&copy; 2026 Echoel &middot; Echoel Studio in TestFlight</span>
+        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; in TestFlight</span>
         <nav class="footer-links" aria-label="Site">
-            <a href="overview.html">Overview</a>
-            <a href="tools.html">Tools</a>
-            <a href="faq.html">FAQ</a>
-            <a href="consulting.html">Consulting</a>
-            <a href="support.html">Support</a>
-            <a href="integrations.html">Integrations</a>
-            <a href="architecture.html" aria-current="page">Architecture</a>
-            <a href="artist.html">Artist</a>
-            <a href="press.html">Press</a>
-            <a href="brainstorming.html">Brainstorming</a>
-            <a href="roadmap.html">Roadmap</a>
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="health.html">Health</a>
-            <a href="security.html">Security</a>
-            <a href="accessibility.html">Accessibility</a>
-            <a href="claims.html">What we don&rsquo;t claim</a>
-            <a href="one-clock.html">One Clock</a>
-            <a href="impressum.html">Legal Notice</a>
+            <div class="footer-group">
+                <p class="footer-head">App</p>
+                <a href="faq.html">FAQ</a>
+                <a href="roadmap.html">Roadmap</a>
+                <a href="integrations.html">Integrations</a>
+                <a href="overview.html">Earlier app (10.79)</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">Echoel</p>
+                <a href="consulting.html">Consulting</a>
+                <a href="press.html">Press</a>
+                <a href="artist.html">Artist</a>
+                <a href="one-clock.html">One Clock</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">Legal</p>
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <a href="impressum.html">Legal Notice</a>
+                <a href="accessibility.html">Accessibility</a>
+                <a href="health.html">Health</a>
+                <a href="security.html">Security</a>
+            </div>
         </nav>
     </footer>
 
-    <script src="shared.js?v=10.28.0"></script>
+    <script src="shared.js?v=10.29.0"></script>
 </body>
 </html>

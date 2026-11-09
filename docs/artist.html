@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.28.0',K='echoel-nuke';try{
+    (function(){var V='10.29.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -34,7 +34,7 @@
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="en_US">
-    <meta property="og:site_name" content="Echoel">
+    <meta property="og:site_name" content="Echoelmusic">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Echoel — Music Producer &amp; Sound Artist">
     <meta name="twitter:description" content="Music producer, sound artist and inventor of walk-in vibrating water, light and sound installations. Hamburg.">
@@ -63,7 +63,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="shared.css?v=10.28.0">
+    <link rel="stylesheet" href="shared.css?v=10.29.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
 
@@ -93,27 +93,22 @@
     <a href="#main" class="skip-link">Skip to main content</a>
     <header class="nav">
         <div class="nav-bar">
-            <a href="/" class="nav-logo" aria-label="Echoel home">
+            <a href="/" class="nav-logo" aria-label="Echoelmusic home">
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
-                <span>Echoel</span>
+                <span>Echoelmusic</span>
             </a>
             <nav class="nav-links" aria-label="Main">
-                <a href="overview.html">Overview</a>
-                <a href="tools.html">Tools</a>
-                <a href="faq.html">FAQ</a>
+                <a href="/">App</a>
                 <a href="consulting.html">Consulting</a>
                 <a href="support.html">Support</a>
-                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoel%20Studio%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
+                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoelmusic%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
             </nav>
             <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
         </div>
     </header>
     <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
         <nav>
-            <a href="/">Home</a>
-            <a href="overview.html">Overview</a>
-            <a href="tools.html">Tools</a>
-            <a href="faq.html">FAQ</a>
+            <a href="/">App</a>
             <a href="consulting.html">Consulting</a>
             <a href="support.html">Support</a>
         </nav>
@@ -127,7 +122,7 @@
             </div>
 
             <section>
-                <p class="artist-bio">Music producer, sound artist and inventor of walk-in vibrating water, light and sound installations. Based in Hamburg. Creating interactive multisensory installations, video, visuals, light and musical performance since 2006 &mdash; most recently a <a href="https://www.instagram.com/reel/C8HI8lstsir/" target="_blank" rel="noopener noreferrer">vibration pontons and sound mirror workshop</a> at Burgbeben STRNBRG 2024, created together with Anna.Elisie as <a href="https://www.instagram.com/loewe.immerlieb" target="_blank" rel="noopener noreferrer">Loewe Immerlieb</a>. Active across multiple music projects with the <a href="https://www.tropicaldrones.com/" target="_blank" rel="noopener noreferrer">Tropical Drones</a> collective, and creator of <a href="/">Echoelmusic</a> &mdash; the project behind Echoel Studio, a music workstation for iPhone and iPad, in TestFlight now.</p>
+                <p class="artist-bio">Music producer, sound artist and inventor of walk-in vibrating water, light and sound installations. Based in Hamburg. Creating interactive multisensory installations, video, visuals, light and musical performance since 2006 &mdash; most recently a <a href="https://www.instagram.com/reel/C8HI8lstsir/" target="_blank" rel="noopener noreferrer">vibration pontons and sound mirror workshop</a> at Burgbeben STRNBRG 2024, created together with Anna.Elisie as <a href="https://www.instagram.com/loewe.immerlieb" target="_blank" rel="noopener noreferrer">Loewe Immerlieb</a>. Active across multiple music projects with the <a href="https://www.tropicaldrones.com/" target="_blank" rel="noopener noreferrer">Tropical Drones</a> collective, and creator of <a href="/">Echoelmusic</a> &mdash; the project behind Echoelmusic, a music workstation for iPhone and iPad, in TestFlight now.</p>
             </section>
 
             <section>
@@ -176,30 +171,34 @@
 
     <!-- Footer -->
     <footer>
-        <span class="footer-copy">&copy; 2026 Echoel &middot; Echoel Studio in TestFlight</span>
+        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; in TestFlight</span>
         <nav class="footer-links" aria-label="Site">
-            <a href="overview.html">Overview</a>
-            <a href="tools.html">Tools</a>
-            <a href="faq.html">FAQ</a>
-            <a href="consulting.html">Consulting</a>
-            <a href="support.html">Support</a>
-            <a href="integrations.html">Integrations</a>
-            <a href="architecture.html">Architecture</a>
-            <a href="artist.html" aria-current="page">Artist</a>
-            <a href="press.html">Press</a>
-            <a href="brainstorming.html">Brainstorming</a>
-            <a href="roadmap.html">Roadmap</a>
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="health.html">Health</a>
-            <a href="security.html">Security</a>
-            <a href="accessibility.html">Accessibility</a>
-            <a href="claims.html">What we don&rsquo;t claim</a>
-            <a href="one-clock.html">One Clock</a>
-            <a href="impressum.html">Legal Notice</a>
+            <div class="footer-group">
+                <p class="footer-head">App</p>
+                <a href="faq.html">FAQ</a>
+                <a href="roadmap.html">Roadmap</a>
+                <a href="integrations.html">Integrations</a>
+                <a href="overview.html">Earlier app (10.79)</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">Echoel</p>
+                <a href="consulting.html">Consulting</a>
+                <a href="press.html">Press</a>
+                <a href="artist.html" aria-current="page">Artist</a>
+                <a href="one-clock.html">One Clock</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">Legal</p>
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <a href="impressum.html">Legal Notice</a>
+                <a href="accessibility.html">Accessibility</a>
+                <a href="health.html">Health</a>
+                <a href="security.html">Security</a>
+            </div>
         </nav>
     </footer>
 
-    <script src="shared.js?v=10.28.0"></script>
+    <script src="shared.js?v=10.29.0"></script>
 </body>
 </html>

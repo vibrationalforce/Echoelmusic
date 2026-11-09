@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.28.0',K='echoel-nuke';try{
+    (function(){var V='10.29.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -20,21 +20,21 @@
     Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
     </script>
 
-    <title>Support — Echoel</title>
-    <meta name="description" content="Get help with Echoel Studio, the music workstation in TestFlight, and with the earlier Echoelmusic app (10.79, frozen).">
+    <title>Support — Echoelmusic</title>
+    <meta name="description" content="Get help with Echoelmusic, the music workstation in TestFlight, and with the earlier Echoelmusic app (10.79, frozen).">
     <meta name="theme-color" content="#000000">
-    <meta property="og:title" content="Support — Echoel">
-    <meta property="og:description" content="Get help with Echoel Studio, the music workstation in TestFlight, and with the earlier Echoelmusic app (10.79, frozen).">
+    <meta property="og:title" content="Support — Echoelmusic">
+    <meta property="og:description" content="Get help with Echoelmusic, the music workstation in TestFlight, and with the earlier Echoelmusic app (10.79, frozen).">
     <meta property="og:url" content="https://echoelmusic.com/support.html">
     <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="en_US">
-    <meta property="og:site_name" content="Echoel">
+    <meta property="og:site_name" content="Echoelmusic">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Support — Echoel">
-    <meta name="twitter:description" content="Get help with Echoel Studio, the music workstation in TestFlight, and with the earlier Echoelmusic app (10.79, frozen).">
+    <meta name="twitter:title" content="Support — Echoelmusic">
+    <meta name="twitter:description" content="Get help with Echoelmusic, the music workstation in TestFlight, and with the earlier Echoelmusic app (10.79, frozen).">
     <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
@@ -42,7 +42,7 @@
     <link rel="canonical" href="https://echoelmusic.com/support.html">
     <link rel="alternate" hreflang="en" href="https://echoelmusic.com/support.html">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Support","item":"https://echoelmusic.com/support.html"}]}</script>
-    <link rel="stylesheet" href="shared.css?v=10.28.0">
+    <link rel="stylesheet" href="shared.css?v=10.29.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
 </head>
@@ -50,27 +50,22 @@
     <a href="#main" class="skip-link">Skip to main content</a>
     <header class="nav">
         <div class="nav-bar">
-            <a href="/" class="nav-logo" aria-label="Echoel home">
+            <a href="/" class="nav-logo" aria-label="Echoelmusic home">
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
-                <span>Echoel</span>
+                <span>Echoelmusic</span>
             </a>
             <nav class="nav-links" aria-label="Main">
-                <a href="overview.html">Overview</a>
-                <a href="tools.html">Tools</a>
-                <a href="faq.html">FAQ</a>
+                <a href="/">App</a>
                 <a href="consulting.html">Consulting</a>
                 <a href="support.html" aria-current="page">Support</a>
-                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoel%20Studio%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
+                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoelmusic%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
             </nav>
             <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
         </div>
     </header>
     <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
         <nav>
-            <a href="/">Home</a>
-            <a href="overview.html">Overview</a>
-            <a href="tools.html">Tools</a>
-            <a href="faq.html">FAQ</a>
+            <a href="/">App</a>
             <a href="consulting.html">Consulting</a>
             <a href="support.html" aria-current="page">Support</a>
         </nav>
@@ -79,7 +74,7 @@
     <main id="main" class="subpage">
         <div class="subpage-hero">
             <h1>Support</h1>
-            <p class="subtitle"><strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a music workstation for iPhone and iPad, still being tested on devices. More answers are in the <a href="faq.html">FAQ</a>, its data handling is on the <a href="privacy.html#studio">Privacy</a> page, and what it holds is on the <a href="roadmap.html">Roadmap</a>.</p>
+            <p class="subtitle"><strong>Since 19 October 2026, TestFlight carries Echoelmusic</strong>, a music workstation for iPhone and iPad, still being tested on devices. More answers are in the <a href="faq.html">FAQ</a>, its data handling is on the <a href="privacy.html#studio">Privacy</a> page, and what it holds is on the <a href="roadmap.html">Roadmap</a>.</p>
         </div>
 
         <div class="contact-box">
@@ -89,26 +84,26 @@
         </div>
 
         <section>
-            <h2>Echoel Studio</h2>
+            <h2>Echoelmusic</h2>
             <div class="support-faq">
-                <strong>When does Echoel ask for the microphone?</strong>
-                <p>Only when you arm an audio track to record, or set one to hear its input. Echoel records mono audio from the microphone or one interface input onto the armed track, and the takes stay on the device. If you said no, allow the microphone for Echoel in the Settings app.</p>
+                <strong>When does Echoelmusic ask for the microphone?</strong>
+                <p>Only when you arm an audio track to record, or set one to hear its input. Echoelmusic records mono audio from the microphone or one interface input onto the armed track, and the takes stay on the device. If you said no, allow the microphone for Echoelmusic in the Settings app.</p>
             </div>
             <div class="support-faq">
                 <strong>How do I use a Bluetooth heart-rate strap?</strong>
-                <p>Put the strap on, then in the Song menu choose <strong>Body Source</strong> and <strong>Heart Rate Strap</strong>. Only then does iOS ask for Bluetooth. You do not pair it in the Settings app: Echoel finds a strap that speaks the standard heart-rate service. The strap moves only what you route it to, and an export never reads it.</p>
+                <p>Put the strap on, then in the Song menu choose <strong>Body Source</strong> and <strong>Heart Rate Strap</strong>. Only then does iOS ask for Bluetooth. You do not pair it in the Settings app: Echoelmusic finds a strap that speaks the standard heart-rate service. The strap moves only what you route it to, and an export never reads it.</p>
             </div>
             <div class="support-faq">
-                <strong>Do Echoel&rsquo;s Audio Units work in other apps?</strong>
-                <p>Echoel&rsquo;s instruments and effects are also Audio Units, but they have not yet been tested in a host app on a device, and they are not on sale yet. Tell us what you see if you try one.</p>
+                <strong>Do Echoelmusic&rsquo;s Audio Units work in other apps?</strong>
+                <p>Echoelmusic&rsquo;s instruments and effects are also Audio Units, but they have not yet been tested in a host app on a device, and they are not on sale yet. Tell us what you see if you try one.</p>
             </div>
             <div class="support-faq">
                 <strong>How do I export, and where are my songs?</strong>
-                <p>Export the arrangement as a 24-bit, 48&nbsp;kHz stereo WAV with its loudness (LUFS) and true peak reported, as stems (one WAV per track, before the master effects), or as a Standard MIDI File. Songs save automatically as .echoel files that the Files app shows, and a song sent by AirDrop opens in Echoel. The format is open and documented.</p>
+                <p>Export the arrangement as a 24-bit, 48&nbsp;kHz stereo WAV with its loudness (LUFS) and true peak reported, as stems (one WAV per track, before the master effects), or as a Standard MIDI File. Songs save automatically as .echoel files that the Files app shows, and a song sent by AirDrop opens in Echoelmusic. The format is open and documented.</p>
             </div>
             <div class="support-faq">
                 <strong>How do I restore a purchase?</strong>
-                <p>Open the Song menu, choose <strong>Echoel Plugins</strong> and tap <strong>Restore Purchases</strong>. Without a network, Echoel reads the purchase record already on the device.</p>
+                <p>Open the Song menu, choose <strong>Echoelmusic Plugins</strong> and tap <strong>Restore Purchases</strong>. Without a network, Echoelmusic reads the purchase record already on the device.</p>
             </div>
         </section>
 
@@ -130,7 +125,7 @@
                 </div>
                 <div class="support-faq">
                     <strong>How do I export my creations?</strong>
-                    <p>In the earlier app, the Share button in any session exported a .wav render, a Standard MIDI File (.mid) or the project itself to Files, iCloud or other apps; it had no video export, because recording the visual was removed. Echoel Studio exports a WAV, stems or a MIDI file &mdash; see the <a href="faq.html">FAQ</a>.</p>
+                    <p>In the earlier app, the Share button in any session exported a .wav render, a Standard MIDI File (.mid) or the project itself to Files, iCloud or other apps; it had no video export, because recording the visual was removed. Echoelmusic exports a WAV, stems or a MIDI file &mdash; see the <a href="faq.html">FAQ</a>.</p>
                 </div>
                 <div class="support-faq">
                     <strong>Is my data safe?</strong>
@@ -141,30 +136,34 @@
     </main>
 
     <footer>
-        <span class="footer-copy">&copy; 2026 Echoel &middot; Echoel Studio in TestFlight</span>
+        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; in TestFlight</span>
         <nav class="footer-links" aria-label="Site">
-            <a href="overview.html">Overview</a>
-            <a href="tools.html">Tools</a>
-            <a href="faq.html">FAQ</a>
-            <a href="consulting.html">Consulting</a>
-            <a href="support.html" aria-current="page">Support</a>
-            <a href="integrations.html">Integrations</a>
-            <a href="architecture.html">Architecture</a>
-            <a href="artist.html">Artist</a>
-            <a href="press.html">Press</a>
-            <a href="brainstorming.html">Brainstorming</a>
-            <a href="roadmap.html">Roadmap</a>
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="health.html">Health</a>
-            <a href="security.html">Security</a>
-            <a href="accessibility.html">Accessibility</a>
-            <a href="claims.html">What we don&rsquo;t claim</a>
-            <a href="one-clock.html">One Clock</a>
-            <a href="impressum.html">Legal Notice</a>
+            <div class="footer-group">
+                <p class="footer-head">App</p>
+                <a href="faq.html">FAQ</a>
+                <a href="roadmap.html">Roadmap</a>
+                <a href="integrations.html">Integrations</a>
+                <a href="overview.html">Earlier app (10.79)</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">Echoel</p>
+                <a href="consulting.html">Consulting</a>
+                <a href="press.html">Press</a>
+                <a href="artist.html">Artist</a>
+                <a href="one-clock.html">One Clock</a>
+            </div>
+            <div class="footer-group">
+                <p class="footer-head">Legal</p>
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <a href="impressum.html">Legal Notice</a>
+                <a href="accessibility.html">Accessibility</a>
+                <a href="health.html">Health</a>
+                <a href="security.html">Security</a>
+            </div>
         </nav>
     </footer>
 
-    <script src="shared.js?v=10.28.0"></script>
+    <script src="shared.js?v=10.29.0"></script>
 </body>
 </html>
