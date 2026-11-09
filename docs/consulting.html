@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Cache Control: never cache HTML in browser -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
+    <script>
+    (function(){var V='10.27.0',K='echoel-nuke';try{
+    var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
+    fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+    if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
+    if('caches' in window)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
+    if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
+    Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
+    </script>
+
+    <title>Consulting · Planning · Delivery — Echoel</title>
+    <meta name="description" content="Consulting, planning and project support by Echoel (Michael Terbuyken), Hamburg: sound and content, space and acoustics, immersive and inclusive installations. Remote, with local partners on site.">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:title" content="Consulting · Planning · Delivery — Echoel">
+    <meta property="og:description" content="Sound and content, space and acoustics, immersive and inclusive formats: consulting, planning and project support, from the first call to the finished project.">
+    <meta property="og:url" content="https://echoelmusic.com/consulting.html">
+    <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Echoel">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Consulting · Planning · Delivery — Echoel">
+    <meta name="twitter:description" content="Sound and content, space and acoustics, immersive and inclusive formats: consulting, planning and project support, from the first call to the finished project.">
+    <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
+    <link rel="canonical" href="https://echoelmusic.com/consulting.html">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Consulting","item":"https://echoelmusic.com/consulting.html"}]}</script>
+    <link rel="stylesheet" href="shared.css?v=10.27.0">
+    <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+        /* consulting.html only: the figure that shows the idea behind the work. Tokens only;
+           motion is opacity, one cycle every 4.8 s (far under the 3 Hz flash ceiling), and the
+           global prefers-reduced-motion rule in shared.css stops it on a static frame. */
+        .idea-figure { margin: 8px 0 48px; }
+        .idea-figure svg { display: block; width: 100%; height: auto; }
+        .idea-figure figcaption { color: var(--dim); text-align: center; line-height: 1.6; margin-top: 12px; }
+        .idea-figure .frame { fill: none; stroke: var(--border-strong); stroke-width: 2; }
+        .idea-figure .wave { fill: none; stroke: var(--text); stroke-width: 3; stroke-linecap: round; opacity: 0.2; animation: idea-pulse 4.8s ease-in-out infinite; }
+        .idea-figure .dot { fill: var(--text); opacity: 0.25; animation: idea-pulse 4.8s ease-in-out infinite; }
+        .idea-figure .label { fill: var(--text); font-family: var(--font); font-size: 22px; }
+        .idea-figure .label--dim { fill: var(--dim); }
+        .idea-figure .mark { fill: var(--text); font-family: var(--font); font-weight: 700; font-size: 40px; }
+        @keyframes idea-pulse { 0%, 100% { opacity: 0.2; } 30% { opacity: 0.9; } 60% { opacity: 0.2; } }
+        @media (prefers-reduced-motion: reduce) { .idea-figure .wave, .idea-figure .dot { opacity: 0.7; } }
+        @media (max-width: 600px) {
+            .idea-figure .label { font-size: 36px; }
+            .idea-figure .mark { font-size: 56px; }
+            .idea-figure .label--dim { font-size: 28px; }
+            .area-grid { grid-template-columns: 1fr; }
+        }
+        .stage-list { padding-left: 24px; margin-bottom: 16px; }
+        .stage-list li { color: var(--dim); margin-bottom: 12px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <header class="nav">
+        <div class="nav-bar">
+            <a href="/" class="nav-logo" aria-label="Echoel home">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24.8,60 C29.1,54 36.1,54 40.5,60 C44.9,66 50.1,66 54.5,60 C58.9,54 65.9,54 70.2,60" opacity="0.8"/><path d="M24.8,70 C29.1,64 36.1,64 40.5,70 C44.9,76 50.1,76 54.5,70 C58.9,64 65.9,64 70.2,70" opacity="0.4"/><path d="M24.8,80 C29.1,74 36.1,74 40.5,80 C44.9,86 50.1,86 54.5,80 C58.9,74 65.9,74 70.2,80" opacity="0.2"/></g></svg>
+                <span>Echoel</span>
+            </a>
+            <nav class="nav-links" aria-label="Main">
+                <a href="overview.html">Overview</a>
+                <a href="tools.html">Tools</a>
+                <a href="faq.html">FAQ</a>
+                <a href="consulting.html" aria-current="page">Consulting</a>
+                <a href="support.html">Support</a>
+                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoel%20Studio%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
+            </nav>
+            <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+        </div>
+    </header>
+    <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
+        <nav>
+            <a href="/">Home</a>
+            <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+            <a href="faq.html">FAQ</a>
+            <a href="consulting.html" aria-current="page">Consulting</a>
+            <a href="support.html">Support</a>
+        </nav>
+    </div>
+
+    <main id="main" class="subpage subpage--wide">
+        <div class="subpage-hero">
+            <h1>Consulting · Planning · Delivery</h1>
+            <div class="subtitle">Sound, space and immersive formats — from the first question to the finished project.</div>
+        </div>
+
+        <section class="faq-section">
+            <p>I&rsquo;m Echoel (Michael Terbuyken), a music producer, sound artist and developer in Hamburg. Since 2006 I have been creating interactive installations, video, visuals, light and musical performance. Under Echoelmusic I offer the applied, technical side of this work: the app Echoel Studio, and consulting for your projects.</p>
+        </section>
+
+        <figure class="idea-figure">
+            <svg viewBox="0 0 720 260" role="img" aria-labelledby="idea-title">
+                <title id="idea-title">One piece of music, made in Echoel Studio, carried to sound, vibration, water and light.</title>
+                <rect class="frame" x="40" y="40" width="110" height="180" rx="12"/>
+                <text class="mark" x="95" y="132" text-anchor="middle">E</text>
+                <text class="label label--dim" x="95" y="250" text-anchor="middle">Echoel Studio</text>
+                <path class="wave" d="M170.0,95 C187.5,83 222.5,83 240.0,95" style="animation-delay:0.00s"/>
+                <path class="wave" d="M240.0,95 C257.5,107 292.5,107 310.0,95" style="animation-delay:0.25s"/>
+                <path class="wave" d="M310.0,95 C327.5,83 362.5,83 380.0,95" style="animation-delay:0.50s"/>
+                <path class="wave" d="M380.0,95 C397.5,107 432.5,107 450.0,95" style="animation-delay:0.75s"/>
+                <path class="wave" d="M170.0,130 C187.5,118 222.5,118 240.0,130" style="animation-delay:0.15s"/>
+                <path class="wave" d="M240.0,130 C257.5,142 292.5,142 310.0,130" style="animation-delay:0.40s"/>
+                <path class="wave" d="M310.0,130 C327.5,118 362.5,118 380.0,130" style="animation-delay:0.65s"/>
+                <path class="wave" d="M380.0,130 C397.5,142 432.5,142 450.0,130" style="animation-delay:0.90s"/>
+                <path class="wave" d="M170.0,165 C187.5,153 222.5,153 240.0,165" style="animation-delay:0.30s"/>
+                <path class="wave" d="M240.0,165 C257.5,177 292.5,177 310.0,165" style="animation-delay:0.55s"/>
+                <path class="wave" d="M310.0,165 C327.5,153 362.5,153 380.0,165" style="animation-delay:0.80s"/>
+                <path class="wave" d="M380.0,165 C397.5,177 432.5,177 450.0,165" style="animation-delay:1.05s"/>
+                <circle class="dot" cx="480" cy="48" r="7" style="animation-delay:1.0s"/><text class="label" x="500" y="55">Sound</text>
+                <circle class="dot" cx="480" cy="98" r="7" style="animation-delay:1.2s"/><text class="label" x="500" y="105">Vibration</text>
+                <circle class="dot" cx="480" cy="148" r="7" style="animation-delay:1.4s"/><text class="label" x="500" y="155">Water</text>
+                <circle class="dot" cx="480" cy="198" r="7" style="animation-delay:1.6s"/><text class="label" x="500" y="205">Light</text>
+            </svg>
+            <figcaption>One piece of music, perceived through several senses: the idea that connects my installations and the app.</figcaption>
+        </figure>
+
+        <section class="faq-section">
+            <h2>Three areas</h2>
+            <div class="platform-grid area-grid">
+                <div class="platform-card">
+                    <h3>Sound &amp; Content</h3>
+                    <p>Sound for brands · Multimedia production · Content for social media</p>
+                </div>
+                <div class="platform-card">
+                    <h3>Space &amp; Acoustics</h3>
+                    <p>Sound reinforcement and acoustics for clubs, open air, trade fairs and studios.</p>
+                </div>
+                <div class="platform-card">
+                    <h3>Immersive &amp; Inclusive</h3>
+                    <p>Multidimensional and immersive formats · Making music perceptible for everyone: installations with vibration, water, light and sound.</p>
+                </div>
+            </div>
+            <p>Further services around music production, consulting, and artistic and conceptual work on request.</p>
+        </section>
+
+        <section class="faq-section">
+            <h2>How it works</h2>
+            <p>The same three stages in all three areas:</p>
+            <ol class="stage-list">
+                <li><strong>Consulting:</strong> a call. We clarify the goal, the venue, the audience and the scope.</li>
+                <li><strong>Planning:</strong> concept, plan and cost framework, in writing.</li>
+                <li><strong>Delivery:</strong> project support through to completion.</li>
+            </ol>
+        </section>
+
+        <section class="faq-section">
+            <h2>How I work</h2>
+            <p>I consult, plan and support remotely. Work on site — at trade fairs, measuring and tuning a system, and setting up — is done by local partners following my plan.</p>
+        </section>
+
+        <section class="faq-section">
+            <h2>Online workshops</h2>
+            <p>Workshops take place online, among them <strong>&ldquo;AI in media production&rdquo;</strong>: how I produce software and media with AI agents &mdash; traceable in Echoelmusic&rsquo;s <a href="https://github.com/vibrationalforce/Echoelmusic">public repository</a>.</p>
+        </section>
+
+        <section class="faq-section">
+            <h2>The tool: Echoel Studio</h2>
+            <p>Echoel Studio is my music workstation for iPhone and iPad. It is in TestFlight and still being tested on devices. <a href="overview.html">More about Echoel Studio</a></p>
+        </section>
+
+        <div class="cta-box">
+            <h3>Have a project in mind?</h3>
+            <p>Write me a few lines about what it is. You receive the cost framework with the planning.</p>
+            <a href="mailto:echoel@tropicaldrones.com?subject=Consulting%20%E2%80%94%20first%20call" class="btn">Request a first call</a>
+        </div>
+    </main>
+
+    <footer>
+        <span class="footer-copy">&copy; 2026 Echoel &middot; Echoel Studio in TestFlight</span>
+        <nav class="footer-links" aria-label="Site">
+            <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+            <a href="faq.html">FAQ</a>
+            <a href="consulting.html" aria-current="page">Consulting</a>
+            <a href="support.html">Support</a>
+            <a href="integrations.html">Integrations</a>
+            <a href="architecture.html">Architecture</a>
+            <a href="artist.html">Artist</a>
+            <a href="press.html">Press</a>
+            <a href="brainstorming.html">Brainstorming</a>
+            <a href="roadmap.html">Roadmap</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
+            <a href="accessibility.html">Accessibility</a>
+            <a href="claims.html">What we don&rsquo;t claim</a>
+            <a href="one-clock.html">One Clock</a>
+            <a href="impressum.html">Legal Notice</a>
+        </nav>
+    </footer>
+
+    <script src="shared.js?v=10.27.0"></script>
+</body>
+</html>
