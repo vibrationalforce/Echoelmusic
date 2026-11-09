@@ -34,7 +34,9 @@ final class TheHomePageLeadsWithTheMechanismTests: XCTestCase {
 
     /// Claim 1 — no effect promise on either acquisition page.
     func testNeitherPagePromisesToCalmYouDown() throws {
-        for page in ["docs/index.html", "docs/overview.html"] {
+        // `earlier-app.html` (2026-11-09) holds the earlier-app sections the home page carried
+        // until then, moved verbatim — so it joins the two pages this ban was written for.
+        for page in ["docs/index.html", "docs/overview.html", "docs/earlier-app.html"] {
             let html = try text(page).lowercased()
             XCTAssertFalse(html.contains("calm down"),
                            "\(page) promises an effect (\"calm down\") again — CLAIMS.md §2 allows the mechanism (a settling pulse changes the music), never the outcome (#1238)")
@@ -43,9 +45,11 @@ final class TheHomePageLeadsWithTheMechanismTests: XCTestCase {
 
     /// Claim 2 — the home page's visual card sells the playable picture and the connected-screen stage.
     func testTheHomePageSellsThePlayablePictureAndTheStage() throws {
-        let html = try text("docs/index.html")
+        // Since 2026-11-09 the home page describes the current app only; the "Living visuals"
+        // card of the earlier app lives, verbatim, in the archive page.
+        let html = try text("docs/earlier-app.html")
         guard let card = html.range(of: "<h3>Living visuals</h3>") else {
-            return XCTFail("the \"Living visuals\" card is gone from docs/index.html — move these needles to wherever the visual is sold now (#1238)")
+            return XCTFail("the \"Living visuals\" card is gone from docs/earlier-app.html — move these needles to wherever the visual is sold now (#1238)")
         }
         let window = String(html[card.upperBound...].prefix(900))
         XCTAssertTrue(window.contains("touch the visual and your fingers become notes"),
@@ -69,7 +73,7 @@ final class TheHomePageLeadsWithTheMechanismTests: XCTestCase {
 
     /// Claim 4 — the Specs tile names every shipped open standard.
     func testTheSpecsTileNamesAllFiveStandards() throws {
-        let html = try text("docs/index.html")
+        let html = try text("docs/earlier-app.html")   // the specs tile moved with the earlier-app sections (2026-11-09)
         XCTAssertTrue(html.contains("<div class=\"spec-label\">OSC &middot; ADM-OSC &middot; MIDI &middot; Art-Net &middot; sACN</div>"),
                       "the Specs tile dropped a shipped standard again — sACN is live (`Sync/SACNSender`) and MIDI is sold on the same page (#1238)")
     }

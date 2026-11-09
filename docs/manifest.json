@@ -1,17 +1,18 @@
 {
   "name": "Echoelmusic",
   "short_name": "Echoelmusic",
-  "description": "Echoelmusic, a music workstation for iPhone and iPad, is in TestFlight. The site also documents the earlier bio-reactive app (10.79, frozen).",
+  "description": "Echoelmusic is a music workstation for iPhone and iPad: write, arrange, record and mix songs, then export WAV, stems or MIDI. Free, in TestFlight.",
   "start_url": "/",
-  "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "display": "browser",
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "any",
   "scope": "/",
   "lang": "en",
   "dir": "ltr",
-  "categories": ["music", "productivity"],
+  "categories": [
+    "music"
+  ],
   "icons": [
     {
       "src": "favicon.svg",
@@ -36,64 +37,6 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "app-icon.svg",
-      "sizes": "1024x1024",
-      "type": "image/svg+xml",
-      "form_factor": "wide",
-      "label": "Echoelmusic bio-reactive interface"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Quick start",
-      "short_name": "Start",
-      "description": "Start the instrument and the pulse reading",
-      "url": "/?action=session",
-      "icons": [{"src": "favicon.svg", "sizes": "any"}]
-    }
-  ],
-  "related_applications": [
-    {
-      "platform": "itunes",
-      "url": "https://apps.apple.com/app/echoelmusic/id6757957358"
-    }
-  ],
-  "prefer_related_applications": true,
-  "handle_links": "preferred",
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  },
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "share_target": {
-    "action": "/",
-    "method": "GET",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  },
-  "protocol_handlers": [
-    {
-      "protocol": "web+echoelmusic",
-      "url": "/?protocol=%s"
-    }
-  ],
-  "file_handlers": [
-    {
-      "action": "/",
-      "accept": {
-        "audio/wav": [".wav"],
-        "audio/mpeg": [".mp3"],
-        "audio/flac": [".flac"],
-        "audio/aac": [".aac", ".m4a"]
-      }
     }
   ]
 }

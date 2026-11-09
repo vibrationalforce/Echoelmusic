@@ -23,9 +23,28 @@ E-with-three-waves plus the wordmark "Echoelmusic" as written (no uppercase, no 
 `<title>` ends "— Echoelmusic", the footer says "© 2026 Echoelmusic · in TestFlight". ⛔ The rule that
 stood here (brand Echoel, app "Echoel Studio") is struck; "Echoel Studio" survives only as the NAME OF
 THE CI WORKFLOW (`studio.yml`, read by the merge gates — never rename it from the site's side). The
-navigation is three entries (App · Consulting · Support, plus the TestFlight button) and a footer in
-three groups (App · Echoel · Legal); a page left out of both must be linked from a page's body, or
+navigation is three entries (App · Consulting · Support, plus the button "Request TestFlight access" —
+a mail link is called a request, not "Join", until a public link exists) and a footer in four groups
+(App · About · Archive · Legal); a page left out of both must be linked from a page's body, or
 `testNoPageIsAnOrphan` goes red. Measure, do not recite: `grep -o 'Echoel Studio' docs/*.html | wc -l` → 0.
+
+**Two halves since 2026-11-09 (founder: „kompakt auf den Punkt“, „einfachste Menüstruktur“, services =
+online consulting).** The VISITOR pages describe the current app and the consulting only: `index.html`,
+`consulting.html`, `support.html`, `faq.html`, `roadmap.html`, `press.html`, `claims.html`, `artist.html`
+and the legal pages. The ARCHIVE describes the earlier app (10.79) and is reached through the footer
+group "Archive": `overview.html`, `earlier-app.html` (the earlier-app sections the home page carried
+until that day, moved verbatim), `earlier-app-faq.html` (the earlier-app questions of the FAQ and of
+Support, moved verbatim), `tools.html`, `architecture.html`, `brainstorming.html`, `integrations.html`
+and its four spokes. A sentence about the earlier app belongs in the archive, never on a visitor page;
+the guards that pin earlier-app wording read the archive files. Home, FAQ, Consulting and Support are
+GENERATED from one list of facts each (the FAQ page and its FAQPage JSON-LD from the same list), so
+edit the text in both places or regenerate — the two must not drift.
+
+**Page parts.** Visitor pages are built from: a head that reads from the left (`.subpage-hero`, on the
+home page `.hero`), blocks divided by one hairline (`.block`), cards on the app's surface colour
+(`.card`, `.grid-2`), a fact list (`dl.facts`), one primary `.button` per page and underlined
+`.text-link`s. Headings are sentences in sentence case: no capitals, no letter-spacing. Nothing is
+centred, nothing waits for a scroll to become visible.
 
 **Look.** `shared.css` `:root` (and its inline twin in `index.html`, §6) is
 `EchoelStudio/App/Design/Theme.swift` written as CSS: `--surface`, `--surface-raised`,

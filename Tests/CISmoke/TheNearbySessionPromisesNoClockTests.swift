@@ -257,7 +257,7 @@ final class TheNearbySessionPromisesNoClockTests: XCTestCase {
     private static let driverEnumerations: [(String, String)] = [
         ("docs/architecture.html", "drives the hue"),
         ("docs/architecture.html", "coherence&rarr;sharpness"),
-        ("docs/index.html", "coherence to sharpness"),
+        ("docs/earlier-app.html", "coherence to sharpness"),   // moved with the earlier-app sections, 2026-11-09
         ("Sources/Echoelmusic/Studio/LearnLibrary.swift", "pulse, breath and coherence drive its")
     ]
 }

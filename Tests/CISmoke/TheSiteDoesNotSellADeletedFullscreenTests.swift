@@ -66,7 +66,7 @@ final class TheSiteDoesNotSellADeletedFullscreenTests: XCTestCase {
 
     /// Claim 2 — the three cut capabilities keep their three different histories.
     func testTheThreeCutHistoriesAreNotFlattened() throws {
-        let faq = try Self.text("docs/faq.html")
+        let faq = try Self.text("docs/earlier-app-faq.html")   // the earlier-app questions, moved verbatim 2026-11-09
         XCTAssertFalse(
             faq.contains("live streaming are <strong>not planned</strong> &mdash; they were built and removed"),
             "faq.html says live streaming was built and removed. It was NEVER built: "
@@ -99,7 +99,9 @@ final class TheSiteDoesNotSellADeletedFullscreenTests: XCTestCase {
     /// Claim 4 — support.html sends the reader to a control that exists. Before #1331 there
     /// was none at all; the page named an "Audio Settings" screen this app has never had.
     func testSupportPointsAtTheRealLatencyControl() throws {
-        let support = try Self.text("docs/support.html")
+        // The latency answer describes the earlier app's Master panel; it moved with the other
+        // earlier-app answers of Support into the archive FAQ (2026-11-09).
+        let support = try Self.text("docs/earlier-app-faq.html")
         XCTAssertTrue(
             support.contains("<strong>Audio latency</strong>"),
             "support.html no longer names the `Audio latency` row in the Master panel. That "
