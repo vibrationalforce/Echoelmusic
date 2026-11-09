@@ -14,7 +14,7 @@ import os
 /// The id keeps the app's prefix (`com.echoelmusic.app.`): one App Store record, one purchase.
 enum PluginUnlock {
     static let productID = "com.echoelmusic.app.pro"
-    static let name = "Echoel Plugins"
+    static let name = "Echoelmusic Plugins"
 
     /// The container app and extension share (requested by both since factory job 002). Both
     /// profiles grant it: build 10008 signed with it, and the signing probe of 2026-10-21 printed it

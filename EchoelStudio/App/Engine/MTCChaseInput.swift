@@ -121,7 +121,7 @@ final class MTCChaseInput {
             let title = MIDIObjectGetStringProperty(endpoint, kMIDIPropertyDisplayName, &name) == noErr
                 ? (name?.takeRetainedValue() as String?) ?? "MIDI In" : "MIDI In"
             // Our own timecode out is no source to chase: it would follow itself.
-            guard title != "Echoel Timecode" else { continue }
+            guard title != "Echoelmusic Timecode" else { continue }
             found.append(Source(id: id, name: title))
             if id == chased { target = endpoint }
         }

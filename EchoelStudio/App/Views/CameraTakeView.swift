@@ -95,7 +95,7 @@ struct CameraTakeView: View {
         case .interrupted where recorder.life.lostLastTake: "The take was cut short and could not be saved. The picture comes back when the call or other app lets go of the camera."
         case .interrupted: "Another app or a call is using the camera. The picture comes back when it lets go."
         case .failed: "The camera stopped with an error. Close and open it again."
-        case .denied: "Camera access is off for Echoel. Turn it on in Settings › Privacy › Camera."
+        case .denied: "Camera access is off for Echoelmusic. Turn it on in Settings › Privacy › Camera."
         case .unavailable(let reason): reason
         }
     }

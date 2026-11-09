@@ -34,7 +34,7 @@ public enum DAWprojectExport {
     /// `ExportMedia.names`); a clip whose file has none is left out. `channels` gives each file's
     /// channel count, which the format requires; a file without one is stereo.
     public static func projectXML(for project: Project, mediaPaths: [MediaID: String],
-                                  channels: [MediaID: Int] = [:], application: String = "Echoel Studio",
+                                  channels: [MediaID: Int] = [:], application: String = "Echoelmusic",
                                   version: String = "11.0.0") -> String {
         var ids = IDs()
         let tracks = project.tracks.filter { $0.kind != .video }
@@ -130,7 +130,7 @@ public enum DAWprojectExport {
     /// `metadata.xml`: the song's name as the title.
     public static func metadataXML(title: String) -> String {
         var out = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-        XML("MetaData", [], [XML("Title", text: EDLExport.clean(title, fallback: "Echoel"))]).write(into: &out, indent: 0)
+        XML("MetaData", [], [XML("Title", text: EDLExport.clean(title, fallback: "Echoelmusic"))]).write(into: &out, indent: 0)
         return out
     }
 

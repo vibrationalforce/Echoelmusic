@@ -125,7 +125,7 @@ public enum StudioPlace: String, CaseIterable, Sendable {
         case .convertToMIDI: "Convert to MIDI…"
         case .effects: "Effects"
         case .addEffect: "Add Effect"
-        case .echoel: "Echoel"
+        case .echoel: "Echoelmusic"
         case .audioUnits: "Audio Units"
         case .masterEffects: "Master Effects"
         case .mixAnalysis: "Mix Analysis…"
@@ -297,7 +297,7 @@ public enum LearnGuide {
             id: "effects", title: "Effects and Mix Analysis",
             summary: "Insert effects on any track or the master, then measure the mix.",
             paragraphs: [
-                "On the “Mixer”, “Effects” on a strip opens that track's insert chain; the master strip opens “Master Effects”. “Add Effect” offers the “Echoel” effects — “EQ”, “Compressor”, “Delay”, “Reverb” and more — and installed “Audio Units”.",
+                "On the “Mixer”, “Effects” on a strip opens that track's insert chain; the master strip opens “Master Effects”. “Add Effect” offers the “Echoelmusic” effects — “EQ”, “Compressor”, “Delay”, “Reverb” and more — and installed “Audio Units”.",
                 "On an audio region in “Arrange”, touch and hold for “Pitch & Texture…”: “Pitch Correction” and “Granular Texture” are rendered into the region offline.",
                 "“Mix Analysis…” in the master's effects measures the song offline: loudness, true peak and stereo image under “Measured”, tracks that share their strongest octave under “Masking”, and a master chain under “Suggest Master”, with every number it comes from. Nothing changes until “Apply to Master”, which replaces the master's effects as one undo step.",
             ],
@@ -349,8 +349,8 @@ public enum LearnGuide {
             id: "siri", title: "Siri and Shortcuts",
             summary: "Play, stop and change the open song by voice or with a shortcut.",
             paragraphs: [
-                "Echoel's actions are in the Shortcuts app and work with Siri, Spotlight and the Action button: “Play”, “Stop”, “Set Tempo”, “Add Track”, “Launch Scene”, “Set Key”, “Mute or Unmute Track” and “Export Stems”.",
-                "Say, for example, \"Play Echoel\", \"Set the tempo in Echoel\" or \"Export stems in Echoel\". Each change to the song is one undo step, and finished stems come up in the share sheet.",
+                "Echoelmusic's actions are in the Shortcuts app and work with Siri, Spotlight and the Action button: “Play”, “Stop”, “Set Tempo”, “Add Track”, “Launch Scene”, “Set Key”, “Mute or Unmute Track” and “Export Stems”.",
+                "Say, for example, \"Play Echoelmusic\", \"Set the tempo in Echoelmusic\" or \"Export stems in Echoelmusic\". Each change to the song is one undo step, and finished stems come up in the share sheet.",
             ],
             paths: [[.songMenu, .exportSection, .exportStems]],
             keywords: ["siri", "shortcuts", "voice", "spotlight", "action button"]),

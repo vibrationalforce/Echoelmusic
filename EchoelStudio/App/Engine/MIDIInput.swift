@@ -598,7 +598,7 @@ final class MIDIInput {
     func start() {
         guard client == 0 else { return }
         projectChanged(store.project)
-        let status = MIDIClientCreateWithBlock("Echoel" as CFString, &client) { @Sendable notification in
+        let status = MIDIClientCreateWithBlock("Echoelmusic" as CFString, &client) { @Sendable notification in
             guard notification.pointee.messageID == .msgSetupChanged else { return }
             Task { @MainActor [weak self] in self?.connectSources() }
         }
@@ -625,7 +625,7 @@ final class MIDIInput {
         let router = self.router, inbox = self.inbox, clockInbox = self.clockInbox, gridInbox = self.gridInbox
         let unheard = self.unheardInbox
         let midiProtocol: MIDIProtocolID = midi2Enabled ? ._2_0 : ._1_0
-        let portStatus = MIDIInputPortCreateWithProtocol(client, "Echoel In" as CFString, midiProtocol, &port) {
+        let portStatus = MIDIInputPortCreateWithProtocol(client, "Echoelmusic In" as CFString, midiProtocol, &port) {
             @Sendable [weak self] list, tag in
             let followed = clockInbox.followed.load(ordering: .relaxed)
             let fromFollowed = followed != 0 && Int(bitPattern: tag) == followed

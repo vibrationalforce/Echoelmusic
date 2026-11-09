@@ -52,12 +52,12 @@ final class MIDIClockOutput {
 
     func start() {
         guard client == 0 else { return }
-        let status = MIDIClientCreateWithBlock("Echoel Clock" as CFString, &client) { @Sendable notification in
+        let status = MIDIClientCreateWithBlock("Echoelmusic Clock" as CFString, &client) { @Sendable notification in
             guard notification.pointee.messageID == .msgSetupChanged else { return }
             Task { @MainActor [weak self] in self?.refresh() }
         }
         guard status == noErr else { return fail("client", status) }
-        let portStatus = MIDIOutputPortCreate(client, "Echoel Clock Out" as CFString, &port)
+        let portStatus = MIDIOutputPortCreate(client, "Echoelmusic Clock Out" as CFString, &port)
         guard portStatus == noErr else { return fail("port", portStatus) }
         pump.start(port: port)
         refresh()

@@ -37,7 +37,7 @@ final class NewerSongTests: XCTestCase {
         XCTAssertEqual(project.keptMasterInsertCount, 1)
         XCTAssertEqual(project.tracks.first?.keptInsertCount, 1)
         XCTAssertEqual(project.newerBuildNotice,
-                       "This song was saved by a newer Echoel Studio. 5 items are kept but inactive until you update.")
+                       "This song was saved by a newer Echoelmusic. 5 items are kept but inactive until you update.")
         XCTAssertNil(Project().newerBuildNotice, "a song with nothing kept says nothing")
     }
 

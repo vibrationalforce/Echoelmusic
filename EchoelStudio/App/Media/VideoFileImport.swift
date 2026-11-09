@@ -13,7 +13,7 @@ enum VideoFileImport {
 
         var errorDescription: String? {
             switch self {
-            case .unreadable: "This file is not a video Echoel can read."
+            case .unreadable: "This file is not a video Echoelmusic can read."
             case .noPicture: "This file holds no picture."
             }
         }

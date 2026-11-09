@@ -5,7 +5,7 @@
 /// is sold — the product id lives with the store and the licence check that read it.
 ///
 /// A component's `name` is the unit's own name; the host shows it after the manufacturer
-/// ("Echoel: Synth", conductor 2026-10-31), so it never repeats "Echoel". Type, subtype and
+/// ("Echoelmusic: Synth"; conductor 2026-10-31, maker renamed 2026-11-09), so it never repeats the maker. Type, subtype and
 /// manufacturer are what a host session saves, and they never change.
 public struct OwnPlugin: Sendable, Equatable, Identifiable {
     public let component: PluginComponent
@@ -16,19 +16,19 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
     public static let synth = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eSyn"),
                                    manufacturer: PluginComponent.code("Echo"), name: "Synth",
-                                   manufacturerName: "Echoel"),
+                                   manufacturerName: "Echoelmusic"),
         summary: "The studio's synth.")
 
     public static let drums = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eDrm"),
                                    manufacturer: PluginComponent.code("Echo"), name: "Drums",
-                                   manufacturerName: "Echoel"),
+                                   manufacturerName: "Echoelmusic"),
         summary: "The studio's synthesized drum kit on the General MIDI drum map.")
 
     public static let sampler = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eSmp"),
                                    manufacturer: PluginComponent.code("Echo"), name: "Sampler",
-                                   manufacturerName: "Echoel"),
+                                   manufacturerName: "Echoelmusic"),
         summary: "Load a sample and play it across the keys. The sample is saved with the host's session.")
 
     /// The four standard effects for other hosts (`StandardEffect.extensionComponent`). In Echoel
@@ -36,7 +36,7 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
     public static let effects = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code("xEQ5"),
                                    manufacturer: PluginComponent.code("Echo"), name: "Effects",
-                                   manufacturerName: "Echoel"),
+                                   manufacturerName: "Echoelmusic"),
         summary: "EQ, Compressor, Delay and Reverb.")
 
     /// The instrument the earlier Echoelmusic app shipped (`echl`, "EchoelBodyVibe"). The
@@ -45,7 +45,7 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
     public static let legacyBodyVibe = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("echl"),
                                    manufacturer: PluginComponent.code("Echo"), name: "Synth",
-                                   manufacturerName: "Echoel"),
+                                   manufacturerName: "Echoelmusic"),
         summary: "Opens host sessions saved with the earlier Echoelmusic instrument.")
 
     /// What the purchase unlocks in other hosts.
@@ -176,11 +176,12 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .multibandClipper: "xMCl"
         case .deEsser: "xDes"
         }
-        // The host shows "Echoel: EQ" — manufacturer, then this name, as `Plugins/AUv3/Info.plist`
-        // registers it. The app's own copy (`component`) keeps its stored name: a song saves it.
+        // The host shows "Echoelmusic: EQ" — manufacturer, then this name, as `Plugins/AUv3/Info.plist`
+        // registers it. The app's own copy (`component`) keeps its stored name and maker "Echoel": a
+        // song saves them (Law 3), and identity is the three codes, never the names.
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: title,
-                               manufacturerName: "Echoel")
+                               manufacturerName: "Echoelmusic")
     }
 
     /// The standard effect an extension component is, if it is one.

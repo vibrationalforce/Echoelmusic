@@ -57,7 +57,7 @@ enum VideoExport {
             case .unreadableMix: "The mix could not be read back for the video. Export again."
             case .cannotEncode: "This device cannot encode the video in that format. Choose H.264."
             case .noFieldLayer: "This device cannot draw the Field layer. Export with Field Layer set to Off."
-            case .fieldLayerStopped: "The Field could not be drawn into the video. Keep Echoel open while it exports, and export again."
+            case .fieldLayerStopped: "The Field could not be drawn into the video. Keep Echoelmusic open while it exports, and export again."
             case .failed(let reason): "The video could not be written (\(reason)). Check the free space and export again."
             }
         }

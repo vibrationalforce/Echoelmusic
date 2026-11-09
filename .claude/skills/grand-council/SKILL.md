@@ -85,7 +85,12 @@ bio-signal claim, a lawyer for a compliance fork, etc.)
 
 ## Procedure (one pass, then act)
 
-1. **Frame** the decision in one sentence — the actual fork, with the options.
+1. **Frame** the decision in one sentence — the actual fork, with the options — then fill a
+   five-line **brief** before any mind speaks: *the decision* · *the numbers* (money, time, users,
+   each with its source or `ANNAHME:`) · *the constraints* (law, founder rules, deadline) · *what is
+   already decided* (`decisions.csv`) · *what would change the verdict*. A vague brief gets a
+   flattering verdict; a missing line is named, not guessed (idea from the „roast-room“ reel,
+   learn mode 2026-11-09 — its imitated personas were rejected, the brief kept).
 2. **Ground it** in repo reality first: `echoelmusic-intern/memory/`, `docs/dev/FEATURE_MATRIX.md`,
    `CLAUDE.md` "CURRENT STATE" / "Absent", `echoelmusic-intern/decisions.csv`. No invented facts.
 3. **Seat 4–7 relevant minds.** Each gives ONE line: position + sharpest concern,

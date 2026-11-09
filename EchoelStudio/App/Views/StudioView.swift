@@ -1259,10 +1259,10 @@ struct SongMenu: View {
                 if agent.isOffered {
                     Button("Assistant…", systemImage: "text.bubble") { router.sheet = .agent }
                 }
-                Button("Echoel Plugins…", systemImage: "puzzlepiece.extension") { router.sheet = .store }
+                Button("Echoelmusic Plugins…", systemImage: "puzzlepiece.extension") { router.sheet = .store }
                 // Short chapters on what this build does and where its controls are (Recovery 8).
                 Button(StudioPlace.learn.title, systemImage: "book") { router.sheet = .learn }
-                Button("About Echoel", systemImage: "info.circle") { router.sheet = .about }
+                Button("About Echoelmusic", systemImage: "info.circle") { router.sheet = .about }
             }
         } label: {
             HStack(spacing: Theme.Space.xs) {
@@ -1456,7 +1456,7 @@ struct SongMenu: View {
             }
             Toggle(isOn: Binding(get: { engine.mpe.midi2Enabled }, set: { engine.mpe.setMIDI2($0) })) {
                 Text("MPE Out over MIDI 2.0")
-                Text("Source \u{201C}Echoel MPE (MIDI 2.0)\u{201D}, per-note bend")
+                Text("Source \u{201C}Echoelmusic MPE (MIDI 2.0)\u{201D}, per-note bend")
             }
             Divider()
             Text("The other device or app must support MIDI 2.0.")

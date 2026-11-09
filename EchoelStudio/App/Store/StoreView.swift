@@ -28,7 +28,7 @@ struct StoreView: View {
                 }
             }
             .echoelList()
-            .navigationTitle("Echoel Plugins")
+            .navigationTitle("Echoelmusic Plugins")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
             .task { await store.load() }

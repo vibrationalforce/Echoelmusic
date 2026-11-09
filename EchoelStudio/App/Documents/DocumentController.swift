@@ -57,7 +57,7 @@ final class DocumentController {
             let shown = importUnsaved.prefix(3).map { "\u{201C}\($0)\u{201D}" }.joined(separator: ", ")
             let more = importUnsaved.count > 3 ? " and \(importUnsaved.count - 3) more" : ""
             let songs = importUnsaved.count == 1 ? "The earlier song \(shown) could" : "The earlier songs \(shown)\(more) could"
-            lines.append("\(songs) not be saved here; Echoel tries again \(importRetriesOnReturn ? "once Echoel is back in front" : "at the next start").")
+            lines.append("\(songs) not be saved here; Echoelmusic tries again \(importRetriesOnReturn ? "once Echoel is back in front" : "at the next start").")
         }
         return lines.isEmpty ? nil : (lines + [Self.earlierFilesKept]).joined(separator: " ")
     }
@@ -267,8 +267,8 @@ final class DocumentController {
             log.error("the last launch did not finish — starting a new song")
             startSong(writing: false)
             note = suspect.map {
-                "Echoel did not finish starting last time, so this is a new song; \(Self.songName($0)) was open then and waits until you choose it."
-            } ?? "Echoel did not finish starting last time, so this is a new song. Your songs are in the list."
+                "Echoelmusic did not finish starting last time, so this is a new song; \(Self.songName($0)) was open then and waits until you choose it."
+            } ?? "Echoelmusic did not finish starting last time, so this is a new song. Your songs are in the list."
             if launch.startsSafe {
                 // Before any view reads it: the window's own setting, so the button brings it back.
                 startsSafe = true
@@ -304,10 +304,10 @@ final class DocumentController {
         if currentURL == nil { startSong(writing: false, from: songs.isEmpty ? .fourTracks : .empty) }
         if let unopened {
             note = unopened.newer
-                ? "\(unopened.name) was saved by a newer Echoel. It stays in your songs; update the app to open it."
+                ? "\(unopened.name) was saved by a newer Echoelmusic. It stays in your songs; update the app to open it."
                 : "\(unopened.name) could not be opened. It stays in your songs."
         } else if let held {
-            note = "\(held) was open when Echoel stopped, so it does not open by itself. Choose it in your songs to open it."
+            note = "\(held) was open when Echoelmusic stopped, so it does not open by itself. Choose it in your songs to open it."
         }
     }
 
@@ -501,7 +501,7 @@ final class DocumentController {
     /// The newer-build refusal as the musician reads it, naming what is missing when one name is.
     private static func newerLine(_ name: String, _ error: Error) -> String {
         let missing = (error as? ProjectCodec.DecodeError)?.missingName.map { " \($0)" } ?? ""
-        return "\(name) was saved by a newer Echoel.\(missing) Update the app to open it."
+        return "\(name) was saved by a newer Echoelmusic.\(missing) Update the app to open it."
     }
 
     /// A song handed to the app — tapped in Files, sent by AirDrop, shared from another app. It
@@ -621,7 +621,7 @@ final class DocumentController {
             if found.fromPrevious {
                 let name = url.deletingPathExtension().lastPathComponent
                 log.error("the document did not open — opened the copy one save back")
-                lastError = [failedMoveLine, "\(name) was damaged on disk, so Echoel opened it as it was one save earlier.",
+                lastError = [failedMoveLine, "\(name) was damaged on disk, so Echoelmusic opened it as it was one save earlier.",
                              project.newerBuildNotice]
                     .compactMap { $0 }.joined(separator: " ")
             }
@@ -760,8 +760,8 @@ final class DocumentController {
             if let gone {
                 // Written again so the changes are kept; the line says what the package took along.
                 lastError = project.media.isEmpty
-                    ? "\(gone) was moved or deleted in the Files app, so Echoel saved it again with your changes."
-                    : "\(gone) was moved or deleted in the Files app with its audio files. Echoel saved it again with your changes, without that audio."
+                    ? "\(gone) was moved or deleted in the Files app, so Echoelmusic saved it again with your changes."
+                    : "\(gone) was moved or deleted in the Files app with its audio files. Echoelmusic saved it again with your changes, without that audio."
                 if nameTakenFrom != nil {
                     lastError = (lastError ?? "") + " Another song has that name now, so this one is \(url.deletingPathExtension().lastPathComponent)."
                 }
@@ -1007,7 +1007,7 @@ final class DocumentController {
         // anything (review 007 round 1). It names where the file is, so it changes only with that,
         // and says what lags behind, the file, so it never reads as a failed save (round 2).
         let file = url.deletingPathExtension().lastPathComponent
-        let line = "Only the file lags behind: in the Files app the song is called \(file) for now, and Echoel tries to rename the file when it next saves."
+        let line = "Only the file lags behind: in the Files app the song is called \(file) for now, and Echoelmusic tries to rename the file when it next saves."
         // Said once; a later failure that left the file somewhere else says where it is now.
         guard line != failedMoveLine else { return }
         moveSettled()
@@ -1129,7 +1129,7 @@ final class DocumentController {
                 ? "A plugin stopped rendering during the export, so the file would have had gaps. Nothing was saved."
                 : error as? WAVWriter.WriteError == .tooLong
                 ? tooLong
-                : "Could not export the song. Try again; if it fails again, share the diagnostics from About Echoel."
+                : "Could not export the song. Try again; if it fails again, share the diagnostics from About Echoelmusic."
             return nil
         }
     }
@@ -1232,7 +1232,7 @@ final class DocumentController {
                     ? "A plugin stopped rendering during the export, so the stems would have had gaps. Nothing was saved."
                     : error as? WAVWriter.WriteError == .tooLong
                     ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz). Shorten the arrangement and export again."
-                    : "Could not export the stems. Try again; if it fails again, share the diagnostics from About Echoel."
+                    : "Could not export the stems. Try again; if it fails again, share the diagnostics from About Echoelmusic."
             }
             return nil
         }
@@ -1336,7 +1336,7 @@ final class DocumentController {
                 lastExportIsNews = false
                 lastError = error is PluginRenderFailed
                     ? "A plugin stopped rendering during the export, so the file would have had gaps. Nothing was saved."
-                    : "Could not export the ADM file. Check the free space and try again; if it fails again, share the diagnostics from About Echoel."
+                    : "Could not export the ADM file. Check the free space and try again; if it fails again, share the diagnostics from About Echoelmusic."
             }
             return nil
         }
@@ -1478,9 +1478,9 @@ final class DocumentController {
     }
 
     /// Why a file is left out when the song holds more audio than the device keeps.
-    private static let overBudget = "The song holds more audio than Echoel can keep in memory on this device."
+    private static let overBudget = "The song holds more audio than Echoelmusic can keep in memory on this device."
     /// Why a file is left out when the memory was not free to load it.
-    private static let noFreeMemory = "There was not enough free memory; Echoel tries again the next time the song opens."
+    private static let noFreeMemory = "There was not enough free memory; Echoelmusic tries again the next time the song opens."
 
     /// The audio files the arrangement plays that did not decode, by name: they render as
     /// silence, and the export says which and why. Only what it plays — a region, a placed audio
@@ -2244,7 +2244,7 @@ final class DocumentController {
         case .failure(let error):
             log.error("video export failed — \(error.localizedDescription, privacy: .private)")
             lastExportIsNews = false
-            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not export the video. Try again; if it fails again, share the diagnostics from About Echoel."
+            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not export the video. Try again; if it fails again, share the diagnostics from About Echoelmusic."
             return nil
         }
     }
@@ -2318,7 +2318,7 @@ final class DocumentController {
             if !grown.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: store.project,
                                          channels: channels).isEmpty {
                 try? FileManager.default.removeItem(at: copy)
-                lastError = "This file does not fit: the song already holds as much audio as Echoel can keep in memory on this device."
+                lastError = "This file does not fit: the song already holds as much audio as Echoelmusic can keep in memory on this device."
                 return nil
             }
             samples[imported.file.id] = imported.buffer
@@ -2715,7 +2715,7 @@ final class DocumentController {
             lastError = lastError.map { "\($0) \(line)" } ?? line
         }
         if !silenced.isEmpty {
-            let line = "The song now holds more audio than Echoel can keep in memory on this device; the next time it opens, \(Self.audioFiles(silenced.map(\.name))) \(silenced.count == 1 ? "stays" : "stay") silent."
+            let line = "The song now holds more audio than Echoelmusic can keep in memory on this device; the next time it opens, \(Self.audioFiles(silenced.map(\.name))) \(silenced.count == 1 ? "stays" : "stay") silent."
             lastError = lastError.map { "\($0) \(line)" } ?? line
         }
     }
@@ -3084,10 +3084,10 @@ final class DocumentController {
             return nil
         case .leftOut:
             log.error("the import of earlier songs ended twice on the same song — leaving it out")
-            return "Echoel ended twice while bringing the same earlier song over, so that song is left out; the others come over as usual."
+            return "Echoelmusic ended twice while bringing the same earlier song over, so that song is left out; the others come over as usual."
         case .givenUp:
             log.error("the import of earlier songs ended \(EarlierSongImport.attemptLimit, privacy: .public) runs in a row — not running it again")
-            return "Bringing your earlier songs over did not finish after several tries, so Echoel stops trying. Any it brought over are in your songs."
+            return "Bringing your earlier songs over did not finish after several tries, so Echoelmusic stops trying. Any it brought over are in your songs."
         }
     }
 

@@ -66,7 +66,7 @@ final class PluginControlsModel {
         } catch is SampleBuffer.OutOfMemory {
             sampleMessage = "There is not enough free memory to load this file. Close other apps or choose a shorter file."
         } catch {
-            sampleMessage = "Echoel cannot read this file. Choose a WAV, AIFF, CAF, MP3 or M4A file."
+            sampleMessage = "Echoelmusic cannot read this file. Choose a WAV, AIFF, CAF, MP3 or M4A file."
         }
     }
 
@@ -163,7 +163,7 @@ struct PluginControlsView: View {
                     .foregroundStyle(EchoelBrand.Color.text)
                     .accessibilityAddTraits(.isHeader)
                 if !model.isUnlocked {
-                    Text("Demo: two seconds of silence every 30 seconds. Echoel Plugins in Echoel Studio unlocks \(model.title) and shows whether it is on sale; reload it here after buying.")
+                    Text("Demo: two seconds of silence every 30 seconds. Echoelmusic Plugins in Echoelmusic unlocks \(model.title) and shows whether it is on sale; reload it here after buying.")
                         .font(EchoelBrand.Font.caption)
                         .foregroundStyle(EchoelBrand.Color.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)

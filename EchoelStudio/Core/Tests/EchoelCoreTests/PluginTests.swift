@@ -172,7 +172,7 @@ final class OwnPluginTests: XCTestCase {
         let registered = OwnPlugin.all.map(\.component) + [OwnPlugin.legacyBodyVibe.component]
             + StandardEffect.allCases.map(\.extensionComponent)
         for component in registered {
-            XCTAssertEqual(component.manufacturerName, "Echoel")
+            XCTAssertEqual(component.manufacturerName, "Echoelmusic")
             XCTAssertFalse(component.name.hasPrefix("Echoel"), "\(component.name) repeats the maker")
             XCTAssertFalse(component.name.isEmpty)
         }
