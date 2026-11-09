@@ -76,6 +76,7 @@ der Vollständigkeit halber. `window-margins.py` und `doorless-state.py` standen
 | `check-infoplist.sh` | Nach `xcodegen generate` — die Plist bleibt vollständig und wahr. Sie selbst ist founder-gated: berichten, nicht editieren. |
 | `install-hooks.sh` · `build-guard.sh` | Einrichtung auf dem Mac — das Xcode-Projekt entsteht mit `xcodegen generate --spec project.yml` (README.md §Build). `build-guard.sh` hängt als pre-push-Hook. |
 | `asc-build-state.rb` | Läuft in `studio-testflight.yml`: `auth` meldet sich vor dem Signieren einmal bei App Store Connect an, `wait <build> <version>` wartet nach dem Upload, bis Apple den Build als VALID, INVALID oder FAILED verarbeitet hat. Liest den Schlüssel nur aus der Umgebung und druckt ihn nie. |
+| `asc-beta.rb` | Nach einem VALID-Build: `distribute <build> <version> <Gruppe> EchoelStudio/RELEASE` setzt „What to Test“, lässt die Tester benachrichtigen, legt den Build in die Gruppe des öffentlichen Links und reicht ihn zur Beta App Review ein. `feedback [Tage]` druckt Screenshot- und Absturz-Feedback samt Crash-Log als Markdown, ohne Namen und E-Mail der Tester. Noch nie gegen App Store Connect gelaufen; in `studio-testflight.yml` einhängen ist founder-gated. |
 
 ## E — MEDIEN UND INHALT: Pipeline, nie in `Sources/`
 
