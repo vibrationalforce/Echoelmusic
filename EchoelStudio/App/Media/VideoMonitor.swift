@@ -1,5 +1,7 @@
 import AVFoundation
 import EchoelCore
+import Observation
+import QuartzCore
 import SwiftUI
 import UIKit
 
@@ -8,16 +10,31 @@ import UIKit
 /// It keeps no time of its own. Ten times a second it compares where the player is with where
 /// the clock says the file should be and holds, slews (±3 %) or seeks (`VideoPlan.correction`).
 /// A video's own sound is never played. Not observable: nothing in a view body reads it (Law 6).
+///
+/// The picture is a person's own footage, and footage can strobe. While the window shows, every
+/// new frame is measured small and counted (`VideoFlashWatch`, over `VideoFlashLimit`); the gain it
+/// answers is handed to the picture's leaf through `flashGate`, so a strobing passage is shown
+/// dimmed instead of flashing. The live stream and the export do not come through here.
 @MainActor
 final class VideoMonitor {
     let player = AVPlayer()
     nonisolated static let tickMilliseconds = 100
+    /// How often the shown frame is looked at for the flash limit: faster than any frame rate a
+    /// phone plays, so no frame of a strobe goes by uncounted.
+    nonisolated static let measureMilliseconds = 8
     /// A seek while playing aims this far ahead, so it lands about where the clock is when it ends.
     nonisolated static let seekLeadSeconds = 0.1
 
     private var loop: Task<Void, Never>?
     private var loaded: (media: MediaID, url: URL)?
     private var seeking = false
+
+    /// The gain the shown picture may have, for the one leaf that draws it.
+    let flashGate = VideoFlashGate()
+    /// The loaded file's frames at `VideoFlashCells.pixelsPerSide`, only for measuring.
+    private var measuring: AVPlayerItemVideoOutput?
+    private var measureLoop: Task<Void, Never>?
+    private var flashWatch = VideoFlashWatch()
 
     /// Hands the loaded file's frames to a picture the app draws itself — the Field layer's preview
     /// (W15) — while true. Off, nothing is decoded beyond what the player's own layer shows.
@@ -60,14 +77,24 @@ final class VideoMonitor {
                 try? await Task.sleep(for: .milliseconds(VideoMonitor.tickMilliseconds))
             }
         }
+        measureLoop = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                self.measureShownFrame()
+                try? await Task.sleep(for: .milliseconds(VideoMonitor.measureMilliseconds))
+            }
+        }
     }
 
     func stop() {
         loop?.cancel()
         loop = nil
+        measureLoop?.cancel()
+        measureLoop = nil
         grading = .off
         player.pause()
         detachOutput()
+        detachMeasuring()
         player.replaceCurrentItem(with: nil)
         loaded = nil
         seeking = false
@@ -89,8 +116,10 @@ final class VideoMonitor {
         if loaded?.media != shot.media || loaded?.url != url {
             loaded = (shot.media, url)
             detachOutput()
+            detachMeasuring()
             let item = AVPlayerItem(url: url)
             attachOutput(to: item)
+            attachMeasuring(to: item)
             player.replaceCurrentItem(with: item)
             grading = .off
             loadOrientation(of: url)
@@ -135,7 +164,54 @@ final class VideoMonitor {
         grading = .off
         player.pause()
         detachOutput()
+        detachMeasuring()
         player.replaceCurrentItem(with: nil)
+    }
+
+    // MARK: - The flash limit for the shown picture
+
+    private static var measuringAttributes: [String: any Sendable] {
+        [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+         kCVPixelBufferWidthKey as String: VideoFlashCells.pixelsPerSide,
+         kCVPixelBufferHeightKey as String: VideoFlashCells.pixelsPerSide]
+    }
+
+    private func attachMeasuring(to item: AVPlayerItem) {
+        let made = AVPlayerItemVideoOutput(pixelBufferAttributes: Self.measuringAttributes)
+        item.add(made)
+        measuring = made
+    }
+
+    private func detachMeasuring() {
+        if let measuring, let item = player.currentItem, item.outputs.contains(measuring) { item.remove(measuring) }
+        measuring = nil
+    }
+
+    /// One look at what is shown now, on the display's clock: a new frame is measured and counted,
+    /// a held one only lets a lowered gain climb back (`VideoFlashWatch`). A frame that cannot be
+    /// read changes nothing.
+    private func measureShownFrame() {
+        guard let output = measuring else { return }
+        let now = CACurrentMediaTime()
+        let itemTime = output.itemTime(forHostTime: now)
+        if output.hasNewPixelBuffer(forItemTime: itemTime),
+           let pixel = output.copyPixelBuffer(forItemTime: itemTime, itemTimeForDisplay: nil) {
+            flashGate.update(show(pixel, at: now))
+        } else {
+            flashGate.update(flashWatch.hold(at: now))
+        }
+    }
+
+    /// Hands a frame's bytes to the watch and answers the gain.
+    private func show(_ pixel: CVPixelBuffer, at time: Double) -> Double {
+        guard CVPixelBufferLockBaseAddress(pixel, .readOnly) == kCVReturnSuccess else { return flashWatch.gain }
+        defer { CVPixelBufferUnlockBaseAddress(pixel, .readOnly) }
+        guard let base = CVPixelBufferGetBaseAddress(pixel) else { return flashWatch.gain }
+        let height = CVPixelBufferGetHeight(pixel)
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(pixel)
+        let bytes = UnsafeRawBufferPointer(start: base, count: bytesPerRow * height)
+        return flashWatch.show(bgra: bytes, width: CVPixelBufferGetWidth(pixel), height: height,
+                               bytesPerRow: bytesPerRow, at: time)
     }
 
     // MARK: - Frames for the Field layer's preview (W15)
@@ -244,6 +320,59 @@ final class VideoMonitor {
     }
 }
 
+/// The gain the shown footage may have (`VideoFlashLimit`), for the picture's leaf: 1 while
+/// nothing flashes, near 0 while something does, climbing back afterwards. Observed, and written
+/// only when it moves, so a quiet film draws nothing again.
+@MainActor
+@Observable
+final class VideoFlashGate {
+    private(set) var gain = 1.0
+    /// The picture is held back now: said in the window's bar, so a dark picture has a reason.
+    private(set) var isLimiting = false
+
+    func update(_ next: Double) {
+        guard next.isFinite else { return }
+        if next != gain { gain = next }
+        let limiting = next < 1
+        if limiting != isLimiting { isLimiting = limiting }
+    }
+}
+
+/// The footage's picture behind its flash limit: on black, as bright as the limit allows. The one
+/// view that reads the moving gain (Law 6).
+private struct FlashLimitedPicture<Content: View>: View {
+    let gate: VideoFlashGate
+    let content: Content
+
+    init(gate: VideoFlashGate, @ViewBuilder content: () -> Content) {
+        self.gate = gate
+        self.content = content()
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black
+            content.opacity(gate.gain)
+        }
+    }
+}
+
+/// Says in the window's bar why the picture is dark while the limit holds it back.
+private struct FlashLimitNote: View {
+    let gate: VideoFlashGate
+
+    var body: some View {
+        if gate.isLimiting {
+            Text("Flash limit")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .accessibilityLabel("The picture flashes and is dimmed")
+        }
+    }
+}
+
 /// A view whose layer is the player's picture.
 private final class PlayerLayerView: UIView {
     override class var layerClass: AnyClass { AVPlayerLayer.self }
@@ -297,6 +426,7 @@ struct VideoWindow: View {
                 Image(systemName: "film")
                     .frame(width: Theme.Size.touch, height: Theme.Size.touch)
                     .accessibilityHidden(true)
+                FlashLimitNote(gate: monitor.flashGate)
                 Spacer(minLength: 0)
                 Button(action: close) { Image(systemName: "xmark") }
                     .buttonStyle(.plain)
@@ -323,10 +453,12 @@ struct VideoWindow: View {
     /// drawn by the export's pass. Should that pass not build, it stands aside and the plain
     /// picture shows.
     private var picture: some View {
-        ZStack {
-            PlayerPicture(player: monitor.player)
-            if layer.isVisible {
-                FieldLayerPicture(monitor: monitor, layer: layer, reduceMotion: reduceMotion)
+        FlashLimitedPicture(gate: monitor.flashGate) {
+            ZStack {
+                PlayerPicture(player: monitor.player)
+                if layer.isVisible {
+                    FieldLayerPicture(monitor: monitor, layer: layer, reduceMotion: reduceMotion)
+                }
             }
         }
     }
