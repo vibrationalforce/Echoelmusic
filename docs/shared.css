@@ -16,7 +16,7 @@
     --dim: rgba(224,224,224,0.65);                /* Theme.Color.textSecondary — 6.7:1 on black */
     --dim-tertiary: rgba(224,224,224,0.58);       /* Theme.Color.textTertiary — 5.5:1 on black */
     --surface: #0e0e12;                           /* Theme.Color.surface */
-    --surface-raised: #1a1a1e;                    /* Theme.Color.surfaceRaised */
+    --surface-raised: #1b1b1e;                    /* Theme.Color.surfaceRaised */
     --border: rgba(224,224,224,0.10);             /* Theme.Color.border — a divider */
     --border-strong: rgba(224,224,224,0.45);      /* Theme.Color.borderStrong — a control's edge, 3.6:1 */
     --accent: #4dd98c;                            /* Theme.Color.accent — bio-green: a live signal only; nothing on the site is one */
@@ -432,5 +432,5 @@ footer {
     *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 @media (prefers-contrast: high) {
-    :root { --dim: rgba(224,224,224,0.85); }
+    :root { --dim: rgba(224,224,224,0.9); --border: rgba(224,224,224,0.2); }
 }

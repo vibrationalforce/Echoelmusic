@@ -38,7 +38,6 @@
             --font: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
         }
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        html { background: var(--bg); }
         html { background: var(--bg); color-scheme: dark; }
         body {
             font-family: var(--font);
@@ -87,6 +86,9 @@
         footer { border-top: 1px solid var(--border); padding: 20px 0 32px; color: var(--dim); font-size: 0.875rem; display: flex; flex-wrap: wrap; gap: 8px 20px; }
         @media (prefers-reduced-motion: no-preference) {
             .ring .fill { transition: stroke-dashoffset 220ms linear; }
+        }
+        @media (prefers-contrast: high) {
+            :root { --dim: rgba(224,224,224,0.9); --border: rgba(224,224,224,0.2); }
         }
     </style>
 </head>

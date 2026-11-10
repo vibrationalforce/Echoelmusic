@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.34.0',K='echoel-nuke';try{
+    (function(){var V='10.35.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -63,7 +63,7 @@
             --dim: rgba(224,224,224,0.65);
             --bg: #000;
             --surface: #0e0e12;
-            --surface-raised: #1a1a1e;
+            --surface-raised: #1b1b1e;
             --glass: var(--surface);
             --border: rgba(224,224,224,0.10);
             --border-strong: rgba(224,224,224,0.45);
