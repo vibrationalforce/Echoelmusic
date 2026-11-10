@@ -106,10 +106,12 @@ struct RegionColorView: View {
             } label: {
                 Label("Match Color", systemImage: "eyedropper")
             }
+            .menuStyle(.button)
             .disabled(others.isEmpty)
             .accessibilityHint("Takes the colour of another video part of the song.")
         }
-        .buttonStyle(.bordered)
+        // The app's own button, not the system's tinted capsule: one look for every control.
+        .buttonStyle(ToolButtonStyle())
         .disabled(reading != nil)
     }
 

@@ -58,6 +58,19 @@ struct StudioView: View {
             }
         }
 
+        /// Its symbol on the bar of views, above the word.
+        var symbol: String {
+            switch self {
+            case .instrument: "pianokeys"
+            case .tracks: "list.bullet"
+            case .arrange: "rectangle.split.3x1"
+            case .session: "square.grid.3x3"
+            case .mixer: "slider.vertical.3"
+            case .field: "circle.hexagongrid"
+            case .sky: "moon.stars"
+            }
+        }
+
         /// Whether the keys belong under this view: where notes are played or written. The mixer,
         /// the Field and the sky keep their whole height — under the keys a phone left the mixer
         /// about 350 points for a strip that wants 520.
@@ -813,8 +826,7 @@ private struct ListeningNote: View {
                     .foregroundStyle(Theme.Color.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Button("OK") { seen = true }
-                    .font(Theme.Font.label)
-                    .frame(minHeight: Theme.Size.touch)
+                    .buttonStyle(ToolButtonStyle())
                     .accessibilityLabel("OK, Hide the Listening Note")
             }
             .padding(.horizontal, Theme.Space.l)
@@ -1519,25 +1531,24 @@ struct SongMenu: View {
     }
 }
 
-/// The views of the studio as a row of chips at the bottom, where the earlier instrument had its
-/// bar: the chosen one is the off-white tile, the others raised with a hairline. It scrolls
-/// sideways rather than squeezing the names into a segmented control.
+/// The views of the studio at the bottom, where the earlier instrument had its bar: seven equal
+/// cells, a symbol over the word, the chosen one the off-white tile. Every view is on screen on
+/// every phone. As a row of word chips the bar was 536 points wide — on a 390-point screen Field
+/// and Sky lay beyond the edge with nothing to hint at them (device recording of build 10068).
 private struct SurfaceBar: View {
     @Binding var selection: StudioView.Surface
 
     private static var items: [StudioView.Surface] { [.instrument, .tracks, .arrange, .session, .mixer, .field, .sky] }
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Theme.Space.s) {
-                ForEach(Array(Self.items.enumerated()), id: \.element) { index, surface in
-                    chip(surface, surface.title)
-                        .shortcut(.view(index))
-                }
+        HStack(spacing: Theme.Space.xxs) {
+            ForEach(Array(Self.items.enumerated()), id: \.element) { index, surface in
+                cell(surface)
+                    .shortcut(.view(index))
             }
-            .padding(.horizontal, Theme.Space.m)
-            .padding(.vertical, Theme.Space.s)
         }
+        .padding(.horizontal, Theme.Space.xs)
+        .padding(.vertical, Theme.Space.xs)
         .background(Theme.Color.surface)
         .overlay(alignment: .top) {
             Rectangle().fill(Theme.Color.border).frame(height: 1)
@@ -1547,12 +1558,46 @@ private struct SurfaceBar: View {
         .accessibilityLabel("Views")
     }
 
-    private func chip(_ surface: StudioView.Surface, _ title: String) -> some View {
+    private func cell(_ surface: StudioView.Surface) -> some View {
         let chosen = selection == surface
-        return Button(title) { selection = surface }
-            .buttonStyle(ToolButtonStyle(isActive: chosen))
-            .animation(Theme.Motion.quick, value: chosen)
-            .accessibilityAddTraits(chosen ? .isSelected : [])
+        return Button { selection = surface } label: {
+            VStack(spacing: Theme.Space.xxs) {
+                Image(systemName: surface.symbol)
+                    .font(Theme.Font.label)
+                    .accessibilityHidden(true)
+                // One line, shrunk before it is cut: "Instrument" is the widest word of the seven.
+                Text(surface.title)
+                    .font(Theme.Font.caption)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
+        }
+        .buttonStyle(SurfaceCellStyle(isChosen: chosen))
+        .animation(Theme.Motion.quick, value: chosen)
+        .accessibilityLabel(surface.title)
+        .accessibilityAddTraits(chosen ? .isSelected : [])
+    }
+}
+
+/// A cell of the bar of views: the chosen one is the off-white tile with a black label, as every
+/// chosen control; the others are plain symbol and word, so seven share a phone's width without
+/// seven frames. It has no minimum width of its own — the tool button's 60 points times seven
+/// is wider than a phone.
+private struct SurfaceCellStyle: ButtonStyle {
+    let isChosen: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(isChosen ? Theme.Color.onAccent : Theme.Color.text)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.medium)
+                    .fill(isChosen ? Theme.Color.text : Theme.Color.surface)
+            )
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? Theme.Motion.pressedOpacity : 1)
+            .animation(Theme.Motion.quick, value: configuration.isPressed)
+            .accessibilityShowsLargeContentViewer()
     }
 }
 
