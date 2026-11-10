@@ -103,6 +103,20 @@ struct PluginControlsView: View {
     var maximumSampleSeconds: Double
     var maximumSampleFrames: Int
     @State private var importing = false
+    /// The narrowest a number's field gets (the Studio's own measure, `SoundPanel`): a phone-wide
+    /// host window then shows two fields side by side instead of one.
+    @ScaledMetric(relativeTo: .body) private var columnWidth: CGFloat = 150
+
+    /// The parameters whose values have names, and the switches: one full row each.
+    private var namedParameters: [AUParameter] {
+        model.parameters.filter { $0.valueStrings != nil || $0.unit == .boolean }
+    }
+
+    /// The numbers. They share a grid: a host's window on a phone is about 250 points high, and
+    /// one field per row left two of them on screen (host recording of build 10068, 2026-11-10).
+    private var numberParameters: [AUParameter] {
+        model.parameters.filter { $0.valueStrings == nil && $0.unit != .boolean }
+    }
 
     /// Wide ranges (cutoff, times) move by ratio, so the low end is as reachable as the high.
     private static func isExponential(_ parameter: AUParameter) -> Bool {
@@ -169,8 +183,14 @@ struct PluginControlsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if model.acceptsSamples { sampleRow }
-                ForEach(model.parameters, id: \.address) { parameter in
+                ForEach(namedParameters, id: \.address) { parameter in
                     row(parameter)
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: columnWidth), spacing: EchoelBrand.Space.s)],
+                          alignment: .leading, spacing: EchoelBrand.Space.s) {
+                    ForEach(numberParameters, id: \.address) { parameter in
+                        row(parameter)
+                    }
                 }
                 if let help = model.help {
                     Text(help)
