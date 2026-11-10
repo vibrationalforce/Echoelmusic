@@ -78,14 +78,13 @@ struct SoundPanel: View {
     }
 
     private var devicePicker: some View {
-        Picker("Instrument", selection: Binding(
+        let devices = InstrumentDevice.builtIn.map { (device: InstrumentDevice) -> SegmentOption<InstrumentDevice> in
+            SegmentOption(device, device.title)
+        }
+        return EchoelSegments("Instrument", selection: Binding(
             get: { track.instrument.device },
             set: { try? store.perform(.setInstrumentDevice(track.id, $0)) }
-        )) {
-            ForEach(InstrumentDevice.builtIn, id: \.self) { Text($0.title).tag($0) }
-        }
-        .pickerStyle(.segmented)
-        .accessibilityLabel("Instrument")
+        ), options: devices)
     }
 
     /// Every installed Audio Unit instrument, searchable, by maker and the ones used last
@@ -303,35 +302,36 @@ struct SoundPanel: View {
     /// armed and the song plays lands in its lane instead of being overridden by it.
     private enum ChoiceStyle { case segmented, menu }
 
+    /// The engines do not fit a row of cells on a phone: the engine is a menu, the short choices
+    /// are a row (`EchoelSegments`).
+    @ViewBuilder
     private func choicePicker(_ parameter: InstrumentParameter, style: ChoiceStyle = .segmented) -> some View {
         let address = ParameterAddress(.track(track.id), parameter.key)
         let current = Int(track.instrument.value(parameter).rounded())
         let writing = writer.isWriting && engine.isPlaying
-        return Picker(parameter.title, selection: Binding(
+        let choice = Binding<Int>(
             get: { writing ? (passPick ?? current) : current },
-            set: {
-                passPick = writing ? $0 : nil
-                writer.set(address, to: Double($0), coalescingKey: nil)
+            set: { (index: Int) in
+                passPick = writing ? index : nil
+                writer.set(address, to: Double(index), coalescingKey: nil)
                 writer.endGesture()
             }
-        )) {
-            ForEach(parameter.choices.indices, id: \.self) { Text(parameter.choices[$0]).tag($0) }
+        )
+        switch style {
+        case .menu:
+            Picker(parameter.title, selection: choice) {
+                ForEach(parameter.choices.indices, id: \.self) { Text(parameter.choices[$0]).tag($0) }
+            }
+            .pickerStyle(.menu)
+            .accessibilityLabel(parameter.title)
+        case .segmented:
+            EchoelSegments(parameter.title, selection: choice, options: choiceOptions(parameter))
         }
-        .modifier(ChoiceStyleModifier(menu: style == .menu))
-        .accessibilityLabel(parameter.title)
     }
-}
 
-/// Ten engines do not fit a segmented row on a phone: the engine is a menu, the short choices stay
-/// segmented.
-private struct ChoiceStyleModifier: ViewModifier {
-    let menu: Bool
-
-    func body(content: Content) -> some View {
-        if menu {
-            content.pickerStyle(.menu)
-        } else {
-            content.pickerStyle(.segmented)
+    private func choiceOptions(_ parameter: InstrumentParameter) -> [SegmentOption<Int>] {
+        parameter.choices.indices.map { (index: Int) -> SegmentOption<Int> in
+            SegmentOption(index, parameter.choices[index])
         }
     }
 }

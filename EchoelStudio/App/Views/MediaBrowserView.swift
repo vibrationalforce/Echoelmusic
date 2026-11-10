@@ -132,14 +132,11 @@ struct MediaBrowserView: View {
     }
 
     private func kindPicker(counts: [MediaBrowser.Kind: Int], total: Int) -> some View {
-        Picker("Kind", selection: $kind) {
-            Text("All \(total)").tag(MediaBrowser.Kind?.none)
-            ForEach(MediaBrowser.Kind.allCases, id: \.self) { kind in
-                Text("\(kind.title) \(counts[kind] ?? 0)").tag(MediaBrowser.Kind?.some(kind))
-            }
+        var shown: [SegmentOption<MediaBrowser.Kind?>] = [SegmentOption(MediaBrowser.Kind?.none, "All \(total)")]
+        for each in MediaBrowser.Kind.allCases {
+            shown.append(SegmentOption(MediaBrowser.Kind?.some(each), "\(each.title) \(counts[each] ?? 0)"))
         }
-        .pickerStyle(.segmented)
-        .accessibilityLabel("Show")
+        return EchoelSegments("Show", selection: $kind, options: shown)
     }
 
     private func footer(shown: Int, total: Int) -> String? {

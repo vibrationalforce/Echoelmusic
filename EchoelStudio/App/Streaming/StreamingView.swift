@@ -257,15 +257,17 @@ struct StreamTargetEditor: View {
         }
     }
 
+    /// The stream's shapes by name, for their row of cells.
+    private var formatOptions: [SegmentOption<StreamFormat>] {
+        StreamFormat.allCases.map { (format: StreamFormat) -> SegmentOption<StreamFormat> in
+            SegmentOption(format, format.title)
+        }
+    }
+
     private var shapeSection: some View {
         EchoelSection("Picture",
                       footer: "\(target.format.pixelWidth) × \(target.format.pixelHeight), 30 frames a second. Recommended for \(target.platform.title): \(target.platform.recommendedFormats.map(\.title).joined(separator: ", ")).") {
-            Picker("Shape", selection: $target.format) {
-                ForEach(StreamFormat.allCases, id: \.self) { format in
-                    Text(format.title).tag(format)
-                }
-            }
-            .pickerStyle(.segmented)
+            EchoelSegments("Shape", selection: $target.format, options: formatOptions)
         }
     }
 

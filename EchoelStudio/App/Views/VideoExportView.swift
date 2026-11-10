@@ -33,15 +33,11 @@ struct VideoExportView: View {
             Form {
                 exportStatus
                 EchoelSection("Frame") {
-                    Picker("Frame", selection: $options.shape) {
-                        ForEach(VideoExportPlan.Shape.allCases, id: \.self) { Text($0.title).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    Picker("Picture", selection: $options.fit) {
-                        Text("Fill").tag(VideoExportPlan.Fit.fill)
-                        Text("Fit").tag(VideoExportPlan.Fit.fit)
-                    }
-                    .pickerStyle(.segmented)
+                    EchoelSegments("Frame", selection: $options.shape, options: shapeOptions)
+                    EchoelSegments("Picture", selection: $options.fit, options: [
+                        SegmentOption(VideoExportPlan.Fit.fill, "Fill"),
+                        SegmentOption(VideoExportPlan.Fit.fit, "Fit"),
+                    ])
                     NoteText("Fill crops the picture to the frame in the export only; Fit shows all of it on black.")
                 }
                 fieldSection
@@ -58,11 +54,10 @@ struct VideoExportView: View {
                     }
                 }
                 EchoelSection("Encoding") {
-                    Picker("Codec", selection: $options.codec) {
-                        Text("H.264").tag(VideoExportPlan.Codec.h264)
-                        Text("HEVC").tag(VideoExportPlan.Codec.hevc)
-                    }
-                    .pickerStyle(.segmented)
+                    EchoelSegments("Codec", selection: $options.codec, options: [
+                        SegmentOption(VideoExportPlan.Codec.h264, "H.264"),
+                        SegmentOption(VideoExportPlan.Codec.hevc, "HEVC"),
+                    ])
                     Picker("Loudness", selection: $options.loudness) {
                         ForEach(ExportLoudness.allCases, id: \.self) { Text($0.title).tag($0) }
                     }
@@ -102,15 +97,25 @@ struct VideoExportView: View {
         }
     }
 
+    /// The frames and the blends by name, for their rows of cells.
+    private var shapeOptions: [SegmentOption<VideoExportPlan.Shape>] {
+        VideoExportPlan.Shape.allCases.map { (shape: VideoExportPlan.Shape) -> SegmentOption<VideoExportPlan.Shape> in
+            SegmentOption(shape, shape.title)
+        }
+    }
+
+    private var blendOptions: [SegmentOption<FieldLayer.Blend>] {
+        FieldLayer.Blend.allCases.map { (blend: FieldLayer.Blend) -> SegmentOption<FieldLayer.Blend> in
+            SegmentOption(blend, blend.title)
+        }
+    }
+
     /// The Field over the picture (W15): Off, or Screen, Add or Normal at an opacity. Without Metal
     /// the choice is held at Off and says why.
     private var fieldSection: some View {
         EchoelSection("Field") {
-            Picker("Field Layer", selection: $fieldBlend) {
-                ForEach(FieldLayer.Blend.allCases, id: \.self) { Text($0.title).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .disabled(!MetalField.isAvailable)
+            EchoelSegments("Field Layer", selection: $fieldBlend, options: blendOptions)
+                .disabled(!MetalField.isAvailable)
             if !MetalField.isAvailable {
                 NoteText("The Field layer needs Metal graphics, which this device does not have.")
             } else {

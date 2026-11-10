@@ -134,11 +134,10 @@ struct InstrumentSurface: View {
                 .font(Theme.Font.label)
                 .foregroundStyle(Theme.Color.textSecondary)
                 .accessibilityHidden(true)
-            Picker("Tempo", selection: Binding(get: { flow.lock }, set: { flow.setLock($0) })) {
-                Text("Fixed").tag(TempoLock.fixed)
-                Text("Flow").tag(TempoLock.flow)
-            }
-            .pickerStyle(.segmented)
+            EchoelSegments("Tempo", selection: Binding(get: { flow.lock }, set: { flow.setLock($0) }), options: [
+                SegmentOption(TempoLock.fixed, "Fixed"),
+                SegmentOption(TempoLock.flow, "Flow"),
+            ])
             .disabled(!flow.canFlow && flow.lock == .fixed)
             .accessibilityHint("Fixed keeps the tempo where you set it. Flow lets your pulse move it, one step per bar.")
             FlowStatusLine()
