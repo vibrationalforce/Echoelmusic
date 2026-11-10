@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// The outside work that ships inside Echoel Studio, with the licence each comes under — shown
-/// in full, offline, from About. The texts are the projects' own: HaishinKit (read at 2.2.5; 2.3.0 is linked since 2026-11-10) and Logboard
-/// 2.6.0 (BSD-3-Clause, from each repository's LICENSE.md at that tag) and Atkinson Hyperlegible
+/// The outside work that ships inside Echoelmusic, with the licence each comes under — shown
+/// in full, offline, from About. The texts are the projects' own: HaishinKit (2.3.0 is linked
+/// since 2026-11-10; its LICENSE.md at that tag is the text below, as it was at 2.2.5) and Logboard
+/// 2.6 (BSD-3-Clause, from each repository's LICENSE.md) and Atkinson Hyperlegible
 /// 1.006 (SIL Open Font License 1.1). libsrt and the OpenSSL inside it left with SRT (2026-11-04).
 /// Keep this list in step with `THIRD_PARTY_NOTICES.md` and with what `project.yml` links.
 struct Acknowledgment: Identifiable, Hashable {
