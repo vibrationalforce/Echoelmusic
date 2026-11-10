@@ -107,15 +107,47 @@ struct PluginControlsView: View {
     /// host window then shows two fields side by side instead of one.
     @ScaledMetric(relativeTo: .body) private var columnWidth: CGFloat = 150
 
-    /// The parameters whose values have names, and the switches: one full row each.
-    private var namedParameters: [AUParameter] {
-        model.parameters.filter { $0.valueStrings != nil || $0.unit == .boolean }
+    /// Under this height the window is a host's strip on a phone — about 250 points in the host
+    /// recording of build 10068 (2026-11-10). The host's own bar names the unit there, so the
+    /// title goes and the margins tighten, and the room is the controls'.
+    private static let compactHeight: CGFloat = 340
+
+    /// A parameter's named values, when it has any.
+    private static func choiceNames(of parameter: AUParameter) -> [String]? {
+        guard let names = parameter.valueStrings, !names.isEmpty else { return nil }
+        return names
     }
 
-    /// The numbers. They share a grid: a host's window on a phone is about 250 points high, and
-    /// one field per row left two of them on screen (host recording of build 10068, 2026-11-10).
-    private var numberParameters: [AUParameter] {
-        model.parameters.filter { $0.valueStrings == nil && $0.unit != .boolean }
+    /// A choice's place among `count` names, whatever its value is: inside the list, 0 for a value
+    /// that is not a number.
+    static func index(of value: AUValue, count: Int) -> Int {
+        guard value.isFinite, count > 0 else { return 0 }
+        return Int(Swift.min(Swift.max(value.rounded(), 0), AUValue(count - 1)))
+    }
+
+    /// The rows on screen, in the order a hand reaches for them: the engine first (it decides
+    /// which rows there are), then the other named choices, the switches, the numbers — all in ONE
+    /// grid. As full rows above the numbers, the synth's five choices (each a caption over a
+    /// 44-point control) stood between the top of a phone-high window and its first number.
+    /// A row only one engine plays (the texture's rule, density, rate and seed, the DDSP profile)
+    /// shows while that engine is chosen, as on the Studio's Sound page; a host still reaches it
+    /// by its address.
+    private var rows: [AUParameter] {
+        let engine = model.parameters.first { $0.identifier == Self.engineIdentifier }
+        let chosen = engine.map { found in
+            Self.index(of: model.values[found.address] ?? found.value, count: Self.choiceNames(of: found)?.count ?? 0)
+        }
+        let shown = model.parameters.filter { parameter in
+            guard let chosen else { return true }
+            if Self.textureIdentifiers.contains(parameter.identifier) { return chosen == SynthParameter.textureEngineIndex }
+            if parameter.identifier == Self.profileIdentifier { return chosen == SynthParameter.ddspEngineIndex }
+            return true
+        }
+        let engines = shown.filter { $0.identifier == Self.engineIdentifier }
+        let choices = shown.filter { $0.identifier != Self.engineIdentifier && Self.choiceNames(of: $0) != nil }
+        let switches = shown.filter { Self.choiceNames(of: $0) == nil && $0.unit == .boolean }
+        let numbers = shown.filter { Self.choiceNames(of: $0) == nil && $0.unit != .boolean }
+        return engines + choices + switches + numbers
     }
 
     /// Wide ranges (cutoff, times) move by ratio, so the low end is as reachable as the high.
@@ -160,8 +192,17 @@ struct PluginControlsView: View {
         }
     }
 
-    /// The sampler's root key in the tree (`InstrumentKernelParameter`: the key with "_" for ".").
-    private static let rootKeyIdentifier = SynthParameter.samplerRoot.key.rawValue.replacingOccurrences(of: ".", with: "_")
+    /// A Core row's identifier in the tree (`InstrumentKernelParameter`: the key with "_" for ".").
+    /// On no actor: the constants below are made from it.
+    nonisolated private static func identifier(_ row: SynthParameter) -> String {
+        row.key.rawValue.replacingOccurrences(of: ".", with: "_")
+    }
+
+    /// The sampler's root key, and the synth's rows that decide what shows (`rows`).
+    private static let rootKeyIdentifier = PluginControlsView.identifier(SynthParameter.samplerRoot)
+    private static let engineIdentifier = PluginControlsView.identifier(SynthParameter.engine)
+    private static let profileIdentifier = PluginControlsView.identifier(SynthParameter.ddspProfile)
+    private static let textureIdentifiers = Set(SynthParameter.textureRows.map { PluginControlsView.identifier($0) })
 
     static func value(at position: AUValue, in parameter: AUParameter) -> AUValue {
         let lo = parameter.minValue, hi = parameter.maxValue
@@ -170,40 +211,44 @@ struct PluginControlsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: EchoelBrand.Space.m) {
-                Text(model.title)
-                    .font(EchoelBrand.Font.title)
-                    .foregroundStyle(EchoelBrand.Color.text)
-                    .accessibilityAddTraits(.isHeader)
-                if !model.isUnlocked {
-                    Text("Demo: two seconds of silence every 30 seconds. \(PluginUnlock.name) in the Echoelmusic app unlocks \(model.title); reload it here after buying.")
-                        .font(EchoelBrand.Font.caption)
-                        .foregroundStyle(EchoelBrand.Color.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                if model.acceptsSamples { sampleRow }
-                ForEach(namedParameters, id: \.address) { parameter in
-                    row(parameter)
-                }
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: columnWidth), spacing: EchoelBrand.Space.s)],
-                          alignment: .leading, spacing: EchoelBrand.Space.s) {
-                    ForEach(numberParameters, id: \.address) { parameter in
-                        row(parameter)
+        GeometryReader { window in
+            let compact = window.size.height < Self.compactHeight
+            ScrollView {
+                VStack(alignment: .leading, spacing: compact ? EchoelBrand.Space.s : EchoelBrand.Space.m) {
+                    if !compact { title }
+                    if !model.isUnlocked {
+                        note("Demo: two seconds of silence every 30 seconds. \(PluginUnlock.name) in the Echoelmusic app unlocks \(model.title); reload it here after buying.")
                     }
+                    if model.acceptsSamples { sampleRow }
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: columnWidth), spacing: EchoelBrand.Space.s)],
+                              alignment: .leading, spacing: EchoelBrand.Space.s) {
+                        ForEach(rows, id: \.address) { parameter in
+                            row(parameter)
+                        }
+                    }
+                    if let help = model.help { note(help) }
                 }
-                if let help = model.help {
-                    Text(help)
-                        .font(EchoelBrand.Font.caption)
-                        .foregroundStyle(EchoelBrand.Color.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                .padding(compact ? EchoelBrand.Space.s : EchoelBrand.Space.l)
             }
-            .padding(EchoelBrand.Space.l)
         }
         .background(EchoelBrand.Color.background)
         .tint(EchoelBrand.Color.accent)
         .preferredColorScheme(.dark)
+    }
+
+    private var title: some View {
+        Text(model.title)
+            .font(EchoelBrand.Font.title)
+            .foregroundStyle(EchoelBrand.Color.text)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    /// A sentence beside the controls: the demo's, or the unit's one line of help.
+    private func note(_ sentence: String) -> some View {
+        Text(sentence)
+            .font(EchoelBrand.Font.caption)
+            .foregroundStyle(EchoelBrand.Color.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var sampleRow: some View {
@@ -237,20 +282,8 @@ struct PluginControlsView: View {
 
     @ViewBuilder private func row(_ parameter: AUParameter) -> some View {
         let value = model.values[parameter.address] ?? parameter.value
-        if let names = parameter.valueStrings {
-            VStack(alignment: .leading, spacing: EchoelBrand.Space.xs) {
-                Text(parameter.displayName)
-                    .font(EchoelBrand.Font.caption)
-                    .foregroundStyle(EchoelBrand.Color.textSecondary)
-                Picker(parameter.displayName, selection: Binding(
-                    get: { Int(value.rounded()) },
-                    set: { model.set(parameter, AUValue($0)) }
-                )) {
-                    ForEach(names.indices, id: \.self) { Text(names[$0]).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .frame(minHeight: EchoelBrand.touch)
-            }
+        if let names = Self.choiceNames(of: parameter) {
+            PluginChoiceField(parameter: parameter, names: names, value: value) { model.set(parameter, $0) }
         } else if parameter.unit == .boolean {
             // The Studio's switch (`EchoelToggle.swift`, shared), not the system's green pill.
             Toggle(parameter.displayName, isOn: Binding(get: { value >= 0.5 }, set: { model.set(parameter, $0 ? 1 : 0) }))
@@ -326,6 +359,56 @@ private struct PluginValueField: View {
             let step: AUValue = direction == .increment ? 0.02 : -0.02
             set(PluginControlsView.value(at: position + step, in: parameter))
         }
+    }
+}
+
+/// A named choice in the plugin window, drawn as the value field beside it: the name above, the
+/// chosen value below, a chevron for "there is more". A tap opens the names as a menu — eleven
+/// engines do not fit a segmented row in a phone-wide window (the Studio's own rule, `SoundPanel`),
+/// and the system's segmented control was the one part of the window that was not Echoel's.
+/// It writes the parameter tree, never a song.
+private struct PluginChoiceField: View {
+    let parameter: AUParameter
+    let names: [String]
+    let value: AUValue
+    let set: (AUValue) -> Void
+
+    var body: some View {
+        let index = PluginControlsView.index(of: value, count: names.count)
+        Menu {
+            Picker(parameter.displayName, selection: Binding(get: { index }, set: { set(AUValue($0)) })) {
+                ForEach(names.indices, id: \.self) { Text(names[$0]).tag($0) }
+            }
+        } label: {
+            VStack(alignment: .leading, spacing: EchoelBrand.Space.xs) {
+                Text(parameter.displayName)
+                    .font(EchoelBrand.Font.caption)
+                    .foregroundStyle(EchoelBrand.Color.textSecondary)
+                    .lineLimit(1)
+                HStack(spacing: EchoelBrand.Space.xs) {
+                    Text(names[index])
+                        .font(EchoelBrand.Font.value)
+                        .foregroundStyle(EchoelBrand.Color.text)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.down")
+                        .font(EchoelBrand.Font.caption)
+                        .foregroundStyle(EchoelBrand.Color.textSecondary)
+                        .accessibilityHidden(true)
+                }
+                // As high as the value field's bar, so the two kinds of cell line up in a row.
+                Color.clear.frame(height: 3)
+            }
+            .padding(EchoelBrand.Space.s)
+            .frame(maxWidth: .infinity, minHeight: EchoelBrand.touch, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: EchoelBrand.Radius.medium).fill(EchoelBrand.Color.surface))
+            .overlay(RoundedRectangle(cornerRadius: EchoelBrand.Radius.medium)
+                .strokeBorder(EchoelBrand.Color.borderStrong, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .accessibilityLabel(parameter.displayName)
+        .accessibilityValue(names[index])
     }
 }
 
