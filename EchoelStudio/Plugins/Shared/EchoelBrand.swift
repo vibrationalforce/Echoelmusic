@@ -29,7 +29,8 @@ enum EchoelBrand {
         static let text = neutral
         static let textSecondary = neutral.opacity(0.65)
         static let textTertiary = neutral.opacity(0.58)
-        /// Bio-green: what is active, selected or measured.
+        /// Bio-green: what sounds, is measured or is held under a finger. A signal, never the area
+        /// behind a label.
         static let accent = SwiftUI.Color(red: 0.30, green: 0.85, blue: 0.55)
         static let onAccent = SwiftUI.Color.black
         static let record = SwiftUI.Color(red: 0.90, green: 0.30, blue: 0.30)

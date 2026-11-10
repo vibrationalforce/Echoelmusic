@@ -117,7 +117,7 @@ struct ChannelStrip: View {
                         .accessibilityLabel("Mute \(track.name)")
                         .accessibilityValue(track.mixer.isMuted ? "On" : "Off")
                     Button("S") { try? store.perform(.setSolo(track.id, !track.mixer.isSoloed)) }
-                        .buttonStyle(ToolButtonStyle(isActive: track.mixer.isSoloed, activeColor: Theme.Color.play))
+                        .buttonStyle(ToolButtonStyle(isActive: track.mixer.isSoloed))
                         .accessibilityLabel("Solo \(track.name)")
                         .accessibilityValue(track.mixer.isSoloed ? "On" : "Off")
                 }

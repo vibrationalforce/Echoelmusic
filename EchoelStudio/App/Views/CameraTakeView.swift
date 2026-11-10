@@ -63,7 +63,7 @@ struct CameraTakeView: View {
         } label: {
             Label(recorder.state == .recording ? "Stop" : "Record", systemImage: recorder.state == .recording ? "stop.fill" : "record.circle")
         }
-        .buttonStyle(ToolButtonStyle(isActive: recorder.state == .recording, activeColor: Theme.Color.record))
+        .buttonStyle(ToolButtonStyle(isActive: recorder.state == .recording, fill: .recording))
         .disabled(!recorder.canRecord && recorder.state != .recording)
         .accessibilityHint("Plays the song and films with it; Stop ends both.")
     }

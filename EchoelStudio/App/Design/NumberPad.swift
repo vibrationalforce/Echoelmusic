@@ -237,8 +237,10 @@ struct NumberPad: View {
                 .font(Theme.Font.valueLarge)
                 .foregroundStyle(primary ? Theme.Color.onAccent : Theme.Color.text)
                 .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
+                // OK is the pad's main action, so it is the off-white tile: the pad opens from every
+                // number in the app, and the green is kept for what the body and the song do.
                 .background(RoundedRectangle(cornerRadius: Theme.Radius.medium)
-                    .fill(primary ? Theme.Color.accent : Theme.Color.surfaceRaised))
+                    .fill(primary ? Theme.Color.text : Theme.Color.surfaceRaised))
                 .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium)
                     .strokeBorder(Theme.Color.borderStrong, lineWidth: primary ? 0 : 1))
                 .contentShape(Rectangle())

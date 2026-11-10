@@ -127,7 +127,7 @@ struct TrackRow: View {
             } label: {
                 Text("M")
             }
-            .buttonStyle(ToolButtonStyle(isActive: track.mixer.isMuted, activeColor: Theme.Color.accent))
+            .buttonStyle(ToolButtonStyle(isActive: track.mixer.isMuted))
             .accessibilityLabel("Mute \(track.name)")
             .accessibilityValue(track.mixer.isMuted ? "On" : "Off")
             Button {
@@ -135,7 +135,7 @@ struct TrackRow: View {
             } label: {
                 Text("S")
             }
-            .buttonStyle(ToolButtonStyle(isActive: track.mixer.isSoloed, activeColor: Theme.Color.play))
+            .buttonStyle(ToolButtonStyle(isActive: track.mixer.isSoloed))
             .accessibilityLabel("Solo \(track.name)")
             .accessibilityValue(track.mixer.isSoloed ? "On" : "Off")
         }
@@ -177,7 +177,7 @@ struct ArmButton: View {
         } label: {
             Image(systemName: "record.circle")
         }
-        .buttonStyle(ToolButtonStyle(isActive: armed, activeColor: Theme.Color.record))
+        .buttonStyle(ToolButtonStyle(isActive: armed, fill: .recording))
         .accessibilityLabel("Arm \(track.name) for Recording")
         .accessibilityValue(armed ? "On" : "Off")
     }

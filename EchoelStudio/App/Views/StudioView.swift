@@ -376,7 +376,7 @@ struct TransportBar: View {
         }
         .menuStyle(.button)
         .buttonStyle(ToolButtonStyle(isActive: writer.isWriting || midi.isLearning,
-                                     activeColor: writer.isWriting ? Theme.Color.record : Theme.Color.accent))
+                                     fill: writer.isWriting ? .recording : .chosen))
         .accessibilityLabel("More")
         .accessibilityValue(writer.isWriting ? "Writing automation" : midi.isLearning ? "MIDI Learn on" : "")
     }
@@ -401,7 +401,8 @@ struct TransportBar: View {
             } label: {
                 Image(systemName: engine.isStalled ? "arrow.clockwise" : engine.isPlaying || countsIn ? "stop.fill" : "play.fill")
             }
-            .buttonStyle(ToolButtonStyle(isActive: engine.isPlaying || countsIn, activeColor: Theme.Color.play))
+            // Playing is a signal, not a choice: the glyph turns green on the plain tile.
+            .buttonStyle(ToolButtonStyle(isRunning: engine.isPlaying || countsIn))
             .shortcut(.playStop)
             .accessibilityLabel(engine.isStalled ? "Restart Audio" : engine.isPlaying || countsIn ? "Stop" : "Play")
             .accessibilityValue(countsIn ? "Starts on the next bar" : "")
@@ -469,7 +470,7 @@ struct TransportBar: View {
                 Label("Write", systemImage: "pencil.line")
                     .labelStyle(.titleAndIcon)
             }
-            .buttonStyle(ToolButtonStyle(isActive: writer.isWriting, activeColor: Theme.Color.record))
+            .buttonStyle(ToolButtonStyle(isActive: writer.isWriting, fill: .recording))
             .accessibilityLabel("Write Automation")
             .accessibilityValue(writer.isWriting ? "On" : "Off")
             .accessibilityHint("While playing, moving a control writes it into the song.")
@@ -720,7 +721,7 @@ struct RecordButton: View {
         } label: {
             Image(systemName: "record.circle")
         }
-        .buttonStyle(ToolButtonStyle(isActive: recording.isRecording, activeColor: Theme.Color.record))
+        .buttonStyle(ToolButtonStyle(isActive: recording.isRecording, fill: .recording))
         .accessibilityLabel(recording.isRecording ? "Stop Recording" : "Record")
         .accessibilityHint(recording.armedTrack == nil ? "Records the track the keys play." : "")
         .disabled(!recording.canRecord)
@@ -1507,9 +1508,9 @@ struct SongMenu: View {
     }
 }
 
-/// The views of the studio as a row of chips — the earlier instrument's bottom bar: the chosen
-/// one filled with the accent, the others raised with a hairline. It scrolls sideways when the
-/// text is large rather than squeezing six names into a segmented control.
+/// The views of the studio as a row of chips at the bottom, where the earlier instrument had its
+/// bar: the chosen one is the off-white tile, the others raised with a hairline. It scrolls
+/// sideways rather than squeezing the names into a segmented control.
 private struct SurfaceBar: View {
     @Binding var selection: StudioView.Surface
 

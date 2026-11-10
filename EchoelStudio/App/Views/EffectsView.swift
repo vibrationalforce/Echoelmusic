@@ -129,7 +129,7 @@ struct EffectsView: View {
             Button(word) {
                 perform(bypass: insert.id, !insert.isBypassed)
             }
-            .buttonStyle(ToolButtonStyle(isActive: !insert.isBypassed, activeColor: Theme.Color.play))
+            .buttonStyle(ToolButtonStyle(isActive: !insert.isBypassed))
             .accessibilityLabel("\(insert.plugin.displayName) Active")
             .accessibilityValue(insert.isBypassed ? "Bypassed" : "On")
             // Voice Control answers to the word on the button, not only to its spoken name (W18, m9).

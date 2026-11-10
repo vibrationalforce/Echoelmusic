@@ -15,7 +15,7 @@ import SwiftUI
 /// `accent` 11.6 · 10.6 · 9.5, `record` 5.5 · 5.1 · 4.5, `warning` 9.3 · 8.5 · 7.6 — every text
 /// token clears AA (4.5:1). `borderStrong` is 3.6:1 (a control's boundary, WCAG 1.4.11 asks 3:1);
 /// `border` is 1.2:1 on purpose, a divider that must not compete with what it separates.
-/// Black on `accent` (an active button's label) is 11.6:1.
+/// Black on `text` (a chosen button's label) is 15.9:1, black on `record` (a recording one's) 5.5:1.
 enum Theme {
     enum Color {
         // The values live in `EchoelBrand` (`Plugins/Shared/EchoelBrand.swift`), which the AUv3
@@ -33,9 +33,11 @@ enum Theme {
         static let text = EchoelBrand.Color.text
         static let textSecondary = EchoelBrand.Color.textSecondary
         static let textTertiary = EchoelBrand.Color.textTertiary
-        /// Bio-green: the signal colour, for what is active, selected or measured.
+        /// Bio-green: the signal colour, for what sounds, is measured or is held under a finger —
+        /// a label, a line, a meter, a switch that is on. Never the area behind a label: a chosen
+        /// or main control is the off-white tile (`ToolButtonStyle`), as on the earlier instrument.
         static let accent = EchoelBrand.Color.accent
-        /// The label on an `accent` or `text` fill.
+        /// The label on a `text` or `record` fill, and the knob of a switch that is on.
         static let onAccent = EchoelBrand.Color.onAccent
         /// Running, healthy, in range — the same green as the accent, so the app has one.
         static let play = accent
@@ -187,12 +189,28 @@ enum Theme {
 
 /// The one button style for toolbar and transport controls: solid fill, 8 pt radius, a hairline
 /// boundary, opacity feedback on press (no scaling, no glow).
+///
+/// A lit button is monochrome, the earlier instrument's rule (`EchoelTheme`): chosen, switched on
+/// or the page's one main action, it is the off-white tile with a black label. The only other fill
+/// is the record red, a colour with a meaning of its own. The fill is a named case, never a colour
+/// handed in, so no call site can lay the bio-green behind a label again. Green is a signal, and a
+/// signal is drawn as the label: `isRunning`, for what sounds now, on the plain tile.
 struct ToolButtonStyle: ButtonStyle {
+    /// What the fill of a lit button says.
+    enum Fill {
+        /// Chosen, switched on, or the main action: off-white under a black label.
+        case chosen
+        /// Written into the song now — a take, an automation pass: the record red.
+        case recording
+    }
+
     var isActive = false
-    var activeColor: Color = Theme.Color.accent
+    var fill: Fill = .chosen
+    /// Sounding now (the song plays, a clip plays): the label wears the green, the tile stays plain.
+    var isRunning = false
 
     func makeBody(configuration: Configuration) -> some View {
-        ToolButtonFace(configuration: configuration, isActive: isActive, activeColor: activeColor)
+        ToolButtonFace(configuration: configuration, isActive: isActive, fill: fill, isRunning: isRunning)
     }
 }
 
@@ -201,18 +219,19 @@ struct ToolButtonStyle: ButtonStyle {
 private struct ToolButtonFace: View {
     let configuration: ButtonStyleConfiguration
     let isActive: Bool
-    let activeColor: Color
+    let fill: ToolButtonStyle.Fill
+    let isRunning: Bool
     @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         configuration.label
             .font(Theme.Font.label)
-            .foregroundStyle(isActive ? Theme.Color.onAccent : Theme.Color.text)
+            .foregroundStyle(labelColor)
             .frame(minWidth: Theme.Size.touch, minHeight: Theme.Size.touch)
             .padding(.horizontal, Theme.Space.s)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.medium)
-                    .fill(isActive ? activeColor : Theme.Color.surfaceRaised)
+                    .fill(isActive ? fillColor : Theme.Color.surfaceRaised)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.medium)
@@ -223,5 +242,18 @@ private struct ToolButtonFace: View {
             // The transport, the keys and the bar of views stop growing at the second accessibility
             // size; past it a long press shows the button large, as the system's bars do (W18, m20).
             .accessibilityShowsLargeContentViewer()
+    }
+
+    private var fillColor: Color {
+        switch fill {
+        case .chosen: Theme.Color.text
+        case .recording: Theme.Color.record
+        }
+    }
+
+    /// Black on a lit tile; the green of a signal on a plain one that sounds; else the text colour.
+    private var labelColor: Color {
+        if isActive { return Theme.Color.onAccent }
+        return isRunning ? Theme.Color.play : Theme.Color.text
     }
 }

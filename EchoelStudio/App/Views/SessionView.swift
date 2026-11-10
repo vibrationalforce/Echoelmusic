@@ -87,7 +87,8 @@ struct SessionTrackHeader: View {
                 .minimumScaleFactor(0.85)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Button { engine.stopClip(on: track.id) } label: { Image(systemName: "stop.fill") }
-                .buttonStyle(ToolButtonStyle(isActive: isPlaying))
+                // A clip sounds on this track: the glyph turns green, as Play's does.
+                .buttonStyle(ToolButtonStyle(isRunning: isPlaying))
                 .disabled(!isPlaying)
                 .accessibilityLabel("Stop Clip on \(track.name)")
         }
@@ -319,7 +320,7 @@ struct SessionFooter: View {
                 .buttonStyle(ToolButtonStyle())
                 .disabled(engine.session.playing.isEmpty)
             Button("Back to Arrangement", systemImage: "arrow.uturn.backward.circle") { engine.backToArrangement() }
-                .buttonStyle(ToolButtonStyle(isActive: !engine.session.detached.isEmpty, activeColor: Theme.Color.accent))
+                .buttonStyle(ToolButtonStyle(isActive: !engine.session.detached.isEmpty))
                 .disabled(engine.session.detached.isEmpty)
         }
     }
