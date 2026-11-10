@@ -93,7 +93,13 @@ Einstieg: `echoelmusic-intern/docs/dev/ECHOEL_VISION_2026-10-19.md`.
 - **Clip-Schnitt:** „Split a clip at the playhead, consolidate and duplicate in Arrange.“ (`App/Views/ArrangeView.swift`, „Split at Playhead“). Die Zeile „split … gibt es nicht“ unter „Nicht sagen“ ist damit für Studio überholt.
 - **MIDI-Import:** „Import a Standard MIDI file into the song.“ (`App/Views/StudioView.swift`, „Import MIDI…“).
 - **Bake Effects:** „Bake Effects renders an audio region through its track's effects onto a new track below it, as one undo step.“ (`App/Documents/DocumentController.swift` `bakeEffects`).
-Weiter NICHT: Apple Health im Studio, Kamera-Puls als Werbesatz (nur Datenschutz-Offenlegung), „works in AUM/Logic“.
+Weiter KEIN Werbesatz: **Apple Health als Körper-Quelle** und der **Kamera-Puls**. Beide sind in der App gebaut
+(`App/Body/HealthHeartRate.swift`, `App/Body/CameraCapture.swift`, je mit Berechtigungstext in `EchoelStudio/project.yml`) und
+stehen deshalb in der Datenschutz-Offenlegung (`docs/privacy.html`, Abschnitt der heutigen App). Die Offenlegung ist Pflicht,
+der Werbesatz bleibt verboten: kein Gerät hat sie gezeigt, und mit Gesundheitsdaten wird nie geworben (App-Review 5.1.3).
+⚠️ Bis 2026-11-10 hieß diese Zeile „Weiter NICHT: Apple Health im Studio, Kamera-Puls als Werbesatz“ und ließ sich als „gibt es
+in der App nicht“ lesen — dann sähe die Datenschutzseite wie eine Überbehauptung aus. Gemeint war immer: gebaut, offengelegt,
+nicht beworben. Ebenfalls weiter nicht: „works in AUM/Logic“ (die Geräte-Prüfung vom 2026-11-10 steht unten bei „Nicht sagen“).
 
 Stand: 2026-10-13 (Produktgesetz vom 2026-09-24 nachgezogen — `docs/dev/FOUNDER_PRODUCT_LAW.md`:
 Echoelmusic IST die Workstation. ✅ neu: Mixer-Bühne, Sampler je Spur, Grain-Insert, Stück-Export,
