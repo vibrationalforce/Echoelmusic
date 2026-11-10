@@ -1,13 +1,13 @@
-# Third-Party Notices & Attributions — Echoel
+# Third-Party Notices & Attributions — Echoelmusic
 
-This document lists third-party material in the Echoel app and how it is licensed /
+This document lists third-party material in the Echoelmusic app and how it is licensed /
 attributed. It covers what ships **in the app binary** and, separately, developer-only
 tooling that does **not** ship.
 
 > Not legal advice. This is standard open-source attribution hygiene maintained by the
 > developer. A final review by counsel is recommended before release.
 
-_Last reviewed: 2026-09-12._
+_Last reviewed: 2026-11-10 (the streaming package's version and the licence holder line; the rest as of 2026-09-12)._
 
 ---
 
@@ -58,9 +58,13 @@ _Last reviewed: 2026-09-12._
 - Echoel Studio (`EchoelStudio/project.yml`) links ONE outside package since 2026-10-31 (wave W14,
   live streaming), pinned exactly, used only under `EchoelStudio/App/Streaming/`, never by the
   Audio Unit extension:
-  - **HaishinKit.swift 2.2.5** (products HaishinKit and RTMPHaishinKit) — BSD-3-Clause,
-    https://github.com/HaishinKit/HaishinKit.swift
-  - **Logboard 2.6.0** (pulled in by HaishinKit) — BSD-3-Clause.
+  - **HaishinKit.swift 2.3.0** (products HaishinKit and RTMPHaishinKit) — BSD-3-Clause,
+    https://github.com/HaishinKit/HaishinKit.swift. It was 2.2.5 until 2026-11-10
+    (`EchoelStudio/project.yml`, `exactVersion`). Re-read at the tag 2.3.0 on 2026-11-10: the
+    licence is still BSD-3-Clause with the copyright line "Copyright (c) 2015, shogo4405", the
+    line the app shows.
+  - **Logboard 2.6.x** (pulled in by HaishinKit, whose manifest at 2.3.0 asks for 2.6.0 up to
+    but not including 2.7.0) — BSD-3-Clause.
   - ⛔ **libsrt and OpenSSL 3.3.2 are no longer linked (2026-11-04, team SAFE).** They came with
     the SRTHaishinKit product (OpenSSL linked statically inside the libsrt binary, measured with
     `strings libsrt.a`). SRT left Studio v1 so that no OpenSSL ships and
@@ -83,8 +87,8 @@ are not in `Sources/` or app `Resources/` and are never compiled into the app:
 
 ---
 
-## Echoel's own license
-The Echoel source is MIT-licensed — see `LICENSE` (© 2024–2025 Echoelmusic).
+## Echoelmusic's own license
+The Echoelmusic source is MIT-licensed — see `LICENSE` (© 2024–2026 Michael Terbuyken).
 
 ---
 
@@ -97,8 +101,9 @@ The Echoel source is MIT-licensed — see `LICENSE` (© 2024–2025 Echoelmusic)
       unticked while the work was already done — a checklist that overstates the backlog costs
       the same attention as one that understates it.
 - [x] **Echoel Studio, 2026-10-31 (team DOORS):** About → Acknowledgments shows the full texts
-      offline (`EchoelStudio/App/Views/Acknowledgments.swift`): HaishinKit 2.2.5 and Logboard
-      2.6.0 (BSD-3-Clause, their LICENSE.md at those tags) and Atkinson Hyperlegible (OFL 1.1);
+      offline (`EchoelStudio/App/Views/Acknowledgments.swift`): HaishinKit and Logboard
+      (BSD-3-Clause, their LICENSE.md as read at 2.2.5 and 2.6.0; HaishinKit's text at the linked
+      2.3.0 is the same, see above) and Atkinson Hyperlegible (OFL 1.1);
       libsrt and OpenSSL left with SRT on 2026-11-04. Device check pending.
       The earlier app (`Sources/`) still has no such screen.
 - [x] Export compliance, decided 2026-10-31 and tightened 2026-11-04: SRT (libsrt with OpenSSL)
