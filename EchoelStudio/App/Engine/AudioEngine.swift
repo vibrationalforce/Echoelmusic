@@ -125,6 +125,14 @@ final class AudioEngine {
     let timecodeChase = MTCChaseInput()
     /// Sends the live track's notes as an MPE zone to the outputs picked in the song menu (W5b).
     let mpe = MIDIMPEOutput()
+    /// Body sharing as the Connections page has it (off at every launch): MPE Out's pressure and
+    /// slide and the live stream's picture carry the body only while it is on.
+    private(set) var bodyConsent = BioEgressPolicy.Consent.off
+
+    func setBodyConsent(_ consent: BioEgressPolicy.Consent) {
+        bodyConsent = consent
+        mpe.setConsent(consent)
+    }
     /// Which session clip each track plays, as the render thread reports it.
     let session = SessionState()
     /// The media browser's listening (Recovery 7): one file over the song, added after the master in

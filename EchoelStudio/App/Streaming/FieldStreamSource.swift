@@ -5,10 +5,12 @@ import Foundation
 import Metal
 
 /// The live stream's picture (wave W14): the Field, drawn offscreen at 30 frames a second by its
-/// own `MetalFieldRenderer` — the same snapshot, clocks, flash guards, shader and looks as the
+/// own `MetalFieldRenderer` — the same clocks, flash guards, shader and looks as the
 /// window on screen (the looks chosen in the Field window, read every frame; live, so a look
 /// that listens to the master's partials hears them as the window does) — once per shape the
 /// stream carries (9:16, 16:9, 1:1, 4:5), each at its encoded size.
+/// This picture leaves the device, so its snapshot carries the body only as far as it may leave
+/// (`FieldFrame.streamed`): a heart rate read from Apple Health moves the window, never the stream.
 /// A frame leaves as a `CMSampleBuffer` stamped with the host clock, the clock the master mix's
 /// timestamps use too, so the encoder keeps picture and sound together.
 ///

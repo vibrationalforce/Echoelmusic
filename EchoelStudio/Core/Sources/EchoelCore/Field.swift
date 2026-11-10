@@ -84,6 +84,22 @@ public struct FieldFrame: Equatable, Sendable {
                           bars: bars, keyMask: BarWeave.keyMask(context))
     }
 
+    /// The frame a picture that LEAVES the device is drawn from — the live stream (wave W14): the
+    /// song as it is, and of the body only what may leave. Each reading is asked from `shareable`
+    /// (the app hands in `ModulationInputs.shareableValue`), which answers nil for a value that
+    /// must stay on the device — a heart rate read from Apple Health (App Store 5.1.3,
+    /// `BioEgressPolicy`) — so that pulse reads as not measured there and moves nothing, while a
+    /// strap's or the camera's still does. None of the frame's own body is kept: what is not
+    /// handed over is absent. A body reading added to the frame is cut here in the same commit.
+    public func leavingDevice(body shareable: (ModulationSource) -> Double?) -> FieldFrame {
+        var frame = self
+        frame.pulse = shareable(.heartRate).flatMap(Self.reading)
+        frame.hrv = shareable(.hrv).flatMap(Self.reading)
+        frame.coherence = shareable(.coherence).flatMap(Self.reading)
+        frame.breath = shareable(.breath).flatMap(Self.reading)
+        return frame
+    }
+
     /// The key's tonic in the octave of middle C, at the song's concert pitch: C4 is 261.63 Hz
     /// at A = 440, and a root of 9 (A) is the concert pitch itself.
     public static func tonicHz(of context: MusicalContext) -> Double {

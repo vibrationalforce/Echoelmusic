@@ -43,6 +43,37 @@ final class FieldTests: XCTestCase {
         XCTAssertEqual(frame.coherence, 0.4)
     }
 
+    /// A picture that leaves the device (the live stream) is drawn from the song as it is and from
+    /// the body only as far as it may leave: each reading is the one handed over, in its own place;
+    /// what is not handed over is absent — never the frame's own — and so is a bad one.
+    func testAFrameLeavingTheDeviceKeepsTheSongAndOnlyTheBodyThatMayLeave() {
+        let live = FieldFrame(beatPhase: 0.25, barPhase: 0.5, tonicHz: 330, level: 0.4, pulse: 0.5, hrv: 0.3,
+                              coherence: 0.7, breath: 0.6, isPlaying: true, bars: 3.5, keyMask: 0x0AB5)
+        // Apple Health as the body source: its pulse must stay, and it measures nothing else.
+        let health = live.leavingDevice { (_: ModulationSource) -> Double? in nil }
+        let song = FieldFrame(beatPhase: 0.25, barPhase: 0.5, tonicHz: 330, level: 0.4, isPlaying: true,
+                              bars: 3.5, keyMask: 0x0AB5)
+        XCTAssertEqual(health, song, "the song as it is, and no body")
+        // A strap or the camera: what they measure may leave, each reading in its own place.
+        let measured: [ModulationSource: Double] = [.heartRate: 0.1, .hrv: 0.2, .coherence: 0.3, .breath: 0.4]
+        let strap = live.leavingDevice { (source: ModulationSource) -> Double? in measured[source] }
+        let shared = FieldFrame(beatPhase: 0.25, barPhase: 0.5, tonicHz: 330, level: 0.4, pulse: 0.1, hrv: 0.2,
+                                coherence: 0.3, breath: 0.4, isPlaying: true, bars: 3.5, keyMask: 0x0AB5)
+        XCTAssertEqual(strap, shared, "the same song, the body as handed over")
+        // Only the pulse held back: the rest of the body still goes.
+        let mixed = live.leavingDevice { (source: ModulationSource) -> Double? in
+            source == .heartRate ? nil : measured[source]
+        }
+        XCTAssertNil(mixed.pulse, "not the frame's own 0.5")
+        XCTAssertEqual(mixed.coherence, 0.3)
+        // A reading outside 0 … 1 or not finite is absent, as everywhere in a frame.
+        let bad = live.leavingDevice { (source: ModulationSource) -> Double? in
+            source == .heartRate ? 1.5 : Double.nan
+        }
+        XCTAssertNil(bad.pulse)
+        XCTAssertNil(bad.breath)
+    }
+
     /// Asked to strobe at 10 Hz, the guard lets through no more than three flashes a second.
     func testNoMoreThanThreeFlashesASecond() {
         var limit = FlashLimit()

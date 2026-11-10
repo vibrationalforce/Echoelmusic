@@ -368,11 +368,11 @@ final class MPEPump: Sendable {
                 var expression: [MPEZone.Message] = []
                 // Only a value that may leave the device: an Apple Health reading never goes out
                 // (REC-1), and a body source only while body sharing is on — a MIDI output is a wire
-                // off the device like the others (`BioEgressPolicy.allowsExpression`).
-                if let source = current.pressure, BioEgressPolicy.allowsExpression(from: source, consent: current.consent) {
+                // off the device like the others (`BioEgressPolicy.allowsLeaving`).
+                if let source = current.pressure, BioEgressPolicy.allowsLeaving(of: source, consent: current.consent) {
                     expression += current.zone.setPressure(modulation.shareableValue(source))
                 }
-                if let source = current.slide, BioEgressPolicy.allowsExpression(from: source, consent: current.consent) {
+                if let source = current.slide, BioEgressPolicy.allowsLeaving(of: source, consent: current.consent) {
                     expression += current.zone.setSlide(modulation.shareableValue(source))
                 }
                 if !expression.isEmpty {

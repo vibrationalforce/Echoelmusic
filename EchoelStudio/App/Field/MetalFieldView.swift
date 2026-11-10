@@ -501,8 +501,10 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     }
 
     /// Draws the next frame into `texture` — the live stream's picture (wave W14): the same
-    /// snapshot, clocks, flash guards and shader as the window, at the texture's own size and
-    /// aspect, so a 9:16, 16:9, 1:1 or 4:5 frame is the same Field framed for its shape. Commits and
+    /// clocks, flash guards and shader as the window, at the texture's own size and
+    /// aspect, so a 9:16, 16:9, 1:1 or 4:5 frame is the same Field framed for its shape. Its
+    /// snapshot is the window's with the body cut to what may leave the device
+    /// (`FieldFrame.streamed`): a pulse read from Apple Health moves the window, never this. Commits and
     /// returns at once; `completed` runs on Metal's thread when the GPU has written the texture.
     /// False when nothing was encoded (no queue yet). Never in the background: iOS refuses GPU work there.
     @MainActor
@@ -511,7 +513,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         let seconds = Swift.min(Swift.max(now - lastFrameTime, 0), 0.1)
         lastFrameTime = now
         if let store, let engine {
-            frame = FieldFrame.current(store: store, engine: engine)
+            frame = FieldFrame.streamed(store: store, engine: engine)
         }
         peaks = listeningTo?.fieldSpectrum.peaks ?? .silent
         uniforms.aspect = texture.height > 0 ? Float(texture.width) / Float(texture.height) : 1

@@ -11,7 +11,8 @@ import HealthKit
 /// writes to Health, measured. Off until the musician chooses it; only then does iOS ask, and it
 /// asks to READ heart rate and nothing else — Echoel never writes to Health. The value never leaves
 /// the device: Connections never read this class, and the modulation cell carries it as private,
-/// so MIDI out sends nothing for it (`ModulationInputs.shareableValue`).
+/// so MIDI out sends nothing for it and the live stream's picture shows no pulse for it
+/// (`ModulationInputs.shareableValue`, `FieldFrame.streamed`).
 ///
 /// A Watch reading arrives 4 to 5 seconds late and, at rest, minutes apart, so this source is slow
 /// modulation only: it glides over seconds, feeds the heart-rate source alone, and never sets the

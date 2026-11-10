@@ -93,4 +93,31 @@ final class FieldMotionTests: XCTestCase {
         XCTAssertFalse(absent.hasCoherence)
         XCTAssertEqual(absent.pulsePhase, measured.pulsePhase, "no pulse, no heartbeat")
     }
+
+    /// The live stream's picture (wave W14) is drawn from the frame as it may leave the device
+    /// (`FieldFrame.leavingDevice`): a pulse that must stay on it — Apple Health's — is no heartbeat
+    /// there, and the centre rests on the level as with no body source, while the window on the
+    /// device keeps beating. A pulse that may leave (a strap, the camera) is the same frame in both.
+    func testAPulseThatMustStayOnTheDeviceMovesNoPictureThatLeaves() {
+        let onDevice = FieldFrame(level: 0.2, pulse: 0.5, isPlaying: true)
+        let streamed = onDevice.leavingDevice { (_: ModulationSource) -> Double? in nil }
+        var window = FieldMotion()
+        var stream = FieldMotion()
+        var seen = FieldMotion.Shown()
+        var sent = FieldMotion.Shown()
+        for _ in 0..<60 {
+            seen = window.step(onDevice, after: 1.0 / 60, still: false, patternScale: 1)
+            sent = stream.step(streamed, after: 1.0 / 60, still: false, patternScale: 1)
+            XCTAssertEqual(sent.pulsePhase, 0, "no heartbeat clock in the picture that leaves")
+            XCTAssertFalse(sent.hasPulse)
+        }
+        XCTAssertTrue(seen.hasPulse, "the window on the device still shows the pulse")
+        XCTAssertGreaterThan(seen.pulsePhase, 0)
+        XCTAssertEqual(seen.centreLight, 0.5, accuracy: 1e-9, "its centre on the pulse")
+        XCTAssertEqual(sent.centreLight, 0.2, accuracy: 1e-9, "the stream's on the level")
+        let shared = onDevice.leavingDevice { (source: ModulationSource) -> Double? in
+            source == .heartRate ? 0.5 : nil
+        }
+        XCTAssertEqual(shared, onDevice, "a pulse that may leave: the same frame, so the same picture")
+    }
 }

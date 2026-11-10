@@ -41,6 +41,28 @@ final class ModulationInputsTests: XCTestCase {
         XCTAssertNil(inputs.shareableValue(.hrv), "absent stays absent")
     }
 
+    /// The live stream's picture is drawn from a frame that asks for shareable values only
+    /// (`FieldFrame.leavingDevice`): Apple Health's pulse moves the window on the device and is
+    /// absent from the picture that leaves; a value that may leave is in both.
+    func testAFrameLeavingTheDeviceCarriesNoPrivatePulse() {
+        let inputs = ModulationInputs()
+        inputs.set(.heartRate, 0.5, mayLeaveDevice: false)
+        inputs.set(.coherence, 0.7)
+        let onDevice = FieldFrame(level: 0.4, pulse: inputs.value(.heartRate), coherence: inputs.value(.coherence))
+        XCTAssertEqual(onDevice.pulse, 0.5, "the window on this device shows it")
+        let fromHealth = onDevice.leavingDevice { (source: ModulationSource) -> Double? in
+            inputs.shareableValue(source)
+        }
+        XCTAssertNil(fromHealth.pulse, "a pulse from Apple Health is not in a picture that leaves")
+        XCTAssertEqual(fromHealth.coherence, 0.7, "what may leave still is")
+        XCTAssertEqual(fromHealth.level, onDevice.level)
+        inputs.set(.heartRate, 0.6)
+        let fromStrap = onDevice.leavingDevice { (source: ModulationSource) -> Double? in
+            inputs.shareableValue(source)
+        }
+        XCTAssertEqual(fromStrap.pulse, 0.6, "a strap's pulse after it leaves again")
+    }
+
     /// G-A M09: a value out of the domain is absent, not clamped into the strongest swing.
     func testAValueOutsideZeroToOneIsAbsent() {
         let inputs = ModulationInputs()

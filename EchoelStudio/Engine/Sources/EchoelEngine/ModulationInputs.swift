@@ -39,8 +39,8 @@ public final class ModulationInputs: @unchecked Sendable {
         return value(at: index)
     }
 
-    /// The source's value for anything that sends it off the device (MIDI out): nil while it is
-    /// absent, and nil for a value that must stay on the device. Render-safe.
+    /// The source's value for anything that sends it off the device (MIDI out, the live stream's
+    /// picture): nil while it is absent, and nil for a value that must stay on the device. Render-safe.
     public func shareableValue(_ source: ModulationSource) -> Double? {
         guard let index = Self.index(source), index < cells.count else { return nil }
         let reading = Double(bitPattern: cells[index].bits.load(ordering: .relaxed))

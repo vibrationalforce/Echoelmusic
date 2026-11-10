@@ -150,6 +150,20 @@ extension FieldFrame {
                              coherence: inputs.value(.coherence), isPlaying: engine.isPlaying,
                              breath: inputs.value(.breath))
     }
+
+    /// The snapshot a picture that LEAVES the device is drawn from — the live stream (wave W14):
+    /// `current`, its body cut to what may leave (`FieldFrame.leavingDevice`). Two gates, as for
+    /// every other wire: the body moves the streamed picture only while body sharing is on
+    /// (`BioEgressPolicy.allowsLeaving`), and a heart rate read from Apple Health never does
+    /// (`ModulationInputs.shareableValue`). Every Field on this device's own screens draws `current`.
+    @MainActor
+    static func streamed(store: ProjectStore, engine: AudioEngine) -> FieldFrame {
+        let inputs = engine.modulation
+        let consent = engine.bodyConsent
+        return current(store: store, engine: engine).leavingDevice { (source: ModulationSource) -> Double? in
+            BioEgressPolicy.allowsLeaving(of: source, consent: consent) ? inputs.shareableValue(source) : nil
+        }
+    }
 }
 
 /// The Field on the CPU: a SwiftUI Canvas at 30 frames a second, for a device without Metal. It

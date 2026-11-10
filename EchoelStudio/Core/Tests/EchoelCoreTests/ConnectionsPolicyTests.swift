@@ -93,12 +93,12 @@ final class ConnectionsPolicyTests: XCTestCase {
     func testANotesExpressionFollowsTheBodyOnlyWithBodySharing() {
         let body: [ModulationSource] = [.breath, .coherence, .hrv, .heartRate, .motionTiltX, .motionEnergy]
         for source in body {
-            XCTAssertFalse(BioEgressPolicy.allowsExpression(from: source, consent: .off), source.rawValue)
-            XCTAssertTrue(BioEgressPolicy.allowsExpression(from: source, consent: bodyOnly), source.rawValue)
+            XCTAssertFalse(BioEgressPolicy.allowsLeaving(of: source, consent: .off), source.rawValue)
+            XCTAssertTrue(BioEgressPolicy.allowsLeaving(of: source, consent: bodyOnly), source.rawValue)
         }
         let song: [ModulationSource] = [.lfo1, .macro1, .midiCC1, .weave1]
         for source in song {
-            XCTAssertTrue(BioEgressPolicy.allowsExpression(from: source, consent: .off), "\(source.rawValue) is not the body")
+            XCTAssertTrue(BioEgressPolicy.allowsLeaving(of: source, consent: .off), "\(source.rawValue) is not the body")
         }
     }
 

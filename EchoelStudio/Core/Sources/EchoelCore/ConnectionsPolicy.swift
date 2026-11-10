@@ -55,12 +55,13 @@ public enum BioEgressPolicy {
         source.rawValue.hasPrefix("body.")
     }
 
-    /// Whether a note's expression on a MIDI output (pressure, slide) may follow `source`. A body
-    /// source needs the same consent as every other connection (gate 2): a MIDI output is a wire
-    /// off the device like any other, a network session included. A source that is not the body's
-    /// needs none. Whether the READING may leave — never one from the Health store — is decided
-    /// where the value is stored (`ModulationInputs.shareableValue`), which is gate 1.
-    public static func allowsExpression(from source: ModulationSource, consent: Consent) -> Bool {
+    /// Whether a value of `source` may leave the device on a wire that is not a Connections
+    /// address: a note's pressure and slide on a MIDI output, the body in the live stream's
+    /// picture. A body source needs the same consent as every other connection (gate 2) — a MIDI
+    /// output and a stream are wires off the device like any other. A source that is not the
+    /// body's needs none. Whether the READING may leave — never one from the Health store — is
+    /// decided where the value is stored (`ModulationInputs.shareableValue`), which is gate 1.
+    public static func allowsLeaving(of source: ModulationSource, consent: Consent) -> Bool {
         !measuresBody(source) || consent.sharesBody
     }
 
