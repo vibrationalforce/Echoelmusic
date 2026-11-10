@@ -190,34 +190,54 @@ final class RecordController {
     }
 
     func stopRecording() async {
-        guard isRecording else { return }
+        if let ended = await takeEnds() { await land(ended) }
+    }
+
+    /// An audio take the engine has let go of, on its way into the song.
+    private struct EndedTake {
+        let take: RecordedTake
+        let file: DocumentController.TakeTarget
+        let track: TrackID
+    }
+
+    /// Ends the running take as far as the engine: a count-in is called off, a MIDI take is
+    /// committed at once, an audio take's file is closed. What comes back is the audio take that
+    /// is still to be placed (`land`): reading it takes longer the longer the take is, and the
+    /// transport's Stop does not wait for that.
+    private func takeEnds() async -> EndedTake? {
+        guard isRecording else { return nil }
         // Record or Stop pressed while the count-in still clicks: nothing was recorded, and the
         // song does not start.
         if engine.countsIn {
             await callOffCountIn()
-            return
+            return nil
         }
         guard case .audio(let track, let file) = takePhase else {
             endMIDITake()
-            return
+            return nil
         }
         takePhase = .committing
         isLoopRecording = false
-        let ended = await engine.endTake()
+        let closed = await engine.endTake()
         // The engine let go of the take (`TakeLifecycle.finished`): Record may begin the next one.
         // Nothing else leaves `committing`, so the phase is still it here.
         takePhase = .none
-        guard let take = ended else {
+        guard let take = closed else {
             // Nothing to commit, so this take no longer holds the package (a rename waits while
             // a take runs).
             documents.takeAbandoned(file)
-            return
+            return nil
         }
+        return EndedTake(take: take, file: file, track: track)
+    }
+
+    /// Places an ended take in the song.
+    private func land(_ ended: EndedTake) async {
         // Placed with the map the take began under, which the engine kept with it — never the
         // map at the stop: a followed clock drifts, the engine keeps the song's musical position
         // across each change, and so the take's start sample names a later tick under the later
         // map, bars off on a long set (review 2026-10-28, 2.2).
-        await documents.commitTake(take, target: file, onto: track, tempoMap: take.tempoMap)
+        await documents.commitTake(ended.take, target: ended.file, onto: ended.track, tempoMap: ended.take.tempoMap)
     }
 
     /// The take Record began before its count-in's downbeat is dropped whole — an audio take's
@@ -294,12 +314,17 @@ final class RecordController {
     func stopTransport() async {
         // During a count-in this Stop calls it off and leaves the cue: it is no second Stop.
         let countedIn = engine.countsIn
-        await stopRecording()
+        let ended = await takeEnds()
+        // The song stops as soon as the engine has let go of the take — until then the phase was
+        // `committing` and Record refused — and the take is placed after that. Stopped only after
+        // the placing, the song played on for as long as reading the take took, with Record ready:
+        // a take begun there had the transport halted under it by this, the older, Stop.
         if countedIn {
             engine.cancelCountIn()
         } else {
             engine.transportStop()
         }
+        if let ended { await land(ended) }
         await inputFollowsSong()
     }
 
