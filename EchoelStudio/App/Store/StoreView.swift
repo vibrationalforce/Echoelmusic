@@ -43,15 +43,14 @@ struct StoreView: View {
     /// exists, the price button beside this text would have contradicted it (store review 2026-10-24).
     private var footer: String {
         let units = "They are AUv3 instruments for apps that host Audio Units."
+        // What a device has shown, and nothing wider: one instrument in one host.
+        let tried = " The synthesizer has been tried in AUM on an iPhone; the drums, the sampler and other host apps are not yet tested."
         // Nothing to buy: nothing is locked (`PluginUnlock.isOnSale`).
         guard PluginUnlock.isOnSale else {
-            return units + " They are not yet tested in a host app on a device, and they are not on sale yet."
-                + " Until they are, they play in full in other apps."
+            return units + tried + " They are not on sale yet. Until they are, they play in full in other apps."
         }
-        let sale = store.product == nil
-            ? " They are not yet tested in a host app on a device, and they are not on sale yet."
-            : " They are not yet tested in a host app on a device."
-        return units + sale
+        let sale = store.product == nil ? " They are not on sale yet." : ""
+        return units + tried + sale
             + " Until they are unlocked, they play as a demo: two seconds of silence every thirty."
             + " One purchase, no subscription."
     }
