@@ -393,7 +393,7 @@ an older build does not know. Since 2026-11-05 a reader follows one rule for it 
   in the file; and an insert whose plugin `type` is not an effect type the reader takes in an
   insert slot (a MIDI effect `aumi`, or a type it does not know at all). A kept part plays
   nothing — a kept route moves no parameter, a kept insert is passed by as if bypassed — and the
-  musician is told when the song opens: "This song was saved by a newer Echoel Studio. N items
+  musician is told when the song opens: "This song was saved by a newer Echoelmusic. N items
   are kept but inactive until you update."
 - **A kept part is written back as it was read.** The reader holds it as the JSON it found —
   every key, the ones it does not know included — and saving writes it again at its place in its
@@ -426,7 +426,7 @@ again is written as format 4, and builds before format 4 do not open it.
 
 Format 2 is format 3 without `modRoutes`. A reader of format 3 opens it with no routes; a
 format-2 file that carries `modRoutes` is refused, since no format-2 build wrote one. A song saved
-again is written as format 3, and builds before format 3 (Echoel Studio 10012 and earlier) do not
+again is written as format 3, and builds before format 3 (Echoelmusic 10012 and earlier) do not
 open it.
 
 ## Format 1
