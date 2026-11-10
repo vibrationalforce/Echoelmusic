@@ -72,6 +72,9 @@ final class MIDIClockOutput {
 
     func isChosen(_ destination: Destination) -> Bool { chosen.contains(destination.id) }
 
+    /// A clock leaves this device now: a chosen output is there.
+    var isSending: Bool { destinations.contains { chosen.contains($0.id) } }
+
     func toggle(_ destination: Destination) {
         if chosen.contains(destination.id) { chosen.remove(destination.id) } else { chosen.insert(destination.id) }
         UserDefaults.standard.set(chosen.map { Int($0) }, forKey: Self.defaultsKey)

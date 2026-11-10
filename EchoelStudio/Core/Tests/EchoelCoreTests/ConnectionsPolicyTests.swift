@@ -102,6 +102,18 @@ final class ConnectionsPolicyTests: XCTestCase {
         }
     }
 
+    /// A tempo that follows the pulse stays on the device unless the musician shares the body:
+    /// with a clock, a jam or OSC carrying the tempo away, Flow follows only with body sharing on.
+    func testATempoThatLeavesFollowsThePulseOnlyWithBodySharing() {
+        XCTAssertTrue(BioEgressPolicy.allowsFollowingThePulse(tempoLeaves: false, consent: .off), "on the device, always")
+        XCTAssertTrue(BioEgressPolicy.allowsFollowingThePulse(tempoLeaves: false, consent: bodyOnly))
+        XCTAssertFalse(BioEgressPolicy.allowsFollowingThePulse(tempoLeaves: true, consent: .off), "off the device, not unasked")
+        XCTAssertTrue(BioEgressPolicy.allowsFollowingThePulse(tempoLeaves: true, consent: bodyOnly))
+        let clinicalOnly = BioEgressPolicy.Consent(sharesBody: false, sharesClinicalDetail: true)
+        XCTAssertFalse(BioEgressPolicy.allowsFollowingThePulse(tempoLeaves: true, consent: clinicalOnly),
+                       "the detail switch alone shares nothing")
+    }
+
     /// Every source is the body's or it is not, by its stored name — a source added later with a
     /// `body.` name needs consent without anyone listing it.
     func testASourceIsTheBodysByItsStoredName() {

@@ -87,8 +87,11 @@ public enum ConnectionsOSC {
     }
 
     /// The song's batch: the tempo the transport plays, the key's root (0 = C … 11 = B), where the
-    /// playhead stands in its beat, and the master's level 0 … 1. The tempo is the song's written
-    /// tempo (or the clock it follows) — a body never sets it here, so it carries no body.
+    /// playhead stands in its beat, and the master's level 0 … 1. The tempo is the one the
+    /// transport plays: the song's written tempo, the clock it follows, or Flow's. Flow's follows
+    /// the pulse, and it does so with this connection on only while the body is shared
+    /// (`BioEgressPolicy.allowsFollowingThePulse`) — otherwise Flow holds, so no tempo sent here
+    /// moved with a body nobody shared.
     /// `0` for tempo and level while stopped means stopped, and is sent as such: a receiver can
     /// tell "transport stopped" from "Echoel went away". `/music/note/count` is not built: nothing
     /// counts sounding notes in Studio, and a constant would read as a measurement.

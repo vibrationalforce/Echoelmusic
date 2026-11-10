@@ -65,6 +65,15 @@ public enum BioEgressPolicy {
         !measuresBody(source) || consent.sharesBody
     }
 
+    /// Whether Flow may follow the pulse now (`FlowTempo`). On this device, always. While the tempo
+    /// this phone plays leaves it — a MIDI clock out, a jam it hosts, the OSC connection's tempo
+    /// and beat — a tempo that follows the pulse is the body's on a wire off the device, in small
+    /// steps, and needs the same consent as every other (gate 2). Without it Flow holds the tempo
+    /// where it is: the caller hands Flow no pulse, which is what Flow does with an untrusted one.
+    public static func allowsFollowingThePulse(tempoLeaves: Bool, consent: Consent) -> Bool {
+        !tempoLeaves || consent.sharesBody
+    }
+
     public static let clinicalAddresses: Set<String> = [
         "/echoelmusic/bio/heart/rmssd",
         "/echoelmusic/bio/heart/pnn50",

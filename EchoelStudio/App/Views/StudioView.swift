@@ -112,7 +112,8 @@ struct StudioView: View {
             engine.update(store.project)
             connections.scene(sceneID, is: ScenePresence.Phase(scenePhase))
             jam.attach(engine: engine, store: store, midi: midi)
-            flow.attach(engine: engine, store: store, strap: strap, camera: camera, midi: midi, jam: jam)
+            flow.attach(engine: engine, store: store, strap: strap, camera: camera, midi: midi, jam: jam,
+                        connections: connections)
         }
         .onChange(of: store.project) { _, project in engine.update(project) }
         // Another song: Play starts and Stop returns at its bar 1, not at the last song's cue.

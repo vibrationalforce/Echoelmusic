@@ -10,6 +10,11 @@ import Observation
 /// stopped. Closing the lock keeps where Flow got to as the song's tempo: one undo step, a gesture
 /// (T1). While a jam's host or a MIDI clock sets the pace, Flow is off and cannot be chosen.
 ///
+/// The tempo Flow plays follows the body, so it leaves the device only as the body does: while a
+/// MIDI clock goes out, this phone hosts a jam or the OSC connection is on, Flow follows the pulse
+/// only with Share Body Data on (`BioEgressPolicy.allowsFollowingThePulse`). Without it Flow holds
+/// the tempo where it is and says so (`holdsForSharing`).
+///
 /// Owned by `StudioView`, so Flow goes on while another view is open. Its observed values change
 /// when the lock, the trust or the shown tempo does, so a view reading them is not redrawn by each
 /// look (Law 6).
@@ -26,6 +31,9 @@ final class FlowController {
     private(set) var shownPulse: Int?
     /// Where the pulse takes the tempo, whole beats a minute, while Flow follows it.
     private(set) var shownTarget: Int?
+    /// Flow is on and holds the tempo, because the tempo leaves this device and Share Body Data
+    /// is off.
+    private(set) var holdsForSharing = false
 
     @ObservationIgnored private var flow = FlowTempo()
     @ObservationIgnored private var engine: AudioEngine?
@@ -34,6 +42,7 @@ final class FlowController {
     @ObservationIgnored private var camera: CameraPulseSource?
     @ObservationIgnored private var midi: MIDIInput?
     @ObservationIgnored private var jam: JamSession?
+    @ObservationIgnored private var connections: ConnectionsController?
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private var lastLook: ContinuousClock.Instant?
     @ObservationIgnored private var lastBar: Int64?
@@ -48,7 +57,8 @@ final class FlowController {
     nonisolated static let looksPerWrite = 2
 
     func attach(engine: AudioEngine, store: ProjectStore, strap: HeartRateStrap, camera: CameraPulseSource,
-                midi: MIDIInput, jam: JamSession) {
+                midi: MIDIInput, jam: JamSession, connections: ConnectionsController) {
+        self.connections = connections
         self.engine = engine
         self.store = store
         self.strap = strap
@@ -129,7 +139,8 @@ final class FlowController {
         // An app back from the background may have slept for minutes: the glide ends, nothing more.
         let seconds = Swift.min(1, Double(parts.seconds) + Double(parts.attoseconds) * 1e-18)
         let before = flow.target
-        flow.advance(seconds: seconds, pulse: measuredPulse)
+        // No pulse handed in is a pulse Flow does not trust: the tempo holds where it is.
+        flow.advance(seconds: seconds, pulse: mayFollowThePulse ? measuredPulse : nil)
         // The song's own bar lines, while it plays: one step at each.
         if engine.isPlaying {
             let project = store.project
@@ -140,8 +151,9 @@ final class FlowController {
             lastBar = nil
         }
         if let before, let after = flow.target, after != before {
-            // T1: every change of where the tempo goes is named, with what moved it.
-            DiagnosticLog.app.note("tempo: flow step", [("from", before), ("to", after), ("pulse", flow.pulse ?? 0)])
+            // T1: every change of where the tempo goes is named, with its source — Flow. The
+            // pulse itself is not written: the log is a file the musician can share.
+            DiagnosticLog.app.note("tempo: flow step", [("from", before), ("to", after)])
         }
         looksSinceWrite += 1
         if let tempo = flow.tempo, looksSinceWrite >= Self.looksPerWrite,
@@ -150,6 +162,21 @@ final class FlowController {
             engine.flowTempo = tempo
         }
         publishShown()
+    }
+
+    /// The tempo this phone plays leaves it now: a MIDI clock goes out, this phone hosts a jam, or
+    /// the OSC connection — which carries the tempo and the beat — is on.
+    private var tempoLeaves: Bool {
+        if let engine, engine.clock.isSending { return true }
+        if let jam, jam.role == .hosting { return true }
+        if let connections, connections.isOn(.osc) { return true }
+        return false
+    }
+
+    /// Whether Flow may follow the pulse now: always while the tempo stays on this device, and
+    /// with Share Body Data on while it leaves.
+    private var mayFollowThePulse: Bool {
+        BioEgressPolicy.allowsFollowingThePulse(tempoLeaves: tempoLeaves, consent: engine?.bodyConsent ?? .off)
     }
 
     /// The pulse of the body source that is on, while it is measured.
@@ -169,5 +196,12 @@ final class FlowController {
         if pulse != shownPulse { shownPulse = pulse }
         let target = following ? flow.wanted.map { Int($0.rounded()) } : nil
         if target != shownTarget { shownTarget = target }
+        let holds = lock == .flow && !mayFollowThePulse
+        if holds != holdsForSharing {
+            holdsForSharing = holds
+            if holds {
+                DiagnosticLog.app.note("tempo: flow holds", because: "the tempo leaves this device and body sharing is off")
+            }
+        }
     }
 }

@@ -299,15 +299,19 @@ private struct FlowStatusLine: View {
     @Environment(FlowController.self) private var flow
 
     var body: some View {
-        NoteText(Self.text(lock: flow.lock, canFlow: flow.canFlow, pulse: flow.shownPulse, target: flow.shownTarget))
+        NoteText(Self.text(lock: flow.lock, canFlow: flow.canFlow, holdsForSharing: flow.holdsForSharing,
+                           pulse: flow.shownPulse, target: flow.shownTarget))
     }
 
-    static func text(lock: TempoLock, canFlow: Bool, pulse: Int?, target: Int?) -> String {
+    static func text(lock: TempoLock, canFlow: Bool, holdsForSharing: Bool, pulse: Int?, target: Int?) -> String {
         guard canFlow else { return "A jam's host or a MIDI clock sets the tempo now, so Flow is off." }
         switch lock {
         case .fixed:
             return "The tempo stays where you set it."
         case .flow:
+            guard !holdsForSharing else {
+                return "Flow holds the tempo: a MIDI clock, a jam you host or OSC carries it off this device, and Share Body Data is off. Turn it on under Connections and Flow follows your pulse again."
+            }
             guard let pulse, let target else {
                 return "Flow waits for a steady pulse. Then it moves the tempo one step per bar while the song plays."
             }
