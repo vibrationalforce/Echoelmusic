@@ -1504,6 +1504,10 @@ struct SongMenu: View {
             Divider()
             sourceMenu("Pressure", current: engine.mpe.pressureSource) { engine.mpe.setPressure($0) }
             sourceMenu("Slide", current: engine.mpe.slideSource) { engine.mpe.setSlide($0) }
+            if engine.mpe.bodyExpressionWaitsForSharing {
+                // A sentence, not a control: it says where the switch is.
+                Section("Pressure and Slide follow the body only while Share Body Data is on (Connections).") {}
+            }
         }
         .disabled(engine.mpe.destinations.isEmpty)
     }

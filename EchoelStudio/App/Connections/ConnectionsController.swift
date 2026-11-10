@@ -328,6 +328,8 @@ final class ConnectionsController {
     /// Body sharing: the one switch that lets a measured body reach any connection. Not stored.
     func setSharesBody(_ on: Bool) {
         consent.sharesBody = on
+        // MPE Out's pressure and slide are a wire off the device too: the same switch governs them.
+        engine?.mpe.setConsent(consent)
         // Nothing of the body waits to be sent once it is off; the next batch starts from nothing.
         lastBody = []
         lastBodySent = nil

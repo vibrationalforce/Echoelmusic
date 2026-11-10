@@ -88,6 +88,29 @@ final class ConnectionsPolicyTests: XCTestCase {
         XCTAssertFalse(BioEgressPolicy.allowsEgress(address: "/echoelmusic/bio/event/heartbeat", source: .health, consent: both))
     }
 
+    /// Pressure and slide on a MIDI output are a wire off the device like any other: a body source
+    /// drives them only with body sharing on, and a source that is not the body's needs no consent.
+    func testANotesExpressionFollowsTheBodyOnlyWithBodySharing() {
+        let body: [ModulationSource] = [.breath, .coherence, .hrv, .heartRate, .motionTiltX, .motionEnergy]
+        for source in body {
+            XCTAssertFalse(BioEgressPolicy.allowsExpression(from: source, consent: .off), source.rawValue)
+            XCTAssertTrue(BioEgressPolicy.allowsExpression(from: source, consent: bodyOnly), source.rawValue)
+        }
+        let song: [ModulationSource] = [.lfo1, .macro1, .midiCC1, .weave1]
+        for source in song {
+            XCTAssertTrue(BioEgressPolicy.allowsExpression(from: source, consent: .off), "\(source.rawValue) is not the body")
+        }
+    }
+
+    /// Every source is the body's or it is not, by its stored name — a source added later with a
+    /// `body.` name needs consent without anyone listing it.
+    func testASourceIsTheBodysByItsStoredName() {
+        let body = Set(ModulationSource.allCases.filter { BioEgressPolicy.measuresBody($0) }.map(\.rawValue))
+        let expected: Set<String> = ["body.heartRate", "body.hrv", "body.coherence", "body.breath",
+                                     "body.motion.tiltX", "body.motion.tiltY", "body.motion.rotation", "body.motion.energy"]
+        XCTAssertEqual(body, expected)
+    }
+
     func testConsentStartsOff() {
         XCTAssertEqual(BioEgressPolicy.Consent(), .off)
         XCTAssertFalse(BioEgressPolicy.Consent.off.sharesBody)

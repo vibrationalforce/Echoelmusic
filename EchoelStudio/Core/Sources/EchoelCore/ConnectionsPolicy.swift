@@ -48,6 +48,22 @@ public enum BioEgressPolicy {
         }
     }
 
+    /// Whether a modulation source measures the body: its stored name begins with `body.` — the
+    /// pulse, HRV, coherence, the breath and the phone's own motion. An LFO, a macro, a wheel and
+    /// the song's Weave do not.
+    public static func measuresBody(_ source: ModulationSource) -> Bool {
+        source.rawValue.hasPrefix("body.")
+    }
+
+    /// Whether a note's expression on a MIDI output (pressure, slide) may follow `source`. A body
+    /// source needs the same consent as every other connection (gate 2): a MIDI output is a wire
+    /// off the device like any other, a network session included. A source that is not the body's
+    /// needs none. Whether the READING may leave — never one from the Health store — is decided
+    /// where the value is stored (`ModulationInputs.shareableValue`), which is gate 1.
+    public static func allowsExpression(from source: ModulationSource, consent: Consent) -> Bool {
+        !measuresBody(source) || consent.sharesBody
+    }
+
     public static let clinicalAddresses: Set<String> = [
         "/echoelmusic/bio/heart/rmssd",
         "/echoelmusic/bio/heart/pnn50",

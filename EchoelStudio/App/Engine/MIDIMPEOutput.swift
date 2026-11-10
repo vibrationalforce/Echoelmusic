@@ -152,6 +152,21 @@ final class MIDIMPEOutput {
         pump.setSources(pressure: pressureSource, slide: slideSource)
     }
 
+    /// Whether body sharing is on (the Connections page's switch): pressure and slide follow a
+    /// body source only then. Kept here so the menu can say why a chosen source is silent.
+    private(set) var sharesBody = false
+
+    func setConsent(_ consent: BioEgressPolicy.Consent) {
+        sharesBody = consent.sharesBody
+        pump.setConsent(consent)
+    }
+
+    /// A body source is chosen for pressure or slide and body sharing is off: nothing of it is sent.
+    var bodyExpressionWaitsForSharing: Bool {
+        guard !sharesBody else { return false }
+        return [pressureSource, slideSource].compactMap { $0 }.contains { BioEgressPolicy.measuresBody($0) }
+    }
+
     static func title(_ source: ModulationSource?) -> String {
         switch source {
         case .breath: "Breath"
@@ -208,6 +223,8 @@ final class MPEPump: Sendable {
         var zone = MPEZone()
         var pressure: ModulationSource?
         var slide: ModulationSource?
+        /// What the musician switched on in Connections; off until told otherwise.
+        var consent = BioEgressPolicy.Consent.off
         /// The MIDI 2.0 source and its translator, both only while it is on.
         var midi2Source = MIDIEndpointRef()
         var midi2: MIDI2Translator?
@@ -257,6 +274,12 @@ final class MPEPump: Sendable {
             $0.pressure = pressure
             $0.slide = slide
         }
+    }
+
+    /// Body sharing as the Connections page has it. Off, pressure and slide stop following a body
+    /// source at the next drain; the notes go on.
+    func setConsent(_ consent: BioEgressPolicy.Consent) {
+        state.withLock { $0.consent = consent }
     }
 
     /// A newly chosen output hears the zone announced first; one let go hears every note end.
@@ -343,9 +366,15 @@ final class MPEPump: Sendable {
             }
             if current.hasOutput, let modulation = current.modulation {
                 var expression: [MPEZone.Message] = []
-                // Only a value that may leave the device: an Apple Health reading never goes out (REC-1).
-                if let source = current.pressure { expression += current.zone.setPressure(modulation.shareableValue(source)) }
-                if let source = current.slide { expression += current.zone.setSlide(modulation.shareableValue(source)) }
+                // Only a value that may leave the device: an Apple Health reading never goes out
+                // (REC-1), and a body source only while body sharing is on — a MIDI output is a wire
+                // off the device like the others (`BioEgressPolicy.allowsExpression`).
+                if let source = current.pressure, BioEgressPolicy.allowsExpression(from: source, consent: current.consent) {
+                    expression += current.zone.setPressure(modulation.shareableValue(source))
+                }
+                if let source = current.slide, BioEgressPolicy.allowsExpression(from: source, consent: current.consent) {
+                    expression += current.zone.setSlide(modulation.shareableValue(source))
+                }
                 if !expression.isEmpty {
                     let words = MPEOutputWords.midi2(expression, translator: &current.midi2)
                     out.append(Batch(endpoints: current.endpoints, time: 0, messages: expression,
