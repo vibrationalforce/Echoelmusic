@@ -338,27 +338,30 @@ public final class StandardEffectUnit: AUAudioUnit {
             let bypassed = state.bypassed.load(ordering: .relaxed)
             // Playing, the dry line still hears the input, so a bypass picks it up in time.
             if !bypassed { line.feed(left: left, right: right, frames: frames) }
-            let start = AUEventSampleTime(timestamp.pointee.mSampleTime)
+            // The host's numbers are read without arithmetic that can stop the process
+            // (`RenderEvents`): in another app's host that process runs every Echoelmusic unit.
+            let start = RenderEvents.start(sampleTime: timestamp.pointee.mSampleTime)
             var done = 0
             var event = eventList
             while let current = event {
                 let header = current.pointee.head
-                let offset = Swift.min(Swift.max(Int(header.eventSampleTime - start), done), frames)
+                let offset = RenderEvents.offset(eventTime: header.eventSampleTime, start: start, done: done, frames: frames)
                 if offset > done {
                     if !bypassed { kernel.process(left: left + done, right: right + done, frames: offset - done) }
                     done = offset
                 }
                 if header.eventType == .parameter {
                     let parameter = current.pointee.parameter
-                    kernel.setParameter(Int(parameter.parameterAddress), parameter.value)
+                    kernel.setParameter(RenderEvents.address(parameter.parameterAddress), parameter.value)
                 } else if header.eventType == .parameterRamp {
                     // The ramp runs over its frames where the kernel can (`canRamp`); bypassed, the
                     // kernel does not play, so it takes the end value and comes back there.
                     let parameter = current.pointee.parameter
+                    let address = RenderEvents.address(parameter.parameterAddress)
                     if bypassed {
-                        kernel.setParameter(Int(parameter.parameterAddress), parameter.value)
+                        kernel.setParameter(address, parameter.value)
                     } else {
-                        kernel.rampParameter(Int(parameter.parameterAddress), to: parameter.value,
+                        kernel.rampParameter(address, to: parameter.value,
                                              frames: Int(parameter.rampDurationSampleFrames))
                     }
                 }

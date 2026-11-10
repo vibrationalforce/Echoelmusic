@@ -264,14 +264,17 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             guard let left = buffers[0].mData?.assumingMemoryBound(to: Float.self),
                   let right = buffers[1].mData?.assumingMemoryBound(to: Float.self) else { return noErr }
 
-            let start = AUEventSampleTime(timestamp.pointee.mSampleTime)
+            // The host's numbers are read without arithmetic that can stop the process
+            // (`RenderEvents`): a sample time that is no number, an event time or an address at
+            // the edge of its type.
+            let start = RenderEvents.start(sampleTime: timestamp.pointee.mSampleTime)
             let demoFrom = state.demoFrame
             state.demoFrame += Int64(frames)
             var done = 0
             var event = eventList
             while let current = event {
                 let header = current.pointee.head
-                let offset = Swift.min(Swift.max(Int(header.eventSampleTime - start), done), frames)
+                let offset = RenderEvents.offset(eventTime: header.eventSampleTime, start: start, done: done, frames: frames)
                 if offset > done {
                     state.kernel.render(frames: offset - done, left: left + done, right: right + done, gain: 1)
                     done = offset
@@ -283,11 +286,11 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
                     state.kernel.receive(midi: Int(midi.length), midi.data.0, midi.data.1, midi.data.2)
                 case .parameter:
                     let parameter = current.pointee.parameter
-                    state.kernel.setParameter(Int(parameter.parameterAddress), parameter.value)
+                    state.kernel.setParameter(RenderEvents.address(parameter.parameterAddress), parameter.value)
                 case .parameterRamp:
                     // The ramp runs over its frames, as the host asked, where the kernel can glide.
                     let parameter = current.pointee.parameter
-                    state.kernel.rampParameter(Int(parameter.parameterAddress), to: parameter.value,
+                    state.kernel.rampParameter(RenderEvents.address(parameter.parameterAddress), to: parameter.value,
                                                frames: Int(parameter.rampDurationSampleFrames))
                 default:
                     break

@@ -331,6 +331,40 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertEqual(played, noErr, "exactly the allocated frames still render")
     }
 
+    /// A host owes its numbers no meaning: a timestamp's flags may say its sample time is not
+    /// valid, and an event's time and address are the host's. None of them may stop the process
+    /// the unit runs in — in another app's host that is every Echoelmusic unit of the session at
+    /// once. The call plays, and an address no parameter has changes nothing.
+    func testARenderCallWithNumbersThatAreNoTimeStillPlays() throws {
+        let equalizer = try unit(.equalizer)
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 256) else {
+            return XCTFail("no stereo buffer")
+        }
+        buffer.frameLength = 256
+        let before = equalizer.parameterTree?.allParameters.map(\.value)
+        let pull: AURenderPullInputBlock = { _, _, _, _, _ in noErr }
+        let block = equalizer.internalRenderBlock
+        var stray = AUParameterEvent()
+        stray.eventSampleTime = .min
+        stray.eventType = .parameter
+        stray.parameterAddress = .max
+        stray.value = 1
+        var event = AURenderEvent()
+        event.parameter = stray
+        let times: [Double] = [.nan, .infinity, -.infinity, 1e300, -1e300, 4_096, 0]
+        for time in times {
+            var stamp = AudioTimeStamp()
+            stamp.mSampleTime = time
+            var flags = AudioUnitRenderActionFlags()
+            let played = withUnsafePointer(to: event) { list in
+                block(&flags, &stamp, 256, 0, buffer.mutableAudioBufferList, list, pull)
+            }
+            XCTAssertEqual(played, noErr, "sample time \(time)")
+        }
+        XCTAssertEqual(equalizer.parameterTree?.allParameters.map(\.value), before, "no parameter moved")
+    }
+
     func testARegisteredEffectLoadsLikeAnyAudioUnit() throws {
         StandardEffectUnit.register()
         let loaded = expectation(description: "instantiated")
