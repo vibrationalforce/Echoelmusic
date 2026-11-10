@@ -163,8 +163,9 @@ struct StudioView: View {
                 // One picture at a time: the window rests while the Field, the Instrument (which
                 // shows it) or the sky is the view, or the Field fills the screen.
                 if showsFieldWindow, surface != .field, surface != .instrument, surface != .sky, !fieldFullscreen {
-                    FieldWindow(expand: { openFieldFullscreen() }, close: { showsFieldWindow = false })
-                        .padding(Theme.Space.m)
+                    // The video window holds the bottom leading corner while it shows.
+                    FieldWindowDock(expand: { openFieldFullscreen() }, close: { showsFieldWindow = false },
+                                    taken: showsVideoWindow && hasVideo ? .bottomLeading : nil)
                         .transition(.opacity)
                 }
                 // `isOn` changes only at Go Live and Stop; the clock ticks in the badge.

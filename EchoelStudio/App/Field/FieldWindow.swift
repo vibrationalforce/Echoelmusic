@@ -6,13 +6,23 @@ import SwiftUI
 /// switch shows and hides it — under More on a phone held upright, where the transport has no room
 /// for it; it hides itself while the Field is the chosen view, so one picture is
 /// drawn at a time. Not a modal — it is layered over the view, and the fullscreen is too (Law 7:
-/// the one `.sheet(item:)` keeps its enum).
+/// the one `.sheet(item:)` keeps its enum). It rests in a corner and can be dragged by the handle
+/// in its bar to another (`FieldWindowDock`), so it gets out of the way of what it covers.
 struct FieldWindow: View {
     /// Whether the window shows over the views; kept on this device, never in the song.
     nonisolated static let shownKey = "field.window.shown"
+    /// The corner it rests in (`CardCorner`), kept on this device.
+    nonisolated static let cornerKey = "field.window.corner"
 
     let expand: () -> Void
     let close: () -> Void
+    /// The corner it rests in, in words, for VoiceOver.
+    var place = ""
+    /// The handle is dragged this far from where the drag began; and let go there.
+    var dragged: (CGSize) -> Void = { _ in }
+    var dropped: (CGSize) -> Void = { _ in }
+    /// The handle's own action, for a musician who does not drag: on to the next corner.
+    var moveOn: () -> Void = {}
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
@@ -33,7 +43,7 @@ struct FieldWindow: View {
                     .buttonStyle(.plain)
                     .frame(width: Theme.Size.touch, height: Theme.Size.touch)
                     .accessibilityLabel("Full Screen")
-                Spacer(minLength: 0)
+                handle
                 Button(action: close) { Image(systemName: "xmark") }
                     .buttonStyle(.plain)
                     .frame(width: Theme.Size.touch, height: Theme.Size.touch)
@@ -50,9 +60,82 @@ struct FieldWindow: View {
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.large).stroke(Theme.Color.border, lineWidth: 1))
     }
 
+    /// The middle of the bar: drag it and the card follows, let go and it rests in the nearest
+    /// corner. Measured in the screen's own space, so the card moving under the finger does not
+    /// feed back into the distance.
+    private var handle: some View {
+        Image(systemName: "line.3.horizontal")
+            .foregroundStyle(Theme.Color.textSecondary)
+            .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 8, coordinateSpace: .global)
+                    .onChanged { value in dragged(value.translation) }
+                    .onEnded { value in dropped(value.translation) }
+            )
+            .accessibilityElement()
+            .accessibilityLabel("Move Field Window")
+            .accessibilityValue(place)
+            .accessibilityHint("Moves the window to the next corner. Or drag it to a corner.")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { moveOn() }
+    }
+
     /// A card, not a panel: wide enough to read the picture, narrow enough to leave the view under
     /// it usable. A regular width (an iPad, a phone on its side) gets a larger one.
     private var width: CGFloat { horizontalSizeClass == .regular ? 240 : 160 }
+}
+
+/// The Field window in its corner. It owns where the card rests and the drag that moves it, so
+/// the view above it is not drawn again while a finger moves (Law 6). The card follows the finger
+/// and, let go, rests in the corner the drag reached — placed there at once, nothing glides.
+struct FieldWindowDock: View {
+    let expand: () -> Void
+    let close: () -> Void
+    /// A corner another card holds now (the video window, bottom leading): this one steps aside.
+    var taken: CardCorner?
+    @AppStorage(FieldWindow.cornerKey) private var cornerName = CardCorner.bottomTrailing.rawValue
+    @State private var drag = CGSize.zero
+    @Environment(\.layoutDirection) private var layoutDirection
+
+    private var corner: CardCorner {
+        (CardCorner(rawValue: cornerName) ?? .bottomTrailing).avoiding(taken)
+    }
+
+    var body: some View {
+        FieldWindow(expand: expand, close: close, place: Self.words(for: corner, in: layoutDirection),
+                    dragged: { translation in drag = translation },
+                    dropped: { translation in rest(after: translation) },
+                    moveOn: { cornerName = corner.next.avoiding(taken).rawValue })
+            .offset(drag)
+            .padding(Theme.Space.m)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: Self.alignment(of: corner))
+    }
+
+    /// The drag is over: the card rests where it was taken, or stays for a slip of the thumb.
+    private func rest(after translation: CGSize) {
+        // Leading and trailing are the reading direction's sides; the screen's x runs to the right.
+        let towardTrailing = layoutDirection == .rightToLeft ? -translation.width : translation.width
+        let reached = corner.moved(towardTrailing: Double(towardTrailing), down: Double(translation.height))
+        cornerName = reached.avoiding(taken).rawValue
+        drag = .zero
+    }
+
+    static func alignment(of corner: CardCorner) -> Alignment {
+        switch corner {
+        case .topLeading: .topLeading
+        case .topTrailing: .topTrailing
+        case .bottomLeading: .bottomLeading
+        case .bottomTrailing: .bottomTrailing
+        }
+    }
+
+    /// The corner as VoiceOver says it: by the screen's sides, whatever the reading direction.
+    static func words(for corner: CardCorner, in direction: LayoutDirection) -> String {
+        let onTheLeft = corner.isLeading == (direction == .leftToRight)
+        let edge = corner.isTop ? "Top" : "Bottom"
+        return edge + (onTheLeft ? " left" : " right")
+    }
 }
 
 /// The Field as the chosen view, with its door to fullscreen in the corner.
