@@ -236,11 +236,16 @@ final class PluginHost {
         onUnitsChanged?()
     }
 
-    /// Re-reads the installed units, off the main thread: the system may scan for them.
+    /// Re-reads the installed units, off the main thread: the system may scan for them. An effect
+    /// is an `aufx` or an `aumf` (a music effect: it processes sound and may also take MIDI) — the
+    /// song takes both as an insert (`PluginComponent.role`), so both are offered. Only `aufx` was
+    /// asked for, and an installed music effect could not be chosen at all.
     func refreshCatalog() {
         Task {
             let found = await Task.detached(priority: .utility) {
-                (Self.installed(kAudioUnitType_MusicDevice), Self.installed(kAudioUnitType_Effect))
+                let processors = Self.installed(kAudioUnitType_Effect) + Self.installed(kAudioUnitType_MusicEffect)
+                return (Self.installed(kAudioUnitType_MusicDevice),
+                        processors.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending })
             }.value
             instruments = found.0
             effects = found.1
@@ -359,7 +364,15 @@ final class PluginHost {
         requests[slot] = nil
         loading.remove(slot)
         guard let unit else {
-            fail(slot, request.component, reason: "\(request.component.name) is not installed on this device. Install it from the App Store, or choose another plugin.", detail: failure)
+            // Listed by the system and still not made: its extension did not start (or took too
+            // long, or was stopped). "Not installed" sent the musician to the App Store for a
+            // plugin that is on the device.
+            let listed = (instruments + effects).contains(request.component)
+            let name = request.component.name
+            let reason = listed
+                ? "\(name) is installed but did not start. Open the app it came with once, then choose it again here, or use another plugin."
+                : "\(name) is not installed on this device. Install it from the App Store, or choose another plugin."
+            fail(slot, request.component, reason: reason, detail: failure)
             return
         }
         let isEffect = slot.isInsert
@@ -508,8 +521,11 @@ final class PluginHost {
     /// Stereo at `sampleRate` (input too, for an effect), the engine's largest block, the saved
     /// settings, the song's tempo and transport through `clock`, then render resources — most
     /// units read the host blocks only when they allocate (audit 2026-10-23).
+    /// `offline` for an export's units: they render faster than real time, and a unit that
+    /// reads from disk or works on a thread of its own is told it may wait for its data instead
+    /// of playing a gap (`AUAudioUnit.isRenderingOffline`).
     private static func prepare(_ unit: AUAudioUnit, isEffect: Bool, sampleRate: Double, state: Data?,
-                                clock: HostClock) throws {
+                                clock: HostClock, offline: Bool = false) throws {
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2),
               unit.outputBusses.count > 0 else {
             throw HostError.noOutput
@@ -523,6 +539,7 @@ final class PluginHost {
         if let state { apply(state, to: unit) }
         unit.musicalContextBlock = clock.musicalContextBlock
         unit.transportStateBlock = clock.transportStateBlock
+        if offline { unit.isRenderingOffline = true }
         try unit.allocateRenderResources()
     }
 
@@ -618,7 +635,8 @@ final class PluginHost {
         guard let unit = box.unit else { return nil }
         let clock = HostClock()
         do {
-            try prepare(unit, isEffect: isEffect, sampleRate: sampleRate, state: state, clock: clock)
+            // Only an export comes through here (`offlineUnits`).
+            try prepare(unit, isEffect: isEffect, sampleRate: sampleRate, state: state, clock: clock, offline: true)
         } catch {
             return nil
         }
