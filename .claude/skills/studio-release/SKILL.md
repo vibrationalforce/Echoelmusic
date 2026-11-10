@@ -13,6 +13,11 @@ damit er nicht jedes Mal aus dem Gedächtnis gebaut wird. Gesetz dazu: `EchoelSt
 3. **Gerät:** höchstens drei gebaute Scheiben warten auf ein Geräte-Urteil (WIP 3). Liegen mehr
    ungeprüfte Builds vor, zuerst die Geräte-Session, nicht der nächste Build.
 
+**Der Kauf der Instrumente:** `PluginUnlock.isOnSale` (`EchoelStudio/Plugins/Shared/PluginUnlock.swift`)
+ist `false`, solange das Produkt nicht im Verkauf ist — dann sperrt nichts und die Plugins-Seite
+zeigt keinen Preis. Der Build, der MIT dem Produkt zur Prüfung geht, trägt `true`; kein Build davor,
+und dieser nie ohne. Vor jedem Release messen: `grep -n 'isOnSale =' EchoelStudio/Plugins/Shared/PluginUnlock.swift`.
+
 ## Die RELEASE-Datei (`EchoelStudio/RELEASE`) — jede Zeile ist eine Behauptung
 
 - Erste Zeile: `11.0.0, <n>th upload — <was neu ist, in Worten des Musikers>`.
