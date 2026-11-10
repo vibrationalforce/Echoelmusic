@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.33.0',K='echoel-nuke';try{
+    (function(){var V='10.34.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -43,7 +43,7 @@
     <link rel="canonical" href="https://echoelmusic.com/roadmap.html">
     <link rel="alternate" hreflang="en" href="https://echoelmusic.com/roadmap.html">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Roadmap","item":"https://echoelmusic.com/roadmap.html"}]}</script>
-    <link rel="stylesheet" href="shared.css?v=10.33.0">
+    <link rel="stylesheet" href="shared.css?v=10.34.0">
     <style>.spec-table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:0.95em}.spec-table th,.spec-table td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--border,#2a2a2a)}.spec-table th{color:var(--dim,#9a9a9a);font-weight:600}.spec-table code{white-space:nowrap}@media (max-width:600px){.spec-table{display:block;overflow-x:auto}}@media (max-width:600px){.spec-table[data-layout=stack]{overflow-x:visible}.spec-table[data-layout=stack] thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.spec-table[data-layout=stack] tbody,.spec-table[data-layout=stack] tr,.spec-table[data-layout=stack] td{display:block}.spec-table[data-layout=stack] tr{padding:14px 0;border-bottom:1px solid var(--border,#2a2a2a)}.spec-table[data-layout=stack] td{padding:0;border-bottom:0}.spec-table[data-layout=stack] td:first-child{font-weight:600;margin-bottom:6px}.spec-table[data-layout=stack] td[data-label]{margin-top:10px}.spec-table[data-layout=stack] td[data-label]::before{content:attr(data-label);display:block;color:var(--dim,#9a9a9a);font-size:0.9em;margin-bottom:2px}}</style>
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
@@ -93,7 +93,7 @@
                 <li><strong>Picture, sky, stage and stream:</strong> video tracks from the photo library; a Sky view of the stars above you; OSC, ADM-OSC, Art-Net and sACN out, each off until you switch it on, with body values sent only while you allow it; and a live stream of the picture and the master mix over RTMP or RTMPS that starts only when you press Go Live.</li>
                 <li><strong>Editing:</strong> split a clip at the playhead, import MIDI files, bake a track&rsquo;s effects into audio, and MPE out to your synths.</li>
                 <li><strong>A heart-rate strap as a modulation source:</strong> a Bluetooth chest strap&rsquo;s heart rate, HRV or coherence moves a fader, pan, send or synth parameter you route it to. Without a strap the control stays where you set it, and an export never reads the strap.</li>
-                <li><strong>Echoelmusic's own instruments and effects for other apps:</strong> the synthesizer, drums and sampler, and the twenty-five built-in effects, as Audio Units. They are not yet tested in a host app on a device, and they are not on sale yet.</li>
+                <li><strong>Echoelmusic's own instruments and effects for other apps:</strong> the synthesizer, drums and sampler, and the twenty-five built-in effects, as Audio Units. The synthesizer has been tried in AUM on an iPhone; the drums, the sampler, the effects and other host apps are not yet tested. They are not on sale yet.</li>
                 <li><strong>An assistant on the device:</strong> you describe a change to the song in words, it shows what it did, and one undo takes it back. It uses the language model on the device, where the device has one, and needs no network.</li>
                 <li><strong>The network:</strong> this build contacts the App Store at launch, to check whether you bought Echoelmusic's instruments, and when you open the store screen, and uses the network only for what you switch on yourself, such as Network MIDI; each use is listed on the <a href="privacy.html#studio">Privacy</a> page.</li>
             </ul>
@@ -110,7 +110,7 @@
                 <thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">When</th><th role="columnheader" scope="col">What</th><th role="columnheader" scope="col">Done when</th></tr></thead>
                 <tbody role="rowgroup">
                 <tr role="row"><td role="cell">Autumn 2026</td><td role="cell">Composing: starter projects, more instrument presets, scale lock on keys and pads, and project export for other music apps. Stem export is in TestFlight now.</td><td role="cell" data-label="Done when">A song with four tracks is made, saved, reopened and exported on a phone in flight mode. Then a public TestFlight beta.</td></tr>
-                <tr role="row"><td role="cell">Early 2027</td><td role="cell">The one-time purchase for Echoelmusic's own instruments goes on sale, and an accessibility check. The instruments as Audio Units and Restore Purchases are in TestFlight now; the instruments are not yet tested in a host app on a device.</td><td role="cell" data-label="Done when">The instruments load and play in two host apps on a device, at 44.1 and 48 kHz. App Store 1.0, planned for March 2027.</td></tr>
+                <tr role="row"><td role="cell">Early 2027</td><td role="cell">The one-time purchase for Echoelmusic's own instruments goes on sale, and an accessibility check. The instruments as Audio Units are in TestFlight now and play in full until the purchase is on sale. The synthesizer has been tried in AUM on an iPhone; the drums, the sampler and other host apps are not yet tested.</td><td role="cell" data-label="Done when">The instruments load and play in two host apps on a device, at 44.1 and 48 kHz. App Store 1.0, planned for March 2027.</td></tr>
                 <tr role="row"><td role="cell">Spring 2027</td><td role="cell">Live: MIDI clock in and out, scene launching from a DJ mixer or controller, Network MIDI only with partners you know. MIDI clock in and out, the session grid and Network MIDI only with hosts you let in are in TestFlight now.</td><td role="cell" data-label="Done when">A 30 to 60 minute set on a device with hardware, without a dropout.</td></tr>
                 <tr role="row"><td role="cell">Summer and autumn 2027</td><td role="cell">Two open packages, planned: one that reads body signals and one that speaks the stage protocols.</td><td role="cell" data-label="Done when">Both released under the MIT licence, usable without the app.</td></tr>
                 <tr role="row"><td role="cell">Winter 2027–28</td><td role="cell">Stage output: cue, OSC, DMX and spatial-object tracks. The connections screen and its four outputs (OSC, ADM-OSC, Art-Net and sACN) are in TestFlight now.</td><td role="cell" data-label="Done when">A water, light and sound installation runs for four hours from Echoelmusic.</td></tr>
@@ -177,6 +177,6 @@
         <span class="footer-copy">&copy; 2026 Echoelmusic &middot; in TestFlight</span>
     </footer>
 
-    <script src="shared.js?v=10.33.0"></script>
+    <script src="shared.js?v=10.34.0"></script>
 </body>
 </html>
