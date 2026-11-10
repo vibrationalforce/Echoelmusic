@@ -191,6 +191,26 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertNoThrow(try equalizer.allocateRenderResources(), "one rate on both sides")
     }
 
+    /// A format the render block cannot read or fill is refused when the host sets it — an
+    /// interleaved stereo bus is ONE buffer, which the block handed on unprocessed — and the bus
+    /// keeps the format it had. The standard format at another rate is still taken.
+    func testAnInterleavedOrIntegerFormatIsRefusedWhenItIsSet() throws {
+        let equalizer = try StandardEffectUnit(componentDescription: StandardEffectUnit.audioComponent(StandardEffect.equalizer.component))
+        let interleaved = try XCTUnwrap(AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 48_000,
+                                                      channels: 2, interleaved: true))
+        let integer = try XCTUnwrap(AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 48_000,
+                                                  channels: 2, interleaved: false))
+        for bus in [equalizer.inputBusses[0], equalizer.outputBusses[0]] {
+            XCTAssertThrowsError(try bus.setFormat(interleaved))
+            XCTAssertThrowsError(try bus.setFormat(integer))
+            XCTAssertFalse(bus.format.isInterleaved)
+            XCTAssertEqual(bus.format.commonFormat, .pcmFormatFloat32)
+        }
+        try equalizer.inputBusses[0].setFormat(try stereo(44_100))
+        try equalizer.outputBusses[0].setFormat(try stereo(44_100))
+        XCTAssertNoThrow(try equalizer.allocateRenderResources(), "the standard format at another rate is taken")
+    }
+
     /// A host's reset empties the tail: an impulse that would repeat 10 ms later is gone once the
     /// host resets the unit, while a unit that is not reset still plays the repeat.
     func testAResetEmptiesTheDelaysTail() throws {

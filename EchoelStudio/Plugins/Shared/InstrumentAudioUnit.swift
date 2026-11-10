@@ -90,6 +90,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         }
         let bus = try AUAudioUnitBus(format: format)
         bus.maximumChannelCount = 2
+        // Stereo only, said on the bus too: it checks a new format's channels before it asks us.
+        bus.supportedChannelCounts = UnitFormat.channelCounts
         outputBus = bus
         busArray = AUAudioUnitBusArray(audioUnit: self, busType: .output, busses: [bus])
         // `.flag_CanRamp` only where the kernel glides a host's ramp (the synth's numbers).
@@ -147,16 +149,34 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
 
     override var canProcessInPlace: Bool { false }
 
+    /// No input, stereo out, and nothing else: the render block fills exactly two buffers. Without
+    /// this a host reads "any number of channels" and may offer the instrument in mono, which
+    /// `allocateRenderResources` then refuses (the effects say theirs in `StandardEffectUnit`).
+    override var channelCapabilities: [NSNumber]? { UnitFormat.instrumentCapabilities }
+
+    /// Asked before a host changes the output's format. A format the render block cannot fill — an
+    /// interleaved one arrives as a single buffer, an integer one would be handed float bits — is
+    /// refused here, so the host hears it when it sets the format and can choose another, instead
+    /// of at allocation or as an error in every render call. The earlier instrument refused the
+    /// same (`Sources/EchoelmusicAUv3`).
+    override func shouldChange(to format: AVAudioFormat, for bus: AUAudioUnitBus) -> Bool {
+        UnitFormat.accepts(format) && super.shouldChange(to: format, for: bus)
+    }
+
     var isUnlocked: Bool {
         get { render.unlocked.load(ordering: .acquiring) }
         set { render.unlocked.store(newValue, ordering: .releasing) }
     }
 
+    /// The format is checked BEFORE the base class counts the unit as allocated, as the effects do.
+    /// Refused after it, the unit stayed marked allocated with no buffers: the base class then
+    /// turns down every new bus format until the host deallocates, so a host that tried a format
+    /// we do not play could not go on to one we do.
     override func allocateRenderResources() throws {
-        try super.allocateRenderResources()
-        guard let format = outputBus?.format, format.channelCount == 2 else {
+        guard let format = outputBus?.format, UnitFormat.accepts(format) else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_FormatNotSupported))
         }
+        try super.allocateRenderResources()
         let frames = Int(maximumFramesToRender)
         let kernel = kernelType.init(sampleRate: format.sampleRate, maximumFrames: frames)
         for index in kernelType.parameters.indices {
@@ -164,11 +184,29 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         }
         log.info("allocate \(self.title, privacy: .public) \(format.sampleRate, privacy: .public) Hz, \(frames, privacy: .public) frames")
         if let sample, let sampler = kernel as? any SampleLoadingKernel { sampler.load(sample.buffer) }
+        // A host may allocate twice with no deallocation between: the earlier buffers go first.
+        releaseBuffers()
         render.kernel = kernel
         render.left = .allocate(capacity: frames)
         render.right = .allocate(capacity: frames)
         render.capacity = frames
         render.demoFrame = 0
+    }
+
+    /// Frees the buffers a host may ask the render block to supply. Never while a render call
+    /// runs: a host renders only between allocation and deallocation.
+    private func releaseBuffers() {
+        render.left?.deallocate()
+        render.right?.deallocate()
+        render.left = nil
+        render.right = nil
+        render.capacity = 0
+    }
+
+    /// A host may let the unit go without deallocating its render resources.
+    deinit {
+        render.left?.deallocate()
+        render.right?.deallocate()
     }
 
     /// Makes `buffer` the sample, or takes the sample away. Off the render thread.
@@ -238,11 +276,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     }
 
     override func deallocateRenderResources() {
-        render.left?.deallocate()
-        render.right?.deallocate()
-        render.left = nil
-        render.right = nil
-        render.capacity = 0
+        releaseBuffers()
         super.deallocateRenderResources()
     }
 

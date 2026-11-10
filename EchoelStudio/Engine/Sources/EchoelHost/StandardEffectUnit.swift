@@ -209,6 +209,15 @@ public final class StandardEffectUnit: AUAudioUnit {
     /// at load.
     public override var channelCapabilities: [NSNumber]? { [NSNumber(value: 2), NSNumber(value: 2)] }
 
+    /// Asked before a host changes either bus's format. The render block takes two buffers of
+    /// floats on each side: an interleaved stereo format arrives as ONE buffer, which the block
+    /// handed on unprocessed, and an integer one would be read as floats. Such a format is refused
+    /// here, when the host sets it, so the host can choose another — the instrument unit refuses the
+    /// same (`UnitFormat`).
+    public override func shouldChange(to format: AVAudioFormat, for bus: AUAudioUnitBus) -> Bool {
+        UnitFormat.accepts(format) && super.shouldChange(to: format, for: bus)
+    }
+
     /// The base state (the parameter tree by address) plus the same values by identifier
     /// (`StandardEffectSettings`). A state Echoel wrote without loading the unit — the master
     /// suggestion's — carries only the identifiers; a state with both plays the identifiers.
