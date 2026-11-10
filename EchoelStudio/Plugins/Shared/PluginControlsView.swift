@@ -163,7 +163,7 @@ struct PluginControlsView: View {
                     .foregroundStyle(EchoelBrand.Color.text)
                     .accessibilityAddTraits(.isHeader)
                 if !model.isUnlocked {
-                    Text("Demo: two seconds of silence every 30 seconds. Echoelmusic Plugins in Echoelmusic unlocks \(model.title) and shows whether it is on sale; reload it here after buying.")
+                    Text("Demo: two seconds of silence every 30 seconds. \(PluginUnlock.name) in the Echoelmusic app unlocks \(model.title); reload it here after buying.")
                         .font(EchoelBrand.Font.caption)
                         .foregroundStyle(EchoelBrand.Color.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)

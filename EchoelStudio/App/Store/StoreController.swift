@@ -6,7 +6,8 @@ import os
 /// Sells Echoel's own Audio Units as ONE purchase (`PluginUnlock`). It lifts the demo pause of
 /// Echoel's instruments (the effects are free) in every host on a device of the same Apple account,
 /// once the app has run on that device: after every check of the transactions the app records the
-/// result in the shared container, where the plugins read it.
+/// result in the shared container, where the plugins read it. Until the purchase is on sale
+/// (`PluginUnlock.isOnSale`) nothing is locked, and this page offers nothing to buy.
 @MainActor
 @Observable
 final class StoreController {
@@ -42,6 +43,9 @@ final class StoreController {
     /// run can end early and empty, and it would be the newest pass, so it would write `false`
     /// for a buyer (store review 2026-10-24).
     func load() async {
+        // Not on sale: the App Store is not asked, so no price appears for a purchase that would
+        // unlock nothing — the instruments play in full until the sale starts.
+        guard PluginUnlock.isOnSale else { return }
         isLoading = true
         defer { isLoading = false }
         do {

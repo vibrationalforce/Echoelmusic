@@ -8,8 +8,9 @@ import Synchronization
 import os
 
 /// An Echoel instrument as an Audio Unit (`aumu`) for other apps: a kernel's parameters in a
-/// tree, MIDI in, stereo out. Until it is unlocked (a purchase in Echoel) it plays as a demo:
-/// two seconds of silence every thirty. Every instrument extension uses this one class.
+/// tree, MIDI in, stereo out. Once the purchase is on sale (`PluginUnlock.isOnSale`), it plays as
+/// a demo until it is unlocked in the app: two seconds of silence every thirty. Every instrument
+/// extension uses this one class.
 final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     let title: String
     let help: String?

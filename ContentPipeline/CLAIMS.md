@@ -51,9 +51,11 @@ Modulationsquelle (Herzfrequenz/HRV/Kohärenz auf Fader, Pan, Send, Synth-Parame
 Export liest den Gurt nie — `EchoelStudio/project.yml` Bluetooth-Text, Builds 10012–10017). Der Satz oben „nichts aus
 den Körper-Zeilen“ meint die ALT-APP-Zeilen (Kamera-rPPG, Apple Health, Watch); der Gurt des Studios ist eine
 Studio-Fähigkeit und wird nur als MECHANISMUS beschrieben (§2), nie als Wirkung. **Weiter NICHT im Store-Text,
-gemessen:** die eigenen Instrumente als Audio Units in fremden Hosts — sie laufen dort im Demo-Gate („two seconds of
-silence every thirty“, `Plugins/Shared/PluginControlsView.swift`), und der Freischalt-Kauf ist nicht im Verkauf (§7,
-Nachtrag 1); das Field (Visual), Loop/Overdub, Tonsysteme, der Assistent, der Import alter Songs. „Beta“ steht in
+gemessen:** die eigenen Instrumente als Audio Units in fremden Hosts — der Freischalt-Kauf ist nicht im Verkauf (§7,
+Nachtrag 1), und bis er es ist, sperrt nichts: seit 2026-11-10 spielen sie dort ohne Demo-Pause
+(`PluginUnlock.isOnSale` in `Plugins/Shared/PluginUnlock.swift`; die Pause „two seconds of silence every thirty“
+kommt mit dem Verkauf zurück); das Field (Visual), Loop/Overdub, Tonsysteme, der Assistent, der Import alter Songs.
+„Beta“ steht in
 einem Store-Text nicht; stattdessen „Echoel is in active development“ plus Feedback-Adresse. Kein Satz ist auf einem
 Gerät geprüft — die Reihenfolge aus `docs/dev/APP_STORE_LISTING_STUDIO_11.md` (erst Gerät) ist damit umgekehrt worden,
 auf Founder-Freigabe; was ein Gerät widerlegt, fliegt aus beiden Sprachen im selben Commit. Die Release Notes sagen

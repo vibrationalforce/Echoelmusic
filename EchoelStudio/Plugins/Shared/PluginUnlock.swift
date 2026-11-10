@@ -16,6 +16,14 @@ enum PluginUnlock {
     static let productID = "com.echoelmusic.app.pro"
     static let name = "Echoelmusic Plugins"
 
+    /// Whether the purchase is on sale. While it is not, nothing can unlock the instruments, so
+    /// they are not locked either: a demo pause no purchase removes reads as a broken plug-in,
+    /// and its text sent the musician to a purchase that did not exist (host recording of build
+    /// 10068, 2026-11-10). The lock (`EchoelPluginUnit.needsPurchase`) and the store page read
+    /// this one value. Set it to `true` in the build that goes to review together with the
+    /// product — not before, and never without it.
+    static let isOnSale = false
+
     /// The container app and extension share (requested by both since factory job 002). Both
     /// profiles grant it: build 10008 signed with it, and the signing probe of 2026-10-21 printed it
     /// in each development and App Store profile. Whether the extension then launches in a host is

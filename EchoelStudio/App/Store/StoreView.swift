@@ -13,15 +13,18 @@ struct StoreView: View {
             List {
                 EchoelSection("Instruments", footer: footer) {
                     ForEach(OwnPlugin.instruments) { plugin in row(plugin) }
-                    purchase
+                    if PluginUnlock.isOnSale { purchase }
                 }
                 EchoelSection("Free") {
                     ForEach(OwnPlugin.free) { plugin in row(plugin) }
                 }
-                EchoelSection {
-                    Button("Restore Purchases") { Task { await store.restore() } }
-                        .buttonStyle(EchoelRowButtonStyle())
-                        .disabled(store.isBusy)
+                // Nothing is sold yet, so there is nothing to restore either.
+                if PluginUnlock.isOnSale {
+                    EchoelSection {
+                        Button("Restore Purchases") { Task { await store.restore() } }
+                            .buttonStyle(EchoelRowButtonStyle())
+                            .disabled(store.isBusy)
+                    }
                 }
                 if let message = store.message {
                     EchoelSection { NoteText(message) }
@@ -39,10 +42,16 @@ struct StoreView: View {
     /// "Not on sale yet" is true only while the App Store knows no product; the day the product
     /// exists, the price button beside this text would have contradicted it (store review 2026-10-24).
     private var footer: String {
+        let units = "They are AUv3 instruments for apps that host Audio Units."
+        // Nothing to buy: nothing is locked (`PluginUnlock.isOnSale`).
+        guard PluginUnlock.isOnSale else {
+            return units + " They are not yet tested in a host app on a device, and they are not on sale yet."
+                + " Until they are, they play in full in other apps."
+        }
         let sale = store.product == nil
             ? " They are not yet tested in a host app on a device, and they are not on sale yet."
             : " They are not yet tested in a host app on a device."
-        return "They are AUv3 instruments for apps that host Audio Units." + sale
+        return units + sale
             + " Until they are unlocked, they play as a demo: two seconds of silence every thirty."
             + " One purchase, no subscription."
     }
