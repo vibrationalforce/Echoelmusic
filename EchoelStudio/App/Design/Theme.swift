@@ -187,8 +187,8 @@ enum Theme {
     }
 }
 
-/// The one button style for toolbar and transport controls: solid fill, 8 pt radius, a hairline
-/// boundary, opacity feedback on press (no scaling, no glow).
+/// The one button style for toolbar and transport controls: solid fill, 8 pt radius, a control's
+/// boundary (`borderStrong`), opacity feedback on press (no scaling, no glow).
 ///
 /// A lit button is monochrome, the earlier instrument's rule (`EchoelTheme`): chosen, switched on
 /// or the page's one main action, it is the off-white tile with a black label. The only other fill
@@ -235,7 +235,9 @@ private struct ToolButtonFace: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.medium)
-                    .strokeBorder(Theme.Color.border, lineWidth: isActive ? 0 : 1)
+                    // An unlit button is still a control: it takes the control's boundary, not
+                    // the divider's hairline (1.4:1 against the bar it sat on).
+                    .strokeBorder(Theme.Color.borderStrong, lineWidth: isActive ? 0 : 1)
             )
             .opacity(isEnabled ? (configuration.isPressed ? Theme.Motion.pressedOpacity : 1) : 0.4)
             .animation(Theme.Motion.quick, value: configuration.isPressed)

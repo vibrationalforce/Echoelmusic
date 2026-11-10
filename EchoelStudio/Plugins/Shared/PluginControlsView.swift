@@ -329,7 +329,7 @@ private struct PluginValueField: View {
     }
 }
 
-/// The Studio's tool button, for the plugin window: a solid fill, an 8 pt radius, a hairline
+/// The Studio's tool button, for the plugin window: a solid fill, an 8 pt radius, a control's
 /// boundary, the brand face, and opacity on press — never scale.
 private struct PluginButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -340,7 +340,7 @@ private struct PluginButtonStyle: ButtonStyle {
             .frame(minHeight: EchoelBrand.touch)
             .background(RoundedRectangle(cornerRadius: EchoelBrand.Radius.medium).fill(EchoelBrand.Color.surfaceRaised))
             .overlay(RoundedRectangle(cornerRadius: EchoelBrand.Radius.medium)
-                .strokeBorder(EchoelBrand.Color.border, lineWidth: 1))
+                .strokeBorder(EchoelBrand.Color.borderStrong, lineWidth: 1))
             .opacity(configuration.isPressed ? EchoelBrand.Motion.pressedOpacity : 1)
             .animation(EchoelBrand.Motion.quick, value: configuration.isPressed)
     }
