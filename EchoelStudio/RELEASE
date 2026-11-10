@@ -1,29 +1,20 @@
-11.0.0 — the earlier instrument's look: chosen is off-white, green is a signal; the plug-ins play in full and fit a phone-high window
+11.0.0 — all seven views on a phone's bar; the body leaves by MPE Out and in a stream only with Share Body Data on
 
-What is new since 10068. Each line is code that the Echoel Studio run builds; the render-event
-and unit-format rules have tests of their own, and nothing here is device-verified yet.
-- Look: a chosen view, a switched-on button (Mute, Solo, Loop, Click, Keys, an effect that is on)
-  and a page's main action (the number pad's OK) are an off-white tile with a black label. The
-  green is kept for what sounds or is measured: Play shows a green glyph while the song plays,
-  and so does a track's stop button while its clip plays. Recording stays red.
-- Buttons: a button that is not lit has a visible outline (it had a divider's hairline).
-- Keys: the key strip stands under Instrument, Tracks, Arrange and Session; Mixer, Field and Sky
-  keep their whole height. The Keys switch is unchanged.
-- Audio Units in other apps: the instruments are not demo-locked while the purchase is not on
-  sale — no pause, no demo sentence; "Echoelmusic Plugins…" offers nothing to buy or restore.
-- Plug-in window: every control is in one grid; a named choice (Engine, Waveform, Filter) opens
-  a menu; rows only one engine plays show while that engine is chosen; in a window under 340
-  points high the title goes.
-- Audio Units, in a host: numbers a host sends that are no time or no address can no longer
-  stop the units; an instrument says it is stereo with no input and refuses another format
-  when the host sets it; a host's reset silences the instrument.
-- Plugins from other makers: music effects are offered under Add Effect; an export tells its
-  units that it renders offline; a plugin that is installed but did not start is no longer
-  called "not installed".
-- Go Live: the streaming library is HaishinKit 2.3.0 (it was 2.2.5).
+What is new since 10069. Each line is code that the Echoel Studio run builds; the two rules
+about what leaves the device have tests of their own, and nothing here is device-verified yet.
+- Bar of views: seven equal cells, a symbol over the word, so Instrument, Tracks, Arrange,
+  Session, Mixer, Field and Sky all stand on a phone held upright; the chosen one is the
+  off-white tile.
+- Look: Auto Enhance and Match Color (a video part's colour page) and the listening note's OK
+  are the app's own buttons; they were the system's.
+- MPE Out: Pressure and Slide follow a body source only while Share Body Data is on
+  (Connections). With it off the notes still go out, the two stay still, and the MPE Out menu
+  says where the switch is.
+- Go Live: the streamed picture moves with the body only while Share Body Data is on, and
+  never with a heart rate read from Apple Health. The picture on this device is unchanged.
 
-Previous: 11.0.0 (10068) — one name, Echoelmusic; a stream and a take finish stopping before
-the next begins; 10067 — warp modes, a playhead you can move, zoom and waveforms.
+Previous: 11.0.0 (10069) — the earlier instrument's look, the plug-ins play in full and fit a
+phone-high window; 10068 — one name, Echoelmusic.
 Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -32,15 +23,13 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. AUM: load "Echoelmusic: Synth" and hold a note for 40 seconds: does it sound without a
-   pause, and is there no demo sentence in its window?
-2. AUM on the iPhone, Synth window at its usual size: are Engine, Waveform, Filter, Cutoff and
-   Resonance on screen without scrolling, and does tapping Engine open a list with all eleven
-   names?
-3. In the app: are the chosen view and a Mute or Solo that is on off-white with black letters,
-   and does Play show a green glyph while the song plays — and can you tell at a glance what
-   is on?
-4. Open Mixer, Field and Sky: is the key strip gone there, and is it back under Instrument and
-   Tracks?
-5. Go Live to a destination, wait for the On Air clock, press Stop Stream: does the stream
-   arrive at the destination and stop cleanly?
+1. iPhone held upright: are all seven views on the bar without scrolling, can you read each
+   word, and is the chosen one the light tile?
+2. Tap Field, then Sky, then Mixer on the bar: does each open at the first tap?
+3. MPE Out to a MIDI output, Pressure on a body source, Share Body Data off: do the notes
+   arrive while pressure stays still, and does the MPE Out menu name the switch? With Share
+   Body Data on: does pressure move?
+4. Go Live with a body source on and Share Body Data off: is the picture at the destination
+   calm while the Field on the phone still moves with you?
+5. A video part's colour page: do Auto Enhance and Match Color look like the app's other
+   buttons, and does each still do its work?
