@@ -6,6 +6,7 @@
     <title>One Clock — Echoelmusic</title>
     <meta name="description" content="Everyone with this page open breathes in and out at the same moment. One clock for every device — no server, no account, no data.">
     <meta name="theme-color" content="#000000">
+    <meta name="color-scheme" content="dark">
     <meta property="og:title" content="One Clock — Echoelmusic">
     <meta property="og:description" content="Everyone with this page open breathes in and out at the same moment. One clock for every device — no server, no account, no data.">
     <meta property="og:url" content="https://echoelmusic.com/one-clock.html">
@@ -32,12 +33,13 @@
         :root {
             --bg: #000;
             --text: #e0e0e0;
-            --dim: rgba(224,224,224,0.55);
-            --border: rgba(224,224,224,0.14);
+            --dim: rgba(224,224,224,0.65);
+            --border: rgba(224,224,224,0.10);
             --font: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
         }
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         html { background: var(--bg); }
+        html { background: var(--bg); color-scheme: dark; }
         body {
             font-family: var(--font);
             background: var(--bg);

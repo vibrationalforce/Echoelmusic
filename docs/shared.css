@@ -19,7 +19,7 @@
     --surface-raised: #1a1a1e;                    /* Theme.Color.surfaceRaised */
     --border: rgba(224,224,224,0.10);             /* Theme.Color.border — a divider */
     --border-strong: rgba(224,224,224,0.45);      /* Theme.Color.borderStrong — a control's edge, 3.6:1 */
-    --accent: #4dd98c;                            /* Theme.Color.accent — bio-green, active/selected only */
+    --accent: #4dd98c;                            /* Theme.Color.accent — bio-green: a live signal only; nothing on the site is one */
     --on-accent: #000;                            /* Theme.Color.onAccent */
     --record: #e64d4d;                            /* Theme.Color.record — record/danger only */
     --warning: #e69e33;                           /* Theme.Color.warning */
@@ -33,6 +33,9 @@
 /* ===== RESET ===== */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+/* The ground belongs to <html> too, and the page says it is dark: without both, a phone's browser
+   drew its own bars and the overscroll area white around a black page (seen on iOS Safari). */
+html { background: var(--bg); color-scheme: dark; }
 body {
     font-family: var(--font);
     background: var(--bg);
@@ -45,13 +48,14 @@ body {
 }
 a, a:visited, a:active, a:link { color: inherit; text-decoration: none; }
 a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
-/* The page you are on, in the nav: the one place the site has a "selected" state, so the one
-   place it uses the accent — the same rule as the app. Colour is not the only cue: the link
-   also carries aria-current, which a screen reader announces. */
+/* The page you are on, in the nav: the one place the site has a "selected" state. It is drawn
+   as the app draws a chosen control — in the off-white, never in the green, which is kept for a
+   live signal (and a website has none). An underline is the second cue besides the brighter
+   text, and the link also carries aria-current, which a screen reader announces. */
 /* (0,3,1): `.nav-links a:link` below is (0,2,1) and later, so the bare (0,2,1) form lost to it
    and no page ever showed the accent (measured 2026-11-09 on six pages). */
 .nav-links a[aria-current="page"], .nav-links a[aria-current="page"]:link, .nav-links a[aria-current="page"]:visited,
-.menu-overlay a[aria-current="page"], .menu-overlay a[aria-current="page"]:link, .menu-overlay a[aria-current="page"]:visited { color: var(--accent); }
+.menu-overlay a[aria-current="page"], .menu-overlay a[aria-current="page"]:link, .menu-overlay a[aria-current="page"]:visited { color: var(--text); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
 ::selection { background: rgba(224,224,224,0.3); color: #fff; }
 
 /* ===== SKIP LINK ===== */

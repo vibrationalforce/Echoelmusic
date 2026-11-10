@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.30.0',K='echoel-nuke';try{
+    (function(){var V='10.31.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -23,6 +23,7 @@
     <title>The earlier app (10.79) — Echoelmusic</title>
     <meta name="description" content="Archive: the earlier Echoelmusic app (10.79, frozen), an instrument played by the body. Today Echoelmusic is a music workstation in TestFlight.">
     <meta name="theme-color" content="#000000">
+    <meta name="color-scheme" content="dark">
     <meta property="og:title" content="The earlier app (10.79) — Echoelmusic">
     <meta property="og:description" content="Archive: the earlier Echoelmusic app (10.79, frozen), an instrument played by the body. Today Echoelmusic is a music workstation in TestFlight.">
     <meta property="og:url" content="https://echoelmusic.com/earlier-app.html">
@@ -75,6 +76,7 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; scroll-padding-top: 80px; overflow-x: hidden; }
+        html { background: var(--bg); color-scheme: dark; }
 
         body {
             font-family: var(--font);
@@ -86,7 +88,7 @@
         a, a:visited, a:active { color: inherit; text-decoration: none; }
         a:focus-visible, button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
         .nav-links a[aria-current="page"], .nav-links a[aria-current="page"]:link, .nav-links a[aria-current="page"]:visited,
-.menu-overlay a[aria-current="page"], .menu-overlay a[aria-current="page"]:link, .menu-overlay a[aria-current="page"]:visited { color: var(--accent); }
+.menu-overlay a[aria-current="page"], .menu-overlay a[aria-current="page"]:link, .menu-overlay a[aria-current="page"]:visited { color: var(--text); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
 
         .skip-link {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);

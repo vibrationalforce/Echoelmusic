@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.30.0',K='echoel-nuke';try{
+    (function(){var V='10.31.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -23,6 +23,7 @@
     <title>Online consulting for sound and media production — Echoelmusic</title>
     <meta name="description" content="Online consulting by Echoel (Michael Terbuyken), Hamburg: calls, written plans, project support and workshops for sound and media production.">
     <meta name="theme-color" content="#000000">
+    <meta name="color-scheme" content="dark">
     <meta property="og:title" content="Online consulting for sound and media production — Echoelmusic">
     <meta property="og:description" content="Online consulting for sound and media production: a first call, a written plan, remote project support and online workshops. By Echoel (Michael Terbuyken), Hamburg.">
     <meta property="og:url" content="https://echoelmusic.com/consulting.html">
@@ -41,7 +42,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
     <link rel="canonical" href="https://echoelmusic.com/consulting.html">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Consulting","item":"https://echoelmusic.com/consulting.html"}]}</script>
-    <link rel="stylesheet" href="shared.css?v=10.30.0">
+    <link rel="stylesheet" href="shared.css?v=10.31.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
     <style>
@@ -227,6 +228,6 @@
         <span class="footer-copy">&copy; 2026 Echoelmusic &middot; in TestFlight</span>
     </footer>
 
-    <script src="shared.js?v=10.30.0"></script>
+    <script src="shared.js?v=10.31.0"></script>
 </body>
 </html>
