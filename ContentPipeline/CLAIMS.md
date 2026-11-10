@@ -190,6 +190,11 @@ erweitern nicht.
   rendert eine WAV je gehörter Spur; die Summe ist der Mix VOR den Master-Effekten (`Engine/Tests/.../StemRenderTests.swift`
   pinnt die Summe, die Notiz in `exportStems` nennt die ausgelassenen Master-Effekte). Sagbar ist „stems (one WAV per track, before the master effects)“ — „mastering“ und „normalised“ bleiben verboten.
 - „works in AUM, Logic, GarageBand“, „plugin you can buy“: Studios Audio Units liefen in keinem Host auf einem Gerät (§1, Nachtrag 3); nichts ist im Verkauf (§7, Nachtrag 1).
+  ⭐ **Geräte-Prüfung 2026-11-10, Build 10069, AUM auf einem iPhone:** das Instrument „Echoelmusic: Synth“ lädt,
+  klingt 40 Sekunden ohne Unterbrechung und zeigt seine Regler im Fenster des Hosts (Engine, Waveform, Filter, Cutoff,
+  Resonance ohne Scrollen; das Engine-Menü nennt alle elf). Erlaubt ist damit genau dieser Satz: „The synthesizer has
+  been tried in AUM on an iPhone.“ Weiter NICHT: „works in AUM, Logic, GarageBand“ — belegt ist EIN Instrument in EINEM
+  Host. Drums, Sampler, die 25 Effekte, GarageBand, Logic und jedes iPad sind ungeprüft; der Klang ist nicht beurteilt.
 - „imports your old Echoelmusic songs“: die App verlangt die App Group `group.com.echoelmusic` seit `a14e1960a` wieder (F17 erledigt 21.10.), ausgeliefert erst mit dem nächsten TestFlight-Build und auf keinem Gerät geprüft. Bis ein Gerät es zeigt, nicht behaupten; in 10004–10009 fand der Import nichts.
 - „AI that writes your song“: der Assistent ist nur mit Apple Intelligence sichtbar, ändert Tempo, Spuren, Sounds, Mix und einfache Muster, und lief auf keinem Gerät. Nie „KI komponiert“, nie „Superintelligenz“.
 - „Network MIDI between two iPads running Echoel“: Echoel nimmt Verbindungen an, startet keine, und sendet nur Clock.
