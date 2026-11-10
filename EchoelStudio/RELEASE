@@ -1,20 +1,29 @@
-11.0.0 — all seven views on a phone's bar; the body leaves by MPE Out and in a stream only with Share Body Data on
+11.0.0 — one switch for everything of the body that leaves; the app's own row of cells; a Field window that moves out of the way
 
-What is new since 10069. Each line is code that the Echoel Studio run builds; the two rules
-about what leaves the device have tests of their own, and nothing here is device-verified yet.
-- Bar of views: seven equal cells, a symbol over the word, so Instrument, Tracks, Arrange,
-  Session, Mixer, Field and Sky all stand on a phone held upright; the chosen one is the
-  off-white tile.
-- Look: Auto Enhance and Match Color (a video part's colour page) and the listening note's OK
-  are the app's own buttons; they were the system's.
-- MPE Out: Pressure and Slide follow a body source only while Share Body Data is on
-  (Connections). With it off the notes still go out, the two stay still, and the MPE Out menu
-  says where the switch is.
-- Go Live: the streamed picture moves with the body only while Share Body Data is on, and
-  never with a heart rate read from Apple Health. The picture on this device is unchanged.
+What is new since 10070. Each line is code that the Echoel Studio run builds; the rules have tests
+of their own, and nothing here is device-verified yet.
+- Flow: a tempo that follows the pulse leaves the device only with Share Body Data on. While a
+  MIDI clock goes out, this phone hosts a jam or the OSC connection is on, and sharing is off,
+  Flow holds the tempo where it is; the Instrument page says why and where the switch is. A Flow
+  step is noted in the diagnostics log with the two tempos, no longer with the pulse.
+- Look: a choice between a few names is the app's own row of cells — the chosen one the off-white
+  tile — where the system's segmented control stood: Fixed and Flow, the instrument, waveform,
+  filter, drum models and sampler mode on the Sound page, the kinds in the media browser, Frame,
+  Picture, Codec and the Field layer in the video export, the shape under Go Live. The Notes and
+  Sound switch in the clip editor's bar is still the system's.
+- Keys switch: dimmed under the views that settle it themselves — the Instrument always has its
+  keys, the mixer, the Field and the sky never do. It decides under Tracks, Arrange and Session.
+- Field window: a handle in the middle of its bar; drag it and the card rests in the corner you
+  reach, kept on this device. It steps aside from the video window's corner.
+- Instrument page: the safety sentence under the pulse is body text, not a grey note.
+- Echoelmusic Plugins page: says the synthesizer has been tried in AUM on an iPhone, and that the
+  drums, the sampler and other host apps are not yet tested.
+- In the code and not in use yet: a flash limit for footage (a tested rule; the video window and
+  the Field preview do not read it yet).
 
-Previous: 11.0.0 (10069) — the earlier instrument's look, the plug-ins play in full and fit a
-phone-high window; 10068 — one name, Echoelmusic.
+Previous: 11.0.0 (10070) — all seven views on a phone's bar; the body leaves by MPE Out and in a
+stream only with Share Body Data on; 10069 — the earlier instrument's look, the plug-ins play in
+full.
 Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -23,13 +32,15 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. iPhone held upright: are all seven views on the bar without scrolling, can you read each
-   word, and is the chosen one the light tile?
-2. Tap Field, then Sky, then Mixer on the bar: does each open at the first tap?
-3. MPE Out to a MIDI output, Pressure on a body source, Share Body Data off: do the notes
-   arrive while pressure stays still, and does the MPE Out menu name the switch? With Share
-   Body Data on: does pressure move?
-4. Go Live with a body source on and Share Body Data off: is the picture at the destination
-   calm while the Field on the phone still moves with you?
-5. A video part's colour page: do Auto Enhance and Match Color look like the app's other
-   buttons, and does each still do its work?
+1. Keys switch in the transport (under More on a phone held upright): is it dimmed under Mixer,
+   Field, Sky and Instrument, and lit and working under Tracks, Arrange and Session?
+2. Flow on, a body source on, a MIDI clock going out (or the OSC connection on), Share Body Data
+   off: does the tempo hold, and does the Instrument page say why and where the switch is? With
+   Share Body Data on: does Flow follow your pulse again after a few seconds?
+3. Fixed and Flow on the Instrument page, Waveform and Filter on the Sound page, Frame and Codec
+   in the video export: do they look like the app's other controls, the chosen one the light
+   tile, and does a tap still choose?
+4. Field window over Tracks: drag it by the handle in its bar to another corner. Does it follow
+   the finger, rest in that corner, and is it still there after you close and open the app?
+5. Instrument page: can you read the safety sentence under the pulse at a glance? And does
+   "Echoelmusic Plugins…" say the synthesizer has been tried in AUM on an iPhone?
