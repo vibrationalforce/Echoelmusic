@@ -273,7 +273,8 @@ private struct InstrumentPulse: View {
             .accessibilityValue(rate.map { "\($0) beats per minute" } ?? "Not measured")
             NoteText(sourceLine(measured: rate != nil))
             NoteText(ModulateMenu.measuringLine(measuring, sourceOn: strap.isOn || camera.isOn || health.isOn || phoneMotion.isOn))
-            NoteText("Pulse, HRV, coherence and breath are for self-observation, not a medical diagnosis. Do not play the Instrument while driving or steering a boat, or under the influence of alcohol or drugs.")
+            // The safety line is the page's plainest text, not its smallest: body size, full colour.
+            ParagraphText("Pulse, HRV, coherence and breath are for self-observation, not a medical diagnosis. Do not play the Instrument while driving or steering a boat, or under the influence of alcohol or drugs.")
         }
     }
 
