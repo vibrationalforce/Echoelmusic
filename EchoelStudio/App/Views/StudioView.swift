@@ -57,6 +57,16 @@ struct StudioView: View {
             case .sky: "Sky"
             }
         }
+
+        /// Whether the keys belong under this view: where notes are played or written. The mixer,
+        /// the Field and the sky keep their whole height — under the keys a phone left the mixer
+        /// about 350 points for a strip that wants 520.
+        var takesKeys: Bool {
+            switch self {
+            case .instrument, .tracks, .arrange, .session: true
+            case .mixer, .field, .sky: false
+            }
+        }
     }
 
     var body: some View {
@@ -134,8 +144,9 @@ struct StudioView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 }
             }
-            // The Instrument is played on the keys, so they stay under it whatever the Keys switch says.
-            if showsKeys || surface == .instrument {
+            // The Instrument is played on the keys, so they stay under it whatever the Keys switch
+            // says; the mixer, the Field and the sky never carry them (`Surface.takesKeys`).
+            if surface == .instrument || (showsKeys && surface.takesKeys) {
                 Divider().overlay(Theme.Color.border)
                 PlayKeysView()
                     .accessibilityElement(children: .contain)
