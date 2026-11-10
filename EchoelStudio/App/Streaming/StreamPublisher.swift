@@ -34,7 +34,7 @@ actor StreamPublisher {
     }
 
     private struct Destination {
-        let session: any Session
+        let session: any StreamSession
         let format: StreamFormat
     }
 
@@ -51,11 +51,11 @@ actor StreamPublisher {
     /// once the server accepted the publish, or throws what it said.
     func open(_ target: StreamTarget, url: URL) async throws {
         if !registered {
-            await SessionBuilderFactory.shared.register(RTMPSessionFactory())
+            await StreamSessionBuilderFactory.shared.register(RTMPSessionFactory())
             registered = true
         }
         await close(target.id)
-        guard let session = try await SessionBuilderFactory.shared.make(url).setMode(.publish).build() else {
+        guard let session = try await StreamSessionBuilderFactory.shared.make(url).setMode(.publish).build() else {
             throw StreamPublisherError.unsupported
         }
         let stream = await session.stream
@@ -155,7 +155,7 @@ actor StreamPublisher {
             "The server refused the connection (\(response.status?.code ?? "no reason")). Check the server address."
         case RTMPStream.Error.requestFailed(let response):
             "The server refused the stream (\(response.status?.code ?? "no reason")). Check the stream key."
-        case SessionBuilderFactory.Error.notFound, SessionBuilderFactory.Error.illegalArgument:
+        case StreamSessionBuilderFactory.Error.notFound, StreamSessionBuilderFactory.Error.illegalArgument:
             "The address is not an RTMP or RTMPS address."
         default:
             "Could not connect (\(error.localizedDescription)). Check the network and the server address."

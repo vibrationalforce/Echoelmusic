@@ -40,7 +40,7 @@ packages:
   # SRT (libsrt with OpenSSL) left Studio v1 on 2026-11-04. Imported only under App/Streaming/ (studio.yml).
   HaishinKit:
     url: https://github.com/HaishinKit/HaishinKit.swift
-    exactVersion: 2.2.5
+    exactVersion: 2.3.0
 
 targets:
   EchoelStudio:
