@@ -1,30 +1,29 @@
-11.0.0 — one name, Echoelmusic; a stream and a take finish stopping before the next begins
+11.0.0 — the earlier instrument's look: chosen is off-white, green is a signal; the plug-ins play in full and fit a phone-high window
 
-What is new since 10067. Each line is code that the Echoel Studio run builds; only the stream's
-four states have tests of their own, and nothing here is device-verified yet.
-- Name: the name under the app's icon is Echoelmusic (it was Echoel). The app's messages, the
-  About page ("About Echoelmusic"), the purchase page ("Echoelmusic Plugins"), the Siri
-  examples on the Learn page ("Play Echoelmusic") and the permission questions iOS asks say
-  the same.
-- Audio Units in other apps: the 29 units are registered as "Echoelmusic: Synth",
-  "Echoelmusic: EQ" and so on. Type, subtype and manufacturer code are unchanged.
-- MIDI and lights: the MIDI 2.0 source another app sees is "Echoelmusic MPE (MIDI 2.0)", the
-  timecode source "Echoelmusic Timecode", the sACN source name "Echoelmusic" — choose them
-  again once where a routing was saved.
-- Go Live: Stop Stream closes every destination before Go Live is offered again; the page says
-  "Stopping" meanwhile. A destination that answers after Stop no longer brings the stream back.
-- Background: with nothing playing the audio stops when the app leaves the screen, as before.
-  The app now also counts its input as closed there, so a song that stops needing the input
-  while away comes back without the microphone.
-- Recording: after a take is stopped, Record is unavailable until the take's file is closed,
-  instead of starting a take that had to be thrown away.
-- Export Video and Export Field Layer (Alpha): when the mix cannot be rendered — a plugin
-  stops, or the song is too long — the export stops and says why, instead of writing a film
-  without sound. A film says what its mix was exported without, and a Field layer no longer
-  shows a loudness.
+What is new since 10068. Each line is code that the Echoel Studio run builds; the render-event
+and unit-format rules have tests of their own, and nothing here is device-verified yet.
+- Look: a chosen view, a switched-on button (Mute, Solo, Loop, Click, Keys, an effect that is on)
+  and a page's main action (the number pad's OK) are an off-white tile with a black label. The
+  green is kept for what sounds or is measured: Play shows a green glyph while the song plays,
+  and so does a track's stop button while its clip plays. Recording stays red.
+- Buttons: a button that is not lit has a visible outline (it had a divider's hairline).
+- Keys: the key strip stands under Instrument, Tracks, Arrange and Session; Mixer, Field and Sky
+  keep their whole height. The Keys switch is unchanged.
+- Audio Units in other apps: the instruments are not demo-locked while the purchase is not on
+  sale — no pause, no demo sentence; "Echoelmusic Plugins…" offers nothing to buy or restore.
+- Plug-in window: every control is in one grid; a named choice (Engine, Waveform, Filter) opens
+  a menu; rows only one engine plays show while that engine is chosen; in a window under 340
+  points high the title goes.
+- Audio Units, in a host: numbers a host sends that are no time or no address can no longer
+  stop the units; an instrument says it is stereo with no input and refuses another format
+  when the host sets it; a host's reset silences the instrument.
+- Plugins from other makers: music effects are offered under Add Effect; an export tells its
+  units that it renders offline; a plugin that is installed but did not start is no longer
+  called "not installed".
+- Go Live: the streaming library is HaishinKit 2.3.0 (it was 2.2.5).
 
-Previous: 11.0.0 (10067) — warp modes, a playhead you can move, zoom and waveforms; 10064 — a
-de-esser, vocal chains, reverb modes.
+Previous: 11.0.0 (10068) — one name, Echoelmusic; a stream and a take finish stopping before
+the next begins; 10067 — warp modes, a playhead you can move, zoom and waveforms.
 Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -33,15 +32,15 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Home Screen after the update: does the name under the icon read "Echoelmusic" in full, not
-   cut off?
-2. AUM or GarageBand: are the units listed as "Echoelmusic: Synth", "Echoelmusic: EQ" and so
-   on, and does a session saved with the build before still open with its sound?
-3. Go Live to a destination, wait for the On Air clock, press Stop Stream, and press Go Live
-   again as soon as it is offered: does the page say "Stopping" in between, and does the
-   second stream arrive at the destination?
-4. Arm an audio track, leave the song stopped, go to the Home Screen for ten seconds and come
-   back: does the orange microphone dot go out while you are away, and can you record a take
-   at once without arming again?
-5. Record an audio take of a minute or more, press Record to end it and Record again at once:
-   does a second take start, and are both takes on the track afterwards?
+1. AUM: load "Echoelmusic: Synth" and hold a note for 40 seconds: does it sound without a
+   pause, and is there no demo sentence in its window?
+2. AUM on the iPhone, Synth window at its usual size: are Engine, Waveform, Filter, Cutoff and
+   Resonance on screen without scrolling, and does tapping Engine open a list with all eleven
+   names?
+3. In the app: are the chosen view and a Mute or Solo that is on off-white with black letters,
+   and does Play show a green glyph while the song plays — and can you tell at a glance what
+   is on?
+4. Open Mixer, Field and Sky: is the key strip gone there, and is it back under Instrument and
+   Tracks?
+5. Go Live to a destination, wait for the On Air clock, press Stop Stream: does the stream
+   arrive at the destination and stop cleanly?
