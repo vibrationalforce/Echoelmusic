@@ -72,6 +72,9 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         /// more is refused instead of writing past them.
         var capacity = 0
         let unlocked = Atomic<Bool>(true)
+        /// Raised by `reset()` on the host's thread; the render block drains it and silences the
+        /// kernel at the start of its next call, so the voices have one writer.
+        let resetRequested = Atomic<Bool>(false)
         var demoFrame: Int64 = 0
         init(kernel: any InstrumentKernel) { self.kernel = kernel }
     }
@@ -232,6 +235,16 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         sampleObserver.withLock { $0 = observer }
     }
 
+    /// A host's reset (a transport jump, a stop, a new song): every voice falls silent at once, so
+    /// a held or ringing note of the old place does not sound into the new one. The host may call
+    /// this while rendering, so it only asks; the render block silences the kernel at the start of
+    /// its next call (all sound off, controller 120, which every kernel reads). Parameters and the
+    /// sample stay as they are. The effects do the same for their tails (`StandardEffectUnit`).
+    override func reset() {
+        super.reset()
+        render.resetRequested.store(true, ordering: .releasing)
+    }
+
     /// The parameters (the system's part) plus the sample, so a host's session brings it back.
     override var fullState: [String: Any]? {
         get {
@@ -290,6 +303,10 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             }
             // More frames than were allocated would write past our buffers and the kernel's.
             guard frames <= state.capacity else { return kAudioUnitErr_TooManyFramesToProcess }
+            // A host's reset since the last call: all sound off before this call's first event.
+            if state.resetRequested.exchange(false, ordering: .acquiringAndReleasing) {
+                state.kernel.receive(status: 0xB0, 120, 0)
+            }
             // The host may hand buffers or ask for ours.
             if buffers[0].mData == nil { buffers[0].mData = UnsafeMutableRawPointer(ownLeft) }
             if buffers[1].mData == nil { buffers[1].mData = UnsafeMutableRawPointer(ownRight) }
