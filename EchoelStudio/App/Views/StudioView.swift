@@ -80,6 +80,22 @@ struct StudioView: View {
             case .mixer, .field, .sky: false
             }
         }
+
+        /// What the Keys switch does under this view. Under Tracks, Arrange and Session it decides;
+        /// the Instrument always has its keys, and the mixer, the Field and the sky never do — there
+        /// the switch is dimmed, so it does not look on over a view that shows no keys.
+        var keysSwitch: KeysSwitch {
+            switch self {
+            case .instrument: .alwaysShown
+            case .tracks, .arrange, .session: .decides
+            case .mixer, .field, .sky: .neverShown
+            }
+        }
+    }
+
+    /// What the transport's Keys switch does under the chosen view (`Surface.keysSwitch`).
+    enum KeysSwitch {
+        case decides, alwaysShown, neverShown
     }
 
     var body: some View {
@@ -127,7 +143,7 @@ struct StudioView: View {
     /// it is (W18, m17): the transport, the chosen view, the keys, the bar of views.
     private var studio: some View {
         VStack(spacing: 0) {
-            TransportBar()
+            TransportBar(keysSwitch: surface.keysSwitch)
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("Transport")
                 // Return, comma and period: the locate keys, which have no button of their own.
@@ -294,6 +310,17 @@ struct TransportBar: View {
     @State private var clickOn = true
     @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
     @AppStorage(FieldWindow.shownKey) private var showsFieldWindow = true
+    /// What the Keys switch does under the chosen view; dimmed where the view settles it.
+    var keysSwitch = StudioView.KeysSwitch.decides
+
+    /// The Keys switch as VoiceOver says it: its state where it decides, the reason where it does not.
+    private var keysValue: String {
+        switch keysSwitch {
+        case .decides: showsKeys ? "Shown" : "Hidden"
+        case .alwaysShown: "Always shown on this view"
+        case .neverShown: "Not shown on this view"
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -390,6 +417,7 @@ struct TransportBar: View {
             Toggle(isOn: $showsKeys) {
                 Label("Keys", systemImage: "pianokeys")
             }
+            .disabled(keysSwitch != .decides)
             Toggle(isOn: $showsFieldWindow) {
                 Label("Field Window", systemImage: "rectangle.inset.bottomright.filled")
             }
@@ -478,9 +506,10 @@ struct TransportBar: View {
             MIDILearnButton()
 
             Button { showsKeys.toggle() } label: { Image(systemName: "pianokeys") }
-                .buttonStyle(ToolButtonStyle(isActive: showsKeys))
+                .buttonStyle(ToolButtonStyle(isActive: showsKeys && keysSwitch == .decides))
+                .disabled(keysSwitch != .decides)
                 .accessibilityLabel("Keys")
-                .accessibilityValue(showsKeys ? "Shown" : "Hidden")
+                .accessibilityValue(keysValue)
                 .accessibilityHint("Shows keys and pads that play the live track.")
 
             // The Field as a small window over the other views (wave W3).
