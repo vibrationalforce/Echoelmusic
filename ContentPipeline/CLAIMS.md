@@ -595,6 +595,40 @@ das?", sondern auch **„kostet sie das?", „ist das im Stack?", „geht das da
 
 ---
 
+## Beratung — was über sie gesagt werden darf (2026-11-10)
+
+Die eine Quelle ist die Seite `docs/consulting.html`. Wer einen Beratungs-Text schreibt — eine
+Beschreibung, einen Beitrag, eine Antwort-Vorlage —, nimmt seine Sätze von dort und erfindet keinen
+dazu. Die Seite ist ein Angebot einer Person, kein Produkt: was sie nicht sagt, ist nicht gemessen.
+
+**Sagbar, wie die Seite es sagt:**
+- Die Form: „Calls, written plans, project support and workshops. All of it happens online.“
+- Die vier Stufen: first call · written plan („Concept, plan and cost framework, in writing.“) ·
+  project support („by call and message through to completion“) · online workshops.
+- Die Themen: sound and content · space and acoustics „as planning and review“ · immersive and
+  inclusive formats („Making music perceptible for everyone: installations with vibration, water,
+  light and sound.“).
+- Der Workshop „AI in media production“: „how I produce software and media with AI agents —
+  traceable in Echoelmusic’s public repository“. Hier läuft ein Modell, also darf das Wort stehen
+  (Regel „KI/AI nur, wo ein Modell läuft“).
+- Wer vor Ort arbeitet: „Work on site … is done by your crew or by local partners, following my plan.“
+- Die Kosten: „You receive the cost framework with the planning.“
+- Die App daneben: „It is in TestFlight and still being tested on devices.“ — mehr über die App nur
+  aus dem Studio-Abschnitt oben.
+
+**Nicht sagbar:**
+- **Arbeit vor Ort, ein Besuch, ein Aufbau.** Die Seite sagt online, in jedem Satz.
+- **Ein Preis, ein Tagessatz, „ab …“.** Auf der Seite steht keine Zahl; den Rahmen gibt es mit der Planung.
+- **Kundennamen, Referenzen, „gearbeitet mit …“.** Keine ist veröffentlicht.
+- **Ein versprochenes Ergebnis** — Reichweite, Umsatz, Besucherzahl, „garantiert“.
+- **Titel und Zertifikate**, die die Seite nicht nennt (Akustiker, Ingenieur, zertifiziert).
+- **Gesundheits-Sprache** für das Thema „immersive and inclusive“: es geht um Zugang und Wahrnehmung,
+  nie um Behandlung — Abschnitt 2 und der Abschnitt „Sprache“ gelten hier genauso.
+- **„Die App erledigt das für Ihr Projekt“:** die Beratung verkauft keine Fähigkeit der App, die der
+  Studio-Abschnitt nicht trägt.
+
+---
+
 ## Sprache
 
 - Marke: **Echoel**. Nie „BLAB", „Vibrational Force", nie Heilfrequenzen, Chakren, Solfeggio.
