@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.35.0',K='echoel-nuke';try{
+    (function(){var V='10.36.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -44,7 +44,7 @@
     <link rel="alternate" hreflang="en" href="https://echoelmusic.com/privacy.html">
     <link rel="alternate" hreflang="x-default" href="https://echoelmusic.com/privacy.html">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Privacy Policy","item":"https://echoelmusic.com/privacy.html"}]}</script>
-    <link rel="stylesheet" href="shared.css?v=10.35.0">
+    <link rel="stylesheet" href="shared.css?v=10.36.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
 </head>
@@ -118,7 +118,7 @@
                 <li><strong>Speech recognition (subtitles):</strong> asked for only when you choose to transcribe the speech in a part into subtitles. Recognition runs on this device; the audio does not leave it, and only the text you keep is stored, inside your song.</li>
                 <li><strong>Motion (Phone Motion as a body source):</strong> if you turn on Phone Motion, Echoelmusic reads the phone's tilt, turning and movement to move the values you route them to. The readings are used as they arrive and are never stored in your song or sent anywhere; turn the source off and they stop.</li>
                 <li><strong>Apple Health (heart rate, read only):</strong> if you choose Apple Health as a body source, iOS asks whether Echoelmusic may read your heart rate from Apple Health, for example what an Apple Watch measured. It asks for heart rate and nothing else, reads only readings from the last two minutes onward, never your history, and never writes to Apple Health. A reading arrives seconds late, so it moves the values you route it to slowly and never sets the tempo. It is not stored, not written into a song, never used for advertising, and not sent over Connections or MPE Out. Choose another source or Off and the reading is gone.</li>
-                <li><strong>Body values that can leave (each off until you choose it):</strong> (1) Connections with Share Body Data on: the strap's pulse, HRV and coherence go to the OSC receiver you entered, and a measured coherence changes the brightness of the light output. (2) MPE Out, once you pick a MIDI output and with Share Body Data on: pressure and slide follow two body sources from the strap or the camera, breath and coherence unless you change them. (3) Go Live with Share Body Data on: the Field's picture moves with the body source that is on, its centre at the rate of your pulse; no number is sent, the picture is. With Share Body Data off the streamed picture shows no body. (4) Tempo lock Flow: the song's tempo follows your pulse in small steps; MIDI clock, a Jam and the OSC connection carry that tempo, and each step is noted with the pulse in the diagnostics log on this device, which leaves only if you share it. A heart rate read from Apple Health is kept out of all four.</li>
+                <li><strong>Body values that can leave (each off until you choose it):</strong> (1) Connections with Share Body Data on: the strap's pulse, HRV and coherence go to the OSC receiver you entered, and a measured coherence changes the brightness of the light output. (2) MPE Out, once you pick a MIDI output and with Share Body Data on: pressure and slide follow two body sources from the strap or the camera, breath and coherence unless you change them. (3) Go Live with Share Body Data on: the Field's picture moves with the body source that is on, its centre at the rate of your pulse; no number is sent, the picture is. With Share Body Data off the streamed picture shows no body. (4) Tempo lock Flow: the song's tempo follows your pulse in small steps. MIDI clock, a Jam you host and the OSC connection carry the tempo off this device; while one of them is on, Flow follows your pulse only with Share Body Data on and holds the tempo where it is otherwise. Each step is noted in the diagnostics log on this device with the two tempos, not with your pulse; the log leaves only if you share it. A heart rate read from Apple Health is kept out of all four.</li>
                 <li><strong>Diagnostics log:</strong> a log stays on this device: what the audio and the app did, and how earlier runs ended as iOS reports it. It holds numbers only, never a name you typed, and with the tempo lock on Flow the pulse that moved the tempo. It is left out of device backups and leaves only when you share it.</li>
                 <li><strong>Your songs:</strong> songs, with their audio and video takes, are files in the app's Documents folder. The Files app shows them, and an iCloud or computer backup of your device includes them, as for any app.</li>
             </ul>
@@ -301,6 +301,6 @@
         <span class="footer-copy">&copy; 2026 Echoelmusic &middot; in TestFlight</span>
     </footer>
 
-<script src="shared.js?v=10.35.0"></script>
+<script src="shared.js?v=10.36.0"></script>
 </body>
 </html>
