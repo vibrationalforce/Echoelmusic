@@ -95,8 +95,8 @@ extension VideoFlashLimit {
     /// blue move a red signal that is not its own, and only then do the seven color sums count
     /// (`colorCombinations`). Footage shown by itself, on black, is counted by its luminance and its
     /// own red, WCAG's two measures. The sums run at the red steps on every color, grey too: handed
-    /// over always, they took a whole picture flickering by one stored level for a flash, and
-    /// ordinary footage went dark.
+    /// over always, they took a bright picture flickering by one stored level (231 and up) for a
+    /// flash, and ordinary footage went dark.
     @discardableResult
     public mutating func next(time: Double, frame: VideoFlashCells, blended: Bool) -> Double {
         next(time: time, cells: frame.luminance, redCells: frame.red, colorCells: blended ? frame.color : nil,
