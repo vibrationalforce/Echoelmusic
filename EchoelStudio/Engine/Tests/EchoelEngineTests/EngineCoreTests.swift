@@ -173,6 +173,22 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(firstSound(render(engine, frames: 1_024).left), "a slot that does not exist plays nothing")
     }
 
+    /// A live event the ring had no room for may have been a key's release: then everything
+    /// sounding ends, so the key is not left hanging.
+    func testAKeyWhoseReleaseWasLostInAFullRingDoesNotHang() throws {
+        let tune = try song([[]])
+        let engine = core()
+        publish(tune.project, to: engine)
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        XCTAssertNotNil(firstSound(render(engine, frames: 1_024).left), "the key sounds")
+        // More controller moves than the ring holds arrive before the next block, then the release.
+        for step in 0..<1_100 { engine.playLive(slot: 0, status: 0xB0, 1, UInt8(step % 128)) }
+        engine.playLive(slot: 0, status: 0x80, 60, 0)
+        _ = render(engine, frames: 48_000)
+        XCTAssertNil(firstSound(render(engine, frames: 1_024).left), "the lost release left nothing hanging")
+    }
+
     /// The modulation wheel played live reaches the track's synth (S-16b): a sine at A4 with the
     /// filter open holds 440 Hz, and the wheel all the way up swings it ±50 cents —
     /// 440 · 2^(∓50/1200) = 427.5 … 452.9 Hz (`PolySynth.vibratoRange`).

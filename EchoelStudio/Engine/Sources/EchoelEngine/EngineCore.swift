@@ -77,6 +77,9 @@ public final class EngineCore: @unchecked Sendable {
     private let anchorSamplesPerTick = Atomic<UInt64>(0)
     /// Controller → render: notes played live, each packed as slot · status · data1 · data2.
     private let live = EventRing()
+    /// Controller → render: a live event did not fit into `live` and was lost. It may have been
+    /// a key's release, so the render thread then ends everything sounding (`playLiveEvents`).
+    private let liveDropped = Atomic<Bool>(false)
     private let clockFlag = Atomic<Bool>(false)
     /// Render → MIDI sender: clock (24 per quarter), start/continue/stop and song position,
     /// written only while `setClockOutEnabled(true)`.
@@ -692,7 +695,8 @@ public final class EngineCore: @unchecked Sendable {
     /// 120/123 silence or release, the synth reads 1 and 64, a plugin gets every one.
     public func playLive(slot: Int, status: UInt8, _ data1: UInt8, _ data2: UInt8) {
         guard slot >= 0, slot < slotCapacity, slot <= 0xFF else { return }
-        live.push(UInt32(slot) << 24 | UInt32(status) << 16 | UInt32(data1 & 0x7F) << 8 | UInt32(data2 & 0x7F))
+        let packed = UInt32(slot) << 24 | UInt32(status) << 16 | UInt32(data1 & 0x7F) << 8 | UInt32(data2 & 0x7F)
+        if !live.push(packed) { liveDropped.store(true, ordering: .releasing) }
     }
 
     /// The playhead in samples, for a small leaf view — never for a view body that hosts menus.
@@ -895,6 +899,9 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         playLiveEvents()
+        // A live event the ring had no room for is lost, and with it perhaps a key's release:
+        // everything sounding ends, so no key is left hanging until Stop.
+        if liveDropped.exchange(false, ordering: .acquiringAndReleasing) { releaseAllNotes() }
         let playing = transportAsked
         let clocking = clockFlag.load(ordering: .relaxed)
         if clocking { sendTransport(playing: playing, sought: seek >= 0) }
