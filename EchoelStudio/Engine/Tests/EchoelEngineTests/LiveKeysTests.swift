@@ -51,11 +51,15 @@ final class LiveKeysTests: XCTestCase {
         XCTAssertEqual(LiveKeys.lock(for: major, instrument: sampler), cMajor)
         sampler.slices = [SampleSlice(start: 0), SampleSlice(start: 30_000)]
         XCTAssertNil(LiveKeys.lock(for: major, instrument: sampler), "cut into slices, every key plays its own")
+        sampler.slices = []
+        XCTAssertEqual(LiveKeys.lock(for: major, instrument: sampler), cMajor, "an empty list is no cut")
         // Slices left in the settings of a track that plays another device mean nothing.
         var synth = InstrumentSettings(device: .synth)
         synth.slices = [SampleSlice(start: 0)]
         XCTAssertEqual(LiveKeys.lock(for: major, instrument: synth), cMajor)
-        XCTAssertNotNil(LiveKeys.lock(for: major, instrument: InstrumentSettings(device: .plugin)))
+        var hosted = InstrumentSettings(device: .plugin)
+        hosted.slices = [SampleSlice(start: 0)]
+        XCTAssertEqual(LiveKeys.lock(for: major, instrument: hosted), cMajor, "a plugin is held like the synth")
         XCTAssertNil(LiveKeys.lock(for: major, instrument: InstrumentSettings(device: .drums)))
         XCTAssertNil(LiveKeys.lock(for: MusicalContext(root: 5), instrument: InstrumentSettings(device: .sampler)),
                      "chromatic holds nothing")

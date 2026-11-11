@@ -20,6 +20,8 @@ final class PlaySurfaceTests: XCTestCase {
                        "never more pads than a sample can be cut into")
         sampler.slices = nil
         XCTAssertEqual(PlaySurface.surface(for: sampler), .keys)
+        sampler.slices = []
+        XCTAssertEqual(PlaySurface.surface(for: sampler), .keys, "an empty list is no cut")
     }
 
     /// Slices left in the settings of a track that plays another device mean nothing.
@@ -30,6 +32,9 @@ final class PlaySurfaceTests: XCTestCase {
         var kit = InstrumentSettings(device: .drums)
         kit.slices = [SampleSlice(start: 0)]
         XCTAssertEqual(PlaySurface.surface(for: kit), .drumPads)
+        var hosted = InstrumentSettings(device: .plugin)
+        hosted.slices = [SampleSlice(start: 0)]
+        XCTAssertEqual(PlaySurface.surface(for: hosted), .keys)
     }
 
     func testPadsRiseFromTheBottomLeft() {

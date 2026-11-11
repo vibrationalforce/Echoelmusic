@@ -9,7 +9,8 @@ import SwiftUI
 /// keyboard (`HexKeyLayout`), chosen by the header's hexagon button. In a song with a key, the keys
 /// show it: a filled dot on its root, a ring on the other tones of its scale (`KeyMark`). Shown,
 /// not enforced; Keys Follow Scale stays the switch that bends a key to the scale. Where on a key
-/// the finger lands sets how hard it plays (`TouchVelocity`) while Touch Loudness is on.
+/// the finger lands sets how hard it plays (`TouchVelocity`) while Touch Loudness is on; both
+/// switches sit in the Song menu's key section.
 struct PlayKeysView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -20,8 +21,9 @@ struct PlayKeysView: View {
     /// Piano keys or the hex keyboard; kept on this device, never in the song.
     @AppStorage("playKeys.hex") private var showsHex = false
     /// Whether the place of a touch on a key sets its loudness; off, every key plays the one
-    /// loudness it always played. Kept on this device, never in the song.
-    @AppStorage("playKeys.touchLoudness") private var touchLoudness = true
+    /// loudness it always played. Kept on this device, never in the song; switched in the Song menu.
+    @AppStorage(PlayKeysView.touchLoudnessKey) private var touchLoudness = true
+    nonisolated static let touchLoudnessKey = "playKeys.touchLoudness"
 
     private static let lowestC = 0
     private static let highestC = 96
@@ -85,11 +87,6 @@ struct PlayKeysView: View {
                 .lineLimit(1)
             Spacer(minLength: Theme.Space.s)
             if let track, PlaySurface.surface(for: track.instrument) == .keys {
-                Button { touchLoudness.toggle() } label: { Image(systemName: "hand.tap") }
-                    .buttonStyle(ToolButtonStyle(isActive: touchLoudness))
-                    .accessibilityLabel("Touch Loudness")
-                    .accessibilityValue(touchLoudness ? "On" : "Off")
-                    .accessibilityHint("On, a key plays softer near its top and harder near its foot. Off, every key plays one loudness.")
                 Button { showsHex.toggle() } label: { Image(systemName: "hexagon") }
                     .buttonStyle(ToolButtonStyle(isActive: showsHex))
                     .accessibilityLabel("Hex Keyboard")
@@ -131,6 +128,8 @@ private struct Keyboard: View {
     private static let whiteClasses: Set<Int> = [0, 2, 4, 5, 7, 9, 11]
     /// White keys followed by a black one: C, D, F, G, A.
     private static let blackFollows: Set<Int> = [0, 2, 5, 7, 9]
+    /// How far down a white key the black keys reach, as a share of its length.
+    private static let blackLength: CGFloat = 0.6
     private static let names = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]
 
     static func name(of note: Int) -> String {
@@ -148,7 +147,7 @@ private struct Keyboard: View {
                     ForEach(whites, id: \.self) { note in
                         PlayKey(router: router, note: note, style: .white,
                                 label: note % 12 == 0 ? Self.name(of: note) : nil, mark: context.keyMark(of: note),
-                                placesLoudness: placesLoudness)
+                                placesLoudness: placesLoudness, ownFrom: Self.blackLength)
                             .frame(width: width)
                     }
                 }
@@ -156,7 +155,7 @@ private struct Keyboard: View {
                     if Self.blackFollows.contains(note % 12), index < whites.count - 1, note + 1 <= 127 {
                         PlayKey(router: router, note: note + 1, style: .black, label: nil,
                                 mark: context.keyMark(of: note + 1), placesLoudness: placesLoudness)
-                            .frame(width: width * 0.7, height: geometry.size.height * 0.6)
+                            .frame(width: width * 0.7, height: geometry.size.height * Self.blackLength)
                             .offset(x: width * CGFloat(index + 1) - width * 0.35)
                     }
                 }
@@ -281,20 +280,24 @@ private struct SlicePads: View {
 
     var body: some View {
         let shown = PlaySurface.padRows(count: count, columns: columns)
-        // Up to two rows stand as tall as the kit's pads; more are a finger high each, so sixteen
-        // pads on a phone leave the song its room.
+        // Up to two rows are as tall as the kit's pads at their smallest; more are a finger high
+        // each, so sixteen pads on a phone leave the song its room. The height is fixed, as the
+        // keyboard's is: the strip does not take the free height from the view above.
         let height = compact || shown.count > 2 ? Theme.Size.touch : Swift.min(padHeight, 88)
         VStack(spacing: Theme.Space.s) {
             ForEach(shown, id: \.self) { row in
                 HStack(spacing: Theme.Space.s) {
                     ForEach(row, id: \.self) { index in
+                        // VoiceOver reads the pads 1 to N, as the slice editor lists them; the
+                        // picture stays a drum machine's, the first pad at the bottom left.
                         PlayKey(router: router, note: SampleSlice.firstNote + index, style: .pad,
-                                label: String(index + 1), spokenAs: "Pad \(index + 1)")
-                            .frame(maxWidth: .infinity, minHeight: height)
+                                label: String(index + 1), spokenAs: "Pad \(index + 1)",
+                                readingOrder: Double(count - index))
+                            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
                     }
                     // A short top row keeps the pads' width: empty places fill it.
                     ForEach(row.count..<Swift.max(row.count, columns), id: \.self) { _ in
-                        Color.clear.frame(maxWidth: .infinity, minHeight: height)
+                        Color.clear.frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
                     }
                 }
             }
@@ -312,7 +315,9 @@ private struct SlicePads: View {
 /// channel 16, so a key held here and the same key held on a keyboard on channel 1 are two
 /// keys, not one struck twice (`LiveKeys` tells keys apart by channel; the instrument does not
 /// hear it). A key or a hex cell can play softer near its top and harder near its foot
-/// (`TouchVelocity`); each has its whole range, so a short black key plays as loud as a white one.
+/// (`TouchVelocity`). Each has its whole range over the part that is its own — a white piano key
+/// from the black keys' foot down — so a white and a black key touched in the middle of their own
+/// parts play alike, and a phrase across both stays even.
 private struct PlayKey: View {
     enum Style: Equatable { case white, black, pad, hex(Color) }
 
@@ -325,8 +330,14 @@ private struct PlayKey: View {
     /// Whether the place of a touch along the key sets how hard it plays. A pad never does: it is
     /// a target, not a lever, and plays one loudness wherever it is hit.
     var placesLoudness = false
+    /// The share of the key's length, from its top, that lies between other keys: a touch there
+    /// plays as the top of the key's own part. A white piano key has the black keys' length.
+    var ownFrom: CGFloat = 0
     /// What VoiceOver calls a pad whose label is only its number.
     var spokenAs: String?
+    /// Where VoiceOver reads this key among its neighbours; higher is earlier, 0 keeps the order
+    /// on the screen.
+    var readingOrder: Double = 0
 
     @GestureState private var touching = false
     @State private var struck: UInt8?
@@ -376,6 +387,7 @@ private struct PlayKey: View {
             }
             .onDisappear { release() }
             .accessibilityLabel(spokenName)
+            .accessibilitySortPriority(readingOrder)
             .accessibilityValue(spokenMark)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { strike() }
@@ -434,7 +446,8 @@ private struct PlayKey: View {
         }
     }
 
-    /// A key is said by its full name with its octave; a pad by its drum.
+    /// A key is said by its full name with its octave; a kit's pad by its drum, a slice's pad by
+    /// its number (`spokenAs`).
     private var spokenName: String {
         switch style {
         case .pad: return spokenAs ?? label ?? Keyboard.name(of: note)
@@ -455,7 +468,8 @@ private struct PlayKey: View {
     /// How hard a touch `offset` points down a key `length` points long plays.
     private func loudness(at offset: CGFloat, of length: CGFloat) -> UInt8 {
         guard placesLoudness else { return TouchVelocity.unplaced }
-        return TouchVelocity.velocity(offset: Double(offset), length: Double(length))
+        let top = length * ownFrom
+        return TouchVelocity.velocity(offset: Double(offset - top), length: Double(length - top))
     }
 
     private func press(_ velocity: UInt8) {

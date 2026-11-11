@@ -1073,6 +1073,9 @@ struct SongMenu: View {
     @Environment(JamSession.self) private var jam: JamSession?
     /// What Export WAV brings the mix to (CUT): kept on this device, never in the song; Off at first.
     @AppStorage(SongMenu.wavLoudnessKey) private var wavLoudness = ExportLoudness.exportDefault
+    /// Whether the place of a touch on a screen key sets its loudness (`PlayKeysView`); kept on
+    /// this device. The default is the keys' own.
+    @AppStorage(PlayKeysView.touchLoudnessKey) private var touchLoudness = true
 
     nonisolated static let wavLoudnessKey = "export.wav.loudness"
 
@@ -1405,9 +1408,14 @@ struct SongMenu: View {
                 }
             }
             // On this device: a controller's keys sound the nearest pitch in the scale. Not for a
-            // drum kit, whose keys pick drums; a chromatic scale holds nothing.
+            // drum kit or a sliced sample, whose keys pick a drum or a slice; a chromatic scale
+            // holds nothing.
             Toggle(isOn: Binding(get: { engine.keysFollowScale }, set: { engine.setKeysFollowScale($0) })) {
                 Label("Keys Follow Scale", systemImage: "pianokeys")
+            }
+            // On this device: a screen key plays softer near its top and harder near its foot.
+            Toggle(isOn: $touchLoudness) {
+                Label("Touch Loudness", systemImage: "hand.tap")
             }
         } label: {
             Label("Key \u{00B7} \(context.title)", systemImage: "music.note")
