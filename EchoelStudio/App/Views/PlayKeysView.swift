@@ -354,10 +354,12 @@ private struct SlicePads: View {
 
 /// The chords of the song's key as a row of pads: one finger on one pad plays its chord — three
 /// voices led from the chord before and its root under them (`ChordRow`) — for as long as the
-/// finger stays down, and writes nothing. One chord sounds at a time: a pad pressed while another
-/// sounds ends that one first, so two fingers never stack two chords into a cluster. The chord
-/// played last is kept while the row shows, for the voices to lead from; a change of the song's
-/// key forgets it. Like the keys, it plays on MIDI channel 16 through the one live router.
+/// finger stays down. It writes nothing of its own; a running take records it as it records any
+/// key. One chord sounds at a time: a pad pressed while another sounds ends that one first, so two
+/// fingers never stack two chords into a cluster. The chord played last is kept while the row
+/// shows, for the voices to lead from; a change of the song's key or scale ends what sounds and
+/// forgets it, and a change of its swing, tuning or A4 leaves a held chord sounding. Like the
+/// keys, it plays on MIDI channel 16 through the one live router.
 private struct ChordPads: View {
     let router: LiveRouter
     let context: MusicalContext
@@ -381,7 +383,8 @@ private struct ChordPads: View {
                     .foregroundStyle(Theme.Color.textSecondary)
                     .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
             } else {
-                HStack(spacing: Theme.Space.s) {
+                // Narrow gaps, so seven pads stay a finger wide on a phone in portrait.
+                HStack(spacing: Theme.Space.xs) {
                     ForEach(row.indices, id: \.self) { index in
                         ChordPad(label: row[index].label, spoken: row[index].chord.spokenName,
                                  isDown: held == index,
@@ -394,11 +397,14 @@ private struct ChordPads: View {
                 .accessibilityAddTraits(.allowsDirectInteraction)
             }
         }
-        .onChange(of: context) { _, _ in
+        .onChange(of: row) { _, _ in
             endSounding()
             last = nil
         }
-        .onDisappear { endSounding() }
+        .onDisappear {
+            endSounding()
+            last = nil
+        }
     }
 
     private var height: CGFloat { compact ? Theme.Size.touch : Swift.min(padHeight, 88) }
@@ -438,6 +444,9 @@ private struct ChordPad: View {
 
     @GestureState private var touching = false
     @State private var down = false
+    /// The chord sounds from VoiceOver's activate and ends on its own; a finger that lands on the
+    /// pad meanwhile takes it over and ends it when it lifts.
+    @State private var fromActivate = false
 
     var body: some View {
         RoundedRectangle(cornerRadius: Theme.Radius.medium)
@@ -455,6 +464,7 @@ private struct ChordPad: View {
                 DragGesture(minimumDistance: 0)
                     .updating($touching) { _, state, _ in state = true }
                     .onChanged { _ in
+                        fromActivate = false
                         guard !down else { return }
                         down = true
                         press()
@@ -473,16 +483,20 @@ private struct ChordPad: View {
     private func lift() {
         guard down else { return }
         down = false
+        fromActivate = false
         release()
     }
 
-    /// VoiceOver's activate: a short chord, since there is no finger to lift.
+    /// VoiceOver's activate: a short chord, since there is no finger to lift — unless a finger
+    /// took it over meanwhile.
     private func strike() {
         guard !down else { return }
         down = true
+        fromActivate = true
         press()
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(600))
+            guard fromActivate else { return }
             lift()
         }
     }
@@ -521,6 +535,9 @@ private struct PlayKey: View {
 
     @GestureState private var touching = false
     @State private var struck: UInt8?
+    /// The note sounds from VoiceOver's activate and ends on its own; a finger that lands on the
+    /// key meanwhile takes it over and ends it when it lifts.
+    @State private var fromActivate = false
 
     private static let noteOn: UInt8 = 0x9F
     private static let noteOff: UInt8 = 0x8F
@@ -558,7 +575,10 @@ private struct PlayKey: View {
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .updating($touching) { _, state, _ in state = true }
-                    .onChanged { value in press(loudness(at: value.startLocation.y, of: length)) }
+                    .onChanged { value in
+                        fromActivate = false
+                        press(loudness(at: value.startLocation.y, of: length))
+                    }
                     .onEnded { _ in release() }
             )
             // The safety net for a touch the system cancels: no `onEnded` comes, the state resets.
@@ -660,17 +680,21 @@ private struct PlayKey: View {
     }
 
     private func release() {
+        fromActivate = false
         guard let pitch = struck else { return }
         struck = nil
         router.receive(status: Self.noteOff, pitch, 0)
     }
 
     /// VoiceOver's activate: a short note, since there is no finger to lift — and no place on the
-    /// key, so it plays the one loudness.
+    /// key, so it plays the one loudness — unless a finger took it over meanwhile.
     private func strike() {
+        guard struck == nil else { return }
         press(TouchVelocity.unplaced)
+        fromActivate = true
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(300))
+            guard fromActivate else { return }
             release()
         }
     }
