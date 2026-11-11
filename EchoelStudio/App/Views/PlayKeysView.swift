@@ -7,7 +7,8 @@ import SwiftUI
 /// shows its kit as pads; every other instrument track shows a keyboard — piano keys, or the hex
 /// keyboard (`HexKeyLayout`), chosen by the header's hexagon button. In a song with a key, the keys
 /// show it: a filled dot on its root, a ring on the other tones of its scale (`KeyMark`). Shown,
-/// not enforced; Keys Follow Scale stays the switch that bends a key to the scale.
+/// not enforced; Keys Follow Scale stays the switch that bends a key to the scale. Where on a key
+/// the finger lands sets how hard it plays (`TouchVelocity`) while Touch Loudness is on.
 struct PlayKeysView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -17,6 +18,9 @@ struct PlayKeysView: View {
     nonisolated static let shownKey = "playKeys.shown"
     /// Piano keys or the hex keyboard; kept on this device, never in the song.
     @AppStorage("playKeys.hex") private var showsHex = false
+    /// Whether the place of a touch on a key sets its loudness; off, every key plays the one
+    /// loudness it always played. Kept on this device, never in the song.
+    @AppStorage("playKeys.touchLoudness") private var touchLoudness = true
 
     private static let lowestC = 0
     private static let highestC = 96
@@ -35,10 +39,11 @@ struct PlayKeysView: View {
                 } else if showsHex {
                     HexKeyboard(router: engine.live, lowest: clampedLowest,
                                 minimumCell: isCompact ? 44 : 48,
-                                context: store.project.context)
+                                context: store.project.context, placesLoudness: touchLoudness)
                         .frame(height: isCompact ? Swift.min(keyHeight, 100) : Swift.min(keyHeight * 1.3, 220))
                 } else {
-                    Keyboard(router: engine.live, lowest: clampedLowest, context: store.project.context)
+                    Keyboard(router: engine.live, lowest: clampedLowest, context: store.project.context,
+                             placesLoudness: touchLoudness)
                         .frame(height: isCompact ? Swift.min(keyHeight, 84) : Swift.min(keyHeight, 180))
                 }
             } else {
@@ -69,6 +74,11 @@ struct PlayKeysView: View {
                 .lineLimit(1)
             Spacer(minLength: Theme.Space.s)
             if let track, track.instrument.device != .drums {
+                Button { touchLoudness.toggle() } label: { Image(systemName: "hand.tap") }
+                    .buttonStyle(ToolButtonStyle(isActive: touchLoudness))
+                    .accessibilityLabel("Touch Loudness")
+                    .accessibilityValue(touchLoudness ? "On" : "Off")
+                    .accessibilityHint("On, a key plays softer near its top and harder near its foot. Off, every key plays one loudness.")
                 Button { showsHex.toggle() } label: { Image(systemName: "hexagon") }
                     .buttonStyle(ToolButtonStyle(isActive: showsHex))
                     .accessibilityLabel("Hex Keyboard")
@@ -104,6 +114,8 @@ private struct Keyboard: View {
     let lowest: Int
     /// The song's key, for the marks on the keys.
     let context: MusicalContext
+    /// Whether the place of a touch on a key sets its loudness.
+    let placesLoudness: Bool
 
     private static let whiteClasses: Set<Int> = [0, 2, 4, 5, 7, 9, 11]
     /// White keys followed by a black one: C, D, F, G, A.
@@ -124,13 +136,15 @@ private struct Keyboard: View {
                 HStack(spacing: 0) {
                     ForEach(whites, id: \.self) { note in
                         PlayKey(router: router, note: note, style: .white,
-                                label: note % 12 == 0 ? Self.name(of: note) : nil, mark: context.keyMark(of: note))
+                                label: note % 12 == 0 ? Self.name(of: note) : nil, mark: context.keyMark(of: note),
+                                placesLoudness: placesLoudness)
                             .frame(width: width)
                     }
                 }
                 ForEach(Array(whites.enumerated()), id: \.element) { index, note in
                     if Self.blackFollows.contains(note % 12), index < whites.count - 1, note + 1 <= 127 {
-                        PlayKey(router: router, note: note + 1, style: .black, label: nil, mark: context.keyMark(of: note + 1))
+                        PlayKey(router: router, note: note + 1, style: .black, label: nil,
+                                mark: context.keyMark(of: note + 1), placesLoudness: placesLoudness)
                             .frame(width: width * 0.7, height: geometry.size.height * 0.6)
                             .offset(x: width * CGFloat(index + 1) - width * 0.35)
                     }
@@ -163,6 +177,8 @@ private struct HexKeyboard: View {
     /// The song's key and its A4: a cell wears its pitch's light at that A4, as the Field and the
     /// lamp do, and the key's mark.
     let context: MusicalContext
+    /// Whether the place of a touch on a cell sets its loudness.
+    let placesLoudness: Bool
 
     var body: some View {
         GeometryReader { geometry in
@@ -176,7 +192,8 @@ private struct HexKeyboard: View {
                 ForEach(board.cells) { key in
                     PlayKey(router: router, note: key.pitch,
                             style: .hex(Theme.Color.pitchFill(key.pitch, concertPitch: context.concertPitch)),
-                            label: Self.label(of: key.pitch), mark: context.keyMark(of: key.pitch))
+                            label: Self.label(of: key.pitch), mark: context.keyMark(of: key.pitch),
+                            placesLoudness: placesLoudness)
                         .frame(width: cell, height: cell * CGFloat(HexKeyLayout.heightPerWidth))
                         .position(x: CGFloat(key.x) * cell, y: top + boardHeight - CGFloat(key.y) * cell)
                 }
@@ -246,7 +263,8 @@ private struct DrumPads: View {
 /// press started even when the octave changed under the finger. The screen plays on MIDI
 /// channel 16, so a key held here and the same key held on a keyboard on channel 1 are two
 /// keys, not one struck twice (`LiveKeys` tells keys apart by channel; the instrument does not
-/// hear it).
+/// hear it). A key or a hex cell can play softer near its top and harder near its foot
+/// (`TouchVelocity`); each has its whole range, so a short black key plays as loud as a white one.
 private struct PlayKey: View {
     enum Style: Equatable { case white, black, pad, hex(Color) }
 
@@ -256,15 +274,25 @@ private struct PlayKey: View {
     let label: String?
     /// The song's key on this key; a pad wears none.
     var mark = KeyMark.unmarked
+    /// Whether the place of a touch along the key sets how hard it plays. A pad never does: it is
+    /// a target, not a lever, and plays one loudness wherever it is hit.
+    var placesLoudness = false
 
     @GestureState private var touching = false
     @State private var struck: UInt8?
 
-    private static let velocity: UInt8 = 100
     private static let noteOn: UInt8 = 0x9F
     private static let noteOff: UInt8 = 0x8F
 
     var body: some View {
+        // The key's own length, so a touch knows how far down the key it landed. The face fills
+        // the space as the bare shape did.
+        GeometryReader { geometry in
+            face(length: geometry.size.height)
+        }
+    }
+
+    private func face(length: CGFloat) -> some View {
         shape
             .fill(fill)
             .overlay(shape.stroke(Theme.Color.border, lineWidth: 1))
@@ -289,7 +317,7 @@ private struct PlayKey: View {
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .updating($touching) { _, state, _ in state = true }
-                    .onChanged { _ in press() }
+                    .onChanged { value in press(loudness(at: value.startLocation.y, of: length)) }
                     .onEnded { _ in release() }
             )
             // The safety net for a touch the system cancels: no `onEnded` comes, the state resets.
@@ -374,11 +402,17 @@ private struct PlayKey: View {
         }
     }
 
-    private func press() {
+    /// How hard a touch `offset` points down a key `length` points long plays.
+    private func loudness(at offset: CGFloat, of length: CGFloat) -> UInt8 {
+        guard placesLoudness else { return TouchVelocity.unplaced }
+        return TouchVelocity.velocity(offset: Double(offset), length: Double(length))
+    }
+
+    private func press(_ velocity: UInt8) {
         guard struck == nil, (0...127).contains(note) else { return }
         let pitch = UInt8(note)
         struck = pitch
-        router.receive(status: Self.noteOn, pitch, Self.velocity)
+        router.receive(status: Self.noteOn, pitch, velocity)
     }
 
     private func release() {
@@ -387,9 +421,10 @@ private struct PlayKey: View {
         router.receive(status: Self.noteOff, pitch, 0)
     }
 
-    /// VoiceOver's activate: a short note, since there is no finger to lift.
+    /// VoiceOver's activate: a short note, since there is no finger to lift — and no place on the
+    /// key, so it plays the one loudness.
     private func strike() {
-        press()
+        press(TouchVelocity.unplaced)
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(300))
             release()
