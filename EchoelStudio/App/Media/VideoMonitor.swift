@@ -33,6 +33,12 @@ final class VideoMonitor {
     /// asked for the frame on the glass now, the dim landed after the frame that completed the
     /// count, and a fast strobe showed a transition or two more than the limit allows.
     nonisolated static let measureLeadSeconds = 2.0 / 60
+    /// From one look's time to the next the look walks in steps of this, 1/240 s: shorter than a
+    /// frame of any film a phone plays, so no frame in between is passed over.
+    nonisolated static let walkStep = CMTime(value: 1, timescale: 240)
+    /// Further apart than this, two looks' times are a seek, a loop or another place in the film,
+    /// not a stretch to walk: a quarter second, sixty steps at most.
+    nonisolated static let longestWalkSeconds = 0.25
     /// A seek while playing aims this far ahead, so it lands about where the clock is when it ends.
     nonisolated static let seekLeadSeconds = 0.1
 
@@ -47,6 +53,8 @@ final class VideoMonitor {
     private var measureLoop: Task<Void, Never>?
     /// The look chose the long pause last: nothing could change when it went to sleep.
     private var measureRests = false
+    /// The film's time the last look asked for; no number before the first look at a file.
+    private var askedItemTime = CMTime.invalid
     private var flashWatch = VideoFlashWatch()
 
     /// Hands the loaded file's frames to a picture the app draws itself — the Field layer's preview
@@ -229,11 +237,13 @@ final class VideoMonitor {
         let made = AVPlayerItemVideoOutput(pixelBufferAttributes: Self.measuringAttributes)
         item.add(made)
         measuring = made
+        askedItemTime = .invalid
     }
 
     private func detachMeasuring() {
         if let measuring, let item = player.currentItem, item.outputs.contains(measuring) { item.remove(measuring) }
         measuring = nil
+        askedItemTime = .invalid
     }
 
     /// One look at what is shown now, on the display's clock: a new frame is measured and counted,
@@ -250,13 +260,35 @@ final class VideoMonitor {
         // The frame due a little ahead, counted at the time of the look: every frame is asked for
         // earlier by the same lead, so the times between them stay what they are. A frame the
         // output does not hold yet is found by a later look. Standing still, ahead is the same frame.
-        let itemTime = output.itemTime(forHostTime: now + Self.measureLeadSeconds)
-        if output.hasNewPixelBuffer(forItemTime: itemTime),
-           let pixel = output.copyPixelBuffer(forItemTime: itemTime, itemTimeForDisplay: nil) {
-            flashGate.update(show(pixel, at: now))
-        } else {
-            flashGate.update(flashWatch.hold(at: now))
+        let target = output.itemTime(forHostTime: now + Self.measureLeadSeconds)
+        // From the time the last look asked for up to this one, step by step: when the film
+        // starts to move the asked time jumps ahead by the lead, and after a held main thread by
+        // more. Asked for the last time alone, the frames in between were shown and never counted.
+        let steps = walkSteps(to: target)
+        var decided: Double?
+        for index in 0...steps {
+            var asked = target
+            if index < steps {
+                asked = CMTimeAdd(askedItemTime, CMTimeMultiply(Self.walkStep, multiplier: Int32(index + 1)))
+            }
+            if output.hasNewPixelBuffer(forItemTime: asked),
+               let pixel = output.copyPixelBuffer(forItemTime: asked, itemTimeForDisplay: nil) {
+                decided = show(pixel, at: now)
+            }
         }
+        askedItemTime = target
+        flashGate.update(decided ?? flashWatch.hold(at: now))
+    }
+
+    /// How many steps lie between the time the last look asked for and `target`, not counting
+    /// `target` itself. None when this is the first look at a file, the film stands, or the time
+    /// went back or far ahead — a seek, a loop: then only `target` is asked for.
+    private func walkSteps(to target: CMTime) -> Int {
+        guard askedItemTime.isNumeric, target.isNumeric else { return 0 }
+        let ahead = CMTimeGetSeconds(CMTimeSubtract(target, askedItemTime))
+        let stepSeconds = CMTimeGetSeconds(Self.walkStep)
+        guard ahead.isFinite, ahead > stepSeconds, ahead <= Self.longestWalkSeconds else { return 0 }
+        return Int((ahead / stepSeconds).rounded(.up)) - 1
     }
 
     /// Hands a frame's bytes to the watch and answers the gain.
