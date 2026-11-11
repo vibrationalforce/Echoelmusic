@@ -1,3 +1,10 @@
+# Hooks dieses Repos
+
+| Hook | Ereignis | Was er tut | Prüfen |
+|---|---|---|---|
+| `protect-founder-gated.py` | PreToolUse (Bash) | schützt `.claude/settings.json` und `.mcp.json` (Abschnitte unten) | `--selftest` (2026-11-11: 62 von 63; der Fall „add a covering dir + commit“ scheitert schon auf dem Stand vor dieser Datei — offen) |
+| `verify-after-edit.py` (seit 2026-11-11, Founder-Auftrag „Hooks: nach jeder Änderung Linter und schnelle Unittests“) | PostToolUse (Edit, Write, MultiEdit) | prüft die EINE geänderte Datei: Swift unter `EchoelStudio/` gegen die Gesetze, die eine Zeile entscheiden kann (print, Force-Unwrap, ObservableObject, UIScreen.main, @MainActor an einer Testklasse, Lock/GCD/I/O/Log/Task in DSP, Kernels und den drei Render-Closures, Import-Zeilen und Netz-Liste aus `studio.yml`, verbotene Wörter in sichtbaren Texten); auf einem Mac mit Swift dazu die eigene Testklasse per `swift test --filter`; Python unter `scripts/`, `.claude/hooks/`, `EchoelStudio/Support/CI/` muss parsen und sein `--selftest` bestehen. Fund = Exit 2 (die Sitzung muss reparieren), Rat = Kontext, sauber = still. Schreibt nichts | `--selftest` (21 Fälle), `--tree` (2026-11-11: 685 Dateien, 0 Funde, 0 Rat) |
+
 # Schutz der founder-gesperrten Pfade
 
 ⭐ **Seit 2026-10-17 schützen Hook und `permissions.ask` mechanisch nur `.claude/settings.json`
