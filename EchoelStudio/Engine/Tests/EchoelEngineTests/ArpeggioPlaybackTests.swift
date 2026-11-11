@@ -69,6 +69,22 @@ final class ArpeggioPlaybackTests: XCTestCase {
     private let chord = [Note(pitch: 60, start: 0, length: 3_840), Note(pitch: 64, start: 0, length: 3_840),
                          Note(pitch: 67, start: 0, length: 3_840)]
 
+    /// Keys held live into an arpeggiating track play on through the song loop's wrap: the pass
+    /// after it steps on the same samples as the first, from the loop's start. A quarter at 120 BPM
+    /// is 24,000 samples, the one-bar loop 96,000.
+    func testKeysArpeggiatedLiveKeepPlayingInThePassAfterAWrap() throws {
+        let (empty, _) = try project(notes: [], arpeggio: Arpeggio(rate: .quarter, order: .up))
+        let (core, slot) = engine(for: empty)
+        core.setLoop(0..<(4 * q))
+        for pitch: UInt8 in [60, 64] { core.playLive(slot: slot, status: 0x90, pitch, 100) }
+        core.play()
+        let heard = noteOns(core, frames: 192_000)
+        let first: [Int] = heard.filter { $0[0] < 96_000 }.map { $0[0] }
+        let second: [Int] = heard.filter { $0[0] >= 96_000 }.map { $0[0] - 96_000 }
+        XCTAssertEqual(first, [0, 24_000, 48_000, 72_000], "a bar of quarters")
+        XCTAssertEqual(second, first, "the pass after the wrap steps as the first did")
+    }
+
     func testAnArpeggiatedClipPlaysLiveAsItExports() throws {
         let (song, _) = try project(notes: chord, arpeggio: Arpeggio(rate: .eighthTriplet, order: .upDown, octaves: 2, gate: 0.7))
         let export = OfflineRender.render(song, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0)

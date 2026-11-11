@@ -368,6 +368,26 @@ final class InstrumentPathTests: XCTestCase {
 
     // MARK: - What each instrument hears
 
+    /// A clip's sustain pedal holds nothing past the song loop's wrap: the note it holds after its
+    /// key went up is silent 48,000 frames into the next pass, where the same song without the loop
+    /// still holds it. At 120 BPM the pedal goes down on tick 2,800 (sample 70,000), the note sounds
+    /// from tick 2,880 to 3,120 (72,000 to 78,000), and the loop's end, the bar, is 96,000.
+    func testAClipsSustainPedalHoldsNothingPastTheLoopsWrap() throws {
+        let t = try tune([Note(pitch: 60, start: 2_880, length: 240)],
+                         controls: [ControlChange(kind: .controller(number: 64), start: 2_800, value: 127)])
+        var heard: [[Float]] = []
+        for looping in [false, true] {
+            let core = engine()
+            publish(t, to: core)
+            core.setLoop(looping ? 0..<bar : nil)
+            core.play()
+            heard.append(render(core, frames: 166_000))
+        }
+        XCTAssertNotNil(firstSound(Array(heard[0][144_000..<166_000])), "without the loop the pedal holds the note")
+        XCTAssertNotNil(firstSound(Array(heard[1][90_000..<96_000])), "it holds it up to the loop's end")
+        XCTAssertNil(firstSound(Array(heard[1][144_000..<166_000])), "48,000 frames after the wrap nothing is held")
+    }
+
     func testTheDrumsAndTheSamplerIgnoreAClipsBendsAndControllers() throws {
         let notes = [Note(pitch: 36, start: 0, length: 960), Note(pitch: 60, start: 480, length: 960)]
         let controls = [ControlChange(kind: .pitchBend, start: 100, value: 16_383),

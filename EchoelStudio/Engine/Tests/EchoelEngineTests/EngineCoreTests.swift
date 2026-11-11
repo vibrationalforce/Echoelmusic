@@ -45,6 +45,52 @@ final class EngineCoreTests: XCTestCase {
     private let bar = MusicalTime.ticksPerBar(.common)
     private var generation: UInt64 = 0
 
+    /// A clip note that crosses the song loop's end ends at the wrap: 48,000 frames into the next
+    /// pass it is silent, where the same song without the loop still holds it. At 120 BPM tick
+    /// 3,000 is sample 75,000 and tick 6,000 is 150,000; the loop's end, the bar, is 96,000, and
+    /// the note starts again 75,000 into the next pass, at 171,000.
+    func testAClipNoteThatCrossesTheLoopsEndIsSilentSoonAfterTheWrap() throws {
+        let s = try song([[Note(pitch: 55, start: 3_000, length: 3_000)]])
+        var heard: [[Float]] = []
+        for looping in [false, true] {
+            let engine = core()
+            publish(s.project, to: engine)
+            engine.setLoop(looping ? 0..<bar : nil)
+            engine.play()
+            heard.append(render(engine, frames: 168_000).left)
+        }
+        XCTAssertNotNil(firstSound(Array(heard[0][144_000..<148_000])), "without the loop the note still sounds")
+        XCTAssertNotNil(firstSound(Array(heard[1][90_000..<96_000])), "it sounds up to the loop's end")
+        XCTAssertNil(firstSound(Array(heard[1][144_000..<168_000])), "48,000 frames after the wrap it is silent")
+    }
+
+    /// A key held live ends at Stop, at a pause, at a seek while stopped and at a Stop while
+    /// already stopped. A block is rendered between the key and the move, so the key has reached
+    /// the instrument before the move releases.
+    func testStopPauseASeekAtRestAndASecondStopEachEndAKeyHeldLive() throws {
+        let tune = try song([[]])
+        for move in ["stop", "pause", "seek at rest", "second stop"] {
+            let engine = core()
+            publish(tune.project, to: engine)
+            if move == "stop" || move == "pause" { engine.play() }
+            if move == "second stop" {
+                engine.play()
+                _ = render(engine, frames: 4_800)
+                engine.stop()
+            }
+            _ = render(engine, frames: 256)
+            engine.playLive(slot: 0, status: 0x90, 60, 100)
+            XCTAssertNotNil(firstSound(render(engine, frames: 1_024).left), "\(move): the key sounds")
+            switch move {
+            case "pause": engine.pause()
+            case "seek at rest": engine.seek(toSample: 48_000)
+            default: engine.stop()
+            }
+            _ = render(engine, frames: 48_000)
+            XCTAssertNil(firstSound(render(engine, frames: 1_024).left), "\(move): the move ended the key")
+        }
+    }
+
     private struct Song {
         var project: Project
         var tracks: [TrackID]

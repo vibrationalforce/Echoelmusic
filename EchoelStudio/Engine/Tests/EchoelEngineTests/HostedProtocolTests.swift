@@ -65,6 +65,23 @@ private final class AffineEffect: HostedProcessor, @unchecked Sendable {
 final class HostedProtocolTests: XCTestCase {
     private let rate = 48_000.0
 
+    /// The song loop's wrap tells a plugin all notes off on the wrap's sample, also when no key is
+    /// held: the clip's one note ended at 36,000, and the wrap at 96,000 still sends it. The
+    /// 512-frame block that holds the loop's end is cut there, 256 frames in.
+    func testAPluginHearsAllNotesOffAtTheLoopsWrapWithNoKeyHeld() throws {
+        let (project, track) = try pluginSong()
+        let unit = ConstantInstrument(level: 0, sampleRate: rate)
+        let core = engine(project, track: track, unit: unit)
+        core.setLoop(0..<MusicalTime.ticksPerBar(.common))
+        core.play()
+        _ = render(core, frames: 96_000 + 1_024, block: 512)
+        let notes = unit.heard.filter { $0.status == 0x90 || $0.status == 0x80 }
+        XCTAssertEqual(notes.map(\.status), [0x90, 0x80], "one note, ended long before the loop's end")
+        XCTAssertEqual(notes.map(\.frame), [24_000, 36_000])
+        let allOff: [Int64] = unit.heard.filter { $0.status == 0xB0 && $0.data == 123 }.map { $0.frame }
+        XCTAssertTrue(allOff.contains(96_000), "the wrap sends all notes off with nothing held: \(allOff)")
+    }
+
     /// A plugin track with one note, one beat in for half a beat: frames 24,000 to 36,000.
     private func pluginSong() throws -> (Project, TrackID) {
         var project = Project(tempo: 120)
