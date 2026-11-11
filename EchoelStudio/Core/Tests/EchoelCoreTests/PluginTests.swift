@@ -139,6 +139,19 @@ final class OwnPluginTests: XCTestCase {
         XCTAssertTrue(OwnPlugin.free.contains(OwnPlugin.effects))
     }
 
+    /// The line that describes the free effects counts every standard effect and names the first
+    /// ones, so it can never say fewer than the extension carries (it said four of 25).
+    func testTheFreeEffectsLineCountsEveryStandardEffect() {
+        let line = OwnPlugin.effects.summary
+        XCTAssertEqual(line, StandardEffect.freeSummary)
+        XCTAssertTrue(line.hasPrefix("\(StandardEffect.allCases.count) effects, free in every host: "), line)
+        for effect in StandardEffect.allCases.prefix(4) {
+            XCTAssertTrue(line.contains(effect.title), effect.title)
+        }
+        XCTAssertTrue(line.contains("and \(StandardEffect.allCases.count - 4) more"), line)
+        XCTAssertTrue(line.hasSuffix("."))
+    }
+
     func testTheStandardEffectsAreDistinctEffectsThatKnowThemselvesAgain() {
         let components = StandardEffect.allCases.map(\.component)
         XCTAssertEqual(Set(components).count, StandardEffect.allCases.count)

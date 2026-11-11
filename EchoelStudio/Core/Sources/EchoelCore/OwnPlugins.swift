@@ -31,13 +31,14 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
                                    manufacturerName: "Echoelmusic"),
         summary: "Load a sample and play it across the keys. The sample is saved with the host's session.")
 
-    /// The four standard effects for other hosts (`StandardEffect.extensionComponent`). In Echoel
-    /// itself they stay free under their own ids.
+    /// Every standard effect for other hosts (`StandardEffect.extensionComponent`), named by the
+    /// one list they come from, so the line can never describe fewer or other effects than the
+    /// extension carries. In Echoel itself they stay free under their own ids.
     public static let effects = OwnPlugin(
         component: PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code("xEQ5"),
                                    manufacturer: PluginComponent.code("Echo"), name: "Effects",
                                    manufacturerName: "Echoelmusic"),
-        summary: "EQ, Compressor, Delay and Reverb.")
+        summary: StandardEffect.freeSummary)
 
     /// The instrument the earlier Echoelmusic app shipped (`echl`, "EchoelBodyVibe"). The
     /// extension still answers to it with the synth, so a host session saved with it opens.
@@ -81,6 +82,15 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         dynamicEQ, multibandClipper, deEsser
 
     public var id: String { rawValue }
+
+    /// The effects as one line for a store or a plugin list: how many, that they are free, the first
+    /// four by name. Built from `allCases`, so a new effect is counted the day it is added.
+    public static var freeSummary: String {
+        let named = allCases.prefix(4).map(\.title)
+        let more = allCases.count - named.count
+        let names = named.joined(separator: ", ") + (more > 0 ? " and \(more) more" : "")
+        return "\(allCases.count) effects, free in every host: \(names)."
+    }
 
     public var title: String {
         switch self {
