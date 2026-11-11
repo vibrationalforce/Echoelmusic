@@ -34,6 +34,8 @@ final class VideoMonitor {
     /// The loaded file's frames at `VideoFlashCells.pixelsPerSide`, only for measuring.
     private var measuring: AVPlayerItemVideoOutput?
     private var measureLoop: Task<Void, Never>?
+    /// The look chose the long pause last: nothing could change when it went to sleep.
+    private var measureRests = false
     private var flashWatch = VideoFlashWatch()
 
     /// Hands the loaded file's frames to a picture the app draws itself — the Field layer's preview
@@ -80,13 +82,40 @@ final class VideoMonitor {
                 try? await Task.sleep(for: .milliseconds(VideoMonitor.tickMilliseconds))
             }
         }
+        startMeasuring()
+    }
+
+    /// The look at the shown frame, from now on. It sleeps the short interval while a frame can
+    /// change or the picture is dimmed, and the tick's while nothing can (`measurePause`).
+    private func startMeasuring() {
+        measureLoop?.cancel()
+        measureRests = false
         measureLoop = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
                 self.measureShownFrame()
-                try? await Task.sleep(for: .milliseconds(VideoMonitor.measureMilliseconds))
+                let pause = self.measurePause
+                self.measureRests = pause != VideoMonitor.measureMilliseconds
+                try? await Task.sleep(for: .milliseconds(pause))
             }
         }
+    }
+
+    /// How long the look sleeps before the next one. A frame can change while a file is loaded
+    /// and the film plays or a seek is on its way, with the app on screen; then, and while the
+    /// picture is dimmed, the look is the short one. A film standing still, a gap and the app
+    /// playing in the background woke the main thread 125 times a second for nothing.
+    private var measurePause: Int {
+        let canChange = measuring != nil && (player.rate != 0 || seeking)
+            && UIApplication.shared.applicationState != .background
+        return canChange || flashWatch.gain < 1 ? Self.measureMilliseconds : Self.tickMilliseconds
+    }
+
+    /// The film may move from now on: a look that rests starts afresh, so it does not sleep
+    /// through the first frames. Called where the player is set going or sent to another place.
+    private func wakeMeasuring() {
+        guard measureRests, measureLoop != nil else { return }
+        startMeasuring()
     }
 
     func stop() {
@@ -94,6 +123,7 @@ final class VideoMonitor {
         loop = nil
         measureLoop?.cancel()
         measureLoop = nil
+        measureRests = false
         grading = .off
         player.pause()
         detachOutput()
@@ -146,6 +176,7 @@ final class VideoMonitor {
         case .seek(let seconds):
             seek(to: seconds, playing: true)
         }
+        wakeMeasuring()
     }
 
     private func seek(to seconds: Double, playing: Bool) {
@@ -158,6 +189,7 @@ final class VideoMonitor {
             Task { @MainActor [weak self] in self?.seeking = false }
         }
         if playing { player.rate = 1 }
+        wakeMeasuring()
     }
 
     private func blank() {
