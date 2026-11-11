@@ -900,8 +900,12 @@ public final class EngineCore: @unchecked Sendable {
         }
         playLiveEvents()
         // A live event the ring had no room for is lost, and with it perhaps a key's release:
-        // everything sounding ends, so no key is left hanging until Stop.
-        if liveDropped.exchange(false, ordering: .acquiringAndReleasing) { releaseAllNotes() }
+        // everything sounding ends, so no key is left hanging until Stop. An arpeggiating track
+        // keeps its keys through all notes off, so its phrase is ended here too.
+        if liveDropped.exchange(false, ordering: .acquiringAndReleasing) {
+            releaseAllNotes()
+            for slot in 0..<slotCapacity where arps.isOn(slot) { stopArpNote(slot, arps.clear(slot), offset: 0) }
+        }
         let playing = transportAsked
         let clocking = clockFlag.load(ordering: .relaxed)
         if clocking { sendTransport(playing: playing, sought: seek >= 0) }

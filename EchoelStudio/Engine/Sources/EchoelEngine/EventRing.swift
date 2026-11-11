@@ -2,7 +2,8 @@ import Synchronization
 
 /// A single-producer, single-consumer ring of small events — MIDI from a controller to the
 /// render thread. The producer never waits and never allocates; an event that does not fit is
-/// dropped (a controller sends far fewer than the ring holds per block).
+/// dropped and `push` says so, for the caller to answer (a controller sends far fewer than the ring
+/// holds per block).
 public final class EventRing: @unchecked Sendable {
     public let capacity: Int
     private let storage: UnsafeMutablePointer<UInt32>

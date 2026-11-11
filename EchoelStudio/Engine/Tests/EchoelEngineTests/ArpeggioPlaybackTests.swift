@@ -69,6 +69,20 @@ final class ArpeggioPlaybackTests: XCTestCase {
     private let chord = [Note(pitch: 60, start: 0, length: 3_840), Note(pitch: 64, start: 0, length: 3_840),
                          Note(pitch: 67, start: 0, length: 3_840)]
 
+    /// A key's release lost in a full live ring does not leave an arpeggiating track stepping on:
+    /// the phrase ends with everything else.
+    func testAnArpeggioWhoseKeysReleaseWasLostInAFullRingStops() throws {
+        let (empty, _) = try project(notes: [], arpeggio: Arpeggio(rate: .quarter, order: .up))
+        let (core, slot) = engine(for: empty)
+        core.playLive(slot: slot, status: 0x90, 60, 100)
+        core.play()
+        XCTAssertFalse(noteOns(core, frames: 48_000).isEmpty, "the phrase steps")
+        for step in 0..<1_100 { core.playLive(slot: slot, status: 0xB0, 1, UInt8(step % 128)) }
+        core.playLive(slot: slot, status: 0x80, 60, 0)
+        _ = noteOns(core, frames: 256)
+        XCTAssertTrue(noteOns(core, frames: 96_000).isEmpty, "no step after the lost release")
+    }
+
     /// Keys held live into an arpeggiating track play on through the song loop's wrap: the pass
     /// after it steps on the same samples as the first, from the loop's start. A quarter at 120 BPM
     /// is 24,000 samples, the one-bar loop 96,000.
