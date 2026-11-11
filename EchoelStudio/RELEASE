@@ -1,29 +1,23 @@
-11.0.0 — one switch for everything of the body that leaves; the app's own row of cells; a Field window that moves out of the way
+11.0.0 — the video window dims footage that strobes; Stop stops at once after a take; a stream stopped while it connects stays stopped
 
-What is new since 10070. Each line is code that the Echoel Studio run builds; the rules have tests
+What is new since 10071. Each line is code that the Echoel Studio run builds; the rules have tests
 of their own, and nothing here is device-verified yet.
-- Flow: a tempo that follows the pulse leaves the device only with Share Body Data on. While a
-  MIDI clock goes out, this phone hosts a jam or the OSC connection is on, and sharing is off,
-  Flow holds the tempo where it is; the Instrument page says why and where the switch is. A Flow
-  step is noted in the diagnostics log with the two tempos, no longer with the pulse.
-- Look: a choice between a few names is the app's own row of cells — the chosen one the off-white
-  tile — where the system's segmented control stood: Fixed and Flow, the instrument, waveform,
-  filter, drum models and sampler mode on the Sound page, the kinds in the media browser, Frame,
-  Picture, Codec and the Field layer in the video export, the shape under Go Live. The Notes and
-  Sound switch in the clip editor's bar is still the system's.
-- Keys switch: dimmed under the views that settle it themselves — the Instrument always has its
-  keys, the mixer, the Field and the sky never do. It decides under Tracks, Arrange and Session.
-- Field window: a handle in the middle of its bar; drag it and the card rests in the corner you
-  reach, kept on this device. It steps aside from the video window's corner.
-- Instrument page: the safety sentence under the pulse is body text, not a grey note.
-- Echoelmusic Plugins page: says the synthesizer has been tried in AUM on an iPhone, and that the
-  drums, the sampler and other host apps are not yet tested.
-- In the code and not in use yet: a flash limit for footage (a tested rule; the video window and
-  the Field preview do not read it yet).
+- Video window: a flash limit for your own footage. While the window shows, each frame is
+  measured small; a passage that strobes is shown dimmed, the window's bar says "Flash limit",
+  and the picture comes back a few seconds after the strobe ends. Footage by itself is counted
+  by its brightness and its own red. With the Field Layer on (video export), the footage's
+  colors count too, which is stricter. Limits we know of: the measuring and the dimming run on
+  the main thread, so the dim can come a frame late or wait while the app is busy; the black of
+  a gap between two parts is not counted. The export and the live stream are not limited.
+- Recording: the transport's Stop stops the song as soon as the take's file is closed, and the
+  take is placed after that. Before, the song played on while the take was read, Record was
+  ready, and a take begun there went on over a song that stood still.
+- Live stream: a destination that is stopped while it still connects does not connect
+  afterwards, is not shown as failed, and is not called live when its server answers late.
+- Shortcut "Export Stems": says that an export already runs, where it named another reason.
 
-Previous: 11.0.0 (10070) — all seven views on a phone's bar; the body leaves by MPE Out and in a
-stream only with Share Body Data on; 10069 — the earlier instrument's look, the plug-ins play in
-full.
+Previous: 11.0.0 (10071) — one switch for everything of the body that leaves; the app's own row
+of cells; a Field window that moves out of the way; 10070 — all seven views on a phone's bar.
 Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
@@ -32,15 +26,14 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Keys switch in the transport (under More on a phone held upright): is it dimmed under Mixer,
-   Field, Sky and Instrument, and lit and working under Tracks, Arrange and Session?
-2. Flow on, a body source on, a MIDI clock going out (or the OSC connection on), Share Body Data
-   off: does the tempo hold, and does the Instrument page say why and where the switch is? With
-   Share Body Data on: does Flow follow your pulse again after a few seconds?
-3. Fixed and Flow on the Instrument page, Waveform and Filter on the Sound page, Frame and Codec
-   in the video export: do they look like the app's other controls, the chosen one the light
-   tile, and does a tap still choose?
-4. Field window over Tracks: drag it by the handle in its bar to another corner. Does it follow
-   the finger, rest in that corner, and is it still there after you close and open the app?
-5. Instrument page: can you read the safety sentence under the pulse at a glance? And does
-   "Echoelmusic Plugins…" say the synthesizer has been tried in AUM on an iPhone?
+1. Video window with an ordinary clip (filmed by hand, indoors): does the picture stay bright
+   from start to end, with no "Flash limit" in the window's bar?
+2. The same clip with the Field Layer switched on in the video export: does the picture in the
+   window still stay bright?
+3. Video window with a clip that strobes (a club light, or a few frames of black and white cut
+   in turn): is it dimmed within about half a second, does the bar say "Flash limit", does the
+   picture come back calmly a few seconds after the strobe ends, and does the film keep playing?
+4. Record an audio take, press Stop in the transport, then Record at once: does the song stop
+   as soon as you press Stop, and does the new take begin with the song running or counting in?
+5. Go Live to a destination and press Stop Stream while it still says Connecting: does the page
+   show no failure, and does the platform show no stream?
