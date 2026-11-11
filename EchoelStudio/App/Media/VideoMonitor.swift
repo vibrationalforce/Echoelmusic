@@ -123,9 +123,12 @@ final class VideoMonitor {
     }
 
     /// The film may move from now on: a look that rests starts afresh, so it does not sleep
-    /// through the first frames. Called where the player is set going or sent to another place.
+    /// through the first frames. Called where the player is set going or sent to another place —
+    /// on every tick while the song plays, so it asks first whether a fresh look would be the
+    /// short one. Without that, a look resting because the app is in the background was torn
+    /// down and started again ten times a second.
     private func wakeMeasuring() {
-        guard measureRests, measureLoop != nil else { return }
+        guard measureRests, measureLoop != nil, measurePause == Self.measureMilliseconds else { return }
         startMeasuring()
     }
 
