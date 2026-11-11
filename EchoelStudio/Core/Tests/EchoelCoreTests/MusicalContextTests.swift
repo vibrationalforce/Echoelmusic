@@ -24,6 +24,54 @@ final class MusicalContextTests: XCTestCase {
         XCTAssertEqual((57...68).filter(pentatonic.contains), [57, 60, 62, 64, 67])
     }
 
+    // MARK: The key shown on a keyboard
+
+    func testAKeyWearsItsPlaceInTheSongsKey() {
+        let cMajor = MusicalContext(scale: .major)
+        XCTAssertEqual(cMajor.keyMark(of: 60), .root)
+        XCTAssertEqual(cMajor.keyMark(of: 72), .root, "every octave of the root")
+        XCTAssertEqual(cMajor.keyMark(of: 62), .scaleTone)
+        XCTAssertEqual(cMajor.keyMark(of: 61), KeyMark.unmarked, "C♯ is outside C major")
+
+        let aMinor = MusicalContext(root: 9, scale: .minor)
+        XCTAssertEqual(aMinor.keyMark(of: 57), .root)
+        XCTAssertEqual(aMinor.keyMark(of: 60), .scaleTone, "C is the third of A minor")
+        XCTAssertEqual(aMinor.keyMark(of: 61), KeyMark.unmarked)
+    }
+
+    func testAChromaticSongMarksNoKey() {
+        let chromatic = MusicalContext()
+        XCTAssertTrue((0...127).allSatisfy { (pitch: Int) -> Bool in chromatic.keyMark(of: pitch) == KeyMark.unmarked })
+        let rooted = MusicalContext(root: 7, scale: .chromatic)
+        XCTAssertEqual(rooted.keyMark(of: 67), KeyMark.unmarked, "a root alone frames nothing")
+    }
+
+    func testAPitchOutsideTheKeyboardWearsNothing() {
+        let cMajor = MusicalContext(scale: .major)
+        XCTAssertEqual(cMajor.keyMark(of: -12), KeyMark.unmarked)
+        XCTAssertEqual(cMajor.keyMark(of: 128), KeyMark.unmarked)
+        XCTAssertEqual(cMajor.keyMark(of: 0), .root)
+        XCTAssertEqual(cMajor.keyMark(of: 127), .scaleTone, "G9 is the fifth of C")
+    }
+
+    /// In every scale and on every root, one octave shows one root and as many other marks as
+    /// the scale has other tones — and a marked key is exactly a key the scale contains.
+    func testAnOctaveShowsOneRootAndTheScalesOtherTones() {
+        for scale in Scale.allCases where scale != .chromatic {
+            for root in MusicalContext.rootRange {
+                let context = MusicalContext(root: root, scale: scale)
+                let marks: [KeyMark] = (60..<72).map { (pitch: Int) -> KeyMark in context.keyMark(of: pitch) }
+                let roots = marks.filter { (mark: KeyMark) -> Bool in mark == .root }.count
+                let tones = marks.filter { (mark: KeyMark) -> Bool in mark == .scaleTone }.count
+                XCTAssertEqual(roots, 1, "\(context.title)")
+                XCTAssertEqual(tones, scale.intervals.count - 1, "\(context.title)")
+                for pitch in 60..<72 {
+                    XCTAssertEqual(context.keyMark(of: pitch) != KeyMark.unmarked, context.contains(pitch), "\(context.title), pitch \(pitch)")
+                }
+            }
+        }
+    }
+
     func testTheFrameReadsAsKeyAndScale() throws {
         XCTAssertEqual(MusicalContext(root: 2, scale: .dorian).title, "D Dorian")
         XCTAssertEqual(MusicalContext(root: 10, scale: .harmonicMinor).title, "B♭ Harmonic Minor")

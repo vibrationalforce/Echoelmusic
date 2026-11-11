@@ -68,6 +68,16 @@ public struct MusicalContext: Codable, Equatable, Sendable {
         return scale.intervals.contains(degree)
     }
 
+    /// What the key of `pitch` wears on a keyboard drawn on the screen. A chromatic song — and a
+    /// scale this build does not know, which reads as chromatic — frames nothing, so no key is
+    /// marked: a mark on every key would say nothing. A pitch outside MIDI's range wears none.
+    public func keyMark(of pitch: Int) -> KeyMark {
+        guard scale != .chromatic, (0...127).contains(pitch) else { return .unmarked }
+        let degree = ((pitch - root) % 12 + 12) % 12
+        if degree == 0 { return .root }
+        return scale.intervals.contains(degree) ? .scaleTone : .unmarked
+    }
+
     /// The nearest pitch in the key and scale; on a tie, the lower one. Stays within 0…127.
     public func nearest(_ pitch: Int) -> Int {
         let clamped = Swift.min(Swift.max(pitch, 0), 127)
@@ -95,6 +105,14 @@ public struct MusicalContext: Codable, Equatable, Sendable {
 }
 
 /// A scale as the semitone steps above its root. Stored by name in the song; never rename a case.
+/// What a key on the screen shows of the song's key: its root, another tone of its scale, or
+/// nothing. Shown, never enforced — the key lock is a switch of its own (`LiveKeys`).
+public enum KeyMark: Equatable, Sendable {
+    case root
+    case scaleTone
+    case unmarked
+}
+
 public enum Scale: String, Codable, CaseIterable, Sendable {
     case chromatic, major, minor, dorian, phrygian, lydian, mixolydian, locrian
     case harmonicMinor, melodicMinor, majorPentatonic, minorPentatonic, blues, wholeTone

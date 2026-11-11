@@ -5,7 +5,9 @@ import SwiftUI
 /// keyboard does. Every touch goes through the one live router (`AudioEngine.live`): the song's
 /// key lock, the chosen live track and a running MIDI take apply to it unchanged. A drum track
 /// shows its kit as pads; every other instrument track shows a keyboard — piano keys, or the hex
-/// keyboard (`HexKeyLayout`), chosen by the header's hexagon button.
+/// keyboard (`HexKeyLayout`), chosen by the header's hexagon button. In a song with a key, the keys
+/// show it: a filled dot on its root, a ring on the other tones of its scale (`KeyMark`). Shown,
+/// not enforced; Keys Follow Scale stays the switch that bends a key to the scale.
 struct PlayKeysView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -33,10 +35,10 @@ struct PlayKeysView: View {
                 } else if showsHex {
                     HexKeyboard(router: engine.live, lowest: clampedLowest,
                                 minimumCell: isCompact ? 44 : 48,
-                                concertPitch: store.project.context.concertPitch)
+                                context: store.project.context)
                         .frame(height: isCompact ? Swift.min(keyHeight, 100) : Swift.min(keyHeight * 1.3, 220))
                 } else {
-                    Keyboard(router: engine.live, lowest: clampedLowest)
+                    Keyboard(router: engine.live, lowest: clampedLowest, context: store.project.context)
                         .frame(height: isCompact ? Swift.min(keyHeight, 84) : Swift.min(keyHeight, 180))
                 }
             } else {
@@ -100,6 +102,8 @@ struct PlayKeysView: View {
 private struct Keyboard: View {
     let router: LiveRouter
     let lowest: Int
+    /// The song's key, for the marks on the keys.
+    let context: MusicalContext
 
     private static let whiteClasses: Set<Int> = [0, 2, 4, 5, 7, 9, 11]
     /// White keys followed by a black one: C, D, F, G, A.
@@ -120,13 +124,13 @@ private struct Keyboard: View {
                 HStack(spacing: 0) {
                     ForEach(whites, id: \.self) { note in
                         PlayKey(router: router, note: note, style: .white,
-                                label: note % 12 == 0 ? Self.name(of: note) : nil)
+                                label: note % 12 == 0 ? Self.name(of: note) : nil, mark: context.keyMark(of: note))
                             .frame(width: width)
                     }
                 }
                 ForEach(Array(whites.enumerated()), id: \.element) { index, note in
                     if Self.blackFollows.contains(note % 12), index < whites.count - 1, note + 1 <= 127 {
-                        PlayKey(router: router, note: note + 1, style: .black, label: nil)
+                        PlayKey(router: router, note: note + 1, style: .black, label: nil, mark: context.keyMark(of: note + 1))
                             .frame(width: width * 0.7, height: geometry.size.height * 0.6)
                             .offset(x: width * CGFloat(index + 1) - width * 0.35)
                     }
@@ -156,8 +160,9 @@ private struct HexKeyboard: View {
     let router: LiveRouter
     let lowest: Int
     let minimumCell: CGFloat
-    /// The song's A4: a cell wears its pitch's light at it, as the Field and the lamp do.
-    let concertPitch: Double
+    /// The song's key and its A4: a cell wears its pitch's light at that A4, as the Field and the
+    /// lamp do, and the key's mark.
+    let context: MusicalContext
 
     var body: some View {
         GeometryReader { geometry in
@@ -169,8 +174,9 @@ private struct HexKeyboard: View {
             let top = Swift.max(0, geometry.size.height - boardHeight)
             ZStack(alignment: .topLeading) {
                 ForEach(board.cells) { key in
-                    PlayKey(router: router, note: key.pitch, style: .hex(Theme.Color.pitchFill(key.pitch, concertPitch: concertPitch)),
-                            label: Self.label(of: key.pitch))
+                    PlayKey(router: router, note: key.pitch,
+                            style: .hex(Theme.Color.pitchFill(key.pitch, concertPitch: context.concertPitch)),
+                            label: Self.label(of: key.pitch), mark: context.keyMark(of: key.pitch))
                         .frame(width: cell, height: cell * CGFloat(HexKeyLayout.heightPerWidth))
                         .position(x: CGFloat(key.x) * cell, y: top + boardHeight - CGFloat(key.y) * cell)
                 }
@@ -248,6 +254,8 @@ private struct PlayKey: View {
     let note: Int
     let style: Style
     let label: String?
+    /// The song's key on this key; a pad wears none.
+    var mark = KeyMark.unmarked
 
     @GestureState private var touching = false
     @State private var struck: UInt8?
@@ -261,14 +269,20 @@ private struct PlayKey: View {
             .fill(fill)
             .overlay(shape.stroke(Theme.Color.border, lineWidth: 1))
             .overlay(alignment: labelCentred ? .center : .bottom) {
-                if let label {
-                    Text(label)
-                        .font(Theme.Font.caption)
-                        .foregroundStyle(labelColor)
-                        .padding(.bottom, labelCentred ? 0 : Theme.Space.xs)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                // On a piano key the mark sits over the name, at the foot of the key; on a hex
+                // cell under it.
+                VStack(spacing: 2) {
+                    if !labelCentred { markDot }
+                    if let label {
+                        Text(label)
+                            .font(Theme.Font.caption)
+                            .foregroundStyle(labelColor)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                    if labelCentred { markDot }
                 }
+                .padding(.bottom, labelCentred ? 0 : Theme.Space.xs)
             }
             // A hexagon is touched only inside its outline: the rows' frames overlap.
             .contentShape(shape)
@@ -284,6 +298,7 @@ private struct PlayKey: View {
             }
             .onDisappear { release() }
             .accessibilityLabel(spokenName)
+            .accessibilityValue(spokenMark)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { strike() }
     }
@@ -300,6 +315,36 @@ private struct PlayKey: View {
         switch style {
         case .pad, .hex: return true
         case .white, .black: return false
+        }
+    }
+
+    /// The key's place in the song's key: a filled dot for the root, a ring for another tone of
+    /// the scale — told apart by shape, not by colour.
+    @ViewBuilder private var markDot: some View {
+        switch mark {
+        case .root:
+            Circle().fill(markColor).frame(width: 7, height: 7)
+        case .scaleTone:
+            Circle().stroke(markColor, lineWidth: 1.5).frame(width: 6, height: 6)
+        case .unmarked:
+            EmptyView()
+        }
+    }
+
+    private var markColor: Color {
+        if struck != nil { return Theme.Color.onAccent }
+        switch style {
+        case .white: return Theme.Color.keyLabel
+        case .hex: return Theme.Color.text
+        case .black, .pad: return Theme.Color.textSecondary
+        }
+    }
+
+    private var spokenMark: String {
+        switch mark {
+        case .root: return "Root of the key"
+        case .scaleTone: return "In the scale"
+        case .unmarked: return ""
         }
     }
 
