@@ -20,10 +20,13 @@ import Foundation
 ///   which also sees what the moving gain itself does.
 /// - **Red**, on the same windows and cells: WCAG counts a second kind of flash, saturated red,
 ///   that luminance cannot see. It runs on the red signal at WCAG's red step (20/320).
-/// - **Color**, on the same windows and cells at the red steps: over a reddish picture under the
-///   footage a blue or green swing moves the shown red signal while the footage's own stays 0.
-///   This type never sees what lies under the footage, so it bounds every such picture at once
-///   with the seven sums in `colorCombinations`.
+/// - **Color**, on the same windows and cells at the red steps, and only where the caller hands
+///   the color cells over — while another picture is drawn with the footage. Over a reddish
+///   picture a blue or green swing moves the shown red signal while the footage's own stays 0.
+///   This type never sees that picture, so it bounds every such picture at once with the seven
+///   sums in `colorCombinations`. They count every color, grey too, at the red steps: a whole
+///   frame moving by one stored level is a transition to them. That is the safe side over a
+///   picture nobody measured, and wrong for footage shown by itself.
 ///
 /// **What it guarantees.** A transition is a signal moving its step against its last extreme, so a
 /// slow fade is one transition, not many. Five inside one second drop the gain to `engagedGain`

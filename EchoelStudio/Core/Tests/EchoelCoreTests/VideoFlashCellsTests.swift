@@ -125,11 +125,11 @@ final class VideoFlashCellsTests: XCTestCase {
             _ = shown.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> Bool in
                 frame.measure(bgra: raw, width: side, height: side, bytesPerRow: side * 4)
             }
-            strobing.next(time: time, frame: frame)
+            strobing.next(time: time, frame: frame, blended: false)
             _ = grey.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> Bool in
                 frame.measure(bgra: raw, width: side, height: side, bytesPerRow: side * 4)
             }
-            steadyGains.append(steady.next(time: time, frame: frame))
+            steadyGains.append(steady.next(time: time, frame: frame, blended: false))
         }
         XCTAssertEqual(strobing.gain, VideoFlashLimit.engagedGain)
         XCTAssertTrue(steadyGains.allSatisfy { (gain: Double) -> Bool in gain == 1 })
@@ -157,9 +157,50 @@ final class VideoFlashCellsTests: XCTestCase {
         for index in 0..<180 {
             let time = Double(index) / 60
             let isRed = Int((20 * time).rounded(.down)) % 2 == 0
-            limit.next(time: time, frame: isRed ? redFrame : greyFrame)
+            limit.next(time: time, frame: isRed ? redFrame : greyFrame, blended: false)
         }
         XCTAssertEqual(limit.gain, VideoFlashLimit.engagedGain)
+    }
+
+    // MARK: Footage by itself, and footage with another picture
+
+    /// A whole picture flickering between two neighbouring stored levels, twenty changes a second
+    /// (a lamp, a codec): its luminance moves by under one hundredth, far from WCAG's tenth, and
+    /// nothing in it is red. `blended` says whether another picture is drawn with it.
+    private static func gainsOfAOneLevelFlicker(blended: Bool) -> [Double] {
+        let side = VideoFlashCells.pixelsPerSide
+        let lower = picture(width: side, height: side) { (_: Int, _: Int) in (red: 240, green: 240, blue: 240) }
+        let upper = picture(width: side, height: side) { (_: Int, _: Int) in (red: 241, green: 241, blue: 241) }
+        var watch = VideoFlashWatch()
+        watch.isBlended = blended
+        var gains: [Double] = []
+        for index in 0..<180 {
+            let time = Double(index) / 60
+            let isLower = Int((20 * time).rounded(.down)) % 2 == 0
+            let shown = isLower ? lower : upper
+            let gain = shown.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> Double in
+                watch.show(bgra: raw, width: side, height: side, bytesPerRow: side * 4, at: time)
+            }
+            gains.append(gain)
+        }
+        return gains
+    }
+
+    /// Shown by itself, ordinary footage is not dimmed for a flicker of one stored level: only the
+    /// luminance and the footage's own red count.
+    func testAOneLevelFlickerIsNoFlashForFootageShownByItself() {
+        let gains = Self.gainsOfAOneLevelFlicker(blended: false)
+        XCTAssertEqual(gains.count, 180)
+        XCTAssertTrue(gains.allSatisfy { (gain: Double) -> Bool in gain == 1 }, "the picture keeps its full gain for three seconds")
+    }
+
+    /// With another picture drawn over it, the same flicker is counted: over a red picture nobody
+    /// measured it could be a red flash. The safe side, until the shown picture itself is measured.
+    func testTheSameFlickerIsCountedWhileAnotherPictureIsDrawnWithIt() {
+        let gains = Self.gainsOfAOneLevelFlicker(blended: true)
+        XCTAssertEqual(gains.last, VideoFlashLimit.engagedGain)
+        XCTAssertEqual(gains[14], 1, "the fifth change comes with the sixteenth frame")
+        XCTAssertEqual(gains[15], VideoFlashLimit.engagedGain)
     }
 
     // MARK: A picture on screen, look by look

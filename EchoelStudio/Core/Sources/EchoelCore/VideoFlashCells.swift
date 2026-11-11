@@ -90,11 +90,16 @@ public struct VideoFlashCells: Sendable {
 }
 
 extension VideoFlashLimit {
-    /// Takes one measured frame and answers the gain — `next(time:cells:redCells:colorCells:cellsPerSide:)`
-    /// with every signal the frame carries, so a caller cannot leave the colors out.
+    /// Takes one measured frame and answers the gain. `blended` says that another picture is drawn
+    /// with the footage — the Field layer over it. Only then can a swing of the footage's green or
+    /// blue move a red signal that is not its own, and only then do the seven color sums count
+    /// (`colorCombinations`). Footage shown by itself, on black, is counted by its luminance and its
+    /// own red, WCAG's two measures. The sums run at the red steps on every color, grey too: handed
+    /// over always, they took a whole picture flickering by one stored level for a flash, and
+    /// ordinary footage went dark.
     @discardableResult
-    public mutating func next(time: Double, frame: VideoFlashCells) -> Double {
-        next(time: time, cells: frame.luminance, redCells: frame.red, colorCells: frame.color,
+    public mutating func next(time: Double, frame: VideoFlashCells, blended: Bool) -> Double {
+        next(time: time, cells: frame.luminance, redCells: frame.red, colorCells: blended ? frame.color : nil,
              cellsPerSide: VideoFlashLimit.cellsPerSide)
     }
 }
@@ -108,6 +113,9 @@ public struct VideoFlashWatch: Sendable {
     private var cells = VideoFlashCells()
     private var limit = VideoFlashLimit()
     private var hasMeasured = false
+    /// Another picture is drawn with the footage now (the Field layer); the caller keeps it
+    /// current. See `VideoFlashLimit.next(time:frame:blended:)`.
+    public var isBlended = false
 
     public init() {}
 
@@ -121,13 +129,13 @@ public struct VideoFlashWatch: Sendable {
                               at time: Double) -> Double {
         guard cells.measure(bgra: bytes, width: width, height: height, bytesPerRow: bytesPerRow) else { return limit.gain }
         hasMeasured = true
-        return limit.next(time: time, frame: cells)
+        return limit.next(time: time, frame: cells, blended: isBlended)
     }
 
     /// No new frame at `time`: the last one is still on screen. Answers the gain.
     @discardableResult
     public mutating func hold(at time: Double) -> Double {
         guard hasMeasured, limit.gain < 1 else { return limit.gain }
-        return limit.next(time: time, frame: cells)
+        return limit.next(time: time, frame: cells, blended: isBlended)
     }
 }

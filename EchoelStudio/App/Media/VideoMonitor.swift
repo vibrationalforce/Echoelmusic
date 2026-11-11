@@ -41,6 +41,9 @@ final class VideoMonitor {
     var deliversFrames = false {
         didSet {
             guard deliversFrames != oldValue else { return }
+            // The Field is drawn with the footage now, or no longer: the flash limit counts the
+            // footage's colors only while it is (`VideoFlashWatch.isBlended`).
+            flashWatch.isBlended = deliversFrames
             detachOutput()
             if let item = player.currentItem { attachOutput(to: item) }
         }
