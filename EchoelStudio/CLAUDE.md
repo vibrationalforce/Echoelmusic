@@ -102,6 +102,22 @@ the Host), and builds the app for the simulator and as a Release device build; r
 pushed (a newer push cancels the older run). On a Mac:
 `swift test --package-path EchoelStudio/Core` (likewise `DSP`, `Engine`).
 
+**Commands** (a Mac with Xcode 26; the same lines CI runs, `.github/workflows/studio.yml`):
+
+| What | Command |
+|---|---|
+| Tests of one package | `swift test --package-path EchoelStudio/Core` (likewise `DSP`, `Engine`) |
+| One test class | `swift test --package-path EchoelStudio/Core --filter ChordRowTests` — a source `X.swift` is tested by class `XTests` in its package (219 of 269 sources; four live in `DSPTests.swift` or `EngineCoreTests.swift`) |
+| A package for iOS | `cd EchoelStudio/DSP && xcodebuild build -scheme EchoelDSP -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO` (Engine: schemes `EchoelEngine` and `EchoelHost`; Core: `EchoelCore`) |
+| The app | `xcodegen generate --spec EchoelStudio/project.yml`, then `xcodebuild build -project EchoelStudio/EchoelStudio.xcodeproj -scheme EchoelStudio -destination 'generic/platform=iOS Simulator' -configuration Debug CODE_SIGNING_ALLOWED=NO` (Release: `-destination 'generic/platform=iOS' -configuration Release`) |
+| The checks that need no toolchain | `python3 .claude/hooks/verify-after-edit.py --tree` (every Studio Swift file against the line-decidable laws, the import rows and the network list, read from studio.yml) · `python3 EchoelStudio/Support/CI/swift_imports.py --selftest` |
+
+The CI steps, in order, which a session reads on its own commit: job "Core + DSP + Engine" — Network only where
+named · Imports only where named · Test (macOS host) [Core] · Test DSP (macOS host) · Build DSP for iOS · Test Engine
+(macOS host) · Build Engine for iOS · Build for iOS [Core]; job "App (iPhone + iPad)" — Generate project · Build for
+iOS Simulator · Extension carries no engine code · Launch smoke (iOS Simulator) · Build for iOS device (Release).
+App/ and Plugins/ have no test target: their only CI execution is the build and the 20 s launch smoke.
+
 **The module boundary is enforced by building, never by a test (Law 8).** In the gate,
 "Imports only where named" compares each library's imports with its row (Core, DSP, Kernels,
 Engine, Host; `Plugins/` never imports EchoelEngine) and "Extension carries no engine code"

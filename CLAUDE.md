@@ -35,7 +35,8 @@ Bundle prefix: `com.echoelmusic` · App Group: `group.com.echoelmusic`
 | `ContentPipeline/` · `fastlane/` | Content und Store-Text; `ContentPipeline/CLAIMS.md` = was nach außen gesagt werden darf | `ContentPipeline/README.md` |
 | `memory/` · `scratchpads/` · `decisions.csv` · `inspiration.csv` | Gedächtnis, Protokoll, Pläne, Ledger — seit 2026-11-05 nur im privaten Repo `echoelmusic-intern` | DEVELOPMENT WORKFLOW unten |
 | `scripts/` | die Messinstrumente | `scripts/INDEX.md` |
-| `.claude/` | `rules/` (immer geladen), `skills/`, `agents/`, `hooks/` | `.claude/rules/context.md` |
+| `.claude/` | `rules/` (immer geladen), `skills/`, `agents/`, `hooks/` (Hook nach jeder Änderung: `verify-after-edit.py`), `auto_memory.md` (Architektur, Risikozonen, Systemgrenzen — lesen vor Engine/DSP/Body/Plugins) | `.claude/rules/context.md` |
+| `TASKS.md` | Vorlage für ein Feature über viele Scheiben (PRD, Kopf, eine Scheibe in Arbeit); Hefte privat | `TASKS.md` |
 
 ## Wohin die alten Abschnitte gezogen sind (W-MAP, 2026-11-01)
 
@@ -101,6 +102,12 @@ Priority: Build errors → Test failures → Crash code → Task → Cleanup
   `Xcode Compile Check` plus CI/CD-Schritt `Build for Testing`; Testergebnisse mit
   `python3 scripts/gh-test-verdict.py`, WINDOW-Zeile beachten (`Tests/CISmoke/CLAUDE.md` §0 und §5).
 
+- **Ausführungs-Schleife (jede Scheibe):** Anspruch ins Board → Test zuerst (heute rot) → Code → der Hook
+  `.claude/hooks/verify-after-edit.py` meldet nichts (`--selftest`, `--tree` für alles) → ein Commit, eine Sache →
+  Push → den `Echoel Studio`-Lauf auf GENAU diesem Commit Schritt für Schritt lesen → Render-Pfad, Sicherheit,
+  Format, sichtbarer Text: Gegenlesung, Funde als eigene Zeilen → erst dann „fertig“, und nur „CI-grün“, bis ein
+  Gerät spricht. Audio-Latenz misst kein Test (`.claude/auto_memory.md` §4): eine Render-Änderung nennt ihre
+  Geräte-Frage. Lange Features: `TASKS.md`. Befehle für Mac und CI: `EchoelStudio/CLAUDE.md` „Verifying“.
 - **TESTFLIGHT = ECHOEL STUDIO (since 2026-10-18/19, builds 10004+).** Ship by changing `EchoelStudio/RELEASE` and pushing — ANY change uploads. `studio-testflight.yml` waits for the `Echoel Studio` run on that commit, signs in to App Store Connect before signing, uploads, and waits for Apple's processing (VALID/INVALID). The earlier app's `testflight.yml` uploads only with `legacy_upload=LEGACY` (2026-10-20); `scripts/check-testflight.sh` and `/testflight-deploy` dispatch THAT workflow. Guard `TheStudioUploadWaitsForItsGateTests`. ⛔ The 2026-05-30 "PIPELINE GREEN" line that stood here: `memory/LEDGER_COUNTS.md` §AP.
 
 ---
