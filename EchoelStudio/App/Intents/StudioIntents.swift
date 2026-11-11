@@ -346,6 +346,12 @@ struct ExportStemsIntent: AppIntent {
         let bridge = StudioIntentBridge.shared
         guard let documents = bridge.documents else { throw IntentFailure("Echoelmusic is still opening. Try again in a moment.") }
         let engine = try bridge.requireEngine()
+        // An export that already runs refuses a second one without a word: `exportStems` answers
+        // nil and leaves `lastError` as it was. Said here, or the line below speaks whatever stood
+        // there from something else.
+        guard !documents.isExporting else {
+            throw IntentFailure("Echoelmusic is exporting already. Try again when that export is done.")
+        }
         guard let folder = await documents.exportStems(plugins: engine.plugins) else {
             throw IntentFailure(documents.lastError ?? "The stems could not be exported.")
         }
