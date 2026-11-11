@@ -36,6 +36,10 @@ import Foundation
 /// count, at `releasePerSecond`, and only on a frame that advanced the clock; footage that goes on
 /// strobing never releases it.
 ///
+/// That holds where the frame is shown at the gain this type answered for it. A caller that
+/// learns the gain after the frame is already on screen shows every transition inside that delay
+/// at the old gain; it has to hand the frame over before it shows, or count the delay in.
+///
 /// **Its own clock.** Each frame advances it by the source's elapsed time, held between
 /// `shortestFrameSeconds` and `longestFrameSeconds`. A repeated time advances it by nothing (a
 /// 24-frame clip on a 120 Hz display passes each time five times). A time that goes back — a seek,

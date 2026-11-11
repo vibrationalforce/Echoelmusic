@@ -15,13 +15,24 @@ import UIKit
 /// new frame is measured small and counted (`VideoFlashWatch`, over `VideoFlashLimit`); the gain it
 /// answers is handed to the picture's leaf through `flashGate`, so a strobing passage is shown
 /// dimmed instead of flashing. The live stream and the export do not come through here.
+///
+/// **How far that reaches.** The player's layer shows its frames by itself; the look and the dim
+/// both run on the main actor. The look therefore asks for the frame that is due a little ahead
+/// (`measureLeadSeconds`), so the gain is on its way before that frame is on the glass. While the
+/// main thread is held — a layout pass, a save — frames go by unseen and the dim waits: there the
+/// limit fails open. Whether the lead is enough, and how long such holds are, only a device shows.
 @MainActor
 final class VideoMonitor {
     let player = AVPlayer()
     nonisolated static let tickMilliseconds = 100
-    /// How often the shown frame is looked at for the flash limit: faster than any frame rate a
-    /// phone plays, so no frame of a strobe goes by uncounted.
+    /// How often the shown frame is looked at for the flash limit while it can change: shorter
+    /// than a frame of any film a phone plays, so each one is seen while the main thread is free.
     nonisolated static let measureMilliseconds = 8
+    /// How far ahead of the display the look asks for a frame, in seconds: two refreshes of a
+    /// 60 Hz screen. The gain a frame decides reaches the picture a refresh or two after the look;
+    /// asked for the frame on the glass now, the dim landed after the frame that completed the
+    /// count, and a fast strobe showed a transition or two more than the limit allows.
+    nonisolated static let measureLeadSeconds = 2.0 / 60
     /// A seek while playing aims this far ahead, so it lands about where the clock is when it ends.
     nonisolated static let seekLeadSeconds = 0.1
 
@@ -233,7 +244,10 @@ final class VideoMonitor {
             flashGate.update(flashWatch.hold(at: now))
             return
         }
-        let itemTime = output.itemTime(forHostTime: now)
+        // The frame due a little ahead, counted at the time of the look: every frame is asked for
+        // earlier by the same lead, so the times between them stay what they are. A frame the
+        // output does not hold yet is found by a later look. Standing still, ahead is the same frame.
+        let itemTime = output.itemTime(forHostTime: now + Self.measureLeadSeconds)
         if output.hasNewPixelBuffer(forItemTime: itemTime),
            let pixel = output.copyPixelBuffer(forItemTime: itemTime, itemTimeForDisplay: nil) {
             flashGate.update(show(pixel, at: now))
