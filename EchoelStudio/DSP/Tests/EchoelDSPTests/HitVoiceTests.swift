@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import EchoelDSP
 
@@ -137,7 +138,7 @@ final class HitVoiceTests: XCTestCase {
     /// to the voice that moves this is a change of the sound.
     func testTheClapsLevelIsHeld() {
         let first = Array(hit(.clap).prefix(19_200))
-        XCTAssertEqual(rms(first), 0.021964, accuracy: 0.021964 * 0.01)
+        XCTAssertEqual(rms(first), 0.021884, accuracy: 0.021884 * 0.01)
         let peak = first.reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
         XCTAssertEqual(peak, 0.29, accuracy: 0.03)
     }
@@ -254,8 +255,9 @@ final class HitVoiceTests: XCTestCase {
         XCTAssertEqual(SoundRuler.measure(second)?.bursts, 2)
     }
 
-    /// A hit on a voice that still rings rises from where the voice stands: it stays bounded and ends.
-    func testAHitOnARingingVoiceRingsOnAndEnds() {
+    /// A hit on a voice that still sounds starts it over, as a drum of the kit does: a roll of
+    /// twelve hits 30 ms apart stays bounded and ends.
+    func testARollOnOneVoiceStaysBoundedAndEnds() {
         var voice = HitVoice(sampleRate: rate)
         voice.trigger(.clap, velocity: 127)
         var played = render(&voice, seconds: 0.02)
@@ -267,6 +269,74 @@ final class HitVoiceTests: XCTestCase {
         XCTAssertTrue(played.allSatisfy(\.isFinite))
         XCTAssertLessThan(played.reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }, 1)
         XCTAssertFalse(voice.isActive)
+    }
+
+    /// A hit with another band on a voice that still sounds starts it over: the old filter state
+    /// does not play through the new band's level, and what the voice played last fades out
+    /// instead of breaking off. Before, this hit played some forty times as loud as it should.
+    func testAHitWithAnotherBandOnASoundingVoiceDoesNotJump() throws {
+        let bright = changed { $0.band = 12_000; $0.focus = 0.95 }
+        let dull = changed { $0.band = 100; $0.focus = 0 }
+        var voice = HitVoice(sampleRate: rate)
+        voice.trigger(bright, velocity: 127)
+        let before = render(&voice, seconds: 0.012)
+        voice.trigger(dull, velocity: 127)
+        let after = render(&voice, seconds: 1.2)
+        let fresh = hit(dull, velocity: 127)
+        let last = try XCTUnwrap(before.last)
+        let first = try XCTUnwrap(after.first)
+        XCTAssertLessThan(Swift.abs(first - last), 0.05, "no step where the new hit starts")
+        let peak = after.reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
+        let freshPeak = fresh.reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
+        XCTAssertLessThan(peak, freshPeak * 2)
+    }
+
+    /// The voice stops only once its air is gone too: a hit whose air outlasts its strike and ring
+    /// is not cut off while the air still sounds.
+    func testTheAirIsHeardOutBeforeTheVoiceStops() throws {
+        let airy = changed { $0.bursts = 1; $0.snap = 0.002; $0.tail = 0.005; $0.tailLevel = 0.1; $0.air = 1; $0.airTime = 0.2 }
+        let samples = hit(airy, velocity: 127, seconds: 4)
+        let end = try XCTUnwrap(samples.lastIndex { $0 != 0 }) + 1
+        XCTAssertGreaterThan(end, 48_000, "the air rings for most of a second")
+        let peak = samples.reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
+        let lastMillisecond = samples[(end - 48)..<end].reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
+        XCTAssertLessThan(lastMillisecond, peak * 1e-3, "the last millisecond is 60 dB under the peak")
+    }
+
+    /// A ring with no share in the hit does not keep the voice open for its length.
+    func testARingWithNoShareDoesNotHoldTheVoiceOpen() {
+        var voice = HitVoice(sampleRate: rate)
+        voice.trigger(changed { $0.tail = 3; $0.tailLevel = 0 }, velocity: 127)
+        _ = render(&voice, seconds: 1)
+        XCTAssertFalse(voice.isActive)
+    }
+
+    /// The noise keeps one density per hertz and the band is levelled to the filter's own power,
+    /// so a sound is as loud at every sample rate.
+    func testTheClapIsAsLoudAtEverySampleRate() {
+        func level(at sampleRate: Float) -> Double {
+            var voice = HitVoice(sampleRate: sampleRate)
+            var total = 0.0
+            for _ in 0..<8 {
+                voice.trigger(.clap, velocity: 100)
+                var buffer = [Float](repeating: 0, count: Int(sampleRate * 1.2))
+                buffer.withUnsafeMutableBufferPointer { voice.render(into: $0) }
+                total += rms(Array(buffer.prefix(Int(sampleRate * 0.4))))
+            }
+            return total / 8
+        }
+        let reference = level(at: 48_000)
+        for sampleRate: Float in [8_000, 22_050, 44_100, 96_000, 192_000] {
+            let decibels = 20 * log10(level(at: sampleRate) / reference)
+            XCTAssertEqual(decibels, 0, accuracy: 1, "\(sampleRate) Hz")
+        }
+    }
+
+    /// An attack longer than the gap would melt the bursts into one; a burst rises over half the
+    /// gap at most, so they stay apart.
+    func testBurstsStayApartWhenTheAttackIsLongerThanTheGap() {
+        let slow = reading(of: changed { $0.bursts = 3; $0.gap = 0.01; $0.attack = 0.02 })
+        XCTAssertGreaterThan(slow.bursts, 2.5)
     }
 
     func testNumbersOutsideTheirRangeStillPlay() {
