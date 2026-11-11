@@ -79,6 +79,22 @@ public struct SVFilter: Sendable {
         }
     }
 
+    /// One step that gives the band-pass and the low-pass output together: the two integrators
+    /// hold both, so a voice that wants a strike and the darker ring under it pays for one
+    /// filter. `mode` is not read.
+    @inline(__always)
+    public mutating func processBandAndLow(_ input: Float) -> (band: Float, low: Float) {
+        let a1 = 1 / (1 + g * (g + k))
+        let a2 = g * a1
+        let a3 = g * a2
+        let v3 = input - ic2eq
+        let v1 = a1 * ic1eq + a2 * v3
+        let v2 = ic2eq + a2 * ic1eq + a3 * v3
+        ic1eq = Self.flush(2 * v1 - ic1eq)
+        ic2eq = Self.flush(2 * v2 - ic2eq)
+        return (v1, v2)
+    }
+
     private mutating func update() {
         let requested = cutoff.isFinite ? Swift.max(0, cutoff) : 1_000
         let normalized = Swift.min(Swift.max(requested / sampleRate, 1e-5), 0.49)
