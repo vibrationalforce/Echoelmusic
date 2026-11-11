@@ -4,7 +4,8 @@ import SwiftUI
 /// Keys and pads on the screen, so the phone alone plays the live track the way a plugged-in
 /// keyboard does. Every touch goes through the one live router (`AudioEngine.live`): the song's
 /// key lock, the chosen live track and a running MIDI take apply to it unchanged. A drum track
-/// shows its kit as pads; every other instrument track shows a keyboard — piano keys, or the hex
+/// shows its kit as pads and a sampler whose file is cut into slices one pad per slice
+/// (`PlaySurface`); every other instrument track shows a keyboard — piano keys, or the hex
 /// keyboard (`HexKeyLayout`), chosen by the header's hexagon button. In a song with a key, the keys
 /// show it: a filled dot on its root, a ring on the other tones of its scale (`KeyMark`). Shown,
 /// not enforced; Keys Follow Scale stays the switch that bends a key to the scale. Where on a key
@@ -34,18 +35,7 @@ struct PlayKeysView: View {
         VStack(spacing: Theme.Space.s) {
             header(track)
             if let track {
-                if track.instrument.device == .drums {
-                    DrumPads(router: engine.live, compact: isCompact)
-                } else if showsHex {
-                    HexKeyboard(router: engine.live, lowest: clampedLowest,
-                                minimumCell: isCompact ? 44 : 48,
-                                context: store.project.context, placesLoudness: touchLoudness)
-                        .frame(height: isCompact ? Swift.min(keyHeight, 100) : Swift.min(keyHeight * 1.3, 220))
-                } else {
-                    Keyboard(router: engine.live, lowest: clampedLowest, context: store.project.context,
-                             placesLoudness: touchLoudness)
-                        .frame(height: isCompact ? Swift.min(keyHeight, 84) : Swift.min(keyHeight, 180))
-                }
+                playSurface(for: track)
             } else {
                 Text("Add an instrument track to play it here.")
                     .font(Theme.Font.caption)
@@ -62,6 +52,27 @@ struct PlayKeysView: View {
 
     private var isCompact: Bool { verticalSizeClass == .compact }
 
+    /// Pads for an instrument whose keys pick a sound, keys for one whose keys pick a pitch.
+    @ViewBuilder private func playSurface(for track: Track) -> some View {
+        switch PlaySurface.surface(for: track.instrument) {
+        case .drumPads:
+            DrumPads(router: engine.live, compact: isCompact)
+        case .slicePads(let count):
+            SlicePads(router: engine.live, count: count, compact: isCompact)
+        case .keys:
+            if showsHex {
+                HexKeyboard(router: engine.live, lowest: clampedLowest,
+                            minimumCell: isCompact ? 44 : 48,
+                            context: store.project.context, placesLoudness: touchLoudness)
+                    .frame(height: isCompact ? Swift.min(keyHeight, 100) : Swift.min(keyHeight * 1.3, 220))
+            } else {
+                Keyboard(router: engine.live, lowest: clampedLowest, context: store.project.context,
+                         placesLoudness: touchLoudness)
+                    .frame(height: isCompact ? Swift.min(keyHeight, 84) : Swift.min(keyHeight, 180))
+            }
+        }
+    }
+
     private var clampedLowest: Int {
         Swift.min(Swift.max(lowest - lowest % 12, Self.lowestC), Self.highestC)
     }
@@ -73,7 +84,7 @@ struct PlayKeysView: View {
                 .foregroundStyle(Theme.Color.textSecondary)
                 .lineLimit(1)
             Spacer(minLength: Theme.Space.s)
-            if let track, track.instrument.device != .drums {
+            if let track, PlaySurface.surface(for: track.instrument) == .keys {
                 Button { touchLoudness.toggle() } label: { Image(systemName: "hand.tap") }
                     .buttonStyle(ToolButtonStyle(isActive: touchLoudness))
                     .accessibilityLabel("Touch Loudness")
@@ -257,6 +268,43 @@ private struct DrumPads: View {
     }
 }
 
+/// A sliced sample as pads, one per slice from `SampleSlice.firstNote`, the first at the bottom
+/// left as on a drum machine (`PlaySurface.padRows`): four to a row, eight where the screen is wide.
+private struct SlicePads: View {
+    let router: LiveRouter
+    let count: Int
+    let compact: Bool
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @ScaledMetric(relativeTo: .body) private var padHeight: CGFloat = 60
+
+    private var columns: Int { compact || horizontalSizeClass == .regular ? 8 : 4 }
+
+    var body: some View {
+        let shown = PlaySurface.padRows(count: count, columns: columns)
+        // Up to two rows stand as tall as the kit's pads; more are a finger high each, so sixteen
+        // pads on a phone leave the song its room.
+        let height = compact || shown.count > 2 ? Theme.Size.touch : Swift.min(padHeight, 88)
+        VStack(spacing: Theme.Space.s) {
+            ForEach(shown, id: \.self) { row in
+                HStack(spacing: Theme.Space.s) {
+                    ForEach(row, id: \.self) { index in
+                        PlayKey(router: router, note: SampleSlice.firstNote + index, style: .pad,
+                                label: String(index + 1), spokenAs: "Pad \(index + 1)")
+                            .frame(maxWidth: .infinity, minHeight: height)
+                    }
+                    // A short top row keeps the pads' width: empty places fill it.
+                    ForEach(row.count..<Swift.max(row.count, columns), id: \.self) { _ in
+                        Color.clear.frame(maxWidth: .infinity, minHeight: height)
+                    }
+                }
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Slice Pads")
+        .accessibilityAddTraits(.allowsDirectInteraction)
+    }
+}
+
 /// One key or pad. The first contact plays the note and lifting the finger ends it; a touch the
 /// system cancels (a notification pulled down, a call) ends it too, because the gesture state
 /// resets, so no note is left hanging. The struck pitch is kept, so the release ends what the
@@ -277,6 +325,8 @@ private struct PlayKey: View {
     /// Whether the place of a touch along the key sets how hard it plays. A pad never does: it is
     /// a target, not a lever, and plays one loudness wherever it is hit.
     var placesLoudness = false
+    /// What VoiceOver calls a pad whose label is only its number.
+    var spokenAs: String?
 
     @GestureState private var touching = false
     @State private var struck: UInt8?
@@ -387,7 +437,7 @@ private struct PlayKey: View {
     /// A key is said by its full name with its octave; a pad by its drum.
     private var spokenName: String {
         switch style {
-        case .pad: return label ?? Keyboard.name(of: note)
+        case .pad: return spokenAs ?? label ?? Keyboard.name(of: note)
         case .white, .black, .hex: return Keyboard.name(of: note)
         }
     }
