@@ -253,6 +253,41 @@ final class VideoFlashLimitTests: XCTestCase {
         XCTAssertTrue(onDisplay(1.9).allSatisfy { (gain: Double) -> Bool in gain == 1 })
     }
 
+    /// Four changes in under half a second, two seconds on the last frame, one more change. With
+    /// the still handed over as rest, the four are long past when the fifth comes; a clock that
+    /// only frames move would count the two seconds as a quarter of one and call it a strobe.
+    func testAStillBetweenChangesLetsTimePass() {
+        var limit = VideoFlashLimit()
+        let levels: [Double] = [0, 1, 0, 1, 0]
+        for (index, level) in levels.enumerated() {
+            limit.next(time: Double(index) * 0.1, cells: Self.frame(level), cellsPerSide: Self.side)
+        }
+        XCTAssertEqual(limit.gain, 1, "four transitions do not engage")
+        var time = 0.4
+        for _ in 0..<20 {
+            time += 0.1
+            limit.rest(time: time)
+        }
+        XCTAssertEqual(limit.next(time: 2.5, cells: Self.frame(1), cellsPerSide: Self.side), 1)
+    }
+
+    /// Rest is time only: it never lifts a lowered gain, which climbs back on frames alone.
+    func testRestNeverMovesTheGain() {
+        var limit = VideoFlashLimit()
+        for index in 0..<120 {
+            let time = Double(index) / Self.framesPerSecond
+            let value: Double = Self.isUp(10, at: time) ? 1 : 0
+            limit.next(time: time, cells: Self.frame(value), cellsPerSide: Self.side)
+        }
+        XCTAssertEqual(limit.gain, VideoFlashLimit.engagedGain)
+        var time = 2.0
+        for _ in 0..<100 {
+            time += 0.1
+            limit.rest(time: time)
+        }
+        XCTAssertEqual(limit.gain, VideoFlashLimit.engagedGain, "ten seconds of rest change nothing")
+    }
+
     /// A clock that loops, runs backwards or is no number drops no frame from the count.
     func testALoopASeekOrATimeThatIsNoNumberIsStillCounted() throws {
         let looping = Self.show(Self.strobe(10), clock: { (index: Int) -> Double in Double(index % 30) / 60 })

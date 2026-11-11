@@ -376,6 +376,14 @@ public struct VideoFlashLimit: Sendable {
         return gain
     }
 
+    /// No new frame at `time`: only time passes. The clock moves as it does for a frame and
+    /// nothing is counted, because a picture standing still makes no transition. So a change
+    /// before a long still and a change after it are not taken for one burst. It never moves the
+    /// gain: a lowered one climbs back only on a frame (`next`).
+    public mutating func rest(time: Double) {
+        _ = advanceClock(to: time)
+    }
+
     /// Advances the clock for one frame and answers by how much.
     private mutating func advanceClock(to time: Double) -> Double {
         guard started else {

@@ -235,6 +235,32 @@ final class VideoFlashCellsTests: XCTestCase {
         }
     }
 
+    /// Four changes between a dark and a bright picture, a minute on the last one — the song is
+    /// stopped — and one more change: the picture keeps its gain. Held looks at full gain let the
+    /// minute pass; counted as no time, the fifth change dimmed a picture that had not flashed.
+    func testChangesBeforeAndAfterALongStillAreNotOneBurst() {
+        let side = VideoFlashCells.pixelsPerSide
+        let dark = Self.picture(width: side, height: side) { (_: Int, _: Int) in (red: 40, green: 40, blue: 40) }
+        let bright = Self.picture(width: side, height: side) { (_: Int, _: Int) in (red: 230, green: 230, blue: 230) }
+        var watch = VideoFlashWatch()
+        let pictures: [[UInt8]] = [dark, bright, dark, bright, dark]
+        for (index, shown) in pictures.enumerated() {
+            _ = shown.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> Double in
+                watch.show(bgra: raw, width: side, height: side, bytesPerRow: side * 4, at: Double(index) * 0.1)
+            }
+        }
+        XCTAssertEqual(watch.gain, 1, "four changes do not engage")
+        var time = 0.4
+        for _ in 0..<600 {
+            time += 0.1
+            XCTAssertEqual(watch.hold(at: time), 1)
+        }
+        let after = bright.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> Double in
+            watch.show(bgra: raw, width: side, height: side, bytesPerRow: side * 4, at: time + 0.1)
+        }
+        XCTAssertEqual(after, 1, "the changes of a minute ago are over")
+    }
+
     /// Before any picture was read, and while nothing is dimmed, a held frame is not counted at all.
     func testAHeldFrameCostsNothingWhileNothingIsDimmed() {
         var watch = VideoFlashWatch()

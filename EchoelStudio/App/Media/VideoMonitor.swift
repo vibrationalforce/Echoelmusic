@@ -191,11 +191,16 @@ final class VideoMonitor {
     }
 
     /// One look at what is shown now, on the display's clock: a new frame is measured and counted,
-    /// a held one only lets a lowered gain climb back (`VideoFlashWatch`). A frame that cannot be
-    /// read changes nothing.
+    /// a held one lets time pass and a lowered gain climb back (`VideoFlashWatch`). A frame that
+    /// cannot be read changes nothing. With no file loaded — a gap on the video track, the playhead
+    /// before the first part — time passes too: the look used to return here, so a dimmed picture
+    /// and the note in the bar stood as they were for as long as the gap lasted.
     private func measureShownFrame() {
-        guard let output = measuring else { return }
         let now = CACurrentMediaTime()
+        guard let output = measuring else {
+            flashGate.update(flashWatch.hold(at: now))
+            return
+        }
         let itemTime = output.itemTime(forHostTime: now)
         if output.hasNewPixelBuffer(forItemTime: itemTime),
            let pixel = output.copyPixelBuffer(forItemTime: itemTime, itemTimeForDisplay: nil) {

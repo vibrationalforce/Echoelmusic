@@ -106,7 +106,8 @@ extension VideoFlashLimit {
 
 /// The flash limit as a shown picture uses it, look by look: a new frame is measured and counted;
 /// a frame that is only held on screen is counted while the gain is lowered — so a picture that was
-/// dimmed comes back after the film stops instead of staying dark — and otherwise costs nothing.
+/// dimmed comes back after the film stops instead of staying dark — and otherwise only lets time
+/// pass, so what changed before a long still is over when the picture changes again.
 /// The caller says the time on the display's clock; a media clock would make a strobe look slower
 /// at a faster playback rate.
 public struct VideoFlashWatch: Sendable {
@@ -132,10 +133,14 @@ public struct VideoFlashWatch: Sendable {
         return limit.next(time: time, frame: cells, blended: isBlended)
     }
 
-    /// No new frame at `time`: the last one is still on screen. Answers the gain.
+    /// No new frame at `time`: the last one is still on screen, or nothing is. Answers the gain.
     @discardableResult
     public mutating func hold(at time: Double) -> Double {
-        guard hasMeasured, limit.gain < 1 else { return limit.gain }
+        guard hasMeasured else { return limit.gain }
+        guard limit.gain < 1 else {
+            limit.rest(time: time)
+            return limit.gain
+        }
         return limit.next(time: time, frame: cells, blended: isBlended)
     }
 }
