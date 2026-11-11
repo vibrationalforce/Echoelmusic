@@ -1737,7 +1737,7 @@ final class AudioEngine {
 
     private func liveLock(in project: Project) -> [UInt8]? {
         guard keysFollowScale, let track = liveTrackID(in: project).flatMap(project.track) else { return nil }
-        return LiveKeys.lock(for: project.context, device: track.instrument.device)
+        return LiveKeys.lock(for: project.context, instrument: track.instrument)
     }
 
     /// Built outside the main actor and with an explicitly `@Sendable` block: a closure formed

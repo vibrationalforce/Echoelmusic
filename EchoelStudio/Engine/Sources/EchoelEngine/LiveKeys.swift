@@ -96,6 +96,15 @@ public struct LiveKeys: Sendable {
         }
     }
 
+    /// The table for a track's instrument: as `lock(for:device:)`, except that a sampler whose file
+    /// is cut into slices is not held. Its keys pick a slice rather than a pitch, as a drum kit's
+    /// pick a drum; bent to the scale, a key would play its neighbour's slice and some slices
+    /// could not be played at all.
+    public static func lock(for context: MusicalContext, instrument: InstrumentSettings) -> [UInt8]? {
+        if instrument.device == .sampler, let slices = instrument.slices, !slices.isEmpty { return nil }
+        return lock(for: context, device: instrument.device)
+    }
+
     /// No key is held any more; sends nothing. For a new engine core, which has none of the notes.
     public mutating func reset() {
         for index in slots.indices { slots[index] = -1 }

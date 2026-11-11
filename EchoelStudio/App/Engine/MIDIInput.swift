@@ -38,7 +38,7 @@ final class LiveRouter: Sendable {
     /// Nil while nothing records. The MIDI thread appends; never the render thread.
     private let capture = Mutex<[Captured]?>(nil)
 
-    /// `lock` maps each key to the pitch it plays (`LiveKeys.lock(for:device:)`); nil plays every
+    /// `lock` maps each key to the pitch it plays (`LiveKeys.lock(for:instrument:)`); nil plays every
     /// key as itself. A held key keeps the pitch it struck when the lock changes.
     func set(core: EngineCore?, slot: Int?, lock: [UInt8]?) {
         target.withLock { (state: inout Target) in

@@ -43,6 +43,24 @@ final class LiveKeysTests: XCTestCase {
         XCTAssertEqual(Array(keys.release(channel: 0, key: 61)), [off(60)])
     }
 
+    /// A sampler whose file is cut into slices is left alone like a kit: its keys pick a slice, not
+    /// a pitch. One sample played across the keys is melodic and is held.
+    func testTheLockLeavesASlicedSamplerAloneAndHoldsAWholeOne() {
+        let major = MusicalContext(scale: .major)
+        var sampler = InstrumentSettings(device: .sampler)
+        XCTAssertEqual(LiveKeys.lock(for: major, instrument: sampler), cMajor)
+        sampler.slices = [SampleSlice(start: 0), SampleSlice(start: 30_000)]
+        XCTAssertNil(LiveKeys.lock(for: major, instrument: sampler), "cut into slices, every key plays its own")
+        // Slices left in the settings of a track that plays another device mean nothing.
+        var synth = InstrumentSettings(device: .synth)
+        synth.slices = [SampleSlice(start: 0)]
+        XCTAssertEqual(LiveKeys.lock(for: major, instrument: synth), cMajor)
+        XCTAssertNotNil(LiveKeys.lock(for: major, instrument: InstrumentSettings(device: .plugin)))
+        XCTAssertNil(LiveKeys.lock(for: major, instrument: InstrumentSettings(device: .drums)))
+        XCTAssertNil(LiveKeys.lock(for: MusicalContext(root: 5), instrument: InstrumentSettings(device: .sampler)),
+                     "chromatic holds nothing")
+    }
+
     func testAKeyReleasedAfterTheLiveTrackChangedEndsTheNoteItStarted() {
         var keys = LiveKeys()
         XCTAssertEqual(Array(keys.press(channel: 0, key: 60, velocity: 100, slot: 0)), [on(60)])
