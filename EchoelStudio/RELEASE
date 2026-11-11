@@ -1,24 +1,31 @@
-11.0.0 — the video window dims footage that strobes; Stop stops at once after a take; a stream stopped while it connects stays stopped
+11.0.0 — how hard a screen key plays comes from where the finger lands; a sliced sample plays on pads; the chords of the song's key under one finger
 
-What is new since 10071. Each line is code that the Echoel Studio run builds; the rules have tests
+What is new since 10072. Each line is code that the Echoel Studio run builds; the rules have tests
 of their own, and nothing here is device-verified yet.
-- Video window: a flash limit for your own footage. While the window shows, each frame is
-  measured small; a passage that strobes is shown dimmed, the window's bar says "Flash limit",
-  and the picture comes back a few seconds after the strobe ends. Footage by itself is counted
-  by its brightness and its own red. With the Field Layer on (video export), the footage's
-  colors count too, which is stricter. Limits we know of: the measuring and the dimming run on
-  the main thread, so the dim can come a frame late or wait while the app is busy; the black of
-  a gap between two parts is not counted. The export and the live stream are not limited.
-- Recording: the transport's Stop stops the song as soon as the take's file is closed, and the
-  take is placed after that. Before, the song played on while the take was read, Record was
-  ready, and a take begun there went on over a song that stood still.
-- Live stream: a destination that is stopped while it still connects does not connect
-  afterwards, is not shown as failed, and is not called live when its server answers late.
-- Shortcut "Export Stems": says that an export already runs, where it named another reason.
+- Keys: where a finger lands on a screen key sets how hard it plays — softer near the top of the
+  key, harder near its foot, the middle as before (100). A white key counts from the foot of the
+  black keys down; a hex cell over its own length. Song menu → "Touch Loudness" (on) turns it
+  off, and then every key plays as before. Pads play 100, and so does a key activated with
+  VoiceOver.
+- Keys: in a song with a key and a scale, the piano keys and the hex cells show it — a filled
+  dot on the root, a ring on every other tone of the scale. VoiceOver says "Root of the key" or
+  "In the scale". It shows and does not change what sounds; "Keys Follow Scale" stays the switch
+  for that.
+- Keys: a Sampler track whose sample is cut with "Slice to Pads" gets one pad per slice instead
+  of piano keys, the first slice at the bottom left. "Keys Follow Scale" no longer bends the
+  notes of a sliced sample, so every pad plays its own slice. VoiceOver reads "Pad 1" first.
+- Keys: the button at the top right of the keys ("Play On") chooses Piano Keys, Hex Keyboard or
+  Chords. Chords shows the chords of the song's key as pads, each named (VoiceOver: "D minor");
+  a finger on a pad plays that chord, voiced close together with its root below, for as long as
+  the finger stays, and one chord sounds at a time. A song without a key shows "Give the song a
+  key in the Song menu to play its chords here."
+- Live notes: when hundreds of live events arrive at once and one is lost, every sounding note
+  and an arpeggiator's phrase end, where a lost release could leave a note hanging until Stop.
+- Echoelmusic Plugins: the free effects are counted from the one list — "25 effects, free in
+  every host: EQ, Compressor, Delay, Reverb and 21 more."
 
-Previous: 11.0.0 (10071) — one switch for everything of the body that leaves; the app's own row
-of cells; a Field window that moves out of the way; 10070 — all seven views on a phone's bar.
-Earlier: git history.
+Previous: 11.0.0 (10072) — the video window dims footage that strobes; Stop stops at once after
+a take; 10071 — one switch for everything of the body that leaves. Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -26,14 +33,16 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Video window with an ordinary clip (filmed by hand, indoors): does the picture stay bright
-   from start to end, with no "Flash limit" in the window's bar?
-2. The same clip with the Field Layer switched on in the video export: does the picture in the
-   window still stay bright?
-3. Video window with a clip that strobes (a club light, or a few frames of black and white cut
-   in turn): is it dimmed within about half a second, does the bar say "Flash limit", does the
-   picture come back calmly a few seconds after the strobe ends, and does the film keep playing?
-4. Record an audio take, press Stop in the transport, then Record at once: does the song stop
-   as soon as you press Stop, and does the new take begin with the song running or counting in?
-5. Go Live to a destination and press Stop Stream while it still says Connecting: does the page
-   show no failure, and does the platform show no stream?
+1. Open Keys on a synth track and tap one white key twice: once near its lower edge, once just
+   below the black keys. Is the lower tap clearly louder? And with Song menu → Touch Loudness
+   off, do both taps sound the same?
+2. Give the song a key in the Song menu (for example D minor): do the keys show a filled dot on
+   every D and a ring on the other tones of the scale, and nothing on the rest?
+3. On a Sampler track, cut a drum loop with Slice to Pads and open Keys: are there pads instead
+   of keys, does the bottom-left pad play the loop's first slice, and does each pad still play
+   its own slice with Keys Follow Scale on?
+4. Play On → Chords, in a song with a key: hold one pad, then lift and hold another, then slide
+   quickly between two. Does each chord sound for as long as you hold it, end when you lift, and
+   is only one chord ever heard at a time, with no note left ringing?
+5. With VoiceOver on: do the chord pads read their names ("D minor" …), and do the slice pads
+   read from "Pad 1" at the bottom left?
