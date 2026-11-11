@@ -74,3 +74,28 @@ public enum ChordRow {
         return moved
     }
 }
+
+extension ChordSuggest.Chord {
+    /// The chord as VoiceOver says it: "D minor", "B diminished", "F sharp major", "C suspended
+    /// fourth"; another stack names its tones, "C, E, A". `name` writes it short ("Dm", "B°").
+    public var spokenName: String {
+        guard let root = pitchClasses.first, pitchClasses.count == 3 else { return "" }
+        let spokenRoot = { (pitchClass: Int) -> String in
+            MusicalContext.rootNames[ChordSuggest.pitchClass(pitchClass)]
+                .replacingOccurrences(of: "♯", with: " sharp")
+                .replacingOccurrences(of: "♭", with: " flat")
+        }
+        let third = ChordSuggest.pitchClass(pitchClasses[1] - root)
+        let fifth = ChordSuggest.pitchClass(pitchClasses[2] - root)
+        let base = spokenRoot(root)
+        switch (third, fifth) {
+        case (4, 7): return base + " major"
+        case (3, 7): return base + " minor"
+        case (3, 6): return base + " diminished"
+        case (4, 8): return base + " augmented"
+        case (2, 7): return base + " suspended second"
+        case (5, 7): return base + " suspended fourth"
+        default: return pitchClasses.map(spokenRoot).joined(separator: ", ")
+        }
+    }
+}

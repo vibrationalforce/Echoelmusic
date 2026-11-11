@@ -126,6 +126,22 @@ final class ChordRowTests: XCTestCase {
         XCTAssertTrue(ChordRow.entries(in: MusicalContext(root: -1, scale: .major)).isEmpty)
     }
 
+    /// VoiceOver says a chord in words, as the button writes it short.
+    func testAChordIsSpokenInWords() {
+        XCTAssertEqual(ChordRow.entries(in: cMajor).map(\.chord.spokenName),
+                       ["C major", "D minor", "E minor", "F major", "G major", "A minor", "B diminished"])
+        let fSharpMajor = MusicalContext(root: 6, scale: .major)
+        XCTAssertEqual(ChordRow.entries(in: fSharpMajor).first?.chord.spokenName, "F sharp major")
+        let eFlatMinor = MusicalContext(root: 3, scale: .minor)
+        XCTAssertEqual(ChordRow.entries(in: eFlatMinor).first?.chord.spokenName, "E flat minor")
+        for scale in Scale.allCases where scale != .chromatic {
+            for entry in ChordRow.entries(in: MusicalContext(root: 0, scale: scale)) {
+                XCTAssertFalse(entry.chord.spokenName.isEmpty, "\(scale) \(entry.label)")
+                XCTAssertFalse(entry.chord.spokenName.contains("♯") || entry.chord.spokenName.contains("♭"))
+            }
+        }
+    }
+
     func testAnIndexOutsideTheRowSoundsNothing() {
         for index in [-1, 7, 8, Int.max, Int.min] {
             XCTAssertNil(ChordRow.press(index, in: cMajor, after: nil), "\(index)")

@@ -5,8 +5,8 @@ import SwiftUI
 /// keyboard does. Every touch goes through the one live router (`AudioEngine.live`): the song's
 /// key lock, the chosen live track and a running MIDI take apply to it unchanged. A drum track
 /// shows its kit as pads and a sampler whose file is cut into slices one pad per slice
-/// (`PlaySurface`); every other instrument track shows a keyboard — piano keys, or the hex
-/// keyboard (`HexKeyLayout`), chosen by the header's hexagon button. In a song with a key, the keys
+/// (`PlaySurface`); every other instrument track shows a keyboard — piano keys, the hex keyboard
+/// (`HexKeyLayout`) or the chords of the song's key (`ChordRow`), chosen in the header's menu. In a song with a key, the keys
 /// show it: a filled dot on its root, a ring on the other tones of its scale (`KeyMark`). Shown,
 /// not enforced; Keys Follow Scale stays the switch that bends a key to the scale. Where on a key
 /// the finger lands sets how hard it plays (`TouchVelocity`) while Touch Loudness is on; both
@@ -20,6 +20,8 @@ struct PlayKeysView: View {
     nonisolated static let shownKey = "playKeys.shown"
     /// Piano keys or the hex keyboard; kept on this device, never in the song.
     @AppStorage("playKeys.hex") private var showsHex = false
+    /// The chords of the song's key in place of the keys; kept on this device, never in the song.
+    @AppStorage("playKeys.chords") private var showsChords = false
     /// Whether the place of a touch on a key sets its loudness; off, every key plays the one
     /// loudness it always played. Kept on this device, never in the song; switched in the Song menu.
     @AppStorage(PlayKeysView.touchLoudnessKey) private var touchLoudness = true
@@ -54,6 +56,35 @@ struct PlayKeysView: View {
 
     private var isCompact: Bool { verticalSizeClass == .compact }
 
+    /// What the keys strip plays on, kept as the two switches it has always been stored in.
+    private enum KeysLayout: CaseIterable {
+        case piano, hex, chords
+
+        var title: String {
+            switch self {
+            case .piano: "Piano Keys"
+            case .hex: "Hex Keyboard"
+            case .chords: "Chords"
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .piano: "pianokeys"
+            case .hex: "hexagon"
+            case .chords: "rectangle.split.3x1"
+            }
+        }
+    }
+
+    private var layout: Binding<KeysLayout> {
+        Binding(get: { showsChords ? .chords : (showsHex ? .hex : .piano) },
+                set: { choice in
+                    showsChords = choice == .chords
+                    showsHex = choice == .hex
+                })
+    }
+
     /// Pads for an instrument whose keys pick a sound, keys for one whose keys pick a pitch.
     @ViewBuilder private func playSurface(for track: Track) -> some View {
         switch PlaySurface.surface(for: track.instrument) {
@@ -62,7 +93,9 @@ struct PlayKeysView: View {
         case .slicePads(let count):
             SlicePads(router: engine.live, count: count, compact: isCompact)
         case .keys:
-            if showsHex {
+            if showsChords {
+                ChordPads(router: engine.live, context: store.project.context, compact: isCompact)
+            } else if showsHex {
                 HexKeyboard(router: engine.live, lowest: clampedLowest,
                             minimumCell: isCompact ? 44 : 48,
                             context: store.project.context, placesLoudness: touchLoudness)
@@ -87,11 +120,22 @@ struct PlayKeysView: View {
                 .lineLimit(1)
             Spacer(minLength: Theme.Space.s)
             if let track, PlaySurface.surface(for: track.instrument) == .keys {
-                Button { showsHex.toggle() } label: { Image(systemName: "hexagon") }
-                    .buttonStyle(ToolButtonStyle(isActive: showsHex))
-                    .accessibilityLabel("Hex Keyboard")
-                    .accessibilityValue(showsHex ? "On" : "Off")
-                    .accessibilityHint("Switches between piano keys and a hex keyboard of thirds and fifths.")
+                Menu {
+                    Picker("Play On", selection: layout) {
+                        ForEach(KeysLayout.allCases, id: \.self) { choice in
+                            Label(choice.title, systemImage: choice.symbol).tag(choice)
+                        }
+                    }
+                } label: {
+                    Image(systemName: layout.wrappedValue.symbol)
+                }
+                .menuStyle(.button)
+                .buttonStyle(ToolButtonStyle(isActive: layout.wrappedValue != .piano))
+                .accessibilityLabel("Play On")
+                .accessibilityValue(layout.wrappedValue.title)
+                .accessibilityHint("Piano keys, a hex keyboard of thirds and fifths, or the chords of the song's key.")
+            }
+            if let track, PlaySurface.surface(for: track.instrument) == .keys, !showsChords {
                 // Each octave button says where the keys start, so a press is heard to land
                 // (W18, m19): VoiceOver reads the new value of the button it pressed.
                 Button { lowest = clampedLowest - 12 } label: { Image(systemName: "minus") }
@@ -305,6 +349,142 @@ private struct SlicePads: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Slice Pads")
         .accessibilityAddTraits(.allowsDirectInteraction)
+    }
+}
+
+/// The chords of the song's key as a row of pads: one finger on one pad plays its chord — three
+/// voices led from the chord before and its root under them (`ChordRow`) — for as long as the
+/// finger stays down, and writes nothing. One chord sounds at a time: a pad pressed while another
+/// sounds ends that one first, so two fingers never stack two chords into a cluster. The chord
+/// played last is kept while the row shows, for the voices to lead from; a change of the song's
+/// key forgets it. Like the keys, it plays on MIDI channel 16 through the one live router.
+private struct ChordPads: View {
+    let router: LiveRouter
+    let context: MusicalContext
+    let compact: Bool
+    @ScaledMetric(relativeTo: .body) private var padHeight: CGFloat = 60
+    @State private var last: ChordRow.Press?
+    /// The pad sounding now and its notes, so its release ends exactly what its press started.
+    @State private var held: Int?
+    @State private var sounding: [UInt8] = []
+
+    private static let velocity: UInt8 = 100
+    private static let noteOn: UInt8 = 0x9F
+    private static let noteOff: UInt8 = 0x8F
+
+    var body: some View {
+        let row = ChordRow.entries(in: context)
+        Group {
+            if row.isEmpty {
+                Text("Give the song a key in the Song menu to play its chords here.")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                    .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
+            } else {
+                HStack(spacing: Theme.Space.s) {
+                    ForEach(row.indices, id: \.self) { index in
+                        ChordPad(label: row[index].label, spoken: row[index].chord.spokenName,
+                                 isDown: held == index,
+                                 press: { press(index) }, release: { release(index) })
+                            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+                    }
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Chords")
+                .accessibilityAddTraits(.allowsDirectInteraction)
+            }
+        }
+        .onChange(of: context) { _, _ in
+            endSounding()
+            last = nil
+        }
+        .onDisappear { endSounding() }
+    }
+
+    private var height: CGFloat { compact ? Theme.Size.touch : Swift.min(padHeight, 88) }
+
+    private func press(_ index: Int) {
+        endSounding()
+        guard let chord = ChordRow.press(index, in: context, after: last) else { return }
+        let notes = chord.notes.compactMap { (pitch: Int) -> UInt8? in
+            (0...127).contains(pitch) ? UInt8(pitch) : nil
+        }
+        for pitch in notes { router.receive(status: Self.noteOn, pitch, Self.velocity) }
+        sounding = notes
+        held = index
+        last = chord
+    }
+
+    private func release(_ index: Int) {
+        guard held == index else { return }
+        endSounding()
+    }
+
+    private func endSounding() {
+        for pitch in sounding { router.receive(status: Self.noteOff, pitch, 0) }
+        sounding = []
+        held = nil
+    }
+}
+
+/// One chord pad. The first contact presses it and lifting the finger releases it; a touch the
+/// system cancels releases it too, because the gesture state resets.
+private struct ChordPad: View {
+    let label: String
+    let spoken: String
+    let isDown: Bool
+    let press: () -> Void
+    let release: () -> Void
+
+    @GestureState private var touching = false
+    @State private var down = false
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: Theme.Radius.medium)
+            .fill(isDown ? Theme.Color.accent : Theme.Color.surfaceRaised)
+            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.border, lineWidth: 1))
+            .overlay {
+                Text(label)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(isDown ? Theme.Color.onAccent : Theme.Color.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+            }
+            .contentShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .updating($touching) { _, state, _ in state = true }
+                    .onChanged { _ in
+                        guard !down else { return }
+                        down = true
+                        press()
+                    }
+                    .onEnded { _ in lift() }
+            )
+            .onChange(of: touching) { _, stillTouching in
+                if !stillTouching { lift() }
+            }
+            .onDisappear { lift() }
+            .accessibilityLabel(spoken)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { strike() }
+    }
+
+    private func lift() {
+        guard down else { return }
+        down = false
+        release()
+    }
+
+    /// VoiceOver's activate: a short chord, since there is no finger to lift.
+    private func strike() {
+        guard !down else { return }
+        down = true
+        press()
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
+            lift()
+        }
     }
 }
 
