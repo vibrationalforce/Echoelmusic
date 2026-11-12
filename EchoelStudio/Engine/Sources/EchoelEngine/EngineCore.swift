@@ -331,6 +331,8 @@ public final class EngineCore: @unchecked Sendable {
     /// Host time of the current render call, and where the current chunk starts in it.
     private var callHostTime: UInt64 = 0
     private var chunkStart = 0
+    /// The slot the note out played last chunk (render thread), or −1.
+    private var noteOutHeard = -1
 
     /// Per slot, the keys played live into a track that arpeggiates and its phrase (EDIT-2).
     private let arps: LiveArpeggiators
@@ -854,6 +856,13 @@ public final class EngineCore: @unchecked Sendable {
         if !hasRendered {
             hasRendered = true
             if spatialOn { spatialMix.update(repeating: 1, count: slotCapacity + Self.smoothedAudioTracks) }
+        }
+        // The note out moved from one slot to another: the releases of what the last slot played
+        // there no longer reach it, so the device hears all notes off once.
+        let noteOutNow = noteOutSlot.load(ordering: .relaxed)
+        if noteOutNow != noteOutHeard {
+            if noteOutNow >= 0, noteOutHeard >= 0 { sendNote(0xB0, 123, 0) }
+            noteOutHeard = noteOutNow
         }
 
         // Where the song was heard last block: a stop fades the audio tracks out from here,
@@ -1686,7 +1695,11 @@ public final class EngineCore: @unchecked Sendable {
             let status = UInt8((event >> 16) & 0xFF), pitch = UInt8((event >> 8) & 0x7F), value = UInt8(event & 0x7F)
             guard slot < slotCapacity else { continue }
             let kind = status & 0xF0
-            let arpeggiated = arps.isOn(slot) && (kind == 0x80 || kind == 0x90)
+            let released = kind == 0x80 || (kind == 0x90 && value == 0)
+            // A key that reached the instrument itself before its track began to arpeggiate: its
+            // release goes to the instrument and the note out too, or that note sounds on.
+            let reachedDirectly = released && soundingNotes.isLive(slot, pitch)
+            let arpeggiated = arps.isOn(slot) && (kind == 0x80 || kind == 0x90) && !reachedDirectly
             if slot == noteOutSlot.load(ordering: .relaxed), !arpeggiated, kind == 0x80 || kind == 0x90 || kind == 0xB0 || kind == 0xE0 {
                 sendNote(kind, pitch, value)
             }
@@ -1696,7 +1709,7 @@ public final class EngineCore: @unchecked Sendable {
             if kind == 0x90 && value > 0, stoppedAt != nil { liveSinceStop[slot] = true }
             // What a key holds live, for a move while the song plays on. A release counts always,
             // also on a track that arpeggiates, so a key let go there leaves no stale pitch.
-            if kind == 0x80 || (kind == 0x90 && value == 0) { soundingNotes.liveUp(slot, pitch) }
+            if released { soundingNotes.liveUp(slot, pitch) }
             if kind == 0xB0, pitch == 123 || pitch == 120 { soundingNotes.liveCleared(slot) }
             if kind == 0xB0, pitch == 64 { soundingNotes.setLivePedal(slot, down: value >= 64) }
             // A track that arpeggiates takes its keys into the phrase; the steps play the instrument
@@ -1706,9 +1719,9 @@ public final class EngineCore: @unchecked Sendable {
                     arps.press(slot, pitch: pitch, velocity: value)
                     continue
                 }
-                if kind == 0x80 || (kind == 0x90 && value == 0) {
+                if released {
                     arps.release(slot, pitch: pitch)
-                    continue
+                    if !reachedDirectly { continue }
                 }
                 if kind == 0xB0, pitch == 123 || pitch == 120 { stopArpNote(slot, arps.clear(slot), offset: 0) }
             }

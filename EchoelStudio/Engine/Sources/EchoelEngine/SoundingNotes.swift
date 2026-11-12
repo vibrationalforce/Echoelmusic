@@ -54,6 +54,14 @@ final class SoundingNotes {
         slots[slot].liveHigh = words.high
     }
 
+    /// Whether a live key put `pitch` into the slot's instrument and has not let go of it.
+    func isLive(_ slot: Int, _ pitch: UInt8) -> Bool {
+        guard slot >= 0, slot < count else { return false }
+        let note = pitch & 0x7F
+        let bit: UInt64 = 1 << UInt64(note & 63)
+        return note < 64 ? slots[slot].liveLow & bit != 0 : slots[slot].liveHigh & bit != 0
+    }
+
     /// A live all notes off (123) or all sound off (120): no live key holds anything there.
     func liveCleared(_ slot: Int) {
         guard slot >= 0, slot < count else { return }

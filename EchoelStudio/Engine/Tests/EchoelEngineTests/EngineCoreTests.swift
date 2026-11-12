@@ -152,6 +152,9 @@ final class EngineCoreTests: XCTestCase {
             engine.play()
             outputs.append(render(engine, frames: 3 * 96_000 + 1_234, block: block).left)
         }
+        // 48,000 frames after the first wrap the clip's note has ended and not yet started again
+        // (at 171,000): what sounds is the key.
+        XCTAssertGreaterThan(rms(outputs[0][144_000..<148_800]), 0.001, "the key sounds on through the wrap")
         for other in outputs.dropFirst() {
             XCTAssertEqual(other, outputs[0])
         }
@@ -205,15 +208,17 @@ final class EngineCoreTests: XCTestCase {
     /// The sustain pedal the player holds is not lifted by the wrap on a track whose clip plays
     /// nothing: the note it holds after its key went up sounds on until the pedal comes up.
     func testTheLivePedalStaysDownThroughTheWrapOnATrackWhoseClipIsSilent() throws {
+        // A two-bar loop: the wrap at 192,000 is passed with the key down, and the last check ends
+        // at 305,600, before the second wrap at 384,000 could sweep anything.
         let tune = try song([[]])
         let engine = core()
         publish(tune.project, to: engine)
-        engine.setLoop(0..<bar)
+        engine.setLoop(0..<(2 * bar))
         engine.play()
         _ = render(engine, frames: 256)
         engine.playLive(slot: 0, status: 0x90, 60, 100)
         engine.playLive(slot: 0, status: 0xB0, 64, 127)
-        _ = render(engine, frames: 120_000 - 256)
+        _ = render(engine, frames: 200_000 - 256)
         engine.playLive(slot: 0, status: 0x80, 60, 0)
         _ = render(engine, frames: 48_000)
         let pedalled = render(engine, frames: 4_800).left
@@ -286,36 +291,80 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the shared pitch ended at the wrap")
     }
 
-    /// A key pressed directly and let go after the track was switched to arpeggiate goes into the
-    /// arpeggiator and leaves the note sounding; the next wrap still sweeps the track. The second
-    /// snapshot keeps the events' revision, so publishing it does not silence the track.
-    func testATrackSwitchedToArpeggiateWhileAKeyIsDownIsStillSweptAtTheWrap() throws {
+    /// Publishes `project` keeping each track's events revision (`EventRevisions`), so a change
+    /// that leaves the notes alone, such as switching the arpeggiator, does not silence a track.
+    private func publish(_ project: Project, to core: EngineCore, revisions: inout EventRevisions) {
+        var slots = SlotAssigner(capacity: core.slotCapacity)
+        slots.update(for: project)
+        let plan = PlaybackPlan(compiling: project)
+        generation += 1
+        core.publish(EngineSnapshot(plan: plan, project: project, slots: slots.slots, sampleRate: rate,
+                                    generation: generation, revisions: revisions.update(for: plan)))
+    }
+
+    /// A key pressed while the track played its keys itself and let go after the track began to
+    /// arpeggiate ends at its release: the release reaches the instrument as well as the
+    /// arpeggiator, where it used to sound on until the next sweep.
+    func testAKeyPressedBeforeTheTrackArpeggiatesEndsAtItsReleaseAfterwards() throws {
         var s = try song([[]])
         var revisions = EventRevisions()
         let engine = core()
-        var slots = SlotAssigner(capacity: engine.slotCapacity)
-        slots.update(for: s.project)
-        var plan = PlaybackPlan(compiling: s.project)
-        generation += 1
-        engine.publish(EngineSnapshot(plan: plan, project: s.project, slots: slots.slots, sampleRate: rate,
-                                      generation: generation, revisions: revisions.update(for: plan)))
+        publish(s.project, to: engine, revisions: &revisions)
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        _ = render(engine, frames: 4_800)
+        try Command.setArpeggio(s.tracks[0], Arpeggio(rate: .quarter)).apply(to: &s.project)
+        publish(s.project, to: engine, revisions: &revisions)
+        _ = render(engine, frames: 256)
+        let held = render(engine, frames: 4_800).left
+        XCTAssertGreaterThan(rms(held[...]), 0.001, "switching the arpeggiator on ends nothing")
+        engine.playLive(slot: 0, status: 0x80, 60, 0)
+        _ = render(engine, frames: 48_000)
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the release ended the note")
+    }
+
+    /// A track that arpeggiates is swept at the wrap although a key that reached the instrument
+    /// directly is still down: the arpeggiator keeps its own keys, so the slot is not kept.
+    func testATrackThatArpeggiatesIsSweptAtTheWrapAlthoughADirectKeyIsHeld() throws {
+        var s = try song([[]])
+        var revisions = EventRevisions()
+        let engine = core()
+        publish(s.project, to: engine, revisions: &revisions)
         engine.setLoop(0..<bar)
         engine.play()
         _ = render(engine, frames: 256)
         engine.playLive(slot: 0, status: 0x90, 60, 100)
         _ = render(engine, frames: 4_800)
         try Command.setArpeggio(s.tracks[0], Arpeggio(rate: .quarter)).apply(to: &s.project)
-        plan = PlaybackPlan(compiling: s.project)
-        generation += 1
-        engine.publish(EngineSnapshot(plan: plan, project: s.project, slots: slots.slots, sampleRate: rate,
-                                      generation: generation, revisions: revisions.update(for: plan)))
-        _ = render(engine, frames: 256)
-        engine.playLive(slot: 0, status: 0x80, 60, 0)
-        _ = render(engine, frames: 80_000)
-        let beforeWrap = render(engine, frames: 4_800).left
-        XCTAssertGreaterThan(rms(beforeWrap[...]), 0.001, "the release went into the arpeggiator")
-        _ = render(engine, frames: 144_000 - 90_112)
+        publish(s.project, to: engine, revisions: &revisions)
+        _ = render(engine, frames: 144_000 - 5_056)
         XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the wrap swept the arpeggiating track")
+    }
+
+    /// The note out moving from one slot to another sends all notes off once: the releases of
+    /// what the first slot played no longer reach the device through it.
+    func testTheNoteOutHearsAllNotesOffOnceWhenItMovesToAnotherSlot() throws {
+        let s = try song([[], []])
+        var assigner = SlotAssigner(capacity: EngineCore(sampleRate: rate).slotCapacity)
+        assigner.update(for: s.project)
+        let first = try XCTUnwrap(assigner.slots[s.tracks[0]])
+        let second = try XCTUnwrap(assigner.slots[s.tracks[1]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.setNoteOut(slot: first)
+        engine.playLive(slot: first, status: 0x90, 60, 100)
+        _ = render(engine, frames: 256)
+        var heard: [TimedMIDIMessage] = []
+        while let message = engine.noteOut.pop() { heard.append(message) }
+        XCTAssertFalse(heard.contains { $0.bytes == [0xB0, 123, 0] }, "choosing a slot first sends nothing")
+        engine.setNoteOut(slot: second)
+        _ = render(engine, frames: 512)
+        heard.removeAll()
+        while let message = engine.noteOut.pop() { heard.append(message) }
+        XCTAssertEqual(heard.filter { $0.bytes == [0xB0, 123, 0] }.count, 1, "the move sends all notes off once")
     }
 
     private struct Song {
