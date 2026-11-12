@@ -330,6 +330,13 @@ struct TransportBar: View {
             // fits (iPad, landscape); else the song row over the transport with every switch;
             // else the phone's two rows — song, pulse, Undo/Redo and More; Play, Record, Loop
             // and the tempo — with the rare switches in More. Only large text wraps further.
+            // The phone's rows come twice: first as they always were (60 pt tiles: iPad mini and
+            // the 11-inch iPads in portrait), then with compact tiles (44 pt, no side padding).
+            // With 60 pt tiles the two rows need about 428 pt, more than any iPhone in portrait
+            // offers (at most 416), and every iPhone fell to three rows with the tempo alone on
+            // the last. The compact rows end in a flexible frame rather than a Spacer, which saves
+            // the 8 pt gap before it: about 356 pt, so iPhones from 390 pt keep a margin for a
+            // tempo with two decimals or a clock that moves it.
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: Theme.Space.s) {
                     transportGroup
@@ -358,13 +365,19 @@ struct TransportBar: View {
                     songRow(more: true)
                     HStack(spacing: Theme.Space.s) {
                         transportGroup
-                        Spacer(minLength: 0)
-                    }
-                    HStack(spacing: Theme.Space.s) {
                         TempoField(showsSteps: false)
-                        Spacer(minLength: 0)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .environment(\.compactToolButtons, true)
+                VStack(spacing: Theme.Space.xs) {
+                    songRow(more: true)
+                    transportGroup
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    TempoField(showsSteps: false)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .environment(\.compactToolButtons, true)
             }
             .padding(.horizontal, Theme.Space.m)
             .padding(.vertical, Theme.Space.xs)
@@ -387,7 +400,7 @@ struct TransportBar: View {
             SongMenu()
                 .layoutPriority(-1)
             Spacer(minLength: 0)
-            PulseReading()
+            PulseReading(showsWords: !more)
             Button { store.undo() } label: { Image(systemName: "arrow.uturn.backward") }
                 .buttonStyle(ToolButtonStyle())
                 .shortcut(.undo)
@@ -1324,10 +1337,17 @@ struct SongMenu: View {
             }
         } label: {
             HStack(spacing: Theme.Space.xs) {
+                // The Echoelmusic mark opens the menu, as it did in the earlier app's top bar.
+                EchoelMark()
+                    .frame(width: 26, height: 26)
                 Text(documents.songTitle)
                     .font(Theme.Font.title)
                     .foregroundStyle(Theme.Color.text)
                     .lineLimit(1)
+                    // The transport bar picks its layout by ideal widths: measured in full, a long
+                    // name pushed a phone to three rows instead of truncating. Measured at this
+                    // width, the name still takes whatever room the chosen layout leaves it.
+                    .frame(idealWidth: 88, alignment: .leading)
                 Image(systemName: "chevron.down")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)

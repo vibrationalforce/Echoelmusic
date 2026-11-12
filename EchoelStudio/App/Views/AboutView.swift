@@ -15,6 +15,8 @@ struct AboutView: View {
         NavigationStack {
             List {
                 EchoelSection("Echoelmusic") {
+                    EchoelMark()
+                        .frame(width: 72, height: 72)
                     ParagraphText("A music workstation for iPhone and iPad: instruments, effects, arrangement, a session view for live sets, mixing and export.")
                     ParagraphText("Around the music: the Field, a picture that moves with the song; the Sky, the stars above you computed for your place and time; Connections, which send OSC, ADM-OSC, Art-Net and sACN to devices you name; and Body, a heart rate strap or the rear camera as a source for modulation.")
                     ParagraphText("Body readings are for self-observation, not a medical diagnosis. Echoelmusic is a tool for making music. It is not a medical product.")

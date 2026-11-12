@@ -5,6 +5,11 @@ import SwiftUI
 /// is live, and in words what is missing otherwise — never a number that was not measured. The
 /// strap and the camera (wave W1) read alike; the chooser keeps one of them on at a time.
 struct PulseReading: View {
+    /// Whether a source without a number shows its words ("Searching", "Hold still"). The phone's
+    /// rows show "–" instead: words change the row's width as they change and would make the bar
+    /// jump between two and three rows. VoiceOver says the words either way.
+    var showsWords = true
+
     @Environment(HeartRateStrap.self) private var strap
     @Environment(CameraPulseSource.self) private var camera
     @Environment(HealthHeartRate.self) private var health
@@ -21,7 +26,7 @@ struct PulseReading: View {
     }
 
     private func reading(beatsPerMinute: Int?, words: String, label: String) -> some View {
-        let text = beatsPerMinute.map { "\($0)" } ?? words
+        let text = beatsPerMinute.map { "\($0)" } ?? (showsWords ? words : "–")
         let spoken = beatsPerMinute.map { "\($0) beats per minute" } ?? words
         return HStack(spacing: Theme.Space.xs) {
             Image(systemName: "heart.fill")

@@ -214,6 +214,19 @@ struct ToolButtonStyle: ButtonStyle {
     }
 }
 
+/// Where room is short — the transport bar on a phone — a tool button keeps its 44 pt touch
+/// square and drops the 8 pt it adds at each side, so the bar fits in two rows.
+private struct CompactToolButtonsKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var compactToolButtons: Bool {
+        get { self[CompactToolButtonsKey.self] }
+        set { self[CompactToolButtonsKey.self] = newValue }
+    }
+}
+
 /// The style's look, in a view of its own so it can read whether the button is enabled: a
 /// disabled Record, Undo or Play is dimmed instead of looking tappable (audit 2026-10-23).
 private struct ToolButtonFace: View {
@@ -222,13 +235,14 @@ private struct ToolButtonFace: View {
     let fill: ToolButtonStyle.Fill
     let isRunning: Bool
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.compactToolButtons) private var compact
 
     var body: some View {
         configuration.label
             .font(Theme.Font.label)
             .foregroundStyle(labelColor)
             .frame(minWidth: Theme.Size.touch, minHeight: Theme.Size.touch)
-            .padding(.horizontal, Theme.Space.s)
+            .padding(.horizontal, compact ? 0 : Theme.Space.s)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.medium)
                     .fill(isActive ? fillColor : Theme.Color.surfaceRaised)
