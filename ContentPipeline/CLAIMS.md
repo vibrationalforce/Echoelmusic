@@ -494,10 +494,14 @@ die Ecke stellt, aus der die Marke ausdrücklich heraus ist: Optimierungs-Szene 
 Instrument. **Nie in Skript, Caption, Hashtag oder Titel.**
 
 ### 10. „Postet automatisch auf TikTok/YouTube/Instagram", „MCP in der App"
-Die App **veröffentlicht nichts**. Sie NIMMT auf und EXPORTIERT (WAV-Aufnahme des
-eigenen Ausgangs, MIDI-Export) — die Verteilung passiert danach von Hand oder über
-diese Pipeline auf einem Rechner. (⛔ Das Video-Panel mit mp4-Teilen stand hier und
-ist mit #1304 gelöscht.)
+Die App **veröffentlicht nichts**. Sie NIMMT auf und EXPORTIERT Dateien — in Studio
+auch eine MP4 über „Export Video…“ (`EchoelStudio/App/Views/VideoExportView.swift`), die
+das Share-Sheet übergibt; die Verteilung passiert danach von Hand oder über diese
+Pipeline auf einem Rechner. Live geht nur, was der Musiker mit Go Live selbst startet
+(Studio-Abschnitt, „Live-Streaming“). (⛔ Das Video-Panel mit mp4-Teilen der FRÜHEREN
+App stand hier und ist mit #1304 gelöscht; Studios „Export Video…“ ist eine eigene,
+spätere Fähigkeit. Ein Werbesatz dazu erst mit eigener Zeile im Studio-Abschnitt, nach
+der Geräteprüfung.)
 Drei unabhängige Gründe, damit die Behauptung nicht in anderer Form wiederkommt
 (die beiden letzten sind Aussagen über FREMDE Plattformen, Stand 2026-07-31 — sie
 altern, ohne dass es hier jemand merkt; vor einer Kampagne kurz nachsehen):
@@ -506,8 +510,10 @@ mit Werkzeugen — eine iOS-App „macht" kein MCP); die **Posting-APIs der Plat
 sind gated** (eigener Review je Plattform, OAuth, Business-/Creator-Konten, bei TikTok
 ein bestandenes Audit — Privatkonten weitgehend gar nicht); und ein Multi-Plattform-
 Publisher wäre ein **zweites Produkt** neben dem Instrument.
-*Erlaubt: „den fertigen Loop teilen“. Nicht erlaubt: „postet für Dich“. ⛔ „das fertige
-Video teilen“ stand hier und ist mit #1304 gegenstandslos — die App erzeugt kein Video.*
+*Erlaubt: „den fertigen Loop teilen“. Nicht erlaubt: „postet für Dich“. „Das fertige
+Video teilen“ bleibt gesperrt, bis „Export Video…“ eine eigene Zeile im Studio-Abschnitt
+hat (gebaut und CI-geprüft, kein Gerätebeleg; ⛔ die frühere Begründung „die App erzeugt
+kein Video“ galt der früheren App und ist für Studio falsch).*
 
 ### 11. Stimme: „nimmt Deine Stimme auf", „Voice Cloning", „AI-Voice", „Text-to-Speech", „Autotune auf der Musik"
 

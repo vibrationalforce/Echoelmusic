@@ -39,8 +39,10 @@ These OVERRIDE anything in the vendored skills. Any draft that violates them is 
   (open standards: ADM-OSC, MIDI 2.0, OSC, BLE HRS). Not a renderer, not a
   competitor clone. Tagline: "multidimensional production instrument".
 - **No false promises:** claim only what ships (see `docs/dev/FEATURE_MATRIX.md`
-  and CLAUDE.md "Absent"). RTMP/streaming, video capture, multitrack = roadmap,
-  not shipping. Don't market unreleased features as live.
+  and CLAUDE.md "Absent"). The one list of what may be said is the Studio section of
+  `ContentPipeline/CLAIMS.md` (live streaming over RTMP/RTMPS with Go Live is there);
+  a feature without its line there, video export included, is not marketed yet.
+  Don't market unreleased features as live.
 - **Accessibility-first**, American English, evidence-based. Respect health/safety
   copy rules (self-observation not medical diagnosis; max-3Hz flash). For any
   bio/health claim, defer to the `bio-safety-reviewer` agent.
