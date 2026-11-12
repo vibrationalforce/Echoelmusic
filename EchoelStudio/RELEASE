@@ -1,56 +1,48 @@
-11.0.0 — a key held through the loop's wrap sounds on; other makers' Audio Units in the lists; a Samples folder to hear sounds from before placing them; the top bar in two rows on most iPhones in portrait, with the Echoelmusic mark
+11.0.0 — the top bar rebuilt: one block for Play, Record and Loop, one display for position and tempo, the rows on one grid
 
-What is new since 10073. Each line is code that the Echoel Studio run builds; the rules have tests
-of their own, and nothing here is device-verified yet.
-- Playing live: a key held on the screen (piano keys, hex cells, chord pads) or on a MIDI keyboard
-  sounds on when the song loop wraps, when you seek while the song plays, and when a MIDI clock, a
-  timecode or a Jam moves the playing song to keep it in step; on that track only the song's own
-  notes end there. The track is still cleared as before when it arpeggiates (the arpeggio of the
-  keys you hold plays on), when its clip moved a controller or the pitch wheel, and when the live
-  sustain pedal holds one of the song's notes; in those last two the held key ends too. With every
-  key up, notes that only the pedal holds end there as well. A clip note on the key's own pitch
-  ends the key with it. Launching or stopping a clip on that track still ends the key. Stop, a
-  pause and a seek while stopped end every sounding note, as before; on a track that arpeggiates,
-  keys still held go on arpeggiating.
-- Playing live: a key pressed before its track begins to arpeggiate ends when you let go of it.
-  With MPE Out sending to a device, choosing another track for the keys sends that device all
-  notes off once, so a note held across the change does not hang there.
-- Audio Units: the Sound page's "Audio Unit Instrument" list and the "Add Effect" list (Mixer → a
-  track's Effects) now read the installed instruments and audio effects two ways, through the
-  system's list of plugins and by asking the system for each registered unit directly, and show a
-  unit found both ways once, under its maker ("Other" where the system names none; one used lately
-  also shows under "Recent"). The list is read again each time it opens. Whether other makers'
-  units, missing until now, appear is check 2. MIDI effects and generators are not listed. As
-  before, Echoelmusic's own units are not listed again among them: Add Effect shows Echoelmusic's
-  effects first, under "Echoelmusic".
-- Browser (Song menu → Browser…): it also lists the Samples folder, which it makes the first time
-  it opens; from then on the Files app shows it as Echoelmusic › Samples (under On My iPhone or On
-  My iPad). Subfolders are included: each sound is listed by its name, with "Samples › Drums" in
-  the line under it. From the Samples folder it lists up to 2,000 sounds, only files that open as
-  audio, and says so when the folder holds more; nothing there is changed or removed, and placing
-  a sound copies it into the song. A tap on a sound's name plays it, as its Listen button does, and
-  a second tap stops it; a sound from outside the open song, as every Samples sound is, plays its
-  first half minute. VoiceOver reads a sound's name and details as one button, apart from its
-  Listen and Place buttons. The browser reads again when you come back from the Files app, and on
-  pull to refresh.
-- Top bar: on an iPhone in portrait it keeps two rows, with the tempo in the second, where it fell
-  to a third; the tool tiles there are narrower, 44 points wide instead of 60, and so is the area
-  that takes their taps; their height is unchanged. While the Heart Rate Strap, the Camera or Apple
-  Health is the body source, the pulse there shows the heart with its number, or a dash where its
-  words stood. On the iPhone SE, 12 mini, 13 mini, XS and 11 Pro (screens 375 points wide) it stays
-  three rows at the standard text size, and a larger text size or Display Zoom can give another
-  iPhone three rows too. A long song name is cut short instead of adding a row. On an 11-inch iPad
-  in landscape the bar can now take two rows where it took one, to make room for the mark.
-- The Echoelmusic mark, the E over three waves of the app icon, is back: at the front of the song
-  menu, which it opens, and at the top of About.
+What is new since 10074. Each line is code that the Echoel Studio run builds; nothing here is
+device-verified yet.
+- Top bar: Play, Record and Loop sit in one block with a fine line between them, and the
+  position, the tempo and Tap in a second block beside it, read as one display. In the same row
+  or the row above sit the Echoelmusic mark, the song and its menu, the pulse while a pulse source
+  is on, and Undo and Redo, with More (…) wherever the switches are not in the bar. Undo, Redo and
+  More are plain symbols without a frame; with Button Shapes on (Settings › Accessibility ›
+  Display & Text Size) they get one.
+- Top bar on an iPhone in portrait: two rows, now also on a 375-point iPhone (SE, 12 mini, 13
+  mini, XS, 11 Pro), at the default text size and Display Zoom. The mark's waves start above
+  Play's left edge, More is centred above Tap, and the display reaches the right edge: the
+  position takes the room the row leaves. Position and tempo use one size of numbers and stand
+  on one line.
+- Top bar: colour only shows a state. A switch that is on shows a light tile inside its key, and
+  Write a red one, because it writes into the song; on an iPhone, More shows the light tile while
+  MIDI Learn is on and the red one while Write Automation is on. Record's symbol is red before it
+  records, the key is red while a take records, and the position turns red. While the song plays,
+  Play becomes Stop and its square is green; when audio has to be restarted, the key shows an
+  amber circular arrow (VoiceOver: Restart Audio). While a MIDI clock, a Jam or
+  Flow sets the tempo, a lock stands before EXT, JAM or FLOW.
+- Top bar: every number keeps one width, and the song's name is measured at one width, so a
+  moving playhead, a new tempo, a changing pulse reading or a long song name never moves the bar
+  into another layout; a long name is cut short. Switching a pulse source on or off can: where
+  room is tight the bar changes layout (an iPhone SE in landscape then has two rows with the
+  switches in sight).
+- Top bar, the layouts: the bar follows the size of its window, not the kind of device. Where it
+  is wide (an iPad at full screen) the switches (Click, MIDI, Keys, Field Window, Write) are a
+  third block and the tempo has − and +; narrower, the switches stay in sight without − and +
+  (an iPad mini in portrait); narrower still, the phone's two rows with the switches in More; in
+  a narrow Slide Over window, three rows. On an iPhone in landscape the bar is one row with the switches in More.
+  All of this is at the default text size and Display Zoom; larger text moves the bar to a
+  layout with more rows sooner.
+- The status lines under the bar (count-in, Loop Record, the Jam, MIDI Learn, errors, an export's
+  loudness) start at its left edge instead of in the middle.
 
-Known limit: a MIDI take does not record a key held across the loop's end as it was heard. While
-the record line shows "Loop Record · take n" (a loop of two bars or longer), the note ends at the
-loop's end and the next take does not have it. On a one-bar loop, a key let go after the loop
-came round is recorded shorter than it was held.
+Known limit, unchanged since 10074: a MIDI take does not record a key held across the loop's end
+as it was heard. While the record line shows "Loop Record · take n" (a loop of two bars or
+longer), the note ends at the loop's end and the next take does not have it. On a one-bar loop, a
+key let go after the loop came round is recorded shorter than it was held.
 
-Previous: 11.0.0 (10073) — touch loudness, slice pads, the chords of the song's key; 10072 — the
-video window dims footage that strobes. Earlier: git history.
+Previous: 11.0.0 (10074) — a key held through the loop sounds on, other makers' Audio Units in the
+lists, a Samples folder to hear sounds from; 10073 — touch loudness, slice pads, the chords of the
+song's key. Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -58,25 +50,19 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Loop on, a synth track on the Init sound or Warm Pad with its Arpeggiator off, whose clip has
-   notes only (drawn, or played on the screen keys: a take from a MIDI keyboard keeps its pedal and
-   wheel, and then the key ends at the wrap, as stated above). Without the sustain pedal, hold a key
-   the clip never plays (on the screen keys or a MIDI keyboard) across the loop's end. Does it sound
-   on without a click while the song's notes start again, and end when you let go? With a MIDI
-   keyboard, also tap Arrange's ruler while holding: does the key sound on there too?
-2. With an AUv3 instrument or effect of another maker installed that another host app on this
-   device already lists: an instrument track's Sound page → Audio Unit Instrument, or Mixer → a
-   track's Effects → Add Effect. Is it listed below "Audio Units" (in its maker's section or under
-   "Other"), and when you choose it, does it load and sound? For a no, say which: not listed, or
-   listed but did not load (and the message shown).
-3. Song menu → Browser… once, then close it: this makes the Samples folder. Files app → On My
-   iPhone → Echoelmusic → Samples: put a folder of a few WAV files there, come back to
-   Echoelmusic, Song menu → Browser…. Is each listed by its name, with "Samples › <folder>" in the
-   line under it, does a tap on a name play it (half a minute at most) and a second tap stop it,
-   and can you place one on a track?
-4. iPhone in portrait, text size and Display Zoom at their defaults: is the top bar two rows, with
-   the tempo in the second, and are its tiles still easy to hit? (On an iPhone SE, 12 mini,
-   13 mini, XS or 11 Pro, three rows are expected.) Does the Echoelmusic mark at its front open the
-   song menu?
-5. With VoiceOver on, in the Browser: does a sound's name read as a button, and does a double tap
-   play it and a second one stop it?
+1. iPhone in portrait, text size and Display Zoom at their defaults: is the top bar two calm rows,
+   with the tempo in the second, the mark's waves starting above Play and More (…) centred above
+   Tap? Does it look orderly to you?
+2. On an iPhone in portrait, tap the tempo, type a new one and press OK; do it again with another
+   number, then tap Undo once, so neither Undo nor Redo is dimmed (Loop and the switches are no
+   undo steps). Do Undo, Redo and More, the plain symbols at the top right, read as buttons, and
+   are they easy to hit without touching a neighbour?
+3. Loop on, then Play, then Record: is the lit Loop clear without outshining Play, is Record's
+   symbol red before you press it, and while recording are the Record key and the position red?
+4. The tempo: drag it up and down, tap it to type one, and tap Tap in time. Does each work as
+   before? Then, with the song stopped, tap Arrange's ruler near bar 3 and tap the position: does
+   it go back to bar 1?
+5. iPad, or an iPhone turned to landscape: is every control in the bar or in More, and does
+   nothing overlap? (Expected: the tempo has − and + only where the bar is wide, such as an iPad
+   at full screen; elsewhere drag it or tap to type. The count-in is under Click: touch and hold
+   it, or find it in More. A long song name ending in … is cut on purpose.)
