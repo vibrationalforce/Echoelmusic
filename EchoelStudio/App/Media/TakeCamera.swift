@@ -82,6 +82,10 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
         guard let device = Self.device(for: lens) else {
             throw OpenError.noCamera
         }
+        // Never touch the app's audio session, as the pulse and sky cameras already do: a take
+        // records no sound, and with the default the capture session reconfigured the shared
+        // session under the running engine while the song played into the take.
+        session.automaticallyConfiguresApplicationAudioSession = false
         session.beginConfiguration()
         defer { session.commitConfiguration() }
         session.sessionPreset = session.canSetSessionPreset(.hd1920x1080) ? .hd1920x1080 : .high
