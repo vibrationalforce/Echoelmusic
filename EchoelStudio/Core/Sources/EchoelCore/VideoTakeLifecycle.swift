@@ -57,6 +57,15 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
 
     public init() {}
 
+    /// The host time a take starts at: the first frame's own capture time when the camera gives
+    /// one and it is plausible, else the time its start was reported. A frame time of 0, one later
+    /// than the report, or one more than `longestLead` before it is a failed conversion, not a
+    /// frame: the report's time is the honest fallback. All three in the host clock's units.
+    public static func startHostTime(frame: UInt64?, reported: UInt64, longestLead: UInt64) -> UInt64 {
+        guard let frame, frame > 0, frame <= reported, reported - frame <= longestLead else { return reported }
+        return frame
+    }
+
     /// Record may start a take now.
     public var canRecord: Bool { (phase == .ready || phase == .landed) && !isInterrupted }
 

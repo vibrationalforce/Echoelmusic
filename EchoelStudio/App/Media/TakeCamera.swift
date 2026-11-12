@@ -17,8 +17,10 @@ import UIKit
 /// iOS closes a running take's file itself, and the take lands with what was filmed.
 final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecordingDelegate {
     enum Event: Sendable {
-        /// The file is being written: the first frame is in.
-        case started(generation: UInt64)
+        /// The file is being written: the first frame is in. `reportedHostTime` is when iOS said
+        /// so; `frameHostTime` is that frame's own capture time on the host clock where iOS gives
+        /// it (18.2 and later), nil before. Both in `mach_absolute_time` units.
+        case started(generation: UInt64, reportedHostTime: UInt64, frameHostTime: UInt64?)
         /// The file is closed; `usable` says whether it holds the take.
         case finished(generation: UInt64, url: URL, usable: Bool)
         /// iOS took the camera (a call, Siri, Control Centre, another app).
@@ -40,6 +42,8 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
     private let onEvent: @Sendable (Event) -> Void
     private let lock = NSLock()
     private var current: UInt64 = 0
+    /// Lock-guarded: the session's clock as the running take started, read on `queue`.
+    private var takeClock: CMClock?
     /// Queue-only: the lens's rotation coordinator and the angle the next take is written at.
     private var rotation: AVCaptureDevice.RotationCoordinator?
     private var orientation = TakeOrientation()
@@ -154,7 +158,11 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
     /// Starts writing `url` for the take numbered `generation`.
     func record(to url: URL, generation: UInt64) {
         queue.async { [self] in
-            lock.withLock { current = generation }
+            let syncClock = session.synchronizationClock
+            lock.withLock {
+                current = generation
+                takeClock = syncClock
+            }
             guard session.isRunning, !output.isRecording else {
                 onEvent(.finished(generation: generation, url: url, usable: false))
                 return
@@ -241,7 +249,29 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
     // MARK: - AVCaptureFileOutputRecordingDelegate
 
     func fileOutput(_ output: AVCaptureFileOutput, didStartRecordingTo fileURL: URL, from connections: [AVCaptureConnection]) {
-        onEvent(.started(generation: lock.withLock { current }))
+        let reported = mach_absolute_time()
+        onEvent(.started(generation: lock.withLock { current }, reportedHostTime: reported, frameHostTime: nil))
+    }
+
+    /// From iOS 18.2 the system calls this one instead (Apple: the other is then not called), with
+    /// the first frame's presentation time on the session's clock: converted to the host clock, it
+    /// places the take where its first frame was filmed, not where the report arrived.
+    @available(iOS 18.2, *)
+    func fileOutput(_ output: AVCaptureFileOutput, didStartRecordingTo fileURL: URL, startPTS: CMTime,
+                    from connections: [AVCaptureConnection]) {
+        let reported = mach_absolute_time()
+        let (generation, syncClock) = lock.withLock { (current, takeClock) }
+        onEvent(.started(generation: generation, reportedHostTime: reported,
+                         frameHostTime: Self.hostTime(of: startPTS, on: syncClock)))
+    }
+
+    /// A capture time on the session's clock as host time (`mach_absolute_time` units); nil when
+    /// either time is not a number.
+    private static func hostTime(of time: CMTime, on clock: CMClock?) -> UInt64? {
+        guard let clock, time.isValid, time.isNumeric else { return nil }
+        let host = CMSyncConvertTime(time, from: clock, to: CMClockGetHostTimeClock())
+        guard host.isValid, host.isNumeric, host.seconds > 0 else { return nil }
+        return CMClockConvertHostTimeToSystemUnits(host)
     }
 
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL,

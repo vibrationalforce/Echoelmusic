@@ -196,14 +196,28 @@ final class VideoTakeRecorder {
         pulse?.isCameraCurrent(holder) == true && life.isCurrent(generation)
     }
 
+    /// Two seconds in host-clock units. No camera reports its first frame that late, so a frame
+    /// time further back than this is a failed conversion and the report's own time is used.
+    private static let longestCaptureLead: UInt64 = {
+        var info = mach_timebase_info_data_t()
+        mach_timebase_info(&info)
+        let numer = UInt64(Swift.max(info.numer, 1))
+        let denom = UInt64(Swift.max(info.denom, 1))
+        return 2_000_000_000 * denom / numer
+    }()
+
     private func cameraEvent(_ event: TakeCamera.Event) {
         switch event {
-        case .started(let generation):
+        case let .started(generation, reportedHostTime, frameHostTime):
             guard life.handle(.started, stamped: generation), let take, take.generation == generation,
                   let engine, let store else { return }
-            // Where the first frame is heard: the take is laid there, not at a bar line.
+            // Where the first frame is heard: the take is laid there, not at a bar line. The
+            // frame's own capture time where the camera gives it; else when iOS reported the start,
+            // stamped on the camera's side before any hop to this actor.
             let project = store.project
-            if let heard = engine.heardPosition(atHostTime: mach_absolute_time()) {
+            let start = VideoTakeLifecycle.startHostTime(frame: frameHostTime, reported: reportedHostTime,
+                                                         longestLead: Self.longestCaptureLead)
+            if let heard = engine.heardPosition(atHostTime: start) {
                 startTick = Tick(Swift.max(0, heard.tick).rounded())
             } else {
                 startTick = engine.playheadTick(in: project)

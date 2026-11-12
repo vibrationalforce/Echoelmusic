@@ -25,6 +25,21 @@ final class VideoTakeLifecycleTests: XCTestCase {
         XCTAssertTrue(life.canRecord, "the next take may begin")
     }
 
+    func testATakeStartsAtItsFirstFrameWhenTheCameraGivesAPlausibleTime() {
+        let reported: UInt64 = 1_000_000
+        XCTAssertEqual(VideoTakeLifecycle.startHostTime(frame: 960_000, reported: reported, longestLead: 100_000), 960_000,
+                       "the first frame, 40 000 units before its start was reported, places the take")
+        XCTAssertEqual(VideoTakeLifecycle.startHostTime(frame: reported, reported: reported, longestLead: 100_000), reported)
+        XCTAssertEqual(VideoTakeLifecycle.startHostTime(frame: nil, reported: reported, longestLead: 100_000), reported,
+                       "a camera without frame times keeps today's start")
+        XCTAssertEqual(VideoTakeLifecycle.startHostTime(frame: 0, reported: reported, longestLead: 100_000), reported,
+                       "0 is a failed conversion")
+        XCTAssertEqual(VideoTakeLifecycle.startHostTime(frame: 1_000_001, reported: reported, longestLead: 100_000), reported,
+                       "a frame cannot come after its own report")
+        XCTAssertEqual(VideoTakeLifecycle.startHostTime(frame: 899_999, reported: reported, longestLead: 100_000), reported,
+                       "a frame far earlier than any capture delay is a failed conversion")
+    }
+
     func testTheScreenStaysAwakeOnlyWhileATakeIsFilmedOrSaved() {
         var life = VideoTakeLifecycle()
         XCTAssertFalse(life.keepsScreenAwake, "a closed camera lets the screen sleep")
