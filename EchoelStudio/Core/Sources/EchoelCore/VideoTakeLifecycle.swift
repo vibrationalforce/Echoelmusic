@@ -60,6 +60,11 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
     /// Record may start a take now.
     public var canRecord: Bool { (phase == .ready || phase == .landed) && !isInterrupted }
 
+    /// The screen stays on while a take is filmed or its file is closed: the musician's hands are
+    /// on the instrument, and Auto-Lock would send the app to the background, where iOS takes the
+    /// camera and the take lands cut short. Everywhere else the screen may sleep as usual.
+    public var keepsScreenAwake: Bool { phase == .recording || phase == .finishing }
+
     /// The camera is about to open: a new generation. Answers it; nil while the camera is open.
     @discardableResult
     public mutating func open() -> UInt64? {

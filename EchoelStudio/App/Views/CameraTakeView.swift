@@ -19,6 +19,8 @@ struct CameraTakeView: View {
     @Environment(CameraPulseSource.self) private var pulse
     @Environment(\.dismiss) private var dismiss
     @State private var recorder = VideoTakeRecorder()
+    /// Whether the screen was kept on before this sheet opened, given back when it closes.
+    @State private var idleTimerBefore: Bool?
 
     var body: some View {
         VStack(spacing: Theme.Space.m) {
@@ -39,8 +41,18 @@ struct CameraTakeView: View {
         .padding(Theme.Space.m)
         .background(Theme.Color.background)
         .interactiveDismissDisabled(isBusy)
-        .onAppear { recorder.open(pulse: pulse, engine: engine, store: store, documents: documents) }
-        .onDisappear { recorder.close() }
+        .onAppear {
+            idleTimerBefore = UIApplication.shared.isIdleTimerDisabled
+            recorder.open(pulse: pulse, engine: engine, store: store, documents: documents)
+        }
+        // Auto-Lock would send the app away mid-take, and iOS would take the camera with it.
+        .onChange(of: recorder.life.keepsScreenAwake) { _, awake in
+            UIApplication.shared.isIdleTimerDisabled = awake || idleTimerBefore == true
+        }
+        .onDisappear {
+            recorder.close()
+            UIApplication.shared.isIdleTimerDisabled = idleTimerBefore == true
+        }
     }
 
     @ViewBuilder private var preview: some View {

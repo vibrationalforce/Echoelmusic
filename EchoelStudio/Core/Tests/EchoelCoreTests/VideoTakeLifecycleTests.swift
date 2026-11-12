@@ -25,6 +25,28 @@ final class VideoTakeLifecycleTests: XCTestCase {
         XCTAssertTrue(life.canRecord, "the next take may begin")
     }
 
+    func testTheScreenStaysAwakeOnlyWhileATakeIsFilmedOrSaved() {
+        var life = VideoTakeLifecycle()
+        XCTAssertFalse(life.keepsScreenAwake, "a closed camera lets the screen sleep")
+        life.open()
+        XCTAssertFalse(life.keepsScreenAwake, "opening the camera is not a take")
+        life.handle(.opened, stamped: life.generation)
+        XCTAssertFalse(life.keepsScreenAwake, "the picture alone is not a take")
+        XCTAssertTrue(life.record())
+        XCTAssertTrue(life.keepsScreenAwake, "a take is filmed")
+        life.handle(.started, stamped: life.generation)
+        XCTAssertTrue(life.stop())
+        XCTAssertTrue(life.keepsScreenAwake, "the take's file is being closed")
+        life.handle(.fileClosed(usable: true), stamped: life.generation)
+        XCTAssertFalse(life.keepsScreenAwake, "the take landed")
+        XCTAssertTrue(life.record())
+        life.handle(.interruptionBegan, stamped: life.generation)
+        life.handle(.fileClosed(usable: true), stamped: life.generation)
+        XCTAssertFalse(life.keepsScreenAwake, "a take cut short and landed lets the screen sleep")
+        life.close()
+        XCTAssertFalse(life.keepsScreenAwake)
+    }
+
     func testAFirstFrameReportedAfterAQuickStopStillPlacesTheTake() {
         var life = readyCamera()
         life.record()
