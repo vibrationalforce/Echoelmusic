@@ -35,7 +35,7 @@ public final class EngineCore: @unchecked Sendable {
     private let seekRequest = Atomic<Int64>(-1)
     /// Samples to move the playhead by without a seek, for phase correction.
     private let nudgeRequest = Atomic<Int64>(0)
-    /// Samples to jump by AS a seek (notes released, cues rebuilt), for a far-off phase.
+    /// Samples to jump by AS a seek (the sequencer's notes released, cues rebuilt), for a far-off phase.
     private let jumpRequest = Atomic<Int64>(0)
     /// The song loop as start << 32 | end, in ticks; 0 while it is off. One word, so the render
     /// thread never reads a start from one range and an end from another.
@@ -334,6 +334,9 @@ public final class EngineCore: @unchecked Sendable {
 
     /// Per slot, the keys played live into a track that arpeggiates and its phrase (EDIT-2).
     private let arps: LiveArpeggiators
+    /// Per slot, the pitches a live key holds and the ones the sequencer still owes a note-off:
+    /// a move while the song plays on ends only the sequencer's notes where a key is held.
+    private let soundingNotes: SoundingNotes
     /// While stopped, the arpeggiator's own clock: ticks at the song's tempo where the playhead
     /// stands, at the start of the chunk being rendered.
     private var freeTick: Double = 0
@@ -438,6 +441,7 @@ public final class EngineCore: @unchecked Sendable {
         metronome = Metronome(sampleRate: Float(rate))
         countClick = Metronome(sampleRate: Float(rate))
         arps = LiveArpeggiators(slots: self.slotCapacity)
+        soundingNotes = SoundingNotes(slots: self.slotCapacity)
         let ceiling = Limiter.Settings(gain: 0, ceiling: Self.outputCeilingDB, release: 0.06)
         guards = (0..<Swift.max(1, Track.outputChannelLimit / 2)).map { _ in Limiter(sampleRate: rate, settings: ceiling) }
         let spatialPoints = self.slotCapacity + Self.smoothedAudioTracks
@@ -576,8 +580,9 @@ public final class EngineCore: @unchecked Sendable {
         nudgeRequest.add(samples, ordering: .relaxed)
     }
 
-    /// Main thread: moves the playhead by `samples` at the next block as a seek does — held
-    /// notes released, cues rebuilt. Relative, so it cannot land a buffer off.
+    /// Main thread: moves the playhead by `samples` at the next block as a seek does — the
+    /// sequencer's notes released (a key held live sounds on while the song plays), cues rebuilt.
+    /// Relative, so it cannot land a buffer off.
     public func jump(bySamples samples: Int64) {
         jumpRequest.add(samples, ordering: .relaxed)
     }
@@ -631,8 +636,9 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     /// Main thread: while playing, the playhead goes back to `range.lowerBound` on the exact
-    /// sample it reaches `range.upperBound`, as a seek does (held notes released, cues rebuilt),
-    /// whatever the buffer size. Nil, an empty range or one out of the song's reach: no loop.
+    /// sample it reaches `range.upperBound`, as a seek does (the sequencer's notes released, a key
+    /// held live sounding on, cues rebuilt), whatever the buffer size. Nil, an empty range or one
+    /// out of the song's reach: no loop.
     public func setLoop(_ range: Range<Tick>?) {
         guard let range, range.lowerBound >= 0, range.upperBound > range.lowerBound,
               range.upperBound <= MusicalTime.maximumTick else {
@@ -867,7 +873,9 @@ public final class EngineCore: @unchecked Sendable {
         if seek >= 0 {
             playhead = seek
             position.store(seek, ordering: .relaxed)
-            releaseAllNotes()
+            // While the song plays on, a key held live sounds through the move; at rest (a locate,
+            // the second Stop, Stop to a cue) everything ends as before.
+            if wasPlaying && transportAsked { releaseNotesAfterMove() } else { releaseAllNotes() }
             resync()
             remapped = false
         }
@@ -1147,6 +1155,13 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     private func play(_ event: PlaybackPlan.NoteEvent, on lane: EngineSnapshot.Lane, offset: Int) {
+        // Every sequenced or arpeggiated event reaches an instrument here, so what the sequencer
+        // owes a slot is complete.
+        switch event.kind {
+        case .noteOn: soundingNotes.sequencedOn(lane.slot, event.pitch)
+        case .noteOff: soundingNotes.sequencedOff(lane.slot, event.pitch)
+        case .pitchBend, .control: soundingNotes.sequencerMovedControllers(lane.slot)
+        }
         if lane.slot == noteOutSlot.load(ordering: .relaxed) {
             switch event.kind {
             case .noteOn(let velocity): sendNote(0x90, event.pitch, velocity, at: offset)
@@ -1197,6 +1212,7 @@ public final class EngineCore: @unchecked Sendable {
     private func releaseBuiltIns(_ slot: Int) {
         if slot == noteOutSlot.load(ordering: .relaxed) { sendNote(0xB0, 123, 0) }
         for index in 0..<builtInCount { kernel(slot, index)?.receive(status: 0xB0, 123, 0) }
+        soundingNotes.swept(slot)
     }
 
     /// Starts every built-in device of a slot over: its voices stop at once and its controllers
@@ -1204,6 +1220,7 @@ public final class EngineCore: @unchecked Sendable {
     private func resetBuiltIns(_ slot: Int) {
         if slot == noteOutSlot.load(ordering: .relaxed) { sendNote(0xB0, 123, 0) }
         for index in 0..<builtInCount { kernel(slot, index)?.reset() }
+        soundingNotes.swept(slot)
     }
 
     private func clipIndex(_ clip: ClipID, in lane: EngineSnapshot.Lane) -> Int {
@@ -1677,6 +1694,11 @@ public final class EngineCore: @unchecked Sendable {
             // again instead of the gains where the song stopped (review 2026-10-23) — that lane
             // only, so the other lanes' and the returns' tails keep theirs.
             if kind == 0x90 && value > 0, stoppedAt != nil { liveSinceStop[slot] = true }
+            // What a key holds live, for a move while the song plays on. A release counts always,
+            // also on a track that arpeggiates, so a key let go there leaves no stale pitch.
+            if kind == 0x80 || (kind == 0x90 && value == 0) { soundingNotes.liveUp(slot, pitch) }
+            if kind == 0xB0, pitch == 123 || pitch == 120 { soundingNotes.liveCleared(slot) }
+            if kind == 0xB0, pitch == 64 { soundingNotes.setLivePedal(slot, down: value >= 64) }
             // A track that arpeggiates takes its keys into the phrase; the steps play the instrument
             // (and the note out) at their samples. All notes off ends the phrase and passes on.
             if arps.isOn(slot) {
@@ -1690,6 +1712,8 @@ public final class EngineCore: @unchecked Sendable {
                 }
                 if kind == 0xB0, pitch == 123 || pitch == 120 { stopArpNote(slot, arps.clear(slot), offset: 0) }
             }
+            // Only a key that really reaches the instrument: an arpeggiated one went into the phrase.
+            if kind == 0x90 && value > 0 { soundingNotes.liveDown(slot, pitch) }
             guard devices[slot] == .plugin else {
                 playLive(slot, kind: kind, pitch, value)
                 continue
@@ -1825,6 +1849,43 @@ public final class EngineCore: @unchecked Sendable {
         for slot in 0..<slotCapacity { releaseBuiltIns(slot) }
         if let snapshot = current?.snapshot {
             for lane in snapshot.lanes { lane.unit?.allNotesOff(offset: 0) }
+        }
+    }
+
+    /// A seek, a jump or the loop's wrap while the song plays on. In a slot where a key is held
+    /// live, the sequencer ends only the notes it started, each with its own note-off on this
+    /// sample, as a note's own end does; the key sounds on. Every other slot is swept as by
+    /// `releaseAllNotes()`, and so is a slot where that would not be enough: the sequencer moved
+    /// a controller there, the live pedal holds a sequenced note, or the track arpeggiates.
+    private func releaseNotesAfterMove() {
+        guard let snapshot = current?.snapshot else {
+            releaseAllNotes()
+            return
+        }
+        // Paying only empties what is owed, so a kept slot stays kept through the three passes,
+        // and a swept slot reads as not kept.
+        for lane in snapshot.lanes where keepsLiveNotes(lane.slot) {
+            let owed = soundingNotes.owed(lane.slot)
+            payOwed(owed.low, from: 0, on: lane)
+            payOwed(owed.high, from: 64, on: lane)
+        }
+        for slot in 0..<slotCapacity where !keepsLiveNotes(slot) { releaseBuiltIns(slot) }
+        for lane in snapshot.lanes where !keepsLiveNotes(lane.slot) { lane.unit?.allNotesOff(offset: 0) }
+    }
+
+    private func keepsLiveNotes(_ slot: Int) -> Bool {
+        soundingNotes.keepsLiveNotes(slot) && !arps.isOn(slot)
+    }
+
+    /// A note-off for every pitch set in `word`, pitch `base` + bit, through `play` as the
+    /// sequencer's own note-off.
+    private func payOwed(_ word: UInt64, from base: UInt8, on lane: EngineSnapshot.Lane) {
+        var rest = word
+        while rest != 0 {
+            let bit = rest.trailingZeroBitCount
+            rest &= rest - 1
+            play(PlaybackPlan.NoteEvent(tick: 0, pitch: base &+ UInt8(truncatingIfNeeded: bit), kind: .noteOff),
+                 on: lane, offset: 0)
         }
     }
 

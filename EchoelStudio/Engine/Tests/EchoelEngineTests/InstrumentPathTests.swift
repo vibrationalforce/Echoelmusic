@@ -388,6 +388,24 @@ final class InstrumentPathTests: XCTestCase {
         XCTAssertNil(firstSound(Array(heard[1][144_000..<166_000])), "48,000 frames after the wrap nothing is held")
     }
 
+    /// A clip that moves the pedal on the track a key is held live on is swept at the wrap as
+    /// before: the note the clip's pedal holds ends there, and the held key with it (a stated
+    /// limit). Two-bar loop, ending at 192,000: the pedal goes down on tick 5,760 (144,000), the
+    /// note sounds from 6,240 to 6,720 (156,000 to 168,000) and parks under it; the pedal's return
+    /// to rest sits at the placement's end, eight bars, never reached.
+    func testAClipThatHoldsThePedalOnTheLiveTrackIsStillSweptAtTheWrap() throws {
+        let t = try tune([Note(pitch: 55, start: 2 * bar - 1_440, length: 480)],
+                         controls: [ControlChange(kind: .controller(number: 64), start: 2 * bar - 1_920, value: 127)])
+        let core = engine()
+        publish(t, to: core)
+        core.setLoop(0..<(2 * bar))
+        core.play()
+        _ = render(core, frames: 256)
+        core.playLive(slot: 0, status: 0x90, 60, 100)
+        _ = render(core, frames: 240_000 - 256)
+        XCTAssertNil(firstSound(render(core, frames: 4_800)), "the clip's pedalled note and the key ended at the wrap")
+    }
+
     func testTheDrumsAndTheSamplerIgnoreAClipsBendsAndControllers() throws {
         let notes = [Note(pitch: 36, start: 0, length: 960), Note(pitch: 60, start: 480, length: 960)]
         let controls = [ControlChange(kind: .pitchBend, start: 100, value: 16_383),

@@ -91,6 +91,233 @@ final class EngineCoreTests: XCTestCase {
         }
     }
 
+    // A two-bar loop at 120 BPM ends at sample 192,000. A clip note from tick 7,200 (2 · bar − 480,
+    // sample 180,000) for 960 ticks crosses it and starts again only at 372,000, so 48,000 frames
+    // after the wrap only what the move left sounding is heard.
+
+    /// A key held live sounds on through the loop's wrap while the song plays, and the clip's own
+    /// note on the same track ends there: after the key's release nothing is left.
+    func testAKeyHeldLiveSoundsOnThroughTheWrapWhileItsOwnTracksClipNoteEndsThere() throws {
+        let s = try song([[Note(pitch: 55, start: 2 * bar - 480, length: 960)]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.setLoop(0..<(2 * bar))
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        _ = render(engine, frames: 240_000 - 256)
+        XCTAssertEqual(engine.wrapCount, 1)
+        let held = render(engine, frames: 4_800).left
+        XCTAssertGreaterThan(rms(held[...]), 0.001, "the key sounds on through the wrap")
+        engine.playLive(slot: 0, status: 0x80, 60, 0)
+        _ = render(engine, frames: 48_000)
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left),
+                     "the clip's note ended at the wrap, the key at its release")
+    }
+
+    /// The same with the crossing note on another track: that track ends it at the wrap, the
+    /// key on its own track sounds on, and Stop still ends the key.
+    func testAKeyHeldLiveSoundsOnThroughTheWrapWhileAnotherTracksNoteEndsThere() throws {
+        let s = try song([[], [Note(pitch: 48, start: 2 * bar - 480, length: 960)]])
+        var assigner = SlotAssigner(capacity: EngineCore(sampleRate: rate).slotCapacity)
+        assigner.update(for: s.project)
+        let keys = try XCTUnwrap(assigner.slots[s.tracks[0]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.setLoop(0..<(2 * bar))
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: keys, status: 0x90, 60, 100)
+        _ = render(engine, frames: 240_000 - 256)
+        let held = render(engine, frames: 4_800).left
+        XCTAssertGreaterThan(rms(held[...]), 0.001, "the key sounds on through the wrap")
+        engine.stop()
+        _ = render(engine, frames: 48_000)
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left),
+                     "Stop ends the key, and the other track's note ended at the wrap")
+    }
+
+    /// With a key held and a clip note crossing the loop's end on the same track, the output does
+    /// not depend on the buffer size: the clip's note ends on the wrap's sample.
+    func testAKeyHeldThroughTheWrapSoundsTheSameAtEveryBlockSize() throws {
+        let notes = [Note(pitch: 55, start: 3_000, length: 1_500)]
+        var outputs: [[Float]] = []
+        for block in [64, 256, 1_000, 4_096] {
+            let s = try song([notes])
+            let engine = core()
+            publish(s.project, to: engine)
+            engine.setLoop(0..<bar)
+            // Before the first block, so the key lands on sample 0 at every size.
+            engine.playLive(slot: 0, status: 0x90, 60, 100)
+            engine.play()
+            outputs.append(render(engine, frames: 3 * 96_000 + 1_234, block: block).left)
+        }
+        for other in outputs.dropFirst() {
+            XCTAssertEqual(other, outputs[0])
+        }
+    }
+
+    /// The note out hears the clip's note-off on the wrap's frame and no all notes off while a key
+    /// is held, and the key itself is not let go.
+    func testNoteOutHearsTheClipsNoteOffOnTheWrapsFrameAndNoAllNotesOffWhileAKeyIsHeld() throws {
+        let s = try song([[Note(pitch: 55, start: 2 * bar - 480, length: 960)]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.setLoop(0..<(2 * bar))
+        engine.play()
+        // The first block takes the snapshot, whose new track lets go of what it holds; the note
+        // out is chosen after it, so only what follows is heard.
+        _ = render(engine, frames: 256)
+        engine.setNoteOut(slot: 0)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        // One call from sample 256: its frames count from there, so the wrap is frame 191,744.
+        _ = render(engine, frames: 192_000, block: 192_000)
+        var heard: [TimedMIDIMessage] = []
+        while let message = engine.noteOut.pop() { heard.append(message) }
+        let atWrap: [[UInt8]] = heard.filter { $0.frame == 192_000 - 256 }.map(\.bytes)
+        XCTAssertEqual(atWrap, [[0x80, 55, 0]], "the clip's note ends on the wrap's frame")
+        XCTAssertFalse(heard.contains { $0.bytes == [0xB0, 123, 0] }, "no all notes off while the key is held")
+        XCTAssertFalse(heard.contains { $0.bytes == [0x80, 60, 0] }, "the key is not let go")
+    }
+
+    /// A jump and a seek while the song plays leave a key held live sounding; its release ends it.
+    func testAKeyHeldLiveSoundsOnThroughAJumpAndASeekWhileTheSongPlays() throws {
+        let tune = try song([[]])
+        let engine = core()
+        publish(tune.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        _ = render(engine, frames: 4_800)
+        engine.jump(bySamples: 48_000)
+        _ = render(engine, frames: 48_000)
+        let afterJump = render(engine, frames: 4_800).left
+        XCTAssertGreaterThan(rms(afterJump[...]), 0.001, "a jump while playing")
+        engine.seek(toSample: 0)
+        _ = render(engine, frames: 48_000)
+        let afterSeek = render(engine, frames: 4_800).left
+        XCTAssertGreaterThan(rms(afterSeek[...]), 0.001, "a seek while playing")
+        engine.playLive(slot: 0, status: 0x80, 60, 0)
+        _ = render(engine, frames: 48_000)
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the release still ends it")
+    }
+
+    /// The sustain pedal the player holds is not lifted by the wrap on a track whose clip plays
+    /// nothing: the note it holds after its key went up sounds on until the pedal comes up.
+    func testTheLivePedalStaysDownThroughTheWrapOnATrackWhoseClipIsSilent() throws {
+        let tune = try song([[]])
+        let engine = core()
+        publish(tune.project, to: engine)
+        engine.setLoop(0..<bar)
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        engine.playLive(slot: 0, status: 0xB0, 64, 127)
+        _ = render(engine, frames: 120_000 - 256)
+        engine.playLive(slot: 0, status: 0x80, 60, 0)
+        _ = render(engine, frames: 48_000)
+        let pedalled = render(engine, frames: 4_800).left
+        XCTAssertGreaterThan(rms(pedalled[...]), 0.001, "the pedal still holds the note after the wrap")
+        engine.playLive(slot: 0, status: 0xB0, 64, 0)
+        _ = render(engine, frames: 48_000)
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the pedal's release ends the note")
+    }
+
+    /// Stop and Play between two blocks reach the render thread as a jump home while playing: a
+    /// key held live sounds on through it, as through any jump.
+    func testAStopAndAPlayBetweenTwoBlocksAreAJumpHomeThatAKeyHeldLiveSoundsThrough() throws {
+        let tune = try song([[]])
+        let engine = core()
+        publish(tune.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        _ = render(engine, frames: 4_800)
+        engine.stop()
+        engine.play()
+        _ = render(engine, frames: 48_000)
+        let after = render(engine, frames: 4_800).left
+        XCTAssertGreaterThan(rms(after[...]), 0.001, "the key sounds on")
+    }
+
+    /// Where keeping would not be enough, the wrap sweeps as before, and these stay green on the
+    /// code before the rule as after it. The player's pedal is down and the clip's note on the
+    /// same track ended under it a beat before the loop's end (tick 5,760 to 6,720): the
+    /// instrument still holds it, so the wrap ends it and the key with it.
+    func testAClipNoteThatEndedUnderTheLivePedalStillEndsAtTheWrapWithAKeyHeld() throws {
+        let s = try song([[Note(pitch: 55, start: 2 * bar - 1_920, length: 960)]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.setLoop(0..<(2 * bar))
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        engine.playLive(slot: 0, status: 0xB0, 64, 127)
+        _ = render(engine, frames: 240_000 - 256)
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the parked note and the key ended at the wrap")
+    }
+
+    /// The player's pedal is down while the clip's note crosses the loop's end on the same track:
+    /// a note-off would only park it, so the wrap sweeps, the key with it.
+    func testTheLivePedalDownWhileTheClipsNoteSoundsStillSweepsAtTheWrap() throws {
+        let s = try song([[Note(pitch: 55, start: 2 * bar - 480, length: 960)]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.setLoop(0..<(2 * bar))
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        engine.playLive(slot: 0, status: 0xB0, 64, 127)
+        _ = render(engine, frames: 240_000 - 256)
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the wrap swept the slot")
+    }
+
+    /// A pitch the clip sounds at the wrap and a key also holds is one note in the instrument:
+    /// the wrap's note-off ends it, as the clip's own note-off does mid-song. A stated limit.
+    func testAPitchTheClipAlsoSoundsAtTheWrapEndsThereAlthoughItsKeyIsStillDown() throws {
+        let s = try song([[Note(pitch: 60, start: 2 * bar - 480, length: 960)]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.setLoop(0..<(2 * bar))
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        _ = render(engine, frames: 240_000 - 256)
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the shared pitch ended at the wrap")
+    }
+
+    /// A key pressed directly and let go after the track was switched to arpeggiate goes into the
+    /// arpeggiator and leaves the note sounding; the next wrap still sweeps the track. The second
+    /// snapshot keeps the events' revision, so publishing it does not silence the track.
+    func testATrackSwitchedToArpeggiateWhileAKeyIsDownIsStillSweptAtTheWrap() throws {
+        var s = try song([[]])
+        var revisions = EventRevisions()
+        let engine = core()
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: s.project)
+        var plan = PlaybackPlan(compiling: s.project)
+        generation += 1
+        engine.publish(EngineSnapshot(plan: plan, project: s.project, slots: slots.slots, sampleRate: rate,
+                                      generation: generation, revisions: revisions.update(for: plan)))
+        engine.setLoop(0..<bar)
+        engine.play()
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        _ = render(engine, frames: 4_800)
+        try Command.setArpeggio(s.tracks[0], Arpeggio(rate: .quarter)).apply(to: &s.project)
+        plan = PlaybackPlan(compiling: s.project)
+        generation += 1
+        engine.publish(EngineSnapshot(plan: plan, project: s.project, slots: slots.slots, sampleRate: rate,
+                                      generation: generation, revisions: revisions.update(for: plan)))
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x80, 60, 0)
+        _ = render(engine, frames: 80_000)
+        let beforeWrap = render(engine, frames: 4_800).left
+        XCTAssertGreaterThan(rms(beforeWrap[...]), 0.001, "the release went into the arpeggiator")
+        _ = render(engine, frames: 144_000 - 90_112)
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the wrap swept the arpeggiating track")
+    }
+
     private struct Song {
         var project: Project
         var tracks: [TrackID]

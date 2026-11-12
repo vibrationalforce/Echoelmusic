@@ -82,8 +82,34 @@ final class HostedProtocolTests: XCTestCase {
         XCTAssertTrue(allOff.contains(96_000), "the wrap sends all notes off with nothing held: \(allOff)")
     }
 
+    /// With a key held live, the wrap tells a plugin the note-off of its clip's crossing note on
+    /// the wrap's sample instead of all notes off, and does not let go of the key; Stop still sends
+    /// all notes off. The clip's note 62 runs from tick 3,600 (sample 90,000) across the loop's end
+    /// at 96,000.
+    func testAConformingInstrumentHearsItsClipsNoteOffAtTheWrapAndNoAllNotesOffWhileAKeyIsHeldLive() throws {
+        let bar = MusicalTime.ticksPerBar(.common)
+        let (project, track) = try pluginSong(notes: [Note(pitch: 62, velocity: 100, start: bar - 240, length: 960)])
+        let unit = ConstantInstrument(level: 0, sampleRate: rate)
+        let core = engine(project, track: track, unit: unit)
+        core.setLoop(0..<bar)
+        core.play()
+        _ = render(core, frames: 512, block: 512)
+        core.playLive(slot: 0, status: 0x90, 64, 90)
+        _ = render(core, frames: 96_000, block: 512)
+        XCTAssertTrue(unit.heard.contains { $0.frame == 96_000 && $0.status == 0x80 && $0.data == 62 },
+                      "the clip's note ends on the wrap's sample")
+        // The first block took the snapshot, whose new track let go of what it held (frame 0).
+        XCTAssertFalse(unit.heard.contains { $0.frame >= 512 && $0.status == 0xB0 && $0.data == 123 },
+                       "no all notes off while the key is held")
+        XCTAssertFalse(unit.heard.contains { $0.status == 0x80 && $0.data == 64 }, "the key is not let go")
+        core.stop()
+        _ = render(core, frames: 1_024, block: 512)
+        XCTAssertTrue(unit.heard.contains { $0.frame >= 96_512 && $0.status == 0xB0 && $0.data == 123 },
+                      "Stop still ends everything")
+    }
+
     /// A plugin track with one note, one beat in for half a beat: frames 24,000 to 36,000.
-    private func pluginSong() throws -> (Project, TrackID) {
+    private func pluginSong(notes: [Note] = [Note(pitch: 60, velocity: 100, start: 960, length: 480)]) throws -> (Project, TrackID) {
         var project = Project(tempo: 120)
         let track = TrackID(), clip = ClipID()
         let plugin = PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("Pure"),
@@ -91,7 +117,7 @@ final class HostedProtocolTests: XCTestCase {
         try Command.addTrack(id: track, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
         try Command.setInstrumentPlugin(track, plugin).apply(to: &project)
         try Command.createClip(track: track, id: clip, name: "C", length: 4 * MusicalTime.ticksPerBar(.common)).apply(to: &project)
-        try Command.addNotes(clip, [Note(pitch: 60, velocity: 100, start: 960, length: 480)]).apply(to: &project)
+        try Command.addNotes(clip, notes).apply(to: &project)
         try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 0).apply(to: &project)
         return (project, track)
     }
