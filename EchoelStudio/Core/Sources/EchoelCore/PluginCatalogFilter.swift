@@ -94,6 +94,50 @@ public enum PluginCatalogFilter {
     }
 
     /// The maker a component is grouped under; "Other" for one that names none.
+    /// The catalogue from two readings of the system: the component manager's and a direct scan of
+    /// the registered components. A device can answer the manager with Apple's units alone while
+    /// the scan finds the others, so both are read. Each component (type, subtype and maker code)
+    /// is listed once, with the manager's names where both found it; Echoel's own are left out,
+    /// since the app plays them itself. Sorted by name, then maker, then subtype.
+    public static func catalogue(managed: [PluginComponent], scanned: [PluginComponent]) -> [PluginComponent] {
+        var listed: [PluginComponent] = []
+        var seen = Set<Identity>()
+        for component in managed + scanned where component.manufacturer != ownManufacturer {
+            guard seen.insert(Identity(component)).inserted else { continue }
+            listed.append(component)
+        }
+        return listed.sorted { lhs, rhs in
+            let byName = compareNames(lhs.name, rhs.name)
+            if byName != .orderedSame { return byName == .orderedAscending }
+            let byMaker = compareNames(lhs.manufacturerName, rhs.manufacturerName)
+            if byMaker != .orderedSame { return byMaker == .orderedAscending }
+            return lhs.subtype < rhs.subtype
+        }
+    }
+
+    /// A registered component's full name as the system gives it, "Maker: Name", split at the
+    /// first separator. A name without one is all name, with no maker.
+    public static func split(fullName: String) -> (maker: String, name: String) {
+        let whole = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let separator = whole.range(of: ": ") else { return ("", whole) }
+        let maker = String(whole[..<separator.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = String(whole[separator.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? ("", whole) : (maker, name)
+    }
+
+    /// What makes a component the same component, whatever names it is listed under.
+    private struct Identity: Hashable {
+        let type: UInt32
+        let subtype: UInt32
+        let manufacturer: UInt32
+
+        init(_ component: PluginComponent) {
+            type = component.type
+            subtype = component.subtype
+            manufacturer = component.manufacturer
+        }
+    }
+
     public static func makerName(_ component: PluginComponent) -> String {
         let maker = component.manufacturerName.trimmingCharacters(in: .whitespacesAndNewlines)
         return maker.isEmpty ? "Other" : maker

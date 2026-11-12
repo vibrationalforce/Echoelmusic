@@ -39,6 +39,7 @@ struct PluginBrowser: View {
     var isDisabled = false
     let choose: (PluginComponent) -> Void
 
+    @Environment(AudioEngine.self) private var engine
     @State private var isOpen = false
     @State private var query = ""
     @State private var recents: [PluginComponent] = []
@@ -54,7 +55,11 @@ struct PluginBrowser: View {
 
     private var openButton: some View {
         Button {
-            if !isOpen { recents = PluginRecents.load(recentsKind) }
+            if !isOpen {
+                recents = PluginRecents.load(recentsKind)
+                // The system may register a unit after launch without saying so: read again.
+                engine.plugins.refreshCatalog()
+            }
             isOpen.toggle()
             if !isOpen { query = "" }
         } label: {

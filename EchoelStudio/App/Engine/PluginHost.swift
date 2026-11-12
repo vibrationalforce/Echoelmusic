@@ -252,18 +252,43 @@ final class PluginHost {
         }
     }
 
+    /// Every installed component of `type`, read twice: through the component manager and by a
+    /// direct scan of the registered components. Some devices answer the manager with Apple's
+    /// units alone while the scan finds every other maker's (`PluginCatalogFilter.catalogue`).
     nonisolated private static func installed(_ type: OSType) -> [PluginComponent] {
+        PluginCatalogFilter.catalogue(managed: managed(type), scanned: scanned(type))
+    }
+
+    nonisolated private static func managed(_ type: OSType) -> [PluginComponent] {
         let query = AudioComponentDescription(componentType: type, componentSubType: 0, componentManufacturer: 0,
                                               componentFlags: 0, componentFlagsMask: 0)
-        return AVAudioUnitComponentManager.shared().components(matching: query)
-            .filter { $0.audioComponentDescription.componentManufacturer != ownManufacturer }
-            .map { component in
-                let description = component.audioComponentDescription
-                return PluginComponent(type: description.componentType, subtype: description.componentSubType,
-                                       manufacturer: description.componentManufacturer, name: component.name,
-                                       manufacturerName: component.manufacturerName)
+        return AVAudioUnitComponentManager.shared().components(matching: query).map { component in
+            let description = component.audioComponentDescription
+            return PluginComponent(type: description.componentType, subtype: description.componentSubType,
+                                   manufacturer: description.componentManufacturer, name: component.name,
+                                   manufacturerName: component.manufacturerName)
+        }
+    }
+
+    nonisolated private static func scanned(_ type: OSType) -> [PluginComponent] {
+        var query = AudioComponentDescription(componentType: type, componentSubType: 0, componentManufacturer: 0,
+                                              componentFlags: 0, componentFlagsMask: 0)
+        var found: [PluginComponent] = []
+        var next = AudioComponentFindNext(nil, &query)
+        while let component = next {
+            var description = AudioComponentDescription()
+            if AudioComponentGetDescription(component, &description) == noErr {
+                var copied: Unmanaged<CFString>?
+                let fullName = AudioComponentCopyName(component, &copied) == noErr
+                    ? (copied?.takeRetainedValue() as String?) ?? "" : ""
+                let parts = PluginCatalogFilter.split(fullName: fullName)
+                found.append(PluginComponent(type: description.componentType, subtype: description.componentSubType,
+                                             manufacturer: description.componentManufacturer, name: parts.name,
+                                             manufacturerName: parts.maker))
             }
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            next = AudioComponentFindNext(component, &query)
+        }
+        return found
     }
 
     /// Brings the loaded units in line with the song at the engine's sample rate: loads what is

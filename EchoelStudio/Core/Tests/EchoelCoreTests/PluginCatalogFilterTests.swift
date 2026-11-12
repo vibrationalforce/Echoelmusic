@@ -25,6 +25,41 @@ final class PluginCatalogFilterTests: XCTestCase {
 
     /// Without a search: Echoel's own in their order, nothing recent yet, the makers alphabetical
     /// and their units alphabetical within.
+    /// A unit the component manager did not report but the direct scan found is in the catalogue:
+    /// a device that answers the manager with Apple's units alone still lists the others.
+    func testTheCatalogueTakesAUnitTheManagerMissedFromTheScan() {
+        let apple = unit("AUDelay", maker: "Apple", subtype: "dely")
+        let catalogue = PluginCatalogFilter.catalogue(managed: [apple], scanned: [apple, shimmer, amp])
+        XCTAssertEqual(catalogue.map(\.name), ["Amp Room", "AUDelay", "Shimmer"])
+    }
+
+    /// A unit both readings found is listed once, under the names the component manager gave it.
+    func testAUnitBothReadingsFindIsListedOnceWithTheManagersNames() {
+        var scannedShimmer = shimmer
+        scannedShimmer.name = "shimmer (scan)"
+        scannedShimmer.manufacturerName = "ZETA"
+        let catalogue = PluginCatalogFilter.catalogue(managed: [shimmer], scanned: [scannedShimmer])
+        XCTAssertEqual(catalogue, [shimmer])
+    }
+
+    /// Echoel's own units are never in the catalogue, whichever reading reports them: the app
+    /// plays them itself.
+    func testTheCatalogueLeavesEchoelsOwnUnitsOut() {
+        var own = unit("Echoelmusic: Synth", maker: "Echoelmusic", subtype: "eSyn")
+        own.manufacturer = PluginCatalogFilter.ownManufacturer
+        let catalogue = PluginCatalogFilter.catalogue(managed: [own, crusher], scanned: [own])
+        XCTAssertEqual(catalogue, [crusher])
+    }
+
+    /// The system names a registered component "Maker: Name"; the scan splits it at the first
+    /// separator, and a name without one is all name.
+    func testAFullNameSplitsIntoMakerAndName() {
+        XCTAssertTrue(PluginCatalogFilter.split(fullName: "Moog Music: Model D") == ("Moog Music", "Model D"))
+        XCTAssertTrue(PluginCatalogFilter.split(fullName: "Lab: Delay: Tape") == ("Lab", "Delay: Tape"))
+        XCTAssertTrue(PluginCatalogFilter.split(fullName: "Plain Name") == ("", "Plain Name"))
+        XCTAssertTrue(PluginCatalogFilter.split(fullName: "Maker: ") == ("", "Maker:"))
+    }
+
     func testEchoelComesFirstThenTheMakersAlphabetically() {
         let sections = PluginCatalogFilter.sections(installed: [shimmer, amp, crusher, echo], own: [echoelEQ, echoelDelay],
                                                     recents: [], query: "")
