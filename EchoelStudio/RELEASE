@@ -1,31 +1,56 @@
-11.0.0 — how hard a screen key plays comes from where the finger lands; a sliced sample plays on pads; the chords of the song's key under one finger
+11.0.0 — a key held through the loop's wrap sounds on; other makers' Audio Units in the lists; a Samples folder to hear sounds from before placing them; the top bar in two rows on most iPhones in portrait, with the Echoelmusic mark
 
-What is new since 10072. Each line is code that the Echoel Studio run builds; the rules have tests
+What is new since 10073. Each line is code that the Echoel Studio run builds; the rules have tests
 of their own, and nothing here is device-verified yet.
-- Keys: where a finger lands on a screen key sets how hard it plays — softer near the top of the
-  key, harder near its foot, the middle as before (100). A white key counts from the foot of the
-  black keys down; a hex cell over its own length. Song menu → "Touch Loudness" (on) turns it
-  off, and then every key plays as before. Pads play 100, and so does a key activated with
-  VoiceOver.
-- Keys: in a song with a key and a scale, the piano keys and the hex cells show it — a filled
-  dot on the root, a ring on every other tone of the scale. VoiceOver says "Root of the key" or
-  "In the scale". It shows and does not change what sounds; "Keys Follow Scale" stays the switch
-  for that.
-- Keys: a Sampler track whose sample is cut with "Slice to Pads" gets one pad per slice instead
-  of piano keys, the first slice at the bottom left. "Keys Follow Scale" no longer bends the
-  notes of a sliced sample, so every pad plays its own slice. VoiceOver reads "Pad 1" first.
-- Keys: the button at the top right of the keys ("Play On") chooses Piano Keys, Hex Keyboard or
-  Chords. Chords shows the chords of the song's key as pads, each named (VoiceOver: "D minor");
-  a finger on a pad plays that chord, voiced close together with its root below, for as long as
-  the finger stays, and one chord sounds at a time. A song without a key shows "Give the song a
-  key in the Song menu to play its chords here."
-- Live notes: when hundreds of live events arrive at once and one is lost, every sounding note
-  and an arpeggiator's phrase end, where a lost release could leave a note hanging until Stop.
-- Echoelmusic Plugins: the free effects are counted from the one list — "25 effects, free in
-  every host: EQ, Compressor, Delay, Reverb and 21 more."
+- Playing live: a key held on the screen (piano keys, hex cells, chord pads) or on a MIDI keyboard
+  sounds on when the song loop wraps, when you seek while the song plays, and when a MIDI clock, a
+  timecode or a Jam moves the playing song to keep it in step; on that track only the song's own
+  notes end there. The track is still cleared as before when it arpeggiates (the arpeggio of the
+  keys you hold plays on), when its clip moved a controller or the pitch wheel, and when the live
+  sustain pedal holds one of the song's notes; in those last two the held key ends too. With every
+  key up, notes that only the pedal holds end there as well. A clip note on the key's own pitch
+  ends the key with it. Launching or stopping a clip on that track still ends the key. Stop, a
+  pause and a seek while stopped end every sounding note, as before; on a track that arpeggiates,
+  keys still held go on arpeggiating.
+- Playing live: a key pressed before its track begins to arpeggiate ends when you let go of it.
+  With MPE Out sending to a device, choosing another track for the keys sends that device all
+  notes off once, so a note held across the change does not hang there.
+- Audio Units: the Sound page's "Audio Unit Instrument" list and the "Add Effect" list (Mixer → a
+  track's Effects) now read the installed instruments and audio effects two ways, through the
+  system's list of plugins and by asking the system for each registered unit directly, and show a
+  unit found both ways once, under its maker ("Other" where the system names none; one used lately
+  also shows under "Recent"). The list is read again each time it opens. Whether other makers'
+  units, missing until now, appear is check 2. MIDI effects and generators are not listed. As
+  before, Echoelmusic's own units are not listed again among them: Add Effect shows Echoelmusic's
+  effects first, under "Echoelmusic".
+- Browser (Song menu → Browser…): it also lists the Samples folder, which it makes the first time
+  it opens; from then on the Files app shows it as Echoelmusic › Samples (under On My iPhone or On
+  My iPad). Subfolders are included: each sound is listed by its name, with "Samples › Drums" in
+  the line under it. From the Samples folder it lists up to 2,000 sounds, only files that open as
+  audio, and says so when the folder holds more; nothing there is changed or removed, and placing
+  a sound copies it into the song. A tap on a sound's name plays it, as its Listen button does, and
+  a second tap stops it; a sound from outside the open song, as every Samples sound is, plays its
+  first half minute. VoiceOver reads a sound's name and details as one button, apart from its
+  Listen and Place buttons. The browser reads again when you come back from the Files app, and on
+  pull to refresh.
+- Top bar: on an iPhone in portrait it keeps two rows, with the tempo in the second, where it fell
+  to a third; the tool tiles there are narrower, 44 points wide instead of 60, and so is the area
+  that takes their taps; their height is unchanged. While the Heart Rate Strap, the Camera or Apple
+  Health is the body source, the pulse there shows the heart with its number, or a dash where its
+  words stood. On the iPhone SE, 12 mini, 13 mini, XS and 11 Pro (screens 375 points wide) it stays
+  three rows at the standard text size, and a larger text size or Display Zoom can give another
+  iPhone three rows too. A long song name is cut short instead of adding a row. On an 11-inch iPad
+  in landscape the bar can now take two rows where it took one, to make room for the mark.
+- The Echoelmusic mark, the E over three waves of the app icon, is back: at the front of the song
+  menu, which it opens, and at the top of About.
 
-Previous: 11.0.0 (10072) — the video window dims footage that strobes; Stop stops at once after
-a take; 10071 — one switch for everything of the body that leaves. Earlier: git history.
+Known limit: a MIDI take does not record a key held across the loop's end as it was heard. While
+the record line shows "Loop Record · take n" (a loop of two bars or longer), the note ends at the
+loop's end and the next take does not have it. On a one-bar loop, a key let go after the loop
+came round is recorded shorter than it was held.
+
+Previous: 11.0.0 (10073) — touch loudness, slice pads, the chords of the song's key; 10072 — the
+video window dims footage that strobes. Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -33,16 +58,25 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (answer each yes or no):
-1. Open Keys on a synth track and tap one white key twice: once near its lower edge, once just
-   below the black keys. Is the lower tap clearly louder? And with Song menu → Touch Loudness
-   off, do both taps sound the same?
-2. Give the song a key in the Song menu (for example D minor): do the keys show a filled dot on
-   every D and a ring on the other tones of the scale, and nothing on the rest?
-3. On a Sampler track, cut a drum loop with Slice to Pads and open Keys: are there pads instead
-   of keys, does the bottom-left pad play the loop's first slice, and does each pad still play
-   its own slice with Keys Follow Scale on?
-4. Play On → Chords, in a song with a key: hold one pad, then lift and hold another, then slide
-   quickly between two. Does each chord sound for as long as you hold it, end when you lift, and
-   is only one chord ever heard at a time, with no note left ringing?
-5. With VoiceOver on: do the chord pads read their names ("D minor" …), and do the slice pads
-   read from "Pad 1" at the bottom left?
+1. Loop on, a synth track on the Init sound or Warm Pad with its Arpeggiator off, whose clip has
+   notes only (drawn, or played on the screen keys: a take from a MIDI keyboard keeps its pedal and
+   wheel, and then the key ends at the wrap, as stated above). Without the sustain pedal, hold a key
+   the clip never plays (on the screen keys or a MIDI keyboard) across the loop's end. Does it sound
+   on without a click while the song's notes start again, and end when you let go? With a MIDI
+   keyboard, also tap Arrange's ruler while holding: does the key sound on there too?
+2. With an AUv3 instrument or effect of another maker installed that another host app on this
+   device already lists: an instrument track's Sound page → Audio Unit Instrument, or Mixer → a
+   track's Effects → Add Effect. Is it listed below "Audio Units" (in its maker's section or under
+   "Other"), and when you choose it, does it load and sound? For a no, say which: not listed, or
+   listed but did not load (and the message shown).
+3. Song menu → Browser… once, then close it: this makes the Samples folder. Files app → On My
+   iPhone → Echoelmusic → Samples: put a folder of a few WAV files there, come back to
+   Echoelmusic, Song menu → Browser…. Is each listed by its name, with "Samples › <folder>" in the
+   line under it, does a tap on a name play it (half a minute at most) and a second tap stop it,
+   and can you place one on a track?
+4. iPhone in portrait, text size and Display Zoom at their defaults: is the top bar two rows, with
+   the tempo in the second, and are its tiles still easy to hit? (On an iPhone SE, 12 mini,
+   13 mini, XS or 11 Pro, three rows are expected.) Does the Echoelmusic mark at its front open the
+   song menu?
+5. With VoiceOver on, in the Browser: does a sound's name read as a button, and does a double tap
+   play it and a second one stop it?
