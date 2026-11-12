@@ -6,9 +6,13 @@ import SwiftUI
 /// strap and the camera (wave W1) read alike; the chooser keeps one of them on at a time.
 struct PulseReading: View {
     /// Whether a source without a number shows its words ("Searching", "Hold still"). The phone's
-    /// rows show "–" instead: words change the row's width as they change and would make the bar
-    /// jump between two and three rows. VoiceOver says the words either way.
+    /// rows show "–" instead: the words need more room than a phone's top row has. VoiceOver says
+    /// the words either way.
     var showsWords = true
+    /// The reading keeps one width whatever it shows, so a word or a number arriving never moves
+    /// the bar to another shape: the heart and three digits, or the heart and the longest word.
+    @ScaledMetric(relativeTo: .headline) private var numberWidth: CGFloat = Theme.Size.pulseReading
+    @ScaledMetric(relativeTo: .subheadline) private var wordsWidth: CGFloat = Theme.Size.pulseWords
 
     @Environment(HeartRateStrap.self) private var strap
     @Environment(CameraPulseSource.self) private var camera
@@ -28,15 +32,21 @@ struct PulseReading: View {
     private func reading(beatsPerMinute: Int?, words: String, label: String) -> some View {
         let text = beatsPerMinute.map { "\($0)" } ?? (showsWords ? words : "–")
         let spoken = beatsPerMinute.map { "\($0) beats per minute" } ?? words
+        let isWord = beatsPerMinute == nil && showsWords
         return HStack(spacing: Theme.Space.xs) {
             Image(systemName: "heart.fill")
+                .font(Theme.Font.label)
                 .foregroundStyle(beatsPerMinute == nil ? Theme.Color.textSecondary : Theme.Color.accent)
             Text(text)
-                .font(Theme.Font.value)
+                .font(isWord ? Theme.Font.label : Theme.Font.value)
                 .foregroundStyle(beatsPerMinute == nil ? Theme.Color.textSecondary : Theme.Color.text)
                 .monospacedDigit()
                 .lineLimit(1)
+                .minimumScaleFactor(isWord ? 0.85 : 0.9)
+                .truncationMode(.tail)
         }
+        .frame(width: showsWords ? wordsWidth : numberWidth, alignment: .trailing)
+        .padding(.leading, Theme.Space.s)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(label)
         .accessibilityValue(spoken)

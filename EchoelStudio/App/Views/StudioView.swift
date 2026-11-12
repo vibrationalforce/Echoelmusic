@@ -311,6 +311,7 @@ struct TransportBar: View {
     @State private var clickOn = true
     @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
     @AppStorage(FieldWindow.shownKey) private var showsFieldWindow = true
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     /// What the Keys switch does under the chosen view; dimmed where the view settles it.
     var keysSwitch = StudioView.KeysSwitch.decides
 
@@ -326,89 +327,165 @@ struct TransportBar: View {
     var body: some View {
         VStack(spacing: 0) {
             // Every control in sight, nothing clipped, no sideways scroll (device video 10021) —
-            // and on a phone in portrait at most two rows (founder round 2): one row where it
-            // fits (iPad, landscape); else the song row over the transport with every switch;
-            // else the phone's two rows — song, pulse, Undo/Redo and More; Play, Record, Loop
-            // and the tempo — with the rare switches in More. Only large text wraps further.
-            // The phone's rows come twice: first as they always were (60 pt tiles: iPad mini and
-            // the 11-inch iPads in portrait), then with compact tiles (44 pt, no side padding).
-            // With 60 pt tiles the two rows need about 428 pt, more than any iPhone in portrait
-            // offers (at most 416), and every iPhone fell to three rows with the tempo alone on
-            // the last. The compact rows end in a flexible frame rather than a Spacer, which saves
-            // the 8 pt gap before it: about 356 pt, so iPhones from 390 pt keep a margin for a
-            // tempo with two decimals or a clock that moves it.
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: Theme.Space.s) {
-                    transportGroup
-                    TempoField()
-                    switchesGroup
-                    songRow(more: false)
-                }
-                VStack(spacing: Theme.Space.xs) {
-                    songRow(more: false)
-                    HStack(spacing: Theme.Space.s) {
-                        transportGroup
-                        TempoField()
-                        switchesGroup
-                        Spacer(minLength: 0)
+            // and on a phone in portrait at most two rows (founder round 2). The bar is two units
+            // and a quiet header (2026-11-12; the tiled bar of build 10074 read as seven loose
+            // boxes): the deck (Play, Record, Loop) and the display (position, tempo, Tap), each
+            // inside one outline, both rows on the same two edges. The first shape that fits:
+            // one row with every switch (iPad, wide landscape); on a phone in landscape one row
+            // with the switches in More; the song row over the deck, the display and the
+            // switches; the phone's two rows, where the position takes what the row leaves so
+            // the display ends on the right edge under More; three rows at large text.
+            // Every width the choice measures is a fixed frame, so neither the playhead, the
+            // tempo nor a pulse word can move the bar between shapes.
+            Group {
+                if verticalSizeClass == .compact {
+                    ViewThatFits(in: .horizontal) {
+                        oneRow
+                        oneRowWithMore
+                        twoRowsWithSwitches
+                        twoRowsCompactDisplay
+                        phoneRows
+                        threeRows
+                    }
+                } else {
+                    ViewThatFits(in: .horizontal) {
+                        oneRow
+                        twoRowsWithSwitches
+                        twoRowsCompactDisplay
+                        phoneRows
+                        threeRows
                     }
                 }
-                VStack(spacing: Theme.Space.xs) {
-                    songRow(more: true)
-                    HStack(spacing: Theme.Space.s) {
-                        transportGroup
-                        TempoField(showsSteps: false)
-                        Spacer(minLength: 0)
-                    }
-                }
-                VStack(spacing: Theme.Space.xs) {
-                    songRow(more: true)
-                    HStack(spacing: Theme.Space.s) {
-                        transportGroup
-                        TempoField(showsSteps: false)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .environment(\.compactToolButtons, true)
-                VStack(spacing: Theme.Space.xs) {
-                    songRow(more: true)
-                    transportGroup
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    TempoField(showsSteps: false)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .environment(\.compactToolButtons, true)
             }
             .padding(.horizontal, Theme.Space.m)
-            .padding(.vertical, Theme.Space.xs)
             .frame(minHeight: Theme.Size.transportHeight)
             // Under the controls, not over them: laid over the strip, a message of two or three
-            // lines covered Play and Record and took their taps (review 2026-10-21).
+            // lines covered Play and Record and took their taps (review 2026-10-21). They start on
+            // the bar's left edge, as its rows do.
             status
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, Theme.Space.m)
         }
         .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
         .background(Theme.Color.surface)
     }
 
-    /// The song and its menu, the pulse while a body source is on, Undo and Redo. The song's name
-    /// takes what room is left and truncates; nothing else gives way.
+    /// iPad and wide landscape: the song, the deck, the display with its steps, the switches, the
+    /// pulse in words, Undo and Redo. The song owns the slack, so its name truncates last.
+    private var oneRow: some View {
+        HStack(spacing: 0) {
+            songMenu
+            deck(stretches: false)
+                .padding(.leading, Theme.Space.m)
+            display(.large, steps: true, fills: false)
+                .padding(.leading, Theme.Space.s)
+            switchesGroup
+                .padding(.leading, Theme.Space.m)
+            PulseReading(showsWords: true)
+            editGroup(more: false)
+        }
+        .padding(.vertical, Theme.Space.xs)
+    }
+
+    /// A phone in landscape: one row, the switches in More, the pulse as a number or a dash.
+    private var oneRowWithMore: some View {
+        HStack(spacing: 0) {
+            songMenu
+            deck(stretches: false)
+                .padding(.leading, Theme.Space.m)
+            display(.regular, steps: false, fills: false)
+                .padding(.leading, Theme.Space.s)
+            PulseReading(showsWords: false)
+            editGroup(more: true)
+        }
+        .padding(.vertical, Theme.Space.xs)
+    }
+
+    /// The song row over the deck, the display with its steps and the switches.
+    private var twoRowsWithSwitches: some View {
+        VStack(spacing: Theme.Space.s) {
+            songRow(more: false)
+            HStack(spacing: 0) {
+                deck(stretches: false)
+                display(.large, steps: true, fills: false)
+                    .padding(.leading, Theme.Space.s)
+                Spacer(minLength: Theme.Space.m)
+                switchesGroup
+            }
+        }
+        .padding(.bottom, Theme.Space.s)
+    }
+
+    /// Between a phone and a tablet (iPad mini in portrait, a small phone in landscape with the
+    /// pulse): the switches stay in sight beside a display of fixed width, instead of the position
+    /// stretching across the row.
+    private var twoRowsCompactDisplay: some View {
+        VStack(spacing: Theme.Space.s) {
+            songRow(more: false)
+            HStack(spacing: 0) {
+                deck(stretches: false)
+                display(.regular, steps: false, fills: false)
+                    .padding(.leading, Theme.Space.s)
+                Spacer(minLength: Theme.Space.m)
+                switchesGroup
+            }
+        }
+        .padding(.bottom, Theme.Space.s)
+    }
+
+    /// The phone in portrait: the song row with More, then the deck and the display, which ends on
+    /// the right edge under More.
+    private var phoneRows: some View {
+        VStack(spacing: Theme.Space.s) {
+            songRow(more: true)
+            HStack(spacing: Theme.Space.s) {
+                deck(stretches: false)
+                display(.regular, steps: false, fills: true)
+            }
+        }
+        .padding(.bottom, Theme.Space.s)
+    }
+
+    /// Large text on a narrow phone: the song row, the deck from edge to edge, the display under it.
+    private var threeRows: some View {
+        VStack(spacing: Theme.Space.s) {
+            songRow(more: true)
+            deck(stretches: true)
+            display(.regular, steps: false, fills: true)
+        }
+        .padding(.bottom, Theme.Space.s)
+    }
+
+    /// The song and its menu, the pulse while a body source is on, Undo and Redo (and More). The
+    /// song owns the row's slack, so the pulse and the edit keys end on the right edge.
     private func songRow(more: Bool) -> some View {
-        HStack(spacing: Theme.Space.s) {
-            SongMenu()
-                .layoutPriority(-1)
-            Spacer(minLength: 0)
+        HStack(spacing: 0) {
+            songMenu
             PulseReading(showsWords: !more)
+            editGroup(more: more)
+        }
+    }
+
+    /// The song's menu as the row's one flexible part: no Spacer beside it, so its name keeps the
+    /// room the row has and truncates only when the row has none. The slack is not a tap target.
+    private var songMenu: some View {
+        SongMenu()
+            // Measured at one width whatever the song is called, so a name never picks the shape.
+            .frame(idealWidth: Theme.Size.songMenuIdeal, maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Undo, Redo and, where the switches have no room, More: bare glyphs, as in a navigation bar.
+    private func editGroup(more: Bool) -> some View {
+        HStack(spacing: 0) {
             Button { store.undo() } label: { Image(systemName: "arrow.uturn.backward") }
-                .buttonStyle(ToolButtonStyle())
+                .buttonStyle(BarQuietStyle())
                 .shortcut(.undo)
                 .disabled(!store.canUndo)
                 .accessibilityLabel(store.undoTitle.map { "Undo \($0)" } ?? "Undo")
 
             Button { store.redo() } label: { Image(systemName: "arrow.uturn.forward") }
-                .buttonStyle(ToolButtonStyle())
+                .buttonStyle(BarQuietStyle())
                 .shortcut(.redo)
                 .disabled(!store.canRedo)
                 .accessibilityLabel(store.redoTitle.map { "Redo \($0)" } ?? "Redo")
@@ -442,8 +519,8 @@ struct TransportBar: View {
             Image(systemName: "ellipsis")
         }
         .menuStyle(.button)
-        .buttonStyle(ToolButtonStyle(isActive: writer.isWriting || midi.isLearning,
-                                     fill: writer.isWriting ? .recording : .chosen))
+        .buttonStyle(BarQuietStyle(isActive: writer.isWriting || midi.isLearning,
+                                   fill: writer.isWriting ? .recording : .chosen))
         .accessibilityLabel("More")
         .accessibilityValue(writer.isWriting ? "Writing automation" : midi.isLearning ? "MIDI Learn on" : "")
     }
@@ -451,10 +528,11 @@ struct TransportBar: View {
     /// The jam's host pressed Play and waits for the next bar line: Stop calls the start off.
     private var countsIn: Bool { jam?.startIsPending == true }
 
-    /// Play, Record and Loop, side by side in every layout. With phones in a jam this phone
-    /// hosts, Play waits for the jam's next bar line, so everyone starts together.
-    private var transportGroup: some View {
-        HStack(spacing: Theme.Space.s) {
+    /// Play, Record and Loop: the deck, one outline in every layout. With phones in a jam this
+    /// phone hosts, Play waits for the jam's next bar line, so everyone starts together.
+    /// `stretches` shares a row's width between the three (the three-row bar).
+    private func deck(stretches: Bool) -> some View {
+        BarGroup {
             Button {
                 if engine.isStalled {
                     engine.restartAudio()
@@ -468,25 +546,39 @@ struct TransportBar: View {
             } label: {
                 Image(systemName: engine.isStalled ? "arrow.clockwise" : engine.isPlaying || countsIn ? "stop.fill" : "play.fill")
             }
-            // Playing is a signal, not a choice: the glyph turns green on the plain tile.
-            .buttonStyle(ToolButtonStyle(isRunning: engine.isPlaying || countsIn))
+            // Playing is a signal, not a choice: the glyph turns green on the plain key.
+            .buttonStyle(BarCellStyle(signal: playSignal, width: stretches ? .stretch : .key(Theme.Size.playKey)))
             .shortcut(.playStop)
             .accessibilityLabel(engine.isStalled ? "Restart Audio" : engine.isPlaying || countsIn ? "Stop" : "Play")
             .accessibilityValue(countsIn ? "Starts on the next bar" : "")
             // When audio could not start, this is the way to try again (ultra-audit R1).
             .disabled(!engine.isRunning && !engine.isStalled)
 
-            RecordButton()
+            RecordButton(width: stretches ? .stretch : .touch)
                 .shortcut(.record)
 
             Button { engine.setLoopsSong(!engine.loopsSong) } label: { Image(systemName: "repeat") }
-                .buttonStyle(ToolButtonStyle(isActive: engine.loopsSong))
+                .buttonStyle(BarCellStyle(isActive: engine.loopsSong, width: stretches ? .stretch : .touch))
                 .shortcut(.loop)
                 .accessibilityLabel("Loop")
                 .accessibilityValue(engine.loopsSong ? (engine.timecodeRuns ? "On, resting while timecode runs" : "On") : "Off")
                 .accessibilityHint("Plays the song from bar 1 again after its last bar.")
+        }
+    }
 
-            PositionReadout()
+    /// Play's glyph: amber while audio must be restarted, green while the song plays or a jam's
+    /// start waits for its bar.
+    private var playSignal: BarCellStyle.Signal {
+        if engine.isStalled { return .attention }
+        return engine.isPlaying || countsIn ? .running : .plain
+    }
+
+    /// The position and the tempo with Tap (and − + where there is room): the display, one outline
+    /// read like one instrument's readout. `fills` lets the position take what the row leaves.
+    private func display(_ numerals: BarNumerals, steps: Bool, fills: Bool) -> some View {
+        BarGroup {
+            PositionReadout(numerals: numerals, fills: fills)
+            TempoField(showsSteps: steps, numerals: numerals)
         }
     }
 
@@ -501,17 +593,20 @@ struct TransportBar: View {
         }
     }
 
-    /// The switches: click, MIDI Learn, keys, Field window, automation writing.
+    /// The switches: click, MIDI Learn, keys, Field window, automation writing — one outline, each
+    /// lit on its own.
     private var switchesGroup: some View {
-        HStack(spacing: Theme.Space.s) {
+        BarGroup {
             Button {
                 clickOn.toggle()
                 engine.setClickEnabled(clickOn)
             } label: {
                 Image(systemName: "metronome")
             }
-            .buttonStyle(ToolButtonStyle(isActive: clickOn))
-            // Held: how many bars Record counts in before a stopped song starts.
+            .buttonStyle(BarCellStyle(isActive: clickOn))
+            // Held: how many bars Record counts in before a stopped song starts. The lifted
+            // preview is the key, not the group around it.
+            .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: Theme.Radius.small))
             .contextMenu { countInPicker }
             .accessibilityLabel("Click")
             .accessibilityValue(clickOn ? "On" : "Off")
@@ -520,7 +615,7 @@ struct TransportBar: View {
             MIDILearnButton()
 
             Button { showsKeys.toggle() } label: { Image(systemName: "pianokeys") }
-                .buttonStyle(ToolButtonStyle(isActive: showsKeys && keysSwitch == .decides))
+                .buttonStyle(BarCellStyle(isActive: showsKeys && keysSwitch == .decides))
                 .disabled(keysSwitch != .decides)
                 .accessibilityLabel("Keys")
                 .accessibilityValue(keysValue)
@@ -528,7 +623,7 @@ struct TransportBar: View {
 
             // The Field as a small window over the other views (wave W3).
             Button { showsFieldWindow.toggle() } label: { Image(systemName: "rectangle.inset.bottomright.filled") }
-                .buttonStyle(ToolButtonStyle(isActive: showsFieldWindow))
+                .buttonStyle(BarCellStyle(isActive: showsFieldWindow))
                 .accessibilityLabel("Field Window")
                 .accessibilityValue(showsFieldWindow ? "Shown" : "Hidden")
                 .accessibilityHint("Shows the Field as a small window over the other views.")
@@ -537,8 +632,9 @@ struct TransportBar: View {
             Button { writer.setWriting(!writer.isWriting) } label: {
                 Label("Write", systemImage: "pencil.line")
                     .labelStyle(.titleAndIcon)
+                    .font(Theme.Font.label)
             }
-            .buttonStyle(ToolButtonStyle(isActive: writer.isWriting, fill: .recording))
+            .buttonStyle(BarCellStyle(isActive: writer.isWriting, fill: .recording, padsLabel: true))
             .accessibilityLabel("Write Automation")
             .accessibilityValue(writer.isWriting ? "On" : "Off")
             .accessibilityHint("While playing, moving a control writes it into the song.")
@@ -546,7 +642,7 @@ struct TransportBar: View {
     }
 
     private var status: some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             // Work that is not on the disk: nothing else on this strip hides it, MIDI Learn included.
             if let unsaved = documents.saveError {
                 Text(unsaved)
@@ -627,7 +723,7 @@ struct TransportBar: View {
     private var messages: some View {
         let notice = Self.notices(engine.notice, engine.plugins.notice)
         let quiet = engine.lastError == nil && documents.lastError == nil
-        return VStack(spacing: 0) {
+        return VStack(alignment: .leading, spacing: 0) {
             if let audio = engine.lastError {
                 Text(audio)
                     .font(Theme.Font.caption)
@@ -741,25 +837,52 @@ private struct PositionReadout: View {
     @Environment(ProjectStore.self) private var store
     @Environment(RecordController.self) private var recording
     @Environment(DocumentController.self) private var documents
+    /// The bar's numeral style, shared with the tempo beside it.
+    var numerals: BarNumerals = .regular
+    /// Takes what the row leaves (the phone's rows), never less than the width it is measured at.
+    var fills = false
+    @ScaledMetric(relativeTo: .headline) private var cellWidth: CGFloat = Theme.Size.positionCell
+    @ScaledMetric(relativeTo: .headline) private var idealWidth: CGFloat = Theme.Size.positionIdeal
+    @ScaledMetric(relativeTo: .title2) private var largeWidth: CGFloat = Theme.Size.positionCellLarge
 
     var body: some View {
-        // Both read here, outside the timeline: a Stop or a locate redraws the resting position.
+        // Both read here, outside the timeline: a Stop or a locate redraws the resting position,
+        // and the start or end of a take turns the digits red or back.
         let playing = engine.isPlaying
         let resting = Double(engine.restingTick)
         let project = store.project
+        let writing = recording.isRecording
+        let width = numerals == .large ? largeWidth : cellWidth
         TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: !playing)) { _ in
             let position = TimelineGeometry.position(atPosition: playing ? engine.heardTick(in: project) : resting,
                                                      meter: engine.playedMeterMap(of: project))
             Button { backToStart() } label: {
-                Text(position.text)
-                    .font(Theme.Font.value)
-                    .foregroundStyle(Theme.Color.text)
-                    .lineLimit(1)
-                    .fixedSize()
-                    .frame(minWidth: 72, minHeight: Theme.Size.touch, alignment: .leading)
-                    .contentShape(Rectangle())
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(position.text)
+                        .font(numerals.font)
+                        .foregroundStyle(writing ? Theme.Color.record : Theme.Color.text)
+                        .lineLimit(1)
+                        // Only past the widest common position ("999.16.4"), which the cell holds
+                        // at full size on every phone: a reading is not the part that gives way.
+                        .minimumScaleFactor(0.75)
+                    // An empty unit line, so the position stands on the tempo's baseline.
+                    Text(TempoField.unit(.song))
+                        .font(Theme.Font.caption)
+                        .hidden()
+                        .accessibilityHidden(true)
+                }
+                .padding(.leading, Theme.Space.s)
+                .padding(.trailing, Theme.Space.xs)
+                .frame(minWidth: fills ? Swift.min(idealWidth, Theme.Size.positionIdeal) : width,
+                       idealWidth: fills ? idealWidth : width,
+                       maxWidth: fills ? .infinity : width, minHeight: Theme.Size.touch, maxHeight: .infinity,
+                       alignment: .leading)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            // The ground outside the plain style, so a press dims the digits and never lets the
+            // group's hairline colour show through the cell.
+            .background(Theme.Color.surface)
             .accessibilityLabel("Position")
             .accessibilityValue(position.spoken)
             .accessibilityHint(playing ? "" : "Goes back to bar 1.")
@@ -778,6 +901,8 @@ private struct PositionReadout: View {
 /// Starts a take on the armed track, or ends the one running.
 struct RecordButton: View {
     @Environment(RecordController.self) private var recording
+    /// The key's width in the deck.
+    var width: BarCellStyle.Width = .touch
 
     var body: some View {
         Button {
@@ -789,7 +914,8 @@ struct RecordButton: View {
         } label: {
             Image(systemName: "record.circle")
         }
-        .buttonStyle(ToolButtonStyle(isActive: recording.isRecording, fill: .recording))
+        // Red before it records, as in the earlier instrument; the red tile while it does.
+        .buttonStyle(BarCellStyle(isActive: recording.isRecording, fill: .recording, signal: .record, width: width))
         .accessibilityLabel(recording.isRecording ? "Stop Recording" : "Record")
         .accessibilityHint(recording.armedTrack == nil ? "Records the track the keys play." : "")
         .disabled(!recording.canRecord)
@@ -922,76 +1048,103 @@ struct TempoField: View {
     @Environment(FlowController.self) private var flow: FlowController?
     @State private var dragStart: Double?
     @State private var taps = TapTempo()
-    @ScaledMetric(relativeTo: .title2) private var valueWidth: CGFloat = 72
+    @ScaledMetric(relativeTo: .headline) private var cellWidth: CGFloat = Theme.Size.tempoCell
+    @ScaledMetric(relativeTo: .title2) private var largeWidth: CGFloat = Theme.Size.tempoCellLarge
     /// The − and + buttons. A phone in portrait leaves them out: the number itself is dragged,
     /// typed on the pad, or adjusted by VoiceOver, and Tap stays.
     var showsSteps = true
+    /// The bar's numeral style, shared with the position beside it.
+    var numerals: BarNumerals = .regular
 
     private static let gestureKey = "project.tempo"
     /// Taps get their own key, so a drag or step after a run of taps is its own undo step.
     private static let tapKey = "project.tempo.tap"
 
+    /// Cells of the bar's display: the tempo, its steps where there is room, and Tap.
     var body: some View {
-        HStack(spacing: Theme.Space.xs) {
+        HStack(spacing: Theme.Space.hairline) {
+            valueCell
             if showsSteps {
-                Button { nudge(-1) } label: { Image(systemName: "minus") }
-                    .buttonStyle(ToolButtonStyle())
-                    .accessibilityLabel("Slower")
-                    .disabled(followsClock)
+                stepKey(-1)
+                stepKey(1)
             }
-
-            VStack(spacing: 0) {
-                // To the hundredth, as typed (100,25), with only the places it needs (120, 100,5).
-                Text(NumberText.string(shownTempo, decimalsUpTo: 2))
-                    .font(Theme.Font.valueLarge)
-                    .foregroundStyle(isTyped ? Theme.Color.accent : Theme.Color.text)
-                // "EXT" stands where the unit stands, in the same few letters' room: while an
-                // external MIDI clock sets the tempo, the number is the clock's — "JAM" while a jam's
-                // host sets it, "FLOW" while the pulse does (T1: the source is always named). A word
-                // would not fit under the number; VoiceOver says it in full below, and the line
-                // under the transport says "Following the Jam."
-                Text(Self.unit(source))
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.textSecondary)
-            }
-            // A full touch target to tap or drag, not the number's own ~42 pt (W18, m14).
-            .frame(minWidth: valueWidth, minHeight: Theme.Size.touch)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 2)
-                    .onChanged { value in
-                        let start = dragStart ?? store.project.tempo
-                        dragStart = start
-                        // 4 pt per BPM, rounded to tenths.
-                        let target = ((start - Double(value.translation.height) / 4) * 10).rounded() / 10
-                        set(target)
-                    }
-                    .onEnded { _ in
-                        dragStart = nil
-                        store.endGesture()
-                    }
-            )
-            .onTapGesture(perform: typeTempo)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Tempo")
-            .accessibilityValue(NumberText.string(shownTempo, decimalsUpTo: 2, unit: "BPM") + Self.spoken(source))
-            .accessibilityAdjustableAction { direction in
-                nudge(direction == .increment ? 1 : -1)
-            }
-            .accessibilityAction(named: "Type a Tempo", typeTempo)
-
-            if showsSteps {
-                Button { nudge(1) } label: { Image(systemName: "plus") }
-                    .buttonStyle(ToolButtonStyle())
-                    .accessibilityLabel("Faster")
-                    .disabled(followsClock)
-            }
-
-            Button("Tap", action: tap)
-                .buttonStyle(ToolButtonStyle())
-                .accessibilityHint("Tap in time to set the tempo.")
-                .disabled(followsClock)
+            tapCell
         }
+    }
+
+    /// The number over its source ("BPM", or a lock and EXT, JAM or FLOW while a clock sets the
+    /// pace), at a fixed width that holds "888,88": dragged, typed on the pad, or adjusted by
+    /// VoiceOver.
+    private var valueCell: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // To the hundredth, as typed (100,25), with only the places it needs (120, 100,5).
+            Text(NumberText.string(shownTempo, decimalsUpTo: 2))
+                .font(numerals.font)
+                .foregroundStyle(isTyped ? Theme.Color.accent : Theme.Color.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            // "EXT" stands where the unit stands, in the same few letters' room: while an
+            // external MIDI clock sets the tempo, the number is the clock's — "JAM" while a jam's
+            // host sets it, "FLOW" while the pulse does (T1: the source is always named), with a
+            // lock in full text colour, so the locked tempo is drawn and not only written.
+            // VoiceOver says it in full below, and the line under the transport says
+            // "Following the Jam."
+            HStack(spacing: Theme.Space.xxs) {
+                if followsClock {
+                    Image(systemName: "lock.fill")
+                }
+                Text(Self.unit(source))
+            }
+            .font(Theme.Font.caption)
+            .foregroundStyle(followsClock ? Theme.Color.text : Theme.Color.textSecondary)
+        }
+        .padding(.leading, Theme.Space.s)
+        .padding(.trailing, Theme.Space.xs)
+        // A full touch target to tap or drag, not the number's own ~42 pt (W18, m14).
+        .frame(width: numerals == .large ? largeWidth : cellWidth, alignment: .leading)
+        .frame(minHeight: Theme.Size.touch, maxHeight: .infinity)
+        .background(Theme.Color.surface)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 2)
+                .onChanged { value in
+                    let start = dragStart ?? store.project.tempo
+                    dragStart = start
+                    // 4 pt per BPM, rounded to tenths.
+                    let target = ((start - Double(value.translation.height) / 4) * 10).rounded() / 10
+                    set(target)
+                }
+                .onEnded { _ in
+                    dragStart = nil
+                    store.endGesture()
+                }
+        )
+        .onTapGesture(perform: typeTempo)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Tempo")
+        .accessibilityValue(NumberText.string(shownTempo, decimalsUpTo: 2, unit: "BPM") + Self.spoken(source))
+        .accessibilityAdjustableAction { direction in
+            nudge(direction == .increment ? 1 : -1)
+        }
+        .accessibilityAction(named: "Type a Tempo", typeTempo)
+    }
+
+    /// − (slower) or + (faster) by one BPM.
+    private func stepKey(_ delta: Double) -> some View {
+        Button { nudge(delta) } label: { Image(systemName: delta < 0 ? "minus" : "plus") }
+            .buttonStyle(BarCellStyle())
+            .accessibilityLabel(delta < 0 ? "Slower" : "Faster")
+            .disabled(followsClock)
+    }
+
+    private var tapCell: some View {
+        Button(action: tap) {
+            Text("Tap")
+                .font(Theme.Font.label)
+        }
+        .buttonStyle(BarCellStyle(padsLabel: true))
+        .accessibilityHint("Tap in time to set the tempo.")
+        .disabled(followsClock)
     }
 
     /// A MIDI clock, a jam's host or Flow sets the pace: the field shows theirs and takes no edit.
@@ -1336,10 +1489,13 @@ struct SongMenu: View {
                 Button("About Echoelmusic", systemImage: "info.circle") { router.sheet = .about }
             }
         } label: {
-            HStack(spacing: Theme.Space.xs) {
-                // The Echoelmusic mark opens the menu, as it did in the earlier app's top bar.
+            HStack(spacing: 0) {
+                // The Echoelmusic mark opens the menu, as it did in the earlier app's top bar. Its
+                // waves start at x 24 of its 100-point box: at 32 pt, 7 pt in, so the frame gives
+                // back 7 pt at each side and the ink starts on the bar's left edge, over Play.
                 EchoelMark()
-                    .frame(width: 26, height: 26)
+                    .frame(width: 32, height: 32)
+                    .padding(.horizontal, -7)
                 Text(documents.songTitle)
                     .font(Theme.Font.title)
                     .foregroundStyle(Theme.Color.text)
@@ -1348,12 +1504,15 @@ struct SongMenu: View {
                     // name pushed a phone to three rows instead of truncating. Measured at this
                     // width, the name still takes whatever room the chosen layout leaves it.
                     .frame(idealWidth: 88, alignment: .leading)
+                    .padding(.leading, Theme.Space.s)
                 Image(systemName: "chevron.down")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
                     .accessibilityHidden(true)
+                    .padding(.leading, Theme.Space.xs)
             }
             .frame(minHeight: Theme.Size.touch)
+            .contentShape(Rectangle())
         }
         .accessibilityLabel("Song \(documents.songTitle)")
         // What the menu holds, by its sections, not only its first two entries (W18, m16).

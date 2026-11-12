@@ -56,7 +56,7 @@ struct MIDILearnButton: View {
             Text("MIDI")
                 .font(Theme.Font.label)
         }
-        .buttonStyle(ToolButtonStyle(isActive: midi.isLearning))
+        .buttonStyle(BarCellStyle(isActive: midi.isLearning, padsLabel: true))
         .accessibilityLabel("MIDI Learn")
         .accessibilityValue(midi.isLearning ? "On" : "Off")
         .accessibilityHint("Tap a control, then move a knob on your MIDI device.")

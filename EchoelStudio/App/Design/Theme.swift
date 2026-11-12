@@ -131,6 +131,31 @@ enum Theme {
         /// Minimum touch target (Apple HIG).
         static let touch = EchoelBrand.touch
         static let transportHeight: CGFloat = 56
+        // The top bar's keys and readouts (2026-11-12). Each readout holds the widest string it
+        // shows in the face's tabular figures, measured in AtkinsonHyperlegible-Bold: a digit is
+        // 632/1000 em, "." and "," 243 — plus 8 pt before the number and 4 pt after it. Scaled
+        // with the numeral's text style where they are used, so no readout ever changes the bar.
+        /// Play, the deck's widest key.
+        static let playKey: CGFloat = 52
+        /// "888.88.8" at 17 pt: 72.7.
+        static let positionCell: CGFloat = 85
+        /// "888.8.8" at 17 pt: 62.0 — what the phone's rows measure the position at; the cell
+        /// itself takes what the row leaves, so it is wider on every phone.
+        static let positionIdeal: CGFloat = 74
+        /// "888,88" at 17 pt: 57.9.
+        static let tempoCell: CGFloat = 70
+        /// "888.88.8" at 22 pt: 94.1.
+        static let positionCellLarge: CGFloat = 107
+        /// "888,88" at 22 pt: 74.9.
+        static let tempoCellLarge: CGFloat = 87
+        /// The heart, 4 pt and "888" at 17 pt (32.2); the heart's width is estimated, so the number
+        /// may scale to 0.9 rather than truncate.
+        static let pulseReading: CGFloat = 54
+        /// The heart and the longest status word ("Bluetooth not allowed", 142.9 at 15 pt).
+        static let pulseWords: CGFloat = 160
+        /// The song menu as the bar's layout choice measures it: the mark (18), 8, the title at
+        /// 88 and the chevron — so the song's name never decides the bar's shape.
+        static let songMenuIdeal: CGFloat = 130
         static let trackRowHeight: CGFloat = 56
         static let rulerHeight: CGFloat = 24
     }
@@ -187,8 +212,9 @@ enum Theme {
     }
 }
 
-/// The one button style for toolbar and transport controls: solid fill, 8 pt radius, a control's
-/// boundary (`borderStrong`), opacity feedback on press (no scaling, no glow).
+/// The button style for toolbars and controls: solid fill, 8 pt radius, a control's boundary
+/// (`borderStrong`), opacity feedback on press (no scaling, no glow). The top bar groups its keys
+/// instead (`BarControls.swift`).
 ///
 /// A lit button is monochrome, the earlier instrument's rule (`EchoelTheme`): chosen, switched on
 /// or the page's one main action, it is the off-white tile with a black label. The only other fill
@@ -214,19 +240,6 @@ struct ToolButtonStyle: ButtonStyle {
     }
 }
 
-/// Where room is short — the transport bar on a phone — a tool button keeps its 44 pt touch
-/// square and drops the 8 pt it adds at each side, so the bar fits in two rows.
-private struct CompactToolButtonsKey: EnvironmentKey {
-    static let defaultValue = false
-}
-
-extension EnvironmentValues {
-    var compactToolButtons: Bool {
-        get { self[CompactToolButtonsKey.self] }
-        set { self[CompactToolButtonsKey.self] = newValue }
-    }
-}
-
 /// The style's look, in a view of its own so it can read whether the button is enabled: a
 /// disabled Record, Undo or Play is dimmed instead of looking tappable (audit 2026-10-23).
 private struct ToolButtonFace: View {
@@ -235,14 +248,13 @@ private struct ToolButtonFace: View {
     let fill: ToolButtonStyle.Fill
     let isRunning: Bool
     @Environment(\.isEnabled) private var isEnabled
-    @Environment(\.compactToolButtons) private var compact
 
     var body: some View {
         configuration.label
             .font(Theme.Font.label)
             .foregroundStyle(labelColor)
             .frame(minWidth: Theme.Size.touch, minHeight: Theme.Size.touch)
-            .padding(.horizontal, compact ? 0 : Theme.Space.s)
+            .padding(.horizontal, Theme.Space.s)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.medium)
                     .fill(isActive ? fillColor : Theme.Color.surfaceRaised)
