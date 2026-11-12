@@ -31,6 +31,10 @@ public enum MediaBrowser {
         case song
         /// In another song of the library, named here: placing it copies it into the open song.
         case library(song: String)
+        /// In the Samples folder the musician fills in the Files app, in the subfolder named here
+        /// ("" for the folder itself, "Drums › Kicks" two folders down): placing it copies it into
+        /// the open song; the browser never changes or removes a file there.
+        case samples(folder: String)
         /// Picked into the browser and in no song: placing it copies it into the open song.
         case imported
 
@@ -39,7 +43,8 @@ public enum MediaBrowser {
             switch self {
             case .song: 0
             case .library: 1
-            case .imported: 2
+            case .samples: 2
+            case .imported: 3
             }
         }
 
@@ -47,9 +52,34 @@ public enum MediaBrowser {
             switch self {
             case .song: "This song"
             case .library(let song): song
+            case .samples(let folder): folder.isEmpty ? MediaBrowser.samplesFolderName : MediaBrowser.samplesFolderName + " › " + folder
             case .imported: "Imported"
             }
         }
+    }
+
+    /// The name of the folder in the app's Documents that the browser lists as samples; the Files
+    /// app shows it under Echoelmusic.
+    public static let samplesFolderName = "Samples"
+
+    /// The subfolder of `root` that holds `file`, as the browser names it: "" for `root` itself,
+    /// "Drums › Kicks" for a file two folders down. Nil for a file outside `root`. Both paths are
+    /// compared with their links resolved, as the system may report either form.
+    public static func samplesFolder(of file: URL, in root: URL) -> String? {
+        let rootParts = folderParts(root)
+        let parentParts = folderParts(file.deletingLastPathComponent())
+        guard parentParts.count >= rootParts.count, Array(parentParts.prefix(rootParts.count)) == rootParts else {
+            return nil
+        }
+        return parentParts.dropFirst(rootParts.count).joined(separator: " › ")
+    }
+
+    /// A folder's path as its names, links resolved, without the trailing "/" some Foundation
+    /// versions report as a component of a directory URL.
+    private static func folderParts(_ folder: URL) -> [String] {
+        var parts = folder.resolvingSymlinksInPath().standardizedFileURL.pathComponents
+        while parts.count > 1, parts.last == "/" { parts.removeLast() }
+        return parts
     }
 
     public enum Sort: String, CaseIterable, Sendable {
@@ -57,7 +87,8 @@ public enum MediaBrowser {
         case name
         /// Longest first; a file with no measured length last.
         case duration
-        /// The open song, then the library's songs, then imported files; by name inside each.
+        /// The open song, then the library's songs, then the Samples folder, then imported files;
+        /// by name inside each.
         case origin
 
         public var title: String {
@@ -118,6 +149,7 @@ public enum MediaBrowser {
             switch origin {
             case .song: prefix = "song"
             case .library: prefix = "library:" + (package?.standardizedFileURL.path ?? "")
+            case .samples: prefix = "samples"
             case .imported: prefix = "imported"
             }
             return Item(id: "\(prefix)/\(file.id)", name: file.name, kind: kind, origin: origin,

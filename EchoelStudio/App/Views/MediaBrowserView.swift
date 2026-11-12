@@ -5,8 +5,10 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 /// The sample and media browser (Recovery 7): the open song's files, the library's other songs'
-/// files and files picked into the browser — filtered by kind, searched by name, sorted, heard,
-/// and placed on a track, into a sampler or into a wavetable. Local only, no network.
+/// files, the sounds in the Samples folder (Files › Echoelmusic › Samples, subfolders included) and
+/// files picked into the browser — filtered by kind, searched by name, sorted, heard (a tap on a
+/// sound's name or its Listen button), and placed on a track, into a sampler or into a wavetable.
+/// Local only, no network.
 ///
 /// Placing goes through the commands the imports already send: a file of the open song through
 /// `MediaBrowser.commands` and the store, a file from elsewhere through the document controller's
@@ -18,6 +20,7 @@ struct MediaBrowserView: View {
     @Environment(DocumentController.self) private var documents
     @Environment(StreamingController.self) private var streaming
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var model = MediaBrowserModel()
     @State private var kind: MediaBrowser.Kind?
     @State private var query = ""
@@ -48,6 +51,10 @@ struct MediaBrowserView: View {
             model.reload(songs: documents.songs, current: documents.currentURL)
             engine.preview.setLevel(decibels: Double(listeningLevel))
             engine.preview.setCueOutput(listensOnCue)
+        }
+        // Back from the Files app with new samples: read again.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { model.reload(songs: documents.songs, current: documents.currentURL) }
         }
         .onChange(of: listeningLevel) { _, level in engine.preview.setLevel(decibels: Double(level)) }
         .onChange(of: listensOnCue) { _, on in engine.preview.setCueOutput(on) }
@@ -84,14 +91,21 @@ struct MediaBrowserView: View {
         MediaBrowser.items(of: store.project, origin: .song, package: documents.currentURL) + model.items
     }
 
-    /// The audio files whose note the browser measures, with where each is read from.
+    /// The audio files whose note the browser measures, with where each is read from. Not the
+    /// Samples folder: measuring up to its 2,000 sounds would hold back the song's own files.
     private var pitchJobs: [MediaBrowserModel.PitchJob] {
-        allItems.filter { $0.kind == .audio }.map { item in
+        allItems.filter(Self.measuresNote).map { item in
             MediaBrowserModel.PitchJob(id: item.id, url: url(of: item), loaded: item.media.flatMap { documents.samples[$0] })
         }
     }
 
-    private var pitchJobIDs: [String] { allItems.filter { $0.kind == .audio }.map(\.id) }
+    private var pitchJobIDs: [String] { allItems.filter(Self.measuresNote).map(\.id) }
+
+    private static func measuresNote(_ item: MediaBrowser.Item) -> Bool {
+        guard item.kind == .audio else { return false }
+        if case .samples = item.origin { return false }
+        return true
+    }
 
     private var list: some View {
         let all = allItems
@@ -99,6 +113,12 @@ struct MediaBrowserView: View {
         return List {
             EchoelSection {
                 kindPicker(counts: MediaBrowser.counts(all), total: all.count)
+                if !model.isLoading, !all.contains(where: { if case .samples = $0.origin { true } else { false } }) {
+                    NoteText("Put your samples into the Files app, in Echoelmusic › Samples, in folders if you like. They show here to hear and to place.")
+                }
+                if model.samplesCapped {
+                    NoteText("The Samples folder holds more than \(MediaBrowserModel.samplesLimit) sounds; the browser lists \(MediaBrowserModel.samplesLimit) of them. Fewer folders in Samples bring the rest in.")
+                }
                 if let message = model.message { NoteText(message, tone: .problem) }
                 if streaming.isOn {
                     NoteText("Listening is off while the stream is live: the stream would carry it.")
@@ -114,6 +134,7 @@ struct MediaBrowserView: View {
             }
         }
         .echoelList()
+        .refreshable { model.reload(songs: documents.songs, current: documents.currentURL) }
         .numberPadHost()
     }
 
@@ -140,11 +161,11 @@ struct MediaBrowserView: View {
     }
 
     private func footer(shown: Int, total: Int) -> String? {
-        model.isLoading ? "Reading the other songs…" : (shown == total ? nil : "\(shown) of \(total) files")
+        model.isLoading ? "Reading the songs and the Samples folder…" : (shown == total ? nil : "\(shown) of \(total) files")
     }
 
     private func emptyText(total: Int) -> String {
-        if model.isLoading { return "Reading the other songs…" }
+        if model.isLoading { return "Reading the songs and the Samples folder…" }
         if total == 0 { return "No files yet. Import a sound, a video or a picture, or bring one into a song." }
         if kind == .image, query.trimmingCharacters(in: .whitespaces).isEmpty {
             return "No pictures. Import one to keep it here; a song holds sounds and videos, not pictures."
@@ -155,7 +176,7 @@ struct MediaBrowserView: View {
     // MARK: - Rows
 
     private func row(_ item: MediaBrowser.Item) -> some View {
-        MediaBrowserRow(item: item, details: details(of: item)) {
+        MediaBrowserRow(item: item, details: details(of: item), tap: listenAction(item)) {
             listenButton(item)
         } place: {
             placeMenu(item)
@@ -189,6 +210,18 @@ struct MediaBrowserView: View {
         let whole = Int(seconds.rounded(.down))
         if whole >= 60 { return String(format: "%d:%02d", whole / 60, whole % 60) }
         return NumberText.string(seconds, decimalsUpTo: 1) + " s"
+    }
+
+    /// What a tap on a sound's name does: the same as its Listen button. Nil where nothing can be
+    /// heard now — a video or a picture, the audio not running, or a live stream.
+    private func listenAction(_ item: MediaBrowser.Item) -> (() -> Void)? {
+        // A sound that plays can always be stopped, as with the Listen button.
+        let playing = model.listening?.id == item.id
+        guard item.canListen, playing || (engine.isUp && !streaming.isOn) else { return nil }
+        return {
+            model.listen(item, url: url(of: item), loaded: item.media.flatMap { documents.samples[$0] },
+                         player: engine.preview)
+        }
     }
 
     @ViewBuilder private func listenButton(_ item: MediaBrowser.Item) -> some View {
@@ -287,8 +320,19 @@ private struct MediaBrowserRow<Listen: View, Place: View>: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     let item: MediaBrowser.Item
     let details: [String]
-    @ViewBuilder let listen: Listen
-    @ViewBuilder let place: Place
+    /// A tap on the name and what is measured: listening, as the Listen button does. Nil: nothing.
+    let tap: (() -> Void)?
+    let listen: Listen
+    let place: Place
+
+    init(item: MediaBrowser.Item, details: [String], tap: (() -> Void)?,
+         @ViewBuilder listen: () -> Listen, @ViewBuilder place: () -> Place) {
+        self.item = item
+        self.details = details
+        self.tap = tap
+        self.listen = listen()
+        self.place = place()
+    }
 
     var body: some View {
         if typeSize >= Theme.Accessibility.denseStripLimit {
@@ -323,6 +367,10 @@ private struct MediaBrowserRow<Listen: View, Place: View>: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(item.name)
         .accessibilityValue(details.joined(separator: ", "))
+        .accessibilityAddTraits(tap == nil ? [] : .isButton)
+        .accessibilityHint(tap == nil ? "" : "Plays or stops the sound.")
+        .contentShape(Rectangle())
+        .onTapGesture { tap?() }
     }
 }
 

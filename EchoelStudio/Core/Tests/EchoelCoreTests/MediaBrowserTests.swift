@@ -57,6 +57,27 @@ final class MediaBrowserTests: XCTestCase {
         XCTAssertEqual(names(MediaBrowser.sorted(items, by: .origin)), ["D", "C", "B", "A"])
     }
 
+    /// The Samples folder comes after the songs and before the imported files, each subfolder as
+    /// its own group in order.
+    func testWhereSortPutsTheSamplesFolderBetweenTheSongsAndTheImportedFiles() {
+        let items = [item("A", origin: .imported), item("B", origin: .samples(folder: "Kicks")),
+                     item("C", origin: .samples(folder: "")), item("D", origin: .library(song: "Alpha")),
+                     item("E", origin: .song)]
+        XCTAssertEqual(names(MediaBrowser.sorted(items, by: .origin)), ["E", "D", "C", "B", "A"])
+    }
+
+    /// A file in the Samples folder is named by the subfolder that holds it; a file outside the
+    /// folder has none.
+    func testASamplesFileIsNamedByTheSubfolderThatHoldsIt() {
+        let root = URL(fileURLWithPath: "/Documents/Samples", isDirectory: true)
+        XCTAssertEqual(MediaBrowser.samplesFolder(of: root.appendingPathComponent("Kick.wav"), in: root), "")
+        XCTAssertEqual(MediaBrowser.samplesFolder(of: root.appendingPathComponent("Drums/Kicks/Kick 2.wav"), in: root),
+                       "Drums › Kicks")
+        XCTAssertNil(MediaBrowser.samplesFolder(of: URL(fileURLWithPath: "/Documents/Other/Kick.wav"), in: root))
+        XCTAssertEqual(MediaBrowser.Origin.samples(folder: "").title, "Samples")
+        XCTAssertEqual(MediaBrowser.Origin.samples(folder: "Drums › Kicks").title, "Samples › Drums › Kicks")
+    }
+
     func testTheOrderDoesNotDependOnTheOrderItemsCameIn() {
         let items = [item("Same", origin: .song), item("Same", origin: .imported), item("Other")]
         for sort in MediaBrowser.Sort.allCases {

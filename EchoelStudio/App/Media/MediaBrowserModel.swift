@@ -53,31 +53,87 @@ final class MediaBrowserModel {
             .appendingPathComponent("Browser Imports", isDirectory: true)
     }
 
+    /// The Samples folder: Files › Echoelmusic › Samples, where the musician keeps sample folders of
+    /// their own. The browser lists its sounds, subfolders included, to hear and to place, and never
+    /// changes or removes a file there.
+    nonisolated static var samplesFolder: URL? {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?
+            .appendingPathComponent(MediaBrowser.samplesFolderName, isDirectory: true)
+    }
+
+    /// The most sounds the Samples folder lists, so a very large folder cannot stall the browser.
+    nonisolated static let samplesLimit = 2_000
+
+    /// Whether the Samples folder held more sounds than the browser lists.
+    private(set) var samplesCapped = false
+
     // MARK: - Reading
 
-    /// Reads the library's songs other than `current` and the imported files, off the main thread.
+    /// Reads the library's songs other than `current`, the Samples folder and the imported files,
+    /// off the main thread. The Samples folder is made the first time, so the Files app shows it.
     func reload(songs: [ProjectLibrary.Entry], current: URL?) {
         loadTask?.cancel()
         isLoading = true
         let open = current?.standardizedFileURL.path
         let packages = songs.filter { $0.url.standardizedFileURL.path != open }.map { (url: $0.url, name: $0.name) }
         let folder = Self.importFolder
+        let samples = Self.samplesFolder
+        if let samples { try? FileManager.default.createDirectory(at: samples, withIntermediateDirectories: true) }
+        let stop = WalkStop()
         loadTask = Task { [weak self] in
-            let found = await Task.detached(priority: .userInitiated) { () -> [MediaBrowser.Item] in
-                var all: [MediaBrowser.Item] = []
-                for package in packages {
-                    if Task.isCancelled { return all }
-                    let document = package.url.appendingPathComponent(ProjectLibrary.documentName)
-                    guard let data = try? Data(contentsOf: document), let project = try? ProjectCodec.decode(data) else { continue }
-                    all += MediaBrowser.items(of: project, origin: .library(song: package.name), package: package.url)
-                }
-                if let folder { all += await Self.importedItems(in: folder) }
-                return all
-            }.value
-            guard let self, !Task.isCancelled else { return }
-            self.items = found
+            // A detached task does not see this task's cancellation: a newer reload stops the walk
+            // through `stop`, so walks over a large Samples folder never pile up.
+            let found = await withTaskCancellationHandler {
+                await Task.detached(priority: .userInitiated) { () -> (items: [MediaBrowser.Item], capped: Bool) in
+                    var all: [MediaBrowser.Item] = []
+                    for package in packages {
+                        if Task.isCancelled { return (all, false) }
+                        let document = package.url.appendingPathComponent(ProjectLibrary.documentName)
+                        guard let data = try? Data(contentsOf: document), let project = try? ProjectCodec.decode(data) else { continue }
+                        all += MediaBrowser.items(of: project, origin: .library(song: package.name), package: package.url)
+                    }
+                    var capped = false
+                    if let samples {
+                        let listed = Self.samplesItems(in: samples, stop: stop)
+                        all += listed.items
+                        capped = listed.capped
+                    }
+                    if let folder { all += await Self.importedItems(in: folder) }
+                    return (all, capped)
+                }.value
+            } onCancel: {
+                stop.request()
+            }
+            guard let self, !Task.isCancelled, !stop.isRequested else { return }
+            self.items = found.items
+            self.samplesCapped = found.capped
             self.isLoading = false
         }
+    }
+
+    /// The sounds in the Samples folder and its subfolders, measured from their headers, at most
+    /// `samplesLimit` of them. Synchronous on purpose: a directory enumerator may not be walked
+    /// from an async context.
+    nonisolated private static func samplesItems(in folder: URL, stop: WalkStop) -> (items: [MediaBrowser.Item], capped: Bool) {
+        guard let walker = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: nil,
+                                                          options: [.skipsHiddenFiles, .skipsPackageDescendants]) else {
+            return ([], false)
+        }
+        var items: [MediaBrowser.Item] = []
+        while let next = walker.nextObject() {
+            if stop.isRequested { return (items, false) }
+            guard let url = next as? URL, kind(of: url) == .audio,
+                  let subfolder = MediaBrowser.samplesFolder(of: url, in: folder) else { continue }
+            // Only what plays: a pack's MIDI files count as audio by type but hold no sound.
+            guard let header = try? AudioFileImport.header(of: url), header.sampleRate > 0 else { continue }
+            if items.count >= samplesLimit { return (items, true) }
+            let path = url.resolvingSymlinksInPath().standardizedFileURL.path
+            items.append(MediaBrowser.Item(id: "samples:" + path, name: url.deletingPathExtension().lastPathComponent,
+                                           kind: .audio, origin: .samples(folder: subfolder), location: url,
+                                           duration: Double(header.frameCount) / header.sampleRate,
+                                           sampleRate: header.sampleRate))
+        }
+        return (items, false)
     }
 
     /// The files in the import folder that are a sound, a video or a picture, measured from their
@@ -279,5 +335,25 @@ final class MediaBrowserModel {
         guard room > 0 else { return nil }
         return try? SampleBuffer(capacity: room, channels: reader.keptChannels, sampleRate: reader.sampleRate,
                                  fill: { try reader.read(sidesInto: $0) })
+    }
+}
+
+/// Asked by a newer reload to stop an older walk of the Samples folder, which runs detached and
+/// cannot see its task's cancellation. Read from the walk's thread, set from wherever the task is
+/// cancelled.
+final class WalkStop: @unchecked Sendable {
+    private let lock = NSLock()
+    private var requested = false
+
+    var isRequested: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return requested
+    }
+
+    func request() {
+        lock.lock()
+        requested = true
+        lock.unlock()
     }
 }
