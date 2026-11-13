@@ -574,4 +574,82 @@ final class DelayCompensationTests: XCTestCase {
                               "block \(block): the unmute fades in, it does not step")
         }
     }
+
+    // MARK: - Changes while the song plays
+
+    /// One edit published while the live core plays: before the block that starts at `at`.
+    private struct Publish {
+        var at: Int
+        var project: Project
+        var effects: [TrackID: [any HostedProcessor]]
+        var master: [any HostedProcessor] = []
+        var prepare: () -> Void = {}
+    }
+
+    /// The live core playing `song` from frame 0 in blocks of `block`: each publish is made before
+    /// the block that starts at its frame (every `at` lies on a block boundary), so two at one
+    /// frame both reach the core before it renders again.
+    private func playLive(_ song: Tones, _ publishes: [Publish], length: Int, block: Int) -> [Float] {
+        let engine = EngineCore(sampleRate: rate)
+        engine.setClickEnabled(false)
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: song.project)
+        let assigned = slots.slots
+        var left = [Float](repeating: 0, count: length)
+        var right = [Float](repeating: 0, count: length)
+        var generation: UInt64 = 0
+        var next = 0
+        var start = 0
+        while start < length {
+            while next < publishes.count, publishes[next].at <= start {
+                let due = publishes[next]
+                XCTAssertEqual(due.at % block, 0, "a publish lands on a block boundary")
+                due.prepare()
+                generation += 1
+                engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: due.project), project: due.project,
+                                              slots: assigned, sampleRate: rate, generation: generation,
+                                              samples: song.samples, effects: due.effects, masterEffects: due.master))
+                next += 1
+            }
+            if start == 0 { engine.play() }
+            let count = Swift.min(block, length - start)
+            left.withUnsafeMutableBufferPointer { (l: inout UnsafeMutableBufferPointer<Float>) in
+                right.withUnsafeMutableBufferPointer { (r: inout UnsafeMutableBufferPointer<Float>) in
+                    guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                    engine.render(frameCount: count, left: lp + start, right: rp + start)
+                }
+            }
+            start += count
+        }
+        return left
+    }
+
+    /// Two edits published before the render thread takes either: the second is made against the
+    /// lines the render thread plays, not against the first, which it skips — so the track that
+    /// waits plays on through the change instead of falling silent for its whole new wait.
+    func testTwoSnapshotsPublishedBeforeOneRenderNeverSilenceATrackThatWaits() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0], plain = song.tracks[1]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        var quieter = song.project
+        try Command.setVolume(.track(plain), db: -1).apply(to: &quieter)
+        let change = beat + 4_800, length = beat + 9_600
+        for block in [64, 128] {
+            let late = LateInsert(latency: 85)
+            let effects: [TrackID: [any HostedProcessor]] = [lateTrack: [late]]
+            let live = playLive(song, [
+                Publish(at: 0, project: song.project, effects: effects),
+                Publish(at: change, project: song.project, effects: effects, prepare: { late.latency = 40 }),
+                Publish(at: change, project: quieter, effects: effects),
+            ], length: length, block: block)
+            var run = 0
+            var longest = 0
+            for sample in live[change..<(change + 2_048)] {
+                run = Swift.abs(sample) < 1e-7 ? run + 1 : 0
+                longest = Swift.max(longest, run)
+            }
+            XCTAssertGreaterThan(peak(live[(length - 2_048)..<length]), 0.1, "block \(block): the tone plays")
+            XCTAssertLessThan(longest, 16, "block \(block): the track that waits plays on through both edits")
+        }
+    }
 }

@@ -513,17 +513,22 @@ public final class EngineCore: @unchecked Sendable {
         inputs.want(snapshot.audioLanes.flatMap { [$0.monitor, $0.monitorRight] }.filter { $0 >= 0 })
         // A lane outside the preallocated slots would index past them on the render thread.
         let limited = snapshot.limited(toSlots: slotCapacity, returnCapacity: Self.returnCapacity)
-        // The delay lines of its compensation plan, made here and freed here with the box: the
-        // render thread never sizes, allocates or frees one. A line the last published box has at
-        // the same place and delay is handed on, so it plays on through the swap.
-        let box = SnapshotBox(limited, lines: CompensationLines(limited, reusing: published.last?.lines))
-        published.append(box)
-        if let unseen = pending.exchange(Unmanaged.passUnretained(box).toOpaque(), ordering: .acquiringAndReleasing) {
-            // The render thread never took this one and now never can; without this, every
-            // publish while the output is stopped would keep another snapshot and its buffers.
+        // A box the render thread never took is withdrawn first: it never can now, and without
+        // this every publish while the output is stopped would keep another snapshot and its
+        // buffers. Withdrawn before the new lines are made, so they are made against the box the
+        // render thread plays (or is taking up right now), never against one it skips — lines
+        // made against a skipped box cannot take over what the playing ones hold, and a track
+        // that waits would fall silent for its whole new wait.
+        if let unseen = pending.exchange(nil, ordering: .acquiringAndReleasing) {
             let skipped = Unmanaged<SnapshotBox>.fromOpaque(unseen).takeUnretainedValue()
             published.removeAll { $0 === skipped }
         }
+        // The delay lines of its compensation plan, made here and freed here with the box: the
+        // render thread never sizes, allocates or frees one. A line the box the render thread
+        // plays has at the same place and delay is handed on, so it plays on through the swap.
+        let box = SnapshotBox(limited, lines: CompensationLines(limited, reusing: published.last?.lines))
+        published.append(box)
+        pending.store(Unmanaged.passUnretained(box).toOpaque(), ordering: .releasing)
         // A box older than the one the render thread acknowledged can no longer be reached:
         // the render thread only ever takes the newest pending one.
         let ack = acknowledged.load(ordering: .acquiring)
