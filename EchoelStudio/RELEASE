@@ -1,68 +1,75 @@
-11.0.0 — the top bar rebuilt: one block for Play, Record and Loop, one display for position and tempo, the rows on one grid
+11.0.0 — video takes that hold the song, the screen and the beat; the Tape effect in time; exports that start on the bar
 
-What is new since 10074. Each line is code that the Echoel Studio run builds; nothing here is
-device-verified yet.
-- Top bar: Play, Record and Loop sit in one block with a fine line between them, and the
-  position, the tempo and Tap in a second block beside it, read as one display. In the same row
-  or the row above sit the Echoelmusic mark, the song and its menu, the pulse while a pulse source
-  is on, and Undo and Redo, with More (…) wherever the switches are not in the bar. Undo, Redo and
-  More are plain symbols without a frame; with Button Shapes on (Settings › Accessibility ›
-  Display & Text Size) they get one.
-- Top bar on an iPhone in portrait: two rows, now also on a 375-point iPhone (SE, 12 mini, 13
-  mini, XS, 11 Pro), at the default text size and Display Zoom. The mark's waves start above
-  Play's left edge, More is centred above Tap, and the display reaches the right edge: the
-  position takes the room the row leaves. Position and tempo use one size of numbers and stand
-  on one line.
-- Top bar: colour only shows a state. A switch that is on shows a light tile inside its key, and
-  Write a red one, because it writes into the song; on an iPhone, More shows the light tile while
-  MIDI Learn is on and the red one while Write Automation is on. Record's symbol is red before it
-  records, the key is red while a take records, and the position turns red. While the song plays,
-  Play becomes Stop and its square is green; when audio has to be restarted, the key shows an
-  amber circular arrow (VoiceOver: Restart Audio). While a MIDI clock, a Jam or
-  Flow sets the tempo, a lock stands before EXT, JAM or FLOW.
-- Top bar: every number keeps one width, and the song's name is measured at one width, so a
-  moving playhead, a new tempo, a changing pulse reading or a long song name never moves the bar
-  into another layout; a long name is cut short. Switching a pulse source on or off can: where
-  room is tight the bar changes layout (an iPhone SE in landscape then has two rows with the
-  switches in sight).
-- Top bar, the layouts: the bar follows the size of its window, not the kind of device. Where it
-  is wide (an iPad at full screen) the switches (Click, MIDI, Keys, Field Window, Write) are a
-  third block and the tempo has − and +; narrower, the switches stay in sight without − and +
-  (an iPad mini in portrait); narrower still, the phone's two rows with the switches in More; in
-  a narrow Slide Over window, three rows. On an iPhone in landscape the bar is one row with the switches in More.
-  All of this is at the default text size and Display Zoom; larger text moves the bar to a
-  layout with more rows sooner.
-- The status lines under the bar (count-in, Loop Record, the Jam, MIDI Learn, errors, an export's
-  loudness) start at its left edge instead of in the middle.
+What is new since 10075. Each line is code that the Echoel Studio run builds. The take camera's
+audio setting is one line with no test of its own; for the other four the rule has tests (for the
+screen and the first frame, the rule, not the camera code). Nothing here is device-verified yet.
+- Video takes: opening the take camera no longer changes the app's audio setup. A take records no
+  sound of its own (the song is its sound), and the camera now leaves the audio alone, as the pulse
+  and sky cameras already did.
+- Video takes: the screen stays on while a take is filmed or saved, so Auto-Lock can no longer
+  send the app away mid-take, where iOS took the camera and the take ended early. Afterwards the
+  screen sleeps as usual.
+- Video takes: from iOS 18.2 a take is laid where its first frame was filmed, from the time the
+  camera gives that frame, not where the report of its start reached the app. On earlier iOS the
+  start is timed as soon as the camera reports it. A frame time that cannot be right is not used.
+- Tape effect: it plays 6 ms behind its input and now says so, so in the app the other tracks
+  wait for it and a Tape track stays in time with the rest. As an Audio Unit in another app it now
+  reports those 6 ms too, so a host that compensates plug-in delay can line the track up (not yet
+  tried in any host); bypassed through the unit's own bypass, its dry sound stays 6 ms late. In
+  Echoelmusic, a Tape set to Off leaves the chain: the track plays without the 6 ms, and the other
+  tracks stop waiting for it.
+- Export: an effect that plays late (Pitch Correction, 19 ms; the Multiband Clipper, 85 samples;
+  another maker's plug-in that reports its delay) no longer makes an export start that late. On a
+  track, a return or the master, the exported WAV (stereo or Spatial Headphone Mix) and the sound
+  of Export Video begin on the song's first sample: the sound lands on the song's markers, and the
+  video's sound sits on its picture. The stems and the ADM file leave the master's effects out; an
+  effect on a track or a return no longer makes them late either. The same holds for a region made
+  with Bake Effects. A Tape track, 6 ms late in an export before, now sits in time there too.
 
 Known limit, unchanged since 10074: a MIDI take does not record a key held across the loop's end
 as it was heard. While the record line shows "Loop Record · take n" (a loop of two bars or
 longer), the note ends at the loop's end and the next take does not have it. On a one-bar loop, a
-key let go after the loop came round is recorded shorter than it was held.
+key let go after the loop came round is recorded shorter than it was held. ("take n" stands for
+the number the line shows: take 1, take 2 …)
+Known limit: while an effect that plays late is on a track (even a muted one), on the master, or
+on a return a send feeds (Tape 6 ms, Pitch Correction 19 ms, the Multiband Clipper 85 samples),
+every track waits for it.
+The whole mix then plays that much behind the click, the Video Window's picture and what goes out
+as MIDI, and an audio or MIDI take played along with the tracks instead of the click lands that
+much late. With Tape this is new in this build.
+Known limit: when the screen turns sideways (Portrait Orientation Lock off), the take camera's
+preview stays a tall box and shows the picture on its side; the take itself is written upright.
 
-Previous: 11.0.0 (10074) — a key held through the loop sounds on, other makers' Audio Units in the
-lists, a Samples folder to hear sounds from; 10073 — touch loudness, slice pads, the chords of the
-song's key. Earlier: git history.
+Previous: 11.0.0 (10075) — the top bar rebuilt as a deck and a display on one grid; 10074 — a key
+held through the loop sounds on, other makers' Audio Units in the lists, a Samples folder to hear
+sounds from. Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
 The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
-Five things to try on the device (answer each yes or no):
-1. iPhone in portrait, text size and Display Zoom at their defaults: is the top bar two calm rows,
-   with the tempo in the second, the mark's waves starting above Play and More (…) centred above
-   Tap? Does it look orderly to you?
-2. On an iPhone in portrait, tap the tempo, type a new one and press OK; do it again with another
-   number, then tap Undo once, so neither Undo nor Redo is dimmed (Loop and the switches are no
-   undo steps). Do Undo, Redo and More, the plain symbols at the top right, read as buttons, and
-   are they easy to hit without touching a neighbour?
-3. Loop on, then Play, then Record: is the lit Loop clear without outshining Play, is Record's
-   symbol red before you press it, and while recording are the Record key and the position red?
-4. The tempo: drag it up and down, tap it to type one, and tap Tap in time. Does each work as
-   before? Then, with the song stopped, tap Arrange's ruler near bar 3 and tap the position: does
-   it go back to bar 1?
-5. iPad, or an iPhone turned to landscape: is every control in the bar or in More, and does
-   nothing overlap? (Expected: the tempo has − and + only where the bar is wide, such as an iPad
-   at full screen; elsewhere drag it or tap to type. The count-in is under Click: touch and hold
-   it, or find it in More. A long song name ending in … is cut on purpose.)
+Five things to try on the device (answer each yes or no). Overlapping video takes hide each other
+in the Video Window, and Record on a stopped song starts where Stop left it (bar 1, unless a place
+on the ruler was chosen): before checks 3 and 5, mute (M)
+every video track that holds an earlier take, add a new video track (Add Track › Video) and use the
+camera button in its row.
+1. Click off (the metronome key; on a phone, More (…) › Click). A song where a synth plays for
+   about a minute, and a video track. Press Play and leave the song playing. While it plays, tap
+   the camera button in the video track's row, wait for the picture, tap Record, film about 20
+   seconds, then tap Stop. Does the song play on without a gap, a crackle or a jump while the
+   camera opens and when the take starts?
+2. Auto-Lock at 30 seconds (Settings › Display & Brightness › Auto-Lock). Open the take camera,
+   set the phone where it films you and tap Record before the screen dims (the screen is kept on
+   from Record until the take is saved, not while the camera only shows its picture). Film two
+   minutes without touching the screen, then tap Stop. Did the screen stay on, and does the sheet
+   say "The take is on the song.", not "The take was cut short…"?
+3. With the click on, turn to the front camera with the switch-camera key beside Record, tap
+   Record, clap on the beat for a few bars, tap Stop, then Close and press Play. In the Video
+   Window, does each clap's picture sit on its click? (Say which iOS version the phone runs.)
+4. Two audio tracks with the same drum loop, Tape on one of them (Mixer → Effects → Add Effect →
+   Tape, Wow at 0): do the two play as one, without a doubled or hollow sound?
+5. Portrait Orientation Lock off. Hold the phone sideways, open the take camera, tap Record, tap
+   Stop after a few seconds, then Close and press Play. In the Video Window, does the take fill the
+   wide window, upright, not on its side or upside down? (The preview in the take sheet shows the
+   picture on its side in this build; judge the take, not the preview.)
