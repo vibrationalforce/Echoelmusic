@@ -251,9 +251,9 @@ public final class StandardEffectUnit: AUAudioUnit {
         set { fullState = newValue }
     }
 
-    /// The pitch correction and the multiband clipper play their output a little behind their
-    /// input (`EffectKernel.latencySeconds`); a host that compensates delay (Logic, AUM) lines the
-    /// track up with this. The other effects have none.
+    /// The pitch correction, the multiband clipper and the tape play their output a little behind
+    /// their input (`EffectKernel.latencySeconds`); a host that compensates delay (Logic, AUM) lines
+    /// the track up with this. The other effects have none.
     public override var latency: TimeInterval {
         render.kernel.latencySeconds
     }
@@ -276,7 +276,7 @@ public final class StandardEffectUnit: AUAudioUnit {
 
     /// A host's bypass (GarageBand's or AUM's switch): the input passes through unchanged — as
     /// late as the effect's `latency`, which does not change, so a host that compensates it keeps
-    /// the bypassed track in time (pitch correction, multiband clipper; the others pass at 0) — and
+    /// the bypassed track in time (pitch correction, multiband clipper, tape; the others pass at 0) — and
     /// parameter changes still reach the kernel, so the effect comes back as the host left it. In
     /// the app the engine drops a bypassed insert from its chain instead (`HostedEffect`), so only
     /// other hosts set this (review 2026-10-23).
