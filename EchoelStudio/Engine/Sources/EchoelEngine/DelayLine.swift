@@ -195,9 +195,10 @@ struct CompensationLines: Sendable {
 
     /// Render thread, while a snapshot is taken up: each line this snapshot brings new takes over
     /// what the previous snapshot's line at its place holds — by the pairing made on the main
-    /// thread, and within `takeOverFrames` in all. Lines made against other lines than the ones
-    /// the render thread held (a snapshot in between was published and never taken up) start
-    /// silent instead.
+    /// thread, and within `takeOverFrames` in all. `EngineCore.publish` withdraws a box the render
+    /// thread never took before it makes the next one's lines, so lines are made against the ones
+    /// the render thread holds; the identity check only keeps a mismatched pairing silent, should
+    /// that ever change.
     func takeOver(from previous: CompensationLines) {
         guard let resolvedFrom, resolvedFrom === previous.origin else { return }
         var budget = Self.takeOverFrames

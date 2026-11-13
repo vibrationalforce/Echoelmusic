@@ -642,11 +642,11 @@ final class DelayCompensationTests: XCTestCase {
                 Publish(at: change, project: song.project, effects: effects, prepare: { late.latency = 40 }),
                 Publish(at: change, project: quieter, effects: effects),
             ], length: length, block: block)
-            var run = 0
+            var silentRun = 0
             var longest = 0
             for sample in live[change..<(change + 2_048)] {
-                run = Swift.abs(sample) < 1e-7 ? run + 1 : 0
-                longest = Swift.max(longest, run)
+                silentRun = Swift.abs(sample) < 1e-7 ? silentRun + 1 : 0
+                longest = Swift.max(longest, silentRun)
             }
             XCTAssertGreaterThan(peak(live[(length - 2_048)..<length]), 0.1, "block \(block): the tone plays")
             XCTAssertLessThan(longest, 16, "block \(block): the track that waits plays on through both edits")
