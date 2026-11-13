@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelKernels
 import Foundation
 import Synchronization
 
@@ -182,14 +183,52 @@ struct Crossover: Sendable, Equatable {
     }
 }
 
+/// What a `PathSwitch` crosses between: a delay line of the compensation, or a latent insert of
+/// a chain (an effect that plays its output behind its input). Nil is the input as it is.
+enum PathStep: Sendable {
+    case line(DelayLine)
+    case unit(any HostedProcessor)
+
+    var line: DelayLine? {
+        if case .line(let line) = self { return line }
+        return nil
+    }
+
+    /// Render thread: the pair through this step, in place.
+    func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
+        switch self {
+        case .line(let line): line.process(left: left, right: right, frames: frames)
+        case .unit(let unit): unit.process(frames: frames, left: left, right: right)
+        }
+    }
+
+    /// The same object, or both none.
+    static func same(_ a: PathStep?, _ b: PathStep?) -> Bool {
+        switch (a, b) {
+        case (nil, nil): return true
+        case (.line(let x)?, .line(let y)?): return x === y
+        case (.unit(let x)?, .unit(let y)?): return x === y
+        default: return false
+        }
+    }
+}
+
+/// One step of an insert chain while a latent insert arrives, leaves or is replaced as a live core
+/// plays (SIM76-D1): an insert as it always plays, or the switch at the place one comes or goes.
+enum ChainStep: Sendable {
+    case unit(any HostedProcessor)
+    case slot(PathSwitch)
+}
+
 /// One place whose wait changes while a live core plays (SIM76-D1): the line it played (or none,
 /// the input as it is) and the line it plays now (or none). While the `Crossover` holds, the place
 /// plays its old path exactly and the new line fills with what comes in; then the two cross on the
 /// ramp; after it, the new path exactly. Without it, a new line started as silence and a line that
 /// went away skipped what it held: a step in the middle of the song.
 ///
-/// Two switches in series on one lane in one crossover (its `pre` and `direct` waits, or a track's
-/// `pre` and the `back` of a return its send feeds) are click-free but not exact: the downstream
+/// Two switches in series on one lane in one crossover (its `pre` and `direct` waits, a track's
+/// `pre` and the `back` of a return its send feeds, or a latent insert arriving on a chain whose
+/// lane's wait changes too) are click-free but not exact: the downstream
 /// new line fills during the hold with the upstream OLD path, so after the shared glide the lane
 /// plays a mixed alignment for the downstream new delay, then glides once more as the upstream
 /// glide comes out of the downstream line.
@@ -198,25 +237,55 @@ struct Crossover: Sendable, Equatable {
 /// `predecessor` are read there too. Armed and played on the render thread, which alone touches
 /// `old`, `isArmed` and `isSame`; `settled` tells the next snapshot's build that the glide is over.
 final class PathSwitch: @unchecked Sendable {
-    /// What the place plays once the glide is over: the snapshot's own line there, or nil.
-    let new: DelayLine?
+    /// What the place plays once the glide is over: the snapshot's own line or insert there, or
+    /// nil.
+    let new: PathStep?
     /// What the snapshot before this one plays at the place, when the crossover was idle.
-    let settledOld: DelayLine?
+    let settledOld: PathStep?
     /// The switch at the same place in the snapshot before, while that one had not settled: an
     /// index into its `switches`, or -1.
     let predecessor: Int
+    /// Frames a new insert plays before its output is real sound (`warmUp(for:)`); 0 for a line,
+    /// which counts what it holds instead.
+    let warmUp: Int
+    /// Main thread only: for an insert that leaves, the insert it sat before in the old chain (nil
+    /// at the chain's end), so a later edit carries it on at its place.
+    let anchor: ObjectIdentifier?
+    /// Main thread only: every insert the old path may play when this switch is armed — its own
+    /// `settledOld`, or what a predecessor it cancels played — so a program never runs one twice.
+    let possibleOld: [ObjectIdentifier]
     /// Render → main: the crossover this switch played in is over.
     let settled = Atomic<Bool>(false)
 
     // Render thread only.
-    private var old: DelayLine?
+    private var old: PathStep?
     private var isArmed = false
     private var isSame = false
 
-    init(new: DelayLine?, settledOld: DelayLine?, predecessor: Int) {
+    init(step new: PathStep?, settledOld: PathStep?, predecessor: Int, warmUp: Int = 0,
+         anchor: ObjectIdentifier? = nil, inherits before: PathSwitch? = nil) {
         self.new = new
         self.settledOld = settledOld
         self.predecessor = predecessor
+        self.warmUp = Swift.max(0, warmUp)
+        self.anchor = anchor
+        var possible: [ObjectIdentifier] = before?.possibleOld ?? []
+        if case .unit(let unit)? = settledOld { possible.append(ObjectIdentifier(unit)) }
+        possibleOld = possible
+    }
+
+    /// A place of the compensation: one line for another.
+    convenience init(new: DelayLine?, settledOld: DelayLine?, predecessor: Int) {
+        self.init(step: new.map { PathStep.line($0) }, settledOld: settledOld.map { PathStep.line($0) },
+                  predecessor: predecessor)
+    }
+
+    /// How long a latent insert that arrives while playing is held behind the old path: its
+    /// latency (bounded as the compensation bounds it), and as much again up to a tenth of a
+    /// second, so filters and a tape's sway have settled before anyone hears it. Main thread.
+    static func warmUp(for unit: any HostedProcessor) -> Int {
+        let latency = Swift.min(Swift.max(0, unit.latencyFrames), DelayCompensation.maximumUnitLatency)
+        return latency + Swift.min(latency, PluginLatency.frames(seconds: 0.1, sampleRate: unit.sampleRate))
     }
 
     /// Render thread: still crossing.
@@ -235,19 +304,33 @@ final class PathSwitch: @unchecked Sendable {
         } else {
             old = settledOld
         }
-        isSame = old === new
+        isSame = PathStep.same(old, new)
         guard !isSame else { return -1 }
-        guard let line = new else { return 0 }
-        var held = 0
-        if let source = old, budget > 0 {
-            held = line.takeOver(source, upTo: budget)
-            budget -= held
+        switch new {
+        case nil:
+            return 0
+        case .unit?:
+            return warmUp
+        case .line(let line)?:
+            var held = 0
+            if case .line(let source)? = old, budget > 0 {
+                held = line.takeOver(source, upTo: budget)
+                budget -= held
+            }
+            return Swift.max(0, line.delay - held)
         }
-        return Swift.max(0, line.delay - held)
     }
 
     /// Render thread: the end of the crossover this switch played in.
     func settle() { settled.store(true, ordering: .releasing) }
+
+    /// Render thread: an insert this switch still plays as its old path (one that leaves or is
+    /// replaced) keeps time with the song while it crosses, as the chain's inserts do.
+    func followOld(_ transport: HostTransport, key: SongKey) {
+        guard isLive, case .unit(let unit)? = old else { return }
+        unit.follow(transport)
+        unit.follow(key: key)
+    }
 
     /// Render thread, while the crossover runs: the place's pair through both paths — the old one
     /// on a copy in `scratch` — then the old path until `window.holdEnd`, the glide to the new one
@@ -343,6 +426,13 @@ struct CompensationLines: Sendable {
     let armed: [PathSwitch]
     /// Main thread only: where each place's switch sits in `switches`, for the next snapshot.
     let switchPlaces: [Place: Int]
+    /// The insert chains whose latent inserts arrive, leave or are replaced while a live core
+    /// plays, parallel to the lanes, the returns and the master: nil where the chain plays as it
+    /// is (`ChainStep`). Their slots are in `switches` too.
+    let instrumentChains: [[ChainStep]?]
+    let audioChains: [[ChainStep]?]
+    let returnChains: [[ChainStep]?]
+    let masterChain: [ChainStep]?
 
     /// No line and no switch: a song without latency, as without compensation. Computed, so each
     /// empty value has its own `origin` like any other.
@@ -371,6 +461,10 @@ struct CompensationLines: Sendable {
         switches = []
         armed = []
         switchPlaces = [:]
+        instrumentChains = []
+        audioChains = []
+        returnChains = []
+        masterChain = nil
     }
 
     /// The lines of `snapshot`'s plan. A line the previous snapshot already has at the same place
@@ -392,8 +486,7 @@ struct CompensationLines: Sendable {
         }
         let carried = previous?.switches ?? []
         let carriedPlaces = previous?.switchPlaces ?? [:]
-        guard !plan.isEmpty || (!playedBefore.isEmpty && !(previous?.entries.isEmpty ?? true))
-            || !carried.isEmpty else {
+        guard !plan.isEmpty || !playedBefore.isEmpty || !carried.isEmpty else {
             self = .none
             return
         }
@@ -448,7 +541,7 @@ struct CompensationLines: Sendable {
             var line: DelayLine?
             if waits > 0 {
                 let result: DelayLine
-                if let back = running?.settledOld, back.delay == waits {
+                if let back = running?.settledOld?.line, back.delay == waits {
                     result = back
                 } else {
                     result = DelayLine(delay: waits)
@@ -491,6 +584,39 @@ struct CompensationLines: Sendable {
             returns.append(back.line)
             returnSwitches.append(back.change)
         }
+        // The insert chains: a latent insert that arrives, leaves or is replaced while the lane
+        // plays crosses over on the same clock (only when there is a snapshot before).
+        var instrumentChains: [[ChainStep]?] = []
+        var audioChains: [[ChainStep]?] = []
+        var returnChains: [[ChainStep]?] = []
+        var masterChain: [ChainStep]?
+        if let earlier, let previous {
+            var oldChains: [TrackID: [any HostedProcessor]] = [:]
+            var oldPrograms: [TrackID: [ChainStep]] = [:]
+            for (index, lane) in earlier.lanes.enumerated() {
+                oldChains[lane.track] = lane.inserts
+                if let program = CompensationLines.at(previous.instrumentChains, index) { oldPrograms[lane.track] = program }
+            }
+            for (index, lane) in earlier.audioLanes.enumerated() {
+                oldChains[lane.track] = lane.inserts
+                if let program = CompensationLines.at(previous.audioChains, index) { oldPrograms[lane.track] = program }
+            }
+            for (index, lane) in earlier.returns.enumerated() {
+                oldChains[lane.track] = lane.inserts
+                if let program = CompensationLines.at(previous.returnChains, index) { oldPrograms[lane.track] = program }
+            }
+            let chain = { (track: TrackID, inserts: [any HostedProcessor]) -> [ChainStep]? in
+                guard let before = oldChains[track] else { return nil }
+                return CompensationLines.program(from: before, to: inserts, carrying: oldPrograms[track],
+                                    previousSwitches: previous.switches, all: &all, fresh: &fresh)
+            }
+            for lane in snapshot.lanes { instrumentChains.append(chain(lane.track, lane.inserts)) }
+            for lane in snapshot.audioLanes { audioChains.append(chain(lane.track, lane.inserts)) }
+            for lane in snapshot.returns { returnChains.append(chain(lane.track, lane.inserts)) }
+            masterChain = CompensationLines.program(from: earlier.masterEffects, to: snapshot.masterEffects,
+                                       carrying: previous.masterChain, previousSwitches: previous.switches,
+                                       all: &all, fresh: &fresh)
+        }
         guard !made.isEmpty || !all.isEmpty else {
             self = .none
             return
@@ -510,8 +636,175 @@ struct CompensationLines: Sendable {
         switches = all
         armed = fresh
         switchPlaces = places
+        self.instrumentChains = instrumentChains
+        self.audioChains = audioChains
+        self.returnChains = returnChains
+        self.masterChain = masterChain
         origin = Origin()
         resolvedFrom = previous?.origin
+    }
+
+    /// The program of one chain going from `old` to `new` while a live core plays, or nil when it
+    /// plays as it is. A latent insert (not bypassed, `latencyFrames` > 0) that arrives, leaves or
+    /// takes another's place gets a slot (`PathSwitch`); everything else plays as it always did. A
+    /// slot still crossing from the program before is carried on with its unit; one whose edit is
+    /// undone gets a successor that cancels it. A chain whose common inserts changed their order
+    /// plays as it is: the reorder switches at once, as before. Main thread.
+    static func program(from old: [any HostedProcessor], to new: [any HostedProcessor], carrying carried: [ChainStep]?,
+                        previousSwitches: [PathSwitch], all: inout [PathSwitch], fresh: inout [PathSwitch]) -> [ChainStep]? {
+        let latent = { (unit: any HostedProcessor) -> Bool in !unit.isBypassed && unit.latencyFrames > 0 }
+        let isOld = { (unit: any HostedProcessor) -> Bool in old.contains { $0 === unit } }
+        let isNew = { (unit: any HostedProcessor) -> Bool in new.contains { $0 === unit } }
+        // The slots of the program before that still cross.
+        var running: [PathSwitch] = []
+        for step in carried ?? [] {
+            if case .slot(let slot) = step, !slot.settled.load(ordering: .acquiring) { running.append(slot) }
+        }
+        let slotIndex = { (slot: PathSwitch) -> Int in previousSwitches.firstIndex { $0 === slot } ?? -1 }
+        let runningFor = { (unit: any HostedProcessor) -> PathSwitch? in
+            running.first { (slot: PathSwitch) -> Bool in
+                if case .unit(let playing)? = slot.new { return playing === unit }
+                return false
+            }
+        }
+        let leavingFrom = { (unit: any HostedProcessor) -> PathSwitch? in
+            running.first { (slot: PathSwitch) -> Bool in
+                guard slot.new == nil, case .unit(let leaving)? = slot.settledOld else { return false }
+                return leaving === unit
+            }
+        }
+        let same = old.count == new.count && zip(old, new).allSatisfy { $0 === $1 }
+        if same {
+            guard !running.isEmpty, let carried else { return nil }
+            var program: [ChainStep] = []
+            for step in carried {
+                switch step {
+                case .unit(let unit):
+                    program.append(.unit(unit))
+                case .slot(let slot):
+                    if !slot.settled.load(ordering: .acquiring) {
+                        all.append(slot)
+                        program.append(.slot(slot))
+                    } else if case .unit(let unit)? = slot.new {
+                        program.append(.unit(unit))
+                    }
+                }
+            }
+            return program
+        }
+        // The inserts both chains play must keep their order.
+        let common = new.filter { isOld($0) }
+        let commonBefore = old.filter { isNew($0) }
+        guard common.count == commonBefore.count, zip(common, commonBefore).allSatisfy({ $0 === $1 }) else { return nil }
+        // Each latent insert that leaves, with the gap it leaves from (the number of common inserts
+        // before it) and the common insert it sat before.
+        var leaving: [(unit: any HostedProcessor, gap: Int)] = []
+        var gap = 0
+        for unit in old {
+            if isNew(unit) {
+                gap += 1
+            } else if latent(unit) {
+                leaving.append((unit, gap))
+            }
+        }
+        let anchorOf = { (gap: Int) -> ObjectIdentifier? in gap < common.count ? ObjectIdentifier(common[gap]) : nil }
+        let arriving = new.contains { !isOld($0) && latent($0) }
+        guard !leaving.isEmpty || arriving || !running.isEmpty else { return nil }
+        // Slots still taking out an insert neither chain has any more: carried on before the
+        // insert they sat before, or at the end when that one went too.
+        let stillLeaving = running.filter { (slot: PathSwitch) -> Bool in
+            guard slot.new == nil, case .unit(let unit)? = slot.settledOld else { return false }
+            return !isOld(unit) && !isNew(unit)
+        }
+        var placed = [Bool](repeating: false, count: stillLeaving.count)
+        var program: [ChainStep] = []
+        var paired = [Bool](repeating: false, count: leaving.count)
+        var made = false
+        // Collected here and handed out at the end: a closure may not capture the inout lists.
+        var played: [PathSwitch] = []
+        var brought: [PathSwitch] = []
+        let leave = { (at: Int) in
+            for (offset, entry) in leaving.enumerated() where entry.gap == at && !paired[offset] {
+                paired[offset] = true
+                let before = runningFor(entry.unit)
+                let slot = PathSwitch(step: nil, settledOld: .unit(entry.unit), predecessor: before.map(slotIndex) ?? -1,
+                                      anchor: anchorOf(at), inherits: before)
+                played.append(slot)
+                brought.append(slot)
+                program.append(.slot(slot))
+                made = true
+            }
+        }
+        let carryLeaving = { (anchor: ObjectIdentifier?) in
+            for (offset, slot) in stillLeaving.enumerated() where !placed[offset] && (anchor == nil || slot.anchor == anchor) {
+                placed[offset] = true
+                played.append(slot)
+                program.append(.slot(slot))
+                made = true
+            }
+        }
+        gap = 0
+        for unit in new {
+            if isOld(unit) {
+                leave(gap)
+                carryLeaving(ObjectIdentifier(unit))
+                gap += 1
+                if let slot = runningFor(unit) {
+                    played.append(slot)
+                    program.append(.slot(slot))
+                    made = true
+                } else {
+                    program.append(.unit(unit))
+                }
+            } else if latent(unit) {
+                // Takes the place of the first latent insert that leaves from the same gap.
+                var replaced: (any HostedProcessor)?
+                if let offset = leaving.indices.first(where: { leaving[$0].gap == gap && !paired[$0] }) {
+                    paired[offset] = true
+                    replaced = leaving[offset].unit
+                }
+                let before = replaced.flatMap(runningFor) ?? leavingFrom(unit)
+                let slot = PathSwitch(step: .unit(unit), settledOld: replaced.map { PathStep.unit($0) },
+                                      predecessor: before.map(slotIndex) ?? -1, warmUp: PathSwitch.warmUp(for: unit),
+                                      inherits: before)
+                played.append(slot)
+                brought.append(slot)
+                program.append(.slot(slot))
+                made = true
+            } else {
+                program.append(.unit(unit))
+            }
+        }
+        leave(gap)
+        carryLeaving(nil)
+        guard made else { return nil }
+        // Each insert runs once per chunk: in the chain, as a slot's new path, or as the old path a
+        // slot may play. Where a quick run of edits would run one twice, the chain switches at
+        // once instead, as it always did.
+        var seen = Set<ObjectIdentifier>()
+        for step in program {
+            switch step {
+            case .unit(let unit):
+                guard seen.insert(ObjectIdentifier(unit)).inserted else { return nil }
+            case .slot(let slot):
+                var mine = Set(slot.possibleOld)
+                if case .unit(let unit)? = slot.new { mine.insert(ObjectIdentifier(unit)) }
+                for identity in mine {
+                    guard seen.insert(identity).inserted else { return nil }
+                }
+            }
+        }
+        all.append(contentsOf: played)
+        fresh.append(contentsOf: brought)
+        return program
+    }
+
+    /// Render thread: a slot of `program` still crosses.
+    static func isCrossing(_ program: [ChainStep]?) -> Bool {
+        for step in program ?? [] {
+            if case .slot(let slot) = step, slot.isLive { return true }
+        }
+        return false
     }
 
     /// Render thread, while a snapshot is taken up: each line this snapshot brings new takes over

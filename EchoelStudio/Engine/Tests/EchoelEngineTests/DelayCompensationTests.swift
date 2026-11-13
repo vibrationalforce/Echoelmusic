@@ -22,6 +22,21 @@ private final class LateInsert: HostedProcessor, @unchecked Sendable {
     func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {}
 }
 
+/// An insert that passes its input through, reports a latency, and counts the frames it ran.
+private final class CountedInsert: HostedProcessor, @unchecked Sendable {
+    let sampleRate: Double = 48_000
+    let insert: InsertID? = nil
+    let parameterRanges: [UInt64: ClosedRange<Float>] = [:]
+    let isBypassed = false
+    let latencyFrames: Int
+    private(set) var processed = 0
+
+    init(latency: Int) { latencyFrames = latency }
+
+    func schedule(address: UInt64, value: Float, offset: Int, ramp: Int) {}
+    func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) { processed += frames }
+}
+
 /// A plugin instrument that plays nothing and reports a latency.
 private final class LateInstrument: HostedInstrument, @unchecked Sendable {
     let sampleRate: Double = 48_000
@@ -895,7 +910,8 @@ final class DelayCompensationTests: XCTestCase {
         ], length: length, block: 64, playAt: playAt, seekTo: from)
         XCTAssertGreaterThan(peak(live[(length - 2_048)..<length]), 0.1, "the tone plays")
         // Song frame `from + k` is heard at `playAt + 85 + k`; the start fades in over 128 frames,
-        // and a crossover still holding at Play would glide until `playAt + 341`.
+        // and a crossover still holding at Play would glide until `playAt + 426` (the insert's
+        // warm-up of 170, then the ramp).
         XCTAssertLessThan(worstDifference(live, from: playAt + 85 + 160, to: length, file, shift: playAt + 85 - from), 1e-6,
                           "it waits 85 frames from the first sound after Play, as the export plays it")
     }
@@ -1000,5 +1016,203 @@ final class DelayCompensationTests: XCTestCase {
         XCTAssertLessThan(steepestStep(live, change..<(length - 2_048)), 1.3 * steady, "no step")
         XCTAssertLessThan(worstDifference(live, from: change + 2_048, to: length, file, shift: total), 1e-6,
                           "it settles on both waits, as the export plays them")
+    }
+
+    // MARK: - A latent insert itself, while the song plays
+
+    /// Echoel's Tape effect on an insert chain: it plays 288 frames behind at 48 kHz.
+    private func tape() -> LatentKernelInsert {
+        LatentKernelInsert(EffectKernel(effect: .tape, sampleRate: rate))
+    }
+
+    /// The steepest step after `change` against the steepest of the steady tone before it and at
+    /// the end: below 1.3 times means no click.
+    private func stepsSmoothly(_ live: [Float], change: Int, length: Int, _ label: String) {
+        let steady = Swift.max(steepestStep(live, (change - 2_048)..<change), steepestStep(live, (length - 2_048)..<length))
+        XCTAssertGreaterThan(steady, 0.01, "\(label): the tone plays")
+        XCTAssertLessThan(steepestStep(live, change..<(length - 2_048)), 1.3 * steady, "\(label): no step")
+    }
+
+    /// A latent insert that arrives on a playing track: the track plays dry while the effect warms
+    /// up, then glides into it, on the same sample as its twin that now waits — no step, in phase.
+    func testATrackThatGetsALatentInsertWhilePlayingGlidesIntoItInStepWithItsTwin() throws {
+        let song = try tones(["Clipped", "Plain"])
+        let clipped = song.tracks[0], plain = song.tracks[1]
+        let change = beat + 4_800, length = beat + 14_400
+        let alone = export(song, effects: [clipped: [clipper()]], isolating: plain)
+        let window = (change + 2_048)..<(change + 6_144)
+        var renders: [[Float]] = []
+        for block in [64, 128] {
+            let live = playLive(song, [
+                Publish(at: 0, project: song.project, effects: [:]),
+                Publish(at: change, project: song.project, effects: [clipped: [clipper()]]),
+            ], length: length, block: block)
+            stepsSmoothly(live, change: change, length: length, "block \(block)")
+            XCTAssertGreaterThan(peak(live[window]), 1.95 * peak(alone[window]), "block \(block): in phase, the sum doubles")
+            renders.append(live)
+        }
+        XCTAssertLessThan(worstDifference(renders[0], from: 0, to: length, renders[1], shift: 0), 1e-6, "any block size")
+    }
+
+    /// A latent insert taken off a playing track: it plays on under the glide back to the dry
+    /// sound, in step with its twin that stops waiting.
+    func testATrackWhoseLatentInsertIsRemovedWhilePlayingGlidesOutOfItInStepWithItsTwin() throws {
+        let song = try tones(["Clipped", "Plain"])
+        let clipped = song.tracks[0]
+        let change = beat + 4_800, length = beat + 9_600
+        let file = export(song, effects: [:])
+        var renders: [[Float]] = []
+        for block in [64, 128] {
+            let live = playLive(song, [
+                Publish(at: 0, project: song.project, effects: [clipped: [clipper()]]),
+                Publish(at: change, project: song.project, effects: [:]),
+            ], length: length, block: block)
+            stepsSmoothly(live, change: change, length: length, "block \(block)")
+            XCTAssertLessThan(worstDifference(live, from: change + 2_048, to: length, file, shift: 0), 1e-6,
+                              "block \(block): then both play dry, as the export plays them")
+            renders.append(live)
+        }
+        XCTAssertLessThan(worstDifference(renders[0], from: 0, to: length, renders[1], shift: 0), 1e-6, "any block size")
+    }
+
+    /// Tape added while playing never clicks: when it stays, when it is taken off again while its
+    /// change still holds (then nobody heard it, and nothing changes), and when it is taken off
+    /// while the mix glides into it (then the removal waits for the glide).
+    func testTapeAddedWhilePlayingNeverClicksEvenWhenTheEditIsUndoneInItsHoldOrItsGlide() throws {
+        let song = try tones(["Taped", "Plain"])
+        let taped = song.tracks[0]
+        let change = beat + 4_800, length = beat + 9_600
+        XCTAssertEqual(tape().latencyFrames, 288, "Tape plays 6 ms behind at 48 kHz")
+        XCTAssertEqual(PathSwitch.warmUp(for: tape()), 576, "held for twice that")
+        let file = export(song, effects: [:])
+        for block in [64, 128] {
+            let live = playLive(song, [
+                Publish(at: 0, project: song.project, effects: [:]),
+                Publish(at: change, project: song.project, effects: [taped: [tape()]]),
+            ], length: length, block: block)
+            stepsSmoothly(live, change: change, length: length, "added, block \(block)")
+        }
+        for block in [64, 128] {
+            let undone = playLive(song, [
+                Publish(at: 0, project: song.project, effects: [:]),
+                Publish(at: change, project: song.project, effects: [taped: [tape()]]),
+                Publish(at: change + 256, project: song.project, effects: [:]),
+            ], length: length, block: block)
+            XCTAssertLessThan(worstDifference(undone, from: 0, to: length, file, shift: 0), 1e-6,
+                              "taken off while it holds, block \(block): the song plays as if nothing had changed")
+        }
+        let gliding = tape()
+        let late = playLive(song, [
+            Publish(at: 0, project: song.project, effects: [:]),
+            Publish(at: change, project: song.project, effects: [taped: [gliding]]),
+            Publish(at: change + 640, project: song.project, effects: [:]),
+        ], length: length, block: 64)
+        stepsSmoothly(late, change: change, length: length, "taken off while it glides")
+        XCTAssertLessThan(worstDifference(late, from: change + 2_048, to: length, file, shift: 0), 1e-6,
+                          "taken off while it glides: then both play dry")
+    }
+
+    /// One latent insert replaced by another of the same latency: no line moves, and the track
+    /// glides from the one to the other once the new one has warmed up.
+    func testALatentInsertReplacedByAnEqualOneWhilePlayingGlidesWithoutAStep() throws {
+        let song = try tones(["Clipped", "Plain"])
+        let clipped = song.tracks[0], plain = song.tracks[1]
+        let change = beat + 4_800, length = beat + 14_400
+        let alone = export(song, effects: [clipped: [clipper()]], isolating: plain)
+        let window = (change + 2_048)..<(change + 6_144)
+        for block in [64, 128] {
+            let live = playLive(song, [
+                Publish(at: 0, project: song.project, effects: [clipped: [clipper()]]),
+                Publish(at: change, project: song.project, effects: [clipped: [clipper()]]),
+            ], length: length, block: block)
+            stepsSmoothly(live, change: change, length: length, "block \(block)")
+            XCTAssertGreaterThan(peak(live[window]), 1.95 * peak(alone[window]), "block \(block): still in phase")
+        }
+    }
+
+    /// The hold before a new latent insert is heard: its latency, and as much again up to a tenth
+    /// of a second — exactly, the old sound before it and the new wait after the glide.
+    func testANewLatentInsertIsHeardAfterTwiceItsLatencyAndATenthOfASecondAtMost() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        let change = beat + 4_800
+        let undelayed = exportOf(song.project, song, effects: [:])
+        for latency in [2_000, 6_000] {
+            let hold = latency + Swift.min(latency, 4_800)
+            XCTAssertEqual(PathSwitch.warmUp(for: LateInsert(latency: latency)), hold)
+            let length = change + hold + Crossover.rampFrames + 2_048
+            let delayed = exportOf(song.project, song, effects: [lateTrack: [LateInsert(latency: latency)]])
+            let live = playLive(song, [
+                Publish(at: 0, project: song.project, effects: [:]),
+                Publish(at: change, project: song.project, effects: [lateTrack: [LateInsert(latency: latency)]]),
+            ], length: length, block: 64)
+            XCTAssertLessThan(worstDifference(live, from: change, to: change + hold, undelayed, shift: 0), 1e-6,
+                              "\(latency): the old sound, exactly, while the insert warms up")
+            XCTAssertLessThan(worstDifference(live, from: change + hold + Crossover.rampFrames, to: length, delayed, shift: latency),
+                              1e-6, "\(latency): then the new wait, exactly")
+        }
+    }
+
+    /// A latent insert added to the master while playing glides in without a step or a dip.
+    func testALatentInsertAddedToTheMasterWhilePlayingGlidesIntoItWithoutAStep() throws {
+        let song = try tones(["Solo"])
+        let change = beat + 4_800, length = beat + 14_400
+        var renders: [[Float]] = []
+        for block in [64, 128] {
+            let live = playLive(song, [
+                Publish(at: 0, project: song.project, effects: [:]),
+                Publish(at: change, project: song.project, effects: [:], master: [clipper()]),
+            ], length: length, block: block)
+            stepsSmoothly(live, change: change, length: length, "block \(block)")
+            XCTAssertGreaterThan(peak(live[(change + 2_048)..<(change + 6_144)]), 0.98 * peak(live[(change - 4_096)..<change]),
+                                 "block \(block): no loss of level")
+            renders.append(live)
+        }
+        XCTAssertLessThan(worstDifference(renders[0], from: 0, to: length, renders[1], shift: 0), 1e-6, "any block size")
+    }
+
+    /// Faders moved again and again beside a latent insert that stays: no crossover starts, so
+    /// the mix never dips and never steps.
+    func testAFaderMovedWhileALatentInsertPlaysNeverDipsOrSteps() throws {
+        let song = try tones(["Clipped", "Plain"])
+        let clipped = song.tracks[0], plain = song.tracks[1]
+        var quieter = song.project
+        try Command.setVolume(.track(plain), db: -1).apply(to: &quieter)
+        let change = beat + 4_800, length = beat + 9_600
+        for block in [64, 128] {
+            let effects: [TrackID: [any HostedProcessor]] = [clipped: [clipper()]]
+            var publishes = [Publish(at: 0, project: song.project, effects: effects)]
+            for step in 0..<12 {
+                publishes.append(Publish(at: change + 256 * step, project: step % 2 == 0 ? quieter : song.project, effects: effects))
+            }
+            let live = playLive(song, publishes, length: length, block: block)
+            stepsSmoothly(live, change: change, length: length, "block \(block)")
+            let reference = peak(live[(change - 2_048)..<change])
+            var start = change
+            while start < change + 4_096 {
+                XCTAssertGreaterThan(peak(live[start..<(start + 128)]), 0.9 * reference, "block \(block): no dip at \(start)")
+                start += 128
+            }
+        }
+    }
+
+    /// A quick run of edits — one latent insert replaced by another, then the first switched on
+    /// again while the change still holds — never runs an insert twice in one block: the chain
+    /// switches at once instead.
+    func testAnInsertNeverRunsTwiceInABlockWhenItComesBackWhileItsReplacementHolds() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        let change = beat + 4_800, length = beat + 9_600
+        let first = CountedInsert(latency: 85), second = CountedInsert(latency: 85)
+        let live = playLive(song, [
+            Publish(at: 0, project: song.project, effects: [lateTrack: [first]]),
+            Publish(at: change, project: song.project, effects: [lateTrack: [second]]),
+            Publish(at: change + 64, project: song.project, effects: [lateTrack: [first, second]]),
+        ], length: length, block: 64)
+        XCTAssertGreaterThan(peak(live[(length - 2_048)..<length]), 0.1, "the tone plays")
+        XCTAssertLessThanOrEqual(first.processed, length, "the first insert runs each frame once at most")
+        XCTAssertLessThanOrEqual(second.processed, length - change, "the second, from its arrival on")
     }
 }

@@ -844,8 +844,8 @@ public final class EngineCore: @unchecked Sendable {
     /// The master's inserts on the master pair, every chunk, so a limiter or a reverb tail runs
     /// on whether or not the song plays.
     private func processMaster(frames: Int) {
-        guard let effects = current?.snapshot.masterEffects else { return }
-        for effect in effects { effect.process(frames: frames, left: outputs[0], right: outputs[1]) }
+        guard let box = current else { return }
+        runChain(box.snapshot.masterEffects, box.lines.masterChain, frames: frames, left: outputs[0], right: outputs[1])
     }
 
     /// The master pair's peaks, after everything was mixed into it.
@@ -1607,6 +1607,26 @@ public final class EngineCore: @unchecked Sendable {
         }
     }
 
+    /// A chain of inserts on a pair: as it is, or — while a latent insert arrives, leaves or is
+    /// replaced and the crossover runs — its program, whose slots cross over (`ChainStep`).
+    private func runChain(_ inserts: [any HostedProcessor], _ program: [ChainStep]?, frames: Int,
+                          left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+        guard let program, !crossover.isIdle else {
+            for effect in inserts { effect.process(frames: frames, left: left, right: right) }
+            return
+        }
+        let window = crossover.window(frames: frames)
+        for step in program {
+            switch step {
+            case .unit(let effect):
+                effect.process(frames: frames, left: left, right: right)
+            case .slot(let slot):
+                slot.render(left: left, right: right, frames: frames, window: window, curve: crossoverCurve,
+                            scratchLeft: switchLeft, scratchRight: switchRight)
+            }
+        }
+    }
+
     /// A new tempo keeps the song where it is: bar 33 stays bar 33, only the time to the next
     /// beat changes, so the playhead moves to the new tempo's sample for that position. Rounded
     /// DOWN: an event the old tempo had not reached then still lies ahead of the playhead —
@@ -2006,6 +2026,10 @@ public final class EngineCore: @unchecked Sendable {
             effect.follow(transport)
             effect.follow(key: key)
         }
+        // An insert that leaves or is replaced plays on under the crossover: it keeps time too.
+        if !crossover.isIdle, let lines = current?.lines {
+            for change in lines.switches { change.followOld(transport, key: key) }
+        }
     }
 
     private func renderUnits(frames: Int) {
@@ -2034,7 +2058,7 @@ public final class EngineCore: @unchecked Sendable {
         for (index, lane) in snapshot.lanes.enumerated() {
             let (left, right) = pair(lane.output)
             let l = bus(lane.slot, busLeft), r = bus(lane.slot, busRight)
-            for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
+            runChain(lane.inserts, CompensationLines.at(lines.instrumentChains, index), frames: frames, left: l, right: r)
             waitIn(CompensationLines.at(lines.instrumentPre, index), CompensationLines.at(lines.instrumentPreSwitches, index),
                    frames: frames, left: l, right: r)
             let held = (mixFrom, mixTo)
@@ -2420,7 +2444,7 @@ public final class EngineCore: @unchecked Sendable {
         for (index, lane) in snapshot.returns.enumerated() {
             let (left, right) = pair(lane.output)
             let l = returnLeft + lane.bus * Self.maximumFrames, r = returnRight + lane.bus * Self.maximumFrames
-            for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
+            runChain(lane.inserts, CompensationLines.at(lines.returnChains, index), frames: frames, left: l, right: r)
             // Delay compensation: the return waits after its chain, before its fader.
             waitIn(CompensationLines.at(lines.returns, index), CompensationLines.at(lines.returnSwitches, index),
                    frames: frames, left: l, right: r)
@@ -2460,7 +2484,9 @@ public final class EngineCore: @unchecked Sendable {
             // leaves has no line here any more, but its old path still plays out its glide.
             let preSwitch = lines.flatMap { CompensationLines.at($0.audioPreSwitches, index) }
             let directSwitch = lines.flatMap { CompensationLines.at($0.audioDirectSwitches, index) }
-            let crossing = !crossover.isIdle && ((preSwitch?.isLive ?? false) || (directSwitch?.isLive ?? false))
+            let program = lines.flatMap { CompensationLines.at($0.audioChains, index) }
+            let crossing = !crossover.isIdle && ((preSwitch?.isLive ?? false) || (directSwitch?.isLive ?? false)
+                || CompensationLines.isCrossing(program))
             // A track that renders nothing this chunk still lets its reading fall — unless its
             // delay lines still hold sound: then it renders silence through them until they are out.
             if !playing, lane.monitor < 0, fadingFrom == nil, lane.inserts.isEmpty,
@@ -2575,7 +2601,7 @@ public final class EngineCore: @unchecked Sendable {
                     audioRight[i] += inputRight[i]
                 }
             }
-            for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
+            runChain(lane.inserts, program, frames: frames, left: audioLeft, right: audioRight)
             waitIn(pre, preSwitch, frames: frames, left: audioLeft, right: audioRight)
             // A monitored input is new sound too: after the block that stops, it is heard at the
             // playhead's gains, not at the ones the song's tails ring out at.
