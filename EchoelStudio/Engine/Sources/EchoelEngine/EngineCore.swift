@@ -16,7 +16,10 @@ import Synchronization
 ///   frees memory.
 /// - **Render thread:** `render` only. No locks, no allocation, no Objective-C, no I/O: every
 ///   buffer and synth is allocated in `init`, and every delay line of a snapshot's delay
-///   compensation in `publish`, with its snapshot (`CompensationLines`).
+///   compensation in `publish`, with its snapshot (`CompensationLines`). While a change of
+///   waits glides (`Crossover`), a published snapshot waits until the glide is over, rounded up
+///   to the next render block — so a seek sent in that time can reach the render thread before
+///   the snapshot published just ahead of it.
 ///
 /// Editing a track's notes while playing releases that track's sounding notes and re-seeks, so
 /// a deleted note can never hang; a mix change keeps every note. A note that already sounded is
@@ -207,6 +210,13 @@ public final class EngineCore: @unchecked Sendable {
     /// region's left and right side by side, a mono one in both alike.
     private let segmentLeft: UnsafeMutablePointer<Float>
     private let segmentRight: UnsafeMutablePointer<Float>
+    /// A change of waits while playing (SIM76-D1): its clock, its ramp (`Crossover.gain`, filled
+    /// in `init`) and the one pair a switch plays its old path on — switches never nest and lanes
+    /// render one at a time, so one pair is enough.
+    private var crossover = Crossover()
+    private let crossoverCurve: UnsafeMutablePointer<Float>
+    private let switchLeft: UnsafeMutablePointer<Float>
+    private let switchRight: UnsafeMutablePointer<Float>
     /// The click of the chunk being rendered. It joins the master pair after the master inserts
     /// and the master meter: it is for the musician, not the mix, so a master compressor does
     /// not duck on every beat and the meter reads what an export would (audit 2026-10-23).
@@ -433,6 +443,12 @@ public final class EngineCore: @unchecked Sendable {
         segmentLeft.initialize(repeating: 0, count: Self.maximumFrames)
         segmentRight = .allocate(capacity: Self.maximumFrames)
         segmentRight.initialize(repeating: 0, count: Self.maximumFrames)
+        crossoverCurve = .allocate(capacity: Crossover.rampFrames)
+        for step in 0..<Crossover.rampFrames { (crossoverCurve + step).initialize(to: Crossover.gain(step)) }
+        switchLeft = .allocate(capacity: Self.maximumFrames)
+        switchLeft.initialize(repeating: 0, count: Self.maximumFrames)
+        switchRight = .allocate(capacity: Self.maximumFrames)
+        switchRight.initialize(repeating: 0, count: Self.maximumFrames)
         clickLeft = .allocate(capacity: Self.maximumFrames)
         clickLeft.initialize(repeating: 0, count: Self.maximumFrames)
         clickRight = .allocate(capacity: Self.maximumFrames)
@@ -499,6 +515,9 @@ public final class EngineCore: @unchecked Sendable {
         monoRight.deallocate()
         segmentLeft.deallocate()
         segmentRight.deallocate()
+        crossoverCurve.deallocate()
+        switchLeft.deallocate()
+        switchRight.deallocate()
         clickLeft.deallocate()
         clickRight.deallocate()
         outputs.deallocate()
@@ -526,7 +545,9 @@ public final class EngineCore: @unchecked Sendable {
         // The delay lines of its compensation plan, made here and freed here with the box: the
         // render thread never sizes, allocates or frees one. A line the box the render thread
         // plays has at the same place and delay is handed on, so it plays on through the swap.
-        let box = SnapshotBox(limited, lines: CompensationLines(limited, reusing: published.last?.lines))
+        // With the snapshot before, so a wait that changes while the song plays crosses over.
+        let last = published.last
+        let box = SnapshotBox(limited, lines: CompensationLines(limited, reusing: last?.lines, after: last?.snapshot))
         published.append(box)
         pending.store(Unmanaged.passUnretained(box).toOpaque(), ordering: .releasing)
         // A box older than the one the render thread acknowledged can no longer be reached:
@@ -759,6 +780,7 @@ public final class EngineCore: @unchecked Sendable {
             outputCount = 2
             let rendered = renderChunk(frames: frames)
             processMaster(frames: rendered)
+            if crossover.advance(rendered) { current?.lines.markSettled() }
             meterMaster(frames: rendered)
             addClick(frames: rendered)
             guardOutput(frames: rendered)
@@ -787,6 +809,7 @@ public final class EngineCore: @unchecked Sendable {
             outputCount = Swift.max(used, 2)
             let rendered = renderChunk(frames: frames)
             processMaster(frames: rendered)
+            if crossover.advance(rendered) { current?.lines.markSettled() }
             meterMaster(frames: rendered)
             addClick(frames: rendered)
             guardOutput(frames: rendered)
@@ -1406,6 +1429,10 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     private func takePendingSnapshot() {
+        // A glide takes no snapshot until it is over (what is left of `Crossover.rampFrames`,
+        // rounded up to the next render block): what it crosses between stays as it is. The box
+        // stays pending; a newer publish withdraws it.
+        if crossover.isRamping { return }
         guard let pointer = pending.exchange(nil, ordering: .acquiringAndReleasing) else { return }
         // Unretained, both: the main thread's `published` list owns the old box and the new one
         // until we acknowledge the new one at the end of this function, so nothing here frees one.
@@ -1560,6 +1587,24 @@ public final class EngineCore: @unchecked Sendable {
     private func takeOverLines(into box: SnapshotBox, from previous: SnapshotBox) {
         guard box !== previous else { return }
         box.lines.takeOver(from: previous.lines)
+        // A wait that changes while playing: the switches the new box brings, on the one clock.
+        let need = box.lines.arm(after: previous.lines, holding: !crossover.isIdle)
+        if need >= 0 { crossover.hold(atLeast: need) }
+        // Every change still holding was undone before anyone heard it.
+        if !crossover.isIdle, !box.lines.hasLiveSwitch { crossover.end() }
+        if crossover.isIdle { box.lines.markSettled() }
+    }
+
+    /// A lane's wait at one place: its line as it is, or — while a change of waits crosses over —
+    /// its switch there (`PathSwitch.render`).
+    private func waitIn(_ line: DelayLine?, _ change: PathSwitch?, frames: Int,
+                        left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+        if let change, !crossover.isIdle {
+            change.render(left: left, right: right, frames: frames, window: crossover.window(frames: frames),
+                          curve: crossoverCurve, scratchLeft: switchLeft, scratchRight: switchRight)
+        } else {
+            line?.process(left: left, right: right, frames: frames)
+        }
     }
 
     /// A new tempo keeps the song where it is: bar 33 stays bar 33, only the time to the next
@@ -1990,14 +2035,16 @@ public final class EngineCore: @unchecked Sendable {
             let (left, right) = pair(lane.output)
             let l = bus(lane.slot, busLeft), r = bus(lane.slot, busRight)
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
-            CompensationLines.at(lines.instrumentPre, index)?.process(left: l, right: r, frames: frames)
+            waitIn(CompensationLines.at(lines.instrumentPre, index), CompensationLines.at(lines.instrumentPreSwitches, index),
+                   frames: frames, left: l, right: r)
             let held = (mixFrom, mixTo)
             if stoppedAt != nil, lane.slot >= 0, lane.slot < slotCapacity, liveSinceStop[lane.slot] {
                 mixFrom = snapshot.time.position(atSample: playhead)
                 mixTo = mixFrom
             }
             send(lane.sends, from: lane.slot, frames: frames, left: l, right: r)
-            CompensationLines.at(lines.instrumentDirect, index)?.process(left: l, right: r, frames: frames)
+            waitIn(CompensationLines.at(lines.instrumentDirect, index),
+                   CompensationLines.at(lines.instrumentDirectSwitches, index), frames: frames, left: l, right: r)
             mix(l, r, into: left, right, frames: frames, curve: lane.mix, fixed: (lane.gainLeft, lane.gainRight),
                 memory: memory(point: lane.slot), meter: lane.slot, spatial: left == outputs[0] ? lane.slot : -1)
             (mixFrom, mixTo) = held
@@ -2375,7 +2422,8 @@ public final class EngineCore: @unchecked Sendable {
             let l = returnLeft + lane.bus * Self.maximumFrames, r = returnRight + lane.bus * Self.maximumFrames
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
             // Delay compensation: the return waits after its chain, before its fader.
-            CompensationLines.at(lines.returns, index)?.process(left: l, right: r, frames: frames)
+            waitIn(CompensationLines.at(lines.returns, index), CompensationLines.at(lines.returnSwitches, index),
+                   frames: frames, left: l, right: r)
             let point = slotCapacity + Self.smoothedAudioTracks + lane.bus
             mix(l, r, into: left, right, frames: frames, curve: lane.mix, fixed: (lane.gainLeft, lane.gainRight),
                 memory: memory(point: point), meter: point)
@@ -2408,10 +2456,15 @@ public final class EngineCore: @unchecked Sendable {
             let point = index < Self.smoothedAudioTracks ? slotCapacity + index : -1
             let pre = lines.flatMap { CompensationLines.at($0.audioPre, index) }
             let direct = lines.flatMap { CompensationLines.at($0.audioDirect, index) }
+            // A switch still crossing renders even where the lane would be skipped: a line that
+            // leaves has no line here any more, but its old path still plays out its glide.
+            let preSwitch = lines.flatMap { CompensationLines.at($0.audioPreSwitches, index) }
+            let directSwitch = lines.flatMap { CompensationLines.at($0.audioDirectSwitches, index) }
+            let crossing = !crossover.isIdle && ((preSwitch?.isLive ?? false) || (directSwitch?.isLive ?? false))
             // A track that renders nothing this chunk still lets its reading fall — unless its
             // delay lines still hold sound: then it renders silence through them until they are out.
             if !playing, lane.monitor < 0, fadingFrom == nil, lane.inserts.isEmpty,
-               pre?.isDrained ?? true, direct?.isDrained ?? true {
+               pre?.isDrained ?? true, direct?.isDrained ?? true, !crossing {
                 meters.record(point, left: 0, right: 0, fall: meterFall)
                 continue
             }
@@ -2426,7 +2479,7 @@ public final class EngineCore: @unchecked Sendable {
             // Skipped, its lines would come back empty, and the fade-in would pass over their
             // silence while the audio arrives `delay` frames later at full level - a click.
             guard lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil
-                || !lane.sends.isEmpty || fading || pre != nil || direct != nil else {
+                || !lane.sends.isEmpty || fading || pre != nil || direct != nil || crossing else {
                 meters.record(point, left: 0, right: 0, fall: meterFall)
                 // Silent, but a launch still happens on its bar.
                 if playing, session, !sessions[lane.slot].isIdle,
@@ -2523,7 +2576,7 @@ public final class EngineCore: @unchecked Sendable {
                 }
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
-            pre?.process(left: audioLeft, right: audioRight, frames: frames)
+            waitIn(pre, preSwitch, frames: frames, left: audioLeft, right: audioRight)
             // A monitored input is new sound too: after the block that stops, it is heard at the
             // playhead's gains, not at the ones the song's tails ring out at.
             let held = (mixFrom, mixTo)
@@ -2532,7 +2585,7 @@ public final class EngineCore: @unchecked Sendable {
                 mixTo = mixFrom
             }
             send(lane.sends, from: point, frames: frames, left: audioLeft, right: audioRight)
-            direct?.process(left: audioLeft, right: audioRight, frames: frames)
+            waitIn(direct, directSwitch, frames: frames, left: audioLeft, right: audioRight)
             mix(audioLeft, audioRight, into: left, right, frames: frames, curve: lane.mix,
                 fixed: (lane.gainLeft, lane.gainRight), memory: memory(point: point), meter: point,
                 spatial: left == outputs[0] ? point : -1)

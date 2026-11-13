@@ -586,10 +586,11 @@ final class DelayCompensationTests: XCTestCase {
         var prepare: () -> Void = {}
     }
 
-    /// The live core playing `song` from frame 0 in blocks of `block`: each publish is made before
-    /// the block that starts at its frame (every `at` lies on a block boundary), so two at one
-    /// frame both reach the core before it renders again.
-    private func playLive(_ song: Tones, _ publishes: [Publish], length: Int, block: Int) -> [Float] {
+    /// The live core playing `song` from frame `playAt` in blocks of `block`: each publish is made
+    /// before the block that starts at its frame (every `at` lies on a block boundary), so two at
+    /// one frame both reach the core before it renders again.
+    private func playLive(_ song: Tones, _ publishes: [Publish], length: Int, block: Int, playAt: Int = 0,
+                          seekTo: Int? = nil) -> [Float] {
         let engine = EngineCore(sampleRate: rate)
         engine.setClickEnabled(false)
         var slots = SlotAssigner(capacity: engine.slotCapacity)
@@ -611,7 +612,10 @@ final class DelayCompensationTests: XCTestCase {
                                               samples: song.samples, effects: due.effects, masterEffects: due.master))
                 next += 1
             }
-            if start == 0 { engine.play() }
+            if start == playAt {
+                if let seekTo { engine.seek(toSample: Int64(seekTo)) }
+                engine.play()
+            }
             let count = Swift.min(block, length - start)
             left.withUnsafeMutableBufferPointer { (l: inout UnsafeMutableBufferPointer<Float>) in
                 right.withUnsafeMutableBufferPointer { (r: inout UnsafeMutableBufferPointer<Float>) in
@@ -651,5 +655,350 @@ final class DelayCompensationTests: XCTestCase {
             XCTAssertGreaterThan(peak(live[(length - 2_048)..<length]), 0.1, "block \(block): the tone plays")
             XCTAssertLessThan(longest, 16, "block \(block): the track that waits plays on through both edits")
         }
+    }
+
+    /// The left side of an export of `project` with these inserts.
+    private func exportOf(_ project: Project, _ song: Tones, effects: [TrackID: [any HostedProcessor]]) -> [Float] {
+        OfflineRender.render(project, sampleRate: rate, tailSeconds: 0.5, ringOutSeconds: 0, samples: song.samples,
+                             effects: effects).left
+    }
+
+    /// The steepest step between two neighbouring samples in `range`.
+    private func steepestStep(_ samples: [Float], _ range: Range<Int>) -> Float {
+        var worst: Float = 0
+        for index in range where index > 0 && index < samples.count {
+            worst = Swift.max(worst, Swift.abs(samples[index] - samples[index - 1]))
+        }
+        return worst
+    }
+
+    /// The largest difference between `live` over `from..<end` and `file` played `shift` frames
+    /// earlier.
+    private func worstDifference(_ live: [Float], from: Int, to end: Int, _ file: [Float], shift: Int) -> Float {
+        var worst: Float = 0
+        for index in from..<Swift.min(end, live.count) {
+            let at = index - shift
+            guard at >= 0, at < file.count else { continue }
+            worst = Swift.max(worst, Swift.abs(live[index] - file[at]))
+        }
+        return worst
+    }
+
+    /// A latency that arrives while the song plays: the track that now waits holds what it played,
+    /// then glides to its new wait — no silence, no step — and plays on as the export plays it.
+    func testAnInsertWithLatencyAddedWhilePlayingNeverStepsTheTrackThatNowWaits() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        let change = beat + 4_800, length = beat + 9_600
+        let file = exportOf(song.project, song, effects: [lateTrack: [LateInsert(latency: 85)]])
+        var renders: [[Float]] = []
+        for block in [64, 128] {
+            let live = playLive(song, [
+                Publish(at: 0, project: song.project, effects: [:]),
+                Publish(at: change, project: song.project, effects: [lateTrack: [LateInsert(latency: 85)]]),
+            ], length: length, block: block)
+            let steady = Swift.max(steepestStep(live, (change - 2_048)..<change), steepestStep(live, (length - 2_048)..<length))
+            XCTAssertGreaterThan(steady, 0.01, "block \(block): the tone plays")
+            XCTAssertLessThan(steepestStep(live, change..<(length - 2_048)), 1.3 * steady, "block \(block): no step")
+            XCTAssertLessThan(worstDifference(live, from: change + 2_048, to: length, file, shift: 85), 1e-6,
+                              "block \(block): then it waits 85 frames, as the export plays it")
+            renders.append(live)
+        }
+        XCTAssertLessThan(worstDifference(renders[0], from: 0, to: length, renders[1], shift: 0), 1e-6, "any block size")
+    }
+
+    /// A latency that leaves while the song plays: the track that waited glides back to no wait.
+    func testAnInsertWithLatencyRemovedWhilePlayingNeverStepsTheTrackThatWaited() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        let change = beat + 4_800, length = beat + 9_600
+        let file = exportOf(song.project, song, effects: [:])
+        var renders: [[Float]] = []
+        for block in [64, 128] {
+            let live = playLive(song, [
+                Publish(at: 0, project: song.project, effects: [lateTrack: [LateInsert(latency: 85)]]),
+                Publish(at: change, project: song.project, effects: [:]),
+            ], length: length, block: block)
+            let steady = Swift.max(steepestStep(live, (change - 2_048)..<change), steepestStep(live, (length - 2_048)..<length))
+            XCTAssertGreaterThan(steady, 0.01, "block \(block): the tone plays")
+            XCTAssertLessThan(steepestStep(live, change..<(length - 2_048)), 1.3 * steady, "block \(block): no step")
+            XCTAssertLessThan(worstDifference(live, from: change + 2_048, to: length, file, shift: 0), 1e-6,
+                              "block \(block): then it waits for nothing")
+            renders.append(live)
+        }
+        XCTAssertLessThan(worstDifference(renders[0], from: 0, to: length, renders[1], shift: 0), 1e-6, "any block size")
+    }
+
+    /// A latency that changes while the song plays — shorter, longer, and shorter with a fader
+    /// moved in the same block — glides the track that waits from one wait to the other.
+    func testALatencyThatChangesWhilePlayingGlidesTheTrackThatWaits() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0], plain = song.tracks[1]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        var quieter = song.project
+        try Command.setVolume(.track(plain), db: -1).apply(to: &quieter)
+        let change = beat + 4_800, length = beat + 9_600
+        let cases: [(from: Int, to: Int, fader: Bool)] = [(85, 40, false), (40, 85, false), (85, 40, true)]
+        for (from, to, fader) in cases {
+            let late = LateInsert(latency: from)
+            let effects: [TrackID: [any HostedProcessor]] = [lateTrack: [late]]
+            var publishes = [Publish(at: 0, project: song.project, effects: effects),
+                             Publish(at: change, project: song.project, effects: effects, prepare: { late.latency = to })]
+            if fader { publishes.append(Publish(at: change, project: quieter, effects: effects)) }
+            let live = playLive(song, publishes, length: length, block: 64)
+            let file = exportOf(fader ? quieter : song.project, song, effects: [lateTrack: [LateInsert(latency: to)]])
+            let label = fader ? "\(from) to \(to) with a fader move" : "\(from) to \(to)"
+            let steady = Swift.max(steepestStep(live, (change - 2_048)..<change), steepestStep(live, (length - 2_048)..<length))
+            XCTAssertGreaterThan(steady, 0.01, label)
+            // While a longer line fills, the old wait plays exactly — not the new line's silence.
+            let before = exportOf(song.project, song, effects: [lateTrack: [LateInsert(latency: from)]])
+            XCTAssertLessThan(worstDifference(live, from: change, to: change + Swift.max(0, to - from), before, shift: from), 1e-6,
+                              "\(label): the old wait holds while the new line fills")
+            var silentRun = 0
+            var longest = 0
+            for sample in live[change..<(change + 2_048)] {
+                silentRun = Swift.abs(sample) < 1e-7 ? silentRun + 1 : 0
+                longest = Swift.max(longest, silentRun)
+            }
+            XCTAssertLessThan(longest, 16, "\(label): no silence")
+            XCTAssertLessThan(steepestStep(live, change..<(length - 2_048)), 1.3 * steady, "\(label): no step")
+            XCTAssertLessThan(worstDifference(live, from: change + 2_048, to: length, file, shift: to), 1e-6,
+                              "\(label): then it waits \(to) frames")
+        }
+    }
+
+    /// Five latencies a block apart: one still holding is dropped unheard, the ones that come while
+    /// the mix glides wait for it, and the mix settles on the last — without a step.
+    func testFiveLatencyChangesInARowWhilePlayingNeverStepAndSettleOnTheLast() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        let change = beat + 4_800, length = beat + 9_600
+        let file = exportOf(song.project, song, effects: [lateTrack: [LateInsert(latency: 85)]])
+        let latencies = [85, 40, 120, 0, 85]
+        for block in [32, 64] {
+            let late = LateInsert(latency: 0)
+            let effects: [TrackID: [any HostedProcessor]] = [lateTrack: [late]]
+            var publishes = [Publish(at: 0, project: song.project, effects: effects)]
+            for (step, latency) in latencies.enumerated() {
+                publishes.append(Publish(at: change + 64 * step, project: song.project, effects: effects,
+                                         prepare: { late.latency = latency }))
+            }
+            let live = playLive(song, publishes, length: length, block: block)
+            let steady = Swift.max(steepestStep(live, (change - 2_048)..<change), steepestStep(live, (length - 2_048)..<length))
+            XCTAssertGreaterThan(steady, 0.01, "block \(block): the tone plays")
+            XCTAssertLessThan(steepestStep(live, change..<(length - 2_048)), 1.3 * steady, "block \(block): no step")
+            XCTAssertLessThan(worstDifference(live, from: change + 2_048, to: length, file, shift: 85), 1e-6,
+                              "block \(block): it settles on the last latency")
+        }
+    }
+
+    /// A return that gets a latency while playing: the track's dry sound and the other return,
+    /// which now wait for it, glide to their wait together.
+    func testAReturnThatGetsALatencyWhilePlayingGlidesTheSoundsThatWaitForIt() throws {
+        var song = try tones(["Voice"])
+        let voice = song.tracks[0], verb = TrackID(), room = TrackID()
+        try Command.addTrack(id: verb, name: "Verb", kind: .returnTrack, index: nil).apply(to: &song.project)
+        try Command.addTrack(id: room, name: "Room", kind: .returnTrack, index: nil).apply(to: &song.project)
+        try Command.setSend(track: voice, to: verb, db: 0).apply(to: &song.project)
+        try Command.setSend(track: voice, to: room, db: 0).apply(to: &song.project)
+        let change = beat + 4_800, length = beat + 9_600
+        let file = exportOf(song.project, song, effects: [verb: [LateInsert(latency: 85)]])
+        var renders: [[Float]] = []
+        for block in [64, 128] {
+            let live = playLive(song, [
+                Publish(at: 0, project: song.project, effects: [:]),
+                Publish(at: change, project: song.project, effects: [verb: [LateInsert(latency: 85)]]),
+            ], length: length, block: block)
+            let steady = Swift.max(steepestStep(live, (change - 2_048)..<change), steepestStep(live, (length - 2_048)..<length))
+            XCTAssertGreaterThan(steady, 0.01, "block \(block): the tone plays")
+            XCTAssertLessThan(steepestStep(live, change..<(length - 2_048)), 1.3 * steady, "block \(block): no step")
+            XCTAssertLessThan(worstDifference(live, from: change + 2_048, to: length, file, shift: 85), 1e-6,
+                              "block \(block): then they wait 85 frames, as the export plays them")
+            renders.append(live)
+        }
+        XCTAssertLessThan(worstDifference(renders[0], from: 0, to: length, renders[1], shift: 0), 1e-6, "any block size")
+    }
+
+    /// The switch alone: its old path exactly until the glide, the raised cosine across it, its new
+    /// path exactly after — at any block size.
+    func testASwitchPlaysItsOldPathUntilTheGlideAndItsNewPathAfterAtAnyBlockSize() {
+        let curve = UnsafeMutablePointer<Float>.allocate(capacity: Crossover.rampFrames)
+        defer { curve.deallocate() }
+        for step in 0..<Crossover.rampFrames { (curve + step).initialize(to: Crossover.gain(step)) }
+        let scratchLeft = UnsafeMutablePointer<Float>.allocate(capacity: 1_024)
+        let scratchRight = UnsafeMutablePointer<Float>.allocate(capacity: 1_024)
+        defer {
+            scratchLeft.deallocate()
+            scratchRight.deallocate()
+        }
+        let primer = (0..<1_000).map { (index: Int) -> Float in Float(index + 1) }
+        let input = (0..<600).map { (index: Int) -> Float in Float(1_001 + index) }
+        let holdFrames = 100
+        for block in [1, 7, 64, 333] {
+            let old = DelayLine(delay: 40)
+            _ = run(old, primer, block: 256)
+            let change = PathSwitch(new: DelayLine(delay: 85), settledOld: old, predecessor: -1)
+            var budget = CompensationLines.takeOverFrames
+            XCTAssertEqual(change.arm(after: nil, holding: false, budget: &budget), 45,
+                           "block \(block): 40 of the new line's 85 frames come from the old one")
+            var crossover = Crossover()
+            crossover.hold(atLeast: holdFrames)
+            var left = input
+            var right = input.map { (sample: Float) -> Float in -sample }
+            var start = 0
+            while start < input.count {
+                let count = Swift.min(block, input.count - start)
+                let window = crossover.window(frames: count)
+                left.withUnsafeMutableBufferPointer { (l: inout UnsafeMutableBufferPointer<Float>) in
+                    right.withUnsafeMutableBufferPointer { (r: inout UnsafeMutableBufferPointer<Float>) in
+                        guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                        change.render(left: lp + start, right: rp + start, frames: count, window: window, curve: curve,
+                                      scratchLeft: scratchLeft, scratchRight: scratchRight)
+                    }
+                }
+                _ = crossover.advance(count)
+                start += count
+            }
+            XCTAssertTrue(crossover.isIdle, "block \(block): the glide is over")
+            var worst: Float = 0
+            for index in 0..<input.count {
+                // The 40 line plays 961, 962 …; the 85 line, once it holds real sound, 916, 917 ….
+                let oldPath = Float(961 + index), newPath = Float(916 + index)
+                let expected: Float
+                if index < holdFrames {
+                    expected = oldPath
+                } else if index < holdFrames + Crossover.rampFrames {
+                    expected = oldPath + (newPath - oldPath) * Crossover.gain(index - holdFrames)
+                } else {
+                    expected = newPath
+                }
+                worst = Swift.max(worst, Swift.abs(left[index] - expected), Swift.abs(right[index] + expected))
+            }
+            XCTAssertLessThan(worst, 0.01, "block \(block)")
+        }
+    }
+
+    /// A latency added while stopped: the change crosses over in silence before Play, so Play in
+    /// the middle of the tone plays what the export plays there, from the end of its start fade.
+    func testALatencyAddedWhileStoppedPlaysWhatTheExportPlaysFromTheFirstSound() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        let playAt = 2_560, length = 2_560 + 9_600, from = beat + 4_800
+        let file = exportOf(song.project, song, effects: [lateTrack: [LateInsert(latency: 85)]])
+        let live = playLive(song, [
+            Publish(at: 0, project: song.project, effects: [:]),
+            Publish(at: 512, project: song.project, effects: [lateTrack: [LateInsert(latency: 85)]]),
+        ], length: length, block: 64, playAt: playAt, seekTo: from)
+        XCTAssertGreaterThan(peak(live[(length - 2_048)..<length]), 0.1, "the tone plays")
+        // Song frame `from + k` is heard at `playAt + 85 + k`; the start fades in over 128 frames,
+        // and a crossover still holding at Play would glide until `playAt + 341`.
+        XCTAssertLessThan(worstDifference(live, from: playAt + 85 + 160, to: length, file, shift: playAt + 85 - from), 1e-6,
+                          "it waits 85 frames from the first sound after Play, as the export plays it")
+    }
+
+    /// A latency that arrives while the track is silent: once it sounds, it plays what the export
+    /// plays.
+    func testATrackSilentWhenALatencyArrivesPlaysWhatTheExportPlaysOnceItSounds() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        let length = beat + 9_600
+        let file = exportOf(song.project, song, effects: [lateTrack: [LateInsert(latency: 85)]])
+        let live = playLive(song, [
+            Publish(at: 0, project: song.project, effects: [:]),
+            Publish(at: 4_800, project: song.project, effects: [lateTrack: [LateInsert(latency: 85)]]),
+        ], length: length, block: 64)
+        XCTAssertGreaterThan(peak(live[(length - 2_048)..<length]), 0.1, "the tone plays")
+        XCTAssertLessThan(worstDifference(live, from: 6_848, to: length, file, shift: 85), 1e-6,
+                          "from its first sound it waits 85 frames, as the export plays it")
+    }
+
+    /// An edit that comes while the mix glides waits for the glide and is heard right after it.
+    func testAMuteSentWhileTheMixGlidesIsHeardRightAfterTheGlide() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0], plain = song.tracks[1]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        var silent = song.project
+        try Command.setMute(plain, true).apply(to: &silent)
+        let change = beat + 4_800, length = beat + 9_600
+        let effects: [TrackID: [any HostedProcessor]] = [lateTrack: [LateInsert(latency: 85)]]
+        let live = playLive(song, [
+            Publish(at: 0, project: song.project, effects: [:]),
+            Publish(at: change, project: song.project, effects: effects),
+            Publish(at: change + 256, project: silent, effects: effects),
+        ], length: length, block: 64)
+        XCTAssertGreaterThan(peak(live[(change - 2_048)..<change]), 0.1, "the tone played")
+        XCTAssertLessThan(peak(live[(change + 1_024)..<length]), 1e-6, "the mute is heard right after the glide")
+    }
+
+    /// A fader moved while the crossover holds: the box carries the switch that is crossing, so the
+    /// glide goes on and the track settles on its new wait at its new level.
+    func testAFaderMovedWhileALatencyChangeHoldsCarriesTheChangeOn() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0], plain = song.tracks[1]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        var quieter = song.project
+        try Command.setVolume(.track(plain), db: -1).apply(to: &quieter)
+        let change = beat + 4_800, length = beat + 9_600
+        let effects: [TrackID: [any HostedProcessor]] = [lateTrack: [LateInsert(latency: 85)]]
+        let file = exportOf(quieter, song, effects: effects)
+        let live = playLive(song, [
+            Publish(at: 0, project: song.project, effects: [:]),
+            Publish(at: change, project: song.project, effects: effects),
+            Publish(at: change + 64, project: quieter, effects: effects),
+        ], length: length, block: 64)
+        let steady = Swift.max(steepestStep(live, (change - 2_048)..<change), steepestStep(live, (length - 2_048)..<length))
+        XCTAssertGreaterThan(steady, 0.01, "the tone plays")
+        XCTAssertLessThan(steepestStep(live, change..<(length - 2_048)), 1.3 * steady, "no step")
+        XCTAssertLessThan(worstDifference(live, from: change + 2_048, to: length, file, shift: 85), 1e-6,
+                          "it waits 85 frames at its new level, as the export plays it")
+    }
+
+    /// A latency added and taken away again while the crossover still holds: nobody heard the new
+    /// wait, so nothing changes at all.
+    func testALatencyUndoneWhileItsChangeHoldsChangesNothing() throws {
+        var song = try tones(["Late", "Plain"])
+        let lateTrack = song.tracks[0]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        let change = beat + 4_800, length = beat + 9_600
+        let file = exportOf(song.project, song, effects: [:])
+        let live = playLive(song, [
+            Publish(at: 0, project: song.project, effects: [:]),
+            Publish(at: change, project: song.project, effects: [lateTrack: [LateInsert(latency: 85)]]),
+            Publish(at: change + 64, project: song.project, effects: [:]),
+        ], length: length, block: 64)
+        XCTAssertGreaterThan(peak(live[(length - 2_048)..<length]), 0.1, "the tone plays")
+        XCTAssertLessThan(worstDifference(live, from: 0, to: length, file, shift: 0), 1e-6,
+                          "the song plays as if nothing had changed")
+    }
+
+    /// Two waits on one lane changing in one crossover — a track's latency, then a return's while
+    /// the first change still holds — cross over in series: click-free, and settled on both.
+    func testTwoWaitsInSeriesChangingInOneCrossoverNeverStep() throws {
+        var song = try tones(["Late", "Voice"])
+        let lateTrack = song.tracks[0], voice = song.tracks[1], verb = TrackID()
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        try Command.addTrack(id: verb, name: "Verb", kind: .returnTrack, index: nil).apply(to: &song.project)
+        try Command.setSend(track: voice, to: verb, db: -6).apply(to: &song.project)
+        let change = beat + 4_800, length = beat + 9_600
+        let first: [TrackID: [any HostedProcessor]] = [lateTrack: [LateInsert(latency: 85)]]
+        let both: [TrackID: [any HostedProcessor]] = [lateTrack: [LateInsert(latency: 85)], verb: [LateInsert(latency: 85)]]
+        let file = exportOf(song.project, song, effects: both)
+        let total = snapshot(song.project, effects: both).compensation.total
+        XCTAssertGreaterThan(total, 85, "the two waits add up")
+        let live = playLive(song, [
+            Publish(at: 0, project: song.project, effects: [:]),
+            Publish(at: change, project: song.project, effects: first),
+            Publish(at: change + 64, project: song.project, effects: both),
+        ], length: length, block: 64)
+        let steady = Swift.max(steepestStep(live, (change - 2_048)..<change), steepestStep(live, (length - 2_048)..<length))
+        XCTAssertGreaterThan(steady, 0.01, "the tone plays")
+        XCTAssertLessThan(steepestStep(live, change..<(length - 2_048)), 1.3 * steady, "no step")
+        XCTAssertLessThan(worstDifference(live, from: change + 2_048, to: length, file, shift: total), 1e-6,
+                          "it settles on both waits, as the export plays them")
     }
 }
