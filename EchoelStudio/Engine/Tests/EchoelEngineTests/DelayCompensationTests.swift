@@ -1215,4 +1215,40 @@ final class DelayCompensationTests: XCTestCase {
         XCTAssertLessThanOrEqual(first.processed, length, "the first insert runs each frame once at most")
         XCTAssertLessThanOrEqual(second.processed, length - change, "the second, from its arrival on")
     }
+
+    /// Two latent inserts on one chain while a long change elsewhere still holds: the first taken
+    /// off, then put back while the second is taken off. The one coming back cancels its own
+    /// leaving and the other glides out in its own slot — the chain never steps.
+    func testAnInsertPutBackWhileItsNeighbourLeavesInTheSameHoldNeverSteps() throws {
+        var song = try tones(["Clipped", "Late"])
+        let clipped = song.tracks[0], lateTrack = song.tracks[1]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        let change = beat + 4_800, length = change + 8_000 + Crossover.rampFrames + 4_096
+        let first = clipper(), second = clipper()
+        let long = LateInsert(latency: 4_000)
+        let live = playLive(song, [
+            Publish(at: 0, project: song.project, effects: [clipped: [first, second]]),
+            Publish(at: change, project: song.project, effects: [clipped: [second], lateTrack: [long]]),
+            Publish(at: change + 64, project: song.project, effects: [clipped: [first], lateTrack: [long]]),
+        ], length: length, block: 64)
+        stepsSmoothly(live, change: change, length: length, "put back while its neighbour leaves")
+    }
+
+    /// Two latent inserts on one chain while a long change elsewhere still holds: the first taken
+    /// off, then the second too. The first, still leaving, keeps its place before the second, so
+    /// the held sound stays exactly what it was — the chain never steps.
+    func testAnInsertStillLeavingKeepsItsPlaceWhenTheInsertAfterItLeavesToo() throws {
+        var song = try tones(["Clipped", "Late"])
+        let clipped = song.tracks[0], lateTrack = song.tracks[1]
+        try Command.setMute(lateTrack, true).apply(to: &song.project)
+        let change = beat + 4_800, length = change + 8_000 + Crossover.rampFrames + 4_096
+        let first = clipper(), second = clipper()
+        let long = LateInsert(latency: 4_000)
+        let live = playLive(song, [
+            Publish(at: 0, project: song.project, effects: [clipped: [first, second]]),
+            Publish(at: change, project: song.project, effects: [clipped: [second], lateTrack: [long]]),
+            Publish(at: change + 64, project: song.project, effects: [lateTrack: [long]]),
+        ], length: length, block: 64)
+        stepsSmoothly(live, change: change, length: length, "both taken off in one hold")
+    }
 }

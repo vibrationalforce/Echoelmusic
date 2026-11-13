@@ -647,9 +647,10 @@ struct CompensationLines: Sendable {
     /// The program of one chain going from `old` to `new` while a live core plays, or nil when it
     /// plays as it is. A latent insert (not bypassed, `latencyFrames` > 0) that arrives, leaves or
     /// takes another's place gets a slot (`PathSwitch`); everything else plays as it always did. A
-    /// slot still crossing from the program before is carried on with its unit; one whose edit is
-    /// undone gets a successor that cancels it. A chain whose common inserts changed their order
-    /// plays as it is: the reorder switches at once, as before. Main thread.
+    /// slot still crossing from the program before is carried on with its unit, a leaving one at
+    /// its place; one whose edit is undone gets a successor that cancels it. A chain whose common
+    /// inserts changed their order, or a run of edits that could run an insert twice, plays as it
+    /// is: it switches at once, as before. Main thread.
     static func program(from old: [any HostedProcessor], to new: [any HostedProcessor], carrying carried: [ChainStep]?,
                         previousSwitches: [PathSwitch], all: inout [PathSwitch], fresh: inout [PathSwitch]) -> [ChainStep]? {
         let latent = { (unit: any HostedProcessor) -> Bool in !unit.isBypassed && unit.latencyFrames > 0 }
@@ -710,8 +711,8 @@ struct CompensationLines: Sendable {
         let anchorOf = { (gap: Int) -> ObjectIdentifier? in gap < common.count ? ObjectIdentifier(common[gap]) : nil }
         let arriving = new.contains { !isOld($0) && latent($0) }
         guard !leaving.isEmpty || arriving || !running.isEmpty else { return nil }
-        // Slots still taking out an insert neither chain has any more: carried on before the
-        // insert they sat before, or at the end when that one went too.
+        // Slots still taking out an insert neither chain has any more: carried on right before the
+        // insert they sat before — or before that insert's own slot when it goes too — or at the end.
         let stillLeaving = running.filter { (slot: PathSwitch) -> Bool in
             guard slot.new == nil, case .unit(let unit)? = slot.settledOld else { return false }
             return !isOld(unit) && !isNew(unit)
@@ -720,12 +721,27 @@ struct CompensationLines: Sendable {
         var program: [ChainStep] = []
         var paired = [Bool](repeating: false, count: leaving.count)
         var made = false
-        // Collected here and handed out at the end: a closure may not capture the inout lists.
+        // Collected here and handed out at the end: a nested function may not capture the inout lists.
         var played: [PathSwitch] = []
         var brought: [PathSwitch] = []
-        let leave = { (at: Int) in
+        // A carried leaving slot goes in after the ones that sat before its own insert.
+        func place(_ offset: Int) {
+            placed[offset] = true
+            let slot = stillLeaving[offset]
+            if case .unit(let unit)? = slot.settledOld { carry(before: ObjectIdentifier(unit)) }
+            played.append(slot)
+            program.append(.slot(slot))
+            made = true
+        }
+        func carry(before anchor: ObjectIdentifier) {
+            for offset in stillLeaving.indices where !placed[offset] && stillLeaving[offset].anchor == anchor {
+                place(offset)
+            }
+        }
+        func leave(_ at: Int) {
             for (offset, entry) in leaving.enumerated() where entry.gap == at && !paired[offset] {
                 paired[offset] = true
+                carry(before: ObjectIdentifier(entry.unit))
                 let before = runningFor(entry.unit)
                 let slot = PathSwitch(step: nil, settledOld: .unit(entry.unit), predecessor: before.map(slotIndex) ?? -1,
                                       anchor: anchorOf(at), inherits: before)
@@ -735,19 +751,11 @@ struct CompensationLines: Sendable {
                 made = true
             }
         }
-        let carryLeaving = { (anchor: ObjectIdentifier?) in
-            for (offset, slot) in stillLeaving.enumerated() where !placed[offset] && (anchor == nil || slot.anchor == anchor) {
-                placed[offset] = true
-                played.append(slot)
-                program.append(.slot(slot))
-                made = true
-            }
-        }
         gap = 0
         for unit in new {
             if isOld(unit) {
                 leave(gap)
-                carryLeaving(ObjectIdentifier(unit))
+                carry(before: ObjectIdentifier(unit))
                 gap += 1
                 if let slot = runningFor(unit) {
                     played.append(slot)
@@ -756,6 +764,15 @@ struct CompensationLines: Sendable {
                 } else {
                     program.append(.unit(unit))
                 }
+            } else if latent(unit), let back = leavingFrom(unit) {
+                // Back while its own leaving still crosses: that leaving is cancelled, and whatever
+                // leaves beside it gets a slot of its own.
+                let slot = PathSwitch(step: .unit(unit), settledOld: nil, predecessor: slotIndex(back),
+                                      warmUp: PathSwitch.warmUp(for: unit), inherits: back)
+                played.append(slot)
+                brought.append(slot)
+                program.append(.slot(slot))
+                made = true
             } else if latent(unit) {
                 // Takes the place of the first latent insert that leaves from the same gap.
                 var replaced: (any HostedProcessor)?
@@ -763,7 +780,8 @@ struct CompensationLines: Sendable {
                     paired[offset] = true
                     replaced = leaving[offset].unit
                 }
-                let before = replaced.flatMap(runningFor) ?? leavingFrom(unit)
+                if let replaced { carry(before: ObjectIdentifier(replaced)) }
+                let before = replaced.flatMap(runningFor)
                 let slot = PathSwitch(step: .unit(unit), settledOld: replaced.map { PathStep.unit($0) },
                                       predecessor: before.map(slotIndex) ?? -1, warmUp: PathSwitch.warmUp(for: unit),
                                       inherits: before)
@@ -776,11 +794,11 @@ struct CompensationLines: Sendable {
             }
         }
         leave(gap)
-        carryLeaving(nil)
+        for offset in stillLeaving.indices where !placed[offset] { place(offset) }
         guard made else { return nil }
-        // Each insert runs once per chunk: in the chain, as a slot's new path, or as the old path a
-        // slot may play. Where a quick run of edits would run one twice, the chain switches at
-        // once instead, as it always did.
+        // Each insert runs once per chunk: in the chain, as a slot's new path, or as an old path a
+        // slot may play (counted wide: every one it might inherit). Where a quick run of edits
+        // could run one twice, the chain switches at once instead, as it always did.
         var seen = Set<ObjectIdentifier>()
         for step in program {
             switch step {
