@@ -77,8 +77,9 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertEqual(u.key, gMajor, "a host without Echoelmusic's unit passes nothing on")
     }
 
-    func testOnlyThePitchCorrectionReportsALatency() throws {
+    func testThePitchCorrectionAndTheTapeReportALatencyAndPlainEffectsNone() throws {
         XCTAssertEqual(try unit(.pitchCorrection).latency, 0.019, accuracy: 0.0005)
+        XCTAssertEqual(try unit(.tape).latency, 0.006, accuracy: 1e-9)
         XCTAssertEqual(try unit(.harmonizer).latency, 0)
         XCTAssertEqual(try unit(.equalizer).latency, 0)
     }
@@ -259,7 +260,7 @@ final class StandardEffectUnitTests: XCTestCase {
     /// frames late, so a host that compensates the latency (Logic, AUM) keeps the bypassed track in
     /// time. An effect without latency passes at 0.
     func testABypassedImpulseEmergesAtTheReportedLatency() throws {
-        for effect in [StandardEffect.pitchCorrection, .multibandClipper, .equalizer] {
+        for effect in [StandardEffect.pitchCorrection, .multibandClipper, .tape, .equalizer] {
             let u = try unit(effect)
             let lag = Int((u.latency * 48_000).rounded())
             u.shouldBypassEffect = true
@@ -273,6 +274,7 @@ final class StandardEffectUnitTests: XCTestCase {
         }
         XCTAssertEqual(Int((try unit(.pitchCorrection).latency * 48_000).rounded()), 912)
         XCTAssertEqual(Int((try unit(.multibandClipper).latency * 48_000).rounded()), 85)
+        XCTAssertEqual(Int((try unit(.tape).latency * 48_000).rounded()), 288)
     }
 
     /// The dry line hears the input while the effect plays, so a bypass switched on after an

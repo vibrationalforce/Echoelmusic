@@ -97,6 +97,28 @@ final class EffectKernelTests: XCTestCase {
         XCTAssertEqual(EffectKernel(effect: .dynamicEQ, sampleRate: rate).latencySeconds, 0)
     }
 
+    /// The tape reads its line 6 ms behind and has no dry path, so it reports those 6 ms as its
+    /// latency at any rate, and an impulse through it — wow off, saturation off, tone fully open —
+    /// comes out 6 ms later (288 frames at 48 kHz, within the tone filter's few frames of smear).
+    func testTheTapeReportsTheLineItIsReadBehindAsItsLatency() {
+        for kernelRate in [44_100.0, 48_000, 96_000] {
+            XCTAssertEqual(EffectKernel(effect: .tape, sampleRate: kernelRate).latencySeconds, Tape.baseSeconds,
+                           accuracy: 1e-12)
+        }
+        let kernel = EffectKernel(effect: .tape, sampleRate: rate)
+        kernel.setParameter(0, 0)     // wow
+        kernel.setParameter(1, 0)     // saturation
+        kernel.setParameter(2, 1)     // tone
+        _ = process(kernel, [Float](repeating: 0, count: 4_800))
+        var impulse = [Float](repeating: 0, count: 1_200)
+        impulse[0] = 1
+        let out = process(kernel, impulse)
+        let loudest = out.indices.max { (a: Int, b: Int) -> Bool in Swift.abs(out[a]) < Swift.abs(out[b]) } ?? 0
+        let expected = Int((Tape.baseSeconds * rate).rounded())
+        XCTAssertEqual(expected, 288)
+        XCTAssertLessThanOrEqual(Swift.abs(loudest - expected), 3, "the impulse came out at frame \(loudest)")
+    }
+
     /// The de-esser's ranges and defaults as they shipped, no delay to report, and its meter: a
     /// 9 kHz tone at −6 dBFS is far over the −30 dB threshold, so its highs come down by the
     /// whole default Range of 6 dB (4.9 dB at 9 kHz in a float simulation, the shelf's corner

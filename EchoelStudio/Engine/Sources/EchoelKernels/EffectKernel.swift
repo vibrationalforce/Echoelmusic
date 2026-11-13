@@ -241,13 +241,15 @@ public final class EffectKernel: @unchecked Sendable {
     /// The key the effect plays in now.
     public var key: SongKey { SongKey(packed: keyBits.load(ordering: .relaxed)) }
 
-    /// How far the output sits behind the input, in seconds: the pitch correction's delay and the
-    /// multiband clipper's oversampling and look-ahead (`MultibandClipper.latencySamples`), 0 for
-    /// every other effect (the harmonizer's voices lag, its dry sound does not).
+    /// How far the output sits behind the input, in seconds: the pitch correction's delay, the
+    /// multiband clipper's oversampling and look-ahead (`MultibandClipper.latencySamples`) and the
+    /// tape's line, read 6 ms behind with no dry path (`Tape.baseSeconds`; its wow sways around
+    /// that point); 0 for every other effect (the harmonizer's voices lag, its dry sound does not).
     public var latencySeconds: Double {
         switch effect {
         case .pitchCorrection: PitchCorrector.latencySeconds
         case .multibandClipper: Double(MultibandClipper.latencySamples) / sampleRate
+        case .tape: Tape.baseSeconds
         default: 0
         }
     }
