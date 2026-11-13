@@ -49,7 +49,7 @@ struct BodySourceMenu: View {
                 health.start()
             } label: {
                 choice("Apple Health (Apple Watch)", chosen: health.isOn,
-                       caption: "Arrives late, when Health syncs with the Watch: slow modulation only, never the beat. Read only, stays on this device.")
+                       caption: "Arrives late, whenever Health syncs: slow modulation only, never the beat. Read only; the reading stays on this device.")
             }
             // The phone itself, beside whichever pulse source is chosen: it feeds other sources
             // (tilt, turning, movement), so it is a switch of its own rather than a fifth choice.

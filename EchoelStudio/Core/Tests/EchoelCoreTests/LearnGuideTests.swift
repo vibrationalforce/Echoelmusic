@@ -115,7 +115,10 @@ final class LearnGuideTests: XCTestCase {
     func testTheBodyChapterStatesItsLimits() throws {
         let body = try XCTUnwrap(LearnGuide.chapters.first { $0.id == "body" }).paragraphs.joined(separator: " ")
         XCTAssertTrue(body.contains("Apple Health arrives late"), "the Apple Health delay, with no figure Apple does not give")
-        XCTAssertTrue(body.contains("older than \(Int(HealthPulse.freshSeconds / 60)) minutes moves nothing"),
+        let freshMinutes = HealthPulse.freshSeconds / 60
+        XCTAssertEqual(freshMinutes, freshMinutes.rounded(), "the Health window is whole minutes, as the text says it")
+        XCTAssertGreaterThan(freshMinutes, 1, "the text says \"minutes\"")
+        XCTAssertTrue(body.contains("older than \(Int(freshMinutes)) minutes moves nothing"),
                       "the age past which the Health source moves nothing")
         XCTAssertTrue(body.contains("never sets the beat"))
         XCTAssertTrue(body.contains("self-observation"))

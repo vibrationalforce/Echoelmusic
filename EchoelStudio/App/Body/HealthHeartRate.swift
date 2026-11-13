@@ -12,7 +12,8 @@ import HealthKit
 /// asks to READ heart rate and nothing else — Echoel never writes to Health. The value never leaves
 /// the device: Connections never read this class, and the modulation cell carries it as private,
 /// so MIDI out sends nothing for it and the live stream's picture shows no pulse for it
-/// (`ModulationInputs.shareableValue`, `FieldFrame.streamed`).
+/// (`ModulationInputs.shareableValue`, `FieldFrame.streamed`). What a route makes it move in the
+/// mix is sound like any other, so Go Live streams that movement with the master mix.
 ///
 /// A Watch reading comes only when Health syncs (iOS does not time it) and, at rest, less often, so
 /// this source is slow modulation only: it glides over seconds, feeds the heart-rate source alone,
@@ -40,7 +41,7 @@ final class HealthHeartRate {
     /// starts or stops being measured, so a menu may read it (Law 6).
     private(set) var measuring: Set<ModulationSource> = []
 
-    /// Slow on purpose: the reading is seconds old when it arrives.
+    /// Slow on purpose: the reading is already old when it arrives.
     static let glideSeconds = 4.0
     static let glideStepSeconds = 1.0 / 15
 
