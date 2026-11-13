@@ -155,6 +155,20 @@ public enum OfflineRender {
             heldLeft.deallocate()
             heldRight.deallocate()
         }
+        // Delay compensation plays everything `total` frames behind its sources, so a device's
+        // outputs line up (`DelayCompensation`). An export renders those frames first and drops
+        // them: the file, its cue markers, every stem and an ADM file start on the song's first
+        // sample, and the end of the song and its tail is not cut by them. Read from the snapshot
+        // as the engine plays it (`publish` limits the slots and returns, which recomputes it).
+        var leadIn = snapshot.limited(toSlots: core.slotCapacity, returnCapacity: EngineCore.returnCapacity)
+            .compensation.total
+        while leadIn > 0 {
+            let count = Swift.min(block, leadIn)
+            left.update(repeating: 0, count: count)
+            right.update(repeating: 0, count: count)
+            core.render(frameCount: count, left: left, right: right)
+            leadIn -= count
+        }
         var peak: Float = 0
         var done = 0, written = 0, held = 0
         // One past the last sample that was still audible.

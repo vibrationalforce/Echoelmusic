@@ -346,12 +346,14 @@ final class DelayCompensationTests: XCTestCase {
         // No latency anywhere: the plain track as it played before compensation.
         let uncompensated = export(song, effects: [:], isolating: plain)
         XCTAssertEqual(plainAlone.count, uncompensated.count)
-        XCTAssertEqual(mismatches(plainAlone, uncompensated, latency: clipperLatency), 0,
-                       "the plain track plays exactly as before, 85 frames later")
+        XCTAssertEqual(mismatches(plainAlone, uncompensated, latency: 0), 0,
+                       "the plain track plays exactly as before: the export drops the 85 frames it waits")
 
         let window = (beat + 4_800)..<(beat + 40_000)
+        // Without compensation the plain track would play 85 frames ahead of the clipped one.
+        let ahead = (window.lowerBound + clipperLatency)..<(window.upperBound + clipperLatency)
         XCTAssertGreaterThan(correlation(clippedAlone[window], plainAlone[window]), 0.98, "compensated: in phase")
-        XCTAssertLessThan(correlation(clippedAlone[window], uncompensated[window]), -0.9,
+        XCTAssertLessThan(correlation(clippedAlone[window], uncompensated[ahead]), -0.9,
                           "without compensation the two would cancel")
         XCTAssertGreaterThan(peak(both[window]), 1.95 * peak(plainAlone[window]), "the sum doubles")
     }
@@ -365,10 +367,12 @@ final class DelayCompensationTests: XCTestCase {
         let dry = export(song, effects: effects(), isolating: voice)
         let wet = export(song, effects: effects(), isolating: verb)
         let before = export(song, effects: [:], isolating: voice)
-        XCTAssertEqual(mismatches(dry, before, latency: clipperLatency), 0, "the dry sound waits the return's chain")
+        XCTAssertEqual(mismatches(dry, before, latency: 0), 0,
+                       "the dry sound waits the return's chain, and the export drops that wait")
         let window = (beat + 4_800)..<(beat + 40_000)
+        let ahead = (window.lowerBound + clipperLatency)..<(window.upperBound + clipperLatency)
         XCTAssertGreaterThan(correlation(dry[window], wet[window]), 0.98, "dry and return meet in phase")
-        XCTAssertLessThan(correlation(before[window], wet[window]), -0.9)
+        XCTAssertLessThan(correlation(before[ahead], wet[window]), -0.9, "a dry sound that did not wait would cancel")
     }
 
     func testWithoutLatencyTheMixIsTheSameSampleForSample() throws {
@@ -387,10 +391,12 @@ final class DelayCompensationTests: XCTestCase {
     }
 
     /// The export renders in blocks of 4,096; the device in whatever it asks for. Every delay line
-    /// runs sample by sample, so each plays the same.
+    /// runs sample by sample, so each plays the same — the device `total` frames later, which the
+    /// export drops so its file starts on the song's first sample.
     func testALiveRenderInAnyBlockSizePlaysWhatTheExportPlays() throws {
         let song = try tones(["Clipped", "Plain"])
         let exported = export(song, effects: [song.tracks[0]: [clipper()]])
+        let total = clipperLatency
         for block in [256, 333, 4_096] {
             let engine = EngineCore(sampleRate: rate)
             engine.setClickEnabled(false)
@@ -400,11 +406,11 @@ final class DelayCompensationTests: XCTestCase {
                                           sampleRate: rate, generation: 1, samples: song.samples,
                                           effects: [song.tracks[0]: [clipper()]]))
             engine.play()
-            var left = [Float](repeating: 0, count: exported.count)
-            var right = [Float](repeating: 0, count: exported.count)
+            var left = [Float](repeating: 0, count: exported.count + total)
+            var right = [Float](repeating: 0, count: exported.count + total)
             var start = 0
-            while start < exported.count {
-                let count = Swift.min(block, exported.count - start)
+            while start < left.count {
+                let count = Swift.min(block, left.count - start)
                 left.withUnsafeMutableBufferPointer { (l: inout UnsafeMutableBufferPointer<Float>) in
                     right.withUnsafeMutableBufferPointer { (r: inout UnsafeMutableBufferPointer<Float>) in
                         guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
@@ -414,7 +420,7 @@ final class DelayCompensationTests: XCTestCase {
                 start += count
             }
             var worst: Float = 0
-            for (live, file) in zip(left, exported) { worst = Swift.max(worst, Swift.abs(live - file)) }
+            for (live, file) in zip(left[total...], exported) { worst = Swift.max(worst, Swift.abs(live - file)) }
             XCTAssertLessThan(worst, 1e-6, "block \(block)")
         }
     }
