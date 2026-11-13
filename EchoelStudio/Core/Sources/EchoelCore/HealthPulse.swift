@@ -6,10 +6,11 @@ import Foundation
 /// engine's modulation cells).
 ///
 /// The earlier app's lesson (#1215): freshness is the age on the MEASUREMENT clock — when the
-/// Watch took the reading — not when the app received it. A Watch reading arrives 4 to 5 seconds
-/// late during a workout and minutes apart at rest; a reading older than `freshSeconds` reads as
-/// "not measured", never as a pulse. That lag is why this source is slow modulation only and never
-/// sets the beat: Flow does not follow it.
+/// Watch took the reading — not when the app received it. A Watch reading reaches this device only
+/// when Health syncs, which iOS does not time and Apple gives no figure for, and at rest the Watch
+/// measures less often than during a workout; a reading older than `freshSeconds` reads as "not
+/// measured", never as a pulse. That lag is why this source is slow modulation only and never sets
+/// the beat: Flow does not follow it.
 ///
 /// Pure: the caller supplies its monotonic clock and each reading's age.
 public enum HealthPulse {

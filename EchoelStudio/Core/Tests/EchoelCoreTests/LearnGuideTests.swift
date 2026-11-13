@@ -114,7 +114,9 @@ final class LearnGuideTests: XCTestCase {
 
     func testTheBodyChapterStatesItsLimits() throws {
         let body = try XCTUnwrap(LearnGuide.chapters.first { $0.id == "body" }).paragraphs.joined(separator: " ")
-        XCTAssertTrue(body.contains("4–5 seconds late"), "the Apple Health latency")
+        XCTAssertTrue(body.contains("Apple Health arrives late"), "the Apple Health delay, with no figure Apple does not give")
+        XCTAssertTrue(body.contains("older than \(Int(HealthPulse.freshSeconds / 60)) minutes moves nothing"),
+                      "the age past which the Health source moves nothing")
         XCTAssertTrue(body.contains("never sets the beat"))
         XCTAssertTrue(body.contains("self-observation"))
         XCTAssertTrue(body.contains("not a diagnosis"))

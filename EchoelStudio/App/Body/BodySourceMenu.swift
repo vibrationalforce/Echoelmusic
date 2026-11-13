@@ -40,15 +40,16 @@ struct BodySourceMenu: View {
             } label: {
                 choice("Camera (fingertip on the rear lens)", chosen: camera.isOn)
             }
-            // Apple Health: read only, never written, never sent off the device. A Watch reading is
-            // seconds late, so it modulates slowly and never sets the beat — the caption says so.
+            // Apple Health: read only, never written, never sent off the device. A Watch reading comes
+            // only when Health syncs, which iOS does not time, so it modulates slowly and never sets the
+            // beat — the caption says so, without a figure Apple does not give.
             Button {
                 strap.stop()
                 camera.stop()
                 health.start()
             } label: {
                 choice("Apple Health (Apple Watch)", chosen: health.isOn,
-                       caption: "Arrives 4–5 s late: slow modulation only, never the beat. Read only, stays on this iPhone.")
+                       caption: "Arrives late, when Health syncs with the Watch: slow modulation only, never the beat. Read only, stays on this device.")
             }
             // The phone itself, beside whichever pulse source is chosen: it feeds other sources
             // (tilt, turning, movement), so it is a switch of its own rather than a fifth choice.
@@ -58,7 +59,7 @@ struct BodySourceMenu: View {
             } label: {
                 choice("Phone Motion", chosen: phoneMotion.isOn,
                        caption: phoneMotion.status == .unavailable ? "This device has no motion sensors."
-                           : "Tilt, turning and movement of this iPhone, beside the pulse source.")
+                           : "Tilt, turning and movement of this device, beside the pulse source.")
             }
         }
     }

@@ -14,10 +14,10 @@ import HealthKit
 /// so MIDI out sends nothing for it and the live stream's picture shows no pulse for it
 /// (`ModulationInputs.shareableValue`, `FieldFrame.streamed`).
 ///
-/// A Watch reading arrives 4 to 5 seconds late and, at rest, minutes apart, so this source is slow
-/// modulation only: it glides over seconds, feeds the heart-rate source alone, and never sets the
-/// beat (Flow does not follow it). A reading older than `HealthPulse.freshSeconds` by its
-/// MEASUREMENT time reads as not measured (`HealthPulse`, `BodyChannel`).
+/// A Watch reading comes only when Health syncs (iOS does not time it) and, at rest, less often, so
+/// this source is slow modulation only: it glides over seconds, feeds the heart-rate source alone,
+/// and never sets the beat (Flow does not follow it). A reading older than `HealthPulse.freshSeconds`
+/// by its MEASUREMENT time reads as not measured (`HealthPulse`, `BodyChannel`).
 @MainActor
 @Observable
 final class HealthHeartRate {
