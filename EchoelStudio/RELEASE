@@ -1,4 +1,4 @@
-11.0.0 — effects that play late glide in and out while the song plays; the Apple Health texts corrected
+11.0.0 — effects that play late glide in and out while the song plays; the Apple Health texts corrected; a camera take that is not on the song is said to be not on it
 
 What is new since 10076. Each line is code that the Echoel Studio run builds. The engine's part of
 the first six lines has tests on audio tracks: stand-in effects for every line, the Multiband
@@ -8,8 +8,9 @@ the Clipper arriving; Off or Remove there has no test. An instrument track goes 
 code and has no test of its own. Tape and Clipper are tested as their signal code, not as the Audio
 Units the app hosts them in; Pitch Correction and plug-ins of other makers are in no crossover test.
 The app's part, which turns On, Off, Add Effect and Remove into those changes, has no test. The
-Learn sentence's opening words and its 2 minutes have a test; the two menu captions have none.
-Nothing here is device-verified yet.
+Learn sentence's opening words and its 2 minutes have a test; the two menu captions have none. The
+camera's states after a take have tests; the app's part that finds out whether the take is on the
+song has none. Nothing here is device-verified yet.
 - Effects that play late (Tape, 6 ms; Pitch Correction, 19 ms; the Multiband Clipper, 85 samples;
   another maker's plug-in that reports its delay): one switched On or Off, added or removed while
   the song plays now crosses over. In 10076, when one came in, each track that waits for it fell
@@ -51,6 +52,10 @@ Nothing here is device-verified yet.
 - Learn, chapter "Modulation and Body Sources": the sentence on Apple Health now reads "Apple Health
   arrives late: a Watch reading comes only when Health syncs, and Apple gives no figure for how long
   that takes; a reading older than 2 minutes moves nothing."
+- Film a Take (the camera key of a video track in Tracks): when a finished take does not get onto
+  the song (its file cannot be read, the song refuses it, or another song was opened while it was
+  saved), the camera page now says "The last take is not on the song." In 10076 it said "The take
+  is on the song." all the same.
 
 Known limit, unchanged since 10074: a MIDI take does not record a key held across the loop's end
 as it was heard. While the record line shows "Loop Record · take n" (a loop of two bars or
