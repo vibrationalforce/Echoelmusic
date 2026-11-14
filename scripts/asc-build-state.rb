@@ -77,15 +77,28 @@ end
 
 case ARGV[0]
 when 'auth'
-  code, = get("/v1/apps/#{APP_ID}")
+  code, body = get("/v1/apps/#{APP_ID}")
   if code == 200
     puts "[OK] App Store Connect accepts the key (app #{APP_ID})"
     exit 0
   end
-  hint = { 401 => 'the key, key ID or issuer ID is wrong, or the key was revoked',
-           403 => 'the key lacks the App Manager or Admin role',
-           404 => 'this key cannot see the app' }[code] || 'no usable answer'
-  puts "::error title=ASC sign-in failed::HTTP #{code} — #{hint}"
+  # Apple names the reason in the error body (public error codes, no key material). A 403 is
+  # not always the key's role: a missing or expired agreement answers 403 too (run 77,
+  # 2026-11-14, the same key that signed in 30 hours before), and only the code tells them apart.
+  apple = begin
+    first = JSON.parse(body).fetch('errors', []).first || {}
+    [first['code'], first['title']].compact.join(': ')
+  rescue StandardError
+    ''
+  end
+  hint = if apple.include?('REQUIRED_AGREEMENTS')
+           'a required agreement is missing or expired; the Account Holder accepts it in App Store Connect'
+         else
+           { 401 => 'the key, key ID or issuer ID is wrong, or the key was revoked',
+             403 => 'the key lacks the App Manager or Admin role, or an agreement is not accepted',
+             404 => 'this key cannot see the app' }[code] || 'no usable answer'
+         end
+  puts "::error title=ASC sign-in failed::HTTP #{code} — #{hint}#{apple.empty? ? '' : " (Apple: #{apple})"}"
   exit 1
 
 when 'wait'
