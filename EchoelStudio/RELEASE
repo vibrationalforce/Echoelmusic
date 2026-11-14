@@ -1,75 +1,188 @@
-11.0.0 — video takes that hold the song, the screen and the beat; the Tape effect in time; exports that start on the bar
+11.0.0 — effects that play late glide in and out while the song plays; the Apple Health texts corrected
 
-What is new since 10075. Each line is code that the Echoel Studio run builds. The take camera's
-audio setting is one line with no test of its own; for the other four the rule has tests (for the
-screen and the first frame, the rule, not the camera code). Nothing here is device-verified yet.
-- Video takes: opening the take camera no longer changes the app's audio setup. A take records no
-  sound of its own (the song is its sound), and the camera now leaves the audio alone, as the pulse
-  and sky cameras already did.
-- Video takes: the screen stays on while a take is filmed or saved, so Auto-Lock can no longer
-  send the app away mid-take, where iOS took the camera and the take ended early. Afterwards the
-  screen sleeps as usual.
-- Video takes: from iOS 18.2 a take is laid where its first frame was filmed, from the time the
-  camera gives that frame, not where the report of its start reached the app. On earlier iOS the
-  start is timed as soon as the camera reports it. A frame time that cannot be right is not used.
-- Tape effect: it plays 6 ms behind its input and now says so, so in the app the other tracks
-  wait for it and a Tape track stays in time with the rest. As an Audio Unit in another app it now
-  reports those 6 ms too, so a host that compensates plug-in delay can line the track up (not yet
-  tried in any host); bypassed through the unit's own bypass, its dry sound stays 6 ms late. In
-  Echoelmusic, a Tape set to Off leaves the chain: the track plays without the 6 ms, and the other
-  tracks stop waiting for it.
-- Export: an effect that plays late (Pitch Correction, 19 ms; the Multiband Clipper, 85 samples;
-  another maker's plug-in that reports its delay) no longer makes an export start that late. On a
-  track, a return or the master, the exported WAV (stereo or Spatial Headphone Mix) and the sound
-  of Export Video begin on the song's first sample: the sound lands on the song's markers, and the
-  video's sound sits on its picture. The stems and the ADM file leave the master's effects out; an
-  effect on a track or a return no longer makes them late either. The same holds for a region made
-  with Bake Effects. A Tape track, 6 ms late in an export before, now sits in time there too.
+What is new since 10076. Each line is code that the Echoel Studio run builds. The engine's part of
+the first six lines has tests on audio tracks: stand-in effects for every line, the Multiband
+Clipper's own signal code for On, Off and a swap, and the Tape's for On and for taking it off again
+before or during its glide in. On a return only a stand-in arriving is tested, on the master only
+the Clipper arriving; Off or Remove there has no test. An instrument track goes through the same
+code and has no test of its own. Tape and Clipper are tested as their signal code, not as the Audio
+Units the app hosts them in; Pitch Correction and plug-ins of other makers are in no crossover test.
+The app's part, which turns On, Off, Add Effect and Remove into those changes, has no test. The
+Learn sentence's opening words and its 2 minutes have a test; the two menu captions have none.
+Nothing here is device-verified yet.
+- Effects that play late (Tape, 6 ms; Pitch Correction, 19 ms; the Multiband Clipper, 85 samples;
+  another maker's plug-in that reports its delay): one switched On or Off, added or removed while
+  the song plays now crosses over. In 10076, when one came in, each track that waits for it fell
+  silent for the wait and came back with a hard edge. Its own track fell silent for the effect's
+  delay and came in with a step. One taken off stopped at once, and the other tracks skipped what
+  they still held.
+- On, or Add Effect once the effect has loaded (its row reads "Loading…" until then): every track
+  first plays on as it was, the new effect running unheard, for the effect's delay and as much
+  again (the second part a tenth of a second at most). At 48 kHz that is 12 ms with Tape, 38 ms
+  with Pitch Correction and 3.5 ms with the Multiband Clipper. Then all tracks glide together
+  over 256 samples (5.3 ms at 48 kHz): the effect's track into the effect's sound, the others
+  into waiting for it.
+- Off, or Remove, of the only effect that plays late: no wait. From the next audio buffer all tracks
+  glide over the same 256 samples, the effect's track to its sound without the effect, the others
+  out of their wait; the effect runs on, in time with the song, until the glide is over. With
+  another such effect on another track, every track first plays on as it was for as much time as a
+  track's wait grows by (6 ms when Tape or Pitch Correction goes Off while the other stays), then
+  the tracks whose wait changes glide.
+- The same on an instrument track, an audio track, a return and the master (the Effects key of
+  any Mixer strip).
+- An edit made while a crossover runs: before the glide the engine takes it at once (a fader, a
+  mute, a note drawn in a clip; a key you play is heard at once, glide or not). During the 256
+  samples of the glide it takes none; such an edit is heard when the glide is over, about 5 ms and
+  one audio buffer later at most.
+- Two edits that reach the engine inside one audio buffer (an effect that plays late switched and a
+  fader moved, say) are taken as one change, worked out against what is playing (the fader at once,
+  the effect with its crossover); the state after the first alone is never played. In 10076 the
+  second was built on the first, which the engine skipped, and a track that waits could fall silent
+  for its whole wait in the middle of the song.
+- Unchanged: an effect that reports no delay (EQ, Compressor, Reverb, Delay and the rest) still
+  switches at once when it is turned On or Off, added or removed, and Move Up and Move Down
+  still switch at once, also for effects that play late. An export has no crossover and starts
+  on the song's first sample, as in 10076. An effect switched while the song is stopped crosses
+  over in silence, and Play then starts in time.
+- Body Source menu (Song menu › Connect › Body Source): the caption under "Apple Health (Apple
+  Watch)" now reads "Arrives late, whenever Health syncs: slow modulation only, never the beat. Read
+  only; the reading stays on this device." It said "Arrives 4–5 s late" and "stays on this iPhone".
+  The caption under "Phone Motion" says "this device" where it said "this iPhone".
+- Learn, chapter "Modulation and Body Sources": the sentence on Apple Health now reads "Apple Health
+  arrives late: a Watch reading comes only when Health syncs, and Apple gives no figure for how long
+  that takes; a reading older than 2 minutes moves nothing."
 
 Known limit, unchanged since 10074: a MIDI take does not record a key held across the loop's end
 as it was heard. While the record line shows "Loop Record · take n" (a loop of two bars or
 longer), the note ends at the loop's end and the next take does not have it. On a one-bar loop, a
 key let go after the loop came round is recorded shorter than it was held. ("take n" stands for
 the number the line shows: take 1, take 2 …)
-Known limit: while an effect that plays late is on a track (even a muted one), on the master, or
-on a return a send feeds (Tape 6 ms, Pitch Correction 19 ms, the Multiband Clipper 85 samples),
-every track waits for it.
-The whole mix then plays that much behind the click, the Video Window's picture and what goes out
-as MIDI, and an audio or MIDI take played along with the tracks instead of the click lands that
-much late. With Tape this is new in this build.
-Known limit: when the screen turns sideways (Portrait Orientation Lock off), the take camera's
-preview stays a tall box and shows the picture on its side; the take itself is written upright.
+Known limit, unchanged since 10076: while an effect that plays late is on a track (even a muted
+one), on the master, or on a return a send feeds (Tape 6 ms, Pitch Correction 19 ms, the
+Multiband Clipper 85 samples), the whole mix plays that much behind the click, the Video Window's
+picture and what goes out as MIDI, and an audio or MIDI take played along with the tracks instead
+of the click lands that much late.
+Known limit, as old as that lag and first stated here: each time such an effect comes or goes while
+the song plays, the mix moves against the click, the picture and outgoing MIDI by as much as that
+lag changes. That is the effect's whole delay when nothing else in the song plays late, and nothing
+when Tape goes Off while Pitch Correction stays on another track. When it comes in, that much of the
+song is heard a second time; when it goes, that much is passed over. In 10076 it moved with a gap or
+a step, now under a glide of about 5 ms; it still moves. With a plug-in that reports a long delay
+that is up to one second.
+Known limit, new: in the 256 samples of a glide a sound meets a copy of itself as far away as the
+glide moves it. When nothing else in the song plays late, that is one delay. On the effect's own
+strip (its track or return; for an effect on the master, the whole mix) the sound without the effect
+is faded into the effect's sound, which comes one delay later (On), or back (Off). Each track that
+waits is faded into its own sound one delay later (On) or earlier (Off). Beside another such effect,
+a track glides by as much as its wait changes (13 ms when Pitch Correction goes Off while Tape
+stays), or not at all. A held note can thin out or dip for those 5 ms, and a beat inside the glide
+can sound doubled when the effect comes in, or softer when it goes. On a track that waits, a partial
+with an odd number of half periods in that distance (with Tape alone 83 Hz, 250 Hz, 417 Hz …) passes
+through silence in the middle.
+Known limit, new: with effects that play late on two tracks, a track whose own such effect comes or
+goes glides twice if it still waits afterwards (Pitch Correction on one track, then Tape On on
+another; or, with both on, Pitch Correction Off). The second glide follows the first by its new wait
+(13 ms in the first example, 6 ms in the second); from the one to the other it plays out of line
+with the rest by the delay of the effect that came or went (6 ms with Tape, 19 ms with Pitch
+Correction). On that track the effect itself comes in, or goes, with the second glide. No step and
+no gap.
+Known limit, new: in a quick run of edits to one track's effects, a second edit that lands
+before the first one's glide is over, and is not the first one taken back, can fall back to the
+switch of 10076 for that track's effects (one starts with its delay of silence, or stops at
+once); the other tracks still glide. By hand this takes two edits within about 5 to 43 ms and
+one audio buffer with Echoelmusic's own effects (the short end after an Off), or within the
+1.1 s of the plug-in below.
+Known limit, new: a plug-in of another maker that reports a long delay is not heard for that delay
+and up to a tenth of a second more after On, or after it has loaded: 1.1 s for one that reports a
+second. Until then On or Add Effect seems to do nothing; taken off again in that time, it was never
+heard and nothing changes. Taken off while another such plug-in stays on another track, it plays on
+for up to a second before the glide. Unchanged: a reported delay of more than one second is made up
+for one second only.
+Known limit, unchanged since 10076: when the screen turns sideways (Portrait Orientation Lock
+off), the take camera's preview stays a tall box and shows the picture on its side; the take
+itself is written upright.
+Known limits of saving, older than this build and first stated here, for checks 3 and 4. A song
+swiped away in the App Switcher within ten seconds of the app's start, before its audio files have
+loaded, is taken for a start that did not finish: the next start opens a new song and says so, and
+the song opens when it is chosen under Song menu → Open. A start opens the song whose file was
+written last, not the one that was open when the app closed. An effect's values stay in the effect
+until the song takes them, which it does, among other moments, when the app leaves the front (the
+App Switcher counts), when another song opens and at an export; for another maker's plug-in also
+when its page closes or a preset is chosen. The save two seconds after an edit does not read them,
+so if the app stops by itself while in front, effect values moved since then are not in the song.
+Known limits on an iPad, older than this build and first stated here, for check 5: Echoelmusic is
+one build for iPhone and iPad (iOS or iPadOS 18 or later). The automatic start check runs it on an
+iPhone simulator only; it compiles the build for the iPad and has never started it on one. The Sky
+follows the device as if it were held upright: with the screen turned sideways the drawn sky is a
+quarter turn off (the horizon stands on end) until a drag on the sky turns it by finger. On an iPad
+some texts still say "phone", among them the Body Source entry "Phone Motion", the notes on the Jam
+and Go Live pages, two chapter summaries in Learn, the camera pulse's "No light" hint and the system
+question for the local network.
 
-Previous: 11.0.0 (10075) — the top bar rebuilt as a deck and a display on one grid; 10074 — a key
-held through the loop sounds on, other makers' Audio Units in the lists, a Samples folder to hear
-sounds from. Earlier: git history.
+Previous: 11.0.0 (10076) — video takes that hold the song, the screen and the beat; the Tape
+effect in time; exports that start on the bar; 10075 — the top bar rebuilt as a deck and a
+display on one grid. Earlier: git history.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
 The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
-Five things to try on the device (answer each yes or no). Overlapping video takes hide each other
-in the Video Window, and Record on a stopped song starts where Stop left it (bar 1, unless a place
-on the ruler was chosen): before checks 3 and 5, mute (M)
-every video track that holds an earlier take, add a new video track (Add Track › Video) and use the
-camera button in its row.
-1. Click off (the metronome key; on a phone, More (…) › Click). A song where a synth plays for
-   about a minute, and a video track. Press Play and leave the song playing. While it plays, tap
-   the camera button in the video track's row, wait for the picture, tap Record, film about 20
-   seconds, then tap Stop. Does the song play on without a gap, a crackle or a jump while the
-   camera opens and when the take starts?
-2. Auto-Lock at 30 seconds (Settings › Display & Brightness › Auto-Lock). Open the take camera,
-   set the phone where it films you and tap Record before the screen dims (the screen is kept on
-   from Record until the take is saved, not while the camera only shows its picture). Film two
-   minutes without touching the screen, then tap Stop. Did the screen stay on, and does the sheet
-   say "The take is on the song.", not "The take was cut short…"?
-3. With the click on, turn to the front camera with the switch-camera key beside Record, tap
-   Record, clap on the beat for a few bars, tap Stop, then Close and press Play. In the Video
-   Window, does each clap's picture sit on its click? (Say which iOS version the phone runs.)
-4. Two audio tracks with the same drum loop, Tape on one of them (Mixer → Effects → Add Effect →
-   Tape, Wow at 0): do the two play as one, without a doubled or hollow sound?
-5. Portrait Orientation Lock off. Hold the phone sideways, open the take camera, tap Record, tap
-   Stop after a few seconds, then Close and press Play. In the Video Window, does the take fill the
-   wide window, upright, not on its side or upside down? (The preview in the take sheet shows the
-   picture on its side in this build; judge the take, not the preview.)
+Five things to try on the device (answer each yes or no). Checks 1 and 2 use one song: a synth
+track on the Init sound or Warm Pad, its Arpeggiator off, whose clip holds long notes (drawn, or
+played in on the screen keys), and an audio track with a loop; both sound all the time. Do
+check 1 first: it ends with Tape removed, and check 2 needs a song with no effect that plays
+late. Check 5 needs an iPad.
+1. Click off (the metronome key; on a phone, More (…) › Click), Loop on. Press Play and leave the
+   song playing. Mixer → the audio track's Effects → Add Effect → Tape. Four changes follow, about
+   two seconds apart: Tape comes in by itself when its row stops reading "Loading…"; then tap On
+   beside it (it then reads Off); tap it again (On); then … beside it › Remove. Each of the four
+   times: does the loop go into the Tape sound or out of it without a click or a gap, and do the
+   synth's long notes play on without a click or a gap? (Each time the mix moves by 6 ms, and for
+   about 5 ms the loop and a held note are each mixed with a copy of themselves 6 ms away: a soft
+   dip, a change of tone, or a beat that sounds doubled when Tape comes in or softer when it goes,
+   is the glide; say so if you hear it. A click, a crackle or silence is a no; say which track and
+   which of the four changes.)
+2. The same song, Tape removed, Click off, Loop on. Before Play, in Arrange: touch and hold the
+   audio track's name › Automate › its Volume, then tap the new lane about halfway down at the
+   song's end (the level now falls along the song and jumps back where the loop starts again);
+   hold the name again › Modulate › its Pan › "Bar LFO → …". Press Play and let the song come
+   round twice. While it plays: on the screen keys, hold a key the clip never plays across the
+   loop's end, then let go; drag the synth's fader in the Mixer; tap Arrange's ruler at another
+   bar (with a MIDI keyboard, hold a key through that tap). Then press Stop, tap the ruler over
+   the middle of the audio loop and press Play. Is there no click, no crackle and no gap
+   anywhere, and does the held key sound on through the loop's end (and, from a MIDI keyboard,
+   through the tap on the ruler) and stop when you let go? (For a no, say where.)
+3. In a short song (the one of checks 1 and 2 will do), record an audio take of a few seconds (arm
+   an audio track, press Record, press Record again to end it) and wait until it shows on the track
+   in Arrange. Rename the song (Song menu → Song Settings…, a name no other song has, Done), swipe
+   the app away in the App Switcher and open it again, press Play and look under Song menu → Open.
+   Then swipe it away, open it, swipe it away again within about two seconds of the song showing,
+   and open it once more. After the first reopening, did the same song open under its new name, did
+   the take play, and did Song menu → Open list the song once, under the new name and no longer
+   under the old one; and after the last, did the same song open again, with no line saying that
+   Echoelmusic did not finish starting last time? (For a no, say which part. If that line does show,
+   say how many seconds passed before the swipe; the song is then under Song menu → Open.)
+4. On a track that plays, add Delay (Mixer → Effects → Add Effect → Delay), tap Time, type 500
+   and OK; if a plug-in of another maker is installed and its page shows a Preset menu with
+   presets, put it on a track too and choose one of them. Tap Done, open another song (Song menu
+   → Open; with no other song, Song menu → New Song → Empty) and then this one again. In the
+   track's Effects tap Delay, tap Ping-Pong so it reads On, then swipe the app away in the App
+   Switcher and open it again. Both times (tap Delay in the track's Effects to see its values):
+   does Delay show what you set, Time 500 ms and the second time also Ping-Pong On, and does the
+   plug-in play the preset you chose? (For a no, say which value and which time.)
+5. On an iPad at full screen (iPadOS 18 or later, rotation lock off), in the song the app opens
+   with (a first install opens Four Tracks): tap the seven views on the bottom bar from left to
+   right and do one thing in each. Instrument: play a key or a pad. Tracks: Add Track › Audio.
+   Arrange: with the song stopped, tap the ruler near bar 3. Session: Add Scene. Mixer: drag the
+   Master fader. Field: the full-screen key at the top right, then the key in the same corner to
+   come back. Sky: choose a city in the place menu at the top left (the first time, iPadOS asks
+   for your location; either answer will do). Then turn the iPad once. Does the app start on the
+   iPad, can every view be operated (a note, a new track, the position near bar 3, a new scene
+   row, the number under the fader following, the Field filling the screen and coming back, a
+   sky drawn), and is every control of the top bar in the bar or under More (…), nothing
+   overlapping, upright and sideways? For a no, say which view. (Expected: − and + beside the
+   tempo only where the bar is wide; the count-in under a held Click or under More (…); a long
+   song name ending in … is cut on purpose; sideways the Sky is drawn on its side until you drag
+   it.) With no iPad on iPadOS 18 or later at hand, answer "no iPad", not yes, and judge only
+   the top bar, on an iPhone held sideways with Portrait Orientation Lock off.
