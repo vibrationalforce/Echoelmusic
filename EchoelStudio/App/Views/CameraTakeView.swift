@@ -9,7 +9,8 @@ import UIKit
 /// first frame was heard. While the camera is open
 /// the pulse camera waits; it comes back when this sheet closes. The sheet cannot be swiped away
 /// while a take is being written, so no take is ever lost to a gesture. A call or Siri mid-take
-/// ends it: the take lands with what was filmed, and the caption says it was cut short.
+/// ends it: the take lands with what was filmed, and the caption says it was cut short. A take
+/// the song could not take is never said to be on it (`lastTakeNotPlaced`).
 struct CameraTakeView: View {
     /// The video track the take lands on; nil makes one.
     let track: TrackID?
@@ -99,13 +100,16 @@ struct CameraTakeView: View {
         switch recorder.state {
         case .closed, .opening: "Opening the camera…"
         case .ready where recorder.life.lostLastTake: "The last take could not be saved. Record films a new one."
+        case .ready where recorder.life.lastTakeNotPlaced: "The last take is not on the song. Record films a new one."
         case .ready: "Record plays the song and films with it. The take has no sound of its own: the song's mix is its sound."
         case .recording: "Filming. Stop ends the take and the song."
         case .finishing: "Saving the take…"
         case .landed(cutShort: true): "The take was cut short by a call or another app. It is on the song with what was filmed."
         case .landed(cutShort: false): "The take is on the song. Record films the next one."
         case .interrupted where recorder.life.lostLastTake: "The take was cut short and could not be saved. The picture comes back when the call or other app lets go of the camera."
+        case .interrupted where recorder.life.lastTakeNotPlaced: "The last take is not on the song. The picture comes back when the call or other app lets go of the camera."
         case .interrupted: "Another app or a call is using the camera. The picture comes back when it lets go."
+        case .failed where recorder.life.lastTakeNotPlaced: "The camera stopped with an error, and the last take is not on the song. Close and open it again."
         case .failed: "The camera stopped with an error. Close and open it again."
         case .denied: "Camera access is off for Echoelmusic. Turn it on in Settings › Privacy › Camera."
         case .unavailable(let reason): reason

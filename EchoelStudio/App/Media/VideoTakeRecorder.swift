@@ -229,13 +229,15 @@ final class VideoTakeRecorder {
             startTick = nil
             if usable {
                 Task { @MainActor [weak self] in
-                    await documents.commitVideoTake(url, target: take.target, onto: take.track, at: start)
-                    self?.finishedLanding(generation: generation, usable: true)
+                    // "On the song" only when it is: a take that cannot be read, that the song
+                    // refuses or whose song was closed meanwhile is said as such.
+                    let placed = await documents.commitVideoTake(url, target: take.target, onto: take.track, at: start)
+                    self?.finishedLanding(generation: generation, as: .afterCommit(placed: placed))
                 }
             } else {
                 documents.takeAbandoned(take.target)
                 try? FileManager.default.removeItem(at: url)
-                finishedLanding(generation: generation, usable: false)
+                finishedLanding(generation: generation, as: .fileClosed(usable: false))
             }
         case .interrupted(let generation):
             endsTheTake(.interruptionBegan, stamped: generation)
@@ -255,10 +257,10 @@ final class VideoTakeRecorder {
         camera?.stopRecording()
     }
 
-    /// The take's file is closed and, when usable, on the song: the camera films the next one —
-    /// or goes, when it was closed meanwhile.
-    private func finishedLanding(generation: UInt64, usable: Bool) {
-        life.handle(.fileClosed(usable: usable), stamped: generation)
+    /// The take's file is closed and, when usable, on the song — or `notPlaced`: the camera films
+    /// the next one, or goes, when it was closed meanwhile.
+    private func finishedLanding(generation: UInt64, as outcome: VideoTakeLifecycle.Event) {
+        life.handle(outcome, stamped: generation)
         if closesAfterTake { release() }
     }
 

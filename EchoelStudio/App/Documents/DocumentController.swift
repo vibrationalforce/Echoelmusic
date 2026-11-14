@@ -2156,8 +2156,9 @@ final class DocumentController {
 
     /// Lays a finished camera take on `track` (or a new video track) at `start`, the tick its first
     /// frame was heard — one undo step. A take is never deleted: one that cannot be read stays in
-    /// the Media folder and the line says so.
-    func commitVideoTake(_ url: URL, target: TakeTarget, onto track: TrackID?, at start: Tick) async {
+    /// the Media folder and the line says so. True only when the take is on the song now; the
+    /// camera page says nothing else.
+    func commitVideoTake(_ url: URL, target: TakeTarget, onto track: TrackID?, at start: Tick) async -> Bool {
         defer {
             takeLanded(target.id)
             followRenamedSong()
@@ -2182,18 +2183,21 @@ final class DocumentController {
                 return .failure(error)
             }
         }.value
-        guard songsOpened == song else { return }
+        guard songsOpened == song else { return false }
         switch result {
         case .success(let file):
-            placeVideo(file, onto: track, at: start, title: "Record Video Take")
+            return placeVideo(file, onto: track, at: start, title: "Record Video Take")
         case .failure(let error):
             log.error("video take unreadable — \(error.localizedDescription, privacy: .private)")
             lastError = "The take could not be read; its file stays in the song's Media folder."
+            return false
         }
     }
 
-    /// The commands that add a video file and place it, making a video track when needed.
-    private func placeVideo(_ file: MediaFile, onto track: TrackID?, at start: Tick, title: String) {
+    /// The commands that add a video file and place it, making a video track when needed. True
+    /// when the song took them.
+    @discardableResult
+    private func placeVideo(_ file: MediaFile, onto track: TrackID?, at start: Tick, title: String) -> Bool {
         var commands: [Command] = []
         let target: TrackID
         if let track, store.project.track(track)?.kind == .video {
@@ -2206,7 +2210,7 @@ final class DocumentController {
         commands.append(.addMedia(file))
         commands.append(.placeVideo(track: target, id: RegionID(), media: file.id,
                                     start: Swift.min(Swift.max(0, start), MusicalTime.maximumTick)))
-        perform(commands, title: title)
+        return perform(commands, title: title)
     }
 
     /// Where a song file is now, for a player that reads it.
@@ -2796,13 +2800,17 @@ final class DocumentController {
         mediaRevision += 1
     }
 
-    private func perform(_ commands: [Command], title: String) {
+    /// True when the song took the commands.
+    @discardableResult
+    private func perform(_ commands: [Command], title: String) -> Bool {
         do {
             try store.perform(commands, title: title)
             lastError = nil
+            return true
         } catch {
             log.error("import rejected — \(String(describing: error), privacy: .public)")
             lastError = "Could not add the file to the song. Try again."
+            return false
         }
     }
 

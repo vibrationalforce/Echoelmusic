@@ -204,4 +204,103 @@ final class VideoTakeLifecycleTests: XCTestCase {
                       "a take that ended by itself (the disk filled up) still lands")
         XCTAssertEqual(life.phase, .landed)
     }
+
+    func testATakeThatCouldNotBeLaidOnTheSongIsNeverSaidToBeOnIt() {
+        var life = readyCamera()
+        life.record()
+        life.stop()
+        XCTAssertTrue(life.handle(.notPlaced, stamped: life.generation),
+                      "the file held the take, but the song did not get it")
+        XCTAssertNotEqual(life.phase, .landed, "'landed' is the caption that says the take is on the song")
+        XCTAssertEqual(life.phase, .ready)
+        XCTAssertTrue(life.lastTakeNotPlaced)
+        XCTAssertFalse(life.lostLastTake, "the file itself was not lost")
+        XCTAssertTrue(life.record(), "the camera films on")
+        XCTAssertFalse(life.lastTakeNotPlaced, "a new take starts without the old one's note")
+        life.stop()
+        XCTAssertTrue(life.handle(.fileClosed(usable: true), stamped: life.generation))
+        XCTAssertEqual(life.phase, .landed)
+        XCTAssertFalse(life.lastTakeNotPlaced)
+    }
+
+    func testATakeCutShortThatCouldNotBeLaidOnTheSongWaitsForTheCamera() {
+        var life = readyCamera()
+        life.record()
+        life.handle(.interruptionBegan, stamped: life.generation)
+        XCTAssertTrue(life.handle(.notPlaced, stamped: life.generation))
+        XCTAssertEqual(life.phase, .interrupted, "iOS still holds the camera")
+        XCTAssertTrue(life.lastTakeNotPlaced)
+        XCTAssertTrue(life.handle(.interruptionEnded, stamped: life.generation))
+        XCTAssertEqual(life.phase, .ready)
+        XCTAssertTrue(life.lastTakeNotPlaced, "the note stays until the next take")
+    }
+
+    func testATakeAfterARuntimeErrorThatCouldNotBeLaidOnTheSongFails() {
+        var life = readyCamera()
+        life.record()
+        life.handle(.runtimeError, stamped: life.generation)
+        XCTAssertTrue(life.handle(.notPlaced, stamped: life.generation))
+        XCTAssertEqual(life.phase, .failed, "the camera is not trusted after the error")
+        XCTAssertTrue(life.lastTakeNotPlaced)
+    }
+
+    func testNotPlacedMeansNothingOutsideATakeOrFromAnOlderCamera() {
+        var life = readyCamera()
+        let ready = life
+        XCTAssertFalse(life.handle(.notPlaced, stamped: life.generation), "no take is closing its file")
+        XCTAssertEqual(life, ready)
+        life.record()
+        life.stop()
+        let old = life.generation
+        life.close()
+        life.open()
+        life.handle(.opened, stamped: life.generation)
+        let reopened = life
+        XCTAssertFalse(life.handle(.notPlaced, stamped: old), "a closed camera's take changes nothing")
+        XCTAssertEqual(life, reopened)
+        life.record()
+        life.stop()
+        XCTAssertTrue(life.handle(.notPlaced, stamped: life.generation))
+        XCTAssertTrue(life.lastTakeNotPlaced)
+        life.close()
+        XCTAssertFalse(life.lastTakeNotPlaced, "closing the camera clears the note")
+    }
+
+    func testATakeThatEndedByItselfAndCouldNotBeLaidOnTheSongFilmsOn() {
+        var life = readyCamera()
+        XCTAssertTrue(life.record())
+        XCTAssertTrue(life.handle(.notPlaced, stamped: life.generation),
+                      "the disk filled up mid-take and the song did not get it")
+        XCTAssertEqual(life.phase, .ready)
+        XCTAssertTrue(life.lastTakeNotPlaced)
+        XCTAssertFalse(life.lostLastTake)
+        XCTAssertFalse(life.keepsScreenAwake, "nothing is filmed or saved any more")
+        XCTAssertTrue(life.canRecord)
+    }
+
+    func testACallWhileAStoppedTakeIsSavedAndNotLaidOnTheSongWaitsForTheCamera() {
+        var life = readyCamera()
+        life.record()
+        life.stop()
+        XCTAssertTrue(life.handle(.interruptionBegan, stamped: life.generation))
+        XCTAssertEqual(life.phase, .finishing, "a stopped take closes its file as it was")
+        XCTAssertFalse(life.cutShort, "Stop ended it, not the call")
+        XCTAssertTrue(life.handle(.notPlaced, stamped: life.generation))
+        XCTAssertEqual(life.phase, .interrupted, "iOS holds the camera")
+        XCTAssertFalse(life.canRecord)
+        XCTAssertTrue(life.lastTakeNotPlaced)
+        XCTAssertTrue(life.handle(.interruptionEnded, stamped: life.generation))
+        XCTAssertEqual(life.phase, .ready)
+        XCTAssertTrue(life.canRecord)
+    }
+
+    func testOnlyAPlacedTakeReportsAUsableFile() {
+        XCTAssertEqual(VideoTakeLifecycle.Event.afterCommit(placed: true), .fileClosed(usable: true))
+        XCTAssertEqual(VideoTakeLifecycle.Event.afterCommit(placed: false), .notPlaced)
+        var life = readyCamera()
+        life.record()
+        life.stop()
+        life.handle(.afterCommit(placed: false), stamped: life.generation)
+        XCTAssertNotEqual(life.phase, .landed, "a take the song did not take is not said to be on it")
+    }
 }

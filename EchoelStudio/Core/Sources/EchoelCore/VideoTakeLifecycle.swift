@@ -40,8 +40,18 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
         case interruptionEnded
         /// The camera session stopped with an error.
         case runtimeError
-        /// The take's file is closed; `usable` says whether it holds the take.
+        /// The take's file is closed; `usable` says whether it holds the take. Usable is reported
+        /// only once the take is on the song (`afterCommit(placed:)`).
         case fileClosed(usable: Bool)
+        /// The camera closed the take's file as usable, but the take is not on the song: the file
+        /// could not be read, the song refused it, or another song was opened meanwhile.
+        case notPlaced
+
+        /// What a usable file reports once the song was asked to take it: `fileClosed(usable:
+        /// true)` only when the take is on the song.
+        public static func afterCommit(placed: Bool) -> Event {
+            placed ? .fileClosed(usable: true) : .notPlaced
+        }
     }
 
     public private(set) var phase: Phase = .closed
@@ -52,6 +62,8 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
     public private(set) var isInterrupted = false
     /// The last take's file could not be kept.
     public private(set) var lostLastTake = false
+    /// The last take is not on the song although the camera closed its file as usable (`notPlaced`).
+    public private(set) var lastTakeNotPlaced = false
     /// The session reported a runtime error since it opened.
     private var brokeDown = false
 
@@ -83,6 +95,7 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
         cutShort = false
         isInterrupted = false
         lostLastTake = false
+        lastTakeNotPlaced = false
         brokeDown = false
         return generation
     }
@@ -94,6 +107,7 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
         cutShort = false
         isInterrupted = false
         lostLastTake = false
+        lastTakeNotPlaced = false
         brokeDown = false
     }
 
@@ -104,6 +118,7 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
         phase = .recording
         cutShort = false
         lostLastTake = false
+        lastTakeNotPlaced = false
         return true
     }
 
@@ -185,6 +200,12 @@ public struct VideoTakeLifecycle: Equatable, Sendable {
             } else {
                 phase = isInterrupted ? .interrupted : .ready
             }
+        case .notPlaced:
+            // Not reported as lost: the camera closed the file as usable. But it is not on the
+            // song, and `landed` would say it is.
+            guard phase == .recording || phase == .finishing else { return false }
+            lastTakeNotPlaced = true
+            phase = brokeDown ? .failed : (isInterrupted ? .interrupted : .ready)
         }
         return true
     }
