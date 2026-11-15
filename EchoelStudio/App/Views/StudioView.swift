@@ -32,6 +32,9 @@ struct StudioView: View {
     @State private var fieldFullscreen = false
     /// The song's video as a small window (wave W7); on by default while the song has video.
     @AppStorage(VideoWindow.shownKey) private var showsVideoWindow = true
+    /// Cycle Tones' look in this window (`CycleTonesSurface.lookKey`): the Field window rests only
+    /// while the sky fills the view. Changes only when the switch is tapped (Law 6).
+    @SceneStorage(CycleTonesSurface.lookKey) private var cycleLook: CycleTonesSurface.Look = .list
     /// The live stream (W14); off until Go Live on its page. Owned here so a stream outlives the page.
     @State private var streaming = StreamingController()
     /// The jam (W16); off until the musician hosts or joins one on its page. Owned here so a jam
@@ -43,7 +46,7 @@ struct StudioView: View {
     @State private var videoHits = VideoHits()
 
     enum Surface: Hashable {
-        case instrument, tracks, arrange, session, mixer, field, sky
+        case instrument, tracks, arrange, session, mixer, field, cycles
 
         /// Its name on the bar of views, and the name of its area for VoiceOver.
         var title: String {
@@ -54,7 +57,7 @@ struct StudioView: View {
             case .session: "Session"
             case .mixer: "Mixer"
             case .field: "Field"
-            case .sky: "Sky"
+            case .cycles: "Cycle Tones"
             }
         }
 
@@ -67,28 +70,28 @@ struct StudioView: View {
             case .session: "square.grid.3x3"
             case .mixer: "slider.vertical.3"
             case .field: "circle.hexagongrid"
-            case .sky: "moon.stars"
+            case .cycles: "moon.stars"
             }
         }
 
         /// Whether the keys belong under this view: where notes are played or written. The mixer,
-        /// the Field and the sky keep their whole height — under the keys a phone left the mixer
+        /// the Field and Cycle Tones keep their whole height — under the keys a phone left the mixer
         /// about 350 points for a strip that wants 520.
         var takesKeys: Bool {
             switch self {
             case .instrument, .tracks, .arrange, .session: true
-            case .mixer, .field, .sky: false
+            case .mixer, .field, .cycles: false
             }
         }
 
         /// What the Keys switch does under this view. Under Tracks, Arrange and Session it decides;
-        /// the Instrument always has its keys, and the mixer, the Field and the sky never do — there
+        /// the Instrument always has its keys, and the mixer, the Field and Cycle Tones never do — there
         /// the switch is dimmed, so it does not look on over a view that shows no keys.
         var keysSwitch: KeysSwitch {
             switch self {
             case .instrument: .alwaysShown
             case .tracks, .arrange, .session: .decides
-            case .mixer, .field, .sky: .neverShown
+            case .mixer, .field, .cycles: .neverShown
             }
         }
     }
@@ -161,8 +164,9 @@ struct StudioView: View {
                         .transition(.opacity)
                 }
                 // One picture at a time: the window rests while the Field, the Instrument (which
-                // shows it) or the sky is the view, or the Field fills the screen.
-                if showsFieldWindow, surface != .field, surface != .instrument, surface != .sky, !fieldFullscreen {
+                // shows it) or the sky of Cycle Tones is the view, or the Field fills the screen.
+                if showsFieldWindow, surface != .field, surface != .instrument,
+                   !(surface == .cycles && cycleLook == .sky), !fieldFullscreen {
                     // The video window holds the bottom leading corner while it shows.
                     FieldWindowDock(expand: { openFieldFullscreen() }, close: { showsFieldWindow = false },
                                     taken: showsVideoWindow && hasVideo ? .bottomLeading : nil)
@@ -176,7 +180,7 @@ struct StudioView: View {
                 }
             }
             // The Instrument is played on the keys, so they stay under it whatever the Keys switch
-            // says; the mixer, the Field and the sky never carry them (`Surface.takesKeys`).
+            // says; the mixer, the Field and Cycle Tones never carry them (`Surface.takesKeys`).
             if surface == .instrument || (showsKeys && surface.takesKeys) {
                 Divider().overlay(Theme.Color.border)
                 PlayKeysView()
@@ -214,7 +218,6 @@ struct StudioView: View {
         case let .transcribe(track, region): TranscribeView(trackID: track, regionID: region)
         case .subtitles: SubtitlesView()
         case .browser: MediaBrowserView()
-        case .cycleTones: CycleTonesView()
         case let .importAudio(track, start):
             AudioFilePicker(pick: { url in
                 router.sheet = nil
@@ -282,9 +285,10 @@ struct StudioView: View {
             } else {
                 FieldSurface(expand: { openFieldFullscreen() })
             }
-        case .sky:
-            // The sky drawn from the star table, place, time and the phone's attitude (Sky S2).
-            SkySurface()
+        case .cycles:
+            // The cycles' tones, as a list or as the sky drawn from the star table, place, time and
+            // the phone's attitude (Sky S2), one switch apart (founder 2026-11-15: in place of the Sky).
+            CycleTonesSurface()
         }
     }
 
@@ -1549,7 +1553,7 @@ struct SongMenu: View {
 
     /// The song's key and scale, and whether a keyboard is held in them. Through the writer like
     /// every other control; song-wide values are never automated (`Command.setAutomation`), so the
-    /// writer sets them directly. Cycle Tones on the Sky page sets the key and concert pitch too.
+    /// writer sets them directly. Cycle Tones sets the key and concert pitch too.
     private var keyAndScale: some View {
         let context = store.project.context
         return Menu {
@@ -1758,10 +1762,14 @@ struct SongMenu: View {
 /// cells, a symbol over the word, the chosen one the off-white tile. Every view is on screen on
 /// every phone. As a row of word chips the bar was 536 points wide — on a 390-point screen Field
 /// and Sky lay beyond the edge with nothing to hint at them (device recording of build 10068).
+/// "Cycle Tones", the widest word, needs 0.81 of its size in the 50.7-point cell of a 375-point
+/// phone at the default text size (Atkinson Hyperlegible at 12 points, measured), within the 0.7
+/// the cell allows; at the larger text sizes it is cut there, one size before "Instrument" is. A
+/// long press shows the whole word in the large-content viewer, as on a system tab bar.
 private struct SurfaceBar: View {
     @Binding var selection: StudioView.Surface
 
-    private static var items: [StudioView.Surface] { [.instrument, .tracks, .arrange, .session, .mixer, .field, .sky] }
+    private static var items: [StudioView.Surface] { [.instrument, .tracks, .arrange, .session, .mixer, .field, .cycles] }
 
     var body: some View {
         HStack(spacing: Theme.Space.xxs) {
@@ -1788,7 +1796,7 @@ private struct SurfaceBar: View {
                 Image(systemName: surface.symbol)
                     .font(Theme.Font.label)
                     .accessibilityHidden(true)
-                // One line, shrunk before it is cut: "Instrument" is the widest word of the seven.
+                // One line, shrunk before it is cut: "Cycle Tones" is the widest word of the seven.
                 Text(surface.title)
                     .font(Theme.Font.caption)
                     .lineLimit(1)

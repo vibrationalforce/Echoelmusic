@@ -1,8 +1,9 @@
 import EchoelCore
 import SwiftUI
 
-/// The sky as a view of the studio (sky source S2, founder 2026-10-31: "a good picture even when
-/// it is dark … intelligent and automatic, without the musician needing to know anything").
+/// The sky, the second look of Cycle Tones (sky source S2, founder 2026-10-31: "a good picture even
+/// when it is dark … intelligent and automatic, without the musician needing to know anything"; a
+/// view of its own until Cycle Tones took its place on the bar, founder 2026-11-15).
 /// The picture is COMPUTED — the star table, the Sun, Moon and planets, the place and the time,
 /// turned by the phone's attitude — so it is sharp in total darkness and behind clouds. No
 /// setting: it opens, finds the place once and follows the phone; a drag turns it by finger,
@@ -445,7 +446,6 @@ struct SkyStarReading: Equatable {
 /// chooses or a fix arrives (Law 6).
 private struct SkyControls: View {
     let pointing: SkyPointing
-    @Environment(StudioRouter.self) private var router
 
     var body: some View {
         HStack(spacing: Theme.Space.s) {
@@ -472,11 +472,6 @@ private struct SkyControls: View {
                     .accessibilityLabel("Follow the Phone")
                     .accessibilityHint("Turns the sky with the direction the phone points.")
             }
-            // Always the rightmost, so the button that comes and goes beside it never moves it.
-            Button { router.sheet = .cycleTones } label: { Image(systemName: "music.note.list") }
-                .buttonStyle(ToolButtonStyle())
-                .accessibilityLabel("Cycle Tones")
-                .accessibilityHint("Lists the tones, tempi and concert pitches of astronomical cycles, to tune the song to one.")
         }
         .foregroundStyle(Theme.Color.textSecondary)
         .padding(.horizontal, Theme.Space.m)

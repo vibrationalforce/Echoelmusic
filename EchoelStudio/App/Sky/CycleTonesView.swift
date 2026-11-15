@@ -1,38 +1,70 @@
 import EchoelCore
 import SwiftUI
 
-/// Cycle Tones (W6b): each cycle of the Earth, the Moon, the planets, minor planets and moons as a
-/// tone — one over its period, doubled by whole octaves into octave 3 — with the tempo seven
-/// octaves lower and the concert pitch that puts the tone exactly on its key (`CycleTone`). The
+/// Cycle Tones, the rightmost view of the studio (founder 2026-11-15, in place of the Sky): the
+/// planets' cycles as a list of tones or as the sky itself — the drawn sky, with each body's tone
+/// under the ring — one switch apart. The switch is remembered per window (`SceneStorage`): on an
+/// iPad with two windows, one window's switch never starts the other window's sky, its sensors or
+/// its camera.
+struct CycleTonesSurface: View {
+    /// How the planets' cycles are shown.
+    enum Look: String, CaseIterable, Identifiable {
+        case list, sky
+
+        var id: Self { self }
+
+        var title: String {
+            switch self {
+            case .list: "List"
+            case .sky: "Sky"
+            }
+        }
+    }
+
+    /// Where the switch is remembered, per window (a convenience, never part of a song). StudioView
+    /// reads the same key to rest the Field window only while the sky shows.
+    static let lookKey = "cycleTones.look"
+    @SceneStorage(CycleTonesSurface.lookKey) private var look: Look = .list
+    @Environment(StreamingController.self) private var streaming
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Picker("Show As", selection: $look) {
+                ForEach(Look.allCases) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, Theme.Space.m)
+            .padding(.vertical, Theme.Space.s)
+            // While streaming, the Live badge holds the top right corner: the switch sits below it.
+            // (`isOn` changes only at Go Live and Stop.)
+            .padding(.top, streaming.isOn ? Theme.Size.touch + Theme.Space.m : 0)
+            .accessibilityHint("Shows the cycles as a list of tones, or the sky with each body's tone under the ring.")
+            switch look {
+            case .list: CycleTonesList()
+            case .sky: SkySurface()
+            }
+        }
+        .background(Theme.Color.background)
+    }
+}
+
+/// The list of Cycle Tones (W6b): each cycle of the Earth, the Moon, the planets, minor planets and
+/// moons as a tone — one over its period, doubled by whole octaves into octave 3 — with the tempo
+/// seven octaves lower and the concert pitch that puts the tone exactly on its key (`CycleTone`). The
 /// tuning fork on a row tunes the song to that cycle: its key, its concert pitch and, unless a clock,
-/// a jam's host or Flow sets the pace, its tempo, as one undo step through the one door. Opened
-/// from the Sky page. Arithmetic from the period, never an effect: the page says how each number
-/// is made and whose method it is (`CycleLibrary.method`, `.credit`).
+/// a jam's host or Flow sets the pace, its tempo, as one undo step through the one door.
+/// Arithmetic from the period, never an effect: the page says how each number is made and whose
+/// method it is (`CycleLibrary.method`, `.credit`).
 ///
 /// The key and the concert pitch are song-wide values, which are never automated
 /// (`Command.setAutomation`), so setting them directly is what the Key menu's writer does too.
-struct CycleTonesView: View {
+struct CycleTonesList: View {
     @Environment(ProjectStore.self) private var store
     @Environment(MIDIInput.self) private var midi
     @Environment(JamSession.self) private var jam: JamSession?
     @Environment(FlowController.self) private var flow: FlowController?
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle("Cycle Tones")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { dismiss() }
-                    }
-                }
-        }
-        .preferredColorScheme(.dark)
-    }
-
-    private var content: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Theme.Space.m) {
                 Text(CycleLibrary.method)

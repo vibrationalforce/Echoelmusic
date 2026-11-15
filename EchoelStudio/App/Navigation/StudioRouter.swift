@@ -61,9 +61,6 @@ enum StudioSheet: Identifiable, Hashable {
     case subtitles
     /// The sample and media browser: the song's, the library's and imported files, to hear and place (Recovery 7).
     case browser
-    /// Cycle Tones: the tones, tempi and concert pitches of astronomical cycles, to tune the song to
-    /// one (W6b, from the Sky page).
-    case cycleTones
 
     var id: Self { self }
 }

@@ -14,7 +14,7 @@ public enum StudioPlace: String, CaseIterable, Sendable {
     case songMenu, songSection, exportSection, playAndSyncSection, connectSection, appSection
     case songSettings, browser, importMIDI, learn
     // The bar of views at the bottom.
-    case instrument, tracks, arrange, session, mixer, field, sky
+    case instrument, tracks, arrange, session, mixer, field, cycleTones, sky
     // The transport and its switches.
     case play, record, loop, keys, click, more, midiLearn, writeAutomation, fieldWindow
     // Tracks.
@@ -70,6 +70,7 @@ public enum StudioPlace: String, CaseIterable, Sendable {
         case .session: "Session"
         case .mixer: "Mixer"
         case .field: "Field"
+        case .cycleTones: "Cycle Tones"
         case .sky: "Sky"
         case .play: "Play"
         case .record: "Record"
