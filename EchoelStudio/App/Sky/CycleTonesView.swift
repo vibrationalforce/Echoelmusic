@@ -1,12 +1,26 @@
 import EchoelCore
 import SwiftUI
 
-/// Cycle Tones, the rightmost view of the studio (founder 2026-11-15, in place of the Sky): the
-/// planets' cycles as a list of tones or as the sky itself — the drawn sky, with each body's tone
-/// under the ring — one switch apart. The switch is remembered per window (`SceneStorage`): on an
-/// iPad with two windows, one window's switch never starts the other window's sky, its sensors or
-/// its camera.
+/// Cycle Tones, the rightmost view of the studio (founder 2026-11-15, in place of the Sky): tones
+/// from natural cycles and measured lines, by category — the planets' cycles (as a list or as the
+/// sky itself, with each body's tone under the ring) and the lines of hydrogen and everyday
+/// molecules. The category and the look are remembered per window (`SceneStorage`): on an iPad with
+/// two windows, one window's switch never starts the other window's sky, its sensors or its camera.
 struct CycleTonesSurface: View {
+    /// What the tones come from.
+    enum Category: String, CaseIterable, Identifiable {
+        case planets, molecules
+
+        var id: Self { self }
+
+        var title: String {
+            switch self {
+            case .planets: "Planets"
+            case .molecules: "Molecules"
+            }
+        }
+    }
+
     /// How the planets' cycles are shown.
     enum Look: String, CaseIterable, Identifiable {
         case list, sky
@@ -21,44 +35,100 @@ struct CycleTonesSurface: View {
         }
     }
 
-    /// Where the switch is remembered, per window (a convenience, never part of a song). StudioView
-    /// reads the same key to rest the Field window only while the sky shows.
+    /// Where the switches are remembered, per window (a convenience, never part of a song).
+    /// StudioView reads the same keys to rest the Field window only while the sky shows.
+    static let categoryKey = "cycleTones.category"
     static let lookKey = "cycleTones.look"
+    @SceneStorage(CycleTonesSurface.categoryKey) private var category: Category = .planets
     @SceneStorage(CycleTonesSurface.lookKey) private var look: Look = .list
     @Environment(StreamingController.self) private var streaming
 
+    /// Whether the sky fills the view for these two switches.
+    static func showsSky(category: Category, look: Look) -> Bool {
+        category == .planets && look == .sky
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            Picker("Show As", selection: $look) {
-                ForEach(Look.allCases) { Text($0.title).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, Theme.Space.m)
-            .padding(.vertical, Theme.Space.s)
-            // While streaming, the Live badge holds the top right corner: the switch sits below it.
-            // (`isOn` changes only at Go Live and Stop.)
-            .padding(.top, streaming.isOn ? Theme.Size.touch + Theme.Space.m : 0)
-            .accessibilityHint("Shows the cycles as a list of tones, or the sky with each body's tone under the ring.")
-            switch look {
-            case .list: CycleTonesList()
-            case .sky: SkySurface()
+            switches
+                // While streaming, the Live badge holds the top right corner: the switches sit below
+                // it. (`isOn` changes only at Go Live and Stop.)
+                .padding(.top, streaming.isOn ? Theme.Size.touch + Theme.Space.m : 0)
+            switch (category, look) {
+            case (.planets, .list): CycleTonesList()
+            case (.planets, .sky): SkySurface()
+            case (.molecules, _): SpectralTonesList()
             }
         }
         .background(Theme.Color.background)
     }
+
+    private var switches: some View {
+        VStack(spacing: Theme.Space.s) {
+            Picker("Category", selection: $category) {
+                ForEach(Category.allCases) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityHint("Chooses what the tones come from: the planets' cycles or the lines of hydrogen and everyday molecules.")
+            if category == .planets {
+                Picker("Show As", selection: $look) {
+                    ForEach(Look.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityHint("Shows the cycles as a list of tones, or the sky with each body's tone under the ring.")
+            }
+        }
+        .padding(.horizontal, Theme.Space.m)
+        .padding(.vertical, Theme.Space.s)
+    }
 }
 
-/// The list of Cycle Tones (W6b): each cycle of the Earth, the Moon, the planets, minor planets and
-/// moons as a tone — one over its period, doubled by whole octaves into octave 3 — with the tempo
-/// seven octaves lower and the concert pitch that puts the tone exactly on its key (`CycleTone`). The
-/// tuning fork on a row tunes the song to that cycle: its key, its concert pitch and, unless a clock,
-/// a jam's host or Flow sets the pace, its tempo, as one undo step through the one door.
-/// Arithmetic from the period, never an effect: the page says how each number is made and whose
-/// method it is (`CycleLibrary.method`, `.credit`).
+/// The list of the planets' cycle tones (W6b): each cycle of the Earth, the Moon, the planets,
+/// minor planets and moons as a tone — one over its period, doubled by whole octaves into octave 3.
+struct CycleTonesList: View {
+    var body: some View {
+        CycleTonePage(method: CycleLibrary.method, credit: CycleLibrary.credit, sections: CycleToneText.cycleSections)
+    }
+}
+
+/// The list of spectral tones (Molecules): hydrogen's first lines and the vibrations of everyday
+/// molecules, each halved by whole octaves into octave 3 (`SpectralLibrary`).
+struct SpectralTonesList: View {
+    var body: some View {
+        CycleTonePage(method: SpectralLibrary.method, credit: SpectralLibrary.credit, sections: CycleToneText.spectralSections)
+    }
+}
+
+/// One row's content, whatever the tone comes from.
+struct ToneItem: Identifiable {
+    let id: String
+    /// "Jupiter · Orbit (sidereal)", "Water H₂O · Bend (ν₂)".
+    let title: String
+    let tone: CycleTone
+    /// "A = 436.62 Hz · Period 11.86 years, 36 octaves up".
+    let derivation: String
+    /// The whole row as VoiceOver reads it: plain words, no subscripts or symbols, units in words.
+    let spoken: String
+}
+
+/// A titled group of rows.
+struct ToneSection: Identifiable {
+    let id: String
+    let title: String
+    let items: [ToneItem]
+}
+
+/// A page of tones: how the numbers are made, what the song holds now, the rows by section, and
+/// whose method and numbers they are. The tuning fork on a row tunes the song to that tone: its
+/// key, its concert pitch and, unless a clock, a jam's host or Flow sets the pace, its tempo, as
+/// one undo step through the one door. Arithmetic, never an effect.
 ///
 /// The key and the concert pitch are song-wide values, which are never automated
 /// (`Command.setAutomation`), so setting them directly is what the Key menu's writer does too.
-struct CycleTonesList: View {
+struct CycleTonePage: View {
+    let method: String
+    let credit: String
+    let sections: [ToneSection]
     @Environment(ProjectStore.self) private var store
     @Environment(MIDIInput.self) private var midi
     @Environment(JamSession.self) private var jam: JamSession?
@@ -67,17 +137,25 @@ struct CycleTonesList: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Theme.Space.m) {
-                Text(CycleLibrary.method)
+                Text(method)
                     .font(Theme.Font.body)
                     .foregroundStyle(Theme.Color.textSecondary)
                 // What the song holds now, so a choice shows what it changed (cold values, Law 6).
                 Text("This song: " + CycleToneText.song(store.project))
                     .font(Theme.Font.value)
                     .foregroundStyle(Theme.Color.text)
-                ForEach(NaturalCycle.Group.allCases, id: \.self) { group in
-                    section(group)
+                ForEach(sections) { section in
+                    Text(section.title)
+                        .font(Theme.Font.label)
+                        .foregroundStyle(Theme.Color.textSecondary)
+                        .padding(.top, Theme.Space.m)
+                        .accessibilityAddTraits(.isHeader)
+                    ForEach(section.items) { item in
+                        CycleToneRow(item: item, holds: CycleToneText.holds(store.project, item.tone),
+                                     tempoSource: tempoSource, tune: tune)
+                    }
                 }
-                Text(CycleLibrary.credit)
+                Text(credit)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
                     .padding(.top, Theme.Space.l)
@@ -88,27 +166,13 @@ struct CycleTonesList: View {
         .background(Theme.Color.background)
     }
 
-    @ViewBuilder private func section(_ group: NaturalCycle.Group) -> some View {
-        Text(group.title)
-            .font(Theme.Font.label)
-            .foregroundStyle(Theme.Color.textSecondary)
-            .padding(.top, Theme.Space.m)
-            .accessibilityAddTraits(.isHeader)
-        ForEach(CycleLibrary.all.filter { $0.group == group }) { cycle in
-            if let tone = cycle.tone {
-                CycleToneRow(cycle: cycle, tone: tone, holds: CycleToneText.holds(store.project, tone),
-                             tempoSource: tempoSource, tune: tune)
-            }
-        }
-    }
-
     /// What sets the pace now, as the tempo field reads it: anything but the song keeps the tempo.
     private var tempoSource: TempoSource {
         TempoSource.current(followsJam: jam?.followsJam == true, followsMIDIClock: midi.followedSource != nil,
                             flows: flow?.lock == .flow)
     }
 
-    private func tune(_ cycle: NaturalCycle, _ tone: CycleTone, _ choice: CycleToneChoice) {
+    private func tune(_ tone: CycleTone, _ choice: CycleToneChoice) {
         let key = Command.setKeyRoot(tone.pitch % 12)
         let pitch = Command.setConcertPitch(hertz: CycleToneText.concertPitch(tone))
         let tempo = Command.setTempo(bpm: CycleToneText.tempo(tone))
@@ -116,7 +180,7 @@ struct CycleTonesList: View {
         switch choice {
         case .all:
             let commands = ownTempo ? [key, pitch, tempo] : [key, pitch]
-            try? store.perform(commands, title: "Tune to Cycle")
+            try? store.perform(commands, title: "Tune to Tone")
         case .key: try? store.perform(key)
         case .concertPitch: try? store.perform(pitch)
         case .tempo:
@@ -131,20 +195,21 @@ enum CycleToneChoice {
     case all, key, concertPitch, tempo
 }
 
-/// One cycle: what it is, its numbers, and the tuning fork that tunes the song to it.
+/// One tone: what it is, its numbers, and the tuning fork that tunes the song to it.
 private struct CycleToneRow: View {
-    let cycle: NaturalCycle
-    let tone: CycleTone
-    /// Which of this cycle's values the song holds now.
+    let item: ToneItem
+    /// Which of this tone's values the song holds now.
     let holds: CycleToneText.Holds
     let tempoSource: TempoSource
-    let tune: (NaturalCycle, CycleTone, CycleToneChoice) -> Void
+    let tune: (CycleTone, CycleToneChoice) -> Void
+
+    private var tone: CycleTone { item.tone }
 
     var body: some View {
         HStack(alignment: .center, spacing: Theme.Space.s) {
             VStack(alignment: .leading, spacing: Theme.Space.xxs) {
                 HStack(spacing: Theme.Space.xs) {
-                    Text(cycle.body + CycleToneText.dot + cycle.cycle)
+                    Text(item.title)
                         .font(Theme.Font.body)
                         .foregroundStyle(Theme.Color.text)
                     if holds.keyAndPitch {
@@ -156,12 +221,12 @@ private struct CycleToneRow: View {
                 Text(CycleToneText.numbers(tone))
                     .font(Theme.Font.value)
                     .foregroundStyle(Theme.Color.text)
-                Text(CycleToneText.derivation(cycle, tone))
+                Text(item.derivation)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(CycleToneText.spoken(cycle, tone))
+            .accessibilityLabel(item.spoken)
             .accessibilityValue(holds.keyAndPitch ? "The song is tuned to it" : "")
             Spacer(minLength: 0)
             menu
@@ -173,13 +238,13 @@ private struct CycleToneRow: View {
 
     private var menu: some View {
         Menu {
-            item(ownTempo ? "Key, Concert Pitch and Tempo" : "Key and Concert Pitch",
-                 held: holds.keyAndPitch && (!ownTempo || holds.tempo)) { tune(cycle, tone, .all) }
+            choice(ownTempo ? "Key, Concert Pitch and Tempo" : "Key and Concert Pitch",
+                 held: holds.keyAndPitch && (!ownTempo || holds.tempo)) { tune(tone, .all) }
             Divider()
-            item("Key \u{00B7} " + CycleToneText.keyName(tone), held: holds.key) { tune(cycle, tone, .key) }
-            item("Concert Pitch \u{00B7} A = " + NumberText.string(CycleToneText.concertPitch(tone), decimals: 2, unit: "Hz"),
-                 held: holds.concertPitch) { tune(cycle, tone, .concertPitch) }
-            item("Tempo \u{00B7} " + CycleToneText.tempoText(tone), held: holds.tempo) { tune(cycle, tone, .tempo) }
+            choice("Key \u{00B7} " + CycleToneText.keyName(tone), held: holds.key) { tune(tone, .key) }
+            choice("Concert Pitch \u{00B7} A = " + NumberText.string(CycleToneText.concertPitch(tone), decimals: 2, unit: "Hz"),
+                 held: holds.concertPitch) { tune(tone, .concertPitch) }
+            choice("Tempo \u{00B7} " + CycleToneText.tempoText(tone), held: holds.tempo) { tune(tone, .tempo) }
                 .disabled(!ownTempo)
             if let follows = tempoFollows {
                 // Why the tempo item is dimmed: what sets the pace (TempoSource).
@@ -192,12 +257,12 @@ private struct CycleToneRow: View {
         }
         .foregroundStyle(Theme.Color.textSecondary)
         .accessibilityLabel("Tune the Song")
-        .accessibilityValue(cycle.body + ", " + cycle.cycle)
+        .accessibilityValue(item.spoken.components(separatedBy: CycleToneText.spokenBreak).first ?? item.spoken)
         .accessibilityHint(hint)
     }
 
     /// A choice; a checkmark when the song already holds it, as the Key menu marks its concert pitch.
-    private func item(_ title: String, held: Bool, action: @escaping () -> Void) -> some View {
+    private func choice(_ title: String, held: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             if held {
                 Label(title, systemImage: "checkmark")
@@ -218,10 +283,10 @@ private struct CycleToneRow: View {
 
     private var hint: String {
         switch tempoSource {
-        case .song: "Sets the song's key, concert pitch or tempo to this cycle's."
-        case .flow: "Sets the song's key and concert pitch to this cycle's. Flow sets the tempo now."
-        case .midiClock: "Sets the song's key and concert pitch to this cycle's. The tempo is following an external clock."
-        case .jam: "Sets the song's key and concert pitch to this cycle's. The tempo is following the jam."
+        case .song: "Sets the song's key, concert pitch or tempo to this tone's."
+        case .flow: "Sets the song's key and concert pitch to this tone's. Flow sets the tempo now."
+        case .midiClock: "Sets the song's key and concert pitch to this tone's. The tempo is following an external clock."
+        case .jam: "Sets the song's key and concert pitch to this tone's. The tempo is following the jam."
         }
     }
 }
@@ -291,9 +356,54 @@ enum CycleToneText {
             + dot + "Period " + period(days: cycle.periodDays) + ", " + octaves(tone.octaves)
     }
 
-    /// The row as VoiceOver reads it, commas for the dots.
-    static func spoken(_ cycle: NaturalCycle, _ tone: CycleTone) -> String {
-        spoken([cycle.body, cycle.cycle, numbers(tone), derivation(cycle, tone)].joined(separator: dot))
+    /// "A = 440.04 Hz · Wavenumber 15233 cm⁻¹, 456.67 THz, 41 octaves down"
+    static func derivation(_ line: SpectralLine, _ tone: CycleTone) -> String {
+        "A = " + NumberText.string(concertPitch(tone), decimals: 2, unit: "Hz")
+            + dot + "Wavenumber " + NumberText.string(line.wavenumber, decimalsUpTo: 2, unit: "cm\u{207B}\u{00B9}")
+            + ", " + NumberText.string(line.hertz / 1e12, decimals: 2, unit: "THz") + ", " + octaves(tone.octaves)
+    }
+
+    /// Where a spoken row's name ends and its numbers begin.
+    static let spokenBreak = "; "
+
+    /// The numbers and derivation as VoiceOver reads them: units and the sharp in words (no number
+    /// on these rows carries a sign).
+    static func spokenNumbers(_ text: String) -> String {
+        var spoken = text.replacingOccurrences(of: dot, with: ", ")
+        for (symbol, words) in [(" cm\u{207B}\u{00B9}", " per centimetre"), (" THz", " terahertz"), (" Hz", " hertz"),
+                                (" BPM", " beats per minute"), ("A = ", "A at "), ("♯", " sharp ")] {
+            spoken = spoken.replacingOccurrences(of: symbol, with: words)
+        }
+        return spoken
+    }
+
+    /// The planets' rows by section. Built when the page is drawn, so every number on a row follows
+    /// the same, current number format.
+    static var cycleSections: [ToneSection] {
+        NaturalCycle.Group.allCases.map { (group: NaturalCycle.Group) -> ToneSection in
+            let items = CycleLibrary.all.filter { $0.group == group }.compactMap { (cycle: NaturalCycle) -> ToneItem? in
+                guard let tone = cycle.tone else { return nil }
+                let derived = derivation(cycle, tone)
+                return ToneItem(id: cycle.id, title: cycle.body + dot + cycle.cycle, tone: tone, derivation: derived,
+                                spoken: cycle.body + ", " + cycle.cycle + spokenBreak
+                                    + spokenNumbers(numbers(tone) + dot + derived))
+            }
+            return ToneSection(id: group.rawValue, title: group.title, items: items)
+        }
+    }
+
+    /// The molecules' rows by section, built the same way.
+    static var spectralSections: [ToneSection] {
+        SpectralLine.Kind.allCases.map { (kind: SpectralLine.Kind) -> ToneSection in
+            let items = SpectralLibrary.all.filter { $0.kind == kind }.compactMap { (line: SpectralLine) -> ToneItem? in
+                guard let tone = line.tone else { return nil }
+                let derived = derivation(line, tone)
+                return ToneItem(id: line.id, title: line.substance + dot + line.line, tone: tone, derivation: derived,
+                                spoken: line.spokenSubstance + ", " + line.spokenLine + spokenBreak
+                                    + spokenNumbers(numbers(tone) + dot + derived))
+            }
+            return ToneSection(id: kind.rawValue, title: kind.title, items: items)
+        }
     }
 
     static func period(days: Double) -> String {

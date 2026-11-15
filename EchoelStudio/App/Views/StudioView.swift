@@ -32,8 +32,9 @@ struct StudioView: View {
     @State private var fieldFullscreen = false
     /// The song's video as a small window (wave W7); on by default while the song has video.
     @AppStorage(VideoWindow.shownKey) private var showsVideoWindow = true
-    /// Cycle Tones' look in this window (`CycleTonesSurface.lookKey`): the Field window rests only
-    /// while the sky fills the view. Changes only when the switch is tapped (Law 6).
+    /// Cycle Tones' switches in this window (`CycleTonesSurface.categoryKey`, `.lookKey`): the Field
+    /// window rests only while the sky fills the view. They change only when tapped (Law 6).
+    @SceneStorage(CycleTonesSurface.categoryKey) private var cycleCategory: CycleTonesSurface.Category = .planets
     @SceneStorage(CycleTonesSurface.lookKey) private var cycleLook: CycleTonesSurface.Look = .list
     /// The live stream (W14); off until Go Live on its page. Owned here so a stream outlives the page.
     @State private var streaming = StreamingController()
@@ -166,7 +167,8 @@ struct StudioView: View {
                 // One picture at a time: the window rests while the Field, the Instrument (which
                 // shows it) or the sky of Cycle Tones is the view, or the Field fills the screen.
                 if showsFieldWindow, surface != .field, surface != .instrument,
-                   !(surface == .cycles && cycleLook == .sky), !fieldFullscreen {
+                   !(surface == .cycles && CycleTonesSurface.showsSky(category: cycleCategory, look: cycleLook)),
+                   !fieldFullscreen {
                     // The video window holds the bottom leading corner while it shows.
                     FieldWindowDock(expand: { openFieldFullscreen() }, close: { showsFieldWindow = false },
                                     taken: showsVideoWindow && hasVideo ? .bottomLeading : nil)
@@ -286,8 +288,9 @@ struct StudioView: View {
                 FieldSurface(expand: { openFieldFullscreen() })
             }
         case .cycles:
-            // The cycles' tones, as a list or as the sky drawn from the star table, place, time and
-            // the phone's attitude (Sky S2), one switch apart (founder 2026-11-15: in place of the Sky).
+            // Tones from the planets' cycles (as a list, or as the sky drawn from the star table,
+            // place, time and the phone's attitude, Sky S2) and from the lines of hydrogen and
+            // everyday molecules (founder 2026-11-15: in place of the Sky).
             CycleTonesSurface()
         }
     }
