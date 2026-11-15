@@ -109,6 +109,8 @@ struct ToneItem: Identifiable {
     let derivation: String
     /// The whole row as VoiceOver reads it: plain words, no subscripts or symbols, units in words.
     let spoken: String
+    /// The first step of its calculation: where the frequency comes from.
+    let origin: String
 }
 
 /// A titled group of rows.
@@ -119,9 +121,9 @@ struct ToneSection: Identifiable {
 }
 
 /// A page of tones: how the numbers are made, what the song holds now, the rows by section, and
-/// whose method and numbers they are. The tuning fork on a row tunes the song to that tone: its
-/// key, its concert pitch and, unless a clock, a jam's host or Flow sets the pace, its tempo, as
-/// one undo step through the one door. Arithmetic, never an effect.
+/// whose method and numbers they are. The tuning fork on a row tunes the song to that tone through
+/// the one door: its key, its tempo (unless a clock, a jam's host or Flow sets the pace), both as
+/// one undo step, or, last and on its own, its concert pitch. Arithmetic, never an effect.
 ///
 /// The key and the concert pitch are song-wide values, which are never automated
 /// (`Command.setAutomation`), so setting them directly is what the Key menu's writer does too.
@@ -178,9 +180,9 @@ struct CycleTonePage: View {
         let tempo = Command.setTempo(bpm: CycleToneText.tempo(tone))
         let ownTempo = tempoSource == .song
         switch choice {
-        case .all:
-            let commands = ownTempo ? [key, pitch, tempo] : [key, pitch]
-            try? store.perform(commands, title: "Tune to Tone")
+        case .keyAndTempo:
+            guard ownTempo else { return }
+            try? store.perform([key, tempo], title: "Tune to Tone")
         case .key: try? store.perform(key)
         case .concertPitch: try? store.perform(pitch)
         case .tempo:
@@ -190,9 +192,10 @@ struct CycleTonePage: View {
     }
 }
 
-/// What one choice in a row tunes.
+/// What one choice in a row tunes — offered in the order the survey found most audible and useful:
+/// the key, the tempo, both, and the concert pitch last and on its own.
 enum CycleToneChoice {
-    case all, key, concertPitch, tempo
+    case key, tempo, keyAndTempo, concertPitch
 }
 
 /// One tone: what it is, its numbers, and the tuning fork that tunes the song to it.
@@ -204,52 +207,80 @@ private struct CycleToneRow: View {
     let tune: (CycleTone, CycleToneChoice) -> Void
 
     private var tone: CycleTone { item.tone }
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        HStack(alignment: .center, spacing: Theme.Space.s) {
-            VStack(alignment: .leading, spacing: Theme.Space.xxs) {
-                HStack(spacing: Theme.Space.xs) {
-                    Text(item.title)
-                        .font(Theme.Font.body)
-                        .foregroundStyle(Theme.Color.text)
-                    if holds.keyAndPitch {
-                        Image(systemName: "checkmark")
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            // At the accessibility text sizes the tuning fork goes under the numbers, so no number is cut.
+            let layout = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.Space.s))
+                : AnyLayout(HStackLayout(alignment: .center, spacing: Theme.Space.s))
+            layout {
+                summary
+                Spacer(minLength: 0)
+                menu
+            }
+            DisclosureGroup("How is this calculated?") {
+                VStack(alignment: .leading, spacing: Theme.Space.xxs) {
+                    ForEach(Array(CycleToneText.steps(item).enumerated()), id: \.offset) { number, step in
+                        Text("\(number + 1). " + step)
                             .font(Theme.Font.caption)
-                            .foregroundStyle(Theme.Color.accent)
+                            .foregroundStyle(Theme.Color.textSecondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .accessibilityLabel("Step \(number + 1): " + CycleToneText.spokenNumbers(step))
                     }
                 }
-                Text(CycleToneText.numbers(tone))
-                    .font(Theme.Font.value)
-                    .foregroundStyle(Theme.Color.text)
-                Text(item.derivation)
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.textSecondary)
+                .padding(.top, Theme.Space.xxs)
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(item.spoken)
-            .accessibilityValue(holds.keyAndPitch ? "The song is tuned to it" : "")
-            Spacer(minLength: 0)
-            menu
+            .font(Theme.Font.caption)
+            .foregroundStyle(Theme.Color.textSecondary)
         }
         .padding(.vertical, Theme.Space.xs)
+    }
+
+    /// What the tone is and its numbers, read as one element.
+    private var summary: some View {
+        VStack(alignment: .leading, spacing: Theme.Space.xxs) {
+            HStack(spacing: Theme.Space.xs) {
+                Text(item.title)
+                    .font(Theme.Font.body)
+                    .foregroundStyle(Theme.Color.text)
+                if holds.keyAndPitch {
+                    Image(systemName: "checkmark")
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Color.accent)
+                }
+            }
+            Text(CycleToneText.numbers(tone))
+                .font(Theme.Font.value)
+                .foregroundStyle(Theme.Color.text)
+            Text(item.derivation)
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(item.spoken)
+        .accessibilityValue(holds.keyAndPitch ? "The song is tuned to it" : "")
     }
 
     private var ownTempo: Bool { tempoSource == .song }
 
     private var menu: some View {
         Menu {
-            choice(ownTempo ? "Key, Concert Pitch and Tempo" : "Key and Concert Pitch",
-                 held: holds.keyAndPitch && (!ownTempo || holds.tempo)) { tune(tone, .all) }
-            Divider()
             choice("Key \u{00B7} " + CycleToneText.keyName(tone), held: holds.key) { tune(tone, .key) }
-            choice("Concert Pitch \u{00B7} A = " + NumberText.string(CycleToneText.concertPitch(tone), decimals: 2, unit: "Hz"),
-                 held: holds.concertPitch) { tune(tone, .concertPitch) }
             choice("Tempo \u{00B7} " + CycleToneText.tempoText(tone), held: holds.tempo) { tune(tone, .tempo) }
                 .disabled(!ownTempo)
+            if ownTempo {
+                choice("Key and Tempo", held: holds.key && holds.tempo) { tune(tone, .keyAndTempo) }
+            }
             if let follows = tempoFollows {
-                // Why the tempo item is dimmed: what sets the pace (TempoSource).
+                // Why the tempo items are dimmed or missing: what sets the pace (TempoSource).
                 Text(follows)
             }
+            Divider()
+            // Last and on its own: the tone exactly on its key, but against recordings at 440 Hz it beats.
+            choice("Concert Pitch \u{00B7} A = " + NumberText.string(CycleToneText.concertPitch(tone), decimals: 2, unit: "Hz"),
+                 held: holds.concertPitch) { tune(tone, .concertPitch) }
         } label: {
             Image(systemName: "tuningfork")
                 .frame(minWidth: Theme.Size.touch, minHeight: Theme.Size.touch)
@@ -283,10 +314,10 @@ private struct CycleToneRow: View {
 
     private var hint: String {
         switch tempoSource {
-        case .song: "Sets the song's key, concert pitch or tempo to this tone's."
-        case .flow: "Sets the song's key and concert pitch to this tone's. Flow sets the tempo now."
-        case .midiClock: "Sets the song's key and concert pitch to this tone's. The tempo is following an external clock."
-        case .jam: "Sets the song's key and concert pitch to this tone's. The tempo is following the jam."
+        case .song: "Sets the song's key, tempo or concert pitch to this tone's."
+        case .flow: "Sets the song's key or concert pitch to this tone's. Flow sets the tempo now."
+        case .midiClock: "Sets the song's key or concert pitch to this tone's. The tempo is following an external clock."
+        case .jam: "Sets the song's key or concert pitch to this tone's. The tempo is following the jam."
         }
     }
 }
@@ -363,18 +394,47 @@ enum CycleToneText {
             + ", " + NumberText.string(line.hertz / 1e12, decimals: 2, unit: "THz") + ", " + octaves(tone.octaves)
     }
 
+    /// A row's calculation, step by step, with its own numbers: where the frequency comes from, the
+    /// octaves into octave 3, the nearest key and how far off it the tone lies, the tempo and the A.
+    static func steps(_ item: ToneItem) -> [String] {
+        let tone = item.tone
+        let count = abs(tone.octaves)
+        let factor = NumberText.string(Foundation.pow(2, Double(count)), decimals: 0)
+        let moved = tone.octaves >= 0 ? "Doubled \(count) times (× \(factor))" : "Halved \(count) times (÷ \(factor))"
+        let key = NoteEditing.name(of: tone.pitch)
+        let keyHertz = 440 * Foundation.pow(2, Double(tone.pitch - 69) / 12)
+        let cents = tone.centsFromKey
+        let side = cents < 0 ? "below" : "above"
+        let hertz = NumberText.string(tone.hertz, decimals: 2)
+        let beat = NumberText.string(60 / tempo(tone), decimals: 2, unit: "s")
+        return [
+            item.origin,
+            moved + ": " + NumberText.string(tone.hertz, decimals: 2, unit: "Hz") + ", its nearest key in octave 3 (tones from "
+                + NumberText.string(CycleTone.lowestHertz, decimals: 2) + " to "
+                + NumberText.string(CycleTone.highestHertz, decimals: 2, unit: "Hz") + ").",
+            "Nearest key: " + key + ", " + NumberText.string(keyHertz, decimals: 2, unit: "Hz") + " when A is 440 Hz; the tone is "
+                + NumberText.string(Swift.abs(cents), decimals: 1, unit: "cents") + " " + side + " it.",
+            // "≈", not "=": the tempo is rounded from the unrounded tone, so the printed sum can differ in its last place.
+            "Tempo: the tone seven octaves lower, " + hertz + " ÷ 128 × 60 ≈ " + tempoText(tone) + ", one beat every " + beat + ".",
+            "Concert pitch: the A, to 0.01 Hz, that puts " + key + " on " + hertz + " Hz: A = "
+                + NumberText.string(concertPitch(tone), decimals: 2, unit: "Hz") + ".",
+        ]
+    }
+
     /// Where a spoken row's name ends and its numbers begin.
     static let spokenBreak = "; "
 
-    /// The numbers and derivation as VoiceOver reads them: units and the sharp in words (no number
-    /// on these rows carries a sign).
+    /// The numbers, derivation and steps as VoiceOver reads them: units, the sharp and the signs of
+    /// the arithmetic in words (no number on these rows carries a sign). "A = " goes before " = ".
     static func spokenNumbers(_ text: String) -> String {
         var spoken = text.replacingOccurrences(of: dot, with: ", ")
         for (symbol, words) in [(" cm\u{207B}\u{00B9}", " per centimetre"), (" THz", " terahertz"), (" Hz", " hertz"),
-                                (" BPM", " beats per minute"), ("A = ", "A at "), ("♯", " sharp ")] {
+                                (" BPM", " beats per minute"), ("A = ", "A at "), ("♯", " sharp "), ("×", "times"),
+                                ("÷", "divided by"), ("≈", "is about"), (" = ", " equals ")] {
             spoken = spoken.replacingOccurrences(of: symbol, with: words)
         }
-        return spoken
+        // A number of seconds: "0.94 s" reads "0.94 seconds"; a word that starts with an s is left alone.
+        return spoken.replacingOccurrences(of: "([0-9]) s\\b", with: "$1 seconds", options: .regularExpression)
     }
 
     /// The planets' rows by section. Built when the page is drawn, so every number on a row follows
@@ -386,7 +446,10 @@ enum CycleToneText {
                 let derived = derivation(cycle, tone)
                 return ToneItem(id: cycle.id, title: cycle.body + dot + cycle.cycle, tone: tone, derivation: derived,
                                 spoken: cycle.body + ", " + cycle.cycle + spokenBreak
-                                    + spokenNumbers(numbers(tone) + dot + derived))
+                                    + spokenNumbers(numbers(tone) + dot + derived),
+                                origin: "Period: " + period(days: cycle.periodDays) + " ("
+                                    + NumberText.string(tone.periodSeconds, decimals: 0, unit: "s")
+                                    + "); its frequency is one over it.")
             }
             return ToneSection(id: group.rawValue, title: group.title, items: items)
         }
@@ -400,7 +463,9 @@ enum CycleToneText {
                 let derived = derivation(line, tone)
                 return ToneItem(id: line.id, title: line.substance + dot + line.line, tone: tone, derivation: derived,
                                 spoken: line.spokenSubstance + ", " + line.spokenLine + spokenBreak
-                                    + spokenNumbers(numbers(tone) + dot + derived))
+                                    + spokenNumbers(numbers(tone) + dot + derived),
+                                origin: "Wavenumber " + NumberText.string(line.wavenumber, decimalsUpTo: 2, unit: "cm\u{207B}\u{00B9}")
+                                    + " × speed of light = " + NumberText.string(line.hertz / 1e12, decimals: 2, unit: "THz") + ".")
             }
             return ToneSection(id: kind.rawValue, title: kind.title, items: items)
         }

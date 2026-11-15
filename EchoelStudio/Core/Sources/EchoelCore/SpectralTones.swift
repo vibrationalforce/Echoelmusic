@@ -65,7 +65,8 @@ public enum SpectralLibrary {
         + "waves per centimetre (cm⁻¹), times the speed of light is the frequency. Each tone is that frequency halved by "
         + "whole octaves until its nearest key lies in octave 3, C3 to B3. Its tempo is the same tone seven octaves lower, "
         + "in beats per minute. Its concert pitch is the A at which, in twelve equal steps, the tone is exactly its key. "
-        + "The tuning fork beside a line sets the song's key, concert pitch or tempo to it, and Undo takes it back. These "
+        + "The tuning fork beside a line sets the song's key, its tempo or, last, its concert pitch to it, and Undo takes "
+        + "it back; under each line, its calculation step by step. These "
         + "are calculations from measured vibrations and, for hydrogen, from the Rydberg formula; they claim nothing about "
         + "what a tone does to a listener."
 

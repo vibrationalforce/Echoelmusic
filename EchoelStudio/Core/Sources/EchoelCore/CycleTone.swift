@@ -102,8 +102,9 @@ public enum CycleLibrary {
     public static let method = "Each tone is an astronomical cycle's frequency, one over its period, doubled by whole "
         + "octaves until its nearest key lies in octave 3, C3 to B3. Its tempo is the same tone seven octaves lower, "
         + "in beats per minute. Its concert pitch is the A at which, in twelve equal steps, the tone is exactly its "
-        + "key. The tuning fork beside a cycle sets the song's key, concert pitch or tempo to it, and Undo takes it "
-        + "back. These are calculations from the periods; they claim nothing about what a tone does to a listener."
+        + "key. The tuning fork beside a cycle sets the song's key, its tempo or, last, its concert pitch to it, and Undo "
+        + "takes it back; under each cycle, its calculation step by step. These are calculations from the periods; they "
+        + "claim nothing about what a tone does to a listener."
 
     /// Whose method and whose numbers — the foot of the page.
     public static let credit = "Method after Hans Cousto, Die Kosmische Oktave (1984). Periods as Cousto tabulates "
