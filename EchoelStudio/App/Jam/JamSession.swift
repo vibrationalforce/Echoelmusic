@@ -53,6 +53,23 @@ final class JamSession {
         return false
     }
 
+    /// Every window's jam, held weakly. Each window has its own (`StudioView`), but they play one
+    /// engine and one song, so a jam hosted in any window carries the tempo of all of them off the
+    /// device: `anyHosts` is the question Flow's body-sharing gate asks, never one window's `role`.
+    private static let live = NSHashTable<JamSession>.weakObjects()
+
+    /// Whether a jam in any window of this app is hosted now; a closed window's jam has gone with
+    /// its window and no longer counts. Flow's look asks it four times a second. A view that reads
+    /// it is drawn again when a jam it saw starts or ends hosting — not when a window opens, since
+    /// the list itself is not observed (a new window's jam starts off).
+    static var anyHosts: Bool {
+        live.allObjects.contains { $0.role == .hosting }
+    }
+
+    init() {
+        Self.live.add(self)
+    }
+
     @ObservationIgnored private var engine: AudioEngine?
     @ObservationIgnored private var store: ProjectStore?
     @ObservationIgnored private var midi: MIDIInput?
