@@ -6,8 +6,8 @@ import XCTest
 /// controls on the one list of names, and can be found by searching.
 final class LearnGuideTests: XCTestCase {
     /// Words no Echoel text uses (ContentPipeline/CLAIMS.md §2 and the language law of the root
-    /// CLAUDE.md), compared as whole words, lower-cased.
-    private static let forbiddenWords: Set<String> = [
+    /// CLAUDE.md), compared as whole words, lower-cased. Also read by `CycleToneTests`.
+    static let forbiddenWords: Set<String> = [
         "wellness", "meditation", "meditate", "meditative", "relax", "relaxing", "relaxation",
         "sleep", "sleeping", "focus", "therapy", "therapeutic", "therapist", "medical", "medicine",
         "medicinal", "heal", "heals", "healing", "binaural", "solfeggio", "chakra", "chakras",
@@ -16,7 +16,7 @@ final class LearnGuideTests: XCTestCase {
         "ai",
     ]
     /// Phrases no Echoel text uses.
-    private static let forbiddenPhrases = ["auto-tune", "40 hz", "healing frequenc"]
+    static let forbiddenPhrases = ["auto-tune", "40 hz", "healing frequenc"]
 
     private func words(_ text: String) -> [String] {
         text.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init)

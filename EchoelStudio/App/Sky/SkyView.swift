@@ -10,7 +10,8 @@ import SwiftUI
 /// not spoil eyes that have adapted to the dark; it never touches the screen brightness.
 ///
 /// Sonification and arithmetic, never effect: what the centre shows is a position, a magnitude
-/// and a colour index, nothing about what a star does to a person.
+/// and a colour index — and, for the Sun, the Moon and a planet, the tone of the cycle it is known
+/// by, arithmetic from its period — nothing about what a star does to a person.
 struct SkySurface: View {
     @Environment(CameraPulseSource.self) private var pulse
     @State private var pointing = SkyPointing()
@@ -96,8 +97,21 @@ struct SkyCanvas: View {
             TimelineView(.animation(minimumInterval: 1.0 / 60)) { context in
                 let frame = SkyFrame.make(pointing: pointing, cache: cache, camera: frames.read(), size: geometry.size,
                                           latitude: latitude, longitude: longitude, at: context.date)
-                Canvas { canvas, size in
-                    SkyCanvas.draw(frame, in: &canvas, size: size)
+                ZStack {
+                    Canvas { canvas, size in
+                        SkyCanvas.draw(frame, in: &canvas, size: size)
+                    }
+                    // The ring and the lines under it, on their own layer: a line that wraps stays
+                    // centred (resolved text reads this environment), and its text stops growing at
+                    // the size the bars stop at, past which an item no longer fits a phone's width.
+                    // The names in the sky and N E S W keep growing with the musician's text size;
+                    // the spoken value says all of it at any size.
+                    Canvas { canvas, size in
+                        SkyCanvas.drawCentre(frame, in: &canvas, size: size)
+                    }
+                    .multilineTextAlignment(.center)
+                    .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
+                    .allowsHitTesting(false)
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Sky")
@@ -175,6 +189,7 @@ struct SkyFrame {
         let name = centred.name ?? SkyFrame.designation(centred)
         var line = "\(name), magnitude \(SkyFrame.number(centred.magnitude))"
         if let tint = centred.colorIndex.map(SkyFrame.tint(colorIndex:)) { line += ", \(tint)" }
+        if case .body(let body) = centred.kind, let tone = CycleToneText.skySpoken[body] { line += ", " + tone }
         return line
     }
 
@@ -190,6 +205,16 @@ struct SkyFrame {
     /// One decimal, in the reader's own number format (a comma where the locale writes one).
     static func number(_ value: Double) -> String {
         NumberText.string(value, decimals: 1)
+    }
+
+    /// The separator of the lines under the ring: a row may end on it, never start with it.
+    static let dot = "\u{00A0}\u{00A0}\u{00B7}  "
+
+    /// One item of a line under the ring, glued so a wrap never splits it: no-break spaces, and a
+    /// word joiner after a hyphen ("Yellow-White"). The font has the no-break space; the joiner has
+    /// no width.
+    static func glued(_ item: String) -> String {
+        item.replacingOccurrences(of: " ", with: "\u{00A0}").replacingOccurrences(of: "-", with: "-\u{2060}")
     }
 
     /// The star's colour in words, from its B−V index (the Morgan–Keenan bands, coarse): the
@@ -231,7 +256,12 @@ extension SkyCanvas {
             drawObject(object, at: at, night: frame.isNight, in: &canvas)
         }
         drawCardinals(point: point, night: frame.isNight, in: &canvas)
-        drawCentre(frame, middle: middle, size: size, in: &canvas)
+    }
+
+    /// The centre layer: the ring and what it holds, drawn whenever the sky itself is.
+    static func drawCentre(_ frame: SkyFrame, in canvas: inout GraphicsContext, size: CGSize) {
+        guard frame.projection != nil, frame.scene != nil, size.width > 0, size.height > 0 else { return }
+        drawCentre(frame, middle: CGPoint(x: size.width / 2, y: size.height / 2), size: size, in: &canvas)
     }
 
     private static func ink(_ night: Bool, _ opacity: Double) -> Color {
@@ -323,21 +353,77 @@ extension SkyCanvas {
         }
     }
 
-    /// The ring in the middle and, under it, what it holds: name, magnitude, colour index.
+    /// The ring in the middle and, under it, what it holds: name, magnitude, colour index; for the
+    /// Sun, the Moon and a planet also the cycle it is known by, as a tone (W6b).
     private static func drawCentre(_ frame: SkyFrame, middle: CGPoint, size: CGSize, in canvas: inout GraphicsContext) {
         let ring: CGFloat = 14
         canvas.stroke(Path(ellipseIn: CGRect(x: middle.x - ring, y: middle.y - ring, width: ring * 2, height: ring * 2)),
                       with: .color(ink(frame.isNight, 0.5)), lineWidth: 1)
         guard let centred = frame.centred else { return }
         // What sits in the ring: its name, how bright it is, its colour in words. Plain words —
-        // no catalogue shorthand ("mag", "B−V") on the screen of a music app.
-        var line = centred.name ?? SkyFrame.designation(centred)
-        line += "  ·  Magnitude " + SkyFrame.number(centred.magnitude)
-        if let index = centred.colorIndex { line += "  ·  " + SkyFrame.tint(colorIndex: index).capitalized }
-        // Centred one value line plus a large gap above the bottom edge (the home indicator).
+        // no catalogue shorthand ("mag", "B−V") on the screen of a music app. Each item is glued, so
+        // a line that wraps breaks only after a dot.
+        let name = SkyFrame.glued(centred.name ?? SkyFrame.designation(centred))
+        let magnitude = SkyFrame.glued("Magnitude " + SkyFrame.number(centred.magnitude))
+        var full = name + SkyFrame.dot + magnitude
+        if let index = centred.colorIndex { full += SkyFrame.dot + SkyFrame.glued(SkyFrame.tint(colorIndex: index).capitalized) }
+        // From the most to the least: all of it, then name and magnitude, then the name.
+        var names: [String] = []
+        for candidate in [full, name + SkyFrame.dot + magnitude, name] where !names.contains(candidate) {
+            names.append(candidate)
+        }
+        let bright = ink(frame.isNight, 0.9), dim = ink(frame.isNight, 0.7)
+        var layouts = names.map { [Text($0).font(Theme.Font.value).foregroundStyle(bright)] }
+        if case .body(let body) = centred.kind, let tone = CycleToneText.skyLines[body] {
+            layouts.insert([Text(full).font(Theme.Font.value).foregroundStyle(bright),
+                            Text(tone).font(Theme.Font.label).foregroundStyle(dim)], at: 0)
+        }
+        drawLines(layouts, centreX: middle.x, ceiling: middle.y + ring + Theme.Space.s, size: size, in: &canvas)
+    }
+
+    /// The first of `layouts` that fits whole between a large gap at the bottom edge (the home
+    /// indicator) and `ceiling` (just under the ring), centred. In a layout the first line is on top;
+    /// the lowest line's last row sits where the one line always sat, a line that wraps grows upward
+    /// from there, and the line above stands on it. Each line is measured at the text size the
+    /// musician chose (up to the bars' limit) and wraps within the screen. When no layout fits whole
+    /// there, the first single line that fits one row whole is drawn just under the ring instead,
+    /// never below the canvas — and nothing when none does. Nothing is cut; the spoken value says
+    /// all of it either way.
+    private static func drawLines(_ layouts: [[Text]], centreX: CGFloat, ceiling: CGFloat, size: CGSize,
+                                  in canvas: inout GraphicsContext) {
         let fromBottom = Theme.Space.xl + Theme.Space.s
-        canvas.draw(Text(line).font(Theme.Font.value).foregroundStyle(ink(frame.isNight, 0.9)),
-                    at: CGPoint(x: middle.x, y: size.height - fromBottom))
+        let width = Swift.max(size.width - 2 * Theme.Space.m, 1)
+        let unbounded = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        let wrapped = CGSize(width: width, height: CGFloat.greatestFiniteMagnitude)
+        for layout in layouts {
+            let resolved = layout.map { canvas.resolve($0) }
+            guard let lowest = resolved.last else { continue }
+            var bottom = size.height - fromBottom + lowest.measure(in: unbounded).height / 2
+            var boxes: [(text: GraphicsContext.ResolvedText, box: CGRect)] = []
+            for text in resolved.reversed() {
+                let measured = text.measure(in: wrapped)
+                guard measured.height <= bottom - ceiling else { break }
+                let box = CGRect(x: centreX - measured.width / 2, y: bottom - measured.height,
+                                 width: measured.width, height: measured.height)
+                boxes.append((text: text, box: box))
+                bottom = box.minY - Theme.Space.xs
+            }
+            guard boxes.count == resolved.count else { continue }
+            for line in boxes { canvas.draw(line.text, in: line.box) }
+            return
+        }
+        for layout in layouts where layout.count == 1 {
+            let text = canvas.resolve(layout[0])
+            let row = text.measure(in: unbounded).height
+            let measured = text.measure(in: wrapped)
+            // One row whole, or the next, shorter line.
+            guard measured.height < row * 1.5 else { continue }
+            let bottom = Swift.max(size.height - fromBottom + row / 2, Swift.min(size.height, ceiling + row))
+            guard bottom - ceiling >= row else { return }
+            canvas.draw(text, in: CGRect(x: centreX - measured.width / 2, y: bottom - measured.height,
+                                         width: measured.width, height: measured.height))
+            return
+        }
     }
 }
 
@@ -359,6 +445,7 @@ struct SkyStarReading: Equatable {
 /// chooses or a fix arrives (Law 6).
 private struct SkyControls: View {
     let pointing: SkyPointing
+    @Environment(StudioRouter.self) private var router
 
     var body: some View {
         HStack(spacing: Theme.Space.s) {
@@ -385,6 +472,11 @@ private struct SkyControls: View {
                     .accessibilityLabel("Follow the Phone")
                     .accessibilityHint("Turns the sky with the direction the phone points.")
             }
+            // Always the rightmost, so the button that comes and goes beside it never moves it.
+            Button { router.sheet = .cycleTones } label: { Image(systemName: "music.note.list") }
+                .buttonStyle(ToolButtonStyle())
+                .accessibilityLabel("Cycle Tones")
+                .accessibilityHint("Lists the tones, tempi and concert pitches of astronomical cycles, to tune the song to one.")
         }
         .foregroundStyle(Theme.Color.textSecondary)
         .padding(.horizontal, Theme.Space.m)

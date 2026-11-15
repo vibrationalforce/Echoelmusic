@@ -65,6 +65,18 @@ public struct CycleTone: Equatable, Sendable {
 public struct NaturalCycle: Equatable, Sendable, Identifiable {
     public enum Group: String, CaseIterable, Sendable {
         case earth, moon, planet, minorPlanet, planetMoon
+
+        /// The section title on the Cycle Tones page. Pluto stands with the planets, as in the
+        /// tables, and the title says so.
+        public var title: String {
+            switch self {
+            case .earth: "Earth"
+            case .moon: "Moon"
+            case .planet: "Planets and Pluto"
+            case .minorPlanet: "Minor Planets"
+            case .planetMoon: "Moons"
+            }
+        }
     }
 
     /// Stable name, `body.cycle` (never stored in a song).
@@ -81,10 +93,30 @@ public struct NaturalCycle: Equatable, Sendable, Identifiable {
 /// The cycles the Sky can play: Earth, its Moon, the planets' orbits, synodic periods and rotations,
 /// minor and dwarf planets, and the planets' moons. Periods as H. Cousto tabulates them from NASA
 /// and JPL data (the minor planets with the date of the last observation used there); each tone is
-/// computed here, not copied.
+/// computed here, not copied. The page's paragraphs, section titles and the sky's one-word cycle
+/// names live here too, so a test reads them (Law 8).
 public enum CycleLibrary {
     static let tables = "H. Cousto, tuning data, after NASA"
     static let smallBodies = "H. Cousto, tuning data, after the JPL Small-Body Database"
+    /// How every number on the page is made, and what the page does — the top of the Cycle Tones page.
+    public static let method = "Each tone is an astronomical cycle's frequency, one over its period, doubled by whole "
+        + "octaves until its nearest key lies in octave 3, C3 to B3. Its tempo is the same tone seven octaves lower, "
+        + "in beats per minute. Its concert pitch is the A at which, in twelve equal steps, the tone is exactly its "
+        + "key. The tuning fork beside a cycle sets the song's key, concert pitch or tempo to it, and Undo takes it "
+        + "back. These are calculations from the periods; they claim nothing about what a tone does to a listener."
+
+    /// Whose method and whose numbers — the foot of the page.
+    public static let credit = "Method after Hans Cousto, Die Kosmische Oktave (1984). Periods as Cousto tabulates "
+        + "them, after NASA and the JPL Small-Body Database."
+
+    /// The cycle a body is known by, in one word, for the line under it in the sky.
+    public static func word(of body: SkyBodies.Body) -> String {
+        switch body {
+        case .sun: "Year"
+        case .moon: "Month"
+        default: "Orbit"
+        }
+    }
 
     private static func row(_ id: String, _ body: String, _ cycle: String, _ group: NaturalCycle.Group,
                             days: Double, source: String = tables) -> NaturalCycle {
@@ -94,6 +126,26 @@ public enum CycleLibrary {
     private static func hours(_ value: Double) -> Double { value / 24 }
 
     public static let all: [NaturalCycle] = earth + moon + planets + minorPlanets + planetMoons
+
+    /// The cycles of a body the sky draws, the one it is known by first: the Sun's are the Earth's
+    /// day and year (the year leads), the Moon's are its months and long cycles (the synodic month
+    /// leads), a planet's are its orbit, synodic period and rotation (the orbit leads).
+    public static func cycles(of body: SkyBodies.Body) -> [NaturalCycle] {
+        switch body {
+        case .sun:
+            let days = earth.filter { $0.id != "earth.year" }
+            return earth.filter { $0.id == "earth.year" } + days
+        case .moon:
+            return moon
+        default:
+            return planets.filter { $0.id.hasPrefix(body.rawValue + ".") }
+        }
+    }
+
+    /// The cycle a body is known by, nil only for a body without cycles.
+    public static func primaryCycle(of body: SkyBodies.Body) -> NaturalCycle? {
+        cycles(of: body).first
+    }
 
     static let earth: [NaturalCycle] = [
         row("earth.day", "Earth", "Solar day", .earth, days: 1),

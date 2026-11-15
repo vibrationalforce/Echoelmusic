@@ -87,4 +87,40 @@ final class CycleToneTests: XCTestCase {
             XCTAssertFalse(CycleLibrary.all.filter { $0.group == group }.isEmpty, "\(group) has cycles")
         }
     }
+
+    func testNoWordOfTheCycleLibraryIsOneEchoelNeverUses() {
+        var texts = [CycleLibrary.method, CycleLibrary.credit]
+        texts += NaturalCycle.Group.allCases.map(\.title)
+        texts += SkyBodies.Body.allCases.map(CycleLibrary.word(of:))
+        texts += CycleLibrary.all.flatMap { [$0.body, $0.cycle, $0.source] }
+        for text in texts {
+            let words = Set(text.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init))
+            XCTAssertTrue(words.isDisjoint(with: LearnGuideTests.forbiddenWords), text)
+            for phrase in LearnGuideTests.forbiddenPhrases {
+                XCTAssertFalse(text.lowercased().contains(phrase), "\(text): \(phrase)")
+            }
+        }
+        XCTAssertTrue(CycleLibrary.method.contains("claim nothing about what a tone does"),
+                      "the page says it is arithmetic, not an effect")
+    }
+
+    func testEachBodyInTheSkyLeadsWithTheCycleItIsKnownBy() throws {
+        XCTAssertEqual(CycleLibrary.cycles(of: .sun).map(\.id), ["earth.year", "earth.day", "earth.siderealDay"],
+                       "the Sun's year and day are the Earth's, the year first")
+        XCTAssertEqual(CycleLibrary.primaryCycle(of: .sun)?.id, "earth.year")
+        XCTAssertEqual(CycleLibrary.cycles(of: .moon).count, 7)
+        XCTAssertEqual(CycleLibrary.primaryCycle(of: .moon)?.id, "moon.synodicMonth")
+        XCTAssertEqual(CycleLibrary.cycles(of: .jupiter).map(\.id), ["jupiter.orbit", "jupiter.synodic", "jupiter.rotation"])
+        for body in SkyBodies.Body.allCases {
+            let cycles = CycleLibrary.cycles(of: body)
+            let primary = try XCTUnwrap(CycleLibrary.primaryCycle(of: body), body.rawValue)
+            XCTAssertEqual(cycles.first, primary, "\(body.rawValue): the list starts with it")
+            XCTAssertTrue(cycles.allSatisfy { $0.tone != nil }, body.rawValue)
+            if body != .sun, body != .moon {
+                XCTAssertEqual(cycles.map(\.id), ["orbit", "synodic", "rotation"].map { body.rawValue + "." + $0 },
+                               "a planet is known by its orbit, then its synodic period and its rotation")
+                XCTAssertTrue(cycles.allSatisfy { $0.body == body.name }, "\(body.rawValue): only its own cycles")
+            }
+        }
+    }
 }

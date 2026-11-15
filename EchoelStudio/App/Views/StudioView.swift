@@ -214,6 +214,7 @@ struct StudioView: View {
         case let .transcribe(track, region): TranscribeView(trackID: track, regionID: region)
         case .subtitles: SubtitlesView()
         case .browser: MediaBrowserView()
+        case .cycleTones: CycleTonesView()
         case let .importAudio(track, start):
             AudioFilePicker(pick: { url in
                 router.sheet = nil
@@ -1547,8 +1548,8 @@ struct SongMenu: View {
     }
 
     /// The song's key and scale, and whether a keyboard is held in them. Through the writer like
-    /// every other control, so a pick while automation writing is armed lands in the lane. Nothing
-    /// else sets them on screen; the assistant is hidden on devices without its model.
+    /// every other control; song-wide values are never automated (`Command.setAutomation`), so the
+    /// writer sets them directly. Cycle Tones on the Sky page sets the key and concert pitch too.
     private var keyAndScale: some View {
         let context = store.project.context
         return Menu {
