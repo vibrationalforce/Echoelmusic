@@ -363,6 +363,10 @@ private struct SkyControls: View {
     var body: some View {
         HStack(spacing: Theme.Space.s) {
             Menu {
+                if let back = pointing.wayBackName {
+                    Button(back, systemImage: "location.fill") { pointing.useHere() }
+                    Divider()
+                }
                 ForEach(SkyPointing.places.map { $0.name }, id: \.self) { name in
                     Button(name) { pointing.choose(name) }
                 }
@@ -373,7 +377,7 @@ private struct SkyControls: View {
             }
             .accessibilityLabel("Place")
             .accessibilityValue(placeLine)
-            .accessibilityHint("Chooses the place whose sky is drawn.")
+            .accessibilityHint("Chooses the place whose sky is drawn. A chosen place stays until you choose another.")
             Spacer(minLength: 0)
             if pointing.steering == .finger, pointing.canFollowPhone {
                 Button { pointing.followPhone() } label: { Image(systemName: "iphone.gen3.radiowaves.left.and.right") }

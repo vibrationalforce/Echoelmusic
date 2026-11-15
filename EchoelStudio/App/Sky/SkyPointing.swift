@@ -17,7 +17,9 @@ import CoreMotion
 /// - Place: CoreLocation "when in use", reduced accuracy, ONE fix — the sky needs the town, not the
 ///   street. The fix is remembered rounded to 0.1° (about 10 km) so the next night works without
 ///   asking; a refused permission falls back to the remembered place or one the musician picks.
-///   Nothing about the place leaves the device.
+///   A chosen place wins over a fix that arrives later and is remembered by its name until the
+///   musician picks another or "Here" (`SkyPlace`); while one is chosen no fix is asked for — "Here"
+///   asks again. Nothing about the place leaves the device.
 ///
 /// Observed properties change only when the mode or the place changes, so a view may read them
 /// (Law 6). The pointing itself is not observable: it moves every frame and only the drawing leaf
@@ -32,13 +34,7 @@ final class SkyPointing {
         case finger
     }
 
-    enum PlaceSource: Equatable {
-        case located
-        case remembered
-        case chosen(String)
-        /// Nothing yet: the view shows where it is looking from and asks for a place.
-        case none
-    }
+    typealias PlaceSource = SkyPlace.Source
 
     /// A few reference places for a musician who declines the location permission.
     nonisolated static let places: [(name: String, latitude: Double, longitude: Double)] = [
@@ -51,14 +47,18 @@ final class SkyPointing {
 
     nonisolated static let latitudeKey = "sky.place.latitude"
     nonisolated static let longitudeKey = "sky.place.longitude"
+    /// The name of the reference place the musician chose, while they keep it.
+    nonisolated static let chosenKey = "sky.place.chosen"
     /// How far one frame moves the shown direction towards the measured one (60 Hz): ~0.1 s to
     /// settle, enough to take out tremor, short enough not to lag a turn.
     nonisolated static let glidePerFrame = 0.25
 
     private(set) var steering: Steering = .finger
-    private(set) var placeSource: PlaceSource = .none
-    private(set) var latitude: Double?
-    private(set) var longitude: Double?
+    /// Which place the sky is drawn from, and why (`SkyPlace` holds the rule).
+    private(set) var place = SkyPlace()
+    var placeSource: PlaceSource { place.source }
+    var latitude: Double? { place.latitude }
+    var longitude: Double? { place.longitude }
     /// True while the location permission is refused or restricted.
     private(set) var locationDenied = false
 
@@ -78,13 +78,15 @@ final class SkyPointing {
 
     init() {
         let defaults = UserDefaults.standard
+        // The last fix, remembered (the fallback for "Here"); then a place the musician chose, as
+        // they left it.
         if defaults.object(forKey: Self.latitudeKey) != nil {
-            let lat = defaults.double(forKey: Self.latitudeKey), lon = defaults.double(forKey: Self.longitudeKey)
-            if lat.isFinite, lon.isFinite, abs(lat) <= 90, abs(lon) <= 180 {
-                latitude = lat
-                longitude = lon
-                placeSource = .remembered
-            }
+            place.remember(latitude: defaults.double(forKey: Self.latitudeKey),
+                           longitude: defaults.double(forKey: Self.longitudeKey))
+        }
+        if let name = defaults.string(forKey: Self.chosenKey),
+           let chosen = Self.places.first(where: { $0.name == name }) {
+            place.choose(name, latitude: chosen.latitude, longitude: chosen.longitude)
         }
     }
 
@@ -95,7 +97,8 @@ final class SkyPointing {
         guard !running else { return }
         running = true
         startMotion()
-        askForPlace()
+        // While a chosen place is shown no fix is asked for; the permission is only read.
+        askForPlace(request: place.chosenName == nil)
     }
 
     /// The sky view went away: sensors off.
@@ -176,13 +179,32 @@ final class SkyPointing {
 
     /// Choose a reference place by hand (the permission is refused, or the musician wants another sky).
     func choose(_ name: String) {
-        guard let place = Self.places.first(where: { $0.name == name }) else { return }
-        latitude = place.latitude
-        longitude = place.longitude
-        placeSource = .chosen(name)
+        guard let reference = Self.places.first(where: { $0.name == name }),
+              place.choose(name, latitude: reference.latitude, longitude: reference.longitude) else { return }
+        UserDefaults.standard.set(name, forKey: Self.chosenKey)
     }
 
-    private func askForPlace() {
+    /// Back to where the phone is: the newest fix (or the remembered place), and a new fix asked for.
+    func useHere() {
+        UserDefaults.standard.removeObject(forKey: Self.chosenKey)
+        place.useHere()
+        if running, !locationDenied { askForPlace(request: true) }
+    }
+
+    /// The menu's way back: "Here" while location may be asked for (also a retry); with location
+    /// refused, only while a place is chosen, named after where "Here" will land — this time's fix
+    /// or the remembered place; nil when there is nowhere to go back to.
+    var wayBackName: String? {
+        if !locationDenied { return "Here" }
+        guard place.chosenName != nil else { return nil }
+        switch place.hereSource {
+        case .located: return "Here"
+        case .remembered: return "Last Known Place"
+        case .none, .chosen: return nil
+        }
+    }
+
+    private func askForPlace(request: Bool) {
         guard Bundle.main.object(forInfoDictionaryKey: "NSLocationWhenInUseUsageDescription") != nil else {
             log.error("sky: NSLocationWhenInUseUsageDescription missing — no location asked")
             return
@@ -201,10 +223,10 @@ final class SkyPointing {
         }
         switch location.authorizationStatus {
         case .notDetermined:
-            location.requestWhenInUseAuthorization()
+            if request { location.requestWhenInUseAuthorization() }
         case .authorizedWhenInUse, .authorizedAlways:
             locationDenied = false
-            location.requestLocation()
+            if request { location.requestLocation() }
         default:
             locationDenied = true
         }
@@ -213,16 +235,15 @@ final class SkyPointing {
     private func authorizationChanged(allowed: Bool, decided: Bool) {
         guard decided else { return }
         locationDenied = !allowed
-        if allowed, running { location.requestLocation() }
+        if allowed, running, place.chosenName == nil { location.requestLocation() }
     }
 
     private func located(latitude lat: Double, longitude lon: Double) {
         guard lat.isFinite, lon.isFinite, abs(lat) <= 90, abs(lon) <= 180 else { return }
         // Rounded to 0.1°: the sky over a town, never the street.
         let roundedLatitude = (lat * 10).rounded() / 10, roundedLongitude = (lon * 10).rounded() / 10
-        latitude = roundedLatitude
-        longitude = roundedLongitude
-        placeSource = .located
+        // Shown unless a chosen place stands; remembered either way, for "Here" and the next night.
+        place.located(latitude: roundedLatitude, longitude: roundedLongitude)
         UserDefaults.standard.set(roundedLatitude, forKey: Self.latitudeKey)
         UserDefaults.standard.set(roundedLongitude, forKey: Self.longitudeKey)
     }
