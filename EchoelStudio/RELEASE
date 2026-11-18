@@ -1,35 +1,31 @@
-11.0.0 — Cycle Tones sits on the bar with Planets, Molecules and Body, and shows each calculation; this build asks one thing: make sixteen bars
+11.0.0 — a clip can be one to sixteen bars long, a first take is as long as you play, and the song loops as long as Arrange says
 
-New since 10079, built by the Echoel Studio run; nothing here is device-verified yet.
-- Bottom bar: "Cycle Tones" stands where "Sky" stood. Its page has three lists, Planets, Molecules
-  and Body, and two looks, List and Sky; the sky with the ring is the second look.
-- Molecules: lines of the hydrogen atom and vibrations of everyday molecules as tones (sections
-  "Hydrogen Atom" and "Everyday Molecules"), halved by whole octaves into octave 3, by the same
-  arithmetic as the cycles.
-- Every row: "How is this calculated?" opens the steps from the cycle to the tone, the tempo and the
-  concert pitch. The tuning fork offers Key, Tempo, Key and Tempo and, last and on its own, Concert
-  Pitch.
-- Body: "Pulse now" shows the pulse of the heart rate strap or the rear camera, whichever is chosen
-  in the Song menu, Body Source; "Take Pulse" holds it as it is at that moment, and the row below
-  turns one heartbeat into a tone, a tempo and a concert pitch. A pulse from Apple Health is not
-  taken. While a MIDI clock, a jam you host, OSC or the lights (Art-Net, sACN) carry the tempo off
-  the device, a pulse is taken only with Share Body Data on.
-- Flow: while the lights (Art-Net, sACN) are on, or a jam is hosted in any window of the app, Flow
-  follows your pulse only with Share Body Data on, as it already did for a MIDI clock, OSC and a
-  jam hosted in its own window.
-- Not visible yet, no screen shows them: AmbiX encoding in the DSP package and a model of a
-  catalogue of instrument packs in the core package.
-Limits, new: a taken pulse lives only as long as the Cycle Tones page; the song keeps what the
-tuning fork set. Older limits as in 10079.
+New since 10080, built by the Echoel Studio run; nothing here is device-verified yet. Each point
+comes from a code walk of the task "make sixteen bars" on 10080.
+- Note and drum editor, bottom bar: a length menu ("Length 1 Bar" and so on). "Repeat the Clip to"
+  2, 4, 8 or 16 bars repeats what the clip holds, so a one-bar beat becomes sixteen bars of it;
+  "Set the Length to" 1 to 16 bars sets the length outright (longer adds empty bars, shorter drops
+  what starts past the end). A length that would run into the next clip on the track is dimmed,
+  and the menu says why. One Undo.
+- Recording: the first take on a song that plays nothing yet runs as long as you play. Before, a
+  new song looped one bar, and everything played for sixteen bars landed in bar 1. Over a one-bar
+  beat a take still plays into that bar, pass over pass, as before.
+- Loop: the song loops to the end of its last clip, as Arrange counts its bars. Before, it looped
+  to the last note, so a four-bar clip with notes only in bar 1 read "4 bars" and looped one.
+- Four Tracks (the song a new install opens): the beat is in Scene 1 in Session too, so the plus
+  under Drums no longer makes a second, empty clip. Arrange says "1 bar", not "1 bars".
+- Learn: "Your First Track and Recording" names the length menu; "Comping and Loop Record" says
+  what a one-bar loop does with each kind of take.
+- Drum editor: the step grid is built column by column, only the columns on screen.
+Limits, new: a sixteen-bar drum clip has 256 steps a row in the step grid, scrolled sideways.
+Older limits as in 10080.
 
-Previous: 10079. A green commit that changes this file uploads build 10000 + run number. A test
+Previous: 10080. A green commit that changes this file uploads build 10000 + run number. A test
 list, not a source for claims (ContentPipeline/CLAIMS.md).
 
-One ask, before any check. No build of this app has yet been used the way a musician would use
-it, so this one asks for that and nothing else: start a screen recording, open the app, and try
-to make sixteen bars in two to five minutes: a beat, a bass line or a chord, then Play. No list
-and no protocol; stop wherever it stops being possible or pleasant. The recording is the answer.
-What gets in the way in it is the next work, in the order it happened.
+One ask, as for 10080. Start a screen recording, open the app, and try to make sixteen bars in two
+to five minutes: a beat, a bass line or a chord, then Play. No list and no protocol; stop wherever
+it stops being possible or pleasant. The recording is the answer. What gets in the way in it is
+the next work, in the order it happened.
 
-The five checks of 10079 stay open and unchanged. They are in this file's previous version and
-rest until that recording exists.
+The five checks of 10079 stay open and unchanged and rest until that recording exists.
