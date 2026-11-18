@@ -99,7 +99,7 @@ final class StarterProjectTests: XCTestCase {
           "instrument": { "device": "drums", "preset": "Init", "values": {} },
           "clips": [ { "id": "5A7A0000-0000-4000-8000-000000000005", "name": "Beat", "length": 3840, "notes": [] } ],
           "placements": [ { "id": "5A7A0000-0000-4000-8000-000000000006", "clip": "5A7A0000-0000-4000-8000-000000000005", "start": 0 } ],
-          "slots": []
+          "slots": [ { "scene": "5A7A0000-0000-4000-8000-000000000007", "clip": "5A7A0000-0000-4000-8000-000000000005" } ]
         }
       ]
     }

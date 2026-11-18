@@ -97,7 +97,7 @@ final class LoopRecordingTests: XCTestCase {
         XCTAssertEqual(project.track(track)?.takeGroups.count, 0, "no folder")
     }
 
-    func testANewSongsMIDITakeOverdubsIntoOneClipAsBefore() {
+    func testAMIDITakeOverAOneBarBeatOverdubsIntoOneClip() {
         let events = [note(60, at: 24_000, sample: 24_000, on: true), note(60, at: 30_000, sample: 30_000, on: false),
                       note(62, at: 96_000 + 48_000, sample: 48_000, on: true), note(62, at: 96_000 + 60_000, sample: 60_000, on: false)]
         let passes = LoopRecording.midiPasses(events, from: .init(sample: 0, played: 0),
@@ -105,6 +105,33 @@ final class LoopRecordingTests: XCTestCase {
                                               loop: 0..<bar, latency: 0, time: time, meter: meter)
         XCTAssertEqual(passes.count, 1, "both passes in one clip, on the same bar")
         XCTAssertEqual(passes.first?.notes.map(\.pitch), [60, 62])
+    }
+
+    func testAMIDITakeRunsFreelyOnlyOnASongThatPlaysNothingYet() {
+        let oneBar = 0..<bar
+        XCTAssertTrue(LoopRecording.midiTakeRunsFreely(songSounds: false, recordsPasses: false), "a first take on a new song")
+        XCTAssertFalse(LoopRecording.midiTakeRunsFreely(songSounds: true, recordsPasses: false),
+                       "over a one-bar beat it overdubs, as before")
+        XCTAssertFalse(LoopRecording.midiTakeRunsFreely(songSounds: false, recordsPasses: true),
+                       "over an empty loop of two bars or more it is loop record")
+        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, freeTake: false, freeMIDITake: true, over: oneBar, meter: meter,
+                                              timecodeRuns: false),
+                       "the one-bar loop of an empty song rests under the first MIDI take")
+        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, freeTake: false, freeMIDITake: true, over: loop, meter: meter,
+                                              timecodeRuns: false),
+                       "and keeps resting when an edit during the take makes the song four bars long")
+        XCTAssertTrue(LoopRecording.loopRuns(isOn: true, freeTake: false, over: loop, meter: meter, timecodeRuns: false),
+                      "without a free take a four-bar loop runs")
+        // With the loop resting the take is one pass: no wrap, every note where it was played.
+        let events = [note(60, at: 24_000, sample: 24_000, on: true), note(60, at: 30_000, sample: 30_000, on: false),
+                      note(62, at: 1_440_000, sample: 1_440_000, on: true), note(62, at: 1_452_000, sample: 1_452_000, on: false)]
+        let passes = LoopRecording.midiPasses(events, from: .init(sample: 0, played: 0),
+                                              to: .init(sample: 1_536_000, played: 1_536_000), wraps: [],
+                                              loop: nil, latency: 0, time: time, meter: meter)
+        XCTAssertEqual(passes.count, 1)
+        XCTAssertEqual(passes.first?.notes.map(\.start), [time.tick(atSample: 24_000), time.tick(atSample: 1_440_000)],
+                       "the second note stays in bar 16, not folded into bar 1")
+        XCTAssertGreaterThanOrEqual(passes.first?.length ?? 0, 16 * bar)
     }
 
     func testAFourBarLoopRecordsPassesAndTwoBarsIsTheThreshold() {
@@ -116,15 +143,15 @@ final class LoopRecordingTests: XCTestCase {
 
     func testTheLoopRestsUnderAShortAudioTakeAndWhileAChasedTimecodeRuns() {
         let short = 0..<bar
-        XCTAssertTrue(LoopRecording.loopRuns(isOn: true, audioTake: false, over: short, meter: meter, timecodeRuns: false))
-        XCTAssertFalse(LoopRecording.loopRuns(isOn: false, audioTake: false, over: loop, meter: meter, timecodeRuns: false))
-        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, audioTake: true, over: short, meter: meter, timecodeRuns: false),
+        XCTAssertTrue(LoopRecording.loopRuns(isOn: true, freeTake: false, over: short, meter: meter, timecodeRuns: false))
+        XCTAssertFalse(LoopRecording.loopRuns(isOn: false, freeTake: false, over: loop, meter: meter, timecodeRuns: false))
+        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, freeTake: true, over: short, meter: meter, timecodeRuns: false),
                        "a first recording runs freely")
-        XCTAssertTrue(LoopRecording.loopRuns(isOn: true, audioTake: true, over: loop, meter: meter, timecodeRuns: false),
+        XCTAssertTrue(LoopRecording.loopRuns(isOn: true, freeTake: true, over: loop, meter: meter, timecodeRuns: false),
                       "loop record")
-        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, audioTake: false, over: loop, meter: meter, timecodeRuns: true),
+        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, freeTake: false, over: loop, meter: meter, timecodeRuns: true),
                        "the sender is the master")
-        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, audioTake: true, over: loop, meter: meter, timecodeRuns: true))
+        XCTAssertFalse(LoopRecording.loopRuns(isOn: true, freeTake: true, over: loop, meter: meter, timecodeRuns: true))
         XCTAssertTrue(LoopRecording.takeRecordsPasses(isOn: true, over: loop, meter: meter, timecodeRuns: false))
         XCTAssertFalse(LoopRecording.takeRecordsPasses(isOn: true, over: loop, meter: meter, timecodeRuns: true),
                        "no passes while the loop rests")

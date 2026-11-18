@@ -47,7 +47,11 @@ public enum StarterProject: CaseIterable, Sendable {
             try Command.createClip(track: drums, id: beat, name: "Beat", length: MusicalTime.ticksPerBar(project.timeSignature))
                 .apply(to: &project)
             try Command.placeClip(track: drums, id: PlacementID(newID()), clip: beat, start: 0).apply(to: &project)
-            try Command.addScene(id: SceneID(newID()), name: "Scene 1", index: nil).apply(to: &project)
+            let scene = SceneID(newID())
+            try Command.addScene(id: scene, name: "Scene 1", index: nil).apply(to: &project)
+            // The beat is in Scene 1 too: an empty slot under Drums made the plus in Session a
+            // second, unrelated clip (code walk of build 10080).
+            try Command.setSlot(track: drums, scene: scene, clip: beat).apply(to: &project)
         }
         try Command.setVolume(.master, db: Self.masterVolumeDB).apply(to: &project)
         return project

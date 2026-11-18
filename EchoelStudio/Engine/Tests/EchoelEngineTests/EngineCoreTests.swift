@@ -602,7 +602,7 @@ final class EngineCoreTests: XCTestCase {
         for timecodeRuns in [false, true] {
             let core = core()
             publish(s.project, to: core)
-            let runs = LoopRecording.loopRuns(isOn: true, audioTake: false, over: 0..<bar, meter: meter,
+            let runs = LoopRecording.loopRuns(isOn: true, freeTake: false, over: 0..<bar, meter: meter,
                                               timecodeRuns: timecodeRuns)
             core.setLoop(runs ? 0..<bar : nil)
             core.seek(toSample: Int64(sender * rate))

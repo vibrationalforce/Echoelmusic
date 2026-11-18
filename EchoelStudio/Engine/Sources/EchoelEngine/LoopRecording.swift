@@ -13,9 +13,10 @@ import Foundation
 public enum LoopRecording {
     /// The shortest loop a take is cut into passes over. A song's loop is not set by the musician:
     /// it runs from bar 1 to the end of the song's last bar (`Arranging.songLoop`), and a new, empty
-    /// song loops ONE bar. A take on that is a first recording, not a loop record — it runs freely
-    /// (an audio take suspends the loop, a MIDI take overdubs into one clip, as before). From two
-    /// bars on there is a part to record passes over.
+    /// song loops ONE bar. A take on that is a first recording, not a loop record: an audio take
+    /// suspends the loop, and so does a MIDI take on a song that plays nothing yet
+    /// (`midiTakeRunsFreely`); a MIDI take over a short loop that plays something overdubs into
+    /// one clip, as before. From two bars on there is a part to record passes over.
     public static let minimumBars = 2
 
     /// Whether a take over `loop` is cut into passes: the loop spans `minimumBars` bars at least.
@@ -26,14 +27,26 @@ public enum LoopRecording {
         return loop.upperBound >= end
     }
 
-    /// Whether the song's loop runs: while it is on, except under an audio take over a loop too
-    /// short to record passes over (that take runs freely), and except while the sender of a
+    /// Whether a MIDI take runs freely, as an audio take does, over a loop too short to record
+    /// passes over: when the song plays nothing yet (no note and no audio). Until 2026-11-18 a
+    /// first take on a new song looped its one bar, and everything played for sixteen bars landed
+    /// in bar 1. Over a short loop that plays something, the take still overdubs into it.
+    /// Decided once, when the take begins, and kept to its end (`loopRuns(freeMIDITake:)`): an
+    /// edit during the take that lengthens the song must not start the loop under it and fold what
+    /// is played after the wrap onto what was played before.
+    public static func midiTakeRunsFreely(songSounds: Bool, recordsPasses: Bool) -> Bool {
+        !songSounds && !recordsPasses
+    }
+
+    /// Whether the song's loop runs: while it is on, except under a free take (an audio take, or
+    /// a MIDI take on a song that plays nothing yet) over a loop too short to record passes over
+    /// (that take runs freely), and except while the sender of a
     /// timecode chase runs. The sender is the master then: a wrap at the loop's end threw the song
     /// off it, the chase jumped back onto the sender, the loop threw it off again — at every quarter
     /// frame, and the chase never locked (2026-11-05).
-    public static func loopRuns(isOn: Bool, audioTake: Bool, over loop: Range<Tick>?, meter: MeterMap,
-                                timecodeRuns: Bool) -> Bool {
-        isOn && !timecodeRuns && (!audioTake || recordsPasses(over: loop, meter: meter))
+    public static func loopRuns(isOn: Bool, freeTake: Bool, freeMIDITake: Bool = false, over loop: Range<Tick>?,
+                                meter: MeterMap, timecodeRuns: Bool) -> Bool {
+        isOn && !timecodeRuns && !freeMIDITake && (!freeTake || recordsPasses(over: loop, meter: meter))
     }
 
     /// Whether a take started now is cut into passes of the loop: it runs and spans enough bars.

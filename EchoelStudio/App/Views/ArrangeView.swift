@@ -82,17 +82,23 @@ struct ArrangeView: View {
         }
     }
 
+    /// "1 bar", "4 bars": the song's length and a clip's, said and shown.
+    static func barsLabel(_ bars: Int) -> String {
+        bars == 1 ? "1 bar" : "\(bars) bars"
+    }
+
     /// The names on the left: the song's length over the ruler, then every track and its lanes.
     /// Apart from `body` so each expression stays small enough to type-check.
+
     private func nameColumn(_ project: Project, hits: [Tick]) -> some View {
         VStack(spacing: Theme.Space.hairline) {
-            Text("\(Arranging.songBars(of: project)) bars")
+            Text(Self.barsLabel(Arranging.songBars(of: project)))
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(height: Self.rulerRowHeight)
-                .accessibilityLabel("Song length \(Arranging.songBars(of: project)) bars")
+                .accessibilityLabel("Song length " + Self.barsLabel(Arranging.songBars(of: project)))
                 .contextMenu {
                     AutomateMenu(owner: .master)
                     ModulateMenu(owner: .master)
@@ -802,7 +808,7 @@ private struct PlacementBlock: View {
 
     /// The block's VoiceOver label: name, where, how long, and whether it is a linked copy.
     private var spokenLabel: String {
-        let base = "\(clip.name), bar \(startBar), \(lengthBars) bars"
+        let base = "\(clip.name), bar \(startBar), " + ArrangeView.barsLabel(lengthBars)
         return uses >= 2 ? "\(base), linked, plays in \(uses) places" : base
     }
 

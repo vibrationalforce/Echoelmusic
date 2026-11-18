@@ -88,6 +88,18 @@ final class ArrangingTests: XCTestCase {
         XCTAssertEqual(Arranging.songBars(of: p), 7)
     }
 
+    /// The song's loop runs to the end of its last clip, as its bars are counted: a four-bar clip
+    /// with a note only in bar 1 is a four-bar song, and loops four bars (2026-11-18).
+    func testTheLoopAndTheBarCountShareOneEnd() throws {
+        var (p, track, clip) = try project(clipBars: 4)
+        try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 0).apply(to: &p)
+        try Command.addNotes(clip, [Note(pitch: 60, start: 0, length: 480)]).apply(to: &p)
+        XCTAssertEqual(Arranging.placedEnd(of: p), 4 * bar)
+        XCTAssertEqual(Arranging.songBars(of: p), 4)
+        XCTAssertEqual(Arranging.songLoop(songEnd: Arranging.placedEnd(of: p), meter: p.meterMap), 0..<(4 * bar))
+        XCTAssertEqual(Arranging.placedEnd(of: Project()), 0, "an empty song")
+    }
+
     /// The export doors open only on what the file would hold: a placed clip without a note
     /// renders no length, a clip in no place is not in the file, a controller move alone is MIDI
     /// but no sound, and an audio region sounds once the song has its file.

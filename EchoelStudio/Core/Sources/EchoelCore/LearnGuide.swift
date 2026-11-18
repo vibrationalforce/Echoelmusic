@@ -256,7 +256,7 @@ public enum LearnGuide {
             id: "firstTrack", title: "Your First Track and Recording",
             summary: "Add a track, play it on the keys, and record.",
             paragraphs: [
-                "Open “Tracks” in the bar of views at the bottom and use “Add Track”: “Instrument”, “Audio”, “Return”, “Video” or “Drums”. Tap an instrument track to open its editor.",
+                "Open “Tracks” in the bar of views at the bottom and use “Add Track”: “Instrument”, “Audio”, “Return”, “Video” or “Drums”. Tap an instrument track to open its editor. The length menu at the bottom of the editor repeats a clip or sets its length, from one bar to sixteen.",
                 "The “Keys” under the views play the live track. “Record” in the transport starts the song and records the armed track; with nothing armed, it records the track the keys play. A MIDI take becomes a new clip, as one undo step.",
                 "To record audio, arm an audio track with the round record button on its row and choose its input on the “Mixer”: the input menu of its strip also holds “Monitor”. Takes stay on the device.",
                 "Every edit is one undo step: Undo and Redo sit beside the “Song menu”. Songs save on their own.",
@@ -267,7 +267,7 @@ public enum LearnGuide {
             id: "comping", title: "Comping and Loop Record",
             summary: "Record pass after pass, then choose the best stretch of each.",
             paragraphs: [
-                "With “Loop” on, the song repeats from bar 1 to the end of its last bar. When that loop is two bars or longer, a take keeps recording through every repeat and each pass becomes a take of its own; the line under the transport counts them. On a one-bar loop a take runs on as one recording. Loop record is in beta.",
+                "With “Loop” on, the song repeats from bar 1 to the end of its last bar. When that loop is two bars or longer, a take keeps recording through every repeat and each pass becomes a take of its own; the line under the transport counts them. On a one-bar loop an audio take runs on as one recording, and so does a first take on a song that plays nothing yet; a MIDI take over a one-bar beat is played into that bar, pass over pass. Loop record is in beta.",
                 "The takes of a track stack as lanes under its row in “Arrange”, oldest on top. Tap a bar on a lane to use that take there, or swipe along a lane to use it for the stretch swiped. Touch and hold a lane for “Use the Whole Take” or “Unfold Takes”.",
                 "Comping never changes a take: it only chooses which one sounds where, and every choice is one undo step.",
             ],

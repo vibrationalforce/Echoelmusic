@@ -115,11 +115,18 @@ public enum Arranging {
     /// at least one bar.
     public static func songBars(of project: Project) -> Int {
         let meter = project.meterMap
-        let last = project.tracks.reduce(Tick(0)) { result, track in
+        return Swift.max(1, Int(clamping: meter.bar(at: meter.nextBarLine(atOrAfter: placedEnd(of: project)))))
+    }
+
+    /// Where the last clip placement (its start plus the whole clip length) or audio region of
+    /// the song ends; 0 for a song with none. Arrange counts its bars from it, and the song's loop
+    /// runs at least to it (2026-11-18): until then the loop ended after the last NOTE, so a
+    /// four-bar clip with notes only in bar 1 read "4 bars" in Arrange and looped one.
+    public static func placedEnd(of project: Project) -> Tick {
+        project.tracks.reduce(Tick(0)) { result, track in
             let clips = track.placements.reduce(result) { Swift.max($0, Self.end(of: $1, in: track) ?? 0) }
             return track.regions.reduce(clips) { Swift.max($0, Self.end(of: $1, in: project) ?? 0) }
         }
-        return Swift.max(1, Int(clamping: meter.bar(at: meter.nextBarLine(atOrAfter: last))))
     }
 
     /// A tap on the track's lane at `tick`. On a placement: nil — the view opens or selects it.

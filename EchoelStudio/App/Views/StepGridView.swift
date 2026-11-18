@@ -35,10 +35,12 @@ struct StepGridView: View {
         ScrollView(.vertical) {
             HStack(alignment: .top, spacing: Theme.Space.xs) {
                 laneNames
+                // Column by column, and lazily: a sixteen-bar clip has 256 steps a lane, and only
+                // the columns on screen are built (clip length menu, 2026-11-18).
                 ScrollView(.horizontal) {
-                    VStack(spacing: Theme.Space.xxs) {
-                        ForEach(lanes) { lane in
-                            laneRow(lane, count: count, meter: meter)
+                    LazyHStack(alignment: .top, spacing: Theme.Space.xxs) {
+                        ForEach(0..<count, id: \.self) { index in
+                            stepColumn(index, meter: meter)
                         }
                     }
                 }
@@ -108,9 +110,10 @@ struct StepGridView: View {
         try? store.perform(command)
     }
 
-    private func laneRow(_ lane: DrumLane, count: Int, meter: MeterMap) -> some View {
-        HStack(spacing: Theme.Space.xxs) {
-            ForEach(0..<count, id: \.self) { index in
+    /// One step of every lane, top to bottom in the lanes' order.
+    private func stepColumn(_ index: Int, meter: MeterMap) -> some View {
+        VStack(spacing: Theme.Space.xxs) {
+            ForEach(lanes) { lane in
                 rotorMark(stepCell(lane, index, meter: meter), lane: lane, index: index)
             }
         }

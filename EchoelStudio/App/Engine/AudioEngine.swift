@@ -222,6 +222,10 @@ final class AudioEngine {
     @ObservationIgnored private var songLoop: Range<Tick>?
     /// The meter that loop was measured in.
     @ObservationIgnored private var songMeter = Project().meterMap
+    /// The last published song plays something: a note or audio (`LoopRecording.midiTakeRunsFreely`).
+    @ObservationIgnored private var songSounds = false
+    /// A MIDI take runs freely over the short loop of a song that played nothing when it began.
+    @ObservationIgnored private var freeMIDITake = false
 
     func setLoopsSong(_ on: Bool) {
         loopsSong = on
@@ -229,13 +233,14 @@ final class AudioEngine {
         applyLoop()
     }
 
-    /// The loop runs while it is on — except under an audio take when it is shorter than a loop
-    /// record takes (`LoopRecording.minimumBars`): one file cannot be placed twice, so that take
-    /// runs freely, as every audio take did before loop record — and except while a chased
-    /// timecode runs (`LoopRecording.loopRuns`).
+    /// The loop runs while it is on — except under a free take when it is shorter than a loop
+    /// record takes (`LoopRecording.minimumBars`): an audio take (one file cannot be placed twice,
+    /// so it runs freely, as every audio take did before loop record) or a first MIDI take on a
+    /// song that plays nothing yet — and except while a chased timecode runs
+    /// (`LoopRecording.loopRuns`).
     private var loopRuns: Bool {
-        LoopRecording.loopRuns(isOn: loopsSong, audioTake: take != nil, over: songLoop, meter: songMeter,
-                               timecodeRuns: timecodeRuns)
+        LoopRecording.loopRuns(isOn: loopsSong, freeTake: take != nil, freeMIDITake: freeMIDITake, over: songLoop,
+                               meter: songMeter, timecodeRuns: timecodeRuns)
     }
 
     /// Whether a take started now is cut into passes of the loop.
@@ -259,8 +264,8 @@ final class AudioEngine {
         core?.setLoop(loopRuns ? songLoop : nil)
     }
 
-    /// Bar 1 to the end of the last bar a clip or an audio region reaches, in the bars of the
-    /// meter the song plays; at least one bar.
+    /// Bar 1 to the end of the last bar a clip, a note or an audio region reaches, in the bars of
+    /// the meter the song plays; at least one bar.
     nonisolated static func loopRange(songEnd: Tick, meter: MeterMap) -> Range<Tick>? {
         Arranging.songLoop(songEnd: songEnd, meter: meter)
     }
@@ -1151,6 +1156,10 @@ final class AudioEngine {
     /// A MIDI take starts: from now on the core reports each wrap of the loop, and the moment the
     /// take began on both of its clocks (Loop record).
     func beginLoopCapture() -> LoopRecording.Moment {
+        // Decided once, when the take begins: its own notes make the song sound, and a take
+        // that runs freely keeps running freely to its end.
+        freeMIDITake = LoopRecording.midiTakeRunsFreely(songSounds: songSounds, recordsPasses: recordsLoopPasses)
+        applyLoop()
         core?.setReportsLoopWraps(true)
         captureLoop = activeLoop
         return currentMoment
@@ -1165,6 +1174,8 @@ final class AudioEngine {
         core?.setReportsLoopWraps(false)
         let loop = captureLoop
         captureLoop = nil
+        freeMIDITake = false
+        applyLoop()
         return (wraps, loop, end)
     }
 
@@ -1657,7 +1668,12 @@ final class AudioEngine {
                                       wavetables: wavetables(for: project))
         meterIndices = core.meterIndices(for: snapshot)
         core.publish(snapshot)
-        let songEnd = Swift.max(plan.songEnd, snapshot.time.tick(atSample: snapshot.audioEnd))
+        let soundEnd = Swift.max(plan.songEnd, snapshot.time.tick(atSample: snapshot.audioEnd))
+        // From the song, not from what is decoded yet: a region still loading is sound all the same.
+        songSounds = project.arrangementHasSound
+        // The loop runs at least to the end of the last clip, as Arrange counts the song's bars
+        // (`Arranging.placedEnd`), not only to the last note.
+        let songEnd = Swift.max(soundEnd, Arranging.placedEnd(of: project))
         songLoop = Self.loopRange(songEnd: songEnd, meter: snapshot.meter)
         songMeter = snapshot.meter
         applyLoop()

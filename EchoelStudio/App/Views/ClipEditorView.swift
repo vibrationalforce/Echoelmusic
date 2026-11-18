@@ -127,13 +127,85 @@ struct ClipEditorView: View {
                     Button("Done") { dismiss() }
                 }
                 ToolbarItemGroup(placement: .bottomBar) {
-                    zoomButtons
+                    if let track, let clip = editedClip(track) {
+                        lengthMenu(clip)
+                    }
                     Spacer()
+                    if showsRoll { zoomButtons }
                 }
             }
-            .toolbar(showsRoll ? .visible : .hidden, for: .bottomBar)
+            .toolbar(showsLengthMenu(track) ? .visible : .hidden, for: .bottomBar)
         }
         .preferredColorScheme(.dark)
+    }
+
+    /// Whether the bottom bar shows: on the Notes or Steps page of a note clip (not audio).
+    private func showsLengthMenu(_ track: Track?) -> Bool {
+        guard page == .notes, let track, let clip = editedClip(track) else { return false }
+        return clip.audio == nil
+    }
+
+    private static func barsTitle(_ bars: Int) -> String {
+        bars == 1 ? "1 Bar" : "\(bars) Bars"
+    }
+
+    /// The clip's length (`ClipLength`): repeat what it holds up to a longer length, or set a
+    /// length outright (longer adds empty bars, shorter drops what starts past the end). A length
+    /// that would run into the next clip on the track is dimmed, and the menu says why.
+    private func lengthMenu(_ clip: Clip) -> some View {
+        let project = store.project
+        let current = ClipLength.bars(of: clip, in: project)
+        let longer = ClipLength.choices.filter { ClipLength.ticks(bars: $0, of: clip.id, in: project) > clip.length }
+        let refused: (Int) -> ClipLength.Refusal? = { bars in
+            if case .failure(let refusal) = ClipLength.commands(for: clip.id, bars: bars, repeating: false, in: project) {
+                return refusal
+            }
+            return nil
+        }
+        let blocked = ClipLength.choices.compactMap(refused).first
+        let title: String = current.map { "Length " + Self.barsTitle($0) } ?? "Length"
+        return Menu {
+            if !clip.notes.isEmpty, !longer.isEmpty {
+                Section("Repeat the Clip to") {
+                    ForEach(longer, id: \.self) { bars in
+                        Button(Self.barsTitle(bars)) { setLength(of: clip.id, bars: bars, repeating: true) }
+                            .disabled(refused(bars) != nil)
+                    }
+                }
+            }
+            Section("Set the Length to") {
+                ForEach(ClipLength.choices, id: \.self) { bars in
+                    Button {
+                        setLength(of: clip.id, bars: bars, repeating: false)
+                    } label: {
+                        if bars == current {
+                            Label(Self.barsTitle(bars), systemImage: "checkmark")
+                        } else {
+                            Text(Self.barsTitle(bars))
+                        }
+                    }
+                    .disabled(refused(bars) != nil)
+                }
+            }
+            if let blocked {
+                Text(blocked.text)
+            }
+        } label: {
+            Label(title, systemImage: "arrow.left.and.right")
+                .labelStyle(.titleAndIcon)
+        }
+        .accessibilityLabel("Clip Length")
+        .accessibilityValue(current.map(Self.barsTitle) ?? "not whole bars")
+    }
+
+    private func setLength(of clip: ClipID, bars: Int, repeating: Bool) {
+        guard case .success(let commands) = ClipLength.commands(for: clip, bars: bars, repeating: repeating,
+                                                                in: store.project) else { return }
+        do {
+            try store.perform(commands, title: repeating ? "Repeat Clip" : "Clip Length")
+        } catch {
+            Theme.Accessibility.announce(Announcement("The clip's length could not be changed.", priority: .urgent))
+        }
     }
 
     /// Zoom Out and Zoom In for the piano roll; the top bar has no room left on a phone.
