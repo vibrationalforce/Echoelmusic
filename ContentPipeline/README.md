@@ -13,7 +13,7 @@ dieselbe Grenze, die für die `echoel-marketing`-Skill gilt.
 | Pfad | Inhalt |
 |---|---|
 | `CLAIMS.md` | **Zuerst lesen.** Was heute wahr ist, was gestrichen ist, mit Begründung. |
-| `Scripts/` | Skript-Templates. `template_short_form.md` ist die Basis. |
+| `Scripts/` | Skripte. ⛔ `template_short_form.md` und `beta_promo_A_B_C_2026-10-15.md` sind seit 2026-11-18 ARCHIV (frühere App 10.x); eine Vorlage für Echoelmusic 11 gibt es noch nicht. |
 | `Assets/` | Bildschirmaufnahmen, Audio-Stems, Markenmaterial. **Nicht committen, was groß ist** — siehe unten. |
 | `Prompts/` | Wiederverwendbare Prompts für Skript-/Caption-Varianten. |
 | `Automation/` | Hilfsskripte (Aufnahme, Schnitt, Verpacken). |
@@ -24,7 +24,7 @@ dieselbe Grenze, die für die `echoel-marketing`-Skill gilt.
 1. **`CLAIMS.md` gegen `CLAUDE.md` „CURRENT STATE" prüfen.** Das Repo verliert und
    gewinnt Fähigkeiten schnell — die Drums verschwanden an einem Tag, der AUv3-Zweig
    an einem anderen. Ein Skript aus der letzten Woche kann heute falsch sein.
-2. **Skript** aus `Scripts/template_short_form.md` ableiten.
+2. **Skript** aus dem Abschnitt „Echoel Studio 11.0.0“ in `CLAIMS.md` ableiten (die alte Vorlage `Scripts/template_short_form.md` ist Archiv).
 3. **Aufnehmen.** Am Gerät, nicht im Simulator: die Kamera-Pulsmessung ist der Kern
    des Materials und im Simulator gibt es sie nicht (kein HealthKit, keine Kamera).
    Simulator taugt für reine UI-Aufnahmen.

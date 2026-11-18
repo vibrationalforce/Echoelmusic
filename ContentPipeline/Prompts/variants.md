@@ -1,5 +1,10 @@
 # Prompt — Skript-Varianten erzeugen
 
+> ⛔ **ARCHIV (seit 2026-11-18) — keine Vorlage für Echoelmusic 11.** Diese Datei beschreibt die frühere App
+> 10.x (das Bio-Instrument, TestFlight 10.79): der Auftrag an einen Agenten, Skripte für die frühere App zu schreiben. Ein neues Skript beginnt beim Abschnitt
+> „Echoel Studio 11.0.0“ in `ContentPipeline/CLAIMS.md`, zeigt, was ein Song in der App wird, und nennt den
+> Körper höchstens als eine wählbare Modulationsquelle. Sie bleibt als Beleg liegen, nichts daraus wird gepostet.
+
 Vorlage für den Auftrag an einen Agenten. Der erste Absatz ist nicht schmückend: ohne
 ihn erfindet ein Modell zuverlässig einen Plugin-WIRT und eine Meditations-Zielgruppe,
 weil das die statistisch naheliegende Bio-Musik-App ist. Echoel ist sie nicht.

@@ -1,5 +1,10 @@
 # Beta-Promo — drei Clips (9:16, 15–25 s) für TestFlight 10.79.505
 
+> ⛔ **ARCHIV (seit 2026-11-18) — keine Vorlage für Echoelmusic 11.** Diese Datei beschreibt die frühere App
+> 10.x (das Bio-Instrument, TestFlight 10.79): drei Clips für Build 10.79.505, Hook „Kein Wearable“. Ein neues Skript beginnt beim Abschnitt
+> „Echoel Studio 11.0.0“ in `ContentPipeline/CLAIMS.md`, zeigt, was ein Song in der App wird, und nennt den
+> Körper höchstens als eine wählbare Modulationsquelle. Sie bleibt als Beleg liegen, nichts daraus wird gepostet.
+
 Nach `template_short_form.md`, jede Fähigkeit gegen `CLAIMS.md` ✅ geprüft. Rohmaterial: die
 Bildschirmaufnahme aus Gerätesitzung 1 plus Handy-Makro vom Finger. Schnitt ≤ 3 Hz, keine
 Blitze. CTA immer „TestFlight", nie „App Store" (CLAIMS §4).

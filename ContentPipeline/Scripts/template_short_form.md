@@ -1,5 +1,10 @@
 # Template — Short Form 9:16 (15–30 s)
 
+> ⛔ **ARCHIV (seit 2026-11-18) — keine Vorlage für Echoelmusic 11.** Diese Datei beschreibt die frühere App
+> 10.x (das Bio-Instrument, TestFlight 10.79): Zielgruppe „Biohacker“, Hook „Finger auf der Kamera“. Ein neues Skript beginnt beim Abschnitt
+> „Echoel Studio 11.0.0“ in `ContentPipeline/CLAIMS.md`, zeigt, was ein Song in der App wird, und nennt den
+> Körper höchstens als eine wählbare Modulationsquelle. Sie bleibt als Beleg liegen, nichts daraus wird gepostet.
+
 **Vor dem Ausfüllen `ContentPipeline/CLAIMS.md` lesen.** Jede Zeile unten, die eine
 Fähigkeit behauptet, muss dort in der ✅-Tabelle stehen. Steht sie nicht dort, ist der
 Take falsch — nicht „noch nicht ganz richtig", sondern falsch.

@@ -22,8 +22,8 @@ The repo vendors Corey Haines' MIT marketing skills at
 `.claude/skills/marketing/skills/<name>/SKILL.md` (45 skills) + shared
 integration docs at `.claude/skills/marketing/tools/`. This skill is the
 **Echoel-optimized entry point**: it picks the right one, in the right order for
-*an iPhone-first bio-reactive instrument sold on the App Store + a GitHub-Pages
-site (`docs/`)*, and keeps every output on-brand. Read the chosen underlying
+*a music workstation for iPhone and iPad — free, with one in-app purchase — on the
+App Store + a GitHub-Pages site (`docs/`)*, and keeps every output on-brand. Read the chosen underlying
 `SKILL.md` and follow it, filtered through the guardrails below.
 
 ## Non-negotiable brand guardrails (apply to ALL marketing output)
@@ -34,10 +34,16 @@ These OVERRIDE anything in the vendored skills. Any draft that violates them is 
   wellness/therapy/healing/soundscape framing, "healing frequencies", chakras,
   Solfeggio, quantum/super-AI/AGI overclaim, "16K". Biofeedback is **science-based
   modulation**, not wellness.
-- **Identity:** Echoel is **the instrument** — "Physical Computing · Biofeedback ·
-  Multimedial & Multidimensional", the bio-reactive *source* for immersive media
-  (open standards: ADM-OSC, MIDI 2.0, OSC, BLE HRS). Not a renderer, not a
-  competitor clone. Tagline: "multidimensional production instrument".
+- **Identity:** the app is **Echoelmusic** — a music workstation for iPhone and iPad:
+  instruments, effects, a piano roll and a drum grid, an arrangement, a session grid,
+  recording, mixing, automation and export; songs are files on the device in an open,
+  documented format, and the app needs no account. Focus since 2026-10-15: professional
+  media production. The body (a heart-rate strap) is ONE optional modulation source,
+  described as a mechanism — never the opening line, never the identity. **Echoel** is
+  the artist, not the app. Name a standard or a protocol only where `CLAIMS.md` carries it.
+  ⛔ Until 2026-11-18 this block read "Echoel is the instrument … the bio-reactive source …
+  multidimensional production instrument": that is the earlier app (10.x). A draft that
+  opens with the body, or calls the app "Echoel", is wrong.
 - **No false promises:** claim only what ships (see `docs/dev/FEATURE_MATRIX.md`
   and CLAUDE.md "Absent"). The one list of what may be said is the Studio section of
   `ContentPipeline/CLAIMS.md` (live streaming over RTMP/RTMPS with Go Live is there);
@@ -54,7 +60,8 @@ These OVERRIDE anything in the vendored skills. Any draft that violates them is 
 2. **Website (`docs/`)** — `seo-audit`, `ai-seo`, `schema`, `site-architecture`,
    `content-strategy`, `programmatic-seo`.
 3. **Positioning & offer** — `product-marketing`, `marketing-psychology`,
-   `offers`, `pricing` (paid app, not B2B SaaS — adapt accordingly).
+   `offers`, `pricing` (a free app with ONE in-app purchase, no subscription, no
+   second product — not B2B SaaS; the price itself is the founder's).
 4. **Reach** — `social`, `video`, `public-relations`, `community-marketing`,
    `co-marketing`, `directory-submissions` (App/AI directories).
 5. **Funnel** — `emails`, `lead-magnets`, `free-tools`, `signup`, `onboarding`,
