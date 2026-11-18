@@ -3,13 +3,13 @@ import SwiftUI
 
 /// Cycle Tones, the rightmost view of the studio (founder 2026-11-15, in place of the Sky): tones
 /// from natural cycles and measured lines, by category — the planets' cycles (as a list or as the
-/// sky itself, with each body's tone under the ring) and the lines of hydrogen and everyday
-/// molecules. The category and the look are remembered per window (`SceneStorage`): on an iPad with
+/// sky itself, with each body's tone under the ring), the lines of hydrogen and everyday
+/// molecules, and the musician's own pulse (Body). The category and the look are remembered per window (`SceneStorage`): on an iPad with
 /// two windows, one window's switch never starts the other window's sky, its sensors or its camera.
 struct CycleTonesSurface: View {
     /// What the tones come from.
     enum Category: String, CaseIterable, Identifiable {
-        case planets, molecules
+        case planets, molecules, body
 
         var id: Self { self }
 
@@ -17,6 +17,7 @@ struct CycleTonesSurface: View {
             switch self {
             case .planets: "Planets"
             case .molecules: "Molecules"
+            case .body: "Body"
             }
         }
     }
@@ -58,6 +59,7 @@ struct CycleTonesSurface: View {
             case (.planets, .list): CycleTonesList()
             case (.planets, .sky): SkySurface()
             case (.molecules, _): SpectralTonesList()
+            case (.body, _): BodyTonesList()
             }
         }
         .background(Theme.Color.background)
@@ -69,7 +71,7 @@ struct CycleTonesSurface: View {
                 ForEach(Category.allCases) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
-            .accessibilityHint("Chooses what the tones come from: the planets' cycles or the lines of hydrogen and everyday molecules.")
+            .accessibilityHint("Chooses what the tones come from: the planets' cycles, the lines of hydrogen and everyday molecules, or your own pulse.")
             if category == .planets {
                 Picker("Show As", selection: $look) {
                     ForEach(Look.allCases) { Text($0.title).tag($0) }
@@ -96,6 +98,110 @@ struct CycleTonesList: View {
 struct SpectralTonesList: View {
     var body: some View {
         CycleTonePage(method: SpectralLibrary.method, credit: SpectralLibrary.credit, sections: CycleToneText.spectralSections)
+    }
+}
+
+/// The musician's own pulse as a tone (Body, `BodyTones`). The pulse is taken, never followed: the
+/// row with the tuning fork shows the pulse as it was at Take Pulse, so its menu is never rebuilt
+/// under a finger, and the taken pulse lives only as long as this page — no file keeps it, and the
+/// song keeps only the key, tempo or concert pitch the musician then chooses.
+///
+/// Only where the pulse may leave (`FlowController.mayTakeThePulse`): never from Apple Health, and
+/// while the tempo leaves this device only with Share Body Data on. When that turns false, the taken
+/// row goes, so no choice can write the pulse into a tempo that leaves; the row above says why.
+struct BodyTonesList: View {
+    @State private var taken: TakenPulse?
+    @Environment(FlowController.self) private var flow
+
+    var body: some View {
+        // `mayTakeThePulse` changes with a gesture or a rare event (a clock, a chosen MIDI output
+        // appearing, a jam in any window, OSC, Share Body Data), never with the pulse: cold.
+        let pulse = taken.flatMap { flow.mayTakeThePulse(from: $0.source) ? $0.beatsPerMinute : nil }
+        CycleTonePage(method: BodyTones.method, credit: BodyTones.credit,
+                      sections: CycleToneText.bodySections(pulse: pulse),
+                      // Asked again at the tuning fork's tap: the gate decides the write, not the drawn row.
+                      allowsTuning: { [taken, flow] in taken.map { flow.mayTakeThePulse(from: $0.source) } ?? false }) {
+            TakePulseRow(taken: $taken)
+        }
+    }
+}
+
+/// A pulse as Take Pulse held it, with the source it came from.
+struct TakenPulse: Equatable {
+    let beatsPerMinute: Int
+    let source: BodyChannel.Source
+}
+
+/// The pulse now, and the button that takes it. A leaf on purpose: the pulse changes about once a
+/// second, and only this view reads it (Law 6) — it hosts no menu, and the page above it reads only
+/// the pulse once taken. It starts no source; the Song menu's Body Source does. It reads the strap
+/// and the camera, as Flow does; Apple Health's pulse is never taken (`BioEgressPolicy` gate 1).
+private struct TakePulseRow: View {
+    @Binding var taken: TakenPulse?
+    @Environment(HeartRateStrap.self) private var strap
+    @Environment(CameraPulseSource.self) private var camera
+    @Environment(HealthHeartRate.self) private var health
+    @Environment(FlowController.self) private var flow
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let reading {
+                pulseRow(reading)
+            } else {
+                note(health.isOn ? BodyTones.healthNotTaken : BodyTones.noSource)
+            }
+            // Whatever source is on: a pulse taken earlier is put aside for the same reason.
+            if !flow.tempoMayCarryThePulse { note(BodyTones.sharingOff) }
+        }
+    }
+
+    private func pulseRow(_ reading: (pulse: Int?, words: String, source: BodyChannel.Source)) -> some View {
+        let pulse = reading.pulse.flatMap { BodyTones.heartbeat(beatsPerMinute: $0) == nil ? nil : $0 }
+        let mayTake = flow.mayTakeThePulse(from: reading.source)
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.Space.s))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: Theme.Space.s))
+        return layout {
+            VStack(alignment: .leading, spacing: Theme.Space.xxs) {
+                Text("Pulse now")
+                    .font(Theme.Font.label)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                Text(pulse.map { NumberText.string(Double($0), decimals: 0, unit: "BPM") } ?? reading.words)
+                    .font(Theme.Font.value)
+                    .foregroundStyle(pulse == nil ? Theme.Color.textSecondary : Theme.Color.text)
+                    .monospacedDigit()
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Pulse now")
+            .accessibilityValue(pulse.map { "\($0) beats per minute" } ?? reading.words)
+            Spacer(minLength: 0)
+            Button("Take Pulse") {
+                // Asked again at the tap: the gate is the one that decides, not the drawn button.
+                guard let pulse, flow.mayTakeThePulse(from: reading.source) else { return }
+                taken = TakenPulse(beatsPerMinute: pulse, source: reading.source)
+            }
+            .buttonStyle(ToolButtonStyle())
+            .disabled(pulse == nil || !mayTake)
+            .accessibilityHint("Holds the pulse as it is now and turns it into a tone below. The song keeps nothing of it until you choose a key, tempo or concert pitch.")
+        }
+        .padding(.vertical, Theme.Space.xs)
+    }
+
+    private func note(_ text: String) -> some View {
+        Text(text)
+            .font(Theme.Font.body)
+            .foregroundStyle(Theme.Color.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, Theme.Space.xs)
+    }
+
+    /// The pulse source that is on, its pulse, its words and what it is, in the order the transport
+    /// reads them; nil while neither the strap nor the camera is on.
+    private var reading: (pulse: Int?, words: String, source: BodyChannel.Source)? {
+        if strap.isOn { return (strap.beatsPerMinute, PulseReading.words(for: strap.status), BodyChannel.Source.ble) }
+        if camera.isOn { return (camera.beatsPerMinute, PulseReading.words(for: camera.status, cue: camera.cue), BodyChannel.Source.camera) }
+        return nil
     }
 }
 
@@ -127,14 +233,28 @@ struct ToneSection: Identifiable {
 ///
 /// The key and the concert pitch are song-wide values, which are never automated
 /// (`Command.setAutomation`), so setting them directly is what the Key menu's writer does too.
-struct CycleTonePage: View {
+/// A page may add its own lines under the song's (`header`): the Body page's Take Pulse.
+struct CycleTonePage<Header: View>: View {
     let method: String
     let credit: String
     let sections: [ToneSection]
+    /// Asked at every choice before anything is written; the Body page closes it while the pulse
+    /// may not go into the song. Planets and Molecules always allow.
+    let allowsTuning: () -> Bool
+    let header: Header
     @Environment(ProjectStore.self) private var store
     @Environment(MIDIInput.self) private var midi
     @Environment(JamSession.self) private var jam: JamSession?
     @Environment(FlowController.self) private var flow: FlowController?
+
+    init(method: String, credit: String, sections: [ToneSection], allowsTuning: @escaping () -> Bool = { true },
+         @ViewBuilder header: () -> Header) {
+        self.method = method
+        self.credit = credit
+        self.sections = sections
+        self.allowsTuning = allowsTuning
+        self.header = header()
+    }
 
     var body: some View {
         ScrollView {
@@ -146,6 +266,7 @@ struct CycleTonePage: View {
                 Text("This song: " + CycleToneText.song(store.project))
                     .font(Theme.Font.value)
                     .foregroundStyle(Theme.Color.text)
+                header
                 ForEach(sections) { section in
                     Text(section.title)
                         .font(Theme.Font.label)
@@ -175,6 +296,7 @@ struct CycleTonePage: View {
     }
 
     private func tune(_ tone: CycleTone, _ choice: CycleToneChoice) {
+        guard allowsTuning() else { return }
         let key = Command.setKeyRoot(tone.pitch % 12)
         let pitch = Command.setConcertPitch(hertz: CycleToneText.concertPitch(tone))
         let tempo = Command.setTempo(bpm: CycleToneText.tempo(tone))
@@ -189,6 +311,12 @@ struct CycleTonePage: View {
             guard ownTempo else { return }
             try? store.perform(tempo)
         }
+    }
+}
+
+extension CycleTonePage where Header == EmptyView {
+    init(method: String, credit: String, sections: [ToneSection]) {
+        self.init(method: method, credit: credit, sections: sections, header: { EmptyView() })
     }
 }
 
@@ -433,7 +561,9 @@ enum CycleToneText {
                                 ("÷", "divided by"), ("≈", "is about"), (" = ", " equals ")] {
             spoken = spoken.replacingOccurrences(of: symbol, with: words)
         }
-        // A number of seconds: "0.94 s" reads "0.94 seconds"; a word that starts with an s is left alone.
+        // A number of seconds: "1 s" reads "1 second", "0.94 s" reads "0.94 seconds"; a word that starts
+        // with an s is left alone.
+        spoken = spoken.replacingOccurrences(of: "(?<![0-9.,])1 s\\b", with: "1 second", options: .regularExpression)
         return spoken.replacingOccurrences(of: "([0-9]) s\\b", with: "$1 seconds", options: .regularExpression)
     }
 
@@ -453,6 +583,20 @@ enum CycleToneText {
             }
             return ToneSection(id: group.rawValue, title: group.title, items: items)
         }
+    }
+
+    /// The taken pulse's row, built the same way; no section while no pulse is taken.
+    static func bodySections(pulse: Int?) -> [ToneSection] {
+        guard let pulse, let tone = BodyTones.heartbeat(beatsPerMinute: pulse) else { return [] }
+        let rate = NumberText.string(Double(pulse), decimals: 0, unit: "BPM")
+        let beat = NumberText.string(tone.periodSeconds, decimalsUpTo: 4, unit: "s")
+        let derived = "A = " + NumberText.string(concertPitch(tone), decimals: 2, unit: "Hz")
+            + dot + "One heartbeat every " + beat + ", " + octaves(tone.octaves)
+        let item = ToneItem(id: "heartbeat", title: "Pulse " + rate + ", taken", tone: tone, derivation: derived,
+                            spoken: "Pulse " + spokenNumbers(rate) + ", taken" + spokenBreak
+                                + spokenNumbers(numbers(tone) + dot + derived),
+                            origin: "Pulse: " + rate + ", one heartbeat every " + beat + "; its frequency is one over it.")
+        return [ToneSection(id: "heartbeat", title: BodyTones.heartbeatTitle, items: [item])]
     }
 
     /// The molecules' rows by section, built the same way.

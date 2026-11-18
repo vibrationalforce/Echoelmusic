@@ -30,7 +30,11 @@ final class JamSession {
         case joined(JamPeer)
     }
 
-    private(set) var role: Role = .off
+    private(set) var role: Role = .off {
+        didSet {
+            if (oldValue == .hosting) != (role == .hosting) { JamRegistry.shared.hostingChanged() }
+        }
+    }
     /// Jams found nearby while looking.
     private(set) var nearby: [JamPeer] = []
     /// Everyone in the jam as the list reads them, the host first.
@@ -53,21 +57,12 @@ final class JamSession {
         return false
     }
 
-    /// Every window's jam, held weakly. Each window has its own (`StudioView`), but they play one
-    /// engine and one song, so a jam hosted in any window carries the tempo of all of them off the
-    /// device: `anyHosts` is the question Flow's body-sharing gate asks, never one window's `role`.
-    private static let live = NSHashTable<JamSession>.weakObjects()
-
-    /// Whether a jam in any window of this app is hosted now; a closed window's jam has gone with
-    /// its window and no longer counts. Flow's look asks it four times a second. A view that reads
-    /// it is drawn again when a jam it saw starts or ends hosting — not when a window opens, since
-    /// the list itself is not observed (a new window's jam starts off).
-    static var anyHosts: Bool {
-        live.allObjects.contains { $0.role == .hosting }
-    }
+    /// Whether a jam in any window of this app is hosted now (`JamRegistry`): the question Flow's
+    /// body-sharing gate and the Body page ask, never one window's `role`.
+    static var anyHosts: Bool { JamRegistry.shared.anyHosts }
 
     init() {
-        Self.live.add(self)
+        JamRegistry.shared.add(self)
     }
 
     @ObservationIgnored private var engine: AudioEngine?
@@ -597,5 +592,35 @@ final class JamSession {
 
     private var tempoText: String {
         followedTempo.map { NumberText.string($0, decimalsUpTo: 2, unit: "BPM") } ?? "the last tempo"
+    }
+}
+
+/// Every window's jam, held weakly. Each window has its own (`StudioView`), but they play one engine
+/// and one song, so a jam hosted in any window carries the tempo of all of them off the device.
+/// Observed through `changes`, which moves whenever any jam starts or ends hosting, so a view that
+/// asks `anyHosts` is drawn again even for a jam in a window opened after it drew; Flow's look asks
+/// four times a second. A window closed while it hosts takes its jam with it without moving
+/// `changes`: Flow's next look sees that at once, a view at its next redraw — until then it stays
+/// closed, the safe side.
+@MainActor
+@Observable
+final class JamRegistry {
+    static let shared = JamRegistry()
+
+    @ObservationIgnored private let jams = NSHashTable<JamSession>.weakObjects()
+    /// Moves when a jam starts or ends hosting; read by `anyHosts` so its readers are observed.
+    private var changes = 0
+
+    func add(_ jam: JamSession) {
+        jams.add(jam)
+    }
+
+    func hostingChanged() {
+        changes &+= 1
+    }
+
+    var anyHosts: Bool {
+        _ = changes
+        return jams.allObjects.contains { $0.role == .hosting }
     }
 }

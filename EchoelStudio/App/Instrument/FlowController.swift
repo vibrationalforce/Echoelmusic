@@ -181,6 +181,22 @@ final class FlowController {
         BioEgressPolicy.allowsFollowingThePulse(tempoLeaves: tempoLeaves, consent: engine?.bodyConsent ?? .off)
     }
 
+    /// Whether a pulse from `source` may be taken into the song now (Cycle Tones, Body): never one
+    /// from Apple Health, and while the tempo leaves this device only with Share Body Data on
+    /// (`BioEgressPolicy.allowsTakingThePulse`). Closed until the controller is attached.
+    func mayTakeThePulse(from source: BodyChannel.Source) -> Bool {
+        guard let engine else { return false }
+        return BioEgressPolicy.allowsTakingThePulse(from: source, tempoLeaves: tempoLeaves, consent: engine.bodyConsent)
+    }
+
+    /// Whether the tempo may carry the pulse now (gate 2): always while it stays on this device, and
+    /// with Share Body Data on while it leaves. The Body page says so when it may not. Closed until
+    /// the controller is attached.
+    var tempoMayCarryThePulse: Bool {
+        guard let engine else { return false }
+        return BioEgressPolicy.allowsFollowingThePulse(tempoLeaves: tempoLeaves, consent: engine.bodyConsent)
+    }
+
     /// The pulse of the body source that is on, while it is measured.
     private var measuredPulse: Double? {
         if let strap, strap.isOn { return strap.beatsPerMinute.map(Double.init) }

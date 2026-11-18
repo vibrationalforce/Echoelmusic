@@ -114,6 +114,22 @@ final class ConnectionsPolicyTests: XCTestCase {
                        "the detail switch alone shares nothing")
     }
 
+    /// Taking a pulse into the song's tempo or key (Cycle Tones, Body) asks what following asks for
+    /// the strap, the camera and the phone, and never takes one from the Health store.
+    func testAPulseIsTakenIntoTheSongOnlyWhereItMayLeave() {
+        for source: BodyChannel.Source in [.camera, .ble, .health, .motion] {
+            for tempoLeaves in [false, true] {
+                for consent in [BioEgressPolicy.Consent.off, bodyOnly] {
+                    let taken = BioEgressPolicy.allowsTakingThePulse(from: source, tempoLeaves: tempoLeaves, consent: consent)
+                    let expected = source != .health && (!tempoLeaves || consent.sharesBody)
+                    XCTAssertEqual(taken, expected, "\(source) leaves: \(tempoLeaves) shares: \(consent.sharesBody)")
+                }
+            }
+        }
+        XCTAssertFalse(BioEgressPolicy.allowsTakingThePulse(from: .health, tempoLeaves: false, consent: bodyOnly),
+                       "Health stays on the device even with everything on")
+    }
+
     /// Every source is the body's or it is not, by its stored name — a source added later with a
     /// `body.` name needs consent without anyone listing it.
     func testASourceIsTheBodysByItsStoredName() {

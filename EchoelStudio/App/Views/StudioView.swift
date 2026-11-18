@@ -289,8 +289,9 @@ struct StudioView: View {
             }
         case .cycles:
             // Tones from the planets' cycles (as a list, or as the sky drawn from the star table,
-            // place, time and the phone's attitude, Sky S2) and from the lines of hydrogen and
-            // everyday molecules (founder 2026-11-15: in place of the Sky).
+            // place, time and the phone's attitude, Sky S2), from the lines of hydrogen and everyday
+            // molecules, and from the musician's own pulse, taken by a gesture (Body, `BodyTones`)
+            // (founder 2026-11-15: in place of the Sky).
             CycleTonesSurface()
         }
     }

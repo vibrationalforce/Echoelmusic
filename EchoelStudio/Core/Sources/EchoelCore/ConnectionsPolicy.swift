@@ -74,6 +74,15 @@ public enum BioEgressPolicy {
         !tempoLeaves || consent.sharesBody
     }
 
+    /// Whether a pulse may be taken into the song now (Cycle Tones, Body): one gesture, not a
+    /// follow, but the tempo it writes is the pulse moved by whole octaves — between 60 and 119 the
+    /// pulse itself — and the key is made from it. So it asks what following asks, and more: never
+    /// a pulse read from the Health store (gate 1 — a song's tempo can leave later, whatever is on
+    /// now), and while the tempo this phone plays leaves it, only with Share Body Data on (gate 2).
+    public static func allowsTakingThePulse(from source: BodyChannel.Source, tempoLeaves: Bool, consent: Consent) -> Bool {
+        allowsEgress(source) && allowsFollowingThePulse(tempoLeaves: tempoLeaves, consent: consent)
+    }
+
     public static let clinicalAddresses: Set<String> = [
         "/echoelmusic/bio/heart/rmssd",
         "/echoelmusic/bio/heart/pnn50",
