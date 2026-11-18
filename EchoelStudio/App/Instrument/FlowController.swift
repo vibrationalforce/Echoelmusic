@@ -11,8 +11,8 @@ import Observation
 /// (T1). While a jam's host or a MIDI clock sets the pace, Flow is off and cannot be chosen.
 ///
 /// The tempo Flow plays follows the body, so it leaves the device only as the body does: while a
-/// MIDI clock goes out, a jam is hosted in any window or the OSC connection is on, Flow follows the pulse
-/// only with Share Body Data on (`BioEgressPolicy.allowsFollowingThePulse`). Without it Flow holds
+/// MIDI clock goes out, a jam is hosted in any window, or OSC, Art-Net or sACN is on, Flow follows the
+/// pulse only with Share Body Data on (`BioEgressPolicy.allowsFollowingThePulse`). Without it Flow holds
 /// the tempo where it is and says so (`holdsForSharing`).
 ///
 /// Owned by `StudioView`, so Flow goes on while another view is open. Its observed values change
@@ -165,12 +165,13 @@ final class FlowController {
     }
 
     /// The tempo this phone plays leaves it now: a MIDI clock goes out, a jam is hosted — in any
-    /// window, since every window plays the one engine (`JamSession.anyHosts`) — or the OSC
-    /// connection, which carries the tempo and the beat, is on.
+    /// window, since every window plays the one engine (`JamSession.anyHosts`) — or a connection
+    /// that carries the beat as a value is on: OSC (the tempo and the beat phase), Art-Net and sACN
+    /// (the light's dimmer swings with the beat and its colour follows the key and concert pitch).
     private var tempoLeaves: Bool {
         if let engine, engine.clock.isSending { return true }
         if JamSession.anyHosts { return true }
-        if let connections, connections.isOn(.osc) { return true }
+        if let connections, connections.isOn(.osc) || connections.isOn(.artNet) || connections.isOn(.sacn) { return true }
         return false
     }
 

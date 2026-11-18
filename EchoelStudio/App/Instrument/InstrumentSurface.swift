@@ -310,7 +310,7 @@ private struct FlowStatusLine: View {
             return "The tempo stays where you set it."
         case .flow:
             guard !holdsForSharing else {
-                return "Flow holds the tempo: a MIDI clock, a jam you host or OSC carries it off this device, and Share Body Data is off. Turn it on under Connections and Flow follows your pulse again."
+                return "Flow holds the tempo: a MIDI clock, a jam you host, OSC or the lights (Art-Net, sACN) carry it off this device, and Share Body Data is off. Turn it on under Connections and Flow follows your pulse again."
             }
             guard let pulse, let target else {
                 return "Flow waits for a steady pulse. Then it moves the tempo one step per bar while the song plays."
