@@ -1,47 +1,35 @@
-11.0.0 — the Sky's camera follows the dark smoothly; a chosen city stays; Cycle Tones tune a song to a cycle of the sky
+11.0.0 — Cycle Tones sits on the bar with Planets, Molecules and Body, and shows each calculation; this build asks one thing: make sixteen bars
 
-New since 10078, built by the Echoel Studio run; nothing here is device-verified yet.
-- Sky, camera picture (while the phone steers): near the limit of automatic exposure in the dark,
-  the exposure goes on from where it stood, at most half again every half second, time before
-  gain, instead of jumping to the longest time at the highest gain. Automatic returns when the
-  light is back or after two overexposed frames in a row; focus holds meanwhile.
-- Sky, place menu (top left): a chosen city stays when your location arrives later and when the Sky
-  opens again; the first item goes back: "Here" (location off: "Last Known Place", once a place was
-  found before).
-- Sky, Cycle Tones (the list key, top right): 74 cycles of the Earth, the Moon, planets, minor
-  planets and moons, each as a tone (one over its period, raised by octaves into octave 3), a tempo
-  seven octaves lower and the concert pitch that puts the tone on its key. A row's tuning fork sets
-  the song's key, concert pitch or tempo, or all three as one Undo; a tempo set by Flow, a MIDI clock
-  or a jam stays. Under the ring the Sun, the Moon and a planet show their tone. Method after Hans
-  Cousto; a calculation that claims nothing about what a tone does to a listener.
-Limits, new: the key choice sets the song's root; in a new song (no scale, twelve equal steps) only
-a Harmonizer that follows the key makes it heard. After dark the camera brightens step by step, at
-most one step every half second. The lines under the ring stop growing at the bars' text size.
-Older limits as in 10078.
+New since 10079, built by the Echoel Studio run; nothing here is device-verified yet.
+- Bottom bar: "Cycle Tones" stands where "Sky" stood. Its page has three lists, Planets, Molecules
+  and Body, and two looks, List and Sky; the sky with the ring is the second look.
+- Molecules: lines of the hydrogen atom and vibrations of everyday molecules as tones (sections
+  "Hydrogen Atom" and "Everyday Molecules"), halved by whole octaves into octave 3, by the same
+  arithmetic as the cycles.
+- Every row: "How is this calculated?" opens the steps from the cycle to the tone, the tempo and the
+  concert pitch. The tuning fork offers Key, Tempo, Key and Tempo and, last and on its own, Concert
+  Pitch.
+- Body: "Pulse now" shows the pulse of the heart rate strap or the rear camera, whichever is chosen
+  in the Song menu, Body Source; "Take Pulse" holds it as it is at that moment, and the row below
+  turns one heartbeat into a tone, a tempo and a concert pitch. A pulse from Apple Health is not
+  taken. While a MIDI clock, a jam you host, OSC or the lights (Art-Net, sACN) carry the tempo off
+  the device, a pulse is taken only with Share Body Data on.
+- Flow: while the lights (Art-Net, sACN) are on, or a jam is hosted in any window of the app, Flow
+  follows your pulse only with Share Body Data on, as it already did for a MIDI clock, OSC and a
+  jam hosted in its own window.
+- Not visible yet, no screen shows them: AmbiX encoding in the DSP package and a model of a
+  catalogue of instrument packs in the core package.
+Limits, new: a taken pulse lives only as long as the Cycle Tones page; the song keeps what the
+tuning fork set. Older limits as in 10079.
 
-Previous: 10078. A green commit that changes this file uploads build 10000 + run number. A test
+Previous: 10079. A green commit that changes this file uploads build 10000 + run number. A test
 list, not a source for claims (ContentPipeline/CLAIMS.md).
 
-Five checks, yes or no. 1 and 2: one song with a synth track (Init or Warm Pad, Arpeggiator off)
-holding long notes, and an audio track with a loop; 1 first.
-1. Click off, Loop on, Play. Mixer → audio track's Effects → Add Effect → Tape; when "Loading…"
-   is gone, tap On (it reads Off), tap again, then … › Remove. Each of the four times, no click or
-   gap in the loop or the long notes? (A 5 ms dip or doubled beat is the glide.)
-2. Tape removed; Stop. Arrange: hold the audio track's name › Automate › Volume, tap the lane halfway down
-   at the song's end; hold the name again › Modulate › Pan › "Bar LFO → …". Press Play and let the
-   loop come round twice; hold a screen key the clip never plays across the loop's end, let go; drag
-   the synth's fader; tap the ruler at another bar. Stop, tap the ruler over the middle of the audio
-   loop, Play. No click anywhere, and does the held key sound through the loop's end? (A clip note
-   begun before a ruler tap is not picked up: not a no.)
-3. Arm the audio track (its record key in Tracks), Record, a few seconds, Record again; wait until
-   the take shows in Arrange; rename the song (Song menu → Song Settings…, a name no other song has,
-   Done). Swipe the app away, open it, press Play, look under Song menu → Open: same song, new name,
-   take playing, listed once? Then swipe it away, open it, swipe it away again within two seconds of
-   the song showing, and open it once more: same song, no "did not finish starting" line?
-4. Delay on a track, Time 500 (and a preset on another maker's plug-in, if any). Open another song
-   (none: Song menu → New Song → Empty) and this one again; Delay's Ping-Pong On; swipe the app
-   away, open it. Both times the values and the preset kept?
-5. iPad, full screen, rotation lock off: one thing in each bottom-bar view (a key; Add Track ›
-   Audio; ruler near bar 3; Add Scene; Master fader; Field full screen and back; Sky: a city, then
-   Cycle Tones open and closed). Turn it once. Every view works, city still chosen, nothing
-   overlapping either way? (Sideways the Sky is drawn on its side until dragged.) No iPad: "no iPad".
+One ask, before any check. No build of this app has yet been used the way a musician would use
+it, so this one asks for that and nothing else: start a screen recording, open the app, and try
+to make sixteen bars in two to five minutes: a beat, a bass line or a chord, then Play. No list
+and no protocol; stop wherever it stops being possible or pleasant. The recording is the answer.
+What gets in the way in it is the next work, in the order it happened.
+
+The five checks of 10079 stay open and unchanged. They are in this file's previous version and
+rest until that recording exists.
