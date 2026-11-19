@@ -1,5 +1,8 @@
 import EchoelCore
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// The design system. Every colour, size and radius on screen comes from here, so the app
 /// reads as one instrument.
@@ -26,13 +29,26 @@ enum Theme {
         /// A control's own fill: the earlier app's 6 % neutral, composited onto `surface` so it
         /// reads the same wherever it sits.
         static let surfaceRaised = EchoelBrand.Color.surfaceRaised
-        /// A hairline that separates; it does not announce a control.
-        static let border = EchoelBrand.Color.border
+        /// A hairline that separates; it does not announce a control. With Increase Contrast on,
+        /// the operable boundary's strength (audit 2026-11-19, UX #14: 1.2 : 1 never strengthened).
+        static let border = increased(EchoelBrand.Color.border, to: EchoelBrand.Color.borderStrong)
         /// The boundary of something operable — a parameter field, a key of the number pad.
         static let borderStrong = EchoelBrand.Color.borderStrong
         static let text = EchoelBrand.Color.text
         static let textSecondary = EchoelBrand.Color.textSecondary
-        static let textTertiary = EchoelBrand.Color.textTertiary
+        /// With Increase Contrast on, the full text colour.
+        static let textTertiary = increased(EchoelBrand.Color.textTertiary, to: EchoelBrand.Color.text)
+
+        /// `normal`, or `high` while the system's Increase Contrast is on — resolved by the trait
+        /// collection, so every view and canvas that draws the token follows the setting.
+        private static func increased(_ normal: SwiftUI.Color, to high: SwiftUI.Color) -> SwiftUI.Color {
+            #if canImport(UIKit)
+            let normalColor = UIColor(normal), highColor = UIColor(high)
+            return SwiftUI.Color(UIColor { traits in traits.accessibilityContrast == .high ? highColor : normalColor })
+            #else
+            return normal
+            #endif
+        }
         /// Bio-green: the signal colour, for what sounds, is measured or is held under a finger —
         /// a label, a line, a meter, a switch that is on. Never the area behind a label: a chosen
         /// or main control is the off-white tile (`ToolButtonStyle`), as on the earlier instrument.
