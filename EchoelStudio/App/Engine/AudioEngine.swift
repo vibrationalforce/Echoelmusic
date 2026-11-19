@@ -960,7 +960,7 @@ final class AudioEngine {
                     }
                 }
                 defer { if let resumeTick { seek(toTick: resumeTick) } }
-                current = EngineCore(sampleRate: sampleRate)
+                current = EngineCore(sampleRate: sampleRate, preview: preview)
                 current.setClickEnabled(clickEnabled)
                 current.setClickLevel(ClickLevel.gain(decibels: clickLevelDB))
                 current.setHeadphoneSpatial(headphoneSpatial)
@@ -977,7 +977,7 @@ final class AudioEngine {
             }
 
             current.load.restart()
-            let node = Self.makeSourceNode(format: format, core: current, preview: preview)
+            let node = Self.makeSourceNode(format: format, core: current)
             step("graph: attach source node", [("Hz", sampleRate), ("ch", Double(channels))])
             engine.attach(node)
             sourceNode = node
@@ -1772,8 +1772,7 @@ final class AudioEngine {
     /// Built outside the main actor and with an explicitly `@Sendable` block: a closure formed
     /// inside a `@MainActor` method inherits that isolation, and the render thread would trap
     /// on the isolation check before the first sample (the legacy app's builds 2613/2618).
-    nonisolated private static func makeSourceNode(format: AVAudioFormat, core: EngineCore,
-                                                   preview: PreviewPlayer) -> AVAudioSourceNode {
+    nonisolated private static func makeSourceNode(format: AVAudioFormat, core: EngineCore) -> AVAudioSourceNode {
         let pointers = ChannelPointers()
         // Host ticks to seconds, read once: the callback measures itself with two clock reads.
         var timebase = mach_timebase_info_data_t()
@@ -1807,11 +1806,6 @@ final class AudioEngine {
             } else {
                 core.render(frameCount: frames, channels: pointers.base, channelCount: count, hostTime: hostTime)
             }
-            // The browser's file after the song's own output guard and master effects, on the main
-            // pair or, chosen on an interface of four outputs or more, on the cue pair 3/4.
-            let first = preview.firstChannel(channelCount: count)
-            preview.render(left: pointers.base[first], right: pointers.base[first + 1], frames: frames,
-                           outputRate: core.sampleRate)
             // The compute and delivery clocks (`RenderLoad`): atomic counters only.
             let sampleTime = timestamp.pointee.mFlags.contains(.sampleTimeValid) ? timestamp.pointee.mSampleTime : nil
             core.load.record(seconds: Double(mach_absolute_time() &- started) * secondsPerTick, frames: frames,

@@ -40,8 +40,9 @@ final class OutputGuardTests: XCTestCase {
         return project
     }
 
-    private func render(_ project: Project, guarded: Bool, seconds: Double = 8) -> (left: [Float], right: [Float]) {
-        let core = EngineCore(sampleRate: rate)
+    private func render(_ project: Project, guarded: Bool, seconds: Double = 8,
+                        preview: PreviewPlayer? = nil) -> (left: [Float], right: [Float]) {
+        let core = EngineCore(sampleRate: rate, preview: preview)
         core.setClickEnabled(false)
         core.setOutputGuard(guarded)
         var slots = SlotAssigner(capacity: core.slotCapacity)
@@ -77,6 +78,21 @@ final class OutputGuardTests: XCTestCase {
         let ceiling = Float(Foundation.pow(10, EngineCore.outputCeilingDB / 20))
         XCTAssertLessThanOrEqual(peak(guarded), ceiling * 1.0001)
         XCTAssertEqual(ClickDetector().clicks(in: guarded.left), [], "the guard turns down without a click")
+    }
+
+    /// The browser's listening at full level over the same song stays under the ceiling too: it is
+    /// added before the guard, not after it (2026-11-19).
+    func testListeningOverALoudSongStaysUnderTheCeiling() throws {
+        let song = try denseSong()
+        let preview = PreviewPlayer()
+        preview.setLevel(decibels: 0)
+        let tone: [Float] = (0..<96_000).map { (index: Int) -> Float in
+            Float(Foundation.sin(2 * Double.pi * 330 * Double(index) / 48_000))
+        }
+        _ = preview.play(try XCTUnwrap(SampleBuffer(samples: tone, sampleRate: rate)))
+        let heard = render(song, guarded: true, seconds: 2, preview: preview)
+        let ceiling = Float(Foundation.pow(10, EngineCore.outputCeilingDB / 20))
+        XCTAssertLessThanOrEqual(peak(heard), ceiling * 1.0001)
     }
 
     /// Below the ceiling the guard is not there: the same samples, bit for bit.

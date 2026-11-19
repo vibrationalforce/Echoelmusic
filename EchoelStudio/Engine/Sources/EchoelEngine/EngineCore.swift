@@ -358,9 +358,15 @@ public final class EngineCore: @unchecked Sendable {
     // Main thread only.
     private var published: [SnapshotBox] = []
 
-    public init(sampleRate: Double, slotCapacity: Int = Track.limit(for: .instrument)) {
+    /// The media browser's listening (`PreviewPlayer`), added into its pair after the click and
+    /// BEFORE the output's guard, so a loud file over a loud song never passes the ceiling
+    /// (2026-11-19: it was added after the guard, in the app's render block). Nil in an export.
+    private let preview: PreviewPlayer?
+
+    public init(sampleRate: Double, slotCapacity: Int = Track.limit(for: .instrument), preview: PreviewPlayer? = nil) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.sampleRate = rate
+        self.preview = preview
         timecode = MTCGenerator(sampleRate: rate)
         self.slotCapacity = Swift.max(1, slotCapacity)
         meters = MeterBank(count: self.slotCapacity + Self.smoothedAudioTracks + Self.returnCapacity + 1)
@@ -790,6 +796,7 @@ public final class EngineCore: @unchecked Sendable {
             if crossover.advance(rendered) { current?.lines.markSettled() }
             meterMaster(frames: rendered)
             addClick(frames: rendered)
+            addPreview(frames: rendered)
             guardOutput(frames: rendered)
             done += rendered
         }
@@ -819,6 +826,7 @@ public final class EngineCore: @unchecked Sendable {
             if crossover.advance(rendered) { current?.lines.markSettled() }
             meterMaster(frames: rendered)
             addClick(frames: rendered)
+            addPreview(frames: rendered)
             guardOutput(frames: rendered)
             if used == 1 {
                 let mono = outputs[0]
@@ -846,6 +854,14 @@ public final class EngineCore: @unchecked Sendable {
             left[i] += clickLeft[i]
             right[i] += clickRight[i]
         }
+    }
+
+    /// The chunk of the browser's listening into the main pair or, chosen on an interface with
+    /// four outputs or more, the cue pair 3/4.
+    private func addPreview(frames: Int) {
+        guard let preview else { return }
+        let first = preview.firstChannel(channelCount: outputCount)
+        preview.render(left: outputs[first], right: outputs[first + 1], frames: frames, outputRate: sampleRate)
     }
 
     /// The master's inserts on the master pair, every chunk, so a limiter or a reverb tail runs
