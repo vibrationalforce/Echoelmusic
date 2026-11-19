@@ -670,6 +670,9 @@ private struct PlacementBlock: View {
     let hits: [Tick]
 
     @State private var dragX: CGFloat = 0
+    /// An edge drag in progress, as the edge shows on the magnet's line (2026-11-19).
+    @State private var trimLeft: CGFloat = 0
+    @State private var trimRight: CGFloat = 0
     @AppStorage(ArrangeView.snapsToHitsKey) private var snapsToHits = true
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
@@ -686,10 +689,14 @@ private struct PlacementBlock: View {
         accessible(block.contextMenu { menu })
     }
 
-    /// The block itself: shape, name, size, position and the move drag.
+    /// The block itself: shape, name, size, position, the edge grips and the move drag.
     private var block: some View {
         let color = Theme.Color.track(track.colorIndex)
-        let width = Swift.max(8, CGFloat(Double(clip.length) / ticksPerPoint))
+        let width = Swift.max(8, CGFloat(Double(clip.length) / ticksPerPoint) - trimLeft + trimRight)
+        let dragging = dragX != 0 || trimLeft != 0 || trimRight != 0
+        // Two 44-pt grips need a block of two touch targets, or no room is left to move it; a
+        // narrower block trims in the editor's length menu, or after zooming in.
+        let grips = CGFloat(Double(clip.length) / ticksPerPoint) >= Self.gripsNeed
         return RoundedRectangle(cornerRadius: Theme.Radius.small)
             .fill(color.opacity(0.35))
             .overlay(
@@ -703,9 +710,11 @@ private struct PlacementBlock: View {
                     .padding(Theme.Space.xs)
             }
             .overlay(alignment: .bottomTrailing) { linkBadge }
+            .overlay(alignment: .leading) { if grips { edgeHandle(.start, color: color) } }
+            .overlay(alignment: .trailing) { if grips { edgeHandle(.end, color: color) } }
             .frame(width: width, height: Theme.Size.trackRowHeight - Theme.Space.s)
-            .offset(x: CGFloat(Double(placement.start) / ticksPerPoint) + dragX, y: Theme.Space.xs)
-            .opacity(dragX == 0 ? 1 : 0.8)
+            .offset(x: CGFloat(Double(placement.start) / ticksPerPoint) + dragX + trimLeft, y: Theme.Space.xs)
+            .opacity(dragging ? 0.8 : 1)
             .onTapGesture { open(track.id, clip.id) }
             .gesture(
                 DragGesture(minimumDistance: 6, coordinateSpace: .named(ArrangeLane.space))
@@ -715,6 +724,51 @@ private struct PlacementBlock: View {
                         drop(movedBy: value.translation.width)
                     }
             )
+    }
+
+    /// The narrowest block that shows its grips, in points.
+    private static let gripsNeed: CGFloat = 88
+
+    /// A grip along one edge, as an audio region has (2026-11-19): drag the start or the end to
+    /// shorten or lengthen the clip. It looks narrow (a 4-pt stripe with 8 pt either side) and
+    /// takes a full touch target, 44 pt, half of it beyond the edge; it wins over the move drag.
+    private func edgeHandle(_ edge: Arranging.Edge, color: Color) -> some View {
+        Rectangle()
+            .fill(color.opacity(0.6))
+            .frame(width: Theme.Space.xs)
+            .padding(.horizontal, Theme.Space.s)
+            .contentShape(Rectangle().inset(by: -Theme.Space.m))
+            .highPriorityGesture(trimGesture(edge))
+            .accessibilityHidden(true)
+    }
+
+    /// The edge follows the finger on the magnet's line and trims once when it lifts: one undo step.
+    private func trimGesture(_ edge: Arranging.Edge) -> some Gesture {
+        DragGesture(minimumDistance: 2, coordinateSpace: .named(ArrangeLane.space))
+            .onChanged { value in
+                let from: Tick = edge == .start ? placement.start : placement.start + clip.length
+                let shown = snap.previewOffset(from: from, translation: value.translation.width,
+                                               ticksPerPoint: ticksPerPoint, meter: meter)
+                if edge == .start { trimLeft = shown } else { trimRight = shown }
+            }
+            .onEnded { value in
+                trimLeft = 0
+                trimRight = 0
+                let delta = ArrangeZoom.ticks(dragged: Double(value.translation.width), ticksPerPoint: ticksPerPoint)
+                trim(edge, byTicks: delta, snap: snap)
+            }
+    }
+
+    private func trim(_ edge: Arranging.Edge, byTicks delta: Tick, snap: SnapGrid) {
+        guard let commands = Arranging.trimmed(placement, edge: edge, byTicks: delta, in: track,
+                                               project: store.project, snap: snap) else { return }
+        try? store.perform(commands, title: "Trim Clip")
+    }
+
+    /// VoiceOver's trims by one bar, on the bar whatever the magnet says.
+    private func trim(_ edge: Arranging.Edge, bars: Int64) {
+        let from: Tick = edge == .start ? placement.start : placement.start + clip.length
+        trim(edge, byTicks: Arranging.ticks(movingBars: bars, from: from, meter: meter), snap: .bar)
     }
 
     /// A linked copy shows a chain and how many places play its clip (×3). VoiceOver reads it in the
@@ -795,6 +849,10 @@ private struct PlacementBlock: View {
             .accessibilityAction(named: "Make Unique") { makeUnique() }
             .accessibilityAction(named: "Split at Playhead") { splitAtPlayhead() }
             .accessibilityAction(named: "Consolidate") { consolidate() }
+            .accessibilityAction(named: "Lengthen End One Bar") { trim(.end, bars: 1) }
+            .accessibilityAction(named: "Shorten End One Bar") { trim(.end, bars: -1) }
+            .accessibilityAction(named: "Start One Bar Earlier") { trim(.start, bars: -1) }
+            .accessibilityAction(named: "Start One Bar Later") { trim(.start, bars: 1) }
             .accessibilityAction(named: "Rename Clip") { router.sheet = .rename(.clip(clip.id)) }
             .accessibilityAction(named: "Delete") { remove() }
     }

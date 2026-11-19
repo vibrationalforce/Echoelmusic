@@ -88,6 +88,116 @@ final class ArrangingTests: XCTestCase {
         XCTAssertEqual(Arranging.songBars(of: p), 7)
     }
 
+    // MARK: - Clip edges (2026-11-19)
+
+    /// A four-bar clip at bar 3 with a note at the start of each of its bars.
+    private func placedClip() throws -> (Project, TrackID, ClipID, Placement) {
+        var (p, track, clip) = try project(clipBars: 4)
+        let placement = Placement(clip: clip, start: 2 * bar)
+        try Command.placeClip(track: track, id: placement.id, clip: clip, start: placement.start).apply(to: &p)
+        try Command.addNotes(clip, (0..<4).map { Note(pitch: 60 + $0, start: Tick($0) * bar, length: 480) }).apply(to: &p)
+        return (p, track, clip, placement)
+    }
+
+    private func applied(_ commands: [Command]?, to project: Project) throws -> Project {
+        var p = project
+        for command in try XCTUnwrap(commands) { try command.apply(to: &p) }
+        return p
+    }
+
+    func testDraggingAClipsEndShortensAndLengthensIt() throws {
+        let (p, track, clip, placement) = try placedClip()
+        let shorter = try applied(Arranging.trimmed(placement, edge: .end, byTicks: -2 * bar, in: try XCTUnwrap(p.track(track)),
+                                                    project: p, snap: .bar), to: p)
+        let short = try XCTUnwrap(shorter.track(track)?.clips.first { $0.id == clip })
+        XCTAssertEqual(short.length, 2 * bar)
+        XCTAssertEqual(short.notes.map(\.pitch), [60, 61], "what starts past the new end goes")
+        let longer = try applied(Arranging.trimmed(placement, edge: .end, byTicks: 3 * bar, in: try XCTUnwrap(p.track(track)),
+                                                   project: p, snap: .bar), to: p)
+        XCTAssertEqual(longer.track(track)?.clips.first { $0.id == clip }?.length, 7 * bar)
+    }
+
+    func testDraggingAClipsStartKeepsEveryNoteWhereItSounds() throws {
+        let (p, track, clip, placement) = try placedClip()
+        let trimmed = try applied(Arranging.trimmed(placement, edge: .start, byTicks: bar, in: try XCTUnwrap(p.track(track)),
+                                                    project: p, snap: .bar), to: p)
+        let t = try XCTUnwrap(trimmed.track(track))
+        let held = try XCTUnwrap(t.clips.first { $0.id == clip })
+        XCTAssertEqual(t.placements.first?.start, 3 * bar)
+        XCTAssertEqual(held.length, 3 * bar)
+        XCTAssertEqual(held.notes.map(\.pitch), [61, 62, 63], "the note before the new start goes")
+        XCTAssertEqual(held.notes.map { $0.start + 3 * bar }, [3 * bar, 4 * bar, 5 * bar], "the others sound where they did")
+        let extended = try applied(Arranging.trimmed(placement, edge: .start, byTicks: -bar, in: try XCTUnwrap(p.track(track)),
+                                                     project: p, snap: .bar), to: p)
+        let e = try XCTUnwrap(extended.track(track))
+        XCTAssertEqual(e.placements.first?.start, bar)
+        XCTAssertEqual(e.clips.first { $0.id == clip }?.notes.first?.start, bar, "an empty bar before the first note")
+        XCTAssertNoThrow(try ProjectCodec.decode(ProjectCodec.encode(extended)))
+    }
+
+    func testAnEdgeStopsAtTheNextClipAndAtBarOne() throws {
+        var (p, track, clip, placement) = try placedClip()
+        try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 8 * bar).apply(to: &p)
+        let commands = Arranging.trimmed(placement, edge: .end, byTicks: 20 * bar, in: try XCTUnwrap(p.track(track)),
+                                         project: p, snap: .bar, newClip: ClipID())
+        let longer = try applied(commands, to: p)
+        let own = try XCTUnwrap(longer.track(track)?.placements.first { $0.id == placement.id })
+        XCTAssertEqual(longer.track(track)?.clips.first { $0.id == own.clip }?.length, 6 * bar, "stops where the next clip starts")
+        let earliest = try applied(Arranging.trimmed(placement, edge: .start, byTicks: -20 * bar, in: try XCTUnwrap(p.track(track)),
+                                                     project: p, snap: .bar), to: p)
+        XCTAssertEqual(earliest.track(track)?.placements.first { $0.id == placement.id }?.start, 0, "never before bar 1")
+    }
+
+    func testTrimmingALinkedCopyLeavesTheOtherPlacesAlone() throws {
+        var (p, track, clip, placement) = try placedClip()
+        try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 10 * bar).apply(to: &p)
+        let fresh = ClipID()
+        let trimmed = try applied(Arranging.trimmed(placement, edge: .end, byTicks: -2 * bar, in: try XCTUnwrap(p.track(track)),
+                                                    project: p, snap: .bar, newClip: fresh), to: p)
+        let t = try XCTUnwrap(trimmed.track(track))
+        XCTAssertEqual(t.placements.first { $0.id == placement.id }?.clip, fresh)
+        XCTAssertEqual(t.clips.first { $0.id == fresh }?.length, 2 * bar)
+        XCTAssertEqual(t.clips.first { $0.id == clip }?.length, 4 * bar, "the other copy keeps four bars")
+    }
+
+    func testAnEdgeThatDoesNotMoveIsNoChange() throws {
+        let (p, track, _, placement) = try placedClip()
+        XCTAssertNil(Arranging.trimmed(placement, edge: .end, byTicks: 10, in: try XCTUnwrap(p.track(track)), project: p, snap: .bar))
+        XCTAssertNil(Arranging.trimmed(placement, edge: .start, byTicks: 4 * bar, in: try XCTUnwrap(p.track(track)), project: p,
+                                       snap: .bar), "the start never reaches the end")
+    }
+
+    /// Placements may overlap; one that lies over this clip does not stop its edge, or a drag
+    /// outward would pull the edge inward.
+    func testAnOverlappingClipDoesNotTurnTheDragAround() throws {
+        var (p, track, _, placement) = try placedClip()
+        let over = ClipID()
+        try Command.createClip(track: track, id: over, name: "Over", length: 2 * bar).apply(to: &p)
+        try Command.placeClip(track: track, id: PlacementID(), clip: over, start: 4 * bar).apply(to: &p)
+        try Command.placeClip(track: track, id: PlacementID(), clip: over, start: bar).apply(to: &p)
+        let t = try XCTUnwrap(p.track(track))
+        let longer = try applied(Arranging.trimmed(placement, edge: .end, byTicks: bar, in: t, project: p, snap: .bar), to: p)
+        XCTAssertEqual(longer.track(track)?.clips.first { $0.id == placement.clip }?.length, 5 * bar, "one bar longer, not shorter")
+        let earlier = try applied(Arranging.trimmed(placement, edge: .start, byTicks: -bar, in: t, project: p, snap: .bar), to: p)
+        XCTAssertEqual(earlier.track(track)?.placements.first { $0.id == placement.id }?.start, bar, "one bar earlier, not later")
+    }
+
+    /// A start dragged later keeps the controller value in effect at the new start: a pedal held
+    /// down before it is still down there.
+    func testAStartDraggedLaterCarriesThePedalThatWasDown() throws {
+        var (p, track, clip, placement) = try placedClip()
+        try Command.setControls(clip, [ControlChange(kind: .controller(number: 64), start: bar / 2, value: 127),
+                                       ControlChange(kind: .pitchBend, start: bar / 4, value: 9_000),
+                                       ControlChange(kind: .pitchBend, start: 2 * bar, value: 8_192)]).apply(to: &p)
+        let trimmed = try applied(Arranging.trimmed(placement, edge: .start, byTicks: bar, in: try XCTUnwrap(p.track(track)),
+                                                    project: p, snap: .bar), to: p)
+        let controls = try XCTUnwrap(trimmed.track(track)?.clips.first { $0.id == clip }?.controls)
+        XCTAssertEqual(controls.filter { $0.kind == .controller(number: 64) }.map(\.start), [0], "the pedal is down from the start")
+        XCTAssertEqual(controls.filter { $0.kind == .controller(number: 64) }.map(\.value), [127])
+        XCTAssertEqual(controls.filter { $0.kind == .pitchBend }.map(\.start), [0, bar], "the bend in effect, then its return")
+        XCTAssertNoThrow(try ProjectCodec.decode(ProjectCodec.encode(trimmed)))
+    }
+
     /// The song's loop runs to the end of its last clip, as its bars are counted: a four-bar clip
     /// with a note only in bar 1 is a four-bar song, and loops four bars (2026-11-18).
     func testTheLoopAndTheBarCountShareOneEnd() throws {

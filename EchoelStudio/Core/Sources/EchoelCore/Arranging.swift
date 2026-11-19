@@ -167,6 +167,84 @@ public enum Arranging {
 
     public enum Edge: Sendable { case start, end }
 
+    /// The commands for a clip placement's edge dragged by `delta` ticks onto the nearest line of
+    /// the magnet (`SnapGrid`; with it off, to the tick), as an audio region's edge is (2026-11-19).
+    /// The end: the clip ends there; longer adds empty time, shorter drops what starts past the
+    /// new end. The start: the placement starts there and every note and controller change keeps
+    /// its place in the song; shorter drops the notes that now start before the clip and carries
+    /// the controller value in effect there to the new start, longer adds empty time before it. An edge stops at the clip next to it on the track and at bar 1. A clip that plays
+    /// in more than one place (a linked copy, or also in a session slot) first becomes a clip of
+    /// its own (`newClip`), so the other places keep theirs. Nil when nothing changes.
+    public static func trimmed(_ placement: Placement, edge: Edge, byTicks delta: Tick, in track: Track,
+                               project: Project, snap: SnapGrid, newClip: ClipID = ClipID()) -> [Command]? {
+        guard let index = track.clipIndex(placement.clip) else { return nil }
+        let clip = track.clips[index]
+        guard clip.audio == nil, clip.length > 0 else { return nil }
+        let meter = project.meterMap
+        let start = placement.start
+        let end = start + clip.length
+        let others = track.placements.filter { $0.id != placement.id }
+        // Only a neighbour outward of the edge stops it; one that overlaps this clip (placements
+        // may overlap) would otherwise turn the drag around.
+        let nextStart = others.filter { $0.start >= end }.map(\.start).min()
+        let previousEnd = others.filter { $0.start < start }.compactMap { Self.end(of: $0, in: track) }
+            .filter { $0 <= start }.max() ?? 0
+        var commands: [Command] = []
+        var target = clip.id
+        if track.uses(of: clip.id) >= 2 {
+            commands.append(.makePlacementUnique(track: track.id, placement.id, clip: newClip))
+            target = newClip
+        }
+        switch edge {
+        case .end:
+            var stop = snap.nearest(end + delta, meter: meter)
+            if let nextStart { stop = Swift.min(stop, nextStart) }
+            stop = Swift.min(stop, MusicalTime.maximumTick)
+            guard stop > start, stop != end else { return nil }
+            return commands + [.setClipLength(target, length: stop - start)]
+        case .start:
+            var begin = snap.nearest(start + delta, meter: meter)
+            begin = Swift.max(begin, previousEnd, 0)
+            guard begin < end, begin != start else { return nil }
+            let shift = begin - start
+            let length = clip.length - shift
+            let dropped = clip.notes.filter { $0.start - shift < 0 }.map(\.id)
+            let kept = clip.notes.filter { $0.start - shift >= 0 }.map { note -> Note in
+                var moved = note
+                moved.start = note.start - shift
+                return moved
+            }
+            var controls = clip.controls.filter { $0.start - shift >= 0 }.map { change -> ControlChange in
+                var moved = change
+                moved.start = change.start - shift
+                return moved
+            }
+            // A pedal held down or a bend in effect where the clip now starts stays in effect:
+            // the last dropped change of each kind moves to the new start, unless one is there.
+            var lastDropped: [ControlChange.Kind: ControlChange] = [:]
+            for change in clip.controls where change.start - shift < 0 {
+                if let held = lastDropped[change.kind], held.start > change.start { continue }
+                lastDropped[change.kind] = change
+            }
+            for change in lastDropped.values.sorted(by: { $0.start < $1.start })
+            where !controls.contains(where: { $0.kind == change.kind && $0.start == 0 }) {
+                var carried = change
+                carried.start = 0
+                controls.append(carried)
+            }
+            controls.sort { $0.start < $1.start }
+            var edits: [Command] = []
+            if !dropped.isEmpty { edits.append(.removeNotes(target, dropped)) }
+            if !kept.isEmpty { edits.append(.updateNotes(target, kept)) }
+            if !clip.controls.isEmpty { edits.append(.setControls(target, controls)) }
+            // Longer: room first, then the notes move later into it. Shorter: the notes move
+            // earlier first, then the clip ends where they still fit.
+            let resize = Command.setClipLength(target, length: length)
+            let body = shift < 0 ? [resize] + edits : edits + [resize]
+            return commands + body + [.movePlacement(track: track.id, placement.id, start: begin)]
+        }
+    }
+
     /// The commands for an audio region's edge dragged by `delta` ticks, snapped to the beat.
     /// The end changes how much of the file plays. The start moves where the region begins AND
     /// where in the file it starts, so the audio that stays sits exactly where it sat in the
