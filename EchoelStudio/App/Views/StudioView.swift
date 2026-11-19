@@ -1810,6 +1810,8 @@ private struct SurfaceBar: View {
         .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Views")
+        // VoiceOver says "tab, 2 of 7" as on a system tab bar (audit 2026-11-19, UX #13).
+        .accessibilityAddTraits(.isTabBar)
     }
 
     private func cell(_ surface: StudioView.Surface) -> some View {
