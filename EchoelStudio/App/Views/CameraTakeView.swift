@@ -36,6 +36,7 @@ struct CameraTakeView: View {
                     .buttonStyle(ToolButtonStyle())
                     .disabled(isBusy)
                 Spacer(minLength: 0)
+                whiteBalanceMenu
                 lensButton
                 recordButton
             }
@@ -80,6 +81,28 @@ struct CameraTakeView: View {
         .buttonStyle(ToolButtonStyle(isActive: recorder.state == .recording, fill: .recording))
         .disabled(!recorder.canRecord && recorder.state != .recording)
         .accessibilityHint("Plays the song and films with it; Stop ends both.")
+    }
+
+    /// Auto, or one colour temperature for the takes; changing it mid-take is allowed (a lamp
+    /// switched on the set), and it stays through a lens change.
+    private var whiteBalanceMenu: some View {
+        Menu {
+            Picker("White Balance", selection: Binding(get: { recorder.whiteBalance },
+                                                        set: { recorder.setWhiteBalance($0) })) {
+                Text("Auto").tag(Int?.none)
+                ForEach(TakeWhiteBalance.kelvins, id: \.self) { kelvin in
+                    Text(TakeWhiteBalance.label(kelvin)).tag(Int?.some(kelvin))
+                }
+            }
+        } label: {
+            Label(TakeWhiteBalance.label(recorder.whiteBalance), systemImage: "thermometer.sun")
+        }
+        .menuStyle(.button)
+        .buttonStyle(ToolButtonStyle())
+        .disabled(recorder.session == nil)
+        .accessibilityLabel("White Balance")
+        .accessibilityValue(TakeWhiteBalance.label(recorder.whiteBalance))
+        .accessibilityHint("Auto, or one colour temperature for the takes.")
     }
 
     private var lensButton: some View {

@@ -63,6 +63,15 @@ final class VideoTakeRecorder {
     /// The lens the next take films through.
     private(set) var lens: TakeOrientation.Lens = .back
 
+    /// The colour temperature the takes are filmed at, nil for auto; it stays through a lens change.
+    private(set) var whiteBalance: Int?
+
+    /// Holds the camera at `kelvin` (or auto), now and for the takes after; allowed mid-take.
+    func setWhiteBalance(_ kelvin: Int?) {
+        whiteBalance = kelvin
+        camera?.setWhiteBalance(kelvin: kelvin)
+    }
+
     /// Record may start a take now — and the lens may change.
     var canRecord: Bool { refusal == nil && life.canRecord }
 
@@ -111,6 +120,7 @@ final class VideoTakeRecorder {
                 Task { @MainActor [weak self] in self?.cameraEvent(event) }
             }
             self.camera = camera
+            camera.setWhiteBalance(kelvin: self.whiteBalance)
             do {
                 try await camera.open()
             } catch {

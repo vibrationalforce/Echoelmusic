@@ -54,6 +54,8 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
     private var observers: [NSObjectProtocol] = []
     private var shouldRun = false
     private var interrupted = false
+    /// Queue-only: the colour temperature the lens is held at, nil for auto (`TakeWhiteBalance`).
+    private var whiteBalance: Int?
     private let log = Logger(subsystem: "com.echoelmusic.studio", category: "video")
 
     /// `generation` stamps the events of this camera until a take names its own.
@@ -100,6 +102,37 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
         session.addInput(input)
         session.addOutput(output)
         rotation = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: nil)
+        applyWhiteBalance(to: device)
+    }
+
+    /// Holds the lens at `kelvin` from now on, through a lens change too; nil gives it back to auto.
+    func setWhiteBalance(kelvin: Int?) {
+        queue.async { [self] in
+            whiteBalance = kelvin
+            if let device = (session.inputs.first as? AVCaptureDeviceInput)?.device { applyWhiteBalance(to: device) }
+        }
+    }
+
+    /// Queue-only. A lens that cannot be held at custom gains stays on auto.
+    private func applyWhiteBalance(to device: AVCaptureDevice) {
+        do {
+            try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
+            if let kelvin = whiteBalance, device.isWhiteBalanceModeSupported(.locked),
+               device.isLockingWhiteBalanceWithCustomDeviceGainsSupported {
+                let raw = device.deviceWhiteBalanceGains(for: AVCaptureDevice.WhiteBalanceTemperatureAndTintValues(
+                    temperature: Float(kelvin), tint: 0))
+                let gains = TakeWhiteBalance.clampedGains(
+                    TakeWhiteBalance.Gains(red: raw.redGain, green: raw.greenGain, blue: raw.blueGain),
+                    maximum: device.maxWhiteBalanceGain)
+                device.setWhiteBalanceModeLocked(with: AVCaptureDevice.WhiteBalanceGains(
+                    redGain: gains.red, greenGain: gains.green, blueGain: gains.blue), completionHandler: nil)
+            } else if device.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+                device.whiteBalanceMode = .continuousAutoWhiteBalance
+            }
+        } catch {
+            log.warning("white balance could not be set: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private static func device(for lens: TakeOrientation.Lens) -> AVCaptureDevice? {
@@ -137,6 +170,7 @@ final class TakeCamera: NSObject, @unchecked Sendable, AVCaptureFileOutputRecord
         session.sessionPreset = session.canSetSessionPreset(.hd1920x1080) ? .hd1920x1080 : .high
         lens = next
         rotation = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: nil)
+        applyWhiteBalance(to: device)
         return true
     }
 
