@@ -213,6 +213,21 @@ struct ParameterField: View {
 
     private var isTyped: Bool { pad?.request?.owner == owner }
 
+    /// The note value a time or a slow rate is at the song's tempo (`TempoNote`, the studio
+    /// calculator): "1/8 dotted" beside 375 ms at 120 BPM. Times from 10 ms to 8 s and rates up
+    /// to 40 Hz only — a cutoff in hertz is a pitch, not a rhythm. The tempo at the song's start.
+    private func noteValue(of value: Double, _ descriptor: ParameterDescriptor) -> String? {
+        let bpm = store.project.tempoMap.bpm(at: 0)
+        switch descriptor.unit {
+        case .seconds where (0.01...8).contains(value):
+            return TempoNote.division(forSeconds: value, bpm: bpm)?.name
+        case .hertz where value > 0 && value <= 40:
+            return TempoNote.division(forHertz: value, bpm: bpm)?.name
+        default:
+            return nil
+        }
+    }
+
     @ViewBuilder private func field(_ descriptor: ParameterDescriptor, value: Double) -> some View {
         let position = descriptor.normalized(value)
         let engaged = drag != nil || isTyped
@@ -221,10 +236,19 @@ struct ParameterField: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
                 .lineLimit(1)
-            Text(ParameterFormat.text(value, descriptor: descriptor))
-                .font(Theme.Font.value)
-                .foregroundStyle(engaged ? Theme.Color.accent : Theme.Color.text)
-                .lineLimit(1)
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Space.xs) {
+                Text(ParameterFormat.text(value, descriptor: descriptor))
+                    .font(Theme.Font.value)
+                    .foregroundStyle(engaged ? Theme.Color.accent : Theme.Color.text)
+                    .lineLimit(1)
+                if let note = noteValue(of: value, descriptor) {
+                    Text(note)
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Color.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+            }
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Rectangle().fill(Theme.Color.surfaceRaised)
