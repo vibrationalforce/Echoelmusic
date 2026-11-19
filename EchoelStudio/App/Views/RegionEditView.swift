@@ -158,6 +158,10 @@ struct RegionEditView: View {
                                               followsTempo: region.followsTempo == true))
         }
         .disabled(region.followsTempo != true)
+        HStack(spacing: Theme.Space.s) {
+            tempoButton("Halve", target: native / 2, region: region)
+            tempoButton("Double", target: native * 2, region: region)
+        }
         warpModePicker(region)
         fitToBars(region)
     }
@@ -277,6 +281,20 @@ struct RegionEditView: View {
             tempoNote = nil
         }
         return true
+    }
+
+    /// Half or twice the native tempo in one tap, for a file heard at the wrong octave of its tempo
+    /// (audit A3 #11; the note above says to double or halve it). Held inside the range; one undo
+    /// step each.
+    private func tempoButton(_ title: String, target: Double, region: AudioRegion) -> some View {
+        Button(title) {
+            store.endGesture()
+            try? store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: Self.heldBPM(target),
+                                              followsTempo: true))
+        }
+        .buttonStyle(ToolButtonStyle())
+        .disabled(region.followsTempo != true || !AudioRegion.nativeBPMRange.contains(target))
+        .accessibilityHint("Sets Native Tempo to " + Self.shown(Self.heldBPM(target)) + ".")
     }
 
     static func shown(_ bpm: Double) -> String { NumberText.string(bpm, decimalsUpTo: 2, unit: "BPM") }
