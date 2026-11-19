@@ -109,9 +109,15 @@ struct ArrangeView: View {
                 ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
                     AutomationName(lane: lane)
                 }
+                ForEach(Self.routes(of: .track(track.id), in: project)) { route in
+                    ModulationName(route: route)
+                }
             }
             ForEach(Self.lanes(of: .master, in: project), id: \.target) { lane in
                 AutomationName(lane: lane)
+            }
+            ForEach(Self.routes(of: .master, in: project)) { route in
+                ModulationName(route: route)
             }
         }
         .frame(width: nameWidth)
@@ -140,9 +146,17 @@ struct ArrangeView: View {
                         AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
                             .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
                     }
+                    ForEach(Self.routes(of: .track(track.id), in: project)) { route in
+                        ModulationLane(route: route)
+                            .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
+                    }
                 }
                 ForEach(Self.lanes(of: .master, in: project), id: \.target) { lane in
                     AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
+                        .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
+                }
+                ForEach(Self.routes(of: .master, in: project)) { route in
+                    ModulationLane(route: route)
                         .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
                 }
             }
@@ -230,6 +244,11 @@ extension ArrangeView {
     /// The song's lanes that belong to `owner`, in the order they were made.
     static func lanes(of owner: ParameterAddress.Owner, in project: Project) -> [AutomationLane] {
         project.automation.filter { $0.target.owner == owner }
+    }
+
+    /// The modulation routes that move one owner's values, each shown as a row under its lanes.
+    static func routes(of owner: ParameterAddress.Owner, in project: Project) -> [ModulationRoute] {
+        project.modRoutes.filter { $0.target.owner == owner }
     }
 
     /// Whether a dragged clip or region lands on a hit within reach (CUT): kept on this device, on at first.
