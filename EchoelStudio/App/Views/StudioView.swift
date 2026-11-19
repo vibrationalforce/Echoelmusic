@@ -754,6 +754,7 @@ struct TransportBar: View {
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.record)
                     .padding(.bottom, Theme.Space.xxs)
+                if engine.microphoneDenied { OpenSettingsButton() }
             }
             if let document = documents.lastError {
                 Text(document)

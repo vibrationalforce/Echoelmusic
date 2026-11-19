@@ -101,6 +101,8 @@ final class AudioEngine {
     @ObservationIgnored private var cutting: Set<WavetableSource> = []
     /// Off at every launch (2026-11-19, founder: the click muted by default).
     @ObservationIgnored private var clickEnabled = false
+    /// The microphone was refused at the last ask: the status strip offers Settings with its line.
+    private(set) var microphoneDenied = false
     /// The click's level in decibels, kept on this device, never in the song; quiet to start.
     private(set) var clickLevelDB: Double = UserDefaults.standard.object(forKey: AudioEngine.clickLevelKey) as? Double
         ?? ClickLevel.standard
@@ -804,8 +806,10 @@ final class AudioEngine {
         }
         guard await AVAudioApplication.requestRecordPermission() else {
             lastError = "Echoelmusic may not use the microphone. Allow it in Settings."
+            microphoneDenied = true
             return false
         }
+        microphoneDenied = false
         if keepingPosition {
             // The answer can take a moment: the song may play again, or the input be open by now,
             // or a call or the background may have taken the audio — then it waits for its return

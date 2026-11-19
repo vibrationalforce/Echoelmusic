@@ -30,6 +30,7 @@ struct CameraTakeView: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
                 .multilineTextAlignment(.center)
+            if recorder.state == .denied { OpenSettingsButton() }
             HStack(spacing: Theme.Space.m) {
                 Button("Close") { dismiss() }
                     .buttonStyle(ToolButtonStyle())
