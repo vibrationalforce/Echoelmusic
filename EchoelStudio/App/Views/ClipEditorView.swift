@@ -354,6 +354,7 @@ struct PianoRoll: View {
 
     private func key(_ pitch: Int) -> some View {
         let black = NoteEditing.isBlackKey(pitch)
+        let mark = store.project.context.keyMark(of: pitch)
         return ZStack(alignment: .leading) {
             Rectangle().fill(Theme.Color.keyWhite)
             if black {
@@ -361,13 +362,16 @@ struct PianoRoll: View {
                     .fill(Theme.Color.keyBlack)
                     .frame(width: keyWidth * 0.6)
             }
-            if pitch % 12 == 0 {
-                Text(NoteEditing.name(of: pitch))
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.keyLabel)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.trailing, Theme.Space.xs)
+            HStack(spacing: Theme.Space.xs) {
+                Spacer(minLength: 0)
+                if pitch % 12 == 0 {
+                    Text(NoteEditing.name(of: pitch))
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Color.keyLabel)
+                }
+                keyMarkDot(mark)
             }
+            .padding(.trailing, Theme.Space.xs)
         }
         .frame(width: keyWidth, height: rowHeight)
         // The line between two white keys: under B (above C) and under E (above F) a full key
@@ -684,10 +688,35 @@ struct PianoRoll: View {
         Theme.Accessibility.announce(Announcement(text, priority: urgent ? .urgent : .normal))
     }
 
+    /// The key's place in the song's key on the side keyboard, as the play keys mark it: a filled
+    /// dot for the root, a ring for another tone of the scale — told apart by shape, not by colour.
+    /// A chromatic song marks nothing (`MusicalContext.keyMark`).
+    @ViewBuilder private func keyMarkDot(_ mark: KeyMark) -> some View {
+        switch mark {
+        case .root: Circle().fill(Theme.Color.keyLabel).frame(width: 6, height: 6)
+        case .scaleTone: Circle().stroke(Theme.Color.keyLabel, lineWidth: 1.2).frame(width: 5, height: 5)
+        case .unmarked: EmptyView()
+        }
+    }
+
     private func drawGrid(in context: inout GraphicsContext, size: CGSize) {
         for pitch in Note.pitchRange where NoteEditing.isBlackKey(pitch) {
             let y = CGFloat(Note.pitchRange.upperBound - pitch) * rowHeight
             context.fill(Path(CGRect(x: 0, y: y, width: size.width, height: rowHeight)), with: .color(Theme.Color.surface))
+        }
+        // The rows of the song's scale lit a little, its root's a little more, so a note outside
+        // the key shows where it sits; the keyboard's dots say the same by shape.
+        let songKey = store.project.context
+        for pitch in Note.pitchRange {
+            let opacity: Double
+            switch songKey.keyMark(of: pitch) {
+            case .root: opacity = 0.14
+            case .scaleTone: opacity = 0.06
+            case .unmarked: continue
+            }
+            let y = CGFloat(Note.pitchRange.upperBound - pitch) * rowHeight
+            context.fill(Path(CGRect(x: 0, y: y, width: size.width, height: rowHeight)),
+                         with: .color(Theme.Color.accent.opacity(opacity)))
         }
         for pitch in Note.pitchRange where pitch % 12 == 0 {
             let y = CGFloat(Note.pitchRange.upperBound - pitch + 1) * rowHeight
