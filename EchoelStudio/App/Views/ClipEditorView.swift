@@ -502,6 +502,7 @@ struct PianoRoll: View {
             }
             Section("Your chords — three or more notes together") {
                 Button("Revoice by Octaves") { revoice() }
+                strumMenu
             }
         } label: {
             Label("Chords", systemImage: "pianokeys")
@@ -509,10 +510,54 @@ struct PianoRoll: View {
         .menuStyle(.button)
         .buttonStyle(ToolButtonStyle())
         .accessibilityLabel("Chords")
-        .accessibilityHint("Suggests chords that fit after the last note, or revoices your chords by octaves.")
+        .accessibilityHint("Suggests chords that fit after the last note, or revoices or strums your chords.")
     }
 
     private static let suggestedChords = 6
+
+    /// Strum: the chords' notes one after another, lowest first (down) or highest first (up), over
+    /// a 1/128, 1/64 or 1/32 note; each note still ends where it ended (`Strum`). On the chosen
+    /// note's chord, or with none chosen, on every chord. One undo step; Together undoes the spread.
+    private var strumMenu: some View {
+        Menu("Strum") {
+            Section("Down, lowest note first") {
+                ForEach(Self.strumSpans, id: \.self) { span in
+                    Button("Down \(Self.strumName(span))") { strum(.down, span: span) }
+                }
+            }
+            Section("Up, highest note first") {
+                ForEach(Self.strumSpans, id: \.self) { span in
+                    Button("Up \(Self.strumName(span))") { strum(.up, span: span) }
+                }
+            }
+            Button("Together") { strum(.down, span: 0) }
+        }
+        .accessibilityHint(chosen.isEmpty ? "Spreads every chord of this clip." : "Spreads the chosen note's chord.")
+    }
+
+    /// A 1/128, a 1/64 and a 1/32 note.
+    private static let strumSpans: [Tick] = [MusicalTime.ticksPerQuarter / 32, MusicalTime.ticksPerQuarter / 16,
+                                             Strum.maximumSpan]
+
+    private static func strumName(_ span: Tick) -> String {
+        switch span {
+        case ..<(MusicalTime.ticksPerQuarter / 16): "Tight"
+        case ..<Strum.maximumSpan: "Medium"
+        default: "Wide"
+        }
+    }
+
+    private func strum(_ direction: Strum.Direction, span: Tick) {
+        let result = Strum.strummed(clip, chosen: chosen, direction: direction, span: span)
+        let text = Strum.message(result, direction: direction, span: span)
+        guard let command = result.command else { return announce(text) }
+        do {
+            try store.perform([command], title: "Strum")
+            announce(text)
+        } catch {
+            announce("The chords could not be strummed.", urgent: true)
+        }
+    }
 
     /// The last Revoice's words while the clip holds the notes it left (one comparison, which
     /// stops at the first note that differs).
