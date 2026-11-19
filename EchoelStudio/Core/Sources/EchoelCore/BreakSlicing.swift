@@ -63,9 +63,9 @@ public struct SampleSlice: Codable, Equatable, Hashable, Sendable {
 /// come from the app (`OnsetDetector` reads the file off the main thread), the result is commands
 /// through the one door, as one undo step.
 public enum BreakSlicing {
-    /// The slice starts for a file: 0, then the onsets heard in it (seconds of the file) — at most
-    /// `SampleSlice.maximumCount` in all, taken evenly across the file's onsets when it has more,
-    /// and none closer than 30 ms to the one before. A file with fewer than two onsets past its
+    /// The slice starts for a file: 0, then the onsets heard in it (seconds of the file), none
+    /// closer than 30 ms to the one before — or, when there are more hits than pads, one start per
+    /// step of the loop's grid (`gridStarts`). A file with fewer than two onsets past its
     /// start is cut into eight equal pads instead, so a loop always slices.
     public static func starts(onsets: [Double], frameCount: Int, sampleRate: Double) -> [Int] {
         guard frameCount > 1, sampleRate.isFinite, sampleRate > 0 else { return frameCount > 0 ? [0] : [] }
@@ -80,11 +80,36 @@ public enum BreakSlicing {
             let pads = 8
             return (0..<pads).map { frameCount * $0 / pads }.reduce(into: [Int]()) { if $1 > ($0.last ?? -1) { $0.append($1) } }
         }
-        let room = SampleSlice.maximumCount - 1
-        if found.count > room {
-            found = (0..<room).map { found[$0 * found.count / room] }
+        // More hits than pads: one pad per step of the loop's grid. Taking every n-th hit instead
+        // (before 2026-11-19) left the others inside long pads, which play at the file's own speed —
+        // off the song's grid wherever the song's tempo is not the loop's, so a chopped break ran
+        // out of time and lost its groove (Michael, 10083).
+        guard found.count < SampleSlice.maximumCount else {
+            return gridStarts(hits: found, frameCount: frameCount, sampleRate: sampleRate)
         }
         return [0] + found
+    }
+
+    /// One start per step of the loop's grid: sixteenths of its beats (`beats(forSeconds:)`), halved
+    /// until `SampleSlice.maximumCount` pads hold them. A step starts at the hit nearest its grid
+    /// line within half a step — the hit's own frame, so a late or early hit keeps its feel — or on
+    /// the line where no hit is near. Every pad is then one step of the music long.
+    static func gridStarts(hits: [Int], frameCount: Int, sampleRate: Double) -> [Int] {
+        var steps = beats(forSeconds: Double(frameCount) / sampleRate) * 4
+        while steps > SampleSlice.maximumCount { steps /= 2 }
+        guard steps > 1 else { return [0] }
+        let reach = frameCount / steps / 2
+        var starts = [0]
+        for step in 1..<steps {
+            let line = Int(Int64(frameCount) * Int64(step) / Int64(steps))
+            var start = line
+            if let near = hits.min(by: { Swift.abs($0 - line) < Swift.abs($1 - line) }), Swift.abs(near - line) <= reach {
+                start = near
+            }
+            guard let last = starts.last, start > last, start < frameCount else { continue }
+            starts.append(start)
+        }
+        return starts
     }
 
     /// How many quarter notes a loop of `seconds` spans: the power of two whose tempo lands in

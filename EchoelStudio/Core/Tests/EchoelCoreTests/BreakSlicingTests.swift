@@ -33,6 +33,26 @@ final class BreakSlicingTests: XCTestCase {
         XCTAssertGreaterThan(starts.last ?? 0, 80_000, "the end of the loop has pads too")
     }
 
+    /// A busy two-second break (thirty-second notes at 120 BPM) is cut on its sixteenths: every pad
+    /// is one step long, so the pattern plays each hit on the song's grid at any tempo (Michael,
+    /// 10083: chopped breaks ran out of time and groove).
+    func testABusyBreakIsCutOnItsGrid() {
+        let onsets = (1..<64).map { Double($0) * 0.03125 }
+        let starts = BreakSlicing.starts(onsets: onsets, frameCount: 96_000, sampleRate: rate)
+        XCTAssertEqual(starts, (0..<16).map { $0 * 6_000 })
+        let notes = BreakSlicing.pattern(starts: starts, frameCount: 96_000, sampleRate: rate).notes
+        XCTAssertEqual(notes.map(\.start), (0..<16).map { Tick($0) * MusicalTime.ticksPerQuarter / 4 })
+    }
+
+    /// A hit a little late keeps its place: the pad starts on the hit, not on the line.
+    func testALateHitKeepsItsFeel() {
+        var onsets = (1..<64).map { Double($0) * 0.03125 }
+        onsets[3] += 0.01   // the hit on the second sixteenth (0.125 s), 10 ms late (480 frames)
+        let starts = BreakSlicing.starts(onsets: onsets, frameCount: 96_000, sampleRate: rate)
+        XCTAssertEqual(starts[1], 6_480)
+        XCTAssertEqual(starts.count, 16)
+    }
+
     func testAFileWithoutOnsetsIsCutIntoEightEqualPads() {
         XCTAssertEqual(BreakSlicing.starts(onsets: [], frameCount: 96_000, sampleRate: rate),
                        [0, 12_000, 24_000, 36_000, 48_000, 60_000, 72_000, 84_000])
