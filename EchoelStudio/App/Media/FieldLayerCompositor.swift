@@ -72,14 +72,17 @@ final class FieldLayerInstruction: NSObject, AVVideoCompositionInstructionProtoc
     let film: FieldLayerFilm
     /// The part's colour correction (COLOR), drawn into the picture before the Field goes over it.
     let grade: ColorGrade?
+    /// The film's flash limit for the footage under the Field (`ExportFlashGains`), by frame time.
+    let flash: ExportFlashGains?
 
     init(timeRange: CMTimeRange, track: CMPersistentTrackID?, placement: FieldLayerPlacement?, film: FieldLayerFilm,
-         grade: ColorGrade? = nil) {
+         grade: ColorGrade? = nil, flash: ExportFlashGains? = nil) {
         span = Span(value: timeRange)
         self.track = track
         self.placement = placement
         self.film = film
         self.grade = grade
+        self.flash = flash
         super.init()
     }
 
@@ -116,8 +119,9 @@ final class FieldLayerCompositor: NSObject, AVVideoCompositing {
             return
         }
         var source = instruction.track.flatMap { request.sourceFrame(byTrackID: $0) }
-        if let grade = instruction.grade, let frame = source {
-            source = ColorGradeRenderer.shared.graded(frame, by: grade) ?? frame
+        let gain = instruction.flash?.gain(at: request.compositionTime.seconds) ?? 1
+        if let frame = source, instruction.grade != nil || gain < 1 {
+            source = ColorGradeRenderer.shared.graded(frame, by: instruction.grade ?? .neutral, gain: gain) ?? frame
         }
         guard instruction.film.draw(source, placement: instruction.placement, at: request.compositionTime.seconds,
                                     into: output) else {

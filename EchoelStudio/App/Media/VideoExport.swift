@@ -49,6 +49,8 @@ enum VideoExport {
         case cannotEncode
         case noFieldLayer
         case fieldLayerStopped
+        /// The footage could not be read through once to check it for flashing (2026-11-19).
+        case unreadablePicture
         case failed(String)
 
         var errorDescription: String? {
@@ -58,6 +60,7 @@ enum VideoExport {
             case .cannotEncode: "This device cannot encode the video in that format. Choose H.264."
             case .noFieldLayer: "This device cannot draw the Field layer. Export with Field Layer set to Off."
             case .fieldLayerStopped: "The Field could not be drawn into the video. Keep Echoelmusic open while it exports, and export again."
+            case .unreadablePicture: "The video could not be checked for flashing before it was written. Keep Echoelmusic open while it exports, and export again."
             case .failed(let reason): "The video could not be written (\(reason)). Check the free space and export again."
             }
         }
@@ -195,10 +198,17 @@ enum VideoExport {
             black(until: total)
         }
 
+        let layered = options.fieldLayer.isVisible ? field : nil
+        // The film's flash limit (2026-11-19): every frame of the footage measured small, in order,
+        // before the film is written; a frame that flashes is drawn darker, as the video window
+        // shows it. Footage that never flashes leaves the film as it was.
+        let measured = try flashGains(of: composition, picture: picture, shots: shots, frame: frame,
+                                      blended: layered != nil)
+        let flash = measured.dims ? measured : nil
+
         let video = AVMutableVideoComposition()
         video.renderSize = frame
         video.frameDuration = CMTime(value: 1, timescale: CMTimeScale(FieldExport.framesPerSecond))
-        let layered = options.fieldLayer.isVisible ? field : nil
         if let layered {
             // Every frame's Field, computed before the first is drawn, from the song and the mix only.
             let frames = Int((CMTimeGetSeconds(total) * Double(FieldExport.framesPerSecond)).rounded(.up)) + 1
@@ -213,14 +223,15 @@ enum VideoExport {
                                         sourceHeight: Double($0.natural.height))
                 }
                 return FieldLayerInstruction(timeRange: shot.range, track: placed == nil ? nil : picture.trackID,
-                                             placement: placed, film: film, grade: placed == nil ? nil : shot.grade)
+                                             placement: placed, film: film, grade: placed == nil ? nil : shot.grade,
+                                             flash: flash)
             }
-        } else if shots.contains(where: { $0.grade != nil }) {
+        } else if flash != nil || shots.contains(where: { $0.grade != nil }) {
             video.customVideoCompositorClass = ColorGradeCompositor.self
             video.instructions = shots.map { shot in
                 ColorGradeInstruction(timeRange: shot.range, track: shot.placing == nil ? nil : picture.trackID,
                                       placing: shot.placing?.transform ?? .identity,
-                                      grade: ColorGradeSource(shot.grade ?? .neutral))
+                                      grade: ColorGradeSource(shot.grade ?? .neutral), flash: flash)
             }
         } else {
             video.instructions = shots.map { shot in
@@ -250,6 +261,73 @@ enum VideoExport {
             if layered != nil, (error as? AVError)?.code == .videoCompositorFailed { throw ExportError.fieldLayerStopped }
             throw ExportError.failed(error.localizedDescription)
         }
+    }
+
+    /// Reads the film's footage once, each frame drawn as the export draws it (placed, graded) but
+    /// at `VideoFlashCells.pixelsPerSide` a side, and counts it with the flash limit. Every frame
+    /// adds one gain, so a gain's index is its frame; a frame that cannot be read counts as the one
+    /// before it.
+    private static func flashGains(of composition: AVComposition, picture: AVCompositionTrack, shots: [Shot],
+                                   frame: CGSize, blended: Bool) throws -> ExportFlashGains {
+        var gains = ExportFlashGains(framesPerSecond: FieldExport.framesPerSecond, blended: blended)
+        guard frame.width > 0, frame.height > 0 else { return gains }
+        let side = CGFloat(VideoFlashCells.pixelsPerSide)
+        let small = CGAffineTransform(scaleX: side / frame.width, y: side / frame.height)
+        let measuring = AVMutableVideoComposition()
+        measuring.renderSize = CGSize(width: side, height: side)
+        measuring.frameDuration = CMTime(value: 1, timescale: CMTimeScale(FieldExport.framesPerSecond))
+        measuring.customVideoCompositorClass = ColorGradeCompositor.self
+        measuring.instructions = shots.map { shot in
+            ColorGradeInstruction(timeRange: shot.range, track: shot.placing == nil ? nil : picture.trackID,
+                                  placing: (shot.placing?.transform ?? .identity).concatenating(small),
+                                  grade: ColorGradeSource(shot.grade ?? .neutral), downsamples: true)
+        }
+        guard let reader = try? AVAssetReader(asset: composition) else { throw ExportError.unreadablePicture }
+        let output = AVAssetReaderVideoCompositionOutput(
+            videoTracks: [picture], videoSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
+        output.videoComposition = measuring
+        output.alwaysCopiesSampleData = false
+        guard reader.canAdd(output) else { throw ExportError.unreadablePicture }
+        reader.add(output)
+        guard reader.startReading() else { throw ExportError.unreadablePicture }
+        var cells = VideoFlashCells()
+        let rate = Double(FieldExport.framesPerSecond)
+        var reading = true
+        while reading {
+            // Each frame's decoder leftovers go with it, as in every reader loop of the app.
+            autoreleasepool {
+                guard let sample = output.copyNextSampleBuffer() else {
+                    reading = false
+                    return
+                }
+                // The frame's place in the film is its own time, not the count of frames read: a
+                // skipped frame is counted as the one before it, a repeated one only once.
+                let seconds = CMSampleBufferGetOutputPresentationTimeStamp(sample).seconds
+                let index = seconds.isFinite ? Int((seconds * rate).rounded()) : gains.gains.count
+                guard index >= gains.gains.count else { return }
+                while gains.gains.count < index { gains.add(cells) }
+                if let buffer = CMSampleBufferGetImageBuffer(sample) {
+                    measure(buffer, into: &cells)
+                }
+                gains.add(cells)
+            }
+        }
+        guard reader.status == .completed else {
+            reader.cancelReading()
+            throw ExportError.unreadablePicture
+        }
+        return gains
+    }
+
+    /// One read frame into `cells`; a frame without readable pixels leaves them as they were.
+    private static func measure(_ buffer: CVPixelBuffer, into cells: inout VideoFlashCells) {
+        guard CVPixelBufferLockBaseAddress(buffer, .readOnly) == kCVReturnSuccess else { return }
+        defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+        guard let base = CVPixelBufferGetBaseAddress(buffer) else { return }
+        let rowBytes = CVPixelBufferGetBytesPerRow(buffer)
+        let height = CVPixelBufferGetHeight(buffer)
+        let bytes = UnsafeRawBufferPointer(start: base, count: rowBytes * height)
+        cells.measure(bgra: bytes, width: CVPixelBufferGetWidth(buffer), height: height, bytesPerRow: rowBytes)
     }
 
     /// The transform that turns a source picture upright and places it in `frame` — the export's,

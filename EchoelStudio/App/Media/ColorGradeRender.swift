@@ -43,33 +43,50 @@ final class ColorGradeRenderer: @unchecked Sendable {
         return filter.outputImage ?? image
     }
 
+    /// `image` at `gain` toward black (`ExportFlashGains`): the flash limit of an export, as the
+    /// video window shows footage at its gain over black. 1 leaves it as it is.
+    func dimmed(_ image: CIImage, by gain: Double) -> CIImage {
+        guard gain.isFinite, gain < 1 else { return image }
+        let held = CGFloat(Swift.max(0, gain))
+        let filter = CIFilter.colorMatrix()
+        filter.inputImage = image
+        filter.rVector = CIVector(x: held, y: 0, z: 0, w: 0)
+        filter.gVector = CIVector(x: 0, y: held, z: 0, w: 0)
+        filter.bVector = CIVector(x: 0, y: 0, z: held, w: 0)
+        return filter.outputImage ?? image
+    }
+
     /// `source` through `grade`, placed by `placing` — the transform the export's layer
     /// instruction takes, in pixels from the top left — into `output`, black where it does not
-    /// reach. Without a source the frame is black.
-    func draw(_ source: CVPixelBuffer?, grade: ColorGrade, placing: CGAffineTransform, into output: CVPixelBuffer) {
+    /// reach, at `gain` toward black. Without a source the frame is black.
+    /// `downsamples` averages the source over each output pixel when it is drawn much smaller —
+    /// the export's flash measuring, whose cell means must see the whole picture.
+    func draw(_ source: CVPixelBuffer?, grade: ColorGrade, placing: CGAffineTransform, gain: Double = 1,
+              downsamples: Bool = false, into output: CVPixelBuffer) {
         let frame = CGRect(x: 0, y: 0, width: CVPixelBufferGetWidth(output), height: CVPixelBufferGetHeight(output))
         var picture = CIImage(color: CIColor(red: 0, green: 0, blue: 0)).cropped(to: frame)
         if let source {
-            let image = graded(CIImage(cvPixelBuffer: source, options: [.colorSpace: NSNull()]), by: grade)
+            let image = dimmed(graded(CIImage(cvPixelBuffer: source, options: [.colorSpace: NSNull()]), by: grade), by: gain)
             // Core Image counts from the bottom left; the transform counts from the top left.
             let intoTopLeft = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: 0, ty: CGFloat(CVPixelBufferGetHeight(source)))
             let intoBottomLeft = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: 0, ty: frame.height)
-            let placed = image.transformed(by: intoTopLeft.concatenating(placing).concatenating(intoBottomLeft))
+            let placed = image.transformed(by: intoTopLeft.concatenating(placing).concatenating(intoBottomLeft),
+                                           highQualityDownsample: downsamples)
             picture = placed.composited(over: picture).cropped(to: frame)
         }
         context.render(picture, to: output, bounds: frame, colorSpace: nil)
     }
 
-    /// `source` through `grade` into a new frame of its own size, for a drawing that places it
-    /// itself (the Field Layer's export). Nil when no frame could be made.
-    func graded(_ source: CVPixelBuffer, by grade: ColorGrade) -> CVPixelBuffer? {
+    /// `source` through `grade` at `gain` into a new frame of its own size, for a drawing that
+    /// places it itself (the Field Layer's export). Nil when no frame could be made.
+    func graded(_ source: CVPixelBuffer, by grade: ColorGrade, gain: Double = 1) -> CVPixelBuffer? {
         let attributes: [String: Any] = [kCVPixelBufferMetalCompatibilityKey as String: true,
                                          kCVPixelBufferIOSurfacePropertiesKey as String: [String: Int]()]
         var made: CVPixelBuffer?
         guard CVPixelBufferCreate(kCFAllocatorDefault, CVPixelBufferGetWidth(source), CVPixelBufferGetHeight(source),
                                   kCVPixelFormatType_32BGRA, attributes as CFDictionary, &made) == kCVReturnSuccess,
               let made else { return nil }
-        draw(source, grade: grade, placing: .identity, into: made)
+        draw(source, grade: grade, placing: .identity, gain: gain, into: made)
         return made
     }
 }
@@ -115,12 +132,20 @@ final class ColorGradeInstruction: NSObject, AVVideoCompositionInstructionProtoc
     let track: CMPersistentTrackID?
     let placing: CGAffineTransform
     let grade: ColorGradeSource
+    /// An export's flash limit, looked up by the frame's time; nil in the video window, which caps
+    /// footage as it shows it.
+    let flash: ExportFlashGains?
+    /// Drawn much smaller than the source, averaged (the export's flash measuring).
+    let downsamples: Bool
 
-    init(timeRange: CMTimeRange, track: CMPersistentTrackID?, placing: CGAffineTransform, grade: ColorGradeSource) {
+    init(timeRange: CMTimeRange, track: CMPersistentTrackID?, placing: CGAffineTransform, grade: ColorGradeSource,
+         flash: ExportFlashGains? = nil, downsamples: Bool = false) {
         span = Span(value: timeRange)
         self.track = track
         self.placing = placing
         self.grade = grade
+        self.flash = flash
+        self.downsamples = downsamples
         super.init()
     }
 
@@ -159,7 +184,9 @@ final class ColorGradeCompositor: NSObject, AVVideoCompositing {
         CVBufferSetAttachment(output, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_709_2, .shouldPropagate)
         CVBufferSetAttachment(output, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, .shouldPropagate)
         let source = instruction.track.flatMap { request.sourceFrame(byTrackID: $0) }
-        ColorGradeRenderer.shared.draw(source, grade: instruction.grade.grade, placing: instruction.placing, into: output)
+        let gain = instruction.flash?.gain(at: request.compositionTime.seconds) ?? 1
+        ColorGradeRenderer.shared.draw(source, grade: instruction.grade.grade, placing: instruction.placing, gain: gain,
+                                       downsamples: instruction.downsamples, into: output)
         request.finish(withComposedVideoFrame: output)
     }
 
