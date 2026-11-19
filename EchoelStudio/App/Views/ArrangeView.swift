@@ -104,7 +104,7 @@ struct ArrangeView: View {
                     ModulateMenu(owner: .master)
                 }
             ForEach(project.tracks) { track in
-                trackName(track)
+                trackName(track, showsHits: !hits.isEmpty)
                 ForEach(TakeLanes.rows(of: track)) { row in TakeLaneName(row: row) }
                 ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
                     AutomationName(lane: lane)
@@ -197,7 +197,7 @@ struct ArrangeView: View {
 
     /// A track name's hold menu; a video track with hits also switches Snap to Hits.
     /// A track's name in the names column, with its menu on a long press.
-    private func trackName(_ track: Track) -> some View {
+    private func trackName(_ track: Track, showsHits: Bool) -> some View {
         Text(track.name)
             .font(Theme.Font.label)
             .foregroundStyle(Theme.Color.text)
@@ -207,7 +207,7 @@ struct ArrangeView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: Theme.Size.trackRowHeight)
             .background(Theme.Color.surface)
-            .contextMenu { trackMenu(track, showsHits: !hits.isEmpty) }
+            .contextMenu { trackMenu(track, showsHits: showsHits) }
             // VoiceOver reaches the track's menu here — Automate and Modulate are nowhere else in
             // Arrange (audit 2026-11-19, UX #3): double-tap and hold opens it.
             .accessibilityLabel(track.name)
