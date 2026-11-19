@@ -15,12 +15,17 @@ enum ParameterFormat {
             return percent == 0 ? "C" : (value < 0 ? "L\(percent)" : "R\(percent)")
         case .bpm:
             return NumberText.string(value, decimalsUpTo: 2, unit: "BPM")
+        // As fine as the ear asks for (Michael on 10083: "alles etwas genauer … auch in den Effekten
+        // die Herz Zahlen"): a slow rate in hundredths (0.25 Hz showed "0 Hz"), a tuning in tenths
+        // (440.5 Hz showed "441 Hz"), a short time in tenths of a millisecond; trailing zeros dropped.
         case .hertz:
-            return value >= 1_000 ? NumberText.string(value / 1_000, decimals: 2, unit: "kHz") : NumberText.string(value, decimals: 0, unit: "Hz")
+            if value >= 1_000 { return NumberText.string(value / 1_000, decimalsUpTo: value >= 10_000 ? 2 : 3, unit: "kHz") }
+            return NumberText.string(value, decimalsUpTo: value < 100 ? 2 : 1, unit: "Hz")
         case .seconds:
-            return value >= 1 ? NumberText.string(value, decimals: 2, unit: "s") : NumberText.string(value * 1_000, decimals: 0, unit: "ms")
+            if value >= 1 { return NumberText.string(value, decimalsUpTo: 3, unit: "s") }
+            return NumberText.string(value * 1_000, decimalsUpTo: value < 0.1 ? 1 : 0, unit: "ms")
         case .octaves:
-            return NumberText.string(value, decimals: 1, unit: "oct")
+            return NumberText.string(value, decimalsUpTo: 2, unit: "oct")
         case .amount:
             return NumberText.string(value, decimals: 2)
         case .choice:
