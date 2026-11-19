@@ -69,7 +69,7 @@ struct MediaBrowserView: View {
         }
         ToolbarItem(placement: .principal) { sortMenu }
         ToolbarItem(placement: .confirmationAction) {
-            Button("Done") { dismiss() }
+            Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
         }
     }
 

@@ -138,7 +138,7 @@ struct AgentView: View {
                 .disabled(store.undoTitle != AgentExecutor.undoTitle || agent.isWorking)
                 .accessibilityLabel("Undo the Assistant's Last Request")
         }
-        ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
+        ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }.keyboardShortcut(.cancelAction) }
     }
 
     private func send() {

@@ -33,7 +33,7 @@ struct StoreView: View {
             .echoelList()
             .navigationTitle("Echoelmusic Plugins")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }.keyboardShortcut(.cancelAction) } }
             .task { await store.load() }
         }
         .preferredColorScheme(.dark)

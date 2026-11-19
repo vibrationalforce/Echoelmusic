@@ -20,7 +20,7 @@ struct JamView: View {
             .echoelList()
             .navigationTitle("Jam")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }.keyboardShortcut(.cancelAction) } }
         }
         .preferredColorScheme(.dark)
         // The page's sections change under VoiceOver's focus when the jam does: say what happened

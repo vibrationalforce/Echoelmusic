@@ -30,7 +30,7 @@ struct ConnectionsView: View {
             .numberPadHost()
             .navigationTitle("Connections")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }.keyboardShortcut(.cancelAction) } }
         }
         .preferredColorScheme(.dark)
     }

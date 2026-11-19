@@ -405,7 +405,7 @@ struct LightShowSheet: View {
     var body: some View {
         NavigationStack {
             LightShowView()
-                .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
+                .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }.keyboardShortcut(.cancelAction) } }
         }
         .preferredColorScheme(.dark)
     }

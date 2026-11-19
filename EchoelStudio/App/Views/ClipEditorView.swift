@@ -125,7 +125,7 @@ struct ClipEditorView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+                    Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
                 }
                 ToolbarItemGroup(placement: .bottomBar) {
                     if let track, let clip = editedClip(track) {

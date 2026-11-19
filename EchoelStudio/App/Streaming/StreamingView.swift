@@ -22,7 +22,7 @@ struct StreamingView: View {
             .echoelList()
             .navigationTitle("Go Live")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }.keyboardShortcut(.cancelAction) } }
             .navigationDestination(item: $editing) { target in
                 StreamTargetEditor(target: target)
             }
