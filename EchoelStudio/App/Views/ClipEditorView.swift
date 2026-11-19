@@ -506,6 +506,7 @@ struct PianoRoll: View {
             }
             Section("Your chords — three or more notes together") {
                 Button("Revoice by Octaves") { revoice() }
+                voicingMenu
                 strumMenu
             }
         } label: {
@@ -537,6 +538,29 @@ struct PianoRoll: View {
             Button("Together") { strum(.down, span: 0) }
         }
         .accessibilityHint(chosen.isEmpty ? "Spreads every chord of this clip." : "Spreads the chosen note's chord.")
+    }
+
+    /// One note of each chord moved by an octave, as a player re-voices it (`ChordVoicing`): on the
+    /// chosen note's chord, or with none chosen, on every chord. One undo step each.
+    private var voicingMenu: some View {
+        Menu("Voicing") {
+            ForEach(ChordVoicing.Kind.allCases, id: \.self) { kind in
+                Button(kind.title) { voice(kind) }
+            }
+        }
+        .accessibilityHint(chosen.isEmpty ? "Re-voices every chord of this clip." : "Re-voices the chosen note's chord.")
+    }
+
+    private func voice(_ kind: ChordVoicing.Kind) {
+        let result = ChordVoicing.voiced(clip, chosen: chosen, kind: kind)
+        let text = ChordVoicing.message(result, kind: kind)
+        guard let command = result.command else { return announce(text) }
+        do {
+            try store.perform([command], title: kind.title)
+            announce(text)
+        } catch {
+            announce("The chords could not be re-voiced.", urgent: true)
+        }
     }
 
     /// A 1/128, a 1/64 and a 1/32 note.
