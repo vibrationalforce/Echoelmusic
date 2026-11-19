@@ -117,7 +117,9 @@ struct SceneButton: View {
         Button { engine.launch(scene.id, in: store.project) } label: {
             HStack(spacing: Theme.Space.xs) {
                 Image(systemName: "play.fill").font(Theme.Font.caption)
-                Text(scene.name).font(Theme.Font.label).lineLimit(1)
+                // Shrunk before it is cut at the largest text sizes, where the cell keeps its 56 pt
+                // (audit 2026-11-19, UX #11).
+                Text(scene.name).font(Theme.Font.label).lineLimit(1).minimumScaleFactor(0.7)
                 Spacer(minLength: 0)
             }
             .foregroundStyle(Theme.Color.text)
@@ -169,6 +171,7 @@ struct SessionCell: View {
                     .font(Theme.Font.label)
                     .foregroundStyle(Theme.Color.text)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Spacer(minLength: 0)
                 // What is left until it starts, its own leaf: only it reads the playhead.
                 if isQueued, let launch = engine.session.launchTicks[track.id] {

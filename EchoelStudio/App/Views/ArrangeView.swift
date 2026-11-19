@@ -720,6 +720,7 @@ private struct PlacementBlock: View {
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.text)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .padding(Theme.Space.xs)
             }
             .overlay(alignment: .bottomTrailing) { linkBadge }
