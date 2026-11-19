@@ -834,20 +834,27 @@ private struct PlacementBlock: View {
         }
     }
 
+    /// Split in two chains: one chain of all the actions timed out the type checker (2026-11-19).
     private func accessible(_ view: some View) -> some View {
+        trimActions(
+            view
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(spokenLabel)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint("Opens the note editor.")
+                .accessibilityAction { open(track.id, clip.id) }
+                .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
+                .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
+                .accessibilityAction(named: "Place at Next Hit") { placeAtNextHit() }
+                .accessibilityAction(named: "Duplicate") { duplicate() }
+                .accessibilityAction(named: "Duplicate as Linked") { duplicateLinked() }
+                .accessibilityAction(named: "Make Unique") { makeUnique() }
+                .accessibilityAction(named: "Split at Playhead") { splitAtPlayhead() }
+        )
+    }
+
+    private func trimActions(_ view: some View) -> some View {
         view
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(spokenLabel)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityHint("Opens the note editor.")
-            .accessibilityAction { open(track.id, clip.id) }
-            .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
-            .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
-            .accessibilityAction(named: "Place at Next Hit") { placeAtNextHit() }
-            .accessibilityAction(named: "Duplicate") { duplicate() }
-            .accessibilityAction(named: "Duplicate as Linked") { duplicateLinked() }
-            .accessibilityAction(named: "Make Unique") { makeUnique() }
-            .accessibilityAction(named: "Split at Playhead") { splitAtPlayhead() }
             .accessibilityAction(named: "Consolidate") { consolidate() }
             .accessibilityAction(named: "Lengthen End One Bar") { trim(.end, bars: 1) }
             .accessibilityAction(named: "Shorten End One Bar") { trim(.end, bars: -1) }
