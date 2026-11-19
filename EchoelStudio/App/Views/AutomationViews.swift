@@ -113,6 +113,7 @@ struct AutomationName: View {
 /// point until the next, is drawn as steps and has no handles. One drag is one undo step.
 struct AutomationRow: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
     let lane: AutomationLane
     let signature: TimeSignature
     let pointsPerBar: CGFloat
@@ -123,7 +124,8 @@ struct AutomationRow: View {
 
     enum Grab: Equatable { case point(Int), bend(Int), nothing }
 
-    private static let hit: CGFloat = 14
+    /// How near a touch must land to take a point: 22 pt, 44 across (audit 2026-11-19, UX #10).
+    private static let hit: CGFloat = 22
     private static let snap = MusicalTime.ticksPerQuarter / 4
 
     private var ticksPerPoint: Double { Double(MusicalTime.ticksPerBar(signature)) / Double(pointsPerBar) }
@@ -144,6 +146,58 @@ struct AutomationRow: View {
         .accessibilityAction(named: "Remove Automation") {
             try? store.perform(.setAutomation(lane.target, points: []))
         }
+        // VoiceOver edits the lane at the playhead (audit 2026-11-19, UX #10: only "Remove
+        // Automation" existed). Swipe up or down moves the point there; the playhead is read when
+        // the action runs, never in the body (Law 6).
+        .accessibilityAction(named: "Add Point at Playhead") { addPointAtPlayhead(descriptor) }
+        .accessibilityAction(named: "Delete Point at Playhead") { deletePointAtPlayhead() }
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: nudgePointAtPlayhead(up: true, descriptor)
+            case .decrement: nudgePointAtPlayhead(up: false, descriptor)
+            @unknown default: break
+            }
+        }
+    }
+
+    /// The point within a beat of the playhead, if any.
+    private func pointNearPlayhead() -> Int? {
+        let tick = engine.playheadTick(in: store.project)
+        let reach = MusicalTime.ticksPerQuarter
+        let near = lane.points.indices.filter { Swift.abs(lane.points[$0].tick - tick) <= reach }
+        return near.min { Swift.abs(lane.points[$0].tick - tick) < Swift.abs(lane.points[$1].tick - tick) }
+    }
+
+    private func addPointAtPlayhead(_ descriptor: ParameterDescriptor?) {
+        guard let descriptor else { return }
+        let playhead = engine.playheadTick(in: store.project)
+        let tick = Swift.max(0, (playhead / Self.snap) * Self.snap)
+        let value = lane.value(at: tick) ?? descriptor.defaultValue
+        var points = lane.points
+        points.removeAll { $0.tick == tick }
+        let index = points.firstIndex { $0.tick > tick } ?? points.count
+        points.insert(AutomationPoint(tick: tick, value: value), at: index)
+        try? store.perform(.setAutomation(lane.target, points: points))
+    }
+
+    private func deletePointAtPlayhead() {
+        guard let index = pointNearPlayhead() else { return }
+        var points = lane.points
+        points.remove(at: index)
+        try? store.perform(.setAutomation(lane.target, points: points))
+    }
+
+    /// One step of a choice, or a twentieth of the range, up or down, held inside the range.
+    private func nudgePointAtPlayhead(up: Bool, _ descriptor: ParameterDescriptor?) {
+        guard let descriptor, let index = pointNearPlayhead() else { return }
+        let span = descriptor.range.upperBound - descriptor.range.lowerBound
+        let step = descriptor.taper == .stepped ? 1 : span / 20
+        guard step.isFinite, step > 0 else { return }
+        var points = lane.points
+        let moved = points[index].value + (up ? step : -step)
+        points[index].value = Swift.min(Swift.max(moved, descriptor.range.lowerBound), descriptor.range.upperBound)
+        guard points[index].value != lane.points[index].value else { return }
+        try? store.perform(.setAutomation(lane.target, points: points))
     }
 
     private func draw(_ context: GraphicsContext, _ size: CGSize, _ descriptor: ParameterDescriptor?) {
