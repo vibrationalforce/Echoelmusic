@@ -189,7 +189,7 @@ struct SessionCell: View {
                 try? store.perform(.setSlot(track: track.id, scene: scene.id, clip: nil))
             }
             // The clip itself: out of every slot and every place in the arrangement (undoable).
-            Button("Delete Clip", systemImage: "trash", role: .destructive) {
+            Button("Delete Clip Everywhere", systemImage: "trash", role: .destructive) {
                 try? store.perform(.deleteClip(clip.id))
             }
         }
@@ -199,7 +199,7 @@ struct SessionCell: View {
         .accessibilityActions {
             if clip.audio == nil { Button("Edit Notes") { open(track.id, clip.id) } }
             Button("Rename Clip") { router.sheet = .rename(.clip(clip.id)) }
-            Button("Delete Clip") { try? store.perform(.deleteClip(clip.id)) }
+            Button("Delete Clip Everywhere") { try? store.perform(.deleteClip(clip.id)) }
         }
     }
 

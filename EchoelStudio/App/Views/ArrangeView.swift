@@ -840,7 +840,7 @@ private struct PlacementBlock: View {
             Button("Consolidate", systemImage: "rectangle.compress.vertical") { consolidate() }
         }
         Button("Rename Clip…", systemImage: "pencil") { router.sheet = .rename(.clip(clip.id)) }
-        Button("Delete", systemImage: "trash", role: .destructive) { remove() }
+        Button("Remove from Song", systemImage: "trash", role: .destructive) { remove() }
         // The clip itself: every place it is in the arrangement and every session slot (undoable).
         Button("Delete Clip Everywhere", systemImage: "trash.slash", role: .destructive) {
             documents.attempt(.deleteClip(clip.id))
@@ -874,7 +874,8 @@ private struct PlacementBlock: View {
             .accessibilityAction(named: "Start One Bar Earlier") { trim(.start, bars: -1) }
             .accessibilityAction(named: "Start One Bar Later") { trim(.start, bars: 1) }
             .accessibilityAction(named: "Rename Clip") { router.sheet = .rename(.clip(clip.id)) }
-            .accessibilityAction(named: "Delete") { remove() }
+            .accessibilityAction(named: "Remove from Song") { remove() }
+            .accessibilityAction(named: "Delete Clip Everywhere") { documents.attempt(.deleteClip(clip.id)) }
     }
 
     private func move(byBars bars: Tick) {
@@ -1188,7 +1189,7 @@ private struct RegionBlock: View {
         if canBake {
             Button("Bake Effects", systemImage: "square.and.arrow.down.on.square") { bake() }
         }
-        Button("Delete", systemImage: "trash", role: .destructive) { remove() }
+        Button("Remove from Song", systemImage: "trash", role: .destructive) { remove() }
         // The file itself: every region and clip that plays it, and a sampler holding it (undoable).
         Button("Remove File from Song", systemImage: "trash.slash", role: .destructive) { removeFile() }
     }
@@ -1245,7 +1246,7 @@ private struct RegionBlock: View {
             .accessibilityAction(named: "Split at Playhead") { split() }
             .accessibilityAction(named: "Consolidate") { consolidate() }
             .accessibilityAction(named: "Bake Effects") { if canBake { bake() } }
-            .accessibilityAction(named: "Delete") { remove() }
+            .accessibilityAction(named: "Remove from Song") { remove() }
     }
 
     private func trimActions(_ view: some View) -> some View {
