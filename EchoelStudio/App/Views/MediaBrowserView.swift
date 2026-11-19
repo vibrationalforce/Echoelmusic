@@ -30,6 +30,8 @@ struct MediaBrowserView: View {
     @AppStorage("browser.listeningLevelDB") private var listeningLevel = -6
     /// Listening on outputs 3/4, where the interface has them.
     @AppStorage("browser.listensOnCue") private var listensOnCue = false
+    /// The video whose picture shows at the top of the list, until Stop or another one.
+    @State private var watching: MediaBrowser.Item?
 
     var body: some View {
         NavigationStack {
@@ -125,6 +127,7 @@ struct MediaBrowserView: View {
                 }
             }
             listeningSection
+            if let watching, let file = url(of: watching) { watchingSection(watching, file: file) }
             EchoelSection(footer: footer(shown: shown.count, total: all.count)) {
                 if shown.isEmpty {
                     NoteText(emptyText(total: all.count))
@@ -149,6 +152,19 @@ struct MediaBrowserView: View {
                 Toggle("Listen on Outputs 3/4", isOn: $listensOnCue)
                     .accessibilityHint("Sends the browser's listening to the interface's cue pair instead of the main pair")
             }
+        }
+    }
+
+    /// The watched video's picture, muted and looping, with its name and Stop.
+    private func watchingSection(_ item: MediaBrowser.Item, file: URL) -> some View {
+        EchoelSection("Watching", footer: "The picture plays without its sound, over and over, until Stop. Never in an export or a recording.") {
+            VideoPeek(url: file)
+                .id(file)
+                .aspectRatio(16 / 9, contentMode: .fit)
+                .frame(maxWidth: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.small))
+                .accessibilityLabel("Picture of \(item.name)")
+            Button("Stop Watching", systemImage: "stop.fill") { watching = nil }
         }
     }
 
@@ -225,7 +241,19 @@ struct MediaBrowserView: View {
     }
 
     @ViewBuilder private func listenButton(_ item: MediaBrowser.Item) -> some View {
-        if item.canListen {
+        if item.kind == .video {
+            let shows = watching?.id == item.id
+            Button {
+                watching = shows ? nil : item
+            } label: {
+                Image(systemName: shows ? "stop.fill" : "play.rectangle")
+                    .frame(minWidth: Theme.Size.touch, minHeight: Theme.Size.touch)
+            }
+            .buttonStyle(.borderless)
+            .disabled(url(of: item) == nil)
+            .accessibilityLabel(shows ? "Stop watching \(item.name)" : "Watch \(item.name)")
+            .accessibilityHint("Shows the picture at the top of the list, without its sound.")
+        } else if item.canListen {
             ListenButton(name: item.name, take: model.listening?.id == item.id ? model.listening?.take : nil,
                          player: engine.preview, enabled: engine.isUp && !streaming.isOn) {
                 model.listen(item, url: url(of: item), loaded: item.media.flatMap { documents.samples[$0] },
