@@ -15,9 +15,10 @@ struct ClipEditorView: View {
     /// The one magnet, shared with the arrangement and kept on this device (`SnapGrid`).
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
     @State private var page: Page = .notes
-    /// The piano roll's zoom, kept on this device, never in the song: at the base a note is
-    /// 17 pt high, under a fingertip (accessibility audit 2026-11-01, M5).
-    @AppStorage(PianoRoll.zoomKey) private var zoom = PianoRoll.zoomLevels[0]
+    /// The piano roll's zoom, kept on this device, never in the song. A new install starts at rows
+    /// of a full touch target, 45 pt (audit 2026-11-19, UX #4: at the base a row was 18 pt); a
+    /// smaller zoom stays one tap away.
+    @AppStorage(PianoRoll.zoomKey) private var zoom = PianoRoll.standardZoom
 
     enum Page: Hashable { case notes, sound }
 
@@ -277,6 +278,8 @@ struct PianoRoll: View {
     nonisolated static let zoomKey = "pianoRoll.zoom"
     /// From the drawn base (18 pt rows) to rows of a full touch target (45 pt).
     nonisolated static let zoomLevels: [Double] = [1, 1.5, 2, 2.5]
+    /// The zoom a new install starts at: rows of a full touch target.
+    nonisolated static let standardZoom: Double = 2.5
 
     @ScaledMetric(relativeTo: .caption) private var baseRowHeight: CGFloat = 18
     @ScaledMetric(relativeTo: .caption) private var keyWidth: CGFloat = 52
@@ -682,7 +685,9 @@ struct NoteBlock: View {
 
     @State private var origin: Note?
 
-    private static let edgeWidth: CGFloat = 14
+    /// The right edge a drag lengthens or shortens by; never more than half the note
+    /// (`NoteEditing.dragTakesTheEnd`), so a short note still moves from its body.
+    private static let edgeWidth: CGFloat = 22
     private static let minimumWidth: CGFloat = 6
     /// The least room a block needs to show its name.
     private static let labelWidth: CGFloat = 30
