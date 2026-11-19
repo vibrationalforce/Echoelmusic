@@ -88,12 +88,13 @@ struct RegionEditView: View {
                 next.fadeOutCurve = curve
                 perform(fades: next, file: file)
             }
-            SettingField(title: "Gain", value: Int((region.gainDB ?? 0).rounded()),
-                         range: Int(AudioRegion.gainRange.lowerBound)...Int(AudioRegion.gainRange.upperBound),
-                         unit: "dB", standard: 0, spokenUnit: "decibels") { db in
-                try? store.perform(.setRegionGain(track: trackID, regionID, gainDB: Double(db)),
+            // In tenths of a dB (audit A3 #12): a stored −3.5 dB showed as −4 and could not be set.
+            SettingField(title: "Gain", value: Int(((region.gainDB ?? 0) * 10).rounded()),
+                         range: Int(AudioRegion.gainRange.lowerBound * 10)...Int(AudioRegion.gainRange.upperBound * 10),
+                         unit: "dB", decimals: 1, standard: 0, spokenUnit: "decibels", commit: { tenths in
+                try? store.perform(.setRegionGain(track: trackID, regionID, gainDB: Double(tenths) / 10),
                                    coalescingKey: "region.gain.\(regionID)")
-            }
+            }, ended: { store.endGesture() })
             warp(region)
                 .padding(.top, Theme.Space.m)
             transpose(region)
@@ -288,8 +289,9 @@ struct RegionEditView: View {
     private func fadeRow(title: String, milliseconds: Int, limit: Int, curve: FadeCurve, key: String,
                          set: @escaping (Int) -> Void, setCurve: @escaping (FadeCurve) -> Void) -> some View {
         HStack(alignment: .center, spacing: Theme.Space.s) {
+            // Each drag or typed value its own undo step (audit A3 #13).
             SettingField(title: title, value: Swift.min(milliseconds, limit), range: 0...Swift.max(limit, 0), unit: "ms",
-                         standard: 0, spokenUnit: "milliseconds", commit: set)
+                         standard: 0, spokenUnit: "milliseconds", commit: set, ended: { store.endGesture() })
             Picker("\(title) Curve", selection: Binding(get: { curve }, set: setCurve)) {
                 ForEach(FadeCurve.allCases, id: \.self) { option in
                     Text(Self.name(option)).tag(option)
