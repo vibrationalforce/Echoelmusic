@@ -104,17 +104,7 @@ struct ArrangeView: View {
                     ModulateMenu(owner: .master)
                 }
             ForEach(project.tracks) { track in
-                Text(track.name)
-                    .font(Theme.Font.label)
-                    .foregroundStyle(Theme.Color.text)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .padding(.horizontal, Theme.Space.s)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(height: Theme.Size.trackRowHeight)
-                    .background(Theme.Color.surface)
-                    .contextMenu { trackMenu(track, showsHits: !hits.isEmpty) }
-                    .accessibilityHidden(true)
+                trackName(track)
                 ForEach(TakeLanes.rows(of: track)) { row in TakeLaneName(row: row) }
                 ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
                     AutomationName(lane: lane)
@@ -206,6 +196,25 @@ struct ArrangeView: View {
     }
 
     /// A track name's hold menu; a video track with hits also switches Snap to Hits.
+    /// A track's name in the names column, with its menu on a long press.
+    private func trackName(_ track: Track) -> some View {
+        Text(track.name)
+            .font(Theme.Font.label)
+            .foregroundStyle(Theme.Color.text)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .padding(.horizontal, Theme.Space.s)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: Theme.Size.trackRowHeight)
+            .background(Theme.Color.surface)
+            .contextMenu { trackMenu(track, showsHits: !hits.isEmpty) }
+            // VoiceOver reaches the track's menu here — Automate and Modulate are nowhere else in
+            // Arrange (audit 2026-11-19, UX #3): double-tap and hold opens it.
+            .accessibilityLabel(track.name)
+            .accessibilityHint("Double-tap and hold for the track's menu: Automate, Modulate, Rename.")
+            .accessibilityAction(named: "Rename Track") { router.sheet = .rename(.track(track.id)) }
+    }
+
     @ViewBuilder private func trackMenu(_ track: Track, showsHits: Bool) -> some View {
         Button("Rename Track…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
         SnapPicker(snap: $snap)
