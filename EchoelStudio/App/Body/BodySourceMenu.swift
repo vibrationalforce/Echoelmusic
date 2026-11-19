@@ -88,6 +88,7 @@ struct CameraPulseCueLine: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
                 .padding(.bottom, Theme.Space.xs)
+            if case .denied = camera.status { OpenSettingsButton() }
         }
     }
 

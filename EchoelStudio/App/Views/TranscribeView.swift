@@ -101,6 +101,7 @@ struct TranscribeView: View {
             Text(outcome)
                 .font(Theme.Font.body)
                 .foregroundStyle(Theme.Color.text)
+            if outcome == SpeechTranscription.Failure.notAllowed.message { OpenSettingsButton() }
         }
     }
 

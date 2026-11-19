@@ -181,6 +181,7 @@ struct JamView: View {
         if let problem = jam.problem {
             EchoelSection {
                 NoteText(problem, tone: .problem)
+                if jam.problemNeedsSettings { OpenSettingsButton() }
             }
         }
     }

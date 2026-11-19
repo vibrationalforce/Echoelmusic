@@ -50,6 +50,11 @@ final class JamSession {
     private(set) var startIsPending = false
     /// What went wrong, in words, until the next Host a Jam or Join a Jam.
     private(set) var problem: String?
+    /// The problem when iOS refused the Local Network: only Settings can allow it again.
+    static let localNetworkRefused =
+        "Echoelmusic cannot reach phones nearby. Allow Local Network for Echoelmusic in Settings, Privacy & Security, then try again."
+    /// The problem is one Settings can solve (the page offers Open Settings with it).
+    var problemNeedsSettings: Bool { problem == Self.localNetworkRefused }
 
     /// A guest follows the host's clock: the tempo field is locked, Follow MIDI Clock waits.
     var followsJam: Bool {
@@ -217,7 +222,7 @@ final class JamSession {
         case .refused(let error):
             DiagnosticLog.app.note("jam: refused", error: error)
             leave()
-            problem = "Echoelmusic cannot reach phones nearby. Allow Local Network for Echoelmusic in Settings, Privacy & Security, then try again."
+            problem = Self.localNetworkRefused
         }
     }
 
