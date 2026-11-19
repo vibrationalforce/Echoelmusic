@@ -396,3 +396,17 @@ private struct CueEditView: View {
         try? store.perform(.setCue(cue), coalescingKey: key.map { "cue.\(cueID).\($0)" })
     }
 }
+
+/// The light show as a sheet of its own, opened from the Song menu: the same page Connections
+/// pushes, in its own navigation stack, with Done.
+struct LightShowSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            LightShowView()
+                .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
+        }
+        .preferredColorScheme(.dark)
+    }
+}

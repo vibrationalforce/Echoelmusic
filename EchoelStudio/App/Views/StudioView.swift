@@ -212,6 +212,7 @@ struct StudioView: View {
         case .rename(let target): RenameView(target: target)
         case .streaming: StreamingView()
         case .connections: ConnectionsView()
+        case .lightShow: LightShowSheet()
         case .jam: JamView()
         case let .regionEdit(track, region): RegionEditView(trackID: track, regionID: region)
         case let .regionColor(track, region): RegionColorView(trackID: track, regionID: region)
@@ -1494,6 +1495,7 @@ struct SongMenu: View {
             Section("Connect") {
                 // OSC, ADM-OSC, Art-Net and sACN out (wave W4): every one off until switched on there.
                 Button("Connections…", systemImage: "antenna.radiowaves.left.and.right") { router.sheet = .connections }
+                Button("Light Show…", systemImage: "light.max") { router.sheet = .lightShow }
                 midi2Menu
                 // MIDI Time Code out and chase (W17-TC): off until chosen there.
                 TimecodeMenu()

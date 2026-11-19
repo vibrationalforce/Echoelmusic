@@ -45,6 +45,9 @@ enum StudioSheet: Identifiable, Hashable {
     case streaming
     /// OSC, ADM-OSC, Art-Net and sACN out, each off until switched on here (wave W4).
     case connections
+    /// Fixtures, cues, GO and Blackout, from the Song menu's Connect section (audit 2026-11-19,
+    /// UX #5: before, only at the foot of Connections, past five protocol sections).
+    case lightShow
     /// Phones in one room play to one bar: host a jam or join one nearby (W16).
     case jam
     /// One audio region's fades and gain (AUD-2).
