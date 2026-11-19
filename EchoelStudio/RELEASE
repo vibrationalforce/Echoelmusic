@@ -1,34 +1,32 @@
-11.0.0 — clip edges in Arrange, a quiet click, safer listening and export, and a studio that says what it does
+11.0.0 — strum and voicings for your chords, your own click, white balance for video takes, and finer editing
 
-New since 10081, built by the Echoel Studio run; nothing here is device-verified yet.
-- Arrange: a note or drum clip has a grip at its start and its end (on a block of at least 88 pt).
-  Drag the end to shorten or lengthen it; drag the start and every note stays where it sounds. The
-  edge follows the magnet, stops at the next clip and at bar 1. One Undo ("Trim Clip").
-- Click: off at every launch. Its level is in the More menu and on the Click key's hold menu,
-  −36 to −6 dB, starting at −24 dB; the count-in plays at the same level.
-- Listening in the browser is mixed before the output's guard, so it cannot pass full scale.
-- Video export: footage that flashes is drawn darker in the film, as the video window shows it
-  (three flashes a second at most). The export reads the footage twice, so it takes longer.
-- A refused permission (microphone, camera, Local Network, speech, camera pulse) has Open Settings.
-- A refused edit in Arrange and the track list says why in the status line instead of snapping back.
-- Piano roll: a new install opens at rows of a full touch target (45 pt); a note's length edge is 22 pt.
-- Song menu, Connect: Light Show… opens fixtures and cues directly.
-- Arrange: "Remove from Song" takes a clip or region out of one place; "Delete Clip Everywhere"
-  deletes the clip (also in Session).
-- A clipping meter shows a light cap and VoiceOver says "clipped"; an empty Mixer and Session say
-  where to start; names shrink before they are cut at large text; Increase Contrast strengthens the
-  hairlines; Escape closes a sheet on an iPad keyboard; VoiceOver reaches a track's menu in Arrange
-  and hears the bar of views as tabs.
-Limits, new: a block narrower than 88 pt shows no grips (trim it in the editor's length menu, or
-zoom in); the app does not read Bold Text yet.
-Older limits as in 10081.
+New since 10082, built by the Echoel Studio run; nothing here is device-verified yet.
+- Note editor, Chords menu: Strum spreads each chord down (lowest note first) or up over a 1/128,
+  1/64 or 1/32 note; every note still ends where it ended; Together puts it back. Voicing moves one
+  note of each chord an octave: Invert Up, Invert Down, Open, Drop 2, Drop 3. On the chosen note's
+  chord, or every chord; one Undo each. Nothing is added.
+- Note editor: in a song with a key, the rows of the scale are lit a little and the root's a little
+  more; the side keyboard marks the root with a dot and the other scale tones with a ring.
+- Click Sound (Click key's hold menu, or More): Built-in Click or Choose Sound… — an audio file up
+  to 10 s; its first 0.2 s plays on every beat and in the count-in, at the click's level. Kept on
+  this device, never in a song.
+- Camera take: White Balance — Auto, 3200, 4000, 5600, 6500 or 7500 K, held through a lens change.
+- Browser: a video has Watch; its picture plays at the top of the list, muted and looping, until Stop.
+- Automation lanes: a double tap removes a point or straightens a bend (a single tap only adds a
+  point); points follow the song's magnet grid instead of a fixed sixteenth. With VoiceOver a lane
+  has Add Point at Playhead, Delete Point at Playhead, and swipe up or down moves that point.
+- Region settings: Gain in tenths of a dB; each gain or fade change is its own Undo; Halve and
+  Double next to Native Tempo.
+Limits, new: above 300 BPM a sample click is cut by the next one; a video's sound is not heard in
+the browser; the app does not read Bold Text yet.
+Older limits as in 10082.
 
-Previous: 10081. A green commit that changes this file uploads build 10000 + run number. A test
+Previous: 10082. A green commit that changes this file uploads build 10000 + run number. A test
 list, not a source for claims (ContentPipeline/CLAIMS.md).
 
-One ask, as for 10081. Start a screen recording, open the app, and try to make sixteen bars in two
-to five minutes: a beat, a bass line or a chord, then Play. No list and no protocol; stop wherever
-it stops being possible or pleasant. The recording is the answer. What gets in the way in it is
-the next work, in the order it happened.
+One ask, as for 10081 and 10082. Start a screen recording, open the app, and try to make sixteen
+bars in two to five minutes: a beat, a bass line or a chord, then Play. No list and no protocol;
+stop wherever it stops being possible or pleasant. The recording is the answer. What gets in the
+way in it is the next work, in the order it happened.
 
 The five checks of 10079 stay open and unchanged and rest until that recording exists.
