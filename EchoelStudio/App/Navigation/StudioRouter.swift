@@ -15,6 +15,8 @@ enum StudioSheet: Identifiable, Hashable {
     case importAudio(TrackID, Tick)
     /// Pick a Standard MIDI File to add to the song as instrument tracks.
     case importMIDI
+    /// Pick an audio file for the click to play, on this device (`ClickSoundFile`).
+    case clickSound
     /// Pick an audio file to become a clip in an audio track's session slot.
     case importClip(TrackID, SceneID)
     /// A track's insert effects.

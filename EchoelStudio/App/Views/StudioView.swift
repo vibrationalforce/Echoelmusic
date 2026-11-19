@@ -147,7 +147,7 @@ struct StudioView: View {
     /// it is (W18, m17): the transport, the chosen view, the keys, the bar of views.
     private var studio: some View {
         VStack(spacing: 0) {
-            TransportBar(keysSwitch: surface.keysSwitch)
+            TransportBar(keysSwitch: surface.keysSwitch, chooseClickSound: { router.sheet = .clickSound })
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("Transport")
                 // Return, comma and period: the locate keys, which have no button of their own.
@@ -244,6 +244,12 @@ struct StudioView: View {
             .ignoresSafeArea()
         case .cameraTake(let track): CameraTakeView(track: track)
         case .exportVideo: VideoExportView()
+        case .clickSound:
+            AudioFilePicker(pick: { url in
+                router.sheet = nil
+                engine.chooseClickSound(url)
+            }, cancel: { router.sheet = nil })
+            .ignoresSafeArea()
         case .importMIDI:
             AudioFilePicker(pick: { url in
                 router.sheet = nil
@@ -325,6 +331,8 @@ struct TransportBar: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     /// What the Keys switch does under the chosen view; dimmed where the view settles it.
     var keysSwitch = StudioView.KeysSwitch.decides
+    /// Opens the file picker for the click's own sound, through the studio's one sheet slot.
+    var chooseClickSound: () -> Void = {}
 
     /// The Keys switch as VoiceOver says it: its state where it decides, the reason where it does not.
     private var keysValue: String {
@@ -513,6 +521,7 @@ struct TransportBar: View {
                 Label("Click", systemImage: "metronome")
             }
             clickLevelPicker
+            clickSoundMenu
             countInPicker
             Toggle(isOn: Binding(get: { midi.isLearning }, set: { midi.setLearning($0) })) {
                 Label("MIDI Learn", systemImage: "slider.horizontal.2.square")
@@ -605,6 +614,24 @@ struct TransportBar: View {
         }
     }
 
+    /// The click's sound: the built-in one or a file of the musician's, kept on this device.
+    private var clickSoundMenu: some View {
+        Menu {
+            Button {
+                engine.useBuiltInClick()
+            } label: {
+                if engine.clickSoundName == nil { Label("Built-in Click", systemImage: "checkmark") } else { Text("Built-in Click") }
+            }
+            if let name = engine.clickSoundName {
+                Label(name, systemImage: "checkmark")
+            }
+            Button("Choose Sound…") { chooseClickSound() }
+        } label: {
+            Label("Click Sound", systemImage: "waveform")
+        }
+        .accessibilityValue(engine.clickSoundName ?? "Built-in click")
+    }
+
     /// Off, one or two bars of click before Record starts a stopped song; a setting of this device.
     private var countInPicker: some View {
         Picker(selection: Binding(get: { engine.countInLength }, set: { engine.setCountInLength($0) })) {
@@ -632,11 +659,12 @@ struct TransportBar: View {
             .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: Theme.Radius.small))
             .contextMenu {
                 clickLevelPicker
+                clickSoundMenu
                 countInPicker
             }
             .accessibilityLabel("Click")
             .accessibilityValue(clickOn ? "On, " + ClickLevel.title(engine.clickLevelDB) : "Off")
-            .accessibilityHint("Touch and hold to choose the click's level and the count-in before Record.")
+            .accessibilityHint("Touch and hold to choose the click's level, its sound and the count-in before Record.")
 
             MIDILearnButton()
 

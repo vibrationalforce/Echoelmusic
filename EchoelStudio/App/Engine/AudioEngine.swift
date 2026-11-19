@@ -107,6 +107,12 @@ final class AudioEngine {
     private(set) var clickLevelDB: Double = UserDefaults.standard.object(forKey: AudioEngine.clickLevelKey) as? Double
         ?? ClickLevel.standard
     private static let clickLevelKey = "clickLevelDB"
+    /// The name of the musician's own click sound on this device, nil for the built-in click
+    /// (`ClickSoundFile`); every new core gets its decoded frames.
+    private(set) var clickSoundName: String?
+    @ObservationIgnored private var clickSample: SampleBuffer?
+    /// Counts the musician's click-sound choices, so an older pick still decoding never lands.
+    @ObservationIgnored private var clickSoundRequest = 0
     /// Headphone Spatial monitoring (Recovery 5): every track heard at its pan's place around the
     /// listener, for headphones. Off at every launch; it changes what is heard, never the song or
     /// the stereo export (`EngineCore.setHeadphoneSpatial`).
@@ -394,6 +400,7 @@ final class AudioEngine {
         let timecode = self.timecode
         timecodeChase.start = { timecode.start }
         observeConfiguration()
+        loadKeptClickSound()
         // A call or Siri takes the audio away. The transport stops where it is, so the song does
         // not carry on by itself when the call ends; the graph comes back, silent, ready to play.
         interruptionObserver = NotificationCenter.default.addObserver(
@@ -967,6 +974,7 @@ final class AudioEngine {
                 current = EngineCore(sampleRate: sampleRate, preview: preview)
                 current.setClickEnabled(clickEnabled)
                 current.setClickLevel(ClickLevel.gain(decibels: clickLevelDB))
+                current.clickSound.set(clickSample)
                 current.setHeadphoneSpatial(headphoneSpatial)
                 // Nothing over −1 dBFS reaches the device (`EngineCore.guards`); exports stay as mixed.
                 current.setOutputGuard(true)
@@ -1585,6 +1593,55 @@ final class AudioEngine {
         clickLevelDB = decibels
         UserDefaults.standard.set(decibels, forKey: Self.clickLevelKey)
         core?.setClickLevel(ClickLevel.gain(decibels: decibels))
+    }
+
+    /// The click plays `picked` from now on — kept on this device, decoded off the main actor.
+    /// Says why when the file cannot be a click, and keeps the sound before it.
+    func chooseClickSound(_ picked: URL) {
+        clickSoundRequest += 1
+        let request = clickSoundRequest
+        Task { @MainActor [weak self] in
+            // Decode the pick before it replaces the kept file, so a bad file changes nothing.
+            let sample = await Task.detached { ClickSoundFile.decode(picked) }.value
+            guard let self, request == self.clickSoundRequest else { return }
+            guard let sample else {
+                self.notice = "That file cannot be the click: it is no audio file, or it runs past \(Int(ClickSoundFile.maximumSeconds)) seconds."
+                return
+            }
+            // The file ops stay on the main actor, in the order the musician chose, so a later
+            // "Built-in Click" always wins. A click file is a few megabytes at most.
+            do {
+                _ = try ClickSoundFile.keep(picked)
+            } catch {
+                self.notice = "The click sound could not be kept on this device; it plays until the app closes."
+            }
+            self.useClickSound(sample, named: ClickSoundFile.name(of: picked))
+        }
+    }
+
+    /// The built-in click again; the kept file is removed.
+    func useBuiltInClick() {
+        clickSoundRequest += 1
+        ClickSoundFile.forget()
+        useClickSound(nil, named: nil)
+    }
+
+    private func useClickSound(_ sample: SampleBuffer?, named name: String?) {
+        clickSample = sample
+        clickSoundName = name
+        core?.clickSound.set(sample)
+    }
+
+    /// The kept click sound, read once at launch.
+    private func loadKeptClickSound() {
+        Task { @MainActor [weak self] in
+            let outcome = await Task.detached { () -> (name: String, sample: SampleBuffer)? in
+                guard let url = ClickSoundFile.kept, let sample = ClickSoundFile.decode(url) else { return nil }
+                return (ClickSoundFile.name(of: url), sample)
+            }.value
+            guard let self, let outcome, self.clickSoundRequest == 0 else { return }
+            self.useClickSound(outcome.sample, named: outcome.name)
+        }
     }
 
     func setHeadphoneSpatial(_ on: Bool) {

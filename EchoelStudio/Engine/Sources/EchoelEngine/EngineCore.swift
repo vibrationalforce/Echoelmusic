@@ -363,6 +363,9 @@ public final class EngineCore: @unchecked Sendable {
     /// (2026-11-19: it was added after the guard, in the app's render block). Nil in an export.
     private let preview: PreviewPlayer?
 
+    /// The click's own sound, if the musician chose one (`ClickSound`); the count-in plays it too.
+    public let clickSound = ClickSound()
+
     public init(sampleRate: Double, slotCapacity: Int = Track.limit(for: .instrument), preview: PreviewPlayer? = nil) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.sampleRate = rate
@@ -1007,6 +1010,8 @@ public final class EngineCore: @unchecked Sendable {
         let clickGain = Float(bitPattern: clickLevelBits.load(ordering: .relaxed))
         metronome.level = clickGain
         countClick.level = clickGain
+        // A new click sound is taken only between clicks, so no tail is cut mid-waveform.
+        if !metronome.isSounding, !countClick.isSounding { clickSound.drain() }
 
         guard playing, let box = current else {
             if stopping {
@@ -1015,6 +1020,8 @@ public final class EngineCore: @unchecked Sendable {
                 stoppedAt = nil
             }
             let held = stoppedAt ?? current?.snapshot.time.position(atSample: playhead) ?? 0
+            // The song's click renders only while it plays; a stopped one has no tail to finish.
+            metronome.silence()
             mixFrom = held
             mixTo = held
             if let snapshot = current?.snapshot { follow(snapshot, playing: false, changed: transportMoved) }
@@ -1022,7 +1029,7 @@ public final class EngineCore: @unchecked Sendable {
             if countIn != nil {
                 advanceCountIn(frames: frames)
             } else {
-                countClick.render(left: clickLeft, right: clickRight, range: 0..<frames)
+                countClick.render(left: clickLeft, right: clickRight, range: 0..<frames, sound: clickSound.sound)
             }
             renderUnits(frames: frames)
             mixLanes(frames: frames)
@@ -1091,7 +1098,7 @@ public final class EngineCore: @unchecked Sendable {
             case .beat:
                 // A change falls on a bar line, which is a beat of both signatures: the beats
                 // count on across it in the new one's length.
-                metronome.trigger(accent: meter.isBarLine(nextBeat))
+                metronome.trigger(accent: meter.isBarLine(nextBeat), sampled: clickSound.sound != nil)
                 nextBeat += meter.ticksPerBeat(at: nextBeat)
             case .arrangement:
                 let lane = snapshot.lanes[due.lane]
@@ -1123,7 +1130,7 @@ public final class EngineCore: @unchecked Sendable {
         }
         renderVoices(rendered..<frames)
         // The last count-in click's tail, when a beat is shorter than the click.
-        countClick.render(left: clickLeft, right: clickRight, range: 0..<frames)
+        countClick.render(left: clickLeft, right: clickRight, range: 0..<frames, sound: clickSound.sound)
         // Counted on with clock out off too, so switching it on mid-song sends no burst.
         sendClocks(snapshot, blockEnd: blockEnd, emitting: clocking)
         if timecoding {
@@ -1185,12 +1192,12 @@ public final class EngineCore: @unchecked Sendable {
             let onset = Int64(beat) * counting.beatSamples - countInDone
             guard onset < Int64(frames) else { break }
             let offset = Swift.max(Int(onset), at)
-            countClick.render(left: clickLeft, right: clickRight, range: at..<offset)
-            countClick.trigger(accent: counting.isAccented(beat: beat))
+            countClick.render(left: clickLeft, right: clickRight, range: at..<offset, sound: clickSound.sound)
+            countClick.trigger(accent: counting.isAccented(beat: beat), sampled: clickSound.sound != nil)
             at = offset
             beat += 1
         }
-        countClick.render(left: clickLeft, right: clickRight, range: at..<frames)
+        countClick.render(left: clickLeft, right: clickRight, range: at..<frames, sound: clickSound.sound)
         countInDone += Int64(frames)
         countInLeft -= Int64(frames)
         countInLeftShown.store(Swift.max(0, countInLeft), ordering: .relaxed)
@@ -2874,7 +2881,7 @@ public final class EngineCore: @unchecked Sendable {
                                right: bus(lane.slot, busRight) + range.lowerBound, gain: 1)
             }
         }
-        metronome.render(left: clickLeft, right: clickRight, range: range)
+        metronome.render(left: clickLeft, right: clickRight, range: range, sound: clickSound.sound)
     }
 }
 

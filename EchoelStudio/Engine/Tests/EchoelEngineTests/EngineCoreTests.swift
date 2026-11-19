@@ -887,6 +887,39 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(ClickLevel.gain(decibels: .nan), standard, "not a number is the standard level")
     }
 
+    /// A chosen click sound plays on the beat at the click's level, for at most
+    /// `ClickSound.maximumSeconds`, and nil gives the sine burst back (2026-11-19).
+    func testAChosenClickSoundPlaysOnTheBeatAndTheBuiltInOneComesBack() throws {
+        let s = try song([[]])
+        let core = clickingCore()
+        let steady = try XCTUnwrap(SampleBuffer(samples: [Float](repeating: 0.5, count: 48_000), sampleRate: rate))
+        core.clickSound.set(steady)
+        publish(s.project, to: core)
+        core.play()
+        let first = render(core, frames: 24_000).left
+        XCTAssertEqual(first[4_800], 0.15, accuracy: 0.002, "the downbeat plays the sample at the click's level (0.5 × 0.3)")
+        let cut = Int(ClickSound.maximumSeconds * rate)
+        XCTAssertEqual(first[cut + 100], 0, "the click stops after its stretch")
+        XCTAssertGreaterThanOrEqual(first.min() ?? -1, 0, "the steady sample never swings like the sine")
+        core.clickSound.set(nil)
+        let next = render(core, frames: 2_400).left
+        XCTAssertLessThan(next.min() ?? 0, 0, "the next beat plays the sine burst again")
+        XCTAssertEqual(core.clickSound.heldSounds, 1, "only the sound the render thread plays is kept")
+    }
+
+    /// A tick shorter than the cut plays whole and at full level: only a cut end fades.
+    func testAShortClickSoundPlaysAtFullLevel() throws {
+        let s = try song([[]])
+        let core = clickingCore()
+        let tick = try XCTUnwrap(SampleBuffer(samples: [Float](repeating: 0.5, count: 144), sampleRate: rate))
+        core.clickSound.set(tick)
+        publish(s.project, to: core)
+        core.play()
+        let out = render(core, frames: 480).left
+        XCTAssertEqual(out[72], 0.15, accuracy: 0.002, "3 ms of tick at the click's level, no fade over it")
+        XCTAssertEqual(out[200], 0, "and nothing after it")
+    }
+
     func testTheClickFallsOnTheBeatsAndAccentsTheDownbeat() throws {
         let s = try song([[]])
         let core = clickingCore()
