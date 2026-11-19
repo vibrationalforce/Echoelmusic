@@ -34,6 +34,7 @@ struct TrackListView: View {
 
 struct TrackRow: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
     @Environment(StudioRouter.self) private var router
     /// The least room the name keeps beside the buttons — about a dozen letters, "Instrument 1" —
@@ -78,12 +79,12 @@ struct TrackRow: View {
             Menu("Color") {
                 ForEach(0..<Palette.trackColorCount, id: \.self) { index in
                     Button(Theme.Color.trackName(index)) {
-                        try? store.perform(.setTrackColor(track.id, colorIndex: index))
+                        documents.attempt(.setTrackColor(track.id, colorIndex: index))
                     }
                 }
             }
             Button("Delete Track", role: .destructive) {
-                try? store.perform(.removeTrack(track.id))
+                documents.attempt(.removeTrack(track.id))
             }
         }
     }
@@ -112,7 +113,7 @@ struct TrackRow: View {
         .accessibilityAction(named: "Move Track Up") { move(by: -1) }
         .accessibilityAction(named: "Move Track Down") { move(by: 1) }
         .accessibilityAction(named: "Delete Track") {
-            try? store.perform(.removeTrack(track.id))
+            documents.attempt(.removeTrack(track.id))
         }
     }
 
@@ -123,7 +124,7 @@ struct TrackRow: View {
             if track.kind == .video { VideoTrackButtons(track: track) }
             if track.kind == .instrument { liveButton }
             Button {
-                try? store.perform(.setMute(track.id, !track.mixer.isMuted))
+                documents.attempt(.setMute(track.id, !track.mixer.isMuted))
             } label: {
                 Text("M")
             }
@@ -131,7 +132,7 @@ struct TrackRow: View {
             .accessibilityLabel("Mute \(track.name)")
             .accessibilityValue(track.mixer.isMuted ? "On" : "Off")
             Button {
-                try? store.perform(.setSolo(track.id, !track.mixer.isSoloed))
+                documents.attempt(.setSolo(track.id, !track.mixer.isSoloed))
             } label: {
                 Text("S")
             }
@@ -160,7 +161,7 @@ struct TrackRow: View {
         guard let position = index else { return }
         let target = position + step
         guard store.project.tracks.indices.contains(target) else { return }
-        try? store.perform(.moveTrack(track.id, toIndex: target))
+        documents.attempt(.moveTrack(track.id, toIndex: target))
     }
 }
 
@@ -185,6 +186,7 @@ struct ArmButton: View {
 
 struct AddTrackMenu: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
 
     var body: some View {
         Menu {
@@ -221,7 +223,7 @@ struct AddTrackMenu: View {
     private func addDrums() {
         let track = TrackID(), clip = ClipID()
         let count = store.project.tracks.filter { $0.instrument.device == .drums && $0.kind == .instrument }.count + 1
-        try? store.perform([
+        documents.attempt([
             .addTrack(id: track, name: "Drums \(count)", kind: .instrument, index: nil),
             .setInstrumentDevice(track, .drums),
             .createClip(track: track, id: clip, name: "Beat", length: MusicalTime.ticksPerBar(store.project.timeSignature)),
@@ -231,7 +233,7 @@ struct AddTrackMenu: View {
 
     private func add(_ kind: TrackKind) {
         let count = store.project.tracks.filter { $0.kind == kind }.count + 1
-        try? store.perform(.addTrack(id: TrackID(), name: "\(kind.displayName) \(count)", kind: kind, index: nil))
+        documents.attempt(.addTrack(id: TrackID(), name: "\(kind.displayName) \(count)", kind: kind, index: nil))
     }
 }
 
