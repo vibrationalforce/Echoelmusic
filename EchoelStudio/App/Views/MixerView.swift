@@ -194,6 +194,11 @@ struct PeakMeter: View {
             Rectangle().fill(peak > 1 ? Theme.Color.record : Theme.Color.play)
                 .frame(height: height * CGFloat(Self.position(peak)))
         }
+        // Over full scale says so by shape too, not by red against green alone (audit 2026-11-19,
+        // UX #9): a light cap at the top of the bar while the peak is over 0 dBFS.
+        .overlay(alignment: .top) {
+            if peak > 1 { Rectangle().fill(Theme.Color.text).frame(height: 3) }
+        }
         .frame(width: 4)
     }
 
@@ -206,7 +211,8 @@ struct PeakMeter: View {
 
     static func spoken(_ peak: Float) -> String {
         guard peak > 0, peak.isFinite, 20 * Foundation.log10(peak) > floor else { return "Silent" }
-        return NumberText.string(Double(20 * Foundation.log10(peak)), decimals: 0, unit: "decibels")
+        let level = NumberText.string(Double(20 * Foundation.log10(peak)), decimals: 0, unit: "decibels")
+        return peak > 1 ? level + ", clipped" : level
     }
 }
 
