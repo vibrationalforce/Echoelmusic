@@ -851,9 +851,45 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertTrue((144_000...144_002).contains(first), "\(first)")
     }
 
+    /// A core whose click is on, at the level these energies were measured at (−10.5 dB): since
+    /// 2026-11-19 the click starts off and at −24 dB, and these tests ask where it falls, not how loud.
+    private func clickingCore() -> EngineCore {
+        let core = EngineCore(sampleRate: rate)
+        core.setClickEnabled(true)
+        core.setClickLevel(0.3)
+        return core
+    }
+
+    /// The click starts off, and switched on it plays quietly: its downbeat peaks at the standard
+    /// level, −24 dB, and at the level chosen after that (2026-11-19).
+    func testTheClickStartsOffAndQuiet() throws {
+        let s = try song([[]])
+        let silent = EngineCore(sampleRate: rate)
+        publish(s.project, to: silent)
+        silent.play()
+        XCTAssertNil(firstSound(render(silent, frames: 4_800).left), "off until it is switched on")
+        let quiet = EngineCore(sampleRate: rate)
+        quiet.setClickEnabled(true)
+        publish(s.project, to: quiet)
+        quiet.play()
+        let standard = ClickLevel.gain(decibels: ClickLevel.standard)
+        let peak = render(quiet, frames: 4_800).left.map { Swift.abs($0) }.max() ?? 0
+        XCTAssertLessThanOrEqual(peak, standard * 1.001)
+        XCTAssertGreaterThan(peak, standard * 0.9)
+        let loud = EngineCore(sampleRate: rate)
+        loud.setClickEnabled(true)
+        loud.setClickLevel(ClickLevel.gain(decibels: -6))
+        publish(s.project, to: loud)
+        loud.play()
+        let louder = render(loud, frames: 4_800).left.map { Swift.abs($0) }.max() ?? 0
+        XCTAssertGreaterThan(louder, standard * 4, "−6 dB is 18 dB above the standard level")
+        XCTAssertEqual(ClickLevel.title(-24), "\u{2212}24 dB")
+        XCTAssertEqual(ClickLevel.gain(decibels: .nan), standard, "not a number is the standard level")
+    }
+
     func testTheClickFallsOnTheBeatsAndAccentsTheDownbeat() throws {
         let s = try song([[]])
-        let core = EngineCore(sampleRate: rate)
+        let core = clickingCore()
         publish(s.project, to: core)
         core.play()
         let out = render(core, frames: 96_000).left
@@ -870,7 +906,7 @@ final class EngineCoreTests: XCTestCase {
         var s = try song([[]])
         try Command.setTempoChange(at: 2 * bar, bpm: 240).apply(to: &s.project)
         try Command.setTempoCurve(at: 2 * bar, curve: .linear).apply(to: &s.project)
-        let core = EngineCore(sampleRate: rate)
+        let core = clickingCore()
         publish(s.project, to: core)
         core.play()
         let out = render(core, frames: 200_000).left
@@ -892,7 +928,7 @@ final class EngineCoreTests: XCTestCase {
     func testTheClickAccentsTheBarLinesOfEachTimeSignature() throws {
         var s = try song([[]])
         try Command.setTimeSignatureChange(at: bar, TimeSignature(3, 4)).apply(to: &s.project)
-        let core = EngineCore(sampleRate: rate)
+        let core = clickingCore()
         publish(s.project, to: core)
         core.play()
         let out = render(core, frames: 12 * 24_000).left
