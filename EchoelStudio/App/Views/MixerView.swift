@@ -19,6 +19,14 @@ struct MixerView: View {
         GeometryReader { geometry in
             let height = faderHeight(in: geometry.size.height)
             ScrollView([.horizontal, .vertical]) {
+              VStack(alignment: .leading, spacing: 0) {
+                // Only the master yet says where the tracks come from (audit 2026-11-19, UX #15).
+                if store.project.tracks.allSatisfy({ $0.kind == .video }) {
+                    Text("Add a track on the Tracks page to mix it here.")
+                        .font(Theme.Font.body)
+                        .foregroundStyle(Theme.Color.textSecondary)
+                        .padding([.horizontal, .top], Theme.Space.m)
+                }
                 HStack(alignment: .top, spacing: Theme.Space.hairline) {
                     // A video track is never heard, so it has no strip.
                     ForEach(store.project.tracks.filter { $0.kind != .video }) { track in
@@ -31,6 +39,7 @@ struct MixerView: View {
                         .padding(.leading, Theme.Space.s)
                 }
                 .padding(Theme.Space.m)
+              }
             }
             .defaultScrollAnchor(.topLeading)
         }

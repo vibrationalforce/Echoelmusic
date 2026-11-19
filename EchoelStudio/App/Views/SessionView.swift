@@ -23,6 +23,13 @@ struct SessionView: View {
         VStack(spacing: 0) {
             ScrollView([.horizontal, .vertical]) {
                 VStack(alignment: .leading, spacing: Theme.Space.hairline) {
+                    // Nothing to launch yet says where to start, as Arrange does (audit 2026-11-19, UX #15).
+                    if tracks.isEmpty {
+                        Text("Add an instrument or audio track on the Tracks page to launch clips here.")
+                            .font(Theme.Font.body)
+                            .foregroundStyle(Theme.Color.textSecondary)
+                            .padding(Theme.Space.l)
+                    }
                     header(tracks)
                     ForEach(store.project.scenes) { scene in
                         row(scene, tracks)
