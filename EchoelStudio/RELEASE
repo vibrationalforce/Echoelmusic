@@ -1,29 +1,32 @@
-11.0.0 — a clip can be one to sixteen bars long, a first take is as long as you play, and the song loops as long as Arrange says
+11.0.0 — clip edges in Arrange, a quiet click, safer listening and export, and a studio that says what it does
 
-New since 10080, built by the Echoel Studio run; nothing here is device-verified yet. Each point
-comes from a code walk of the task "make sixteen bars" on 10080.
-- Note and drum editor, bottom bar: a length menu ("Length 1 Bar" and so on). "Repeat the Clip to"
-  2, 4, 8 or 16 bars repeats what the clip holds, so a one-bar beat becomes sixteen bars of it;
-  "Set the Length to" 1 to 16 bars sets the length outright (longer adds empty bars, shorter drops
-  what starts past the end). A length that would run into the next clip on the track is dimmed,
-  and the menu says why. One Undo.
-- Recording: the first take on a song that plays nothing yet runs as long as you play. Before, a
-  new song looped one bar, and everything played for sixteen bars landed in bar 1. Over a one-bar
-  beat a take still plays into that bar, pass over pass, as before.
-- Loop: the song loops to the end of its last clip, as Arrange counts its bars. Before, it looped
-  to the last note, so a four-bar clip with notes only in bar 1 read "4 bars" and looped one.
-- Four Tracks (the song a new install opens): the beat is in Scene 1 in Session too, so the plus
-  under Drums no longer makes a second, empty clip. Arrange says "1 bar", not "1 bars".
-- Learn: "Your First Track and Recording" names the length menu; "Comping and Loop Record" says
-  what a one-bar loop does with each kind of take.
-- Drum editor: the step grid is built column by column, only the columns on screen.
-Limits, new: a sixteen-bar drum clip has 256 steps a row in the step grid, scrolled sideways.
-Older limits as in 10080.
+New since 10081, built by the Echoel Studio run; nothing here is device-verified yet.
+- Arrange: a note or drum clip has a grip at its start and its end (on a block of at least 88 pt).
+  Drag the end to shorten or lengthen it; drag the start and every note stays where it sounds. The
+  edge follows the magnet, stops at the next clip and at bar 1. One Undo ("Trim Clip").
+- Click: off at every launch. Its level is in the More menu and on the Click key's hold menu,
+  −36 to −6 dB, starting at −24 dB; the count-in plays at the same level.
+- Listening in the browser is mixed before the output's guard, so it cannot pass full scale.
+- Video export: footage that flashes is drawn darker in the film, as the video window shows it
+  (three flashes a second at most). The export reads the footage twice, so it takes longer.
+- A refused permission (microphone, camera, Local Network, speech, camera pulse) has Open Settings.
+- A refused edit in Arrange and the track list says why in the status line instead of snapping back.
+- Piano roll: a new install opens at rows of a full touch target (45 pt); a note's length edge is 22 pt.
+- Song menu, Connect: Light Show… opens fixtures and cues directly.
+- Arrange: "Remove from Song" takes a clip or region out of one place; "Delete Clip Everywhere"
+  deletes the clip (also in Session).
+- A clipping meter shows a light cap and VoiceOver says "clipped"; an empty Mixer and Session say
+  where to start; names shrink before they are cut at large text; Increase Contrast strengthens the
+  hairlines; Escape closes a sheet on an iPad keyboard; VoiceOver reaches a track's menu in Arrange
+  and hears the bar of views as tabs.
+Limits, new: a block narrower than 88 pt shows no grips (trim it in the editor's length menu, or
+zoom in); the app does not read Bold Text yet.
+Older limits as in 10081.
 
-Previous: 10080. A green commit that changes this file uploads build 10000 + run number. A test
+Previous: 10081. A green commit that changes this file uploads build 10000 + run number. A test
 list, not a source for claims (ContentPipeline/CLAIMS.md).
 
-One ask, as for 10080. Start a screen recording, open the app, and try to make sixteen bars in two
+One ask, as for 10081. Start a screen recording, open the app, and try to make sixteen bars in two
 to five minutes: a beat, a bass line or a chord, then Play. No list and no protocol; stop wherever
 it stops being possible or pleasant. The recording is the answer. What gets in the way in it is
 the next work, in the order it happened.
