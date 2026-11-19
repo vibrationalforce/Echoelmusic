@@ -107,9 +107,9 @@ struct AutomationName: View {
 }
 
 /// One lane drawn on the bar timeline: the line between its points, and the points. Tap empty
-/// space to add a point there (snapped to a sixteenth), tap a point to remove it, drag a point
-/// to move it between its neighbours. Each segment has a handle at its middle: drag it up or
-/// down to bend the segment, tap it to straighten it. A lane of choices (the waveform) holds each
+/// space to add a point there (on the song's magnet grid), double-tap a point to remove it, drag
+/// a point to move it between its neighbours. Each segment has a handle at its middle: drag it up
+/// or down to bend the segment, double-tap it to straighten it. A lane of choices (the waveform) holds each
 /// point until the next, is drawn as steps and has no handles. One drag is one undo step.
 struct AutomationRow: View {
     @Environment(ProjectStore.self) private var store
@@ -126,7 +126,9 @@ struct AutomationRow: View {
 
     /// How near a touch must land to take a point: 22 pt, 44 across (audit 2026-11-19, UX #10).
     private static let hit: CGFloat = 22
-    private static let snap = MusicalTime.ticksPerQuarter / 4
+    /// The magnet the arrangement and the note editor use: a point lands where the musician's grid
+    /// says, a triplet or none (audit A3 #4; before, every lane snapped to a sixteenth).
+    @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
     private var ticksPerPoint: Double { Double(MusicalTime.ticksPerBar(signature)) / Double(pointsPerBar) }
 
@@ -138,6 +140,9 @@ struct AutomationRow: View {
                 .background(Theme.Color.background)
                 .contentShape(Rectangle())
                 .gesture(drag(height: height, descriptor))
+                // Two taps remove a point or straighten a bend, one tap adds a point — a slip of
+                // one finger never deletes, as in the note editor (audit A3 #3).
+                .onTapGesture(count: 2) { location in doubleTap(at: location, height: height, descriptor) }
                 .onTapGesture { location in tap(at: location, height: height, descriptor) }
         }
         .accessibilityElement()
@@ -171,7 +176,7 @@ struct AutomationRow: View {
     private func addPointAtPlayhead(_ descriptor: ParameterDescriptor?) {
         guard let descriptor else { return }
         let playhead = engine.playheadTick(in: store.project)
-        let tick = Swift.max(0, (playhead / Self.snap) * Self.snap)
+        let tick = snap.nearest(playhead, meter: store.project.meterMap)
         let value = lane.value(at: tick) ?? descriptor.defaultValue
         var points = lane.points
         points.removeAll { $0.tick == tick }
@@ -270,7 +275,7 @@ struct AutomationRow: View {
 
     private func tick(atX x: CGFloat) -> Tick {
         let raw = Tick((Double(Swift.max(0, x)) * ticksPerPoint).rounded())
-        return Swift.min((raw + Self.snap / 2) / Self.snap * Self.snap, MusicalTime.maximumTick)
+        return snap.nearest(raw, meter: store.project.meterMap)
     }
 
     private func nearest(to location: CGPoint, height: CGFloat, _ descriptor: ParameterDescriptor) -> Int? {
@@ -283,20 +288,25 @@ struct AutomationRow: View {
         return best?.index
     }
 
-    private func tap(at location: CGPoint, height: CGFloat, _ descriptor: ParameterDescriptor?) {
+    /// Two taps on a point remove it; on a bend handle they straighten the segment.
+    private func doubleTap(at location: CGPoint, height: CGFloat, _ descriptor: ParameterDescriptor?) {
         guard let descriptor else { return }
         var points = lane.points
         if let index = nearest(to: location, height: height, descriptor) {
             points.remove(at: index)
             try? store.perform(.setAutomation(lane.target, points: points))
-            return
-        }
-        if let index = nearestBend(to: location, height: height, descriptor) {
-            // A tap on a bend handle straightens the segment.
+        } else if let index = nearestBend(to: location, height: height, descriptor) {
             points[index].curve = 0
             try? store.perform(.setAutomation(lane.target, points: points))
-            return
         }
+    }
+
+    /// One tap away from every point and handle adds a point there; on one, it does nothing.
+    private func tap(at location: CGPoint, height: CGFloat, _ descriptor: ParameterDescriptor?) {
+        guard let descriptor else { return }
+        guard nearest(to: location, height: height, descriptor) == nil,
+              nearestBend(to: location, height: height, descriptor) == nil else { return }
+        var points = lane.points
         let tick = tick(atX: location.x)
         points.removeAll { $0.tick == tick }
         let index = points.firstIndex { $0.tick > tick } ?? points.count
