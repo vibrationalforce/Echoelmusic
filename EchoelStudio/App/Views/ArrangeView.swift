@@ -423,6 +423,7 @@ private struct PlayheadLine: View {
 /// named "Marker N", one undo step. The playhead is read when the button is pressed, never in a body.
 private struct MarkerAddButton: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
@@ -430,7 +431,7 @@ private struct MarkerAddButton: View {
         Button("Add Marker at Playhead", systemImage: "flag") {
             let project = store.project
             let tick = snap.nearest(engine.playheadTick(in: project), meter: project.meterMap)
-            try? store.perform(.addMarker(at: tick, name: project.nextMarkerName()))
+            documents.attempt(.addMarker(at: tick, name: project.nextMarkerName()))
         }
     }
 }
@@ -455,6 +456,7 @@ private struct MarkerStrip: View {
 
 private struct MarkerFlag: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(StudioRouter.self) private var router
     @Environment(AudioEngine.self) private var engine
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
@@ -501,21 +503,22 @@ private struct MarkerFlag: View {
         let project = store.project
         let to = snap.nearest(engine.playheadTick(in: project), meter: project.meterMap)
         guard to != marker.tick else { return }
-        try? store.perform(.moveMarker(from: marker.tick, to: to))
+        documents.attempt(.moveMarker(from: marker.tick, to: to))
     }
 
     private func move(byBars bars: Int64) {
         let to = Swift.max(0, marker.tick + Arranging.ticks(movingBars: bars, from: marker.tick, meter: meter))
         guard to != marker.tick else { return }
-        try? store.perform(.moveMarker(from: marker.tick, to: to))
+        documents.attempt(.moveMarker(from: marker.tick, to: to))
     }
 
-    private func remove() { try? store.perform(.removeMarker(at: marker.tick)) }
+    private func remove() { documents.attempt(.removeMarker(at: marker.tick)) }
 }
 
 /// One track's lane: bar lines, its placements, and taps on empty space.
 private struct ArrangeLane: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     let track: Track
     let project: Project
     let pointsPerBar: CGFloat
@@ -623,7 +626,7 @@ private struct ArrangeLane: View {
         if track.clips.isEmpty {
             createClip(at: Arranging.barStart(tick, meter: meter))
         } else if let command = Arranging.tap(on: track, at: tick, meter: meter) {
-            try? store.perform(command)
+            documents.attempt(command)
         }
     }
 
@@ -636,7 +639,7 @@ private struct ArrangeLane: View {
         } else if track.clips.isEmpty {
             createClip(at: start)
         } else if let command = Arranging.tap(on: track, at: start, meter: meter) {
-            try? store.perform(command)
+            documents.attempt(command)
         }
     }
 
@@ -644,7 +647,7 @@ private struct ArrangeLane: View {
     private func createClip(at start: Tick) {
         guard track.kind == .instrument else { return }
         let clip = ClipID()
-        try? store.perform([
+        documents.attempt([
             .createClip(track: track.id, id: clip, name: Names.derived(track.name, suffix: "Clip"),
                         length: Swift.max(Arranging.ticks(movingBars: 4, from: start, meter: meter), 1)),
             .placeClip(track: track.id, id: PlacementID(), clip: clip, start: start),
@@ -656,6 +659,7 @@ private struct ArrangeLane: View {
 /// one move command when it lifts.
 private struct PlacementBlock: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(StudioRouter.self) private var router
     /// Only for the playhead at the moment Split is chosen — never read in `body`.
     @Environment(AudioEngine.self) private var engine
@@ -762,7 +766,7 @@ private struct PlacementBlock: View {
     private func trim(_ edge: Arranging.Edge, byTicks delta: Tick, snap: SnapGrid) {
         guard let commands = Arranging.trimmed(placement, edge: edge, byTicks: delta, in: track,
                                                project: store.project, snap: snap) else { return }
-        try? store.perform(commands, title: "Trim Clip")
+        documents.attempt(commands, title: "Trim Clip")
     }
 
     /// VoiceOver's trims by one bar, on the bar whatever the magnet says.
@@ -801,9 +805,9 @@ private struct PlacementBlock: View {
         let delta = ArrangeZoom.ticks(dragged: Double(translation), ticksPerPoint: ticksPerPoint)
         if let hit = ArrangeView.hit(near: placement.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
                                      snapping: snapsToHits) {
-            if let command = Hits.placed(placement, in: track, at: hit) { try? store.perform(command) }
+            if let command = Hits.placed(placement, in: track, at: hit) { documents.attempt(command) }
         } else if let command = Arranging.moved(placement, in: track, byTicks: delta, meter: meter, snap: snap) {
-            try? store.perform(command)
+            documents.attempt(command)
         }
     }
 
@@ -830,7 +834,7 @@ private struct PlacementBlock: View {
         Button("Delete", systemImage: "trash", role: .destructive) { remove() }
         // The clip itself: every place it is in the arrangement and every session slot (undoable).
         Button("Delete Clip Everywhere", systemImage: "trash.slash", role: .destructive) {
-            try? store.perform(.deleteClip(clip.id))
+            documents.attempt(.deleteClip(clip.id))
         }
     }
 
@@ -867,7 +871,7 @@ private struct PlacementBlock: View {
     private func move(byBars bars: Tick) {
         if let command = Arranging.moved(placement, in: track,
                                          byTicks: Arranging.ticks(movingBars: bars, from: placement.start, meter: meter), meter: meter) {
-            try? store.perform(command)
+            documents.attempt(command)
         }
     }
 
@@ -879,25 +883,25 @@ private struct PlacementBlock: View {
 
     /// An independent copy right after it: a clip of its own, one undo step.
     private func duplicate() {
-        if let commands = Arranging.copied(placement, in: track) { try? store.perform(commands, title: "Duplicate") }
+        if let commands = Arranging.copied(placement, in: track) { documents.attempt(commands, title: "Duplicate") }
     }
 
     /// A linked copy right after it: the same clip again, so a note edit is heard in both.
     private func duplicateLinked() {
         if let command = Arranging.duplicated(placement, in: track) {
-            try? store.perform([command], title: "Duplicate as Linked")
+            documents.attempt([command], title: "Duplicate as Linked")
         }
     }
 
     /// Gives this placement a clip of its own; nothing happens when nothing else plays its clip.
     private func makeUnique() {
-        if let command = Arranging.madeUnique(placement, in: track) { try? store.perform(command) }
+        if let command = Arranging.madeUnique(placement, in: track) { documents.attempt(command) }
     }
 
     /// Starts the clip exactly on the first hit after its start, one undo step; nothing after the last hit.
     private func placeAtNextHit() {
         guard let hit = nextHit, let command = Hits.placed(placement, in: track, at: hit) else { return }
-        try? store.perform([command], title: "Place at Next Hit")
+        documents.attempt([command], title: "Place at Next Hit")
     }
 
     /// Cuts on the magnet's line nearest the playhead (at the playhead with it off); nothing
@@ -905,17 +909,17 @@ private struct PlacementBlock: View {
     private func splitAtPlayhead() {
         let tick = engine.playheadTick(in: store.project)
         if let command = Arranging.split(placement, in: track, at: tick, meter: meter, snap: snap) {
-            try? store.perform(command)
+            documents.attempt(command)
         }
     }
 
     /// Joins the clip with the placements touching or overlapping it into one clip.
     private func consolidate() {
-        if let command = Arranging.consolidated(placement, in: track) { try? store.perform(command) }
+        if let command = Arranging.consolidated(placement, in: track) { documents.attempt(command) }
     }
 
     private func remove() {
-        try? store.perform(.removePlacement(track: track.id, placement.id))
+        documents.attempt(.removePlacement(track: track.id, placement.id))
     }
 }
 
@@ -1136,16 +1140,16 @@ private struct RegionBlock: View {
         let delta = ArrangeZoom.ticks(dragged: Double(translation), ticksPerPoint: ticksPerPoint)
         if let hit = ArrangeView.hit(near: region.start + delta, in: hits, ticksPerPoint: ticksPerPoint,
                                      snapping: snapsHere) {
-            if let command = Hits.placed(region, in: track, at: hit) { try? store.perform(command) }
+            if let command = Hits.placed(region, in: track, at: hit) { documents.attempt(command) }
         } else if let command = Arranging.moved(region, in: track, byTicks: delta, meter: meter, snap: snap) {
-            try? store.perform(command)
+            documents.attempt(command)
         }
     }
 
     /// Starts the region exactly on the first hit after its start, one undo step.
     private func placeAtNextHit() {
         guard let hit = nextHit, let command = Hits.placed(region, in: track, at: hit) else { return }
-        try? store.perform([command], title: "Place at Next Hit")
+        documents.attempt([command], title: "Place at Next Hit")
     }
 
     /// The hold menu, apart from the block so each expression stays small enough to type-check.
@@ -1181,7 +1185,7 @@ private struct RegionBlock: View {
     }
 
     private func removeFile() {
-        try? store.perform(.removeMedia(file.id))
+        documents.attempt(.removeMedia(file.id))
     }
 
     private func editFades() {
@@ -1333,14 +1337,14 @@ private struct RegionBlock: View {
     /// One command, one undo step.
     private func setFade(_ edge: Arranging.Edge, toFrames frames: Int) {
         guard let command = Arranging.faded(region, edge: edge, toFrames: frames, in: track) else { return }
-        try? store.perform([command], title: edge == .start ? "Fade In" : "Fade Out")
+        documents.attempt([command], title: edge == .start ? "Fade In" : "Fade Out")
     }
 
     /// VoiceOver's fades by one beat: the same command a grip sets.
     private func fade(_ edge: Arranging.Edge, beats: Int) {
         guard file.kind == .audio,
               let command = Arranging.faded(region, edge: edge, byBeats: beats, in: track, project: store.project) else { return }
-        try? store.perform([command], title: edge == .start ? "Fade In" : "Fade Out")
+        documents.attempt([command], title: edge == .start ? "Fade In" : "Fade Out")
     }
 
     /// The fade grip as it shows, and the touch it takes.
@@ -1357,18 +1361,18 @@ private struct RegionBlock: View {
     private func apply(_ edge: Arranging.Edge, byTicks delta: Tick, snap: SnapGrid) {
         guard let commands = Arranging.trimmed(region, edge: edge, byTicks: delta, in: track, project: store.project,
                                                snap: snap) else { return }
-        try? store.perform(commands, title: "Trim Region")
+        documents.attempt(commands, title: "Trim Region")
     }
 
     private func move(byBars bars: Tick) {
         if let command = Arranging.moved(region, in: track,
                                          byTicks: Arranging.ticks(movingBars: bars, from: region.start, meter: meter), meter: meter) {
-            try? store.perform(command)
+            documents.attempt(command)
         }
     }
 
     private func remove() {
-        try? store.perform(.removeRegion(track: track.id, region.id))
+        documents.attempt(.removeRegion(track: track.id, region.id))
     }
 
     /// A cut on the magnet's line nearest the playhead (C5; at the playhead with it off): nothing
@@ -1376,17 +1380,17 @@ private struct RegionBlock: View {
     private func split() {
         let project = store.project
         let at = snap.nearest(engine.playheadTick(in: project), meter: project.meterMap)
-        try? store.perform(.splitRegion(track: track.id, region.id, at: at, newID: RegionID()))
+        documents.attempt(.splitRegion(track: track.id, region.id, at: at, newID: RegionID()))
     }
 
     private func duplicate() {
         guard let commands = Arranging.duplicated(region, in: track, project: store.project) else { return }
-        try? store.perform(commands, title: "Duplicate Region")
+        documents.attempt(commands, title: "Duplicate Region")
     }
 
     /// Joins the region with the pieces of the same file it continues — only when no bounce is needed.
     private func consolidate() {
-        if let command = Arranging.consolidated(region, in: track, project: store.project) { try? store.perform(command) }
+        if let command = Arranging.consolidated(region, in: track, project: store.project) { documents.attempt(command) }
     }
 }
 

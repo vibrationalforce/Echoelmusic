@@ -1615,3 +1615,26 @@ extension Project {
         }
     }
 }
+
+extension CommandError {
+    /// One sentence for the musician when the song refuses an edit (audit 2026-11-19: a refused
+    /// move or trim snapped back with nothing said). A reason written as a clause of its own ("an
+    /// audio clip has no notes") is said as it is; one written against a parameter name ("must be
+    /// within …") or a bare range is not readable alone, and says only that the value did not fit.
+    public var sentence: String {
+        switch self {
+        case .unknownTrack, .unknownClip, .unknownPlacement, .unknownScene, .unknownNote, .unknownMedia,
+             .unknownRegion, .unknownInsert:
+            return "Not done: that part of the song is no longer there."
+        case .duplicateID:
+            return "Not done: that is already in the song."
+        case .invalidValue(_, let reason):
+            let clause = reason.trimmingCharacters(in: .whitespacesAndNewlines)
+            let leading = clause.split(separator: " ").first.map(String.init) ?? ""
+            let readable = !clause.isEmpty && !["must", "needs", "need"].contains(leading)
+                && clause.first.map { $0.isLetter } == true
+            guard readable else { return "Not done: that does not fit here." }
+            return "Not done: \(clause)."
+        }
+    }
+}

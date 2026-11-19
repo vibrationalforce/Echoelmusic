@@ -99,6 +99,8 @@ final class DocumentController {
 
     @ObservationIgnored private let library: ProjectLibrary
     @ObservationIgnored private let store: ProjectStore
+    /// The refusal `attempt` put in `lastError`; the next edit the song takes clears it again.
+    @ObservationIgnored private var shownRefusal: String?
     @ObservationIgnored private var pendingSave: Task<Void, Never>?
     /// When the oldest change the disk does not hold yet arrived (`autosaveLongest`).
     @ObservationIgnored private var firstUnsavedChange: ContinuousClock.Instant?
@@ -2798,6 +2800,34 @@ final class DocumentController {
         guard !store.project.media.contains(where: { $0.id == id }) else { return }
         guard samples.removeValue(forKey: id) != nil else { return }
         mediaRevision += 1
+    }
+
+    /// An edit from a view: done, or — when the song refuses it — said in the status strip, which
+    /// VoiceOver also hears, instead of snapping back in silence (audit 2026-11-19). The line goes
+    /// with the next edit the song takes. True when it was done.
+    @discardableResult
+    func attempt(_ command: Command) -> Bool {
+        attempting { try store.perform(command) }
+    }
+
+    /// The commands as one undo step titled `title`, as `attempt(_:)`.
+    @discardableResult
+    func attempt(_ commands: [Command], title: String) -> Bool {
+        attempting { try store.perform(commands, title: title) }
+    }
+
+    private func attempting(_ edit: () throws -> Void) -> Bool {
+        do {
+            try edit()
+            if let shown = shownRefusal, lastError == shown { lastError = nil }
+            shownRefusal = nil
+            return true
+        } catch {
+            let line = (error as? CommandError)?.sentence ?? "Not done: that does not fit here."
+            lastError = line
+            shownRefusal = line
+            return false
+        }
     }
 
     /// True when the song took the commands.
