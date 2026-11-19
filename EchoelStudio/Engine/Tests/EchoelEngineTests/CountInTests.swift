@@ -116,6 +116,8 @@ final class CountInTests: XCTestCase {
     /// A core holding an empty song at bar 1, stopped, its click on.
     private func playingCore(_ project: Project) throws -> EngineCore {
         let core = EngineCore(sampleRate: rate)
+        // The click is off until the musician turns it on (2026-11-19); these tests hear it.
+        core.setClickEnabled(true)
         core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
                                     slots: [:], sampleRate: rate, generation: 1))
         _ = render(core, frames: 256, block: 256)

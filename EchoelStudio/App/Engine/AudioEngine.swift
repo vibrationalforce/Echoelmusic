@@ -99,7 +99,12 @@ final class AudioEngine {
     /// render thread (`Wavetables`), and the ones being made.
     @ObservationIgnored private var tables: [WavetableSource: WavetableBank] = [:]
     @ObservationIgnored private var cutting: Set<WavetableSource> = []
-    @ObservationIgnored private var clickEnabled = true
+    /// Off at every launch (2026-11-19, founder: the click muted by default).
+    @ObservationIgnored private var clickEnabled = false
+    /// The click's level in decibels, kept on this device, never in the song; quiet to start.
+    private(set) var clickLevelDB: Double = UserDefaults.standard.object(forKey: AudioEngine.clickLevelKey) as? Double
+        ?? ClickLevel.standard
+    private static let clickLevelKey = "clickLevelDB"
     /// Headphone Spatial monitoring (Recovery 5): every track heard at its pan's place around the
     /// listener, for headphones. Off at every launch; it changes what is heard, never the song or
     /// the stereo export (`EngineCore.setHeadphoneSpatial`).
@@ -957,6 +962,7 @@ final class AudioEngine {
                 defer { if let resumeTick { seek(toTick: resumeTick) } }
                 current = EngineCore(sampleRate: sampleRate)
                 current.setClickEnabled(clickEnabled)
+                current.setClickLevel(ClickLevel.gain(decibels: clickLevelDB))
                 current.setHeadphoneSpatial(headphoneSpatial)
                 // Nothing over −1 dBFS reaches the device (`EngineCore.guards`); exports stay as mixed.
                 current.setOutputGuard(true)
@@ -1568,6 +1574,13 @@ final class AudioEngine {
     func setClickEnabled(_ enabled: Bool) {
         clickEnabled = enabled
         core?.setClickEnabled(enabled)
+    }
+
+    func setClickLevel(decibels: Double) {
+        guard decibels.isFinite else { return }
+        clickLevelDB = decibels
+        UserDefaults.standard.set(decibels, forKey: Self.clickLevelKey)
+        core?.setClickLevel(ClickLevel.gain(decibels: decibels))
     }
 
     func setHeadphoneSpatial(_ on: Bool) {

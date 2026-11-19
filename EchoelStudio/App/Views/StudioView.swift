@@ -317,7 +317,8 @@ struct TransportBar: View {
     @Environment(MIDIInput.self) private var midi
     @Environment(ParameterWriter.self) private var writer
     @Environment(JamSession.self) private var jam: JamSession?
-    @State private var clickOn = true
+    /// Off at every launch, as the engine's click (2026-11-19).
+    @State private var clickOn = false
     @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
     @AppStorage(FieldWindow.shownKey) private var showsFieldWindow = true
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -510,6 +511,7 @@ struct TransportBar: View {
             Toggle(isOn: Binding(get: { clickOn }, set: { clickOn = $0; engine.setClickEnabled($0) })) {
                 Label("Click", systemImage: "metronome")
             }
+            clickLevelPicker
             countInPicker
             Toggle(isOn: Binding(get: { midi.isLearning }, set: { midi.setLearning($0) })) {
                 Label("MIDI Learn", systemImage: "slider.horizontal.2.square")
@@ -591,6 +593,17 @@ struct TransportBar: View {
         }
     }
 
+    /// How loud the click and the count-in play, quiet to start; a setting of this device.
+    private var clickLevelPicker: some View {
+        Picker(selection: Binding(get: { engine.clickLevelDB }, set: { engine.setClickLevel(decibels: $0) })) {
+            ForEach(ClickLevel.choices, id: \.self) { level in
+                Text(ClickLevel.title(level)).tag(level)
+            }
+        } label: {
+            Label("Click Level", systemImage: "speaker.wave.1")
+        }
+    }
+
     /// Off, one or two bars of click before Record starts a stopped song; a setting of this device.
     private var countInPicker: some View {
         Picker(selection: Binding(get: { engine.countInLength }, set: { engine.setCountInLength($0) })) {
@@ -616,10 +629,13 @@ struct TransportBar: View {
             // Held: how many bars Record counts in before a stopped song starts. The lifted
             // preview is the key, not the group around it.
             .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: Theme.Radius.small))
-            .contextMenu { countInPicker }
+            .contextMenu {
+                clickLevelPicker
+                countInPicker
+            }
             .accessibilityLabel("Click")
-            .accessibilityValue(clickOn ? "On" : "Off")
-            .accessibilityHint("Touch and hold to choose the count-in before Record.")
+            .accessibilityValue(clickOn ? "On, " + ClickLevel.title(engine.clickLevelDB) : "Off")
+            .accessibilityHint("Touch and hold to choose the click's level and the count-in before Record.")
 
             MIDILearnButton()
 

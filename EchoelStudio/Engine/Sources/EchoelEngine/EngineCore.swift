@@ -34,7 +34,9 @@ public final class EngineCore: @unchecked Sendable {
 
     // Main → render.
     private let isPlayingFlag = Atomic<Bool>(false)
-    private let clickFlag = Atomic<Bool>(true)
+    private let clickFlag = Atomic<Bool>(false)
+    /// The click's and count-in's gain, as the bits of a Float (`ClickLevel`).
+    private let clickLevelBits = Atomic<UInt32>(ClickLevel.gain(decibels: ClickLevel.standard).bitPattern)
     private let seekRequest = Atomic<Int64>(-1)
     /// Samples to move the playhead by without a seek, for phase correction.
     private let nudgeRequest = Atomic<Int64>(0)
@@ -677,6 +679,11 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     public func setClickEnabled(_ enabled: Bool) { clickFlag.store(enabled, ordering: .relaxed) }
+    /// The click's gain (`ClickLevel.gain`); not finite or negative is silence, above 1 is 1.
+    public func setClickLevel(_ gain: Float) {
+        let held: Float = gain.isFinite ? Swift.min(Swift.max(gain, 0), 1) : 0
+        clickLevelBits.store(held.bitPattern, ordering: .relaxed)
+    }
 
     /// Main thread: whether the output's guard limits what leaves the engine (see `guards`). The
     /// app's live engine turns it on; an export's or a bake's leaves it off.
@@ -981,6 +988,9 @@ public final class EngineCore: @unchecked Sendable {
         // A stopping block still fades out the clips that were playing; they stop after it.
         if !stopping { takeLaunchRequests(playing: playing) }
         metronome.isEnabled = clickFlag.load(ordering: .relaxed)
+        let clickGain = Float(bitPattern: clickLevelBits.load(ordering: .relaxed))
+        metronome.level = clickGain
+        countClick.level = clickGain
 
         guard playing, let box = current else {
             if stopping {
