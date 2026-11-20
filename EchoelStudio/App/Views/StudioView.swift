@@ -1149,6 +1149,10 @@ struct TempoField: View {
                     Image(systemName: "lock.fill")
                 }
                 Text(Self.unit(source))
+                // While the pulse moves the tempo, one tap on the number holds the tempo it has
+                // reached (Michael on 10083: the tempo wandered 102–121 BPM with nothing in reach
+                // to stop it). Said here, where the finger is.
+                if flows { Text("· Tap to Hold") }
             }
             .font(Theme.Font.caption)
             .foregroundStyle(followsClock ? Theme.Color.text : Theme.Color.textSecondary)
@@ -1174,7 +1178,7 @@ struct TempoField: View {
                     store.endGesture()
                 }
         )
-        .onTapGesture(perform: typeTempo)
+        .onTapGesture { if flows { holdFlowTempo() } else { typeTempo() } }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Tempo")
         .accessibilityValue(NumberText.string(shownTempo, decimalsUpTo: 2, unit: "BPM") + Self.spoken(source))
@@ -1182,6 +1186,17 @@ struct TempoField: View {
             nudge(direction == .increment ? 1 : -1)
         }
         .accessibilityAction(named: "Type a Tempo", typeTempo)
+        .accessibilityAction(named: "Hold This Tempo") { holdFlowTempo() }
+    }
+
+    /// Flow lets go: the song keeps the tempo the pulse reached, as closing the lock on the
+    /// instrument page does (`FlowController.setLock(.fixed)`). Nothing while Flow is not on.
+    private func holdFlowTempo() {
+        guard flows else { return }
+        let reached = shownTempo
+        flow?.setLock(.fixed)
+        Theme.Accessibility.announce(Announcement("Tempo held at " + NumberText.string(reached, decimalsUpTo: 2, unit: "BPM") + ".",
+                                                  priority: .normal))
     }
 
     /// − (slower) or + (faster) by one BPM.
