@@ -96,8 +96,9 @@ struct Fader: View {
             )
             .onTapGesture(count: 2) { writer.reset(address) }
             .accessibilityElement()
+            .overlay(alignment: .top) { ParameterMarkBadges(address: address).offset(y: -2) }
             .accessibilityLabel(descriptor.title)
-            .accessibilityValue(ParameterFormat.text(value, unit: descriptor.unit))
+            .accessibilityValue(ParameterFormat.text(value, unit: descriptor.unit) + ParameterMarks.spoken(address, in: store.project))
             .accessibilityAdjustableAction { direction in
                 let step = direction == .increment ? 0.02 : -0.02
                 writer.set(address, normalized: position + step, gesture: false)
@@ -166,8 +167,9 @@ struct PanControl: View {
             )
             .onTapGesture(count: 2) { writer.reset(address) }
             .accessibilityElement()
+            .overlay(alignment: .topTrailing) { ParameterMarkBadges(address: address) }
             .accessibilityLabel(descriptor.title)
-            .accessibilityValue(Spoken.pan(value))
+            .accessibilityValue(Spoken.pan(value) + ParameterMarks.spoken(address, in: store.project))
             .accessibilityAdjustableAction { direction in
                 writer.set(address, normalized: position + (direction == .increment ? 0.05 : -0.05), gesture: false)
             }
@@ -232,10 +234,13 @@ struct ParameterField: View {
         let position = descriptor.normalized(value)
         let engaged = drag != nil || isTyped
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
-            Text(title(descriptor))
-                .font(Theme.Font.caption)
-                .foregroundStyle(Theme.Color.textSecondary)
-                .lineLimit(1)
+            HStack(spacing: Theme.Space.xs) {
+                Text(title(descriptor))
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                    .lineLimit(1)
+                ParameterMarkBadges(address: address)
+            }
             HStack(alignment: .firstTextBaseline, spacing: Theme.Space.xs) {
                 Text(ParameterFormat.text(value, descriptor: descriptor))
                     .font(Theme.Font.value)
@@ -291,7 +296,7 @@ struct ParameterField: View {
         }
         .accessibilityElement()
         .accessibilityLabel(spokenTitle(descriptor))
-        .accessibilityValue(ParameterFormat.text(value, descriptor: descriptor))
+        .accessibilityValue(ParameterFormat.text(value, descriptor: descriptor) + ParameterMarks.spoken(address, in: store.project))
         .accessibilityAdjustableAction { direction in
             let step = Self.step(descriptor)
             writer.set(address, normalized: position + (direction == .increment ? step : -step), gesture: false)
