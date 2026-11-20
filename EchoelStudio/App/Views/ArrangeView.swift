@@ -39,6 +39,8 @@ struct ArrangeView: View {
     /// The horizontal zoom at rest, kept on this device (`ArrangeZoom.level` reads a broken one
     /// as the standard zoom).
     @AppStorage(ArrangeZoom.storageKey) private var zoom = ArrangeZoom.base
+    /// The height Arrange has on screen, so the track rows can share what the lanes leave free.
+    @State private var visibleHeight: CGFloat = 0
     /// The live factor of a pinch in progress; it resets itself on release or when a scroll takes
     /// the touch, and the zoom changes once, when the fingers lift.
     @GestureState private var pinch: CGFloat = 1
@@ -75,6 +77,8 @@ struct ArrangeView: View {
             }
         }
         .background(Theme.Color.background)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { visibleHeight = $0 }
+        .environment(\.arrangeRowHeight, rowHeight(project))
         .safeAreaInset(edge: .bottom, spacing: 0) { zoomBar }
         // A video file added to the song is searched for its hits once, off the main thread.
         .task(id: videoMedia(of: project)) {
@@ -137,7 +141,7 @@ struct ArrangeView: View {
                 ForEach(project.tracks) { track in
                     ArrangeLane(track: track, project: project, pointsPerBar: pointsPerBar,
                                 open: open, importAudio: importAudio, files: files, hits: hits)
-                        .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
+                        .frame(width: laneWidth, height: rowHeight(project))
                     ForEach(TakeLanes.rows(of: track)) { row in
                         TakeLane(track: track, project: project, row: row, pointsPerBar: pointsPerBar)
                             .frame(width: laneWidth, height: TakeLanes.rowHeight)
@@ -215,11 +219,11 @@ struct ArrangeView: View {
         Text(track.name)
             .font(Theme.Font.label)
             .foregroundStyle(Theme.Color.text)
-            .lineLimit(1)
+            .lineLimit(2)
             .minimumScaleFactor(0.7)
             .padding(.horizontal, Theme.Space.s)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: Theme.Size.trackRowHeight)
+            .frame(height: rowHeight(store.project))
             .background(Theme.Color.surface)
             .contextMenu { trackMenu(track, showsHits: showsHits) }
             // VoiceOver reaches the track's menu here — Automate and Modulate are nowhere else in
@@ -249,6 +253,27 @@ extension ArrangeView {
     /// The modulation routes that move one owner's values, each shown as a row under its lanes.
     static func routes(of owner: ParameterAddress.Owner, in project: Project) -> [ModulationRoute] {
         project.modRoutes.filter { $0.target.owner == owner }
+    }
+
+    /// A track row's height: the room the ruler, the zoom bar and the lanes of fixed height leave,
+    /// shared by the tracks — never less than a row always was, never more than twice it. The
+    /// 10083 recording showed six rows over an empty half screen with names too small to read.
+    private func rowHeight(_ project: Project) -> CGFloat {
+        Self.rowHeight(project, visible: visibleHeight)
+    }
+
+    static func rowHeight(_ project: Project, visible: CGFloat) -> CGFloat {
+        let base = Theme.Size.trackRowHeight
+        guard !project.tracks.isEmpty, visible.isFinite, visible > 0 else { return base }
+        var fixed = rulerRowHeight + Theme.Size.touch
+        for track in project.tracks {
+            fixed += CGFloat(TakeLanes.rows(of: track).count) * TakeLanes.rowHeight
+            fixed += CGFloat(lanes(of: .track(track.id), in: project).count
+                             + routes(of: .track(track.id), in: project).count) * base
+        }
+        fixed += CGFloat(lanes(of: .master, in: project).count + routes(of: .master, in: project).count) * base
+        let share = (visible - fixed) / CGFloat(project.tracks.count)
+        return Swift.min(Swift.max(share, base), base * 2)
     }
 
     /// Whether a dragged clip or region lands on a hit within reach (CUT): kept on this device, on at first.
@@ -686,6 +711,8 @@ private struct ArrangeLane: View {
 /// A placed clip. The drag offset lives in view state while the finger is down and becomes
 /// one move command when it lifts.
 private struct PlacementBlock: View {
+    /// The track row's height (`ArrangeView.rowHeight`): the block fills it.
+    @Environment(\.arrangeRowHeight) private var rowHeight
     @Environment(ProjectStore.self) private var store
     @Environment(DocumentController.self) private var documents
     @Environment(StudioRouter.self) private var router
@@ -745,7 +772,7 @@ private struct PlacementBlock: View {
             .overlay(alignment: .bottomTrailing) { linkBadge }
             .overlay(alignment: .leading) { if grips { edgeHandle(.start, color: color) } }
             .overlay(alignment: .trailing) { if grips { edgeHandle(.end, color: color) } }
-            .frame(width: width, height: Theme.Size.trackRowHeight - Theme.Space.s)
+            .frame(width: width, height: rowHeight - Theme.Space.s)
             .offset(x: CGFloat(Double(placement.start) / ticksPerPoint) + dragX + trimLeft, y: Theme.Space.xs)
             .opacity(dragging ? 0.8 : 1)
             .onTapGesture { open(track.id, clip.id) }
@@ -970,6 +997,8 @@ private struct PlacementBlock: View {
 /// shows its hits (CUT); an audio region lands on one within reach and moves to the next on Place
 /// at Next Hit.
 private struct RegionBlock: View {
+    /// The track row's height (`ArrangeView.rowHeight`): the block fills it.
+    @Environment(\.arrangeRowHeight) private var rowHeight
     @Environment(ProjectStore.self) private var store
     @Environment(StudioRouter.self) private var router
     @Environment(AudioEngine.self) private var engine
@@ -1084,7 +1113,7 @@ private struct RegionBlock: View {
 
     /// Size, place in the lane (following a move or a left-edge drag), and the move drag.
     private func placed(_ view: some View, width: CGFloat) -> some View {
-        let height: CGFloat = Theme.Size.trackRowHeight - Theme.Space.s
+        let height: CGFloat = rowHeight - Theme.Space.s
         let x: CGFloat = CGFloat(Double(region.start) / ticksPerPoint) + dragX + trimLeft
         let isDragging = dragX != 0 || trimLeft != 0 || trimRight != 0
         let opacity: Double = isDragging ? 0.8 : 1
@@ -1537,4 +1566,9 @@ enum ArrangeSpeech {
     static func position(_ tick: Tick, meter: MeterMap) -> String {
         NoteEditing.spokenPosition(tick, meter: meter, grid: meter.ticksPerBeat(at: tick))
     }
+}
+
+extension EnvironmentValues {
+    /// The height of a track's row in Arrange, which grows into free room (`ArrangeView.rowHeight`).
+    @Entry var arrangeRowHeight: CGFloat = 56
 }
