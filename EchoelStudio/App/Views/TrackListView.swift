@@ -72,6 +72,12 @@ struct TrackRow: View {
         .background(Theme.Color.surface)
         .contextMenu {
             Button("Rename Track…", systemImage: "pencil") { router.sheet = .rename(.track(track.id)) }
+            // Automate, Modulate and the track's effects from the track list too — before, only a
+            // hold on the name in Arrange reached the first two, and only the Mixer the effects
+            // (hidden-features audit 2026-11-20, #8 and #13).
+            AutomateMenu(owner: .track(track.id))
+            ModulateMenu(owner: .track(track.id))
+            Button("Effects…", systemImage: "slider.horizontal.3") { router.sheet = .effects(track.id) }
             Button("Move Up", systemImage: "arrow.up") { move(by: -1) }
                 .disabled(index == 0)
             Button("Move Down", systemImage: "arrow.down") { move(by: 1) }
