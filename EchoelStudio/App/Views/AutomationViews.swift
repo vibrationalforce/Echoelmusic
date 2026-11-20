@@ -247,6 +247,17 @@ struct AutomationRow: View {
             let dot = CGRect(x: point.x - 4, y: point.y - 4, width: 8, height: 8)
             context.fill(Path(ellipseIn: dot), with: .color(Theme.Color.text))
         }
+        // The value of the point under the finger, beside it while it moves (audit A3 #5: a drag
+        // showed nothing, so a point could not be put on −3.0 dB).
+        if case .point(let index) = dragging, lane.points.indices.contains(index) {
+            let label = context.resolve(Text(ParameterFormat.text(lane.points[index].value, descriptor: descriptor))
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.accent))
+            let at = points[index]
+            let x = at.x + 8 + label.measure(in: size).width < size.width ? at.x + 8 : at.x - 8
+            context.draw(label, at: CGPoint(x: x, y: Swift.max(8, at.y - 10)),
+                         anchor: x > at.x ? .leading : .trailing)
+        }
     }
 
     private func x(of tick: Tick) -> CGFloat { CGFloat(Double(tick) / ticksPerPoint) }
