@@ -71,7 +71,7 @@ struct AutomationName: View {
     let lane: AutomationLane
 
     var body: some View {
-        let title = pluginTitle ?? store.project.descriptor(for: lane.target)?.title ?? lane.target.description
+        let title = AutomationName.title(of: lane.target, project: store.project, plugins: engine.plugins)
         Text(title)
             .font(Theme.Font.caption)
             .foregroundStyle(Theme.Color.textSecondary)
@@ -90,17 +90,24 @@ struct AutomationName: View {
             .accessibilityHidden(true)
     }
 
-    /// A plugin parameter by the name its unit gives it, once the unit is loaded.
-    private var pluginTitle: String? {
-        guard case .track(let id) = lane.target.owner, let parameter = lane.target.key.pluginParameter,
-              let track = store.project.track(id), let plugin = track.plugin(for: parameter.unit) else { return nil }
-        _ = engine.plugins.revision
+    /// The lane's name: a plugin parameter by the name its unit gives it once the unit is loaded,
+    /// else the parameter's title. Shared with the lane itself, so VoiceOver hears the same name
+    /// the eye reads (audit A3 #7: a plugin lane was spoken as "Track Plugin #1234").
+    static func title(of target: ParameterAddress, project: Project, plugins: PluginHost) -> String {
+        pluginTitle(of: target, project: project, plugins: plugins)
+            ?? project.descriptor(for: target)?.title ?? target.description
+    }
+
+    private static func pluginTitle(of target: ParameterAddress, project: Project, plugins: PluginHost) -> String? {
+        guard case .track(let id) = target.owner, let parameter = target.key.pluginParameter,
+              let track = project.track(id), let plugin = track.plugin(for: parameter.unit) else { return nil }
+        _ = plugins.revision
         let slot: PluginHost.Slot
         switch parameter.unit {
         case .instrument: slot = .instrument(id)
         case .insert(let insert): slot = .insert(insert)
         }
-        guard let name = engine.plugins.automatableParameters(slot).first(where: { $0.address == parameter.address })?.name
+        guard let name = plugins.automatableParameters(slot).first(where: { $0.address == parameter.address })?.name
         else { return nil }
         return "\(plugin.displayName) \(name)"
     }
@@ -146,7 +153,7 @@ struct AutomationRow: View {
                 .onTapGesture { location in tap(at: location, height: height, descriptor) }
         }
         .accessibilityElement()
-        .accessibilityLabel("\(descriptor?.title ?? "Parameter") automation")
+        .accessibilityLabel("\(AutomationName.title(of: lane.target, project: store.project, plugins: engine.plugins)) automation")
         .accessibilityValue("\(lane.points.count) points")
         .accessibilityAction(named: "Remove Automation") {
             try? store.perform(.setAutomation(lane.target, points: []))
