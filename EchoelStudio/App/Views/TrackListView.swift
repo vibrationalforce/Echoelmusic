@@ -187,6 +187,7 @@ struct ArmButton: View {
 struct AddTrackMenu: View {
     @Environment(ProjectStore.self) private var store
     @Environment(DocumentController.self) private var documents
+    @Environment(StudioRouter.self) private var router
 
     var body: some View {
         Menu {
@@ -223,12 +224,16 @@ struct AddTrackMenu: View {
     private func addDrums() {
         let track = TrackID(), clip = ClipID()
         let name = Names.firstFree("Drums", taken: store.project.tracks.map(\.name))
-        documents.attempt([
+        let added = documents.attempt([
             .addTrack(id: track, name: name, kind: .instrument, index: nil),
             .setInstrumentDevice(track, .drums),
             .createClip(track: track, id: clip, name: "Beat", length: MusicalTime.ticksPerBar(store.project.timeSignature)),
             .placeClip(track: track, id: PlacementID(), clip: clip, start: 0),
         ], title: "Add Drums")
+        // Straight to the steps of the new beat, so the first hit is one tap away (plan point 5
+        // from the 10083 recording: five minutes passed without a note of one's own). The steps
+        // are the musician's; nothing is filled in for them.
+        if added { router.sheet = .clip(track, clip) }
     }
 
     private func add(_ kind: TrackKind) {
