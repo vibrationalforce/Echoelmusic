@@ -82,6 +82,9 @@ struct ClipEditorView: View {
                 } else if let track, let clip = editedClip(track) {
                     PianoRoll(clip: clip, color: Theme.Color.track(track.colorIndex), grid: grid(for: clip),
                               snap: snap, zoom: PianoRoll.zoomLevels[zoomIndex])
+                        // The same strip as at Arrange's side: touch or drag to set the zoom; the
+                        // two buttons in the bottom bar stay.
+                        .overlay(alignment: .trailing) { zoomStrip }
                 } else if let track {
                     emptyState(track)
                 } else {
@@ -221,6 +224,16 @@ struct ClipEditorView: View {
         } catch {
             Theme.Accessibility.announce(Announcement("The clip's length could not be changed.", priority: .urgent))
         }
+    }
+
+    private var zoomStrip: some View {
+        let levels = PianoRoll.zoomLevels
+        return SideZoomStrip(levels: levels, index: zoomIndex, standard: PianoRoll.standardZoom,
+                             spoken: "\(Int((levels[zoomIndex] * 100).rounded())) percent",
+                             hint: "Swipe up for bigger notes, down for smaller ones.",
+                             set: { zoom = $0 })
+            .padding(.vertical, Theme.Space.l)
+            .padding(.trailing, Theme.Space.xs)
     }
 
     /// Zoom Out and Zoom In for the piano roll; the top bar has no room left on a phone.
