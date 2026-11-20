@@ -1062,7 +1062,10 @@ private struct RegionBlock: View {
     private var nextHit: Tick? { file.kind == .audio ? Hits.next(after: region.start, in: hits) : nil }
 
     var body: some View {
-        accessible(block.contextMenu { menu })
+        // A tap opens the region's settings — fades, gain, warp, and the doors to Convert to
+        // MIDI, Pitch & Texture, Transcribe, Color and Bake — which were only behind a hold; an audio region
+        // (hidden-features audit 2026-11-20, #1). The hold menu stays.
+        accessible(block.onTapGesture { editFades() }.contextMenu { menu })
     }
 
     /// The block itself: shape, name, size, position and the move drag.
