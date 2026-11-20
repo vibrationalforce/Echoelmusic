@@ -1154,6 +1154,8 @@ struct TempoField: View {
                 // to stop it). Said here, where the finger is.
                 if flows { Text("· Tap to Hold") }
             }
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
             .font(Theme.Font.caption)
             .foregroundStyle(followsClock ? Theme.Color.text : Theme.Color.textSecondary)
         }
