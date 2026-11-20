@@ -798,10 +798,20 @@ private struct PlacementBlock: View {
         documents.attempt(commands, title: "Trim Clip")
     }
 
-    /// VoiceOver's trims by one bar, on the bar whatever the magnet says.
+    /// VoiceOver's trims by one bar, on the bar whatever the magnet says — and what came of it is
+    /// said, or why nothing did (audit A3 #6: these actions were silent).
     private func trim(_ edge: Arranging.Edge, bars: Int64) {
         let from: Tick = edge == .start ? placement.start : placement.start + clip.length
-        trim(edge, byTicks: Arranging.ticks(movingBars: bars, from: from, meter: meter), snap: .bar)
+        guard let commands = Arranging.trimmed(placement, edge: edge,
+                                               byTicks: Arranging.ticks(movingBars: bars, from: from, meter: meter),
+                                               in: track, project: store.project, snap: .bar) else {
+            return ArrangeSpeech.say("Not trimmed: the clip stops at bar 1 and at the next clip.")
+        }
+        guard documents.attempt(commands, title: "Trim Clip") else { return }
+        let placed = store.project.track(track.id)?.placements.first { $0.id == placement.id } ?? placement
+        let length = store.project.track(track.id)?.clips.first { $0.id == placed.clip }?.length ?? clip.length
+        ArrangeSpeech.say(edge == .start ? "Starts at " + ArrangeSpeech.position(placed.start, meter: meter)
+                                         : "Ends at " + ArrangeSpeech.position(placed.start + length, meter: meter))
     }
 
     /// A linked copy shows a chain and how many places play its clip (×3). VoiceOver reads it in the
@@ -1370,11 +1380,14 @@ private struct RegionBlock: View {
         documents.attempt([command], title: edge == .start ? "Fade In" : "Fade Out")
     }
 
-    /// VoiceOver's fades by one beat: the same command a grip sets.
+    /// VoiceOver's fades by one beat: the same command a grip sets; said after (audit A3 #6).
     private func fade(_ edge: Arranging.Edge, beats: Int) {
         guard file.kind == .audio,
-              let command = Arranging.faded(region, edge: edge, byBeats: beats, in: track, project: store.project) else { return }
-        documents.attempt([command], title: edge == .start ? "Fade In" : "Fade Out")
+              let command = Arranging.faded(region, edge: edge, byBeats: beats, in: track, project: store.project) else {
+            return ArrangeSpeech.say(edge == .start ? "The fade in cannot change further." : "The fade out cannot change further.")
+        }
+        guard documents.attempt([command], title: edge == .start ? "Fade In" : "Fade Out") else { return }
+        ArrangeSpeech.say(edge == .start ? "Fade in changed by \(beats) beat" : "Fade out changed by \(beats) beat")
     }
 
     /// The fade grip as it shows, and the touch it takes.
@@ -1383,9 +1396,15 @@ private struct RegionBlock: View {
     /// How far a grip's centre stays inside the block's edges and top.
     private static let gripInset: CGFloat = gripSize / 2 + 2
 
-    /// VoiceOver's trims by one beat, on the beat whatever the magnet says.
+    /// VoiceOver's trims by one beat, on the beat whatever the magnet says; said after (audit A3 #6).
     private func trim(_ edge: Arranging.Edge, beats: Tick) {
-        apply(edge, byTicks: beats * meter.ticksPerBeat(at: region.start), snap: .beat)
+        guard let commands = Arranging.trimmed(region, edge: edge, byTicks: beats * meter.ticksPerBeat(at: region.start),
+                                               in: track, project: store.project, snap: .beat) else {
+            return ArrangeSpeech.say("Not trimmed: the region stops at its file's edge, bar 1 and the next region.")
+        }
+        guard documents.attempt(commands, title: "Trim Region") else { return }
+        let placed = store.project.track(track.id)?.regions.first { $0.id == region.id } ?? region
+        ArrangeSpeech.say(edge == .start ? "Starts at " + ArrangeSpeech.position(placed.start, meter: meter) : "End trimmed")
     }
 
     private func apply(_ edge: Arranging.Edge, byTicks delta: Tick, snap: SnapGrid) {
@@ -1395,10 +1414,14 @@ private struct RegionBlock: View {
     }
 
     private func move(byBars bars: Tick) {
-        if let command = Arranging.moved(region, in: track,
-                                         byTicks: Arranging.ticks(movingBars: bars, from: region.start, meter: meter), meter: meter) {
-            documents.attempt(command)
+        guard let command = Arranging.moved(region, in: track,
+                                            byTicks: Arranging.ticks(movingBars: bars, from: region.start, meter: meter),
+                                            meter: meter) else {
+            return ArrangeSpeech.say("Not moved: the region stops at bar 1 and at the next region.")
         }
+        guard documents.attempt(command) else { return }
+        let placed = store.project.track(track.id)?.regions.first { $0.id == region.id } ?? region
+        ArrangeSpeech.say("Moved to " + ArrangeSpeech.position(placed.start, meter: meter))
     }
 
     private func remove() {
@@ -1500,4 +1523,17 @@ private struct RegionWaveform: View {
     /// Muted: the wave sits behind the name and the fades, in the track's hue, never brighter than them.
     private nonisolated static let peakOpacity: Double = 0.35
     private nonisolated static let bodyOpacity: Double = 0.6
+}
+
+/// What a VoiceOver action in the arrangement says after it (audit A3 #6): the new place, or why
+/// nothing moved. Said the app's one way (`Theme.Accessibility`).
+enum ArrangeSpeech {
+    static func say(_ text: String) {
+        Theme.Accessibility.announce(Announcement(text, priority: .normal))
+    }
+
+    /// "bar 5, beat 1" — the place as the note editor says it, on the beat.
+    static func position(_ tick: Tick, meter: MeterMap) -> String {
+        NoteEditing.spokenPosition(tick, meter: meter, grid: meter.ticksPerBeat(at: tick))
+    }
 }
