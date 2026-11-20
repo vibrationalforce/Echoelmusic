@@ -1,32 +1,29 @@
-11.0.0 — answers to the sixteen-bar recording: modulation you can see, a tempo you can hold, breaks in time, finer values
+11.0.0 — what a value does, zoom at the side, several notes at once, nothing hidden
 
-New since 10083, built by the Echoel Studio run; nothing here is device-verified yet.
-- Modulation: every route is a row under its track in Arrange — its depth as a value in tenths of
-  a percent, On, From Zero / Centred, Remove. A value that a route or an automation lane moves
-  wears an "M" or "A", and VoiceOver says so. Modulate checks a pair already routed instead of
-  adding it twice.
-- Tempo: while Flow moves the tempo, the number reads "FLOW · Tap to Hold"; one tap keeps the
-  tempo it reached.
-- Breaks: Slice to Pads cuts a busy loop on its grid, one pad per step, each on its own hit, so the
-  pattern plays in time and keeps the feel at any song tempo.
-- Values read as fine as they are set: hertz to hundredths below 100 Hz, milliseconds to a tenth,
-  and a time or slow rate names its note value at the song's tempo ("375 ms 1/8 dotted").
-- Arrange: track rows grow into the free room (up to twice as high); names may take two lines; a
-  new track never repeats another's name.
-- Note editor: Undo and Redo in its own bar. Automation lanes show a point's value while it is
-  dragged. The step grid marks beats at any step size and meter.
-- Add Track › Drums opens the new beat's steps at once.
-- VoiceOver: moving, trimming and fading in Arrange say where things landed or why not; fine value
-  fields swipe in useful steps; a plugin's automation lane is named by its parameter.
-Limits, new: notes are still chosen one at a time in the note editor; a sample click above 300 BPM
-is cut by the next one.
-Older limits as in 10083.
+New since 10084, built by the Echoel Studio run; nothing here is device-verified yet.
+- Modulation: each route's row shows its source's reading as a bar and what it adds now ("+12.5 %"),
+  or "Not measured"; it moves, it never blinks.
+- Zoom: a strip at the right edge of Arrange and of the note editor — touch or drag to zoom,
+  double-tap for the standard size, VoiceOver adjusts it a step at a time. Buttons and pinch stay.
+- Note editor: Select More chooses several notes; Delete, Quantize, Humanize, Strum and Revoice act
+  on all of them, and dragging one moves them all, keeping their shape at the clip's edges.
+- Doors that were only behind a hold: a tap on an audio region opens its settings; Add Marker in
+  Arrange's zoom bar; Automate, Modulate and Effects in the track list's menu; Automate and
+  Modulate on the Mixer's master strip; Follow Pulse (Flow) in Song › Play and Sync; the
+  arpeggiator at the top of the Sound page.
+- Arrange: a button in the zoom bar shows or hides the modulation rows; hidden routes still play.
+- Learn: a chapter "The Instrument and the Body" (Body Voice, Mood, Flow).
+- Fixed: an effect page kept "Loading…" under its values and a grey Compare after the effect had
+  loaded.
+Limits, new: several notes are chosen with the Select More switch, not by drawing a frame; the
+note editor zooms in four sizes; the drum step grid has no zoom strip yet.
+Still: a sample click above 300 BPM is cut by the next one. Older limits as in 10083.
 
-Previous: 10083. A green commit that changes this file uploads build 10000 + run number. A test
+Previous: 10084. A green commit that changes this file uploads build 10000 + run number. A test
 list, not a source for claims (ContentPipeline/CLAIMS.md).
 
-One ask, as for 10083. Start a screen recording, open the app, and try to make sixteen bars in two
-to five minutes: a beat, a bass line or a chord, then Play. No list and no protocol; stop wherever
+One ask, as for 10083 and 10084. Start a screen recording, open the app, and try to make sixteen
+bars in two to five minutes: a beat, a bass line or a chord, then Play. No list and no protocol; stop wherever
 it stops being possible or pleasant. The recording is the answer. What gets in the way in it is
 the next work, in the order it happened.
 
