@@ -69,6 +69,30 @@ final class NoteEditingTests: XCTestCase {
         XCTAssertEqual(left.id, note.id)
     }
 
+    func testChosenNotesMoveTogetherAndStopAtTheEdgeAsAGroup() {
+        let low = Note(pitch: 60, start: 0, length: step)
+        let high = Note(pitch: 67, start: 2 * step, length: step)
+        let c = clip([low, high])
+        // A drag of the low note by nearly two steps and a third: both move, interval and distance kept.
+        let up = NoteEditing.movedTogether([low, high], leader: low, byTicks: 2 * step - 10, semitones: 4,
+                                           grid: step, in: c)
+        XCTAssertEqual(up.map(\.start), [2 * step, 4 * step])
+        XCTAssertEqual(up.map(\.pitch), [64, 71])
+        XCTAssertEqual(up.map(\.id), [low.id, high.id])
+        // Before the clip start: the group stops where its earliest note reaches 0, shape kept.
+        let back = NoteEditing.movedTogether([low, high], leader: high, byTicks: -bar, semitones: 0,
+                                             grid: step, in: c)
+        XCTAssertEqual(back.map(\.start), [0, 2 * step])
+        // Past the clip end: held where the latest note is on the last tick that still starts in it.
+        let late = NoteEditing.movedTogether([low, high], leader: low, byTicks: 10 * bar, semitones: 0,
+                                             grid: step, in: c)
+        XCTAssertEqual(late.map(\.start), [bar - 1 - 2 * step, bar - 1])
+        // Above the keyboard: held where the highest note reaches the top.
+        let top = NoteEditing.movedTogether([low, high], leader: low, byTicks: 0, semitones: 100, grid: step, in: c)
+        XCTAssertEqual(top.map(\.pitch), [Note.pitchRange.upperBound - 7, Note.pitchRange.upperBound])
+        XCTAssertEqual(NoteEditing.movedTogether([], leader: low, byTicks: 0, semitones: 0, grid: step, in: c), [])
+    }
+
     func testResizingSnapsTheEndAndKeepsAMinimum() {
         let c = clip()
         let note = Note(pitch: 60, start: 960, length: 240)

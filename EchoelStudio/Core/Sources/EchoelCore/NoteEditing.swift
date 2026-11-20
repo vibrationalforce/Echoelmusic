@@ -65,6 +65,31 @@ public enum NoteEditing {
         return moved
     }
 
+    /// Several chosen notes moved by a drag on one of them, `leader`: the leader moves as `moved`
+    /// would move it alone, and every other note by the same ticks and semitones, so the group
+    /// keeps its shape. The shift is held back as a whole where one note would leave the clip or
+    /// the keyboard — never one note squeezed against the edge while the others go on.
+    public static func movedTogether(_ notes: [Note], leader: Note, byTicks delta: Tick, semitones: Int,
+                                     grid: Tick, in clip: Clip) -> [Note] {
+        guard !notes.isEmpty else { return [] }
+        let alone = moved(leader, byTicks: delta, semitones: semitones, grid: grid, in: clip)
+        var ticks = alone.start - leader.start
+        var shift = alone.pitch - leader.pitch
+        let earliest = notes.map(\.start).min() ?? 0
+        let latest = notes.map(\.start).max() ?? 0
+        let lowest = notes.map(\.pitch).min() ?? Note.pitchRange.lowerBound
+        let highest = notes.map(\.pitch).max() ?? Note.pitchRange.upperBound
+        let latestStart = Swift.max(0, clip.length - 1)
+        ticks = Swift.min(Swift.max(ticks, -earliest), latestStart - latest)
+        shift = Swift.min(Swift.max(shift, Note.pitchRange.lowerBound - lowest), Note.pitchRange.upperBound - highest)
+        return notes.map { note in
+            var shifted = note
+            shifted.start = note.start + ticks
+            shifted.pitch = note.pitch + shift
+            return shifted
+        }
+    }
+
     /// The note with its end dragged to `endTick`, snapped; never shorter than one grid step
     /// (one tick without a grid) and never past the clip end.
     public static func resized(_ note: Note, toEnd endTick: Tick, grid: Tick, in clip: Clip) -> Note {

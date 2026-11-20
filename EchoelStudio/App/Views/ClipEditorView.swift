@@ -416,12 +416,15 @@ struct PianoRoll: View {
 
     private var noteGrid: some View {
         let meter = store.project.clipMeter(clip.id)
+        // Two or more chosen notes move together when one of them is dragged.
+        let together = clip.notes.filter { selected.contains($0.id) }
         return ZStack(alignment: .topLeading) {
             gridCanvas
             ForEach(clip.notes) { note in
                 NoteBlock(note: note, clip: clip, color: color, grid: grid, meter: meter,
                           pointsPerTick: pointsPerTick, rowHeight: rowHeight,
-                          isSelected: selected.contains(note.id), select: { choose(note.id) })
+                          isSelected: selected.contains(note.id), select: { choose(note.id) },
+                          group: together.count > 1 && selected.contains(note.id) ? together : [])
                     // VoiceOver reads the notes in time, a chord from its lowest note, after the grid.
                     .accessibilitySortPriority(-(Double(note.start) * 128 + Double(note.pitch)))
             }
@@ -843,8 +846,12 @@ struct NoteBlock: View {
     let rowHeight: CGFloat
     var isSelected = false
     var select: () -> Void = {}
+    /// The chosen notes this one moves with, itself among them; empty when it moves alone.
+    var group: [Note] = []
 
     @State private var origin: Note?
+    /// The group as the drag found it, so every change is measured from where it began.
+    @State private var originGroup: [Note] = []
 
     /// The right edge a drag lengthens or shortens by; never more than half the note
     /// (`NoteEditing.dragTakesTheEnd`), so a short note still moves from its body.
@@ -949,6 +956,15 @@ struct NoteBlock: View {
                 if resizing {
                     let end = start.start + start.length + Tick(value.translation.width / pointsPerTick)
                     edited = NoteEditing.resized(start, toEnd: end, grid: grid, in: clip)
+                } else if !group.isEmpty {
+                    if originGroup.isEmpty { originGroup = group }
+                    let shifted = NoteEditing.movedTogether(originGroup, leader: start,
+                                                            byTicks: Tick(value.translation.width / pointsPerTick),
+                                                            semitones: -Int((value.translation.height / rowHeight).rounded()),
+                                                            grid: grid, in: clip)
+                    let current = clip.notes.filter { candidate in shifted.contains { $0.id == candidate.id } }
+                    if shifted != current { perform(.updateNotes(clip.id, shifted), coalescing: true) }
+                    return
                 } else {
                     edited = NoteEditing.moved(start, byTicks: Tick(value.translation.width / pointsPerTick),
                                                semitones: -Int((value.translation.height / rowHeight).rounded()),
@@ -961,6 +977,7 @@ struct NoteBlock: View {
 
     private func finishDrag() {
         origin = nil
+        originGroup = []
         store.endGesture()
     }
 
