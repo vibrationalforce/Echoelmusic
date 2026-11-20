@@ -123,7 +123,12 @@ struct StepGridView: View {
         let mark = state(lane, index)
         let place = NoteEditing.spokenStep(index, step: step, meter: meter, clipLength: clip.length)
         let accentAction = mark == .accent ? "Remove Accent" : "Accent"
-        return StepCell(state: mark, color: color, downbeat: index % 4 == 0, size: cellSize)
+        // A step on a beat of the clip's own meter is marked — every fourth only held for
+        // sixteenths in 4/4, and put the marks on the wrong steps for eighths and triplets
+        // (audit A3 #15).
+        let tick = Tick(index) * step
+        let onBeat = meter.beatStart(at: tick) == tick
+        return StepCell(state: mark, color: color, downbeat: onBeat, size: cellSize)
             .onTapGesture { toggle(lane, index) }
             .onLongPressGesture { accent(lane, index) }
             .accessibilityElement()
