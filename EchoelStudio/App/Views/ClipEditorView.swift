@@ -312,10 +312,12 @@ struct PianoRoll: View {
     @ScaledMetric(relativeTo: .caption) private var keyWidth: CGFloat = 52
     /// Points per sixteenth note at the base zoom.
     private static let basePointsPerSixteenth: CGFloat = 28
-    /// The note a single tap chose. Rows are 18 pt at the base zoom, under a fingertip, so a
+    /// The notes the taps chose. Rows are 18 pt at the base zoom, under a fingertip, so a
     /// single tap never deletes (a slip took a note away, CI audit 2026-10-31): a tap chooses, a
-    /// double tap or Delete Note removes.
-    @State private var selected: NoteID?
+    /// double tap or Delete Note removes. A tap replaces the choice; with Select More on, a tap
+    /// adds a note to it or takes it out — a switch to see, never a hidden hold.
+    @State private var selected: Set<NoteID> = []
+    @State private var addsToSelection = false
     /// What the last Revoice said, with the notes it left: shown above the tools while the clip
     /// still holds exactly those notes, so it never describes an edit since.
     @State private var revoiceNote: (text: String, notes: [Note])?
@@ -363,7 +365,7 @@ struct PianoRoll: View {
 
     /// The row a zoom keeps in view: the chosen note's, else the clip's middle pitch, else C5.
     private var anchorPitch: Int {
-        if let id = selected, let note = clip.notes.first(where: { $0.id == id }) { return note.pitch }
+        if let note = clip.notes.first(where: { selected.contains($0.id) }) { return note.pitch }
         let pitches = clip.notes.map(\.pitch).sorted()
         return pitches.isEmpty ? 72 : pitches[pitches.count / 2]
     }
@@ -419,7 +421,7 @@ struct PianoRoll: View {
             ForEach(clip.notes) { note in
                 NoteBlock(note: note, clip: clip, color: color, grid: grid, meter: meter,
                           pointsPerTick: pointsPerTick, rowHeight: rowHeight,
-                          isSelected: selected == note.id, select: { selected = note.id })
+                          isSelected: selected.contains(note.id), select: { choose(note.id) })
                     // VoiceOver reads the notes in time, a chord from its lowest note, after the grid.
                     .accessibilitySortPriority(-(Double(note.start) * 128 + Double(note.pitch)))
             }
@@ -436,7 +438,8 @@ struct PianoRoll: View {
             .frame(width: gridWidth, height: gridHeight)
             .contentShape(Rectangle())
             .onTapGesture { location in
-                selected = nil
+                selected = []
+                addsToSelection = false
                 tap(at: location)
             }
             .accessibilityLabel("Note Grid")
@@ -451,21 +454,48 @@ struct PianoRoll: View {
         clip.notes.count == 1 ? "1 note" : "\(clip.notes.count) notes"
     }
 
-    /// While a note is chosen: its velocity and the one button that deletes it, in reach of the thumb.
+    /// While notes are chosen, in reach of the thumb: one note's velocity, Select More, and the
+    /// one button that deletes the chosen notes — one undo step however many.
     @ViewBuilder private var selectionBar: some View {
-        if let id = selected, let note = clip.notes.first(where: { $0.id == id }) {
-            velocityField(note)
-            Button("Delete Note", systemImage: "trash", role: .destructive) {
+        let notes = clip.notes.filter { selected.contains($0.id) }
+        if let first = notes.first {
+            if notes.count == 1 { velocityField(first) }
+            Button("Select More", systemImage: "plus.circle") { addsToSelection.toggle() }
+                .buttonStyle(ToolButtonStyle(isActive: addsToSelection))
+                .labelStyle(.iconOnly)
+                .accessibilityLabel("Select More")
+                .accessibilityValue(addsToSelection ? "On" : "Off")
+                .accessibilityHint("While on, a tap on a note adds it to the chosen notes or takes it out.")
+            Button(notes.count == 1 ? "Delete Note" : "Delete \(notes.count) Notes", systemImage: "trash",
+                   role: .destructive) {
                 do {
-                    try store.perform(.removeNotes(clip.id, [id]))
-                    announce("\(NoteEditing.name(of: note.pitch)) deleted.")
+                    try store.perform(.removeNotes(clip.id, notes.map(\.id)))
+                    announce(notes.count == 1 ? "\(NoteEditing.name(of: first.pitch)) deleted."
+                             : "\(notes.count) notes deleted.")
                 } catch {
-                    announce("The note could not be deleted.", urgent: true)
+                    announce(notes.count == 1 ? "The note could not be deleted." : "The notes could not be deleted.",
+                             urgent: true)
                 }
-                selected = nil
+                selected = []
+                addsToSelection = false
             }
             .buttonStyle(ToolButtonStyle())
         }
+    }
+
+    /// A tap on a note: the only chosen note, or with Select More on, in or out of the chosen ones.
+    private func choose(_ id: NoteID) {
+        guard addsToSelection else {
+            selected = [id]
+            return
+        }
+        if selected.contains(id) {
+            selected.remove(id)
+        } else {
+            selected.insert(id)
+        }
+        let count = chosen.count
+        announce(count == 1 ? "1 note chosen." : "\(count) notes chosen.")
     }
 
     /// The chosen note's velocity in Echoel's value field: drag up or down, tap to type it, swipe
@@ -508,7 +538,7 @@ struct PianoRoll: View {
         .menuStyle(.button)
         .buttonStyle(ToolButtonStyle())
         .accessibilityLabel("Timing")
-        .accessibilityHint(selected == nil ? "Quantize or humanize every note." : "Quantize or humanize the chosen note.")
+        .accessibilityHint(chosen.isEmpty ? "Quantize or humanize every note." : "Quantize or humanize the chosen notes.")
     }
 
     /// Chords that fit next, best first (ECHOELTOOLS D5): ranked by harmonic function in the song's
@@ -674,12 +704,18 @@ struct PianoRoll: View {
         }
     }
 
+    /// The chosen notes the clip still holds.
     private var chosen: Set<NoteID> {
-        guard let id = selected, clip.notes.contains(where: { $0.id == id }) else { return [] }
-        return [id]
+        Set(clip.notes.lazy.map(\.id).filter { selected.contains($0) })
     }
 
-    private var scope: String { chosen.isEmpty ? "All notes" : "The note" }
+    private var scope: String {
+        switch chosen.count {
+        case 0: "All notes"
+        case 1: "The note"
+        default: "The \(chosen.count) notes"
+        }
+    }
 
     private func quantize(strength: Double) {
         let meter = store.project.clipMeter(clip.id)
@@ -929,9 +965,11 @@ struct NoteBlock: View {
     }
 
     /// VoiceOver's double tap: chosen, as by a tap, so Delete Note appears.
+    /// Already chosen, the editor announces the new count itself (Select More takes it out).
     private func choose() {
+        let wasChosen = isSelected
         select()
-        announce("\(name) selected.")
+        if !wasChosen { announce("\(name) selected.") }
     }
 
     /// Exactly a semitone, an octave, a step or a bar — or, where that would leave the keyboard or
