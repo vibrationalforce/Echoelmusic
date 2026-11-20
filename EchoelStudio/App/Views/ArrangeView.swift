@@ -1527,6 +1527,7 @@ private struct RegionWaveform: View {
 
 /// What a VoiceOver action in the arrangement says after it (audit A3 #6): the new place, or why
 /// nothing moved. Said the app's one way (`Theme.Accessibility`).
+@MainActor
 enum ArrangeSpeech {
     static func say(_ text: String) {
         Theme.Accessibility.announce(Announcement(text, priority: .normal))
