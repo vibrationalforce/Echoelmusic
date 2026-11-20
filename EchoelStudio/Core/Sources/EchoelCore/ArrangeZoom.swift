@@ -43,6 +43,20 @@ public enum ArrangeZoom {
     /// One press of Zoom Out.
     public static func zoomedOut(_ value: Double) -> Double { zoomed(value, by: 1 / step) }
 
+    /// Where `value` sits on a zoom strip, 0 (most zoomed out) … 1 (most zoomed in), on a log scale,
+    /// so every doubling takes the same travel (the side strip, Michael on 10084).
+    public static func position(_ value: Double) -> Double {
+        let span = log(range.upperBound / range.lowerBound)
+        return log(level(value) / range.lowerBound) / span
+    }
+
+    /// The level at `position` on the strip, held inside `range`; not a number reads as `base`.
+    public static func value(atPosition position: Double) -> Double {
+        guard position.isFinite else { return base }
+        let clamped = Swift.min(Swift.max(position, 0), 1)
+        return level(range.lowerBound * exp(clamped * log(range.upperBound / range.lowerBound)))
+    }
+
     /// Whether Zoom In can still widen the bars.
     public static func canZoomIn(_ value: Double) -> Bool { level(value) < range.upperBound }
 

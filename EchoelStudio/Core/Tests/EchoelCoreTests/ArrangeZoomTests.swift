@@ -103,4 +103,15 @@ final class ArrangeZoomTests: XCTestCase {
         XCTAssertTrue(ArrangeZoom.canZoomOut(.nan), "a broken level reads as the standard zoom")
         XCTAssertEqual(ArrangeZoom.spoken(2), "200 percent")
     }
+
+    /// The side strip: each doubling of the zoom takes the same travel, and a position maps back.
+    func testTheStripMapsZoomOnALogScale() {
+        XCTAssertEqual(ArrangeZoom.position(ArrangeZoom.range.lowerBound), 0, accuracy: 1e-9)
+        XCTAssertEqual(ArrangeZoom.position(ArrangeZoom.range.upperBound), 1, accuracy: 1e-9)
+        XCTAssertEqual(ArrangeZoom.position(1), 0.4, accuracy: 1e-9, "1× is two doublings above 0.25× of five")
+        XCTAssertEqual(ArrangeZoom.value(atPosition: 0.4), 1, accuracy: 1e-9)
+        XCTAssertEqual(ArrangeZoom.value(atPosition: 2), ArrangeZoom.range.upperBound, accuracy: 1e-9)
+        XCTAssertEqual(ArrangeZoom.value(atPosition: .nan), ArrangeZoom.base)
+    }
+
 }

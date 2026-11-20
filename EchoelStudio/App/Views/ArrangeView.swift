@@ -78,6 +78,11 @@ struct ArrangeView: View {
         }
         .background(Theme.Color.background)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { visibleHeight = $0 }
+        .overlay(alignment: .trailing) {
+            SideZoomStrip(zoom: $zoom)
+                .padding(.vertical, Theme.Space.l)
+                .padding(.trailing, Theme.Space.xs)
+        }
         .environment(\.arrangeRowHeight, rowHeight(project))
         .safeAreaInset(edge: .bottom, spacing: 0) { zoomBar }
         // A video file added to the song is searched for its hits once, off the main thread.
