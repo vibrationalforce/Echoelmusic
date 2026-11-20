@@ -30,6 +30,10 @@ struct SoundPanel: View {
                 devicePicker
                 // Two settings of this instrument side by side, for the session (PRO-W1).
                 CompareRow(device: .instrument(track.id))
+                // A MIDI effect on whatever plays the track — a built-in instrument or a plugin. At
+                // the top, one switch while it is off, so it is seen before the long list of the
+                // instrument's own values (hidden-features audit 2026-11-20 #2).
+                ArpeggiatorSection(track: track)
                 switch track.instrument.device {
                 case .drums:
                     // The kit map's one source, shared with the AUv3 drum page and pinned by a test.
@@ -52,8 +56,6 @@ struct SoundPanel: View {
                     PluginInterfaceSection(slot: .instrument(track.id))
                         .id(track.instrument.plugin)
                 }
-                // A MIDI effect on whatever plays the track — a built-in instrument or a plugin.
-                ArpeggiatorSection(track: track)
                 pluginMenu
             }
             .padding(Theme.Space.l)
