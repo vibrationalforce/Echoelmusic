@@ -1918,8 +1918,9 @@ private struct LocateKeys: View {
     }
 }
 
-private extension View {
-    /// The hardware key `ShortcutMap` gives `action`, on the control that does it.
+extension View {
+    /// The hardware key `ShortcutMap` gives `action`, on the control that does it (also the note
+    /// editor's Undo and Redo, audit A3 #1).
     @ViewBuilder func shortcut(_ action: ShortcutMap.Action) -> some View {
         if let key = ShortcutMap.key(for: action) {
             keyboardShortcut(KeyEquivalent(key.character), modifiers: key.modifiers)
@@ -1929,7 +1930,7 @@ private extension View {
     }
 }
 
-private extension ShortcutMap.Key {
+extension ShortcutMap.Key {
     var modifiers: EventModifiers {
         var held: EventModifiers = []
         if command { held.insert(.command) }

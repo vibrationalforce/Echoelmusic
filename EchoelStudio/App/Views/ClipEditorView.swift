@@ -104,6 +104,20 @@ struct ClipEditorView: View {
                     .accessibilityValue(countsIn ? "Starts on the next bar" : "")
                     .disabled(!engine.isRunning)
                 }
+                // Undo and Redo in the editor itself (audit A3 #1): before, a wrong drag here was
+                // undone only after closing the editor.
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { store.undo() } label: { Image(systemName: "arrow.uturn.backward") }
+                        .shortcut(.undo)
+                        .disabled(!store.canUndo)
+                        .accessibilityLabel(store.undoTitle.map { "Undo \($0)" } ?? "Undo")
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { store.redo() } label: { Image(systemName: "arrow.uturn.forward") }
+                        .shortcut(.redo)
+                        .disabled(!store.canRedo)
+                        .accessibilityLabel(store.redoTitle.map { "Redo \($0)" } ?? "Redo")
+                }
                 ToolbarItem(placement: .principal) {
                     Picker("Page", selection: $page) {
                         Text(track?.instrument.device == .drums ? "Steps" : "Notes").tag(Page.notes)
