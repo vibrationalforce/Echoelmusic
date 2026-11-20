@@ -39,6 +39,10 @@ struct ArrangeView: View {
     /// The horizontal zoom at rest, kept on this device (`ArrangeZoom.level` reads a broken one
     /// as the standard zoom).
     @AppStorage(ArrangeZoom.storageKey) private var zoom = ArrangeZoom.base
+    /// Whether the modulation rows show under their tracks, kept on this device. Hidden, the
+    /// routes still play; the button in the zoom bar shows them again (Michael on 10084: the rows
+    /// stay in view and take the room).
+    @AppStorage("arrange.showsModulation") private var showsModulation = true
     /// The height Arrange has on screen, so the track rows can share what the lanes leave free.
     @State private var visibleHeight: CGFloat = 0
     /// The live factor of a pinch in progress; it resets itself on release or when a scroll takes
@@ -118,14 +122,14 @@ struct ArrangeView: View {
                 ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
                     AutomationName(lane: lane)
                 }
-                ForEach(Self.routes(of: .track(track.id), in: project)) { route in
+                ForEach(shownRoutes(of: .track(track.id), in: project)) { route in
                     ModulationName(route: route)
                 }
             }
             ForEach(Self.lanes(of: .master, in: project), id: \.target) { lane in
                 AutomationName(lane: lane)
             }
-            ForEach(Self.routes(of: .master, in: project)) { route in
+            ForEach(shownRoutes(of: .master, in: project)) { route in
                 ModulationName(route: route)
             }
         }
@@ -155,7 +159,7 @@ struct ArrangeView: View {
                         AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
                             .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
                     }
-                    ForEach(Self.routes(of: .track(track.id), in: project)) { route in
+                    ForEach(shownRoutes(of: .track(track.id), in: project)) { route in
                         ModulationLane(route: route)
                             .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
                     }
@@ -164,7 +168,7 @@ struct ArrangeView: View {
                     AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
                         .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
                 }
-                ForEach(Self.routes(of: .master, in: project)) { route in
+                ForEach(shownRoutes(of: .master, in: project)) { route in
                     ModulationLane(route: route)
                         .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
                 }
@@ -188,6 +192,7 @@ struct ArrangeView: View {
     private var zoomBar: some View {
         HStack(spacing: Theme.Space.s) {
             MarkerAddButton(compact: true)
+            modulationToggle
             Spacer()
             zoomButton("Zoom Out", systemImage: "minus.magnifyingglass",
                        enabled: ArrangeZoom.canZoomOut(zoom)) { zoom = ArrangeZoom.zoomedOut(zoom) }
@@ -199,6 +204,21 @@ struct ArrangeView: View {
         .overlay(alignment: .top) {
             Rectangle().fill(Theme.Color.border).frame(height: 1)
         }
+    }
+
+    /// Shows or hides the modulation rows; drawn as on while they show.
+    private var modulationToggle: some View {
+        Button { showsModulation.toggle() } label: {
+            Image(systemName: "waveform.path.ecg")
+                .font(Theme.Font.label)
+                .foregroundStyle(showsModulation ? Theme.Color.accent : Theme.Color.textTertiary)
+                .frame(width: Theme.Size.touch, height: Theme.Size.touch)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Modulation Rows")
+        .accessibilityValue(showsModulation ? "Shown" : "Hidden")
+        .accessibilityHint("Shows or hides the modulation rows under the tracks. Hidden routes still play.")
     }
 
     private func zoomButton(_ title: String, systemImage: String, enabled: Bool,
@@ -266,19 +286,25 @@ extension ArrangeView {
     /// shared by the tracks — never less than a row always was, never more than twice it. The
     /// 10083 recording showed six rows over an empty half screen with names too small to read.
     private func rowHeight(_ project: Project) -> CGFloat {
-        Self.rowHeight(project, visible: visibleHeight)
+        Self.rowHeight(project, visible: visibleHeight, showsModulation: showsModulation)
     }
 
-    static func rowHeight(_ project: Project, visible: CGFloat) -> CGFloat {
+    /// The routes shown as rows: all of the owner's, or none while the rows are hidden.
+    private func shownRoutes(of owner: ParameterAddress.Owner, in project: Project) -> [ModulationRoute] {
+        showsModulation ? Self.routes(of: owner, in: project) : []
+    }
+
+    static func rowHeight(_ project: Project, visible: CGFloat, showsModulation: Bool = true) -> CGFloat {
         let base = Theme.Size.trackRowHeight
         guard !project.tracks.isEmpty, visible.isFinite, visible > 0 else { return base }
         var fixed = rulerRowHeight + Theme.Size.touch
         for track in project.tracks {
             fixed += CGFloat(TakeLanes.rows(of: track).count) * TakeLanes.rowHeight
             fixed += CGFloat(lanes(of: .track(track.id), in: project).count
-                             + routes(of: .track(track.id), in: project).count) * base
+                             + (showsModulation ? routes(of: .track(track.id), in: project).count : 0)) * base
         }
-        fixed += CGFloat(lanes(of: .master, in: project).count + routes(of: .master, in: project).count) * base
+        fixed += CGFloat(lanes(of: .master, in: project).count
+                         + (showsModulation ? routes(of: .master, in: project).count : 0)) * base
         let share = (visible - fixed) / CGFloat(project.tracks.count)
         return Swift.min(Swift.max(share, base), base * 2)
     }
