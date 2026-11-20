@@ -438,7 +438,13 @@ final class PluginHost {
         }
     }
 
-    func isLoaded(_ slot: Slot) -> Bool { loaded[slot] != nil }
+    /// Whether the slot's unit is loaded. Observed through `revision`, which every load and unload
+    /// moves: `loaded` itself is not observed, so without it a page that asked once — "Loading…"
+    /// under an effect, Compare greyed out — went on showing that after the unit had loaded.
+    func isLoaded(_ slot: Slot) -> Bool {
+        _ = revision
+        return loaded[slot] != nil
+    }
 
     /// Which load of the slot's unit is current, nil while none is. A view showing the unit's own
     /// interface keys on it: a unit loaded again answers with an interface of its own, and the
