@@ -46,8 +46,8 @@ final class LearnGuideTests: XCTestCase {
 
     func testTheGuideCoversWhatTheAppDoesToday() {
         let ids = Set(LearnGuide.chapters.map(\.id))
-        for required in ["firstTrack", "comping", "sound", "drums", "effects", "body", "field", "light",
-                         "export", "siri", "safety"] {
+        for required in ["firstTrack", "comping", "sound", "drums", "effects", "body", "instrumentBody", "field",
+                         "light", "export", "siri", "safety"] {
             XCTAssertTrue(ids.contains(required), "chapter \(required)")
         }
     }

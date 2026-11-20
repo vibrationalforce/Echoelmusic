@@ -39,6 +39,8 @@ public enum StudioPlace: String, CaseIterable, Sendable {
     case modulate, bodySource, off, heartRateStrap, camera, appleHealth, phoneMotion
     case heartRate, hrv, coherence, breath, tiltLeftRight, tiltForwardBack, turning, movement
     case invert, remove, tempo, fixed, flow
+    // The Instrument page and the Song menu's Flow switch.
+    case bodyVoice, playOnTheKeys, mood, followPulse
     // The Field.
     case fullScreen, pattern, show, blendWith, externalDisplay, fieldOnExternalDisplay
     case cornerPin, resetCorners
@@ -158,6 +160,10 @@ public enum StudioPlace: String, CaseIterable, Sendable {
         case .tempo: "Tempo"
         case .fixed: "Fixed"
         case .flow: "Flow"
+        case .bodyVoice: "Body Voice"
+        case .playOnTheKeys: "Play on the Keys"
+        case .mood: "Mood"
+        case .followPulse: "Follow Pulse (Flow)"
         case .fullScreen: "Full Screen"
         case .pattern: "Pattern"
         case .show: "Show"
@@ -315,6 +321,18 @@ public enum LearnGuide {
             ],
             paths: [[.songMenu, .connectSection, .bodySource], [.arrange, .modulate], [.instrument, .tempo]],
             keywords: ["pulse", "heart", "bpm", "strap", "watch", "motion", "lfo", "route"]),
+        LearnChapter(
+            id: "instrumentBody", title: "The Instrument and the Body",
+            summary: "Body Voice, Mood and Flow: the Instrument page and what the body changes there.",
+            paragraphs: [
+                "“Instrument” in the bar of views is the page for playing with the body. “Body Voice” adds a pad that the keys play: your breath swells its level, coherence opens and brightens its sound, and your pulse sets its vibrato. It is silent until switched on. If the keys play another track, “Play on the Keys” gives them back to it, and “Modulate” under it shows and changes how the body moves it.",
+                "Breath is read from the timing of your heartbeats, so it joins after a few slow, even breaths. Choose a source first under “Song menu” › “Connect” › “Body Source”.",
+                "“Mood” sets a few of the synth's own values at once — its cutoff, resonance, character and filter — under one name: Warm, Clear, Dark or Bright. It changes the synth track the keys play, one undo step, and every value stays on its “Sound” page to change further.",
+                "“Tempo” chooses “Fixed”, the song's own tempo, or “Flow”, which waits for a steady pulse and then moves the tempo one bounded step per bar, gliding there. The same switch is “Follow Pulse (Flow)” under “Song menu” › “Play and Sync”. While it flows, a tap on the tempo in the transport holds it where it is. While a MIDI clock or a jam sets the pace, Flow cannot be chosen.",
+                "Readings are for self-observation only, not a diagnosis. Do not play the Instrument while driving or steering a boat, or under the influence of alcohol or drugs.",
+            ],
+            paths: [[.instrument, .bodyVoice], [.instrument, .mood], [.songMenu, .playAndSyncSection, .followPulse]],
+            keywords: ["pad", "breath", "vibrato", "preset", "tempo", "pulse", "follow", "bpm", "hold"]),
         LearnChapter(
             id: "field", title: "The Field and an External Screen",
             summary: "A picture that moves with the song, on the phone or a projector.",
