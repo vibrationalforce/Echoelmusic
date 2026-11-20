@@ -1300,6 +1300,7 @@ struct TempoField: View {
 
 /// The song's name, and the menu to start or open another. Songs save themselves.
 struct SongMenu: View {
+    @Environment(FlowController.self) private var flow: FlowController?
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
     @Environment(MIDIInput.self) private var midi
@@ -1516,6 +1517,14 @@ struct SongMenu: View {
                 }
                 .disabled(engine.clock.chosen.isEmpty)
                 mpeMenu
+                // Flow from the song itself, next to the other things a tempo can follow — before,
+                // only the Instrument page could turn it on (hidden-features audit 2026-11-20, #3).
+                if let flow {
+                    Toggle(isOn: Binding(get: { flow.lock == .flow }, set: { flow.setLock($0 ? .flow : .fixed) })) {
+                        Label("Follow Pulse (Flow)", systemImage: "heart")
+                    }
+                    .disabled(!flow.canFlow && flow.lock != .flow)
+                }
                 Menu("Follow MIDI Clock", systemImage: "clock.arrow.2.circlepath") {
                     Button { midi.follow(nil) } label: {
                         if midi.followedSource == nil { Label("Off", systemImage: "checkmark") } else { Text("Off") }
