@@ -91,7 +91,7 @@ struct RegionEditView: View {
             // In tenths of a dB (audit A3 #12): a stored −3.5 dB showed as −4 and could not be set.
             SettingField(title: "Gain", value: Int(((region.gainDB ?? 0) * 10).rounded()),
                          range: Int(AudioRegion.gainRange.lowerBound * 10)...Int(AudioRegion.gainRange.upperBound * 10),
-                         unit: "dB", decimals: 1, standard: 0, spokenUnit: "decibels", commit: { tenths in
+                         unit: "dB", decimals: 1, adjustStep: 5, standard: 0, spokenUnit: "decibels", commit: { tenths in
                 try? store.perform(.setRegionGain(track: trackID, regionID, gainDB: Double(tenths) / 10),
                                    coalescingKey: "region.gain.\(regionID)")
             }, ended: { store.endGesture() })
@@ -151,7 +151,7 @@ struct RegionEditView: View {
         // In hundredths of a BPM (W-2): a whole-number tempo makes most real loops drift.
         SettingField(title: "Native Tempo", value: Self.hundredths(Self.heldBPM(native)),
                      range: Self.hundredths(AudioRegion.nativeBPMRange.lowerBound)...Self.hundredths(AudioRegion.nativeBPMRange.upperBound),
-                     unit: "BPM", decimals: 2, standard: Self.hundredths(Self.heldBPM(store.project.tempoMap.bpm(at: region.start))),
+                     unit: "BPM", decimals: 2, adjustStep: 100, standard: Self.hundredths(Self.heldBPM(store.project.tempoMap.bpm(at: region.start))),
                      spokenUnit: "beats a minute", drags: false) { typed in
             store.endGesture()
             try? store.perform(.setRegionWarp(track: trackID, regionID, nativeBPM: Double(typed) / 100,
@@ -309,7 +309,7 @@ struct RegionEditView: View {
         HStack(alignment: .center, spacing: Theme.Space.s) {
             // Each drag or typed value its own undo step (audit A3 #13).
             SettingField(title: title, value: Swift.min(milliseconds, limit), range: 0...Swift.max(limit, 0), unit: "ms",
-                         standard: 0, spokenUnit: "milliseconds", commit: set, ended: { store.endGesture() })
+                         adjustStep: 10, standard: 0, spokenUnit: "milliseconds", commit: set, ended: { store.endGesture() })
             Picker("\(title) Curve", selection: Binding(get: { curve }, set: setCurve)) {
                 ForEach(FadeCurve.allCases, id: \.self) { option in
                     Text(Self.name(option)).tag(option)

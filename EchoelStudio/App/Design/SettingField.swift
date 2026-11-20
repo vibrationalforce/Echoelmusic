@@ -20,6 +20,10 @@ struct SettingField: View {
     var decimals = 0
     /// The grid the value lands on (100 for a bit rate, 1 for a port).
     var step = 1
+    /// One VoiceOver swipe, where the grid is finer than a step anyone would swipe: a tempo kept in
+    /// hundredths moves a whole BPM, a fade a hundredth of a second (audit A3 #14: a swipe moved
+    /// 0.01 BPM, one cent, one millisecond). Nil swipes by `step`.
+    var adjustStep: Int?
     /// What double-tap and the pad's Default key return to; nil when there is none.
     var standard: Int?
     /// Spoken after the number instead of `unit` ("kilobits a second").
@@ -96,7 +100,8 @@ struct SettingField: View {
         .accessibilityLabel(title)
         .accessibilityValue(spokenUnit.map { "\(number) \($0)" } ?? shown)
         .accessibilityAdjustableAction { direction in
-            finish(snapped(value + (direction == .increment ? step : -step)))
+            let swipe = Swift.max(adjustStep ?? step, step)
+            finish(snapped(value + (direction == .increment ? swipe : -swipe)))
         }
         // As `ParameterField`: VoiceOver's double-tap types the value, as a tap does, and never
         // falls through to the touch double-tap that returns it to the standard (W18); Reset is an

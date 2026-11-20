@@ -41,7 +41,7 @@ struct ModulationLane: View {
     var body: some View {
         HStack(spacing: Theme.Space.s) {
             SettingField(title: "Depth", value: Int((route.depth * 1_000).rounded()), range: -1_000...1_000,
-                         unit: "%", decimals: 1, standard: 250, spokenUnit: "percent", commit: { tenths in
+                         unit: "%", decimals: 1, adjustStep: 10, standard: 250, spokenUnit: "percent", commit: { tenths in
                 var changed = route
                 changed.depth = Double(tenths) / 1_000
                 try? store.perform(.setModRoute(changed), coalescingKey: "modulation.depth.\(route.id)")
