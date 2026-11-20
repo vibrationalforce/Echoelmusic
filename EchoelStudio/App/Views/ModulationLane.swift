@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelEngine
 import SwiftUI
 
 /// A modulation route as a row of the arrangement, under its track's automation lanes (Michael on
@@ -58,6 +59,7 @@ struct ModulationLane: View {
             .pickerStyle(.menu)
             .fixedSize()
             .accessibilityHint("From zero adds only upward; centred moves the value both ways.")
+            ModulationLiveMeter(route: route)
             Button(role: .destructive) {
                 documents.attempt([.removeModRoute(route.id)], title: "Remove Modulation")
             } label: {
@@ -77,5 +79,60 @@ struct ModulationLane: View {
         var changed = route
         edit(&changed)
         documents.attempt([.setModRoute(changed)], title: "Modulation")
+    }
+}
+
+/// What a route is doing right now (Michael on 10084: "Mir fehlt die Visualisierung, was gerade
+/// bei den meisten Parametern wirklich passiert"): the source's reading as a bar, 0 … 100 %, and
+/// what the route adds to its value — "+12.5 %" — the same arithmetic the engine adds
+/// (`Modulation.contribution`). Its own leaf, refreshed ten times a second while it shows, so no
+/// view above it reads a live value (Law 6). A source nothing measures says so instead of a bar.
+struct ModulationLiveMeter: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
+    let route: ModulationRoute
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 0.1)) { _ in
+            let reading = currentReading()
+            let added = Modulation.contribution(of: reading, depth: route.depth, curve: route.curve,
+                                                polarity: route.polarity)
+            HStack(spacing: Theme.Space.xs) {
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        Rectangle().fill(Theme.Color.surfaceRaised)
+                        Rectangle().fill(route.enabled ? Theme.Color.accent : Theme.Color.textTertiary)
+                            .frame(width: geometry.size.width * CGFloat(reading ?? 0))
+                    }
+                }
+                .frame(width: 64, height: 6)
+                .clipShape(RoundedRectangle(cornerRadius: 2))
+                Text(reading == nil ? "Not measured" : NumberText.signed(added * 100, decimals: 1, unit: "%"))
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .frame(minWidth: 72, alignment: .leading)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Now")
+            .accessibilityValue(reading.map { "source \(Int(($0 * 100).rounded())) percent, adds "
+                + NumberText.signed(added * 100, decimals: 1, unit: "percent") } ?? "not measured")
+        }
+    }
+
+    /// The source's reading now: the body and the phone from the engine's inputs, the Bar LFO and
+    /// the Bar Weave from the song position, as the engine reads them.
+    private func currentReading() -> Double? {
+        let project = store.project
+        switch route.source {
+        case .lfo1:
+            return Modulation.songLFO(at: Double(engine.playheadTick(in: project)), meter: project.meterMap)
+        case .weave1:
+            let seed = BarWeave.seed(keyMask: BarWeave.keyMask(project.context))
+            return Modulation.songWeave(at: Double(engine.playheadTick(in: project)), meter: project.meterMap, seed: seed)
+        default:
+            return engine.modulation.value(route.source)
+        }
     }
 }
