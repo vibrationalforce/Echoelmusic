@@ -183,9 +183,11 @@ struct ArrangeView: View {
             .onEnded { value in zoom = ArrangeZoom.zoomed(zoom, by: Double(value.magnification)) }
     }
 
-    /// Zoom Out and Zoom In under the lanes: the pinch is a shortcut, never the only way.
+    /// Add Marker, Zoom Out and Zoom In under the lanes: the pinch is a shortcut, never the only
+    /// way, and a marker is one tap away instead of only behind a hold on the ruler.
     private var zoomBar: some View {
         HStack(spacing: Theme.Space.s) {
+            MarkerAddButton(compact: true)
             Spacer()
             zoomButton("Zoom Out", systemImage: "minus.magnifyingglass",
                        enabled: ArrangeZoom.canZoomOut(zoom)) { zoom = ArrangeZoom.zoomedOut(zoom) }
@@ -477,20 +479,36 @@ private struct PlayheadLine: View {
     }
 }
 
-/// "Add Marker" on the ruler's hold menu: a marker on the magnet's line nearest the playhead,
-/// named "Marker N", one undo step. The playhead is read when the button is pressed, never in a body.
+/// "Add Marker" on the ruler's hold menu and, `compact`, as a flag in the zoom bar: a marker on the
+/// magnet's line nearest the playhead, named "Marker N", one undo step. The playhead is read when
+/// the button is pressed, never in a body.
 private struct MarkerAddButton: View {
+    var compact = false
     @Environment(ProjectStore.self) private var store
     @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
 
     var body: some View {
-        Button("Add Marker at Playhead", systemImage: "flag") {
-            let project = store.project
-            let tick = snap.nearest(engine.playheadTick(in: project), meter: project.meterMap)
-            documents.attempt(.addMarker(at: tick, name: project.nextMarkerName()))
+        if compact {
+            Button(action: add) {
+                Image(systemName: "flag")
+                    .font(Theme.Font.label)
+                    .foregroundStyle(Theme.Color.text)
+                    .frame(width: Theme.Size.touch, height: Theme.Size.touch)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Add Marker at Playhead")
+        } else {
+            Button("Add Marker at Playhead", systemImage: "flag", action: add)
         }
+    }
+
+    private func add() {
+        let project = store.project
+        let tick = snap.nearest(engine.playheadTick(in: project), meter: project.meterMap)
+        documents.attempt(.addMarker(at: tick, name: project.nextMarkerName()))
     }
 }
 
