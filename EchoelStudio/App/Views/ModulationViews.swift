@@ -10,6 +10,7 @@ import SwiftUI
 /// `ProjectStore.perform` (`modulation.set` / `modulation.remove`), one undo step each.
 struct ModulateMenu: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(HeartRateStrap.self) private var strap
     @Environment(CameraPulseSource.self) private var camera
     @Environment(HealthHeartRate.self) private var health
@@ -55,8 +56,18 @@ struct ModulateMenu: View {
                 if let descriptor = project.descriptor(for: target) {
                     Menu(descriptor.title) {
                         ForEach(Self.sources, id: \.0) { source, title in
-                            Button("\(title) → \(descriptor.title)\(measuring.contains(source) ? " · measuring" : "")") {
-                                try? store.perform(.setModRoute(ModulationRoute(source: source, target: target, depth: 0.25)))
+                            let label = "\(title) → \(descriptor.title)\(measuring.contains(source) ? " · measuring" : "")"
+                            // A pair already routed is checked and adds nothing: a second tap used to
+                            // add a second route and quietly double the depth (audit A3 #9). Its row
+                            // in Arrange sets the depth.
+                            if project.modRoutes.contains(where: { $0.source == source && $0.target == target }) {
+                                Button { } label: { Label(label, systemImage: "checkmark") }
+                                    .accessibilityHint("Already routed; its depth is in the row under the track.")
+                            } else {
+                                Button(label) {
+                                    documents.attempt([.setModRoute(ModulationRoute(source: source, target: target, depth: 0.25))],
+                                                      title: "Modulate")
+                                }
                             }
                         }
                     }
@@ -89,6 +100,7 @@ struct ModulateMenu: View {
 /// What one route can do: its depth and sign, its polarity, on or off, removed.
 private struct RouteActions: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     let route: ModulationRoute
 
     var body: some View {
@@ -100,12 +112,12 @@ private struct RouteActions: View {
             change { $0.polarity = $0.polarity == .unipolar ? .bipolar : .unipolar }
         }
         Button(route.enabled ? "Turn Off" : "Turn On") { change { $0.enabled.toggle() } }
-        Button("Remove", role: .destructive) { try? store.perform(.removeModRoute(route.id)) }
+        Button("Remove", role: .destructive) { documents.attempt([.removeModRoute(route.id)], title: "Remove Modulation") }
     }
 
     private func change(_ edit: (inout ModulationRoute) -> Void) {
         var changed = route
         edit(&changed)
-        try? store.perform(.setModRoute(changed))
+        documents.attempt([.setModRoute(changed)], title: "Modulation")
     }
 }
