@@ -221,6 +221,16 @@ public enum CommandError: Error, Equatable, Sendable {
 public enum Names {
     public static let maximumLength = 128
 
+    /// "<base> <n>" with the first n from 1 that no name in `taken` carries — so a new track after
+    /// a deleted one never repeats a name (two tracks named "Drums 2" in the 10083 recording came
+    /// from numbering by count).
+    public static func firstFree(_ base: String, taken: [String]) -> String {
+        let used = Set(taken)
+        var number = 1
+        while used.contains("\(base) \(number)") { number += 1 }
+        return "\(base) \(number)"
+    }
+
     /// Trimmed, non-empty, at most `maximumLength` characters.
     static func validated(_ name: String, parameter: String) throws -> String {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)

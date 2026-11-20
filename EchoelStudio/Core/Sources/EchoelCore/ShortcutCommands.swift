@@ -76,10 +76,7 @@ public enum ShortcutCommands {
 
     /// "<Kind> <n>", the first number no track of the song carries.
     public static func defaultName(for choice: TrackChoice, in project: Project) -> String {
-        let taken = Set(project.tracks.map(\.name))
-        var number = 1
-        while taken.contains("\(choice.baseName) \(number)") { number += 1 }
-        return "\(choice.baseName) \(number)"
+        Names.firstFree(choice.baseName, taken: project.tracks.map(\.name))
     }
 
     private static func agent(_ action: AgentAction, in project: Project) throws -> [Command] {

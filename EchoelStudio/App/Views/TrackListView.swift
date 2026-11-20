@@ -222,9 +222,9 @@ struct AddTrackMenu: View {
     /// An instrument track playing the drum kit, with an empty one-bar pattern ready to fill.
     private func addDrums() {
         let track = TrackID(), clip = ClipID()
-        let count = store.project.tracks.filter { $0.instrument.device == .drums && $0.kind == .instrument }.count + 1
+        let name = Names.firstFree("Drums", taken: store.project.tracks.map(\.name))
         documents.attempt([
-            .addTrack(id: track, name: "Drums \(count)", kind: .instrument, index: nil),
+            .addTrack(id: track, name: name, kind: .instrument, index: nil),
             .setInstrumentDevice(track, .drums),
             .createClip(track: track, id: clip, name: "Beat", length: MusicalTime.ticksPerBar(store.project.timeSignature)),
             .placeClip(track: track, id: PlacementID(), clip: clip, start: 0),
@@ -232,8 +232,8 @@ struct AddTrackMenu: View {
     }
 
     private func add(_ kind: TrackKind) {
-        let count = store.project.tracks.filter { $0.kind == kind }.count + 1
-        documents.attempt(.addTrack(id: TrackID(), name: "\(kind.displayName) \(count)", kind: kind, index: nil))
+        let name = Names.firstFree(kind.displayName, taken: store.project.tracks.map(\.name))
+        documents.attempt(.addTrack(id: TrackID(), name: name, kind: kind, index: nil))
     }
 }
 

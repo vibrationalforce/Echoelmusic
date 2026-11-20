@@ -224,4 +224,13 @@ final class CommandTests: XCTestCase {
         XCTAssertEqual(Set(names).count, names.count)
         XCTAssertTrue(CommandCatalog.all.allSatisfy { !$0.title.isEmpty && !$0.summary.isEmpty })
     }
+
+    /// A new track takes the first free number, never a name another track carries.
+    func testANewNameTakesTheFirstFreeNumber() {
+        XCTAssertEqual(Names.firstFree("Drums", taken: []), "Drums 1")
+        XCTAssertEqual(Names.firstFree("Drums", taken: ["Drums 1", "Drums 2"]), "Drums 3")
+        XCTAssertEqual(Names.firstFree("Drums", taken: ["Drums 1", "Drums 3"]), "Drums 2", "a gap is filled")
+        XCTAssertEqual(Names.firstFree("Drums", taken: ["Drums", "Drums 2"]), "Drums 1")
+    }
+
 }
