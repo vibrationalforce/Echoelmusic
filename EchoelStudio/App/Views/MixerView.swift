@@ -107,6 +107,18 @@ struct ChannelStrip: View {
                 .buttonStyle(ToolButtonStyle(isActive: active > 0))
                 .accessibilityLabel("Master Effects")
                 .accessibilityValue(inserts.isEmpty ? "None" : "\(active) of \(inserts.count) on")
+                // The master's lanes and routes, here as well as behind a hold on the song length
+                // in Arrange (hidden-features audit 2026-11-20 #7).
+                AutomateMenu(owner: .master)
+                    .menuStyle(.button)
+                    .buttonStyle(ToolButtonStyle())
+                    .labelStyle(.titleOnly)
+                    .accessibilityLabel("Automate Master")
+                ModulateMenu(owner: .master)
+                    .menuStyle(.button)
+                    .buttonStyle(ToolButtonStyle())
+                    .labelStyle(.titleOnly)
+                    .accessibilityLabel("Modulate Master")
             }
             if let track, track.kind != .returnTrack {
                 ForEach(store.project.tracks.filter { $0.kind == .returnTrack }) { target in
