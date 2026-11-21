@@ -441,50 +441,36 @@
         </header>
 
         <section class="block" id="build">
-            <h2>What is in the build</h2>
-            <p class="note">Version 11.0.0. It is new, and no part of it has been confirmed on a device yet; that is what the test is for.</p>
-            <div class="grid-2">
-                <div class="card">
-                    <h3>Instruments and sound</h3>
-                    <p>A 16-voice synth with eleven engines: Classic, Supersaw, FM, Sub, Morph, Mallet, DDSP, Choir, Pluck, Wavetable and Texture. A synthesized eight-piece drum kit. A sampler that plays an imported audio file across the keyboard. Twenty-five built-in effects, up to eight on every track and on the master. Installed stereo Audio Units from other apps play on tracks.</p>
+                <h2>What is in the build</h2>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Sound</h3>
+                        <p>A 16-voice synth with eleven engines, a drum kit, a sampler and twenty-five effects. Audio Units from other apps play on tracks.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Write</h3>
+                        <p>Piano roll, drum step grid, arrangement timeline and a session grid. MIDI keyboards by USB, Bluetooth or network.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Record and mix</h3>
+                        <p>MIDI takes and mono audio, a mixer with sends to return tracks, and automation you draw or record.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Export</h3>
+                        <p>24-bit, 48&nbsp;kHz WAV with loudness and true peak, stems, or a Standard MIDI File.</p>
+                    </div>
                 </div>
-                <div class="card">
-                    <h3>Write and arrange</h3>
-                    <p>A piano roll and a drum step grid. An arrangement timeline with clips on bars. A session grid that launches clips and scenes on the next bar, the next quarter note or at once. Play from the on-screen keys or from a MIDI keyboard by USB, Bluetooth or network MIDI.</p>
-                </div>
-                <div class="card">
-                    <h3>Record and mix</h3>
-                    <p>Record MIDI takes as clips, and mono audio from the microphone or one interface input; takes stay on the device. A channel strip with fader, pan and a peak meter on every track and the master, sends to return tracks, and automation that you draw or record.</p>
-                </div>
-                <div class="card">
-                    <h3>Export</h3>
-                    <p>A 24-bit, 48&nbsp;kHz stereo WAV with its loudness and true peak reported. Stems, one WAV per track. A Standard MIDI File. Import a MIDI file into the song.</p>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="block">
-            <h2>Your songs are files</h2>
-            <p>Songs save automatically as .echoel files that the Files app shows, in an <a href="https://github.com/vibrationalforce/Echoelmusic/blob/main/docs/FORMAT.md">open, documented format</a>. The app needs no account. It has no ads, no tracking and no server of ours. What it reads, and what leaves the device only when you switch it on, is on the <a href="privacy.html#studio">Privacy</a> page.</p>
-        </section>
+            <section class="block">
+                <h2>Your songs are files</h2>
+                <p>Open, documented <a href="https://github.com/vibrationalforce/Echoelmusic/blob/main/docs/FORMAT.md">.echoel files</a> on your device. No account, no ads, no tracking. Optional sources and outputs &mdash; a Bluetooth heart-rate strap as a modulation source, OSC, Art-Net, sACN and MPE out &mdash; stay off until you turn them on (<a href="privacy.html#studio">Privacy</a>).</p>
+            </section>
 
-        <section class="block">
-            <h2>Sources and outputs</h2>
-            <p class="note">Also in the build. Nothing is read or sent until you turn it on.</p>
-            <ul class="plain-list">
-                <li><strong>Heart-rate strap.</strong> A Bluetooth chest strap can be a modulation source: heart rate, HRV or coherence on a fader, pan, send or synth parameter. Without a strap the control stays where you set it.</li>
-                <li><strong>Connections.</strong> OSC, ADM-OSC, Art-Net and sACN out to your local network. Body values are sent only while you allow body sharing on that page.</li>
-                <li><strong>Go Live.</strong> Stream the Field&rsquo;s picture and the master mix over RTMP or RTMPS to a service you choose. Nothing goes out until you press Go Live.</li>
-                <li><strong>MPE out.</strong> The live track&rsquo;s notes go to the MIDI outputs you pick, one channel per note.</li>
-                <li><strong>Video tracks.</strong> Import a video from the photo library onto the timeline.</li>
-            </ul>
-        </section>
-
-        <section class="block">
-            <h2>Who makes it</h2>
-            <p>Echoelmusic is built in Hamburg by <a href="artist.html">Echoel</a> (Michael Terbuyken), an artist for electronic music, live performance and immersive, multi-sensory installations, who also develops audio software. He offers <a href="consulting.html">online consulting for sound and media production</a> as well.</p>
-            <p>Details of the build and what comes next are on the <a href="roadmap.html">Roadmap</a>; questions are answered in the <a href="faq.html">FAQ</a>. The earlier body-driven app (10.79) is frozen; its documentation is <a href="overview.html">archived</a>.</p>
-            <div class="social">
+            <section class="block">
+                <h2>Who makes it</h2>
+                <p>Built in Hamburg by <a href="artist.html">Echoel</a> (Michael Terbuyken): music, performance and immersive, multi-sensory installations. Also <a href="consulting.html">consulting</a> for sound and media production. <a href="faq.html">FAQ</a> &middot; <a href="roadmap.html">Roadmap</a> &middot; <a href="overview.html">earlier app (archive)</a>.</p>
+                <div class="social">
             <a href="https://instagram.com/echoelmusic" aria-label="Instagram" rel="noopener noreferrer" target="_blank">
                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
             </a>
