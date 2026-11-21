@@ -70,8 +70,8 @@ and reloaded every open sub-page about once a minute. Move all of them together 
 primary *Music · Performance · Immersive and multi-sensory installation*, secondary *audio development ·
 production · consulting*. `artist.html` carries the Person entity (`@id` `…/artist.html#echoel`, name
 Echoel), the home page's `Organization.founder` points at that `@id`, and the page has its own share
-image `artist-cover.png` (never `og-cover.png`, which advertises the app). Its "Listen" list lets the
-visitor pick a platform; add a platform there AND in `sameAs`. `robots.txt` lets AI search and
+image `artist-cover.png` (never `og-cover.png`, which advertises the app). No streaming or shop links on the
+page (founder 2026-11-21); `sameAs` holds only the @echoelmusic channels. `robots.txt` lets AI search and
 user-initiated fetches in and keeps training-only crawlers out.
 
 **The artist page is one file and has no media.** `artist.html` — 204 lines, 15,730 B — is
