@@ -1,28 +1,21 @@
-11.0.0 — what a value does, zoom at the side, several notes at once, nothing hidden
+11.0.0 — preset menus for the drums and the sampler when they play inside another app
 
-New since 10084, built by the Echoel Studio run; nothing here is device-verified yet.
-- Modulation: each route's row shows its source's reading as a bar and what it adds now ("+12.5 %"),
-  or "Not measured"; it moves, it never blinks.
-- Zoom: a strip at the right edge of Arrange and of the note editor — touch or drag to zoom,
-  double-tap for the standard size, VoiceOver adjusts it a step at a time. Buttons and pinch stay.
-- Note editor: Select More chooses several notes; Delete, Quantize, Humanize, Strum and Revoice act
-  on all of them, and dragging one moves them all, keeping their shape at the clip's edges.
-- Doors that were only behind a hold: a tap on an audio region opens its settings; Add Marker in
-  Arrange's zoom bar; Automate, Modulate and Effects in the track list's menu; Automate and
-  Modulate on the Mixer's master strip; Follow Pulse (Flow) in Song › Play and Sync; the
-  arpeggiator at the top of the Sound page.
-- Arrange: a button in the zoom bar shows or hides the modulation rows; hidden routes still play.
-- Learn: a chapter "The Instrument and the Body" (Body Voice, Mood, Flow).
-- Fixed: an effect page kept "Loading…" under its values and a grey Compare after the effect had
-  loaded.
-Limits, new: several notes are chosen with the Select More switch, not by drawing a frame; the
-note editor zooms in four sizes; the drum step grid has no zoom strip yet.
-Still: a sample click above 300 BPM is cut by the next one. Older limits as in 10083.
+New since 10085, built by the Echoel Studio run; nothing here is device-verified yet.
+- Drums as a plugin in another app (for example AUM): its preset menu lists six kits — Init, Tight,
+  Deep, Bright, Long Kick and Soft. Init is the sound a newly loaded plugin makes.
+- Sampler as a plugin in another app: its preset menu lists six shapes — Init, Tight, Soft Start,
+  Swell, Long Tail and One-Shot (attack, release, level and mode). Choosing one never retunes the
+  sample: its root key stays where you set it.
+- Underneath: every built-in instrument is now tested to keep its pitch and length at 44.1, 48 and
+  96 kHz, the rates a host app may run at.
+Limits as in 10085: several notes are chosen with the Select More switch, not by drawing a frame;
+the note editor zooms in four sizes; the drum step grid has no zoom strip yet; a sample click above
+300 BPM is cut by the next one.
 
-Previous: 10084. A green commit that changes this file uploads build 10000 + run number. A test
+Previous: 10085. A green commit that changes this file uploads build 10000 + run number. A test
 list, not a source for claims (ContentPipeline/CLAIMS.md).
 
-One ask, as for 10083 and 10084. Start a screen recording, open the app, and try to make sixteen
+One ask, as for 10083 to 10085. Start a screen recording, open the app, and try to make sixteen
 bars in two to five minutes: a beat, a bass line or a chord, then Play. No list and no protocol; stop wherever
 it stops being possible or pleasant. The recording is the answer. What gets in the way in it is
 the next work, in the order it happened.
