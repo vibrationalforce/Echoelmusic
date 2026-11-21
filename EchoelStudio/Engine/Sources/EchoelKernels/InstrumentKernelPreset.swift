@@ -13,14 +13,21 @@ public struct InstrumentKernelPreset: Sendable, Equatable {
         self.values = values
     }
 
-    /// The device's presets of the app, in the app's order, by address. A row a preset does not
-    /// name takes its song default, because loading a preset in the app replaces every synth value
-    /// (`Command.loadInstrumentPreset`): a host and a song hear the same sound under one name.
-    /// The drums and the sampler have no presets in the app, so they offer none. Builds arrays.
+    /// The device's starting sounds, in their order, by address. The synth's are the app's
+    /// presets, and a row a preset does not name takes its song default, because loading a preset
+    /// in the app replaces every synth value (`Command.loadInstrumentPreset`): a host and a song
+    /// hear the same sound under one name. The drums offer their kits (`InstrumentPreset.drumKits`).
+    /// The sampler offers none yet: a preset sets every address, and its root key belongs to the
+    /// sample, not to a sound. Builds arrays.
     public static func factory(for device: InstrumentDevice) -> [InstrumentKernelPreset] {
-        guard device == .synth else { return [] }
+        let presets: [InstrumentPreset]
+        switch device {
+        case .synth: presets = InstrumentPreset.all
+        case .drums: presets = InstrumentPreset.drumKits
+        case .sampler, .plugin, .unrecognized: return []
+        }
         let rows = device.parameters
-        return InstrumentPreset.all.map { preset in
+        return presets.map { preset in
             let settings = InstrumentSettings(values: preset.values)
             return InstrumentKernelPreset(name: preset.name, values: rows.map { Float(settings.value($0)) })
         }

@@ -19,7 +19,8 @@ final class InstrumentPresetsTests: XCTestCase {
         let menu = InstrumentPresets.menu(SynthKernel.factoryPresets)
         XCTAssertEqual(menu.map(\.name), SynthKernel.factoryPresets.map(\.name))
         XCTAssertEqual(menu.map(\.number), Array(SynthKernel.factoryPresets.indices))
-        XCTAssertTrue(InstrumentPresets.menu(DrumKernel.factoryPresets).isEmpty)
+        XCTAssertEqual(InstrumentPresets.menu(DrumKernel.factoryPresets).map(\.name), DrumKernel.factoryPresets.map(\.name))
+        XCTAssertTrue(InstrumentPresets.menu(SamplerKernel.factoryPresets).isEmpty)
     }
 
     /// A number in the list is its factory preset; a user preset's (negative) and one past the

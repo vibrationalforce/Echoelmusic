@@ -58,11 +58,55 @@ final class FactoryPresetTests: XCTestCase {
         }
     }
 
-    /// The drums and the sampler have no presets in the app, so a host lists none for them.
-    func testTheDrumsAndTheSamplerOfferNone() {
-        XCTAssertTrue(DrumKernel.factoryPresets.isEmpty)
+    /// The drum plugin lists its kits under their names, in their order, and "Init" is the
+    /// sound the plugin starts with: every address at its default.
+    func testTheDrumsOfferTheirKitsAndInitIsTheStartingSound() throws {
+        XCTAssertEqual(DrumKernel.factoryPresets.map(\.name), InstrumentPreset.drumKits.map(\.name))
+        XCTAssertEqual(DrumKernel.factoryPresets.map(\.name), ["Init", "Tight", "Deep", "Bright", "Long Kick", "Soft"])
+        let initial = try XCTUnwrap(DrumKernel.factoryPresets.first)
+        XCTAssertEqual(initial.values, DrumKernel.parameters.map { Float($0.defaultValue) })
+    }
+
+    /// Every key a kit names is one of the drum plugin's addresses, every kit has a value for every
+    /// address, each value is one the row takes, and no two kits sound the same.
+    func testEveryKitKeyIsAnAddressAndEveryValueIsInRange() {
+        let rows = InstrumentDevice.drums.parameters
+        let keys = rows.map(\.key.rawValue)
+        for (kit, offered) in zip(InstrumentPreset.drumKits, DrumKernel.factoryPresets) {
+            XCTAssertEqual(offered.values.count, DrumKernel.parameters.count, kit.name)
+            for (key, value) in kit.values {
+                guard let address = keys.firstIndex(of: key) else {
+                    XCTFail("\(kit.name): \(key) is no address of the drum plugin")
+                    continue
+                }
+                XCTAssertEqual(offered.values[address], Float(value), "\(kit.name) \(key)")
+            }
+            for (address, row) in rows.enumerated() {
+                let value = Double(offered.values[address])
+                XCTAssertTrue(value.isFinite && row.range.contains(value), "\(kit.name) \(row.key.rawValue)")
+                if row.taper == .stepped {
+                    XCTAssertEqual(value, value.rounded(), "\(kit.name) \(row.key.rawValue) is a whole step")
+                }
+            }
+        }
+        let sounds = DrumKernel.factoryPresets.map(\.values)
+        XCTAssertEqual(Set(sounds.map { $0.map(\.bitPattern) }).count, sounds.count, "every kit sounds different")
+    }
+
+    /// A drum kernel given a kit's values holds them as they are: none is clamped on the way.
+    func testADrumKernelGivenAKitHoldsEveryValue() {
+        for kit in DrumKernel.factoryPresets {
+            let kernel = DrumKernel(sampleRate: 48_000, maximumFrames: 256)
+            for (address, value) in kit.values.enumerated() { kernel.setParameter(address, value) }
+            for (address, value) in kit.values.enumerated() {
+                XCTAssertEqual(kernel.parameter(address), value, "\(kit.name) address \(address)")
+            }
+        }
+    }
+
+    /// The sampler lists no preset yet: one would set its root key, which belongs to the sample.
+    func testTheSamplerOffersNone() {
         XCTAssertTrue(SamplerKernel.factoryPresets.isEmpty)
-        XCTAssertTrue(InstrumentKernelPreset.factory(for: .drums).isEmpty)
         XCTAssertTrue(InstrumentKernelPreset.factory(for: .sampler).isEmpty)
     }
 }

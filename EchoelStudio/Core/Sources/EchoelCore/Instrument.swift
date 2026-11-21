@@ -416,6 +416,47 @@ public struct InstrumentPreset: Sendable, Equatable {
     public static func named(_ name: String) -> InstrumentPreset? {
         all.first { $0.name == name }
     }
+
+    /// The drum plugin's starting kits, the ones a host lists in its preset menu
+    /// (`InstrumentKernelPreset.factory(for: .drums)`); the app's own Drums track does not list
+    /// them yet. A host stores a kit by its place, so the order only grows at the end and a name
+    /// never changes. Every kit names the kit level the plugin starts at, so "Init" is the sound
+    /// a newly loaded plugin makes; a row a kit does not name is at its song default.
+    public static let drumKits: [InstrumentPreset] = [
+        InstrumentPreset(kit: "Init", [:]),
+        InstrumentPreset(kit: "Tight", [
+            "drums.kickGlide": 0.6, "drums.kick.decay": 0.7, "drums.snare.decay": 0.6, "drums.clap.decay": 0.6,
+            "drums.lowTom.decay": 0.7, "drums.highTom.decay": 0.7, "drums.closedHat.decay": 0.5,
+            "drums.openHat.decay": 0.5, "drums.crash.decay": 0.5,
+        ]),
+        InstrumentPreset(kit: "Deep", [
+            "drums.kickGlide": 2, "drums.kick.tune": -3, "drums.kick.decay": 1.6, "drums.snare.tune": -2,
+            "drums.snare.decay": 1.2, "drums.lowTom.tune": -3, "drums.lowTom.decay": 1.3,
+            "drums.highTom.tune": -3, "drums.highTom.decay": 1.3,
+        ]),
+        InstrumentPreset(kit: "Bright", [
+            "drums.hatModel": 1, "drums.tomModel": 1, "drums.snare.tune": 2, "drums.clap.tune": 2,
+            "drums.closedHat.tune": 2, "drums.openHat.tune": 2, "drums.crash.tune": 2,
+        ]),
+        InstrumentPreset(kit: "Long Kick", [
+            "drums.kickGlide": 3, "drums.kick.tune": -5, "drums.kick.decay": 3, "drums.snare.level": 0.9,
+        ]),
+        InstrumentPreset(kit: "Soft", [
+            "drums.kick.level": 0.8, "drums.snare.level": 0.7, "drums.snare.decay": 1.2, "drums.clap.level": 0.6,
+            "drums.closedHat.level": 0.6, "drums.openHat.level": 0.5, "drums.crash.level": 0.4,
+        ]),
+    ]
+
+    /// A drum kit by its rows' stored keys (the piece rows are built from `drumPieces`, so they
+    /// have no static names), with the plugin's starting kit level unless the kit names another.
+    init(kit name: String, _ values: [String: Double]) {
+        self.name = name
+        var stored = values
+        if stored[SynthParameter.drumsLevel.key.rawValue] == nil {
+            stored[SynthParameter.drumsLevel.key.rawValue] = SynthParameter.drumsLevel.defaultValue
+        }
+        self.values = stored
+    }
 }
 
 extension SynthParameter: Hashable {

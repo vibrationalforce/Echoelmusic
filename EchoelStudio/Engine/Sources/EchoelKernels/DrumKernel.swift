@@ -10,6 +10,8 @@ import Synchronization
 public final class DrumKernel: InstrumentKernel, @unchecked Sendable {
     /// The drums' Core table (`InstrumentDevice.drums`): the level at address 0, the sound after it.
     public static let parameters = InstrumentDevice.drums.parameters.map(InstrumentKernelParameter.init)
+    /// The kits a host's preset menu lists (`InstrumentPreset.drumKits`), by address.
+    public static var factoryPresets: [InstrumentKernelPreset] { InstrumentKernelPreset.factory(for: .drums) }
     public let sampleRate: Double
     public let maximumFrames: Int
 
