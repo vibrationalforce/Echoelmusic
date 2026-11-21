@@ -447,6 +447,19 @@ public struct InstrumentPreset: Sendable, Equatable {
         ]),
     ]
 
+    /// The sampler plugin's starting envelopes, the ones a host lists in its preset menu
+    /// (`InstrumentKernelPreset.factory(for: .sampler)`); the app's Sampler track does not list
+    /// them yet. Choosing one leaves the root key, which belongs to the sample. Same order rule as
+    /// the kits: a host stores one by its place.
+    public static let samplerShapes: [InstrumentPreset] = [
+        InstrumentPreset("Init"),
+        InstrumentPreset("Tight", [.samplerAttack: 0.001, .samplerRelease: 0.05]),
+        InstrumentPreset("Soft Start", [.samplerAttack: 0.08, .samplerRelease: 0.4]),
+        InstrumentPreset("Swell", [.samplerAttack: 0.8, .samplerRelease: 1.5]),
+        InstrumentPreset("Long Tail", [.samplerAttack: 0.005, .samplerRelease: 3]),
+        InstrumentPreset("One-Shot", [.samplerMode: 1, .samplerRelease: 0.3]),
+    ]
+
     /// A drum kit by its rows' stored keys (the piece rows are built from `drumPieces`, so they
     /// have no static names), with the plugin's starting kit level unless the kit names another.
     init(kit name: String, _ values: [String: Double]) {

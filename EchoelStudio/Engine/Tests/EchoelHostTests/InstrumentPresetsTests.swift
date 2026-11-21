@@ -20,7 +20,7 @@ final class InstrumentPresetsTests: XCTestCase {
         XCTAssertEqual(menu.map(\.name), SynthKernel.factoryPresets.map(\.name))
         XCTAssertEqual(menu.map(\.number), Array(SynthKernel.factoryPresets.indices))
         XCTAssertEqual(InstrumentPresets.menu(DrumKernel.factoryPresets).map(\.name), DrumKernel.factoryPresets.map(\.name))
-        XCTAssertTrue(InstrumentPresets.menu(SamplerKernel.factoryPresets).isEmpty)
+        XCTAssertEqual(InstrumentPresets.menu(SamplerKernel.factoryPresets).map(\.name), SamplerKernel.factoryPresets.map(\.name))
     }
 
     /// A number in the list is its factory preset; a user preset's (negative) and one past the
@@ -44,6 +44,24 @@ final class InstrumentPresetsTests: XCTestCase {
                 let node = try XCTUnwrap(parameters.parameter(withAddress: AUParameterAddress(address)))
                 XCTAssertEqual(node.value, value, "\(preset.name) address \(address)")
             }
+        }
+    }
+
+    /// A sampler shape sets the envelope and leaves the root key the musician tuned to the sample.
+    func testASamplerShapeLeavesTheRootKey() throws {
+        let kernel = SamplerKernel(sampleRate: 48_000, maximumFrames: 256)
+        let parameters = InstrumentParameterTree.make(for: SamplerKernel.self)
+        parameters.implementorValueObserver = { parameter, value in kernel.setParameter(Int(parameter.address), value) }
+        parameters.implementorValueProvider = { parameter in kernel.parameter(Int(parameter.address)) }
+        let rows = InstrumentDevice.sampler.parameters
+        let root = try XCTUnwrap(rows.firstIndex { $0.key == SynthParameter.samplerRoot.key })
+        let rootNode = try XCTUnwrap(parameters.parameter(withAddress: AUParameterAddress(root)))
+        rootNode.value = 57
+        let swell = try XCTUnwrap(SamplerKernel.factoryPresets.first { $0.name == "Swell" })
+        InstrumentPresets.apply(swell, to: parameters)
+        XCTAssertEqual(kernel.parameter(root), 57, "the root key stays the sample's")
+        for (address, value) in swell.values.enumerated() where address != root {
+            XCTAssertEqual(kernel.parameter(address), value, "Swell address \(address)")
         }
     }
 

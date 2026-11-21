@@ -104,9 +104,34 @@ final class FactoryPresetTests: XCTestCase {
         }
     }
 
-    /// The sampler lists no preset yet: one would set its root key, which belongs to the sample.
-    func testTheSamplerOffersNone() {
-        XCTAssertTrue(SamplerKernel.factoryPresets.isEmpty)
-        XCTAssertTrue(InstrumentKernelPreset.factory(for: .sampler).isEmpty)
+    /// The sampler lists its envelope shapes; "Init" is the sound it starts with, every shape's
+    /// values are ones its rows take, and every one leaves the root key — and only that.
+    func testTheSamplerOffersShapesThatLeaveTheRootKey() throws {
+        XCTAssertEqual(SamplerKernel.factoryPresets.map(\.name),
+                       ["Init", "Tight", "Soft Start", "Swell", "Long Tail", "One-Shot"])
+        let initial = try XCTUnwrap(SamplerKernel.factoryPresets.first)
+        XCTAssertEqual(initial.values, SamplerKernel.parameters.map { Float($0.defaultValue) })
+        let rows = InstrumentDevice.sampler.parameters
+        let root = try XCTUnwrap(rows.firstIndex { $0.key == SynthParameter.samplerRoot.key })
+        for shape in SamplerKernel.factoryPresets {
+            XCTAssertEqual(shape.leaves, [root], shape.name)
+            XCTAssertEqual(shape.values.count, rows.count, shape.name)
+            for (address, row) in rows.enumerated() {
+                let value = Double(shape.values[address])
+                XCTAssertTrue(value.isFinite && row.range.contains(value), "\(shape.name) \(row.key.rawValue)")
+                if row.taper == .stepped {
+                    XCTAssertEqual(value, value.rounded(), "\(shape.name) \(row.key.rawValue) is a whole step")
+                }
+            }
+        }
+        let sounds = SamplerKernel.factoryPresets.map(\.values)
+        XCTAssertEqual(Set(sounds.map { $0.map(\.bitPattern) }).count, sounds.count, "every shape sounds different")
+    }
+
+    /// The synth's presets and the drums' kits leave nothing: choosing one sets every address.
+    func testTheSynthAndTheDrumsLeaveNoAddress() {
+        for preset in SynthKernel.factoryPresets + DrumKernel.factoryPresets {
+            XCTAssertTrue(preset.leaves.isEmpty, preset.name)
+        }
     }
 }

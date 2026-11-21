@@ -117,7 +117,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     }
 
     /// This instrument's starting sounds, numbered by their place: the app's presets for the synth,
-    /// the kits for the drums, none yet for the sampler.
+    /// the kits for the drums, the envelope shapes for the sampler (which keep the sample's root key).
     override var factoryPresets: [AUAudioUnitPreset]? { presetMenu }
 
     /// A host may save the musician's own sounds as user presets: the system keeps each as this

@@ -44,10 +44,10 @@ public enum InstrumentPresets {
     }
 
     /// Sets every value of `preset` through the tree, so the kernel (the tree's implementor), the
-    /// host's controls and its automation all see it. Off the render thread: a host chooses a
-    /// preset from its own interface.
+    /// host's controls and its automation all see it — except the addresses it leaves (the
+    /// sampler's root key). Off the render thread: a host chooses a preset from its own interface.
     public static func apply(_ preset: InstrumentKernelPreset, to tree: AUParameterTree) {
-        for (address, value) in preset.values.enumerated() {
+        for (address, value) in preset.values.enumerated() where !preset.leaves.contains(address) {
             tree.parameter(withAddress: AUParameterAddress(address))?.value = AUValue(value)
         }
     }

@@ -21,6 +21,9 @@ public protocol SampleLoadingKernel: InstrumentKernel {
 public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
     /// The sampler's Core table (`InstrumentDevice.sampler`); the address of a row is its index.
     public static let parameters = InstrumentDevice.sampler.parameters.map(InstrumentKernelParameter.init)
+    /// The envelope shapes a host's preset menu lists (`InstrumentPreset.samplerShapes`), by
+    /// address; each leaves the root key.
+    public static var factoryPresets: [InstrumentKernelPreset] { InstrumentKernelPreset.factory(for: .sampler) }
     /// Computed, not stored: the render thread reads it, and a stored static is a lazy global.
     private static var ringSize: Int { 64 }
 
