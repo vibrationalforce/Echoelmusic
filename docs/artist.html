@@ -20,26 +20,29 @@
     Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
     </script>
 
-    <title>Artist — Echoel (Michael Terbuyken) | Music Producer &amp; Sound Artist, Hamburg</title>
-    <meta name="description" content="Echoel (Michael Terbuyken) — Hamburg music producer and sound artist, inventor of walk-in vibrating water, light and sound installations. Made Echoelmusic.">
+    <title>Echoel — Music, Performance &amp; Installations, Hamburg</title>
+    <meta name="description" content="Echoel (Michael Terbuyken) is a Hamburg artist for electronic music, live performance and immersive, multi-sensory water, light and sound installations.">
     <meta name="theme-color" content="#000000">
     <meta name="color-scheme" content="dark">
-    <meta name="keywords" content="Echoel, Michael Terbuyken, music producer, sound artist, Hamburg, multisensory installation, vibration installation, Documenta, Ars Electronica, Fusion Festival, Tropical Drones, Loewe Immerlieb, electronic music">
+    <meta name="keywords" content="Echoel, Michael Terbuyken, electronic music, live performance, immersive installation, multi-sensory installation, sound art, spatial audio, water light sound installation, Hamburg, Tropical Drones, Loewe Immerlieb">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Echoel — Music Producer &amp; Sound Artist">
-    <meta property="og:description" content="Music producer, sound artist and inventor of walk-in vibrating water, light and sound installations. Hamburg. Creator of Echoelmusic.">
+    <meta property="og:title" content="Echoel — Music · Performance · Immersive Installation">
+    <meta property="og:description" content="Hamburg artist for electronic music, live performance and walk-in, multi-sensory installations where sound becomes water, light and vibration. Also audio developer, producer and consultant.">
     <meta property="og:type" content="profile">
     <meta property="og:url" content="https://echoelmusic.com/artist.html">
-    <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
+    <meta property="og:image" content="https://echoelmusic.com/artist-cover.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:alt" content="Echoel — Music, Performance, Immersive and multi-sensory installation. Hamburg.">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="en_US">
     <meta property="og:site_name" content="Echoelmusic">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Echoel — Music Producer &amp; Sound Artist">
-    <meta name="twitter:description" content="Music producer, sound artist and inventor of walk-in vibrating water, light and sound installations. Hamburg.">
-    <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
+    <meta name="twitter:title" content="Echoel — Music · Performance · Immersive Installation">
+    <meta name="twitter:description" content="Hamburg artist for electronic music, live performance and walk-in, multi-sensory installations where sound becomes water, light and vibration. Also audio developer, producer and consultant.">
+    <meta name="twitter:image" content="https://echoelmusic.com/artist-cover.png">
+    <meta name="twitter:image:alt" content="Echoel — Music, Performance, Immersive and multi-sensory installation. Hamburg.">
 
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
@@ -50,16 +53,23 @@
     {
       "@context": "https://schema.org",
       "@type": "Person",
-      "name": "Michael Terbuyken",
-      "alternateName": "Echoel",
+      "@id": "https://echoelmusic.com/artist.html#echoel",
+      "name": "Echoel",
+      "alternateName": "Michael Terbuyken",
       "url": "https://echoelmusic.com/artist.html",
-      "jobTitle": "Music Producer & Sound Artist",
+      "image": "https://echoelmusic.com/artist-cover.png",
+      "description": "Hamburg artist for electronic music, live performance and immersive, multi-sensory water, light and sound installations. Also audio developer, producer and consultant.",
+      "jobTitle": ["Musician", "Performance artist", "Installation artist", "Audio developer", "Music producer", "Consultant"],
+      "knowsAbout": ["Electronic music", "Live performance", "Immersive installations", "Multi-sensory installations", "Sound art", "Spatial audio", "Water, light and sound installations", "Music production", "Audio software development"],
       "address": { "@type": "PostalAddress", "addressLocality": "Hamburg", "addressCountry": "DE" },
+      "memberOf": { "@type": "Organization", "name": "Tropical Drones", "url": "https://www.tropicaldrones.com/" },
       "sameAs": [
         "https://instagram.com/echoelmusic",
+        "https://echoel.bandcamp.com/",
+        "https://soundcloud.com/echoel",
+        "https://www.traxsource.com/artist/300343/echoel",
         "https://tiktok.com/@echoelmusic",
-        "https://youtube.com/@echoelmusic",
-        "https://www.tropicaldrones.com/"
+        "https://youtube.com/@echoelmusic"
       ]
     }
     </script>
@@ -69,6 +79,8 @@
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
 
     <style>
+        .subpage-hero .roles { color: var(--text); font-weight: 700; font-size: clamp(18px, 2.2vw, 21px); line-height: 1.4; margin-bottom: 12px; }
+        .subpage-hero .roles-secondary { color: var(--dim); font-size: 15px; margin-top: 12px; }
         .artist-bio { color: var(--dim); line-height: 1.85; margin-bottom: 8px; }
         .artist-bio a, .artist-bio a:visited { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
         .artist-bio a:hover { text-decoration: none; }
@@ -99,6 +111,7 @@
                 <span>Echoelmusic</span>
             </a>
             <nav class="nav-links" aria-label="Main">
+                <a href="artist.html" aria-current="page">Artist</a>
                 <a href="/">App</a>
                 <a href="consulting.html">Consulting</a>
                 <a href="support.html">Support</a>
@@ -109,6 +122,7 @@
     </header>
     <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
         <nav>
+            <a href="artist.html" aria-current="page">Artist</a>
             <a href="/">App</a>
             <a href="consulting.html">Consulting</a>
             <a href="support.html">Support</a>
@@ -120,13 +134,25 @@
         <div class="subpage subpage--wide">
             <div class="subpage-hero">
                 <h1>Echoel</h1>
-                <p class="subtitle">Michael Terbuyken &middot; Music Producer &amp; Sound Artist &middot; Hamburg</p>
+                <p class="roles">Music &middot; Performance &middot; Immersive and multi-sensory installation</p>
+                <p class="subtitle">Sound you can stand inside: electronic music, live performance and walk-in installations where sound becomes water, light and vibration. Michael Terbuyken, Hamburg.</p>
+                <p class="roles-secondary">Also: audio development &middot; production &middot; consulting</p>
             </div>
 
             <section>
-                <p class="artist-bio">Music producer, sound artist and inventor of walk-in vibrating water, light and sound installations. Based in Hamburg. Creating interactive multisensory installations, video, visuals, light and musical performance since 2006 &mdash; most recently a <a href="https://www.instagram.com/reel/C8HI8lstsir/" target="_blank" rel="noopener noreferrer">vibration pontons and sound mirror workshop</a> at Burgbeben STRNBRG 2024, created together with Anna.Elisie as <a href="https://www.instagram.com/loewe.immerlieb" target="_blank" rel="noopener noreferrer">Loewe Immerlieb</a>. Active across multiple music projects with the <a href="https://www.tropicaldrones.com/" target="_blank" rel="noopener noreferrer">Tropical Drones</a> collective, and creator of <a href="/">Echoelmusic</a>, a music workstation for iPhone and iPad, in TestFlight now.</p>
+                <p class="artist-bio">Echoel makes electronic music, performs it live and builds immersive, multi-sensory installations: walk-in pieces in which vibrating water, light and sound let a piece of music be heard, seen and felt at once. Based in Hamburg, creating installations, video, visuals, light and musical performance since 2006 &mdash; most recently a <a href="https://www.instagram.com/reel/C8HI8lstsir/" target="_blank" rel="noopener noreferrer">vibration pontons and sound mirror workshop</a> at Burgbeben STRNBRG 2024, created together with Anna.Elisie as <a href="https://www.instagram.com/loewe.immerlieb" target="_blank" rel="noopener noreferrer">Loewe Immerlieb</a>. Active across multiple music projects with the <a href="https://www.tropicaldrones.com/" target="_blank" rel="noopener noreferrer">Tropical Drones</a> collective, and creator of <a href="/">Echoelmusic</a>, a music workstation for iPhone and iPad, in TestFlight now.</p>
             </section>
 
+            <section id="listen">
+                <h2>Listen</h2>
+                <p class="artist-bio">Choose the platform you use. Releases by Echoel solo; the projects below have their own pages.</p>
+                <ul class="project-list">
+                    <li><a href="https://echoel.bandcamp.com/" target="_blank" rel="noopener noreferrer"><span><span class="project-name">Bandcamp</span><span class="project-desc">Buy and stream</span></span><span class="project-arrow">&rarr;</span></a></li>
+                    <li><a href="https://soundcloud.com/echoel" target="_blank" rel="noopener noreferrer"><span><span class="project-name">SoundCloud</span><span class="project-desc">Stream</span></span><span class="project-arrow">&rarr;</span></a></li>
+                    <li><a href="https://www.traxsource.com/artist/300343/echoel" target="_blank" rel="noopener noreferrer"><span><span class="project-name">Traxsource</span><span class="project-desc">Releases on Magician On Duty, LikeBirdz and more</span></span><span class="project-arrow">&rarr;</span></a></li>
+                    <li><a href="https://instagram.com/echoelmusic" target="_blank" rel="noopener noreferrer"><span><span class="project-name">Instagram</span><span class="project-desc">Installations, performances and new music</span></span><span class="project-arrow">&rarr;</span></a></li>
+                </ul>
+            </section>
             <section>
                 <h2>Projects</h2>
                 <ul class="project-list">
@@ -141,12 +167,12 @@
             </section>
 
             <section>
-                <h2>Selected Venues &amp; Festivals</h2>
+                <h2>Selected venues and festivals</h2>
                 <p class="venues">Documenta Kassel &middot; Ars Electronica Linz &middot; Fusion Festival L&auml;rz &middot; Garbicz Festival &middot; Kampnagel Hamburg &middot; Golden Pudel Club Hamburg &middot; G&auml;ngeviertel Hamburg &middot; S&uuml;dpol Hamburg &middot; Fundbureau Hamburg &middot; Astra Stube Hamburg &middot; Hafenklang Hamburg &middot; Kater Blau Berlin &middot; Ritter Butzke Berlin &middot; Jonny Kn&uuml;ppel Berlin &middot; Rummels Bucht Berlin &middot; Canadian Embassy Berlin &middot; Redlight Radio Amsterdam &middot; Albert und Tina Wien &middot; Konotor 80 Leipzig &middot; P8 Karlsruhe &middot; Projekt 42 M&ouml;nchengladbach &middot; Off the Radar Festival &middot; Int. Short Film Festival Detmold &middot; Film Festival Bilkent University Ankara</p>
             </section>
 
             <section>
-                <h2>Echoel Solo</h2>
+                <h2>Echoel solo</h2>
                 <p class="venues">Electronic dance music and hip hop instrumentals, partially with vocals. Released on labels worldwide.</p>
                 <p class="label-list">RSNZRFLXN (Hamburg) &middot; LikeBirdz (Hamburg) &middot; Mereia (Hamburg) &middot; Slow Punch (Hamburg) &middot; Magicians on Duty (Miami) &middot; 8K&#x14D; (Singapore) &middot; Akasha MX (Mexico City) &middot; M&#x14E;N&#x245;D&#x245; (Berlin) &middot; Kollektiv Liebe (Karlsruhe)</p>
             </section>

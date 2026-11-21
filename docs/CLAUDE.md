@@ -24,8 +24,11 @@ E-with-three-waves plus the wordmark "Echoelmusic" as written (no uppercase, no 
 titled for the person), the footer says "© 2026 Echoelmusic · in TestFlight". ⛔ The rule that
 stood here (brand Echoel, app "Echoel Studio") is struck; "Echoel Studio" survives only as the NAME OF
 THE CI WORKFLOW (`studio.yml`, read by the merge gates — never rename it from the site's side). The
-navigation is three entries (App · Consulting · Support, plus the button "Request TestFlight access" —
-a mail link is called a request, not "Join", until a public link exists) and a footer in four groups
+navigation is four entries since 2026-11-21 (Artist · App · Consulting · Support, plus the button
+"Request TestFlight access" — a mail link is called a request, not "Join", until a public link exists;
+founder 2026-11-21: artist identity 70–80 % of the profile, so the artist page is the first entry while
+the home page stays the app's page, because `fastlane/metadata/*/marketing_url.txt` points the App Store
+at it) and a footer in four groups
 (App · About · Archive · Legal); a page left out of both must be linked from a page's body, or
 `testNoPageIsAnOrphan` goes red. Measure, do not recite: `grep -o 'Echoel Studio' docs/*.html | wc -l` → 0.
 
@@ -62,6 +65,14 @@ and reloaded every open sub-page about once a minute. Move all of them together 
 ---
 
 ## 1. Two halves in one directory
+
+**Artist positioning (2026-11-21).** One role line in this order on every page that names him:
+primary *Music · Performance · Immersive and multi-sensory installation*, secondary *audio development ·
+production · consulting*. `artist.html` carries the Person entity (`@id` `…/artist.html#echoel`, name
+Echoel), the home page's `Organization.founder` points at that `@id`, and the page has its own share
+image `artist-cover.png` (never `og-cover.png`, which advertises the app). Its "Listen" list lets the
+visitor pick a platform; add a platform there AND in `sameAs`. `robots.txt` lets AI search and
+user-initiated fetches in and keeps training-only crawlers out.
 
 **The artist page is one file and has no media.** `artist.html` — 204 lines, 15,730 B — is
 Echoel (Michael Terbuyken), Hamburg: bio, labels (Tropical Drones ×3, Slow Punch), venues
