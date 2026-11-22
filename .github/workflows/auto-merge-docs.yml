@@ -116,6 +116,7 @@ jobs:
         id: merge
         env:
           PUSH_BRANCH: ${{ github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "=============================================="
           echo "  MERGING DOCS CHANGES TO MAIN"
@@ -156,8 +157,6 @@ jobs:
           echo "merge_status=push_failed" >> $GITHUB_OUTPUT
           echo "[ERROR] Could not push after 6 attempts"
           exit 1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
         if: always()
