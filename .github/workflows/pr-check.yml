@@ -92,15 +92,6 @@ jobs:
           chmod +x scripts/build-guard.sh
           scripts/build-guard.sh --quick
 
-      - name: "SwiftLint"
-        run: |
-          if command -v swiftlint &> /dev/null; then
-            swiftlint lint --strict --reporter xcode
-          else
-            brew install swiftlint
-            swiftlint lint --strict --reporter xcode
-          fi
-
       - name: "Resolve Swift Package Dependencies"
         run: |
           swift package resolve || true
@@ -154,7 +145,19 @@ jobs:
             2>&1 | tee test-macos.log | xcpretty --test || { echo "TESTS FAILED — full log:"; tail -100 test-macos.log; exit 1; }
           echo "[OK] macOS tests passed"
 
+      # Keep strict lint blocking, but run platform builds/tests first while the
+      # documented legacy style baseline prevents the earlier pipeline from reaching them.
+      - name: "SwiftLint"
+        run: |
+          if command -v swiftlint &> /dev/null; then
+            swiftlint lint --strict --reporter xcode
+          else
+            brew install swiftlint
+            swiftlint lint --strict --reporter xcode
+          fi
+
       - name: "Upload Build Logs (on failure)"
+
         if: failure()
         uses: actions/upload-artifact@v4
         with:
