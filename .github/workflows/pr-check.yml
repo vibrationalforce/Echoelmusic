@@ -30,14 +30,20 @@ jobs:
       - name: "Checkout"
         uses: actions/checkout@v4
 
+      # GitHub PR titles and branch names are untrusted: never splice them into shell code.
       - name: "Info"
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_HEAD: ${{ github.head_ref }}
+          PR_BASE: ${{ github.base_ref }}
         run: |
           echo "=============================================="
           echo "  PR BUILD CHECK"
           echo "=============================================="
-          echo "PR: #${{ github.event.pull_request.number }}"
-          echo "Title: ${{ github.event.pull_request.title }}"
-          echo "Branch: ${{ github.head_ref }} -> ${{ github.base_ref }}"
+          printf 'PR: #%s\n' "$PR_NUMBER"
+          printf 'Title: %s\n' "$PR_TITLE"
+          printf 'Branch: %s -> %s\n' "$PR_HEAD" "$PR_BASE"
           echo "=============================================="
 
       - name: "Validate Project Files"
