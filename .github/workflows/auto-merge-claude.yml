@@ -107,12 +107,14 @@ jobs:
 
       - name: Fetch pushed commit
         id: fetch
+        env:
+          PUSH_BRANCH: ${{ github.ref_name }}
         run: |
           echo "=============================================="
           echo "  FETCHING PUSHED COMMIT"
           echo "=============================================="
           echo "Push SHA: ${{ github.sha }}"
-          echo "Push branch: ${{ github.ref_name }}"
+          printf "Push branch: %s\n" "$PUSH_BRANCH"
 
           # ⛔ 2026-09-25 (founder-approved): this fetch said `--depth=50`. On a full clone that
           # does not deepen anything — it makes the repo SHALLOW, cutting the pushed commit's
@@ -371,6 +373,8 @@ jobs:
         # unverified tip.
         if: steps.fetch.outputs.commit_exists == 'true' && steps.gates.outputs.superseded != 'true'
         id: merge
+        env:
+          PUSH_BRANCH: ${{ github.ref_name }}
         run: |
           echo "=============================================="
           echo "  MERGING CHANGES TO MAIN"
@@ -406,7 +410,7 @@ jobs:
             git reset --hard origin/main
 
             if ! git merge ${{ github.sha }} --no-edit \
-                 -m "fix: auto-merge from ${{ github.ref_name }}"; then
+                 -m "fix: auto-merge from $PUSH_BRANCH"; then
               echo "merge_status=conflict" >> $GITHUB_OUTPUT
               echo "[ERROR] Merge failed - conflicts detected"
               git merge --abort 2>/dev/null || true
@@ -463,13 +467,15 @@ jobs:
 
       - name: Summary
         if: always()
+        env:
+          PUSH_BRANCH: ${{ github.ref_name }}
         run: |
           echo "## Auto-Merge Claude Branch" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Pushed Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Source Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          printf "| Source Branch | \`%s\` |\n" "$PUSH_BRANCH" >> "$GITHUB_STEP_SUMMARY"
           echo "| Commit Found | ${{ steps.fetch.outputs.commit_exists == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Changes code | ${{ steps.scope.outputs.touches_code || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Xcode Compile Check | ${{ steps.gates.outputs.compile_check || 'not required' }} |" >> $GITHUB_STEP_SUMMARY
