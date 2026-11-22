@@ -36,13 +36,16 @@ jobs:
 
       - name: Fetch and validate pushed commit
         id: fetch
+        env:
+          PUSH_REF: ${{ github.ref }}
+          PUSH_BRANCH: ${{ github.ref_name }}
         run: |
           echo "=============================================="
           echo "  FETCHING PUSHED COMMIT"
           echo "=============================================="
           echo "Push SHA: ${{ github.sha }}"
-          echo "Push ref: ${{ github.ref }}"
-          echo "Push branch: ${{ github.ref_name }}"
+          printf "Push ref: %s\n" "$PUSH_REF"
+          printf "Push branch: %s\n" "$PUSH_BRANCH"
 
           # Fetch the specific commit that was pushed (uses SHA, not branch), with its history:
           # `--depth=1` made it a root commit, so the cherry-pick below compared against the empty
@@ -111,6 +114,8 @@ jobs:
       - name: Merge the pushed commits into main
         if: steps.check.outputs.docs_only == 'true' && steps.check.outputs.has_changes == 'true'
         id: merge
+        env:
+          PUSH_BRANCH: ${{ github.ref_name }}
         run: |
           echo "=============================================="
           echo "  MERGING DOCS CHANGES TO MAIN"
@@ -133,7 +138,7 @@ jobs:
             fi
             if ! git merge --no-ff --no-edit ${{ github.sha }} \
                  -m "docs: Auto-merge website update" \
-                 -m "Merged: ${{ github.sha }} from ${{ github.ref_name }}" \
+                 -m "Merged: ${{ github.sha }} from $PUSH_BRANCH" \
                  -m "Auto-merged by GitHub Actions"; then
               git merge --abort 2>/dev/null || true
               echo "merge_status=conflict" >> $GITHUB_OUTPUT
@@ -156,22 +161,25 @@ jobs:
 
       - name: Summary
         if: always()
+        env:
+          PUSH_BRANCH: ${{ github.ref_name }}
+          CHANGED_FILES: ${{ steps.check.outputs.changed_files }}
         run: |
           echo "## Auto-Merge Docs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Pushed Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Source Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          printf "| Source Branch | \`%s\` |\n" "$PUSH_BRANCH" >> "$GITHUB_STEP_SUMMARY"
           echo "| Commit Found | ${{ steps.fetch.outputs.commit_exists == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Docs-only | ${{ steps.check.outputs.docs_only == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Merge Status | ${{ steps.merge.outputs.merge_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ -n "${{ steps.check.outputs.changed_files }}" ]; then
+          if [ -n "$CHANGED_FILES" ]; then
             echo "### Changed Files" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "${{ steps.check.outputs.changed_files }}" >> $GITHUB_STEP_SUMMARY
+            printf "%s\n" "$CHANGED_FILES" >> "$GITHUB_STEP_SUMMARY"
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
 
