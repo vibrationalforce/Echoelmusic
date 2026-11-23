@@ -19,6 +19,9 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
 
     private let renderBlock: AURenderBlock
     private let scheduleMIDI: AUScheduleMIDIEventBlock?
+    /// Apple's bridged music devices accept MIDI with an offset in the upcoming render slice.
+    /// The retained owner keeps this pointer alive for every call on the render thread.
+    private let appleMusicDevice: AudioUnit?
     private let scheduleParameter: AUScheduleParameterBlock?
     /// What must outlive the blocks — the `AUAudioUnit` itself.
     private let owner: AnyObject?
@@ -53,6 +56,13 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
         self.sampleRate = sampleRate
         self.maximumFrames = Swift.max(1, maximumFrames)
         self.owner = owner
+        if let bridge = owner as? AUAudioUnitV2Bridge,
+           bridge.componentDescription.componentManufacturer == kAudioUnitManufacturer_Apple,
+           bridge.componentDescription.componentType == kAudioUnitType_MusicDevice {
+            appleMusicDevice = bridge.audioUnit
+        } else {
+            appleMusicDevice = nil
+        }
         leftBuffer = .allocate(capacity: self.maximumFrames)
         leftBuffer.initialize(repeating: 0, count: self.maximumFrames)
         rightBuffer = .allocate(capacity: self.maximumFrames)
@@ -98,6 +108,11 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     }
 
     private func send(_ status: UInt8, _ data1: UInt8, _ data2: UInt8, offset: Int) {
+        if let appleMusicDevice {
+            _ = MusicDeviceMIDIEvent(appleMusicDevice, UInt32(status), UInt32(data1), UInt32(data2),
+                                     UInt32(clamping: Swift.max(0, offset)))
+            return
+        }
         guard let scheduleMIDI else { return }
         let bytes: (UInt8, UInt8, UInt8) = (status, data1, data2)
         withUnsafeBytes(of: bytes) { raw in

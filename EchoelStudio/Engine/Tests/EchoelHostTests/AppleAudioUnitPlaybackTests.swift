@@ -56,17 +56,27 @@ final class AppleAudioUnitPlaybackTests: XCTestCase {
         try unit.allocateRenderResources()
         defer { unit.deallocateRenderResources() }
         let hosted = HostedUnit(render: unit.renderBlock, scheduleMIDI: try XCTUnwrap(unit.scheduleMIDIEventBlock),
-                                sampleRate: rate, maximumFrames: 256, owner: sampler)
+                                sampleRate: rate, maximumFrames: 256, owner: unit)
         hosted.noteOn(pitch: 60, velocity: 100, offset: 0)
-        var peak: Float = 0
-        for _ in 0..<16 {
-            var left = [Float](repeating: 0, count: 256)
-            var right = left
-            hosted.render(frames: 256, left: &left, right: &right, gainLeft: 1, gainRight: 1)
-            for sample in left + right {
-                XCTAssertTrue(sample.isFinite)
-                peak = max(peak, abs(sample))
+        func renderPeak() -> Float {
+            var peak: Float = 0
+            for _ in 0..<16 {
+                var left = [Float](repeating: 0, count: 256)
+                var right = left
+                hosted.render(frames: 256, left: &left, right: &right, gainLeft: 1, gainRight: 1)
+                for sample in left + right {
+                    XCTAssertTrue(sample.isFinite)
+                    peak = max(peak, abs(sample))
+                }
             }
+            return peak
+        }
+        let peak = renderPeak()
+        if peak == 0 {
+            // A native note is a diagnostic control only. It cannot make this test pass.
+            sampler.startNote(60, withVelocity: 100, onChannel: 0)
+            let referencePeak = renderPeak()
+            XCTFail("Silent hosted note; native note peak \(referencePeak), unit \(type(of: unit))")
         }
         XCTAssertEqual(hosted.renderFailures, 0)
         XCTAssertGreaterThan(peak, 0.001)
