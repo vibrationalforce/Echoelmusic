@@ -9,7 +9,7 @@ import XCTest
 /// absolute frame of each MIDI message it was sent.
 private final class FakeInstrument: @unchecked Sendable {
     let level: Float
-    private var pending: [(offset: Int64, status: UInt8, pitch: UInt8)] = []
+    private var pending: [(frame: Int64, status: UInt8, pitch: UInt8)] = []
     private(set) var heard: [(frame: Int64, status: UInt8, pitch: UInt8)] = []
 
     init(level: Float) { self.level = level }
@@ -17,7 +17,10 @@ private final class FakeInstrument: @unchecked Sendable {
     func makeUnit(sampleRate: Double) -> HostedUnit {
         HostedUnit(render: { [self] _, stamp, frames, _, list, _ in
             let start = Int64(stamp.pointee.mSampleTime)
-            for event in pending { heard.append((start + event.offset, event.status, event.pitch)) }
+            for event in pending {
+                XCTAssertTrue((start..<(start + Int64(frames))).contains(event.frame))
+                heard.append(event)
+            }
             pending.removeAll()
             for buffer in UnsafeMutableAudioBufferListPointer(list) {
                 guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
@@ -25,7 +28,7 @@ private final class FakeInstrument: @unchecked Sendable {
             }
             return noErr
         }, scheduleMIDI: { [self] time, _, _, bytes in
-            pending.append((time - AUEventSampleTimeImmediate, bytes[0], bytes[1]))
+            pending.append((time, bytes[0], bytes[1]))
         }, sampleRate: sampleRate, maximumFrames: 4_096, owner: nil)
     }
 }

@@ -102,7 +102,9 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
         let bytes: (UInt8, UInt8, UInt8) = (status, data1, data2)
         withUnsafeBytes(of: bytes) { raw in
             guard let base = raw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return }
-            scheduleMIDI(AUEventSampleTimeImmediate + AUEventSampleTime(Swift.max(0, offset)), 0, 3, base)
+            // Events are queued before calling this unit's render block. Address them on
+            // the very same sample clock that we pass to that block, including the first note.
+            scheduleMIDI(AUEventSampleTime(sampleTime) + AUEventSampleTime(Swift.max(0, offset)), 0, 3, base)
         }
     }
 

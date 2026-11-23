@@ -21,8 +21,10 @@ public enum UnitFormat {
         }
         if isEffect {
             guard unit.inputBusses.count > 0 else { throw BusError.missingInput }
+            unit.inputBusses[0].isEnabled = true
             try configure(unit.inputBusses[0])
         }
+        unit.outputBusses[0].isEnabled = true
         try configure(unit.outputBusses[0])
     }
 
