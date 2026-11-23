@@ -97,6 +97,7 @@ final class PluginHost {
     /// These describe capture only, not acceptance by the store or a successful file save.
     @ObservationIgnored private(set) var captureResults: [Slot: PluginStateCapture] = [:]
     @ObservationIgnored private var requestCount = 0
+    @ObservationIgnored private var catalogScan: Task<Void, Never>?
     @ObservationIgnored private var registrationObserver: NSObjectProtocol?
     @ObservationIgnored private var invalidationObserver: NSObjectProtocol?
     @ObservationIgnored private var resetObserver: NSObjectProtocol?
@@ -127,6 +128,15 @@ final class PluginHost {
         let component: PluginComponent
         let sampleRate: Double
         let number: Int
+    }
+
+    /// Explicit recovery keeps the song's settings and only restarts this slot.
+    func retryLoad(_ slot: Slot) {
+        guard !holdsPlugins, failed.removeValue(forKey: slot) != nil else { return }
+        refused.remove(slot)
+        restarts[slot] = nil
+        problems[slot] = nil
+        onUnitsChanged?()
     }
 
     /// What the song wants loaded in one slot.
@@ -205,7 +215,7 @@ final class PluginHost {
             restarts[slot] = recent
             let count = recent.count
             if count > Self.restartLimit {
-                let reason = "\(entry.component.name) stopped working and was not loaded again. Choose it again to retry, or use another plugin."
+                let reason = "\(entry.component.name) stopped working and was not loaded again. Tap Retry Load, or use another plugin."
                 fail(slot, entry.component, reason: reason, detail: "stopped \(count) times")
                 refused.insert(slot)
                 reloads.refused(name: entry.component.name, reason: reason)
@@ -241,12 +251,14 @@ final class PluginHost {
     /// song takes both as an insert (`PluginComponent.role`), so both are offered. Only `aufx` was
     /// asked for, and an installed music effect could not be chosen at all.
     func refreshCatalog() {
-        Task {
+        catalogScan?.cancel()
+        catalogScan = Task {
             let found = await Task.detached(priority: .utility) {
                 let processors = Self.installed(kAudioUnitType_Effect) + Self.installed(kAudioUnitType_MusicEffect)
                 return (Self.installed(kAudioUnitType_MusicDevice),
                         processors.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending })
             }.value
+            guard !Task.isCancelled else { return }
             instruments = found.0
             effects = found.1
         }
@@ -395,7 +407,7 @@ final class PluginHost {
             let listed = (instruments + effects).contains(request.component)
             let name = request.component.name
             let reason = listed
-                ? "\(name) is installed but did not start. Open the app it came with once, then choose it again here, or use another plugin."
+                ? "\(name) is installed but did not start. Open the app it came with once, then tap Retry Load, or use another plugin."
                 : "\(name) is not installed on this device. Install it from the App Store, or choose another plugin."
             fail(slot, request.component, reason: reason, detail: failure)
             return
@@ -444,6 +456,12 @@ final class PluginHost {
     func isLoaded(_ slot: Slot) -> Bool {
         _ = revision
         return loaded[slot] != nil
+    }
+
+    /// The wrappers count rejected blocks on the audio thread. Only the visible editor polls.
+    func renderFailures(in slot: Slot) -> Int {
+        guard let entry = loaded[slot] else { return 0 }
+        return entry.instrument?.renderFailures ?? entry.effect?.renderFailures ?? 0
     }
 
     /// Which load of the slot's unit is current, nil while none is. A view showing the unit's own
@@ -557,17 +575,9 @@ final class PluginHost {
     /// of playing a gap (`AUAudioUnit.isRenderingOffline`).
     private static func prepare(_ unit: AUAudioUnit, isEffect: Bool, sampleRate: Double, state: Data?,
                                 clock: HostClock, offline: Bool = false) throws {
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2),
-              unit.outputBusses.count > 0 else {
-            throw HostError.noOutput
-        }
-        try unit.outputBusses[0].setFormat(format)
-        if isEffect {
-            guard unit.inputBusses.count > 0 else { throw HostError.noInput }
-            try unit.inputBusses[0].setFormat(format)
-        }
-        unit.maximumFramesToRender = AUAudioFrameCount(EngineCore.maximumFrames)
         if let state { apply(state, to: unit) }
+        try UnitFormat.configureHostedBusses(unit, isEffect: isEffect, sampleRate: sampleRate)
+        unit.maximumFramesToRender = AUAudioFrameCount(EngineCore.maximumFrames)
         unit.musicalContextBlock = clock.musicalContextBlock
         unit.transportStateBlock = clock.transportStateBlock
         if offline { unit.isRenderingOffline = true }
@@ -805,7 +815,6 @@ final class PluginHost {
         init(_ controller: UIViewController?) { self.controller = controller }
     }
 
-    enum HostError: Error { case noOutput, noInput }
 }
 
 extension PluginHost.Slot {

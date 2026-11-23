@@ -28,6 +28,21 @@ struct PluginInterfaceSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
+            if !engine.plugins.holdsPlugins, engine.plugins.problems[slot] != nil {
+                Button("Retry Load") { engine.plugins.retryLoad(slot) }
+                    .buttonStyle(ToolButtonStyle())
+                    .accessibilityHint("Loads this plugin again with its settings from the song.")
+            }
+            if engine.plugins.isLoaded(slot) {
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    let failures = engine.plugins.renderFailures(in: slot)
+                    if failures > 0 {
+                        Text("Audio blocks the plugin could not render: \(failures)")
+                            .font(Theme.Font.caption)
+                            .foregroundStyle(Theme.Color.textSecondary)
+                    }
+                }
+            }
             HostedPresetRow(slot: slot)
             interface
         }
