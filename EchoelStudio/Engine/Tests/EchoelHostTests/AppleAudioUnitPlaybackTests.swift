@@ -35,26 +35,19 @@ final class AppleAudioUnitPlaybackTests: XCTestCase {
 
     func testAppleSamplerPlaysAScheduledNoteThroughTheHost() throws {
         let rate = 44_100.0
-        let format = try XCTUnwrap(AVAudioFormat(standardFormatWithSampleRate: rate, channels: 1))
-        let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 8192))
-        buffer.frameLength = buffer.frameCapacity
-        let samples = try XCTUnwrap(buffer.floatChannelData)[0]
-        for i in 0..<Int(buffer.frameLength) {
-            samples[i] = Float(0.4 * sin(Double(i) * 2 * Double.pi * 440 / rate))
-        }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".caf")
-        defer { try? FileManager.default.removeItem(at: url) }
-        do {
-            let file = try AVAudioFile(forWriting: url, settings: format.settings)
-            try file.write(from: buffer)
-        }
+        // A generated SoundFont with one looping sine, melodic bank 0, program 0,
+        // root note 60 and a full keyboard zone. No implicit sample-to-key mapping.
+        let url = try XCTUnwrap(Bundle.module.url(forResource: "Sine", withExtension: "sf2"))
         let sampler = AVAudioUnitSampler()
-        try sampler.loadAudioFiles(at: [url])
         let unit = sampler.auAudioUnit
         try UnitFormat.configureHostedBusses(unit, isEffect: false, sampleRate: rate)
         unit.maximumFramesToRender = 256
+        unit.isRenderingOffline = true
         try unit.allocateRenderResources()
         defer { unit.deallocateRenderResources() }
+        try sampler.loadSoundBankInstrument(at: url, program: 0,
+                                            bankMSB: UInt8(kAUSampler_DefaultMelodicBankMSB),
+                                            bankLSB: UInt8(kAUSampler_DefaultBankLSB))
         let hosted = HostedUnit(render: unit.renderBlock, scheduleMIDI: try XCTUnwrap(unit.scheduleMIDIEventBlock),
                                 sampleRate: rate, maximumFrames: 256, owner: unit)
         hosted.noteOn(pitch: 60, velocity: 100, offset: 0)
