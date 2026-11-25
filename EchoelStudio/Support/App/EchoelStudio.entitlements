@@ -2,6 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- The host needs access to Audio Unit extensions installed by other apps. -->
+	<key>inter-app-audio</key>
+	<true/>
 	<!-- Two App Groups, each for one purpose:
 	     `group.com.echoelmusic.shared` (since 2026-10-19, factory job 002): the app records the
 	     plugin purchase there for the extension to read (PluginUnlock.recordOwned).

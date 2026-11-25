@@ -114,8 +114,8 @@ struct SoundPanel: View {
                 Text(problem)
             } else if host.loading.contains(.instrument(track.id)) {
                 Text("Loading \(name)…")
-            } else if host.revision >= 0 && host.units[track.id] != nil {
-                Text("Plays \(name). Notes reach it on the exact frame they fall on.")
+            } else if host.isLoaded(.instrument(track.id)) {
+                Text("Loaded \(name).")
             } else {
                 Text("\(name) is not loaded yet.")
             }
