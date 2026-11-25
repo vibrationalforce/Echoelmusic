@@ -53,13 +53,14 @@ targets += [
         "EchoelKernels",
         .product(name: "EchoelCore", package: "Core"),
     ]),
+    // `Fixtures/Sine.sf2`: the generated SoundFont the Apple Sampler test plays.
     .testTarget(name: "EchoelHostTests", dependencies: [
         "EchoelHost",
         "EchoelEngine",
         "EchoelKernels",
         .product(name: "EchoelCore", package: "Core"),
         .product(name: "EchoelDSP", package: "DSP"),
-    ]),
+    ], resources: [.copy("Fixtures/Sine.sf2")]),
 ]
 #endif
 
