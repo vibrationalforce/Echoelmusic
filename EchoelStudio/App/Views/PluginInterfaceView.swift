@@ -251,8 +251,8 @@ private struct PluginControllerHost: UIViewControllerRepresentable {
     }
 }
 
-/// Reload Plugin, for a unit that did not load or that refuses audio blocks, and how many blocks
-/// it refused. A leaf of its own that reads the count once a second, so the page around it never
+/// Reload Plugin, for a unit that did not load or that refuses audio blocks, how many blocks it
+/// refused, and why its settings did not reach the song. A leaf of its own that reads the count once a second, so the page around it never
 /// reads a value the render thread moves (law 6).
 private struct PluginHealthRow: View {
     @Environment(AudioEngine.self) private var engine
@@ -262,17 +262,25 @@ private struct PluginHealthRow: View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             let host = engine.plugins
             let refused = host.renderFailures(in: slot)
-            if !host.holdsPlugins, host.problems[slot] != nil || refused > 0 {
+            let reloadable = !host.holdsPlugins && (host.problems[slot] != nil || refused > 0)
+            if reloadable || host.saveProblems[slot] != nil {
                 VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                    if let saveProblem = host.saveProblems[slot] {
+                        Text(saveProblem)
+                            .font(Theme.Font.caption)
+                            .foregroundStyle(Theme.Color.textSecondary)
+                    }
                     if refused > 0 {
                         Text(refused == 1 ? "The plugin refused 1 audio block since it was loaded."
                                           : "The plugin refused \(refused) audio blocks since it was loaded.")
                             .font(Theme.Font.caption)
                             .foregroundStyle(Theme.Color.textSecondary)
                     }
-                    Button("Reload Plugin") { host.reload(slot) }
-                        .buttonStyle(ToolButtonStyle())
-                        .accessibilityHint("Loads this plugin again with its settings from the song.")
+                    if reloadable {
+                        Button("Reload Plugin") { host.reload(slot) }
+                            .buttonStyle(ToolButtonStyle())
+                            .accessibilityHint("Loads this plugin again with its settings from the song.")
+                    }
                 }
             }
         }
