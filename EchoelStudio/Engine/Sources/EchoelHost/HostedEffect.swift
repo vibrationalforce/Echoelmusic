@@ -27,6 +27,10 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     /// The insert this effect plays, so the song's automation of it finds it.
     public let insert: InsertID?
     public let parameterRanges: [UInt64: ClosedRange<Float>]
+    /// The unit's output bus: 2 channels, or 1 where it is mono, which plays on both sides
+    /// (`UnitPreparation.Layout`). A mono INPUT needs no telling: the unit's pull asks for one
+    /// buffer, and hears the bus summed at half each.
+    public let outputChannels: Int
 
     private let renderBlock: AURenderBlock
     private let scheduleParameter: AUScheduleParameterBlock?
@@ -37,6 +41,8 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     private let clock: HostClock?
     private let outLeft: UnsafeMutablePointer<Float>
     private let outRight: UnsafeMutablePointer<Float>
+    /// The bus summed to one channel, for a unit with a mono input that hands no buffer of its own.
+    private let inMono: UnsafeMutablePointer<Float>
     private let list: UnsafeMutableAudioBufferListPointer
     /// Render thread only: what the pull-input block hands the unit during one `process` call.
     private var inLeft: UnsafeMutablePointer<Float>?
@@ -57,8 +63,10 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
 
     public init(render: @escaping AURenderBlock, sampleRate: Double, maximumFrames: Int, isBypassed: Bool = false,
                 owner: AnyObject?, insert: InsertID? = nil, scheduleParameter: AUScheduleParameterBlock? = nil,
-                parameterRanges: [UInt64: ClosedRange<Float>] = [:], clock: HostClock? = nil) {
+                parameterRanges: [UInt64: ClosedRange<Float>] = [:], clock: HostClock? = nil,
+                outputChannels: Int = 2) {
         renderBlock = render
+        self.outputChannels = outputChannels == 1 ? 1 : 2
         self.clock = clock
         self.insert = insert
         self.scheduleParameter = scheduleParameter
@@ -72,6 +80,8 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
         outLeft.initialize(repeating: 0, count: self.maximumFrames)
         outRight = .allocate(capacity: self.maximumFrames)
         outRight.initialize(repeating: 0, count: self.maximumFrames)
+        inMono = .allocate(capacity: self.maximumFrames)
+        inMono.initialize(repeating: 0, count: self.maximumFrames)
         list = AudioBufferList.allocate(maximumBuffers: 2)
         // Made once: forming a closure on the render thread would allocate.
         pullInput = { [unowned self] _, _, frames, _, input in
@@ -82,6 +92,7 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     deinit {
         outLeft.deallocate()
         outRight.deallocate()
+        inMono.deallocate()
         free(list.unsafeMutablePointer)
     }
 
@@ -89,6 +100,18 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     private func fill(_ input: UnsafeMutablePointer<AudioBufferList>, frames: Int) -> AUAudioUnitStatus {
         guard let inLeft, let inRight, frames <= maximumFrames else { return kAudioUnitErr_TooManyFramesToProcess }
         let buffers = UnsafeMutableAudioBufferListPointer(input)
+        if buffers.count == 1 {
+            // A mono input: the bus summed, each side at half, into the unit's buffer or ours.
+            let target = buffers[0].mData?.assumingMemoryBound(to: Float.self) ?? inMono
+            let count = buffers[0].mData == nil ? frames
+                : Swift.min(frames, Int(buffers[0].mDataByteSize) / MemoryLayout<Float>.size)
+            for i in 0..<count { target[i] = 0.5 * (inLeft[i] + inRight[i]) }
+            if buffers[0].mData == nil {
+                buffers[0].mData = UnsafeMutableRawPointer(inMono)
+                buffers[0].mDataByteSize = UInt32(frames * MemoryLayout<Float>.size)
+            }
+            return noErr
+        }
         for (index, buffer) in buffers.enumerated() {
             let source = index == 0 ? inLeft : inRight
             let bytes = UInt32(frames * MemoryLayout<Float>.size)
@@ -125,8 +148,12 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
         inRight = right
         defer { inLeft = nil; inRight = nil }
         let bytes = UInt32(frames * MemoryLayout<Float>.size)
+        // As many buffers as the unit's output bus has channels; the list was made for two.
+        list.count = outputChannels
         list[0] = AudioBuffer(mNumberChannels: 1, mDataByteSize: bytes, mData: UnsafeMutableRawPointer(outLeft))
-        list[1] = AudioBuffer(mNumberChannels: 1, mDataByteSize: bytes, mData: UnsafeMutableRawPointer(outRight))
+        if outputChannels > 1 {
+            list[1] = AudioBuffer(mNumberChannels: 1, mDataByteSize: bytes, mData: UnsafeMutableRawPointer(outRight))
+        }
         var flags = AudioUnitRenderActionFlags()
         var stamp = AudioTimeStamp()
         stamp.mSampleTime = sampleTime

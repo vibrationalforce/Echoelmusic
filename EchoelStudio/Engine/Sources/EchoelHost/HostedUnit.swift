@@ -16,6 +16,9 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     public let sampleRate: Double
     public let maximumFrames: Int
     public let parameterRanges: [UInt64: ClosedRange<Float>]
+    /// The unit's output: 2 channels, or 1 for a unit with a mono bus, whose one channel plays on
+    /// both sides (`UnitPreparation.Layout`).
+    public let outputChannels: Int
 
     private let renderBlock: AURenderBlock
     private let scheduleMIDI: AUScheduleMIDIEventBlock?
@@ -44,8 +47,10 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     /// address; `scheduleParameter` moves them.
     public init(render: @escaping AURenderBlock, scheduleMIDI: AUScheduleMIDIEventBlock?, sampleRate: Double,
                 maximumFrames: Int, owner: AnyObject?, scheduleParameter: AUScheduleParameterBlock? = nil,
-                parameterRanges: [UInt64: ClosedRange<Float>] = [:], clock: HostClock? = nil) {
+                parameterRanges: [UInt64: ClosedRange<Float>] = [:], clock: HostClock? = nil,
+                outputChannels: Int = 2) {
         renderBlock = render
+        self.outputChannels = outputChannels == 1 ? 1 : 2
         self.clock = clock
         self.scheduleMIDI = scheduleMIDI
         self.scheduleParameter = scheduleParameter
@@ -117,8 +122,12 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
                        gainLeft: Float, gainRight: Float) {
         guard frames > 0, frames <= maximumFrames else { return }
         let bytes = UInt32(frames * MemoryLayout<Float>.size)
+        // As many buffers as the unit's bus has channels; the list was made for two.
+        list.count = outputChannels
         list[0] = AudioBuffer(mNumberChannels: 1, mDataByteSize: bytes, mData: UnsafeMutableRawPointer(leftBuffer))
-        list[1] = AudioBuffer(mNumberChannels: 1, mDataByteSize: bytes, mData: UnsafeMutableRawPointer(rightBuffer))
+        if outputChannels > 1 {
+            list[1] = AudioBuffer(mNumberChannels: 1, mDataByteSize: bytes, mData: UnsafeMutableRawPointer(rightBuffer))
+        }
         var flags = AudioUnitRenderActionFlags()
         var stamp = AudioTimeStamp()
         stamp.mSampleTime = sampleTime
