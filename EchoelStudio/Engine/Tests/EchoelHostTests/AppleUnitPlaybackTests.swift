@@ -133,4 +133,59 @@ final class AppleUnitPlaybackTests: XCTestCase {
             XCTAssertGreaterThan(peak, 0.001, "at \(rate) Hz the note sent through the host stayed silent")
         }
     }
+
+    /// The host's own MIDI time (`AUEventSampleTimeImmediate` plus the frame in the next block)
+    /// against the same note moved onto the absolute sample clock the render block is given — the
+    /// A/B of how a note reaches a unit. Each must start the note on the frame it was sent for.
+    func testANoteSentIntoTheNextBlockStartsOnItsFrameOnEitherClock() throws {
+        let url = try XCTUnwrap(Bundle.module.url(forResource: "Sine", withExtension: "sf2"))
+        for rate in [44_100.0, 48_000.0] {
+            for clock in [MIDIClock.immediate, .absolute] {
+                let onset = try firstSoundingFrame(of: url, rate: rate, clock: clock, afterBlocks: 1, offset: 100)
+                let expected = frames + 100
+                XCTAssertNotNil(onset, "\(clock) at \(rate) Hz: the note never sounded")
+                if let onset {
+                    XCTAssertTrue((expected...(expected + 8)).contains(onset),
+                                  "\(clock) at \(rate) Hz: sounded at frame \(onset), sent for \(expected)")
+                }
+            }
+        }
+    }
+
+    private enum MIDIClock { case immediate, absolute }
+
+    /// Counts what the host has rendered, for the absolute clock.
+    private final class Rendered: @unchecked Sendable { var frames: Int64 = 0 }
+
+    private func firstSoundingFrame(of url: URL, rate: Double, clock: MIDIClock, afterBlocks silent: Int,
+                                    offset: Int) throws -> Int? {
+        let sampler = AVAudioUnitSampler()
+        let unit = sampler.auAudioUnit
+        try prepareAsTheHostDoes(unit, isEffect: false, sampleRate: rate)
+        defer { unit.deallocateRenderResources() }
+        try sampler.loadSoundBankInstrument(at: url, program: 0,
+                                            bankMSB: UInt8(kAUSampler_DefaultMelodicBankMSB),
+                                            bankLSB: UInt8(kAUSampler_DefaultBankLSB))
+        let schedule = try XCTUnwrap(unit.scheduleMIDIEventBlock)
+        let rendered = Rendered()
+        let send: AUScheduleMIDIEventBlock = { time, cable, length, bytes in
+            switch clock {
+            case .immediate: schedule(time, cable, length, bytes)
+            case .absolute: schedule(rendered.frames + (time - AUEventSampleTimeImmediate), cable, length, bytes)
+            }
+        }
+        let hosted = HostedUnit(render: unit.renderBlock, scheduleMIDI: send, sampleRate: rate,
+                                maximumFrames: frames, owner: unit)
+        var heard: [Float] = []
+        for block in 0..<(silent + 4) {
+            if block == silent { hosted.noteOn(pitch: 69, velocity: 127, offset: offset) }
+            var left = [Float](repeating: 0, count: frames)
+            var right = [Float](repeating: 0, count: frames)
+            hosted.render(frames: frames, left: &left, right: &right, gainLeft: 1, gainRight: 1)
+            rendered.frames += Int64(frames)
+            heard += left
+        }
+        XCTAssertEqual(hosted.renderFailures, 0)
+        return heard.firstIndex { abs($0) > 0.000_1 }
+    }
 }
