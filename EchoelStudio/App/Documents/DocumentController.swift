@@ -2072,16 +2072,18 @@ final class DocumentController {
     }
 
     /// Copies an audio file into the song and places all of it on an audio track at `start` —
-    /// one undo step. The tempo heard in it (W-1, `TempoDetector`) becomes the region's native
-    /// tempo in the same step, with warp still off: the region plays as imported, and Follow Song
-    /// Tempo starts from that tempo. A file with no steady pulse keeps none.
+    /// one undo step. The loop's tempo — heard (W-1, `TempoDetector`), with the octave and short
+    /// loops settled by a tempo its name states (`TempoHint`, "jungle 132") — becomes the region's
+    /// native tempo in the same step, and the region follows the song's tempo at once, its pitch
+    /// unchanged (Michael, 10085: a 132 loop in a 120 song ran out of time until warp was found).
+    /// A file with neither a steady pulse nor a tempo in its name keeps none and plays as imported.
     func importAudio(_ source: URL, placingOn track: TrackID, at start: Tick) async {
         let beats = TempoAnalysis.beatsPerBar(at: start, in: store.project)
         guard let imported = await importMedia(source, hearingTempoIn: beats, placing: { file, heard in
             let region = RegionID()
             var commands: [Command] = [.addMedia(file), .placeAudio(track: track, id: region, media: file.id, start: start)]
-            if let bpm = AudioRegion.nativeBPM(heard: heard?.bpm) {
-                commands.append(.setRegionWarp(track: track, region, nativeBPM: bpm, followsTempo: false))
+            if let bpm = AudioRegion.nativeBPM(heard: TempoHint.resolve(name: file.name, heard: heard?.bpm)) {
+                commands.append(.setRegionWarp(track: track, region, nativeBPM: bpm, followsTempo: true))
             }
             return commands
         }) else { return }
