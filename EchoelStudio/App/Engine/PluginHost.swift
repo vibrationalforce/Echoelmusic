@@ -139,7 +139,14 @@ final class PluginHost {
     /// the main actor after the hop.
     private final class UnitBox: @unchecked Sendable {
         let unit: AUAudioUnit?
-        init(_ unit: AUAudioUnit?) { self.unit = unit }
+        let failure: String?
+        /// No answer came within the deadline.
+        let timedOut: Bool
+        init(_ unit: AUAudioUnit?, failure: String? = nil, timedOut: Bool = false) {
+            self.unit = unit
+            self.failure = failure
+            self.timedOut = timedOut
+        }
     }
 
     init() {
@@ -376,14 +383,28 @@ final class PluginHost {
         let description = AudioComponentDescription(componentType: component.type, componentSubType: component.subtype,
                                                     componentManufacturer: component.manufacturer, componentFlags: 0,
                                                     componentFlagsMask: 0)
-        AUAudioUnit.instantiate(with: description, options: []) { @Sendable [weak self] unit, error in
-            let box = UnitBox(unit)
-            let failure = error.map { $0.localizedDescription }
-            Task { @MainActor in self?.finish(box.unit, failure: failure, slot: slot, number: number, state: state) }
+        Task { [weak self] in
+            let answer = await Self.instantiate(description)
+            self?.finish(answer.unit, failure: answer.failure, timedOut: answer.timedOut, slot: slot, number: number,
+                         state: state)
         }
     }
 
-    private func finish(_ unit: AUAudioUnit?, failure: String?, slot: Slot, number: Int, state: Data?) {
+    /// The unit, or why there is none — within `UnitInstantiation.deadline`: an extension that
+    /// never starts would otherwise leave its slot "Loading…" for ever. A unit that arrives later
+    /// is dropped; Reload Plugin asks again.
+    nonisolated private static func instantiate(_ description: AudioComponentDescription) async -> UnitBox {
+        let seconds = UnitInstantiation.deadline.components.seconds
+        let late = UnitBox(nil, failure: "did not start within \(seconds) seconds", timedOut: true)
+        return await UnitInstantiation.answer(within: UnitInstantiation.deadline, timedOut: late) { reply in
+            AUAudioUnit.instantiate(with: description, options: []) { @Sendable unit, error in
+                reply(UnitBox(unit, failure: error.map { $0.localizedDescription }))
+            }
+        }
+    }
+
+    private func finish(_ unit: AUAudioUnit?, failure: String?, timedOut: Bool = false, slot: Slot, number: Int,
+                        state: Data?) {
         // An answer to a request that was replaced or withdrawn changes nothing.
         guard let request = requests[slot], request.number == number else { return }
         requests[slot] = nil
@@ -394,7 +415,10 @@ final class PluginHost {
             // plugin that is on the device.
             let listed = (instruments + effects).contains(request.component)
             let name = request.component.name
-            let reason = listed
+            let seconds = UnitInstantiation.deadline.components.seconds
+            let reason = timedOut
+                ? "\(name) did not start within \(seconds) seconds. Tap Reload Plugin to try again, or use another plugin."
+                : listed
                 ? "\(name) is installed but did not start. Open the app it came with once, then tap Reload Plugin, or use another plugin."
                 : "\(name) is not installed on this device. Install it from the App Store, or choose another plugin."
             fail(slot, request.component, reason: reason, detail: failure)
@@ -684,11 +708,8 @@ final class PluginHost {
         let description = AudioComponentDescription(componentType: component.type, componentSubType: component.subtype,
                                                     componentManufacturer: component.manufacturer, componentFlags: 0,
                                                     componentFlagsMask: 0)
-        let box: UnitBox = await withCheckedContinuation { continuation in
-            AUAudioUnit.instantiate(with: description, options: []) { @Sendable unit, _ in
-                continuation.resume(returning: UnitBox(unit))
-            }
-        }
+        // The same deadline as a live load: an export waits for no extension for ever.
+        let box = await instantiate(description)
         guard let unit = box.unit else { return nil }
         let clock = HostClock()
         do {
