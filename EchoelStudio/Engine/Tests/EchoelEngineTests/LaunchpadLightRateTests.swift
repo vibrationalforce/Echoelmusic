@@ -38,10 +38,16 @@ final class LaunchpadLightRateTests: XCTestCase {
     func testAPadIsSentOncePerChangeOfItsClipNeverOnEveryFrame() throws {
         let sent = run(try song())
         let pad: UInt8 = 81                                   // top left: track 1, scene 1
-        let padMessages = sent.dropFirst().flatMap { $0 }.filter { $0.count == 3 && $0[1] == pad && $0[0] & 0xF0 == 0x90 }
+        let later: [[UInt8]] = Array(sent.dropFirst().joined())
+        let padMessages = later.filter { (message: [UInt8]) -> Bool in
+            guard message.count == 3, message[1] == pad else { return false }
+            let kind: UInt8 = message[0] & 0xF0
+            return kind == 0x90
+        }
         XCTAssertEqual(padMessages, [[0x91, pad, Launchpad.playingColor], [0x92, pad, Launchpad.playingColor]],
                        "queued, then playing: two changes, two messages in ten seconds")
-        let quietFrames = sent.dropFirst().filter(\.isEmpty).count
+        let afterFirst: [[[UInt8]]] = Array(sent.dropFirst())
+        let quietFrames = afterFirst.filter { (messages: [[UInt8]]) -> Bool in messages.isEmpty }.count
         XCTAssertEqual(quietFrames, 10 * framesPerSecond - 1 - 2, "every other frame sends nothing")
     }
 
