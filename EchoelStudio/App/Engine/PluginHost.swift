@@ -205,7 +205,7 @@ final class PluginHost {
             restarts[slot] = recent
             let count = recent.count
             if count > Self.restartLimit {
-                let reason = "\(entry.component.name) stopped working and was not loaded again. Choose it again to retry, or use another plugin."
+                let reason = "\(entry.component.name) stopped working and was not loaded again. Tap Reload Plugin to try again, or use another plugin."
                 fail(slot, entry.component, reason: reason, detail: "stopped \(count) times")
                 refused.insert(slot)
                 reloads.refused(name: entry.component.name, reason: reason)
@@ -395,7 +395,7 @@ final class PluginHost {
             let listed = (instruments + effects).contains(request.component)
             let name = request.component.name
             let reason = listed
-                ? "\(name) is installed but did not start. Open the app it came with once, then choose it again here, or use another plugin."
+                ? "\(name) is installed but did not start. Open the app it came with once, then tap Reload Plugin, or use another plugin."
                 : "\(name) is not installed on this device. Install it from the App Store, or choose another plugin."
             fail(slot, request.component, reason: reason, detail: failure)
             return
@@ -426,7 +426,8 @@ final class PluginHost {
         onUnitsChanged?()
     }
 
-    /// Not retried until the slot names another plugin: every retry would load and fail again.
+    /// Not retried until the slot names another plugin or the musician taps Reload Plugin
+    /// (`reload`): every automatic retry would load and fail again.
     private func fail(_ slot: Slot, _ component: PluginComponent, reason: String, detail: String?) {
         log.error("plugin: \(component.name, privacy: .public) failed — \(detail ?? "", privacy: .public)")
         failed[slot] = component
@@ -436,6 +437,43 @@ final class PluginHost {
             reloads.failed(slot, reason: reason)
             notice = reloads.text
         }
+    }
+
+    /// The musician asked for the slot's unit to be loaded again: one that failed to load, one
+    /// the restart limit refused, or one that is loaded and refuses audio blocks. It loads with
+    /// the song's settings for the slot, as every load does; a slot still loading is left alone.
+    func reload(_ slot: Slot) {
+        guard !holdsPlugins, requests[slot] == nil else { return }
+        if let entry = loaded[slot] {
+            log.info("plugin: reload \(entry.component.name, privacy: .public) on request")
+            if let observer = entry.observer { entry.unit.parameterTree?.removeParameterObserver(observer) }
+            loaded[slot] = nil
+            syncedState[slot] = nil
+        }
+        // The failure is forgotten either way. When the status line still names the unit — it
+        // stopped and was not loaded again (the restart limit, or a reload after a stop that
+        // failed) — that sentence would outlive this reload: the line is cleared and the slot
+        // waits like a reload after a stop, so what happens now is said (loaded again, or why
+        // not). Other units' sentences go with it; the line is one notice. A first load that
+        // failed is said on the page only, and nothing in the line changes for it.
+        if let component = failed.removeValue(forKey: slot), notice?.contains(component.name) == true {
+            clearNotice()
+            reloads.stopped(slot, name: component.name, component: component, cause: .crash)
+        }
+        refused.remove(slot)
+        restarts[slot] = nil
+        problems[slot] = nil
+        revision += 1
+        // The engine republishes, and `sync` loads the slot as it loads any slot without a unit.
+        onUnitsChanged?()
+    }
+
+    /// Audio blocks the slot's loaded unit refused since it was loaded (it played nothing for
+    /// them, or an effect passed its input through); 0 while none is loaded. Counted on the render
+    /// thread, read here without a lock.
+    func renderFailures(in slot: Slot) -> Int {
+        guard let entry = loaded[slot] else { return 0 }
+        return entry.instrument?.renderFailures ?? entry.effect?.renderFailures ?? 0
     }
 
     /// Whether the slot's unit is loaded. Observed through `revision`, which every load and unload
