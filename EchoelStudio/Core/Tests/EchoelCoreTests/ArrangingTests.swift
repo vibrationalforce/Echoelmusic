@@ -252,6 +252,44 @@ final class ArrangingTests: XCTestCase {
         }
     }
 
+    /// A one-bar loop drawn two and a half bars longer: two whole copies and a third cut at the
+    /// half bar, all in one step (Michael, 10085: loops were duplicated copy by copy).
+    func testAnAudioRegionDrawnPastItsFileRepeatsUpToTheDrag() throws {
+        var p = Project(tempo: 120)
+        let track = TrackID(), region = RegionID()
+        let file = MediaFile(name: "Loop", path: "Media/loop.wav", frameCount: 96_000, sampleRate: 48_000)
+        try Command.addTrack(id: track, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+        try Command.addMedia(file).apply(to: &p)
+        try Command.placeAudio(track: track, id: region, media: file.id, start: 0).apply(to: &p)
+        let t = try XCTUnwrap(p.track(track))
+        let placed = try XCTUnwrap(t.regions.first)
+
+        let commands = try XCTUnwrap(Arranging.extended(placed, byTicks: 2 * bar + bar / 2, in: t, project: p, snap: .beat))
+        let looped = try applied(commands, to: p)
+        let regions = try XCTUnwrap(looped.track(track)).regions.sorted { $0.start < $1.start }
+        XCTAssertEqual(regions.map(\.start), [0, bar, 2 * bar, 3 * bar])
+        XCTAssertEqual(regions.map(\.length), [96_000, 96_000, 96_000, 48_000])
+        XCTAssertEqual(regions.last.flatMap { Arranging.end(of: $0, in: looped) }, 3 * bar + bar / 2)
+    }
+
+    /// Inside its file a longer drag only trims, and a shorter one trims as before.
+    func testAnAudioRegionDrawnInsideItsFileOnlyTrims() throws {
+        var p = Project(tempo: 120)
+        let track = TrackID(), region = RegionID()
+        let file = MediaFile(name: "Loop", path: "Media/loop.wav", frameCount: 96_000, sampleRate: 48_000)
+        try Command.addTrack(id: track, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+        try Command.addMedia(file).apply(to: &p)
+        try Command.placeAudio(track: track, id: region, media: file.id, start: 0).apply(to: &p)
+        try Command.trimRegion(track: track, region, offset: 0, length: 48_000).apply(to: &p)
+        let t = try XCTUnwrap(p.track(track))
+        let placed = try XCTUnwrap(t.regions.first)
+
+        let longer = try applied(Arranging.extended(placed, byTicks: bar / 4, in: t, project: p, snap: .beat), to: p)
+        XCTAssertEqual(try XCTUnwrap(longer.track(track)).regions.map(\.length), [72_000])
+        let shorter = try applied(Arranging.extended(placed, byTicks: -bar / 4, in: t, project: p, snap: .beat), to: p)
+        XCTAssertEqual(try XCTUnwrap(shorter.track(track)).regions.map(\.length), [24_000])
+    }
+
     func testAnAudioRegionLastsAsLongAsItsFileAtTheSongsTempo() throws {
         var p = Project(tempo: 120)
         let track = TrackID(), region = RegionID()

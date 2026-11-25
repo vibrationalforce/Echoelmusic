@@ -43,6 +43,13 @@ struct ArrangeView: View {
     /// routes still play; the button in the zoom bar shows them again (Michael on 10084: the rows
     /// stay in view and take the room).
     @AppStorage("arrange.showsModulation") private var showsModulation = true
+    /// Whether the lanes page along with the playhead while the song plays, kept on this device
+    /// (Michael on 10085: the song ran on past the screen's edge).
+    @AppStorage("arrange.followsPlayhead") private var followsPlayhead = true
+    /// Where the lanes are scrolled to; written only when the playhead pages them.
+    @State private var lanePosition = ScrollPosition(edge: .leading)
+    /// What the lanes show now, read by the follower; not observed, so a scroll redraws nothing.
+    @State private var viewport = ArrangeViewport()
     /// The height Arrange has on screen, so the track rows can share what the lanes leave free.
     @State private var visibleHeight: CGFloat = 0
     /// The live factor of a pinch in progress; it resets itself on release or when a scroll takes
@@ -177,6 +184,14 @@ struct ArrangeView: View {
                 PlayheadLine(ticksPerPoint: ticksPerPoint)
             }
         }
+        .scrollPosition($lanePosition)
+        .onScrollGeometryChange(for: CGRect.self) { $0.visibleRect } action: { _, shown in
+            viewport.visible = shown
+        }
+        .background {
+            PlayheadFollower(ticksPerPoint: ticksPerPoint, follows: followsPlayhead,
+                             viewport: viewport, position: $lanePosition)
+        }
         .simultaneousGesture(pinchGesture)
     }
 
@@ -193,6 +208,7 @@ struct ArrangeView: View {
         HStack(spacing: Theme.Space.s) {
             MarkerAddButton(compact: true)
             modulationToggle
+            followToggle
             Spacer()
             zoomButton("Zoom Out", systemImage: "minus.magnifyingglass",
                        enabled: ArrangeZoom.canZoomOut(zoom)) { zoom = ArrangeZoom.zoomedOut(zoom) }
@@ -204,6 +220,21 @@ struct ArrangeView: View {
         .overlay(alignment: .top) {
             Rectangle().fill(Theme.Color.border).frame(height: 1)
         }
+    }
+
+    /// Turns the lanes' paging with the playhead on or off; drawn as on while it follows.
+    private var followToggle: some View {
+        Button { followsPlayhead.toggle() } label: {
+            Image(systemName: "arrow.right.to.line")
+                .font(Theme.Font.label)
+                .foregroundStyle(followsPlayhead ? Theme.Color.accent : Theme.Color.textTertiary)
+                .frame(width: Theme.Size.touch, height: Theme.Size.touch)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Follow Playhead")
+        .accessibilityValue(followsPlayhead ? "On" : "Off")
+        .accessibilityHint("While the song plays, the lanes turn the page when the playhead reaches the edge.")
     }
 
     /// Shows or hides the modulation rows; drawn as on while they show.
@@ -502,6 +533,50 @@ private struct PlayheadLine: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+}
+
+/// What the lanes' scroll view shows, in its content's points. A plain class held in `@State`, not
+/// observed: the scroll writes it on every frame and no view redraws for it.
+@MainActor
+private final class ArrangeViewport {
+    var visible: CGRect = .zero
+}
+
+/// Turns the lanes' page while the song plays: five times a second it reads where the playhead is
+/// heard and, when it nears the right edge or has jumped out of view (a loop's wrap, a locate),
+/// scrolls so it stands a tenth of the width in from the left. Reads the playhead in a task, never
+/// in a body (Law 6); draws nothing and takes no touch.
+private struct PlayheadFollower: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
+    let ticksPerPoint: Double
+    let follows: Bool
+    let viewport: ArrangeViewport
+    @Binding var position: ScrollPosition
+
+    var body: some View {
+        let playing = engine.isPlaying
+        Color.clear
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+            .task(id: "\(playing) \(follows) \(ticksPerPoint)") {
+                guard playing, follows else { return }
+                while !Task.isCancelled {
+                    page()
+                    try? await Task.sleep(for: .milliseconds(200))
+                }
+            }
+    }
+
+    private func page() {
+        let shown = viewport.visible
+        guard shown.width > 0, ticksPerPoint > 0 else { return }
+        let x = CGFloat(TimelineGeometry.x(ofPosition: engine.heardTick(in: store.project), ticksPerPoint: ticksPerPoint))
+        guard x.isFinite else { return }
+        let margin = shown.width / 10
+        guard x > shown.maxX - margin || x < shown.minX else { return }
+        position.scrollTo(x: Swift.max(0, x - margin))
     }
 }
 
@@ -1479,8 +1554,11 @@ private struct RegionBlock: View {
 
     /// VoiceOver's trims by one beat, on the beat whatever the magnet says; said after (audit A3 #6).
     private func trim(_ edge: Arranging.Edge, beats: Tick) {
-        guard let commands = Arranging.trimmed(region, edge: edge, byTicks: beats * meter.ticksPerBeat(at: region.start),
-                                               in: track, project: store.project, snap: .beat) else {
+        let delta = beats * meter.ticksPerBeat(at: region.start)
+        let found = edge == .end && beats > 0
+            ? Arranging.extended(region, byTicks: delta, in: track, project: store.project, snap: .beat)
+            : Arranging.trimmed(region, edge: edge, byTicks: delta, in: track, project: store.project, snap: .beat)
+        guard let commands = found else {
             return ArrangeSpeech.say("Not trimmed: the region stops at its file's edge, bar 1 and the next region.")
         }
         guard documents.attempt(commands, title: "Trim Region") else { return }
@@ -1488,10 +1566,18 @@ private struct RegionBlock: View {
         ArrangeSpeech.say(edge == .start ? "Starts at " + ArrangeSpeech.position(placed.start, meter: meter) : "End trimmed")
     }
 
+    /// The end drawn past the file repeats the region up to where the finger lifted (`Arranging.extended`).
     private func apply(_ edge: Arranging.Edge, byTicks delta: Tick, snap: SnapGrid) {
-        guard let commands = Arranging.trimmed(region, edge: edge, byTicks: delta, in: track, project: store.project,
-                                               snap: snap) else { return }
-        documents.attempt(commands, title: "Trim Region")
+        let commands = edge == .end
+            ? Arranging.extended(region, byTicks: delta, in: track, project: store.project, snap: snap)
+            : Arranging.trimmed(region, edge: edge, byTicks: delta, in: track, project: store.project, snap: snap)
+        guard let commands else { return }
+        documents.attempt(commands, title: Self.loops(commands) ? "Loop Region" : "Trim Region")
+    }
+
+    /// Whether the commands place copies of the region, rather than only trim it.
+    private static func loops(_ commands: [Command]) -> Bool {
+        commands.contains { if case .placeAudio = $0 { return true } else { return false } }
     }
 
     private func move(byBars bars: Tick) {

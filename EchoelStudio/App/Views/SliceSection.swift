@@ -15,6 +15,8 @@ struct SliceSection: View {
     @State private var writesPattern = true
     @State private var isSlicing = false
     @State private var problem: String?
+    /// The tempo the last slicing placed the pattern by; nil before one, or when none was found.
+    @State private var placedBPM: Double?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.s) {
@@ -40,6 +42,12 @@ struct SliceSection: View {
                 .font(Theme.Font.body)
             if let problem {
                 Text(problem)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+            }
+            if track.instrument.slices != nil, writesPattern {
+                Text(placedBPM.map { "Placed at the loop's tempo, \(NumberText.string($0, decimalsUpTo: 2, unit: "BPM")): each hit on the song's grid." }
+                     ?? "No steady tempo found: the pattern spreads the loop over its length.")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
@@ -108,11 +116,18 @@ struct SliceSection: View {
         let target = track.id
         let source = file
         let pattern = writesPattern
+        let name = source.name
+        let beats = TempoAnalysis.beatsPerBar(at: 0, in: store.project)
         Task {
-            let onsets = await Task.detached(priority: .userInitiated) { BreakOnsets.onsets(of: url) }.value
-            let starts = BreakSlicing.starts(onsets: onsets, frameCount: source.frameCount, sampleRate: source.sampleRate)
+            let reading = await Task.detached(priority: .userInitiated) {
+                BreakOnsets.read(url, name: name, beatsPerBar: beats)
+            }.value
+            let starts = BreakSlicing.starts(onsets: reading.onsets, frameCount: source.frameCount,
+                                             sampleRate: source.sampleRate, bpm: reading.bpm)
+            placedBPM = reading.bpm
             if let current = store.project.track(target) {
                 let commands = BreakSlicing.commands(track: target, file: source, starts: starts, writePattern: pattern,
+                                                     bpm: reading.bpm,
                                                      at: Self.afterLastClip(current, signature: store.project.timeSignature))
                 do {
                     try store.perform(commands, title: "Slice to Pads")

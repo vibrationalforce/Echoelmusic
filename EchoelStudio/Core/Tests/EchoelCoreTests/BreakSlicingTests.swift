@@ -79,6 +79,41 @@ final class BreakSlicingTests: XCTestCase {
         XCTAssertEqual(made.notes.map(\.length), [480, 1_440, 1_920])
     }
 
+    /// With the loop's tempo the slices sit on its beats, not at their share of the file: a one-bar
+    /// loop at 120 BPM with a tenth of a second of tail still plays its hits on quarter notes
+    /// (Michael, 10085: Slice to Pads sounded out of time and nothing matched the tempo).
+    func testAKnownTempoPutsTheSlicesOnTheLoopsBeatsDespiteATail() {
+        let frames = 100_800   // 2.1 s: four beats at 120 plus 0.1 s of tail
+        let starts = [0, 24_000, 48_000, 72_000]
+        let made = BreakSlicing.pattern(starts: starts, frameCount: frames, sampleRate: rate, bpm: 120)
+        XCTAssertEqual(made.length, 4 * MusicalTime.ticksPerQuarter)
+        XCTAssertEqual(made.notes.map(\.start), [0, 960, 1_920, 2_880])
+        XCTAssertEqual(made.notes.last?.length, 960, "the last slice ends at the loop's end, its tail cut")
+        let guessed = BreakSlicing.pattern(starts: starts, frameCount: frames, sampleRate: rate)
+        XCTAssertNotEqual(guessed.notes.map(\.start), made.notes.map(\.start), "without the tempo the tail pulls the hits off the grid")
+    }
+
+    func testAKnownTempoCountsTheLoopsBeats() {
+        XCTAssertEqual(BreakSlicing.beats(forSeconds: 1.82, bpm: 132), 4)
+        XCTAssertEqual(BreakSlicing.beats(forSeconds: 1.38, bpm: 174), 4, "a bar of drum and bass is four beats, not two at 87")
+        XCTAssertEqual(BreakSlicing.beats(forSeconds: 0.1, bpm: 120), 1)
+        XCTAssertEqual(BreakSlicing.beats(forSeconds: 1.4, bpm: .nan), 2, "a tempo that is not a number is no tempo")
+        XCTAssertEqual(BreakSlicing.beats(forSeconds: 1.4, bpm: 5_000), 2, "nor is one outside the native range")
+    }
+
+    /// A busy bar at 132 BPM with a tail: the grid is sixteenths of 132, each pad starts on the hit
+    /// at its line, and the pattern plays them on the song's sixteenths.
+    func testABusyBreakAtAKnownTempoIsCutOnThatTemposGrid() {
+        let thirtySecond = 60.0 / 132 / 8
+        let onsets = (1..<32).map { Double($0) * thirtySecond }
+        let frames = Int((4 * 60.0 / 132 * rate).rounded()) + 4_800
+        let starts = BreakSlicing.starts(onsets: onsets, frameCount: frames, sampleRate: rate, bpm: 132)
+        let hit: (Int) -> Int = { (index: Int) -> Int in Int((Double(index) * thirtySecond * self.rate).rounded()) }
+        XCTAssertEqual(starts, [0] + (1..<16).map { hit(2 * $0) })
+        let notes = BreakSlicing.pattern(starts: starts, frameCount: frames, sampleRate: rate, bpm: 132).notes
+        XCTAssertEqual(notes.map(\.start), (0..<16).map { Tick($0) * MusicalTime.ticksPerQuarter / 4 })
+    }
+
     func testSliceToPadsIsOneUndoStepThroughTheDoor() async throws {
         let (project, track, file) = try song()
         try await MainActor.run {
