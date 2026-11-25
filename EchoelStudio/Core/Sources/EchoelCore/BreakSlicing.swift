@@ -67,7 +67,10 @@ public enum BreakSlicing {
     /// closer than 30 ms to the one before — or, when there are more hits than pads, one start per
     /// step of the loop's grid (`gridStarts`). A file with fewer than two onsets past its
     /// start is cut into eight equal pads instead, so a loop always slices.
-    public static func starts(onsets: [Double], frameCount: Int, sampleRate: Double) -> [Int] {
+    /// With `bpm` — the loop's tempo, heard or stated (`TempoHint`) — the grid is the loop's beats at
+    /// that tempo instead of a guess from its length, so a loop with a tail or a cut that is not
+    /// exactly whole beats still lands on the song's grid.
+    public static func starts(onsets: [Double], frameCount: Int, sampleRate: Double, bpm: Double? = nil) -> [Int] {
         guard frameCount > 1, sampleRate.isFinite, sampleRate > 0 else { return frameCount > 0 ? [0] : [] }
         let gap = Int(0.03 * sampleRate)
         var found: [Int] = []
@@ -85,7 +88,7 @@ public enum BreakSlicing {
         // off the song's grid wherever the song's tempo is not the loop's, so a chopped break ran
         // out of time and lost its groove (Michael, 10083).
         guard found.count < SampleSlice.maximumCount else {
-            return gridStarts(hits: found, frameCount: frameCount, sampleRate: sampleRate)
+            return gridStarts(hits: found, frameCount: frameCount, sampleRate: sampleRate, bpm: bpm)
         }
         return [0] + found
     }
@@ -94,10 +97,27 @@ public enum BreakSlicing {
     /// until `SampleSlice.maximumCount` pads hold them. A step starts at the hit nearest its grid
     /// line within half a step — the hit's own frame, so a late or early hit keeps its feel — or on
     /// the line where no hit is near. Every pad is then one step of the music long.
-    static func gridStarts(hits: [Int], frameCount: Int, sampleRate: Double) -> [Int] {
-        var steps = beats(forSeconds: Double(frameCount) / sampleRate) * 4
+    static func gridStarts(hits: [Int], frameCount: Int, sampleRate: Double, bpm: Double? = nil) -> [Int] {
+        let beatCount = beats(forSeconds: Double(frameCount) / sampleRate, bpm: bpm)
+        var steps = beatCount * 4
         while steps > SampleSlice.maximumCount { steps /= 2 }
         guard steps > 1 else { return [0] }
+        if let tempo = usable(bpm) {
+            // The grid of the loop's beats at its tempo, not of its length.
+            let stepFrames = Double(beatCount) * 60 / tempo * sampleRate / Double(steps)
+            let reach = Int(stepFrames / 2)
+            var starts = [0]
+            for step in 1..<steps {
+                let line = Int((stepFrames * Double(step)).rounded())
+                var start = line
+                if let near = hits.min(by: { Swift.abs($0 - line) < Swift.abs($1 - line) }), Swift.abs(near - line) <= reach {
+                    start = near
+                }
+                guard let last = starts.last, start > last, start < frameCount else { continue }
+                starts.append(start)
+            }
+            return starts
+        }
         let reach = frameCount / steps / 2
         var starts = [0]
         for step in 1..<steps {
@@ -115,8 +135,13 @@ public enum BreakSlicing {
     /// How many quarter notes a loop of `seconds` spans: the power of two whose tempo lands in
     /// 80 … 160 BPM — a two-second loop is four beats at 120, a 1.4-second one four at 171 → two at
     /// 86. The pattern spreads the loop over these beats, so it plays at the song's tempo.
-    public static func beats(forSeconds seconds: Double) -> Int {
+    /// With a usable `bpm` it is the loop's length in beats at that tempo, rounded, at least one.
+    public static func beats(forSeconds seconds: Double, bpm: Double? = nil) -> Int {
         guard seconds.isFinite, seconds > 0 else { return 4 }
+        if let tempo = usable(bpm) {
+            let counted = (seconds * tempo / 60).rounded()
+            return counted.isFinite ? Swift.max(1, Swift.min(256, Int(counted))) : 4
+        }
         var beats = 1
         while beats < 256, 60 * Double(beats) / seconds < 80 { beats *= 2 }
         return beats
@@ -125,11 +150,20 @@ public enum BreakSlicing {
     /// The pattern the loop played, one note per slice on its pad, spread over `beats(forSeconds:)`
     /// quarters so the break plays at the song's tempo: each slice at its share of the loop, each as
     /// long as its slice. The clip is that many quarters long.
-    public static func pattern(starts: [Int], frameCount: Int, sampleRate: Double, velocity: Int = 100) -> (notes: [Note], length: Tick) {
+    /// With a usable `bpm` each slice sits where it falls at the loop's tempo — its seconds in the
+    /// file as quarters — rather than at its share of the file's length.
+    public static func pattern(starts: [Int], frameCount: Int, sampleRate: Double, bpm: Double? = nil,
+                               velocity: Int = 100) -> (notes: [Note], length: Tick) {
         guard frameCount > 0, sampleRate.isFinite, sampleRate > 0, !starts.isEmpty else { return ([], MusicalTime.ticksPerQuarter) }
-        let beats = beats(forSeconds: Double(frameCount) / sampleRate)
+        let tempo = usable(bpm)
+        let beats = beats(forSeconds: Double(frameCount) / sampleRate, bpm: tempo)
         let length = Tick(beats) * MusicalTime.ticksPerQuarter
-        func tick(_ frame: Int) -> Tick { Tick((Double(frame) / Double(frameCount) * Double(length)).rounded()) }
+        func tick(_ frame: Int) -> Tick {
+            if let tempo {
+                return Tick((Double(frame) / sampleRate * tempo / 60 * Double(MusicalTime.ticksPerQuarter)).rounded())
+            }
+            return Tick((Double(frame) / Double(frameCount) * Double(length)).rounded())
+        }
         var notes: [Note] = []
         for (index, start) in starts.enumerated() where index < SampleSlice.maximumCount {
             let stop = index + 1 < starts.count ? starts[index + 1] : frameCount
@@ -144,11 +178,11 @@ public enum BreakSlicing {
     /// Slice to Pads: the commands that cut `track`'s sample at `starts` and — with `writePattern` —
     /// write the pattern it played as a new clip named after the file, placed at `at`. Perform them
     /// as one step (`ProjectStore.perform(_:title:)`), so one undo takes all of it back.
-    public static func commands(track: TrackID, file: MediaFile, starts: [Int], writePattern: Bool,
+    public static func commands(track: TrackID, file: MediaFile, starts: [Int], writePattern: Bool, bpm: Double? = nil,
                                 clip: ClipID = ClipID(), placement: PlacementID = PlacementID(), at: Tick = 0) -> [Command] {
         var commands: [Command] = [.setSamplerSlices(track, starts.map { SampleSlice(start: $0) })]
         guard writePattern else { return commands }
-        let made = pattern(starts: starts, frameCount: file.frameCount, sampleRate: file.sampleRate)
+        let made = pattern(starts: starts, frameCount: file.frameCount, sampleRate: file.sampleRate, bpm: bpm)
         guard !made.notes.isEmpty else { return commands }
         let trimmed = file.name.trimmingCharacters(in: .whitespacesAndNewlines)
         let name = trimmed.isEmpty ? "Break" : String(trimmed.prefix(Names.maximumLength))
@@ -156,5 +190,11 @@ public enum BreakSlicing {
         commands.append(.addNotes(clip, made.notes))
         commands.append(.placeClip(track: track, id: placement, clip: clip, start: at))
         return commands
+    }
+
+    /// A loop tempo the slicer may place by: finite and in `AudioRegion.nativeBPMRange`.
+    static func usable(_ bpm: Double?) -> Double? {
+        guard let bpm, bpm.isFinite, AudioRegion.nativeBPMRange.contains(bpm) else { return nil }
+        return bpm
     }
 }
