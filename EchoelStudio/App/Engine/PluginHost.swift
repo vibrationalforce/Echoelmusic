@@ -441,7 +441,7 @@ final class PluginHost {
             log.info("plugin: allocate \(request.component.name, privacy: .public)")
             try Self.prepare(unit, isEffect: isEffect, sampleRate: request.sampleRate, state: state, clock: clock)
         } catch {
-            fail(slot, request.component, reason: "\(request.component.name) cannot play in stereo at this sample rate. Choose another plugin, or another audio output.",
+            fail(slot, request.component, reason: "\(request.component.name) cannot play in stereo or mono at this sample rate. Choose another plugin, or another audio output.",
                  detail: error.localizedDescription)
             return
         }
@@ -638,13 +638,20 @@ final class PluginHost {
     private static func instrument(_ unit: AUAudioUnit, sampleRate: Double, clock: HostClock) -> HostedUnit {
         HostedUnit(render: unit.renderBlock, scheduleMIDI: unit.scheduleMIDIEventBlock, sampleRate: sampleRate,
                    maximumFrames: EngineCore.maximumFrames, owner: unit,
-                   scheduleParameter: unit.scheduleParameterBlock, parameterRanges: automatable(unit), clock: clock)
+                   scheduleParameter: unit.scheduleParameterBlock, parameterRanges: automatable(unit), clock: clock,
+                   outputChannels: outputChannels(of: unit))
     }
 
     private static func effect(_ unit: AUAudioUnit, insert: InsertID, sampleRate: Double, clock: HostClock) -> HostedEffect {
         HostedEffect(render: unit.renderBlock, sampleRate: sampleRate, maximumFrames: EngineCore.maximumFrames, owner: unit,
                      insert: insert, scheduleParameter: unit.scheduleParameterBlock, parameterRanges: automatable(unit),
-                     clock: clock)
+                     clock: clock, outputChannels: outputChannels(of: unit))
+    }
+
+    /// 1 for a unit whose output bus took mono only (`UnitPreparation`), else 2. Read once the
+    /// unit is prepared, never on the render thread.
+    private static func outputChannels(of unit: AUAudioUnit) -> Int {
+        unit.outputBusses.count > 0 && unit.outputBusses[0].format.channelCount == 1 ? 1 : 2
     }
 
     /// The parameters automation may move: writable, with a real range. Read after the saved
