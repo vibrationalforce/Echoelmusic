@@ -96,6 +96,10 @@ final class PluginHost {
     /// Results of the most recent capture pass, including failures that produce no command.
     /// These describe capture only, not acceptance by the store or a successful file save.
     @ObservationIgnored private(set) var captureResults: [Slot: PluginStateCapture] = [:]
+    /// Why a loaded unit's settings did not reach the song at its last capture, by slot, for its
+    /// page (`PluginSaveProblem`); absent once a capture reads them again. Written only when the
+    /// sentence changes, so a capture on every save moves nothing a view observes.
+    private(set) var saveProblems: [Slot: String] = [:]
     @ObservationIgnored private var requestCount = 0
     @ObservationIgnored private var registrationObserver: NSObjectProtocol?
     @ObservationIgnored private var invalidationObserver: NSObjectProtocol?
@@ -349,6 +353,13 @@ final class PluginHost {
         // A slot no longer wanted, or wanting another plugin, is not loaded again: nothing is said.
         reloads.keep { slot, component in wanted[slot]?.component == component }
         problems = problems.filter { failed[$0.key] != nil }
+        // A slot that is gone, or names another plugin now, has nothing left to say about saving.
+        let stale = saveProblems.keys.filter { slot in
+            guard let want = wanted[slot] else { return true }
+            if let entry = loaded[slot] { return entry.component != want.component }
+            return false
+        }
+        for slot in stale { saveProblems[slot] = nil }
         for (slot, want) in wanted where loaded[slot] == nil && requests[slot] == nil && failed[slot] != want.component {
             if holdsPlugins, want.component.manufacturer != Self.ownManufacturer {
                 problems[slot] = "Not loaded: Echoelmusic did not finish starting twice, so plugins from other makers wait. Load them from the status line."
@@ -760,6 +771,13 @@ final class PluginHost {
             entry?.unit.fullStateForDocument
         }
         captureResults[slot] = result
+        switch PluginSaveProblem.verdict(for: result, name: expected.name, isLoaded: entry?.component == expected) {
+        case .clear: setSaveProblem(nil, for: slot)
+        case .keep: break
+        case .problem(let text):
+            log.error("plugin: \(expected.name, privacy: .public) settings not captured — \(String(describing: result), privacy: .public)")
+            setSaveProblem(text, for: slot)
+        }
         guard case .changed(let data) = result else { return nil }
         capturedState[slot] = data
         return make(data)
@@ -778,10 +796,19 @@ final class PluginHost {
             if let title { try store.perform(commands, title: title) } else { try store.absorb(commands) }
         } catch {
             log.error("plugin settings not taken by the song — \(error.localizedDescription, privacy: .public)")
+            for slot in capturedState.keys {
+                let name = loaded[slot]?.component.name ?? "The plugin"
+                setSaveProblem(PluginSaveProblem.refused(name: name, reason: error.localizedDescription), for: slot)
+            }
             return false
         }
         for (slot, data) in capturedState { syncedState[slot] = data }
         return true
+    }
+
+    private func setSaveProblem(_ text: String?, for slot: Slot) {
+        guard saveProblems[slot] != text else { return }
+        saveProblems[slot] = text
     }
 
     /// The presets the unit in `slot` offers — its factory presets, then the musician's own — and
