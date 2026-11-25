@@ -549,29 +549,17 @@ final class PluginHost {
         unit.select(AUAudioUnitViewConfiguration(width: size.width, height: size.height, hostHasController: false))
     }
 
-    /// Stereo at `sampleRate` (input too, for an effect), the engine's largest block, the saved
-    /// settings, the song's tempo and transport through `clock`, then render resources — most
-    /// units read the host blocks only when they allocate (audit 2026-10-23).
+    /// The saved settings first, then the main busses on and in stereo at `sampleRate` (input
+    /// too, for an effect), the engine's largest block, the song's tempo and transport through
+    /// `clock`, then render resources — `UnitPreparation`, where the order is tested.
     /// `offline` for an export's units: they render faster than real time, and a unit that
     /// reads from disk or works on a thread of its own is told it may wait for its data instead
     /// of playing a gap (`AUAudioUnit.isRenderingOffline`).
     private static func prepare(_ unit: AUAudioUnit, isEffect: Bool, sampleRate: Double, state: Data?,
                                 clock: HostClock, offline: Bool = false) throws {
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2),
-              unit.outputBusses.count > 0 else {
-            throw HostError.noOutput
-        }
-        try unit.outputBusses[0].setFormat(format)
-        if isEffect {
-            guard unit.inputBusses.count > 0 else { throw HostError.noInput }
-            try unit.inputBusses[0].setFormat(format)
-        }
-        unit.maximumFramesToRender = AUAudioFrameCount(EngineCore.maximumFrames)
-        if let state { apply(state, to: unit) }
-        unit.musicalContextBlock = clock.musicalContextBlock
-        unit.transportStateBlock = clock.transportStateBlock
-        if offline { unit.isRenderingOffline = true }
-        try unit.allocateRenderResources()
+        try UnitPreparation.prepare(unit, isEffect: isEffect, sampleRate: sampleRate,
+                                    maximumFrames: EngineCore.maximumFrames, state: state, clock: clock,
+                                    offline: offline)
     }
 
     private static func instrument(_ unit: AUAudioUnit, sampleRate: Double, clock: HostClock) -> HostedUnit {
@@ -672,12 +660,6 @@ final class PluginHost {
             return nil
         }
         return (unit: unit, clock: clock)
-    }
-
-    private static func apply(_ state: Data, to unit: AUAudioUnit) {
-        guard let settings = try? PropertyListSerialization.propertyList(from: state, format: nil) as? [String: Any]
-        else { return }
-        unit.fullStateForDocument = settings
     }
 
     /// The commands that store every loaded unit's current settings in the song, for the units
@@ -804,8 +786,6 @@ final class PluginHost {
         let controller: UIViewController?
         init(_ controller: UIViewController?) { self.controller = controller }
     }
-
-    enum HostError: Error { case noOutput, noInput }
 }
 
 extension PluginHost.Slot {
