@@ -100,6 +100,30 @@ der Werbesatz bleibt verboten: kein Gerät hat sie gezeigt, und mit Gesundheitsd
 ⚠️ Bis 2026-11-10 hieß diese Zeile „Weiter NICHT: Apple Health im Studio, Kamera-Puls als Werbesatz“ und ließ sich als „gibt es
 in der App nicht“ lesen — dann sähe die Datenschutzseite wie eine Überbehauptung aus. Gemeint war immer: gebaut, offengelegt,
 nicht beworben. Ebenfalls weiter nicht: „works in AUM/Logic“ (die Geräte-Prüfung vom 2026-11-10 steht unten bei „Nicht sagen“).
+(7) **2026-11-25, Gerätestand Plug-in-Hosting und nachgemessene Zeilen.** Am Gerät des Founders, Build 10073
+(2026-11-11): Audio Units anderer Hersteller, die andere Apps auf demselben Gerät zeigen, erschienen in Echoelmusic
+nicht bzw. luden nicht. 10074 brachte eine Korrektur (`c9b9498`, zweite Lesung der Registrierung); ob fremde Units
+seitdem erscheinen, laden und klingen, hat kein Gerät gezeigt (Inbox CCC2 offen). Der Host-Pfad hat seit 25.11.
+einen eigenen Chat. **Damit gilt Nachtrag (4) nicht mehr:** der Satz „spielt Audio Units anderer Apps auf Spuren“
+ist vom Gerät widerlegt und wird ohne Beta-Einschränkung nicht mehr gesagt. Sagbar, bis ein Gerät etwas anderes
+zeigt: „Hosting Audio Units from other apps is in beta: some may not appear or load yet.“ Davon betroffen und noch
+nicht geändert: `docs/index.html` („Audio Units from other apps play on tracks“), `fastlane/metadata/en-US/
+description.txt` (Zeilen „Installed third-party Audio Unit instruments …“ und „… or installed stereo Audio Unit
+effects“) und `release_notes.txt` („installed Audio Unit instruments and effects on tracks“); die Formulierung legt
+der Founder fest. Unberührt: die andere Richtung, Echoelmusics eigene Units in fremden Apps (Synth in AUM, 10.11.).
+Nachgemessen am Code von `1f7478d2` (handover `CLAIMS_SYNC_2026-11-18.md` im privaten Repo), jeweils mit Fundstelle:
+die Studio-Zeilen unten zu Aufnahme „mono“, Effektkette „Echoel EQ, Compressor, Delay and Reverb“, Synth „six presets,
+four waveforms“, Import „mixed to mono“, Pianorolle „tap to … remove“ und Raster, Arrange „whole bars … to the beat“
+sowie „Nicht sagen“ zu „split“, „quantize/edit velocity“ und „der Export … normalisiert nicht“ sind ÜBERHOLT. Der Code
+nimmt ein Stereo-Eingangspaar auf (`Core/Sources/EchoelCore/Command.swift:95` `setInput(…, stereo:)`); 25 eigene
+Effekte (`Core/Sources/EchoelCore/OwnPlugins.swift:78`, 25 `aufx` in `Plugins/AUv3/Info.plist`); 11 Synth-Engines
+(Nachtrag 6); der Import behält Stereo (`App/Media/AudioFileImport.swift`, W17); die Pianorolle hat Velocity und
+Quantize (`App/Views/ClipEditorView.swift:507`, `:524`); Arrange schneidet am Abspielkopf (`App/Views/ArrangeView.swift:1019`)
+und rastet standardmäßig auf 1/16 (`Core/Sources/EchoelCore/Snapping.swift:17`); der Export bietet −14/−16 LUFS
+(`Core/Sources/EchoelCore/ExportLoudness.swift:18-19`); frühere Songs werden importiert
+(`App/Documents/DocumentController.swift:2968`); der Gurt liefert auch den Atem (`App/Body/HeartRateStrap.swift:68`).
+Überholt heißt: nicht mehr als Grenze zitieren. Ein neuer Werbesatz entsteht daraus nicht; jeder braucht seine eigene
+Zeile hier, wie Nachtrag (6), und die meisten sind am Gerät unbestätigt.
 
 Stand: 2026-10-13 (Produktgesetz vom 2026-09-24 nachgezogen — `docs/dev/FOUNDER_PRODUCT_LAW.md`:
 Echoelmusic IST die Workstation. ✅ neu: Mixer-Bühne, Sampler je Spur, Grain-Insert, Stück-Export,
