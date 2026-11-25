@@ -15,7 +15,9 @@ import Synchronization
 public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     public let sampleRate: Double
     public let maximumFrames: Int
-    public let parameterRanges: [UInt64: ClosedRange<Float>]
+    /// Main thread only: read when a snapshot is compiled, replaced when the unit's tree changes
+    /// (`updateParameterRanges`); the render thread never reads it.
+    public private(set) var parameterRanges: [UInt64: ClosedRange<Float>]
     /// The unit's output: 2 channels, or 1 for a unit with a mono bus, whose one channel plays on
     /// both sides (`UnitPreparation.Layout`).
     public let outputChannels: Int
@@ -69,6 +71,12 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
         leftBuffer.deallocate()
         rightBuffer.deallocate()
         free(list.unsafeMutablePointer)
+    }
+
+    /// The unit replaced its parameter tree: the ranges the next snapshot compiles automation
+    /// against. Main thread only, like the read.
+    public func updateParameterRanges(_ ranges: [UInt64: ClosedRange<Float>]) {
+        parameterRanges = ranges
     }
 
     // MARK: - Render thread
