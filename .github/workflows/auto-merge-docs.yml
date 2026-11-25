@@ -14,7 +14,10 @@ on:
       - 'claude/**'
     paths:
       - 'docs/**'
-      - '!docs/webapp/**'  # Exclude webapp (needs review)
+      # Exclude webapp (needs review). ⚠️ This filter only decides whether the job STARTS: a push
+      # that touches docs/webapp/ AND another docs/ file still starts it. The check step below is
+      # what holds such a merge — every docs/webapp/ path from the merge base on (2026-11).
+      - '!docs/webapp/**'
 
 permissions:
   contents: write
@@ -28,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout main with full history
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: main
           fetch-depth: 0
@@ -36,13 +39,18 @@ jobs:
 
       - name: Fetch and validate pushed commit
         id: fetch
+        # Ref and branch names are data, not shell code (#450): they reach bash through the
+        # environment, never spliced into the script text.
+        env:
+          PUSH_REF: ${{ github.ref }}
+          PUSH_BRANCH: ${{ github.ref_name }}
         run: |
           echo "=============================================="
           echo "  FETCHING PUSHED COMMIT"
           echo "=============================================="
           echo "Push SHA: ${{ github.sha }}"
-          echo "Push ref: ${{ github.ref }}"
-          echo "Push branch: ${{ github.ref_name }}"
+          printf 'Push ref: %s\n' "$PUSH_REF"
+          printf 'Push branch: %s\n' "$PUSH_BRANCH"
 
           # Fetch the specific commit that was pushed (uses SHA, not branch), with its history:
           # `--depth=1` made it a root commit, so the cherry-pick below compared against the empty
@@ -50,11 +58,11 @@ jobs:
           git fetch origin ${{ github.sha }} || git fetch origin --all
 
           # Verify commit exists in object store
-          if git cat-file -e ${{ github.sha }}^{commit} 2>/dev/null; then
-            echo "commit_exists=true" >> $GITHUB_OUTPUT
+          if git cat-file -e "${{ github.sha }}^{commit}" 2>/dev/null; then
+            echo "commit_exists=true" >> "$GITHUB_OUTPUT"
             echo "[OK] Commit ${{ github.sha }} is accessible"
           else
-            echo "commit_exists=false" >> $GITHUB_OUTPUT
+            echo "commit_exists=false" >> "$GITHUB_OUTPUT"
             echo "[ERROR] Commit ${{ github.sha }} not found"
             exit 1
           fi
@@ -73,44 +81,64 @@ jobs:
           # against today's main: a branch behind main would otherwise "change" every file main
           # moved on since, and a docs-only branch would never merge. Every commit of the push
           # counts, not only the last one (2026-10-31).
+          # `--no-renames` (#450): with rename detection a move lists only its NEW path, so
+          # `Sources/X → docs/X` read as docs-only and `docs/webapp/X → docs/X` hid the webapp
+          # path. Without it a move lists both sides, and each side is judged.
           BASE=$(git merge-base origin/main ${{ github.sha }} 2>/dev/null || echo "")
-          CHANGED_FILES=$( [ -n "$BASE" ] && git diff --name-only "$BASE" ${{ github.sha }} 2>/dev/null || echo "")
+          CHANGED_FILES=$( [ -n "$BASE" ] && git diff --no-renames --name-only "$BASE" ${{ github.sha }} 2>/dev/null || echo "")
 
           if [ -z "$CHANGED_FILES" ]; then
             echo "[INFO] No file differences found between main and ${{ github.sha }}"
-            echo "docs_only=false" >> $GITHUB_OUTPUT
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           echo "Changed files between main and pushed commit:"
-          echo "$CHANGED_FILES"
+          printf '%s\n' "$CHANGED_FILES"
           echo ""
 
-          # Store changed files for summary
-          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Store changed files for summary. File names are data (#450): the heredoc delimiter is
+          # random, so a file named `EOF` cannot end the block early and write further outputs.
+          DELIM="CHANGED_FILES_$(openssl rand -hex 16)"
+          {
+            echo "changed_files<<$DELIM"
+            printf '%s\n' "$CHANGED_FILES"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
 
-          # Check if all changes are in docs/ (excluding workflow files)
-          NON_DOCS_CHANGES=$(echo "$CHANGED_FILES" | grep -v "^docs/" | grep -v "^$" || true)
+          # Every path must be under docs/ — and none under docs/webapp/ (2026-11): the trigger
+          # filter above excludes webapp only from STARTING this job, and a mixed push started it
+          # and merged the webapp part unreviewed. A path git prints quoted (unusual characters)
+          # does not start with `docs/` and is therefore held, never waved through.
+          NON_DOCS_CHANGES=$(printf '%s\n' "$CHANGED_FILES" | grep -v '^docs/' | grep -v '^$' || true)
+          WEBAPP_CHANGES=$(printf '%s\n' "$CHANGED_FILES" | grep '^docs/webapp/' || true)
 
-          if [ -z "$NON_DOCS_CHANGES" ]; then
-            echo "docs_only=true" >> $GITHUB_OUTPUT
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+          if [ -z "$NON_DOCS_CHANGES" ] && [ -z "$WEBAPP_CHANGES" ]; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
             echo ""
-            echo "[OK] All changes are in docs/ - safe to auto-merge"
+            echo "[OK] All changes are in docs/, none in docs/webapp/ - safe to auto-merge"
           else
-            echo "docs_only=false" >> $GITHUB_OUTPUT
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
             echo ""
-            echo "[INFO] Non-docs changes detected - manual review required:"
-            echo "$NON_DOCS_CHANGES"
+            if [ -n "$NON_DOCS_CHANGES" ]; then
+              echo "[INFO] Non-docs changes detected - manual review required:"
+              printf '%s\n' "$NON_DOCS_CHANGES"
+            fi
+            if [ -n "$WEBAPP_CHANGES" ]; then
+              echo "[INFO] docs/webapp/ changes detected - manual review required:"
+              printf '%s\n' "$WEBAPP_CHANGES"
+            fi
           fi
 
       - name: Merge the pushed commits into main
         if: steps.check.outputs.docs_only == 'true' && steps.check.outputs.has_changes == 'true'
         id: merge
+        env:
+          PUSH_BRANCH: ${{ github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "=============================================="
           echo "  MERGING DOCS CHANGES TO MAIN"
@@ -127,57 +155,59 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             if git merge-base --is-ancestor ${{ github.sha }} HEAD; then
-              echo "merge_status=no_changes" >> $GITHUB_OUTPUT
+              echo "merge_status=no_changes" >> "$GITHUB_OUTPUT"
               echo "[INFO] main already contains ${{ github.sha }}"
               exit 0
             fi
             if ! git merge --no-ff --no-edit ${{ github.sha }} \
                  -m "docs: Auto-merge website update" \
-                 -m "Merged: ${{ github.sha }} from ${{ github.ref_name }}" \
+                 -m "Merged: ${{ github.sha }} from $PUSH_BRANCH" \
                  -m "Auto-merged by GitHub Actions"; then
               git merge --abort 2>/dev/null || true
-              echo "merge_status=conflict" >> $GITHUB_OUTPUT
+              echo "merge_status=conflict" >> "$GITHUB_OUTPUT"
               echo "[ERROR] Merge conflict with main"
               exit 1
             fi
             if git push origin HEAD:main; then
-              echo "merge_status=success" >> $GITHUB_OUTPUT
+              echo "merge_status=success" >> "$GITHUB_OUTPUT"
               echo "[OK] Changes merged to main (attempt $attempt)"
               exit 0
             fi
             echo "[INFO] main moved; retrying"
             sleep $((attempt * 5 + RANDOM % 5))
           done
-          echo "merge_status=push_failed" >> $GITHUB_OUTPUT
+          echo "merge_status=push_failed" >> "$GITHUB_OUTPUT"
           echo "[ERROR] Could not push after 6 attempts"
           exit 1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
         if: always()
+        env:
+          PUSH_BRANCH: ${{ github.ref_name }}
+          CHANGED_FILES: ${{ steps.check.outputs.changed_files }}
         run: |
-          echo "## Auto-Merge Docs" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Pushed Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Source Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Commit Found | ${{ steps.fetch.outputs.commit_exists == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Docs-only | ${{ steps.check.outputs.docs_only == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Merge Status | ${{ steps.merge.outputs.merge_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Auto-Merge Docs" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Item | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Pushed Commit | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          # shellcheck disable=SC2016 # the backticks are Markdown, not a command substitution
+          printf '| Source Branch | `%s` |\n' "$PUSH_BRANCH" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commit Found | ${{ steps.fetch.outputs.commit_exists == 'true' && 'Yes' || 'No' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Docs-only | ${{ steps.check.outputs.docs_only == 'true' && 'Yes' || 'No' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Merge Status | ${{ steps.merge.outputs.merge_status || 'N/A' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
 
-          if [ -n "${{ steps.check.outputs.changed_files }}" ]; then
-            echo "### Changed Files" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "${{ steps.check.outputs.changed_files }}" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "### Changed Files" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+            printf '%s\n' "$CHANGED_FILES" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "" >> "$GITHUB_STEP_SUMMARY"
           if [ "${{ steps.merge.outputs.merge_status }}" == "success" ]; then
-            echo "Website deployment will follow automatically via pages.yml workflow." >> $GITHUB_STEP_SUMMARY
+            echo "Website deployment will follow automatically via pages.yml workflow." >> "$GITHUB_STEP_SUMMARY"
           elif [ "${{ steps.check.outputs.docs_only }}" != "true" ]; then
-            echo "Non-docs changes require manual review." >> $GITHUB_STEP_SUMMARY
+            echo "Non-docs changes require manual review." >> "$GITHUB_STEP_SUMMARY"
           fi

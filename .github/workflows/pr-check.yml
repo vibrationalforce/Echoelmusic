@@ -1,8 +1,10 @@
 # =============================================================================
 # ECHOELMUSIC - PR BUILD CHECK
 # =============================================================================
-# Runs ONLY on pull requests - validates code compiles before merge
-# Mirrors the main CI build strategy for consistency
+# Runs ONLY on pull requests that touch the EARLIER app (10.x: Sources/, Tests/,
+# Package.swift, project.yml, its resources and entitlements) - validates it compiles.
+# Echoel Studio has its own gate, `Echoel Studio` (studio.yml); a PR that only touches
+# EchoelStudio/, docs/ or other paths does not start this check (2026-11, #449 in part).
 # =============================================================================
 
 name: "PR Build Check"
@@ -11,6 +13,18 @@ on:
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'Package.resolved'
+      - 'project.yml'
+      - 'Resources/**'
+      - '*.entitlements'
+      - 'scripts/build-guard.sh'
+      - '.github/actions/setup-xcodegen/**'
+      # The check must run on its own changes (same reason as ci.yml / xcode-compile-check.yml).
+      - '.github/workflows/pr-check.yml'
 
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
@@ -28,16 +42,23 @@ jobs:
 
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      # PR titles and branch names are written by whoever opens the PR: they reach bash through
+      # the environment, never spliced into the script text (#448).
       - name: "Info"
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_HEAD: ${{ github.head_ref }}
+          PR_BASE: ${{ github.base_ref }}
         run: |
           echo "=============================================="
           echo "  PR BUILD CHECK"
           echo "=============================================="
-          echo "PR: #${{ github.event.pull_request.number }}"
-          echo "Title: ${{ github.event.pull_request.title }}"
-          echo "Branch: ${{ github.head_ref }} -> ${{ github.base_ref }}"
+          printf 'PR: #%s\n' "$PR_NUMBER"
+          printf 'Title: %s\n' "$PR_TITLE"
+          printf 'Branch: %s -> %s\n' "$PR_HEAD" "$PR_BASE"
           echo "=============================================="
 
       - name: "Validate Project Files"
@@ -54,12 +75,12 @@ jobs:
           echo "All files present."
 
       - name: "Setup Xcode"
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
       - name: "Cache Swift Package Dependencies"
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             ~/.swiftpm
@@ -150,7 +171,7 @@ jobs:
 
       - name: "Upload Build Logs (on failure)"
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pr-build-logs
           path: |

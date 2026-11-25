@@ -28,7 +28,7 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       # The trust promise "no tracking, network only where named" as a check, not a sentence
       # (docs/dev/NEUPLANUNG_2026-10-18.md §2 Vertrauen). Every network API in EchoelStudio's
@@ -127,7 +127,7 @@ jobs:
           PY
 
       - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
@@ -200,10 +200,10 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 

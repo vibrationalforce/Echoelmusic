@@ -151,11 +151,10 @@ Eine Zeile je Datei; App: S = Studio, F = frühere App. Gate = liest `auto-merge
 | `trigger-testflight.yml` | nur Hand → `testflight.yml` | F | nein |
 | `full-tests.yml` | Push `main` `develop` | F | nein |
 | `benchmark.yml` | Push `main` | F | nein |
-| `pr-check.yml` | Pull Request | F | nein |
+| `pr-check.yml` | Pull Request auf Pfade der früheren App | F | nein |
 | `quick-test.yml` | Push `claude/**` auf Swift — nur ein Secret-Grep | beide | nein |
 | `auto-merge-docs.yml` | Push `claude/**` auf `docs/**` | Website | nein |
 | `pages.yml` | Push `main` auf `docs/**` | Website | nein |
-| `fetch-samples.yml` | `.deploy/fetch-samples` | — | nein |
 | `community-triage.yml` | Issues | — | nein |
 
 ⭐ **DER MERGE NACH `main` WARTET SEIT #1405 AUF ZWEI GATES** (Founder 2026-09-21: „auto-merge-claude.yml du hast das alles unter Kontrolle und machste das klar"). Vier Monate lang tat er es nicht, und diese Tabelle nannte den entscheidenden Workflow gar nicht erst (#683) — genau die Register-Lücke, die diese Datei an anderer Stelle „teurer als eine falsche Zahl" nennt, weil sie nie als Frage auftaucht.

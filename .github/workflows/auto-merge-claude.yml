@@ -99,7 +99,7 @@ jobs:
 
     steps:
       - name: Checkout main
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: main
           fetch-depth: 0
@@ -107,12 +107,17 @@ jobs:
 
       - name: Fetch pushed commit
         id: fetch
+        # Branch names are data, not shell code (#450): an expression on `github.ref_name` is spliced into the
+        # script text BEFORE bash parses it, and git allows `$`, `;` and backticks in a ref name.
+        # Every step below reads it from the environment instead.
+        env:
+          PUSH_BRANCH: ${{ github.ref_name }}
         run: |
           echo "=============================================="
           echo "  FETCHING PUSHED COMMIT"
           echo "=============================================="
           echo "Push SHA: ${{ github.sha }}"
-          echo "Push branch: ${{ github.ref_name }}"
+          printf 'Push branch: %s\n' "$PUSH_BRANCH"
 
           # ⛔ 2026-09-25 (founder-approved): this fetch said `--depth=50`. On a full clone that
           # does not deepen anything — it makes the repo SHALLOW, cutting the pushed commit's
@@ -124,11 +129,11 @@ jobs:
           # Guard: TheAutoMergeWaitsForTheGatesTests (the fetch-depth claim).
           git fetch origin ${{ github.sha }} || git fetch origin --all
 
-          if git cat-file -e ${{ github.sha }}^{commit} 2>/dev/null; then
-            echo "commit_exists=true" >> $GITHUB_OUTPUT
+          if git cat-file -e "${{ github.sha }}^{commit}" 2>/dev/null; then
+            echo "commit_exists=true" >> "$GITHUB_OUTPUT"
             echo "[OK] Commit ${{ github.sha }} is accessible"
           else
-            echo "commit_exists=false" >> $GITHUB_OUTPUT
+            echo "commit_exists=false" >> "$GITHUB_OUTPUT"
             echo "[ERROR] Commit ${{ github.sha }} not found"
             exit 1
           fi
@@ -145,8 +150,11 @@ jobs:
           # commit is exactly the content the merge would bring. That asks the
           # real question and needs no merge-base — which a shallow fetch of the
           # branch might not even contain.
-          CHANGED=$(git diff --name-only HEAD..${{ github.sha }} 2>/dev/null || echo "")
-          echo "$CHANGED"
+          # `--no-renames` (#450): with rename detection a move `Sources/X.swift → docs/X.swift`
+          # lists only `docs/X.swift`, so the scope read "no code" and the deletion under Sources/
+          # merged without a gate. Without it a move lists both paths, old and new.
+          CHANGED=$(git diff --no-renames --name-only HEAD..${{ github.sha }} 2>/dev/null || echo "")
+          printf '%s\n' "$CHANGED"
           echo ""
           # TWO areas, each with its OWN gate (2026-10-20, the session took the CI over:
           # „Die Echoelmusic CI übernehmen“). The legacy app's list stays exactly the set
@@ -161,13 +169,13 @@ jobs:
           if printf '%s\n' "$CHANGED" | grep -Eq '^EchoelStudio/'; then
             studio=true
           fi
-          echo "touches_legacy=$legacy" >> $GITHUB_OUTPUT
-          echo "touches_studio=$studio" >> $GITHUB_OUTPUT
+          echo "touches_legacy=$legacy" >> "$GITHUB_OUTPUT"
+          echo "touches_studio=$studio" >> "$GITHUB_OUTPUT"
           if [ "$legacy" = "true" ] || [ "$studio" = "true" ]; then
-            echo "touches_code=true" >> $GITHUB_OUTPUT
+            echo "touches_code=true" >> "$GITHUB_OUTPUT"
             echo "[GATE] This merge changes code — legacy=$legacy studio=$studio; every gate of a touched area must be green."
           else
-            echo "touches_code=false" >> $GITHUB_OUTPUT
+            echo "touches_code=false" >> "$GITHUB_OUTPUT"
             echo "[GATE] No code change. No gate workflow can even start on"
             echo "       this push, and main compiles afterwards exactly as before."
           fi
@@ -217,7 +225,7 @@ jobs:
               own=$(gh api "repos/$REPO/actions/runs?head_sha=$2&per_page=100" 2>/dev/null \
                     | jq -r '[.workflow_runs[]? | select(.name == "Auto-Merge Claude Branch")] | length' 2>/dev/null)
               if [ -n "$own" ] && [ "$own" != "0" ]; then
-                echo "superseded=true" >> $GITHUB_OUTPUT
+                echo "superseded=true" >> "$GITHUB_OUTPUT"
                 echo "[SKIP] $BRANCH moved past ${SHA} to $2 ($1); that push's merge job merges it, this one does not."
                 exit 0
               fi
@@ -339,9 +347,9 @@ jobs:
             sleep 30
           done
 
-          echo "compile_check=$compile" >> $GITHUB_OUTPUT
-          echo "build_for_testing=$testbuild" >> $GITHUB_OUTPUT
-          echo "studio=$studio" >> $GITHUB_OUTPUT
+          echo "compile_check=$compile" >> "$GITHUB_OUTPUT"
+          echo "build_for_testing=$testbuild" >> "$GITHUB_OUTPUT"
+          echo "studio=$studio" >> "$GITHUB_OUTPUT"
           echo ""
           ok=true
           if [ "$NEED_LEGACY" = "true" ]; then
@@ -371,6 +379,8 @@ jobs:
         # unverified tip.
         if: steps.fetch.outputs.commit_exists == 'true' && steps.gates.outputs.superseded != 'true'
         id: merge
+        env:
+          PUSH_BRANCH: ${{ github.ref_name }}
         run: |
           echo "=============================================="
           echo "  MERGING CHANGES TO MAIN"
@@ -386,7 +396,7 @@ jobs:
           # Show what we're merging
           echo ""
           echo "Files changed:"
-          git diff --name-only HEAD..${{ github.sha }} 2>/dev/null || echo "(could not diff)"
+          git diff --no-renames --name-only HEAD..${{ github.sha }} 2>/dev/null || echo "(could not diff)"
           echo ""
 
           # RETRIED, because the gate above can hold this job for up to 45
@@ -406,8 +416,8 @@ jobs:
             git reset --hard origin/main
 
             if ! git merge ${{ github.sha }} --no-edit \
-                 -m "fix: auto-merge from ${{ github.ref_name }}"; then
-              echo "merge_status=conflict" >> $GITHUB_OUTPUT
+                 -m "fix: auto-merge from $PUSH_BRANCH"; then
+              echo "merge_status=conflict" >> "$GITHUB_OUTPUT"
               echo "[ERROR] Merge failed - conflicts detected"
               git merge --abort 2>/dev/null || true
               exit 1
@@ -424,10 +434,10 @@ jobs:
           done
 
           if [ -n "$merged" ]; then
-            echo "merge_status=success" >> $GITHUB_OUTPUT
+            echo "merge_status=success" >> "$GITHUB_OUTPUT"
             echo "[OK] Pushed to main successfully!"
           else
-            echo "merge_status=push_failed" >> $GITHUB_OUTPUT
+            echo "merge_status=push_failed" >> "$GITHUB_OUTPUT"
             echo "[ERROR] Push to main failed eight times"
             exit 1
           fi
@@ -439,7 +449,7 @@ jobs:
         # TestFlight upload quota (and raced Fastlane cert revocation). Deploy
         # intentionally instead: `git push origin HEAD:deploy` (deploy-on-tag.yml).
         if: false
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             console.log('Merge successful! Triggering TestFlight for all platforms...');
@@ -463,20 +473,23 @@ jobs:
 
       - name: Summary
         if: always()
+        env:
+          PUSH_BRANCH: ${{ github.ref_name }}
         run: |
-          echo "## Auto-Merge Claude Branch" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Pushed Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Source Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Commit Found | ${{ steps.fetch.outputs.commit_exists == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Changes code | ${{ steps.scope.outputs.touches_code || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Xcode Compile Check | ${{ steps.gates.outputs.compile_check || 'not required' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| CI/CD Build for Testing | ${{ steps.gates.outputs.build_for_testing || 'not required' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Echoel Studio | ${{ steps.gates.outputs.studio || 'not required' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Superseded by a newer push | ${{ steps.gates.outputs.superseded == 'true' && 'yes (not merged here)' || 'no' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Merge Status | ${{ steps.merge.outputs.merge_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "## Auto-Merge Claude Branch" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Item | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Pushed Commit | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          # shellcheck disable=SC2016 # the backticks are Markdown, not a command substitution
+          printf '| Source Branch | `%s` |\n' "$PUSH_BRANCH" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commit Found | ${{ steps.fetch.outputs.commit_exists == 'true' && 'Yes' || 'No' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Changes code | ${{ steps.scope.outputs.touches_code || 'N/A' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Xcode Compile Check | ${{ steps.gates.outputs.compile_check || 'not required' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| CI/CD Build for Testing | ${{ steps.gates.outputs.build_for_testing || 'not required' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Echoel Studio | ${{ steps.gates.outputs.studio || 'not required' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Superseded by a newer push | ${{ steps.gates.outputs.superseded == 'true' && 'yes (not merged here)' || 'no' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Merge Status | ${{ steps.merge.outputs.merge_status || 'N/A' }} |" >> "$GITHUB_STEP_SUMMARY"
           # ⛔ #1405b — THIS ROW SAID `Dispatched` ON EVERY SUCCESSFUL MERGE AND THE DISPATCH HAS
           # NOT RUN SINCE 2026-06-16. It read `steps.merge.outputs.merge_status`, i.e. it reported
           # whether the MERGE worked and printed a sentence about TESTFLIGHT — so the one step in
@@ -488,4 +501,4 @@ jobs:
           # states, which a hard-coded "Disabled" would not be. This is `doctor` Section A's rule
           # one level down: a watcher on `steps.<id>.outcome` is only possible once the step has an
           # id, and a Summary that cannot be wrong is worth more than one that is usually right.
-          echo "| TestFlight | ${{ steps.testflight.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TestFlight | ${{ steps.testflight.outcome }} |" >> "$GITHUB_STEP_SUMMARY"

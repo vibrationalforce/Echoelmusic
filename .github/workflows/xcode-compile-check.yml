@@ -32,7 +32,7 @@ jobs:
     env:
       BUILD_NUMBER: ${{ github.run_number }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: "Show Xcode"
         run: xcodebuild -version
