@@ -43,6 +43,13 @@ struct ArrangeView: View {
     /// routes still play; the button in the zoom bar shows them again (Michael on 10084: the rows
     /// stay in view and take the room).
     @AppStorage("arrange.showsModulation") private var showsModulation = true
+    /// Whether the lanes page along with the playhead while the song plays, kept on this device
+    /// (Michael on 10085: the song ran on past the screen's edge).
+    @AppStorage("arrange.followsPlayhead") private var followsPlayhead = true
+    /// Where the lanes are scrolled to; written only when the playhead pages them.
+    @State private var lanePosition = ScrollPosition(edge: .leading)
+    /// What the lanes show now, read by the follower; not observed, so a scroll redraws nothing.
+    @State private var viewport = ArrangeViewport()
     /// The height Arrange has on screen, so the track rows can share what the lanes leave free.
     @State private var visibleHeight: CGFloat = 0
     /// The live factor of a pinch in progress; it resets itself on release or when a scroll takes
@@ -177,6 +184,14 @@ struct ArrangeView: View {
                 PlayheadLine(ticksPerPoint: ticksPerPoint)
             }
         }
+        .scrollPosition($lanePosition)
+        .onScrollGeometryChange(for: CGRect.self) { $0.visibleRect } action: { _, shown in
+            viewport.visible = shown
+        }
+        .background {
+            PlayheadFollower(ticksPerPoint: ticksPerPoint, follows: followsPlayhead,
+                             viewport: viewport, position: $lanePosition)
+        }
         .simultaneousGesture(pinchGesture)
     }
 
@@ -193,6 +208,7 @@ struct ArrangeView: View {
         HStack(spacing: Theme.Space.s) {
             MarkerAddButton(compact: true)
             modulationToggle
+            followToggle
             Spacer()
             zoomButton("Zoom Out", systemImage: "minus.magnifyingglass",
                        enabled: ArrangeZoom.canZoomOut(zoom)) { zoom = ArrangeZoom.zoomedOut(zoom) }
@@ -204,6 +220,21 @@ struct ArrangeView: View {
         .overlay(alignment: .top) {
             Rectangle().fill(Theme.Color.border).frame(height: 1)
         }
+    }
+
+    /// Turns the lanes' paging with the playhead on or off; drawn as on while it follows.
+    private var followToggle: some View {
+        Button { followsPlayhead.toggle() } label: {
+            Image(systemName: "arrow.right.to.line")
+                .font(Theme.Font.label)
+                .foregroundStyle(followsPlayhead ? Theme.Color.accent : Theme.Color.textTertiary)
+                .frame(width: Theme.Size.touch, height: Theme.Size.touch)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Follow Playhead")
+        .accessibilityValue(followsPlayhead ? "On" : "Off")
+        .accessibilityHint("While the song plays, the lanes turn the page when the playhead reaches the edge.")
     }
 
     /// Shows or hides the modulation rows; drawn as on while they show.
@@ -502,6 +533,50 @@ private struct PlayheadLine: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+}
+
+/// What the lanes' scroll view shows, in its content's points. A plain class held in `@State`, not
+/// observed: the scroll writes it on every frame and no view redraws for it.
+@MainActor
+private final class ArrangeViewport {
+    var visible: CGRect = .zero
+}
+
+/// Turns the lanes' page while the song plays: five times a second it reads where the playhead is
+/// heard and, when it nears the right edge or has jumped out of view (a loop's wrap, a locate),
+/// scrolls so it stands a tenth of the width in from the left. Reads the playhead in a task, never
+/// in a body (Law 6); draws nothing and takes no touch.
+private struct PlayheadFollower: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
+    let ticksPerPoint: Double
+    let follows: Bool
+    let viewport: ArrangeViewport
+    @Binding var position: ScrollPosition
+
+    var body: some View {
+        let playing = engine.isPlaying
+        Color.clear
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+            .task(id: "\(playing) \(follows) \(ticksPerPoint)") {
+                guard playing, follows else { return }
+                while !Task.isCancelled {
+                    page()
+                    try? await Task.sleep(for: .milliseconds(200))
+                }
+            }
+    }
+
+    private func page() {
+        let shown = viewport.visible
+        guard shown.width > 0, ticksPerPoint > 0 else { return }
+        let x = CGFloat(TimelineGeometry.x(ofPosition: engine.heardTick(in: store.project), ticksPerPoint: ticksPerPoint))
+        guard x.isFinite else { return }
+        let margin = shown.width / 10
+        guard x > shown.maxX - margin || x < shown.minX else { return }
+        position.scrollTo(x: Swift.max(0, x - margin))
     }
 }
 
