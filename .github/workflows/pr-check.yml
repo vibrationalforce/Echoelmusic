@@ -1,8 +1,9 @@
 # =============================================================================
 # ECHOELMUSIC - PR BUILD CHECK
 # =============================================================================
-# Runs ONLY on pull requests - validates code compiles before merge
-# Mirrors the main CI build strategy for consistency
+# Runs ONLY on pull requests - validates the legacy iOS app build and tests.
+# The XcodeGen project.yml has no macOS app scheme; Echoel Studio has independent
+# macOS-host package tests in .github/workflows/studio.yml.
 # =============================================================================
 
 name: "PR Build Check"
@@ -30,14 +31,20 @@ jobs:
       - name: "Checkout"
         uses: actions/checkout@v4
 
+      # GitHub PR titles and branch names are untrusted: never splice them into shell code.
       - name: "Info"
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_HEAD: ${{ github.head_ref }}
+          PR_BASE: ${{ github.base_ref }}
         run: |
           echo "=============================================="
           echo "  PR BUILD CHECK"
           echo "=============================================="
-          echo "PR: #${{ github.event.pull_request.number }}"
-          echo "Title: ${{ github.event.pull_request.title }}"
-          echo "Branch: ${{ github.head_ref }} -> ${{ github.base_ref }}"
+          printf 'PR: #%s\n' "$PR_NUMBER"
+          printf 'Title: %s\n' "$PR_TITLE"
+          printf 'Branch: %s -> %s\n' "$PR_HEAD" "$PR_BASE"
           echo "=============================================="
 
       - name: "Validate Project Files"
@@ -86,15 +93,6 @@ jobs:
           chmod +x scripts/build-guard.sh
           scripts/build-guard.sh --quick
 
-      - name: "SwiftLint"
-        run: |
-          if command -v swiftlint &> /dev/null; then
-            swiftlint lint --strict --reporter xcode
-          else
-            brew install swiftlint
-            swiftlint lint --strict --reporter xcode
-          fi
-
       - name: "Resolve Swift Package Dependencies"
         run: |
           swift package resolve || true
@@ -105,22 +103,11 @@ jobs:
           echo "Building iOS for Simulator..."
           xcodebuild build-for-testing \
             -scheme Echoelmusic \
-            -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 17' \
+            -destination 'platform=iOS Simulator,OS=latest,name=iPhone 17 Pro Max' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee build-ios.log | xcpretty || { echo "BUILD FAILED — full log:"; tail -100 build-ios.log; exit 1; }
           echo "[OK] iOS Simulator build succeeded"
-
-      - name: "Build macOS"
-        run: |
-          set -o pipefail
-          echo "Building macOS..."
-          xcodebuild build-for-testing \
-            -scheme Echoelmusic-macOS \
-            -configuration Debug \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee build-macos.log | xcpretty || { echo "BUILD FAILED — full log:"; tail -100 build-macos.log; exit 1; }
-          echo "[OK] macOS build succeeded"
 
       - name: "Run Tests (iOS Simulator)"
         run: |
@@ -128,36 +115,33 @@ jobs:
           echo "Running iOS tests..."
           xcodebuild test-without-building \
             -scheme Echoelmusic \
-            -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 17' \
+            -destination 'platform=iOS Simulator,OS=latest,name=iPhone 17 Pro Max' \
             -configuration Debug \
             -parallel-testing-enabled YES \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee test-ios.log | xcpretty --test || { echo "TESTS FAILED — full log:"; tail -100 test-ios.log; exit 1; }
           echo "[OK] iOS tests passed"
 
-      - name: "Run Tests (macOS)"
+      # Keep strict lint blocking, but run platform builds/tests first while the
+      # documented legacy style baseline prevents the earlier pipeline from reaching them.
+      - name: "SwiftLint"
         run: |
-          set -o pipefail
-          echo "Running macOS tests..."
-          xcodebuild test-without-building \
-            -scheme Echoelmusic-macOS \
-            -destination 'platform=macOS' \
-            -configuration Debug \
-            -parallel-testing-enabled YES \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee test-macos.log | xcpretty --test || { echo "TESTS FAILED — full log:"; tail -100 test-macos.log; exit 1; }
-          echo "[OK] macOS tests passed"
+          if command -v swiftlint &> /dev/null; then
+            swiftlint lint --strict --reporter xcode
+          else
+            brew install swiftlint
+            swiftlint lint --strict --reporter xcode
+          fi
 
       - name: "Upload Build Logs (on failure)"
+
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: pr-build-logs
           path: |
             build-ios.log
-            build-macos.log
             test-ios.log
-            test-macos.log
           retention-days: 7
 
       - name: "Summary"
@@ -168,7 +152,5 @@ jobs:
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| iOS Build | Passed |" >> $GITHUB_STEP_SUMMARY
           echo "| iOS Tests | Passed |" >> $GITHUB_STEP_SUMMARY
-          echo "| macOS Build | Passed |" >> $GITHUB_STEP_SUMMARY
-          echo "| macOS Tests | Passed |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "All builds and tests passed - ready to merge!" >> $GITHUB_STEP_SUMMARY
+          echo "iOS build and tests passed; SwiftLint also passed. Studio package macOS tests run in the separate Echoel Studio workflow." >> $GITHUB_STEP_SUMMARY
