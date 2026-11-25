@@ -86,11 +86,18 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
         send(0x80, pitch & 0x7F, 0, offset: offset)
     }
 
-    /// A pitch bend or controller, `offset` frames into the next `render` call.
+    /// A channel message other than a note, `offset` frames into the next `render` call: poly
+    /// pressure (`0xA0`), a controller (`0xB0`), a program change (`0xC0`, one data byte), channel
+    /// pressure (`0xD0`, one data byte) or a pitch bend (`0xE0`). On MIDI channel 1, like the
+    /// notes (`noteOn` carries no channel): a controller on another channel than its notes would
+    /// miss a unit that listens on one. Anything else — a note, a system message — is not sent here.
     public func control(status: UInt8, _ data1: UInt8, _ data2: UInt8, offset: Int = 0) {
         let kind = status & 0xF0
-        guard kind == 0xB0 || kind == 0xE0 else { return }
-        send(kind, data1 & 0x7F, data2 & 0x7F, offset: offset)
+        switch kind {
+        case 0xA0, 0xB0, 0xE0: send(kind, data1 & 0x7F, data2 & 0x7F, offset: offset)
+        case 0xC0, 0xD0: send(kind, data1 & 0x7F, 0, length: 2, offset: offset)
+        default: return
+        }
     }
 
     /// All Notes Off (controller 123), with the pedal lifted and the wheel centred, `offset`
@@ -102,12 +109,14 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
         send(0xB0, 123, 0, offset: offset)
     }
 
-    private func send(_ status: UInt8, _ data1: UInt8, _ data2: UInt8, offset: Int) {
+    /// `length` bytes of the three: 2 for a message with one data byte. The tuple lives on the
+    /// stack; nothing is allocated.
+    private func send(_ status: UInt8, _ data1: UInt8, _ data2: UInt8, length: Int = 3, offset: Int) {
         guard let scheduleMIDI else { return }
         let bytes: (UInt8, UInt8, UInt8) = (status, data1, data2)
         withUnsafeBytes(of: bytes) { raw in
             guard let base = raw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return }
-            scheduleMIDI(AUEventSampleTimeImmediate + AUEventSampleTime(Swift.max(0, offset)), 0, 3, base)
+            scheduleMIDI(AUEventSampleTimeImmediate + AUEventSampleTime(Swift.max(0, offset)), 0, length, base)
         }
     }
 
