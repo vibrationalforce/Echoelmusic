@@ -296,6 +296,56 @@ public enum Arranging {
         }
     }
 
+    /// An audio region's end dragged by `delta` ticks, where the drag may go past its file: the
+    /// region first plays as much of its file as there is, then repeats — copies straight after it,
+    /// as Duplicate makes them, the last cut where the drag ended (on the magnet's line). One undo
+    /// step. A loop is drawn longer instead of duplicated copy by copy (Michael, 10085). A shorter
+    /// drag, or a video region, trims exactly as `trimmed` does. At most `maximumCopies` copies.
+    public static func extended(_ region: AudioRegion, byTicks delta: Tick, in track: Track, project: Project,
+                                snap: SnapGrid, maximumCopies: Int = 64) -> [Command]? {
+        guard delta > 0, track.kind == .audio, let stop = end(of: region, in: project) else {
+            return trimmed(region, edge: .end, byTicks: delta, in: track, project: project, snap: snap)
+        }
+        let target = snap.nearest(stop + delta, meter: project.meterMap)
+        guard target > stop else { return nil }
+        var scratch = project
+        var commands: [Command] = []
+        if let grown = trimmed(region, edge: .end, byTicks: delta, in: track, project: project, snap: snap) {
+            guard applied(grown, to: &scratch) else { return nil }
+            commands += grown
+        }
+        guard var last = scratch.track(track.id)?.regions.first(where: { $0.id == region.id }),
+              var reached = end(of: last, in: scratch) else { return commands.isEmpty ? nil : commands }
+        var copies = 0
+        while reached < target, copies < maximumCopies {
+            guard let current = scratch.track(track.id),
+                  let copy = duplicated(last, in: current, project: scratch),
+                  case let .placeAudio(_, id, _, _)? = copy.first,
+                  applied(copy, to: &scratch),
+                  let made = scratch.track(track.id)?.regions.first(where: { $0.id == id }),
+                  let next = end(of: made, in: scratch), next > reached else { break }
+            commands += copy
+            last = made
+            reached = next
+            copies += 1
+        }
+        if copies > 0, reached > target, let current = scratch.track(track.id),
+           let cut = trimmed(last, edge: .end, byTicks: target - reached, in: current, project: scratch, snap: .off) {
+            commands += cut
+        }
+        return commands.isEmpty ? nil : commands
+    }
+
+    /// Applies `commands` to a scratch copy of the song; false when one is refused.
+    private static func applied(_ commands: [Command], to project: inout Project) -> Bool {
+        do {
+            for command in commands { try command.apply(to: &project) }
+            return true
+        } catch {
+            return false
+        }
+    }
+
     /// A linked copy of the placement straight after it ("Duplicate as Linked", an alias): a second
     /// placement of the same clip, so an edit to the notes is heard in both.
     public static func duplicated(_ placement: Placement, in track: Track) -> Command? {

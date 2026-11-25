@@ -1479,8 +1479,11 @@ private struct RegionBlock: View {
 
     /// VoiceOver's trims by one beat, on the beat whatever the magnet says; said after (audit A3 #6).
     private func trim(_ edge: Arranging.Edge, beats: Tick) {
-        guard let commands = Arranging.trimmed(region, edge: edge, byTicks: beats * meter.ticksPerBeat(at: region.start),
-                                               in: track, project: store.project, snap: .beat) else {
+        let delta = beats * meter.ticksPerBeat(at: region.start)
+        let found = edge == .end && beats > 0
+            ? Arranging.extended(region, byTicks: delta, in: track, project: store.project, snap: .beat)
+            : Arranging.trimmed(region, edge: edge, byTicks: delta, in: track, project: store.project, snap: .beat)
+        guard let commands = found else {
             return ArrangeSpeech.say("Not trimmed: the region stops at its file's edge, bar 1 and the next region.")
         }
         guard documents.attempt(commands, title: "Trim Region") else { return }
@@ -1488,10 +1491,18 @@ private struct RegionBlock: View {
         ArrangeSpeech.say(edge == .start ? "Starts at " + ArrangeSpeech.position(placed.start, meter: meter) : "End trimmed")
     }
 
+    /// The end drawn past the file repeats the region up to where the finger lifted (`Arranging.extended`).
     private func apply(_ edge: Arranging.Edge, byTicks delta: Tick, snap: SnapGrid) {
-        guard let commands = Arranging.trimmed(region, edge: edge, byTicks: delta, in: track, project: store.project,
-                                               snap: snap) else { return }
-        documents.attempt(commands, title: "Trim Region")
+        let commands = edge == .end
+            ? Arranging.extended(region, byTicks: delta, in: track, project: store.project, snap: snap)
+            : Arranging.trimmed(region, edge: edge, byTicks: delta, in: track, project: store.project, snap: snap)
+        guard let commands else { return }
+        documents.attempt(commands, title: Self.loops(commands) ? "Loop Region" : "Trim Region")
+    }
+
+    /// Whether the commands place copies of the region, rather than only trim it.
+    private static func loops(_ commands: [Command]) -> Bool {
+        commands.contains { if case .placeAudio = $0 { return true } else { return false } }
     }
 
     private func move(byBars bars: Tick) {
