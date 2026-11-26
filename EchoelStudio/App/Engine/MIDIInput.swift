@@ -82,6 +82,16 @@ final class LiveRouter: Sendable {
             if isNote {
                 // A note plays as the held keys decide, and the take keeps what was heard.
                 for note in decided.notes { core.playLive(slot: note.slot, status: note.status, note.pitch, note.velocity) }
+            } else if kind == 0xA0 {
+                // Poly pressure reaches the note its key sounds: under a key lock the pitch its press
+                // latched, in the slot the press went to, whatever is live now. A key that is up
+                // presses on the live slot, at the pitch the key would sound. Takes keep no pressure.
+                if let held = state.keys.held(source: source, channel: status & 0x0F, key: data1) {
+                    core.playLive(slot: held.slot, status: status, held.pitch, data2)
+                } else if let slot = decided.slot {
+                    core.playLive(slot: slot, status: status, state.keys.pitch(forKey: data1), data2)
+                }
+                return
             } else {
                 guard let slot = decided.slot else { return }
                 core.playLive(slot: slot, status: status, data1, data2)

@@ -81,6 +81,21 @@ final class LiveKeysTests: XCTestCase {
         XCTAssertEqual(Array(keys.release(channel: 0, key: 61)), [off(60)], "not 61, which never sounded")
     }
 
+    /// Poly pressure belongs to the note its key sounds: under the lock, the pitch the press
+    /// latched, in the slot it went to, whatever the key maps to now.
+    func testAHeldKeysPressureFindsThePitchAndSlotItsPressLatched() {
+        var keys = LiveKeys(lock: cMajor)
+        _ = keys.press(source: 1, channel: 2, key: 61, velocity: 100, slot: 3)
+        keys.lock = nil
+        let held = keys.held(source: 1, channel: 2, key: 61)
+        XCTAssertEqual(held?.slot, 3)
+        XCTAssertEqual(held?.pitch, 60, "C♯ sounded C; the scale changed since")
+        XCTAssertNil(keys.held(source: 0, channel: 2, key: 61), "another keyboard does not hold it")
+        XCTAssertEqual(keys.pitch(forKey: 61), 61, "a key that is up presses where it sounds now")
+        _ = keys.release(source: 1, channel: 2, key: 61)
+        XCTAssertNil(keys.held(source: 1, channel: 2, key: 61))
+    }
+
     /// Two keys on one pitch share the note: the second strikes it again, the first release is
     /// silent, the last one ends it.
     func testTwoKeysOnOnePitchStrikeItAgainAndTheLastReleaseEndsIt() {

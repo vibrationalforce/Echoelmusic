@@ -177,6 +177,18 @@ public struct LiveKeys: Sendable {
         return output
     }
 
+    /// Where a held key's poly pressure belongs: the slot its press went to and the pitch the press
+    /// latched, so under a key lock the pressure reaches the note the key sounds, whatever the key
+    /// maps to now. Nil while the key is up.
+    public func held(source: UInt8, channel: UInt8, key: UInt8) -> (slot: Int, pitch: UInt8)? {
+        let index = Self.index(source, channel & 0x0F, key)
+        guard slots[index] >= 0 else { return nil }
+        return (Int(slots[index]), pitches[index])
+    }
+
+    /// The pitch `key` sounds now, as a press would latch it.
+    public func pitch(forKey key: UInt8) -> UInt8 { sounding(key & 0x7F) }
+
     /// The pitch `key` sounds now.
     private func sounding(_ key: UInt8) -> UInt8 {
         guard let lock, lock.count == 128 else { return key }
