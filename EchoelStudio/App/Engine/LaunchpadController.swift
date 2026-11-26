@@ -25,6 +25,9 @@ final class LaunchpadController {
         var shown: ClipGrid?
         /// The device's CoreMIDI unique id: whether our MIDI clock is sent to it.
         var id: MIDIUniqueID = 0
+        /// The unique ids of the device's other destinations, such as its DAW port: a clock sent
+        /// there may drive its animations too, which is not known.
+        var otherPorts: Set<MIDIUniqueID> = []
         /// Whether its pads flashed and pulsed in the frame last sent.
         var animated = true
         /// What the device may keep from our clock: it keeps flashing to that clock after ours stops.
@@ -102,7 +105,7 @@ final class LaunchpadController {
                 _ = MIDIObjectGetIntegerProperty(endpoint, kMIDIPropertyUniqueID, &id)
                 // A Launchpad seen before may still run the clock it kept then.
                 let kept = id == 0 ? Launchpad.KeptClock() : Launchpad.KeptClock(bpm: keptTempos[id])
-                found[endpoint] = Output(id: id, kept: kept)
+                found[endpoint] = Output(id: id, otherPorts: Self.otherDestinations(of: endpoint, besides: id), kept: kept)
             }
             names.append(title)
         }
@@ -153,8 +156,12 @@ final class LaunchpadController {
         for (endpoint, output) in outputs {
             // The device flashes to our clock, and after it stops to the last tempo it heard from
             // us: past three a second the pads stay steady.
+            // A clock on another port of the device may raise what it keeps, never lower it: only
+            // the port the pads are lit through is known to drive them.
+            let chosen = engine.clock.chosen
+            let lit = chosen.contains(output.id)
             var kept = output.kept
-            kept.look(clockChosen: engine.clock.chosen.contains(output.id), transportRuns: transportRuns,
+            kept.look(clockChosen: lit || !chosen.isDisjoint(with: output.otherPorts), transportRuns: transportRuns && lit,
                       renderCount: renders, fastestBPM: fastest, now: elapsed)
             if output.id != 0, keptTempos[output.id] != kept.bpm {
                 keptTempos[output.id] = kept.bpm
@@ -164,7 +171,12 @@ final class LaunchpadController {
             let previous = animated == output.animated ? output.shown : nil
             let messages = Launchpad.lights(now, previous: previous, animated: animated)
             if !messages.isEmpty { send(messages, to: endpoint) }
-            outputs[endpoint] = Output(shown: now, id: output.id, animated: animated, kept: kept)
+            // The record keeps what it does not change here: its id and its other ports.
+            var next = output
+            next.shown = now
+            next.animated = animated
+            next.kept = kept
+            outputs[endpoint] = next
         }
         if keptChanged { saveKeptTempos() }
     }
@@ -203,6 +215,27 @@ final class LaunchpadController {
                 }
             }
         }
+    }
+
+    /// The unique ids of the other destinations on the device `endpoint` belongs to; none for a
+    /// virtual endpoint, which has no device.
+    private static func otherDestinations(of endpoint: MIDIEndpointRef, besides id: MIDIUniqueID) -> Set<MIDIUniqueID> {
+        var entity = MIDIEntityRef()
+        var device = MIDIDeviceRef()
+        guard MIDIEndpointGetEntity(endpoint, &entity) == noErr, entity != 0,
+              MIDIEntityGetDevice(entity, &device) == noErr, device != 0 else { return [] }
+        var ids: Set<MIDIUniqueID> = []
+        for entityIndex in 0..<MIDIDeviceGetNumberOfEntities(device) {
+            let member = MIDIDeviceGetEntity(device, entityIndex)
+            for destinationIndex in 0..<MIDIEntityGetNumberOfDestinations(member) {
+                var other: MIDIUniqueID = 0
+                let destination = MIDIEntityGetDestination(member, destinationIndex)
+                guard MIDIObjectGetIntegerProperty(destination, kMIDIPropertyUniqueID, &other) == noErr,
+                      other != 0, other != id else { continue }
+                ids.insert(other)
+            }
+        }
+        return ids
     }
 
     private static func displayName(_ endpoint: MIDIEndpointRef) -> String? {
