@@ -331,8 +331,13 @@ public struct ProjectLibrary: Sendable {
         }
     }
 
+    /// Deletes only a direct child of this library. An external package (for example a Files
+    /// import) must not be removed by an action intended for a song in the library.
     public func delete(_ url: URL) throws {
-        guard url.pathExtension == Self.fileExtension else { throw LibraryError.notAPackage(url) }
+        guard url.pathExtension == Self.fileExtension,
+              Self.canonicalPath(url.deletingLastPathComponent()) == Self.canonicalPath(directory) else {
+            throw LibraryError.notAPackage(url)
+        }
         try FileManager.default.removeItem(at: url)
     }
 
