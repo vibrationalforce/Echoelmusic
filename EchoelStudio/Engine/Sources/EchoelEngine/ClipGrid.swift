@@ -184,6 +184,16 @@ public enum Launchpad {
         return animates(clockReachesDevice: true, fastestBPM: kept)
     }
 
+    /// The fastest tempo `song` plays at: its own tempo or a tempo change; a ramp never passes its
+    /// ends. Give it the song as the engine plays it (`ClockFollower.played` puts a followed
+    /// clock's tempo in place of the song's), because that is the tempo our clock sends. NaN as
+    /// soon as one tempo is unknown, so an unknown tempo counts as too fast.
+    public static func fastestBPM(of song: Project) -> Double {
+        song.tempoChanges.reduce(song.tempo) { (fastest: Double, change: TempoChange) -> Double in
+            fastest.isNaN || change.bpm.isNaN ? Double.nan : Swift.max(fastest, change.bpm)
+        }
+    }
+
     /// The messages that bring the device's lights from `previous` (nil: unknown, send all) to
     /// `grid`, three bytes each. With `animated` false every pad is lit steadily (channel 1). A
     /// caller that switches `animated` passes `previous` nil, so every pad is sent again.

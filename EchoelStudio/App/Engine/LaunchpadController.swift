@@ -108,8 +108,9 @@ final class LaunchpadController {
         let now = grid()
         trackOffset = now.trackOffset
         sceneOffset = now.sceneOffset
-        let project = store.project
-        let fastest = project.tempoChanges.reduce(project.tempo) { Swift.max($0, $1.bpm) }
+        // The tempo our clock sends: the song as the engine plays it, a followed clock's or Flow's
+        // tempo in place of its own.
+        let fastest = Launchpad.fastestBPM(of: engine.playing(store.project))
         // Our clock's pulses leave only while the song plays: none while stopped or counting in.
         let clockRuns = engine.isPlaying && !engine.countsIn
         for (endpoint, output) in outputs {

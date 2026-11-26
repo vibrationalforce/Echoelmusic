@@ -1272,8 +1272,9 @@ final class AudioEngine {
     /// The song as the engine plays it: itself; or the clock's tempo — and a jam host's time
     /// signature — in place of its own while a clock is followed (`ClockFollower.played`); or, in
     /// Flow, the tempo the pulse set, the song's own time signature kept. Every snapshot, seek,
-    /// placement and automation point goes through this one function (review 2026-10-28, 2.2).
-    private func playing(_ project: Project) -> Project {
+    /// placement and automation point goes through this one function (review 2026-10-28, 2.2), and
+    /// so does the Launchpad's flash limit (`LaunchpadController`).
+    func playing(_ project: Project) -> Project {
         if followsExternalClock {
             return ClockFollower.played(project, tempo: externalTempo, signature: externalSignature)
         }
