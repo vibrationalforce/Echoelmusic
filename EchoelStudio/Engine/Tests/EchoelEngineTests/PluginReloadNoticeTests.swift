@@ -21,6 +21,28 @@ final class PluginReloadNoticeTests: XCTestCase {
         XCTAssertEqual(notice.text, "Alpha is not installed on this device.")
     }
 
+    func testAskingForAUnitAgainTakesBackOnlyWhatWasSaidAboutItsSlot() {
+        var notice = Notice()
+        notice.refused(1, name: "Alpha", reason: "Alpha stopped working and was not loaded again.")
+        notice.stopped(2, name: "Beta", component: "b", cause: .reset)
+        notice.loaded(2)
+        notice.forget(1)
+        XCTAssertEqual(notice.text, "Beta was loaded again after an audio reset, with its last saved settings.",
+                       "Beta's sentence stays while Alpha is asked for again")
+        notice.stopped(1, name: "Alpha", component: "a", cause: .crash)
+        notice.loaded(1)
+        XCTAssertEqual(notice.text, "Alpha stopped and was loaded again with its last saved settings. "
+                       + "Beta was loaded again after an audio reset, with its last saved settings.")
+    }
+
+    func testAskingForOneCopyAgainKeepsWhatWasSaidAboutTheOther() {
+        var notice = Notice()
+        notice.refused(1, name: "Alpha", reason: "Alpha stopped working and was not loaded again.")
+        notice.refused(2, name: "Alpha", reason: "Alpha stopped working and was not loaded again.")
+        notice.forget(1)
+        XCTAssertEqual(notice.text, "Alpha stopped working and was not loaded again.", "the other copy still did not")
+    }
+
     func testAUnitRefusedAtTheRestartLimitIsSaidAtOnce() {
         var notice = Notice()
         notice.refused(name: "Alpha", reason: "Alpha stopped working and was not loaded again.")

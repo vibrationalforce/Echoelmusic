@@ -225,7 +225,7 @@ final class PluginHost {
                 let reason = "\(entry.component.name) stopped working and was not loaded again. Tap Reload Plugin to try again, or use another plugin."
                 fail(slot, entry.component, reason: reason, detail: "stopped \(count) times")
                 refused.insert(slot)
-                reloads.refused(name: entry.component.name, reason: reason)
+                reloads.refused(slot, name: entry.component.name, reason: reason)
             } else {
                 reloads.stopped(slot, name: entry.component.name, component: entry.component, cause: .crash)
             }
@@ -496,13 +496,14 @@ final class PluginHost {
         }
         // The failure is forgotten either way. When the status line still names the unit — it
         // stopped and was not loaded again (the restart limit, or a reload after a stop that
-        // failed) — that sentence would outlive this reload: the line is cleared and the slot
-        // waits like a reload after a stop, so what happens now is said (loaded again, or why
-        // not). Other units' sentences go with it; the line is one notice. A first load that
-        // failed is said on the page only, and nothing in the line changes for it.
+        // failed) — that sentence would outlive this reload: what the line said about this slot is
+        // taken back and the slot waits like a reload after a stop, so what happens now is said
+        // (loaded again, or why not). Other units' sentences stay. A first load that failed is
+        // said on the page only, and nothing in the line changes for it.
         if let component = failed.removeValue(forKey: slot), notice?.contains(component.name) == true {
-            clearNotice()
+            reloads.forget(slot)
             reloads.stopped(slot, name: component.name, component: component, cause: .crash)
+            notice = reloads.text
         }
         refused.remove(slot)
         restarts[slot] = nil

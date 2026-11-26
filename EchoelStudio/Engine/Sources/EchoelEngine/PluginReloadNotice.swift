@@ -24,8 +24,9 @@ public struct PluginReloadNotice<Slot: Hashable & Sendable, Component: Hashable 
     }
 
     private var pending: [Slot: Pending] = [:]
-    private var reloaded: [(name: String, cause: Cause)] = []
-    private var failures: [(name: String, reason: String)] = []
+    private var reloaded: [(slot: Slot, name: String, cause: Cause)] = []
+    /// A failure said for a slot, or for none (a caller that names no slot).
+    private var failures: [(slot: Slot?, name: String, reason: String)] = []
 
     /// The status line's sentence, or nil when there is nothing to say yet.
     public private(set) var text: String?
@@ -42,23 +43,23 @@ public struct PluginReloadNotice<Slot: Hashable & Sendable, Component: Hashable 
         pending[slot] = Pending(name: name, component: component, cause: cause)
     }
 
-    /// The unit is gone and is not loaded again — it stopped too often.
-    public mutating func refused(name: String, reason: String) {
-        failures.append((name, reason))
+    /// The unit in `slot` is gone and is not loaded again — it stopped too often.
+    public mutating func refused(_ slot: Slot? = nil, name: String, reason: String) {
+        failures.append((slot, name, reason))
         compose()
     }
 
     /// The unit in `slot` came back. Nothing changes for a slot that was not waiting.
     public mutating func loaded(_ slot: Slot) {
         guard let done = pending.removeValue(forKey: slot) else { return }
-        reloaded.append((done.name, done.cause))
+        reloaded.append((slot, done.name, done.cause))
         compose()
     }
 
     /// The unit in `slot` did not come back, for `reason`.
     public mutating func failed(_ slot: Slot, reason: String) {
         guard let done = pending.removeValue(forKey: slot) else { return }
-        failures.append((done.name, reason))
+        failures.append((slot, done.name, reason))
         compose()
     }
 
@@ -66,6 +67,15 @@ public struct PluginReloadNotice<Slot: Hashable & Sendable, Component: Hashable 
     /// now names another plugin is not loaded again, so nothing is said about it.
     public mutating func keep(where stillWanted: (Slot, Component) -> Bool) {
         pending = pending.filter { stillWanted($0.key, $0.value.component) }
+    }
+
+    /// The musician asked for the unit in `slot` again: what the line said about that slot is taken
+    /// back, so the outcome of the new load is what is said; what it says about other slots stays,
+    /// two copies of one plugin included.
+    public mutating func forget(_ slot: Slot) {
+        failures.removeAll { $0.slot == slot }
+        reloaded.removeAll { $0.slot == slot }
+        compose()
     }
 
     /// The status line was cleared (Play, a finished export): what is said from now on is only
