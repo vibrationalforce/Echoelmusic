@@ -742,7 +742,8 @@ public final class EngineCore: @unchecked Sendable {
     /// A MIDI channel message played live into the instrument in `slot`, heard at the start of
     /// the next block. One producer at a time: callers on several threads serialize their pushes
     /// (the app's `LiveRouter` does it under one lock). Notes, pitch bend and controllers:
-    /// 120/123 silence or release, the synth reads 1 and 64, a plugin gets every one.
+    /// 120/123 silence or release, the synth reads 1 and 64, a plugin gets every one, and
+    /// channel pressure, poly pressure and program changes too.
     public func playLive(slot: Int, status: UInt8, _ data1: UInt8, _ data2: UInt8) {
         guard slot >= 0, slot < slotCapacity, slot <= 0xFF else { return }
         let packed = UInt32(slot) << 24 | UInt32(status) << 16 | UInt32(data1 & 0x7F) << 8 | UInt32(data2 & 0x7F)
@@ -1842,8 +1843,10 @@ public final class EngineCore: @unchecked Sendable {
             if on { unit.noteOn(pitch: pitch, velocity: value, offset: 0) }
             if off { unit.noteOff(pitch: pitch, offset: 0) }
             // Every controller reaches the plugin as played — the mod wheel, expression, the pedal —
-            // as a host passes them (S-16b).
-            if allOff { unit.allNotesOff(offset: 0) } else if kind == 0xE0 || kind == 0xB0 { unit.control(status: status, pitch, value, offset: 0) }
+            // as a host passes them (S-16b), and so do channel pressure, poly pressure and a
+            // program change (AUH-5d): `control` sends the two-byte ones with one data byte.
+            let passed = kind == 0xE0 || kind == 0xB0 || kind == 0xD0 || kind == 0xC0 || kind == 0xA0
+            if allOff { unit.allNotesOff(offset: 0) } else if passed { unit.control(status: status, pitch, value, offset: 0) }
         }
     }
 

@@ -66,7 +66,9 @@ public protocol HostedInstrument: ParameterScheduling {
     /// A note-on `offset` frames into the next `render` call.
     func noteOn(pitch: UInt8, velocity: UInt8, offset: Int)
     func noteOff(pitch: UInt8, offset: Int)
-    /// A pitch bend (`0xE0`) or a controller (`0xB0`), `offset` frames into the next `render` call.
+    /// A channel message other than a note, `offset` frames into the next `render` call: a pitch
+    /// bend (`0xE0`), a controller (`0xB0`), poly pressure (`0xA0`), or a program change (`0xC0`)
+    /// or channel pressure (`0xD0`), whose one data byte is `data1` (`data2` is 0).
     func control(status: UInt8, _ data1: UInt8, _ data2: UInt8, offset: Int)
     /// All notes off with the pedal lifted and the wheel centred, `offset` frames into the next
     /// `render` call: 0 for a stop or a seek at a block's start, the boundary's frame for a clip
