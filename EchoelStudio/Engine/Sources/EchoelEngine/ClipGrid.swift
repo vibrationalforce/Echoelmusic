@@ -143,17 +143,35 @@ public enum Launchpad {
     static let playingColor: UInt8 = 21
     static let sceneColor: UInt8 = 1
     static let arrowColor: UInt8 = 3
+    /// A waiting pad's colour when the pads stay steady (`animates` is false): white, apart from
+    /// the green of a playing pad.
+    static let waitingColor: UInt8 = 3
+
+    /// The most a light may flash in one second (WCAG 2.3.1, the 3 Hz ceiling).
+    public static let maximumFlashesPerSecond = 3.0
+
+    /// Whether a waiting pad may flash and a playing one pulse. The device runs those animations on
+    /// its own default tempo, or on the MIDI clock it is sent, one cycle a beat (ANNAHME from
+    /// Novation's programmer reference, not measured on a device). So they stay on unless our clock
+    /// reaches the device and the song's fastest tempo would take them past three a second; an
+    /// unknown tempo counts as too fast.
+    public static func animates(clockReachesDevice: Bool, fastestBPM: Double) -> Bool {
+        guard clockReachesDevice else { return true }
+        guard fastestBPM.isFinite, fastestBPM > 0 else { return false }
+        return fastestBPM / 60 <= maximumFlashesPerSecond
+    }
 
     /// The messages that bring the device's lights from `previous` (nil: unknown, send all) to
-    /// `grid`, three bytes each.
-    public static func lights(_ grid: ClipGrid, previous: ClipGrid?) -> [[UInt8]] {
+    /// `grid`, three bytes each. With `animated` false every pad is lit steadily (channel 1). A
+    /// caller that switches `animated` passes `previous` nil, so every pad is sent again.
+    public static func lights(_ grid: ClipGrid, previous: ClipGrid?, animated: Bool = true) -> [[UInt8]] {
         var messages: [[UInt8]] = []
         for row in 0..<ClipGrid.size {
             for column in 0..<ClipGrid.size {
                 let pad = grid.pads[row][column]
                 if let previous, previous.pads[row][column] == pad { continue }
                 let note = UInt8((8 - row) * 10 + column + 1)
-                messages.append(light(pad, note: note))
+                messages.append(light(pad, note: note, animated: animated))
             }
             let lit = row < grid.scenes.count
             if previous == nil || (row < (previous?.scenes.count ?? 0)) != lit {
@@ -170,13 +188,13 @@ public enum Launchpad {
         return messages
     }
 
-    private static func light(_ pad: ClipGrid.Pad, note: UInt8) -> [UInt8] {
+    private static func light(_ pad: ClipGrid.Pad, note: UInt8, animated: Bool) -> [UInt8] {
         let color = { (index: Int) in trackColors[((index % trackColors.count) + trackColors.count) % trackColors.count] }
         switch pad {
         case .off, .empty: return [0x90, note, 0]
         case .clip(let index): return [0x90, note, color(index)]
-        case .queued: return [0x91, note, playingColor]
-        case .playing: return [0x92, note, playingColor]
+        case .queued: return animated ? [0x91, note, playingColor] : [0x90, note, waitingColor]
+        case .playing: return animated ? [0x92, note, playingColor] : [0x90, note, playingColor]
         }
     }
 }
