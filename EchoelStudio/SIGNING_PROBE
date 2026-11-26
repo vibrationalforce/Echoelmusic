@@ -10,3 +10,4 @@ that run only, and exported to a local folder. Nothing is uploaded.
 2026-10-21 run 4 result: refused again; the .auv3 profile now grants both groups, the app's profile still only .shared — the group was ticked on com.echoelmusic.app.auv3, not on com.echoelmusic.app.
 2026-10-21 run 5: the founder saved group.com.echoelmusic on com.echoelmusic.app; run again to see whether the app's profile now grants it.
 2026-11-14 run 6: the TestFlight upload of 7479b00 stops at the App Store Connect sign-in with HTTP 403, and that commit's script drops Apple's reason; this branch carries 00388a0, whose sign-in step prints Apple's error code and title. Nothing is uploaded.
+2026-11-26 run 7: F44 — inter-app-audio is added to the app's entitlements on this branch only (probe/inter-app-audio, never merged by automation); the founder says the capability is ticked on com.echoelmusic.app. Green means both profiles granted it and the signed app carries it.

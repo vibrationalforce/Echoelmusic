@@ -2,6 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Inter-App Audio (F44, 2026-11-26): no Studio build has listed another maker's Audio Unit on
+	     the founder's iPhone, although PluginHost asks both ways Apple offers (the component manager
+	     and AudioComponentFindNext). ANNAHME: iOS lists them to a host only with this capability; the
+	     signing probe shows whether the profile grants it, a device run whether the list fills. The
+	     extension (EchoelPlugins) hosts nothing and does not ask for it. -->
+	<key>inter-app-audio</key>
+	<true/>
 	<!-- Two App Groups, each for one purpose:
 	     `group.com.echoelmusic.shared` (since 2026-10-19, factory job 002): the app records the
 	     plugin purchase there for the extension to read (PluginUnlock.recordOwned).
