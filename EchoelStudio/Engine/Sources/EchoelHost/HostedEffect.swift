@@ -150,6 +150,12 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
 
     /// Replaces `frames` of the bus with the effect's output. A unit that fails a block leaves
     /// the bus as it was; a sample that is not finite becomes silence.
+    ///
+    /// A refused block of a LATENT unit therefore plays dry and `latencyFrames` early against the
+    /// compensated paths (render audit 2026-11-25, finding 8): two jumps, into and out of it. Kept
+    /// on purpose: silence would lose the track live when a unit keeps refusing, and a delayed dry
+    /// history costs a ring per latent insert for a fault that clicks anyway. Exports fail on any
+    /// refused block (`renderFailures`), so no file carries the jump.
     public func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
         guard !isBypassed, frames > 0, frames <= maximumFrames else { return }
         inLeft = left
