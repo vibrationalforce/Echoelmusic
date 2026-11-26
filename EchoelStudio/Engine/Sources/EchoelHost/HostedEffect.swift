@@ -148,8 +148,9 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
                            AUAudioFrameCount(Swift.max(0, ramp)), address, value)
     }
 
-    /// Replaces `frames` of the bus with the effect's output. A unit that fails a block leaves
-    /// the bus as it was; a sample that is not finite becomes silence.
+    /// Replaces `frames` of the bus with the effect's output. A unit that fails a block, or hands
+    /// back fewer samples than it (`mDataByteSize` of memory of its own), leaves the bus as it was
+    /// and counts the block; a sample that is not finite becomes silence.
     ///
     /// A refused block of a LATENT unit therefore plays dry and `latencyFrames` early against the
     /// compensated paths (render audit 2026-11-25, finding 8): two jumps, into and out of it. Kept
@@ -174,7 +175,9 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
         stamp.mFlags = .sampleTimeValid
         let status = renderBlock(&flags, &stamp, AUAudioFrameCount(frames), 0, list.unsafeMutablePointer, pullInput)
         sampleTime += Double(frames)
-        guard status == noErr else {
+        // A unit may point the buffers at memory of its own and says how much it holds; fewer
+        // samples than the block is a refused block, never a read past that memory.
+        guard status == noErr, Self.holdsTheBlock(list, bytes: bytes) else {
             failures.add(1, ordering: .relaxed)
             return
         }
@@ -185,5 +188,15 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
             left[i] = a.isFinite ? a : 0
             right[i] = b.isFinite ? b : 0
         }
+    }
+
+    /// Render thread: whether each of the first two output buffers that has memory holds `bytes`.
+    /// One without memory is never read here: the first plays on both sides, or, without any,
+    /// nothing plays, as before. Shared with `HostedUnit`; comparisons only.
+    static func holdsTheBlock(_ list: UnsafeMutableAudioBufferListPointer, bytes: UInt32) -> Bool {
+        for index in 0..<Swift.min(list.count, 2) where list[index].mData != nil {
+            if list[index].mDataByteSize < bytes { return false }
+        }
+        return true
     }
 }

@@ -134,7 +134,9 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     }
 
     /// Renders `frames` and adds them into `left` and `right` at the lane's gains. A unit that
-    /// fails a block, or returns a value that is not finite, contributes nothing for that frame.
+    /// fails a block, or hands back fewer samples than it (`mDataByteSize` of memory of its own),
+    /// contributes nothing to that block and counts it; a value that is not finite contributes
+    /// nothing for that frame.
     public func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
                        gainLeft: Float, gainRight: Float) {
         guard frames > 0, frames <= maximumFrames else { return }
@@ -151,11 +153,12 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
         stamp.mFlags = .sampleTimeValid
         let status = renderBlock(&flags, &stamp, AUAudioFrameCount(frames), 0, list.unsafeMutablePointer, nil)
         sampleTime += Double(frames)
-        guard status == noErr else {
+        // A unit may point the buffers at its own memory instead of filling ours, and says how much
+        // it holds; fewer samples than the block is a refused block, never a read past that memory.
+        guard status == noErr, HostedEffect.holdsTheBlock(list, bytes: bytes) else {
             failures.add(1, ordering: .relaxed)
             return
         }
-        // A unit may point the buffers at its own memory instead of filling ours.
         guard let l = list[0].mData?.assumingMemoryBound(to: Float.self) else { return }
         let r = list.count > 1 ? (list[1].mData?.assumingMemoryBound(to: Float.self) ?? l) : l
         for i in 0..<frames {
