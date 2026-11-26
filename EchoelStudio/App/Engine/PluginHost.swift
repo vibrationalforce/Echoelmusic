@@ -101,6 +101,9 @@ final class PluginHost {
     /// sentence changes, so a capture on every save moves nothing a view observes.
     private(set) var saveProblems: [Slot: String] = [:]
     @ObservationIgnored private var requestCount = 0
+    /// The catalog scan in flight: a newer one replaces it, so an older scan that ends later never
+    /// writes over a newer list (the registrations can change several times in a row).
+    @ObservationIgnored private var catalogScan: Task<Void, Never>?
     @ObservationIgnored private var registrationObserver: NSObjectProtocol?
     @ObservationIgnored private var invalidationObserver: NSObjectProtocol?
     @ObservationIgnored private var resetObserver: NSObjectProtocol?
@@ -255,12 +258,14 @@ final class PluginHost {
     /// song takes both as an insert (`PluginComponent.role`), so both are offered. Only `aufx` was
     /// asked for, and an installed music effect could not be chosen at all.
     func refreshCatalog() {
-        Task {
+        catalogScan?.cancel()
+        catalogScan = Task {
             let found = await Task.detached(priority: .utility) {
                 let processors = Self.installed(kAudioUnitType_Effect) + Self.installed(kAudioUnitType_MusicEffect)
                 return (Self.installed(kAudioUnitType_MusicDevice),
                         processors.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending })
             }.value
+            guard !Task.isCancelled else { return }
             instruments = found.0
             effects = found.1
         }
