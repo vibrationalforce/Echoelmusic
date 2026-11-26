@@ -37,6 +37,9 @@ public final class DrumKernel: InstrumentKernel, @unchecked Sendable {
     private let tomAddress: Int
     /// Per piece (kit order): tune, decay, level.
     private let pieceAddresses: UnsafeMutablePointer<SIMD4<Int32>>
+    /// How many pieces the kit has, counted once in `init`: the render thread walks the pieces by
+    /// raw value instead of forming `DrumKit.Piece.allCases`, an array.
+    private let pieceCount: Int
 
     public convenience init(sampleRate: Double, maximumFrames: Int = 4_096) {
         self.init(sampleRate: sampleRate, maximumFrames: maximumFrames, level: Float(Self.parameters.first?.defaultValue ?? 0.8))
@@ -74,9 +77,10 @@ public final class DrumKernel: InstrumentKernel, @unchecked Sendable {
         glideAddress = address(SynthParameter.drumsKickGlide.key.rawValue)
         hatAddress = address(SynthParameter.drumsHatModel.key.rawValue)
         tomAddress = address(SynthParameter.drumsTomModel.key.rawValue)
-        pieceAddresses = .allocate(capacity: DrumKit.Piece.allCases.count)
-        pieceAddresses.initialize(repeating: SIMD4(repeating: -1), count: DrumKit.Piece.allCases.count)
-        for (index, piece) in SynthParameter.drumPieces.enumerated() where index < DrumKit.Piece.allCases.count {
+        pieceCount = DrumKit.Piece.allCases.count
+        pieceAddresses = .allocate(capacity: pieceCount)
+        pieceAddresses.initialize(repeating: SIMD4(repeating: -1), count: pieceCount)
+        for (index, piece) in SynthParameter.drumPieces.enumerated() where index < pieceCount {
             pieceAddresses[index] = SIMD4(Int32(address("drums.\(piece.key).tune")), Int32(address("drums.\(piece.key).decay")),
                                           Int32(address("drums.\(piece.key).level")), -1)
         }
@@ -118,8 +122,12 @@ public final class DrumKernel: InstrumentKernel, @unchecked Sendable {
         let now = version.load(ordering: .acquiring)
         guard now != appliedVersion else { return }
         appliedVersion = now
-        for piece in DrumKit.Piece.allCases {
-            let at = pieceAddresses[piece.rawValue]
+        // By raw value (0 ..< pieceCount, the order `pieceAddresses` is filled in), not over
+        // `allCases`: that forms an array, and this runs on the render thread whenever a value
+        // changed, under drum automation every 32 frames (render audit 2026-11-25).
+        for raw in 0..<pieceCount {
+            guard let piece = DrumKit.Piece(rawValue: raw) else { continue }
+            let at = pieceAddresses[raw]
             kit.setSound(DrumKit.PieceSound(tune: value(at[0], 0), decay: value(at[1], 1), level: value(at[2], 1)), for: piece)
         }
         kit.setKickGlide(value(Int32(glideAddress), 1))
