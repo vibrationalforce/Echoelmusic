@@ -1,6 +1,7 @@
 import CoreMIDI
 import EchoelCore
 import EchoelEngine
+import Foundation
 import Observation
 import os
 
@@ -31,6 +32,15 @@ final class LaunchpadController {
     }
 
     @ObservationIgnored private var outputs: [MIDIEndpointRef: Output] = [:]
+    /// The fastest tempo each Launchpad may keep from our clock (`Launchpad.KeptClock.bpm`), by its
+    /// CoreMIDI unique id, kept on this device across a reconnect and a relaunch: a Launchpad that
+    /// stays powered keeps the last clock it heard. One whose power was cut, or that another app has
+    /// since sent a slower clock, has let it go, which nothing here can see: its pads stay steady
+    /// until a slower clock of ours has run long enough, and for good while ours is never sent to it.
+    @ObservationIgnored private var keptTempos: [MIDIUniqueID: Double]
+    private static let keptTemposKey = "launchpadKeptClockBPM"
+    /// A property list holds no infinity: an unknown tempo is stored as this, which counts the same.
+    private static let unknownStoredBPM = 1_000_000.0
     @ObservationIgnored private var trackOffset = 0
     @ObservationIgnored private var sceneOffset = 0
     @ObservationIgnored private var lightTask: Task<Void, Never>?
@@ -42,6 +52,24 @@ final class LaunchpadController {
         self.store = store
         self.engine = engine
         self.midi = midi
+        keptTempos = Self.storedKeptTempos()
+    }
+
+    /// What `keptTempos` held at the last save; an entry that is not a tempo is left out.
+    private static func storedKeptTempos() -> [MIDIUniqueID: Double] {
+        let stored = UserDefaults.standard.dictionary(forKey: keptTemposKey) ?? [:]
+        var tempos: [MIDIUniqueID: Double] = [:]
+        for (key, value) in stored {
+            guard let id = MIDIUniqueID(key), id != 0, let bpm = value as? Double, !bpm.isNaN else { continue }
+            tempos[id] = bpm
+        }
+        return tempos
+    }
+
+    private func saveKeptTempos() {
+        var stored: [String: Double] = [:]
+        for (id, bpm) in keptTempos { stored[String(id)] = Swift.min(bpm, Self.unknownStoredBPM) }
+        UserDefaults.standard.set(stored, forKey: Self.keptTemposKey)
     }
 
     func start() {
@@ -72,7 +100,9 @@ final class LaunchpadController {
                 send([Launchpad.programmerMode(model)], to: endpoint)
                 var id: MIDIUniqueID = 0
                 _ = MIDIObjectGetIntegerProperty(endpoint, kMIDIPropertyUniqueID, &id)
-                found[endpoint] = Output(id: id)
+                // A Launchpad seen before may still run the clock it kept then.
+                let kept = id == 0 ? Launchpad.KeptClock() : Launchpad.KeptClock(bpm: keptTempos[id])
+                found[endpoint] = Output(id: id, kept: kept)
             }
             names.append(title)
         }
@@ -119,18 +149,24 @@ final class LaunchpadController {
         let transportRuns = engine.isRunning && engine.isPlaying && !engine.countsIn
         let renders = engine.renderCount
         let elapsed = ContinuousClock.now - started
+        var keptChanged = false
         for (endpoint, output) in outputs {
             // The device flashes to our clock, and after it stops to the last tempo it heard from
             // us: past three a second the pads stay steady.
             var kept = output.kept
             kept.look(clockChosen: engine.clock.chosen.contains(output.id), transportRuns: transportRuns,
                       renderCount: renders, fastestBPM: fastest, now: elapsed)
+            if output.id != 0, keptTempos[output.id] != kept.bpm {
+                keptTempos[output.id] = kept.bpm
+                keptChanged = true
+            }
             let animated = Launchpad.animates(keptClockBPM: kept.bpm)
             let previous = animated == output.animated ? output.shown : nil
             let messages = Launchpad.lights(now, previous: previous, animated: animated)
             if !messages.isEmpty { send(messages, to: endpoint) }
             outputs[endpoint] = Output(shown: now, id: output.id, animated: animated, kept: kept)
         }
+        if keptChanged { saveKeptTempos() }
     }
 
     private func handle(_ press: Launchpad.Press) {

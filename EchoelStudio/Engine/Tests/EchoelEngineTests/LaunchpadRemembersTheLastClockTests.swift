@@ -98,6 +98,17 @@ final class LaunchpadRemembersTheLastClockTests: XCTestCase {
         XCTAssertTrue(loop.animates)
     }
 
+    func testATempoKeptFromAnEarlierSessionWaitsLikeOneHeardNow() {
+        // The app relaunched and the Launchpad stayed powered: it may still run the 200 it kept.
+        var loop = Loop(kept: Launchpad.KeptClock(bpm: 200))
+        loop.run(for: .seconds(1), chosen: false, playing: true, song: 120)
+        XCTAssertFalse(loop.animates)
+        loop.run(for: .seconds(4), chosen: true, playing: true, song: 120)
+        XCTAssertEqual(loop.kept.bpm, 120, "a slower clock of ours that ran long enough brings it down")
+        XCTAssertFalse(Launchpad.animates(keptClockBPM: Launchpad.KeptClock(bpm: 1_000_000).bpm),
+                       "an unknown tempo as a property list stores it")
+    }
+
     func testAnEngineThatDoesNotRenderSendsNoPulse() {
         var loop = Loop()
         loop.run(for: .seconds(5), chosen: true, playing: true, song: 200)
