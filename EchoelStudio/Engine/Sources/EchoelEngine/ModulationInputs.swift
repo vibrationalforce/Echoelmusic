@@ -33,14 +33,17 @@ public final class ModulationInputs: @unchecked Sendable {
         cells[index].bits.store(stored.bitPattern, ordering: .relaxed)
     }
 
-    /// Render-safe: the source's value, or nil while it is absent.
+    /// The source's value, or nil while it is absent. Not for the render thread: it finds the
+    /// source's position through `ModulationSource.allCases`. The render path reads `value(at:)`
+    /// with an index compiled off the render thread (`MixModulation`).
     public func value(_ source: ModulationSource) -> Double? {
         guard let index = Self.index(source) else { return nil }
         return value(at: index)
     }
 
     /// The source's value for anything that sends it off the device (MIDI out, the live stream's
-    /// picture): nil while it is absent, and nil for a value that must stay on the device. Render-safe.
+    /// picture): nil while it is absent, and nil for a value that must stay on the device. Not for
+    /// the render thread, for the same reason as `value(_:)`.
     public func shareableValue(_ source: ModulationSource) -> Double? {
         guard let index = Self.index(source), index < cells.count else { return nil }
         let reading = Double(bitPattern: cells[index].bits.load(ordering: .relaxed))
