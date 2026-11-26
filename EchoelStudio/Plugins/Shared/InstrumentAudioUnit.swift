@@ -307,7 +307,14 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             if state.resetRequested.exchange(false, ordering: .acquiringAndReleasing) {
                 state.kernel.receive(status: 0xB0, 120, 0)
             }
-            // The host may hand buffers or ask for ours.
+            // The host may hand buffers or ask for ours. Its `mDataByteSize` is SET here, never
+            // read: as in Apple's AUv3 template, a host's buffer holds the call's frames by
+            // contract, and the field it hands in can be stale (ANNAHME: a host that reuses its
+            // list after a shorter call). Refusing or clamping on it would silence hosts that
+            // work (render audit 2026-11-25, priority 9, AUv3 side: by contract, not changed).
+            // Our own bound is `frames <= state.capacity` above. As a HOST, Studio does check a
+            // unit's output (`HostedEffect.holdsTheBlock`): there the unit declares what it
+            // hands back.
             if buffers[0].mData == nil { buffers[0].mData = UnsafeMutableRawPointer(ownLeft) }
             if buffers[1].mData == nil { buffers[1].mData = UnsafeMutableRawPointer(ownRight) }
             buffers[0].mDataByteSize = UInt32(frames * MemoryLayout<Float>.size)
