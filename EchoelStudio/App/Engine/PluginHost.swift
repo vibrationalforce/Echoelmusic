@@ -119,7 +119,10 @@ final class PluginHost {
         let effect: HostedEffect?
         /// Our observer on the unit's parameters; also the originator of values we set, so the
         /// unit does not report them back.
-        let observer: AUParameterObserverToken?
+        var observer: AUParameterObserverToken?
+        /// Tells the host when the unit replaced its tree (`treeChanged`), and the tree it had.
+        var watch: ParameterTreeWatch?
+        var tree: ObjectIdentifier?
         /// The request that loaded it: unique, so a unit loaded again in the same slot (a new
         /// rate, settings an undo took back) is told apart from the one before.
         let number: Int
@@ -449,7 +452,8 @@ final class PluginHost {
         loaded[slot] = Loaded(component: request.component, sampleRate: rate, unit: unit,
                               instrument: isEffect ? nil : Self.instrument(unit, sampleRate: rate, clock: clock),
                               effect: slot.insertID.map { Self.effect(unit, insert: $0, sampleRate: rate, clock: clock) },
-                              observer: observe(unit, slot: slot), number: number)
+                              observer: observe(unit, slot: slot), watch: watch(unit, slot: slot, number: number),
+                              tree: unit.parameterTree.map(ObjectIdentifier.init), number: number)
         syncedState[slot] = state
         problems[slot] = nil
         if reloads.isPending(slot) {
@@ -529,6 +533,34 @@ final class PluginHost {
     }
 
     /// Watches the unit's own controls. The unit calls this on any thread, in batches.
+    private func watch(_ unit: AUAudioUnit, slot: Slot, number: Int) -> ParameterTreeWatch {
+        ParameterTreeWatch(unit) { [weak self] in
+            Task { @MainActor in self?.treeChanged(slot, number: number) }
+        }
+    }
+
+    /// The unit in `slot` has a new tree, or new values for all of it: the observer goes on the
+    /// tree it has now, automation compiles against its ranges, and its page reads it again.
+    /// A unit loaded again since (`number`) is not this one.
+    private func treeChanged(_ slot: Slot, number: Int) {
+        guard var entry = loaded[slot], entry.number == number else { return }
+        let ranges = Self.automatable(entry.unit)
+        // Many units say "all values changed" for every preset; with the same ranges nothing that
+        // automation or the page reads has moved, and the song is not compiled again for it.
+        let before = entry.instrument?.parameterRanges ?? entry.effect?.parameterRanges ?? [:]
+        let tree = entry.unit.parameterTree.map(ObjectIdentifier.init)
+        guard ranges != before || tree != entry.tree else { return }
+        entry.tree = tree
+        log.info("plugin: \(entry.component.name, privacy: .public) changed its parameters")
+        if let observer = entry.observer { entry.unit.parameterTree?.removeParameterObserver(observer) }
+        entry.observer = observe(entry.unit, slot: slot)
+        entry.instrument?.updateParameterRanges(ranges)
+        entry.effect?.updateParameterRanges(ranges)
+        loaded[slot] = entry
+        revision += 1
+        onUnitsChanged?()
+    }
+
     private func observe(_ unit: AUAudioUnit, slot: Slot) -> AUParameterObserverToken? {
         unit.parameterTree?.token(byAddingParameterAutomationObserver: { @Sendable [weak self] count, events in
             var moves: [(address: UInt64, value: Float, phase: ParameterPhase)] = []
@@ -657,13 +689,7 @@ final class PluginHost {
     /// The parameters automation may move: writable, with a real range. Read after the saved
     /// settings are applied — some units build their tree from them.
     private static func automatable(_ unit: AUAudioUnit) -> [UInt64: ClosedRange<Float>] {
-        var ranges: [UInt64: ClosedRange<Float>] = [:]
-        for parameter in unit.parameterTree?.allParameters ?? [] where parameter.flags.contains(.flag_IsWritable) {
-            let low = parameter.minValue, high = parameter.maxValue
-            guard low.isFinite, high.isFinite, high > low else { continue }
-            ranges[parameter.address] = low...high
-        }
-        return ranges
+        HostedParameters.automatableRanges(unit.parameterTree)
     }
 
     /// The parameters of the unit in `slot` that the song can automate, in the unit's order, or

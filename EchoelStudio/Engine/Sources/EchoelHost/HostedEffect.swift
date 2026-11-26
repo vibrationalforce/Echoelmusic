@@ -26,7 +26,9 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     public let isBypassed: Bool
     /// The insert this effect plays, so the song's automation of it finds it.
     public let insert: InsertID?
-    public let parameterRanges: [UInt64: ClosedRange<Float>]
+    /// Main thread only: read when a snapshot is compiled, replaced when the unit's tree changes
+    /// (`updateParameterRanges`); the render thread never reads it.
+    public private(set) var parameterRanges: [UInt64: ClosedRange<Float>]
     /// The unit's output bus: 2 channels, or 1 where it is mono, which plays on both sides
     /// (`UnitPreparation.Layout`). A mono INPUT needs no telling: the unit's pull asks for one
     /// buffer, and hears the bus summed at half each.
@@ -94,6 +96,12 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
         outRight.deallocate()
         inMono.deallocate()
         free(list.unsafeMutablePointer)
+    }
+
+    /// The unit replaced its parameter tree: the ranges the next snapshot compiles automation
+    /// against. Main thread only, like the read.
+    public func updateParameterRanges(_ ranges: [UInt64: ClosedRange<Float>]) {
+        parameterRanges = ranges
     }
 
     /// Render thread: the unit's input is the bus, in its own buffers or pointed at ours.
