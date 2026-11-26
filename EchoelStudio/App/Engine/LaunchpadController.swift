@@ -110,8 +110,11 @@ final class LaunchpadController {
         trackOffset = now.trackOffset
         sceneOffset = now.sceneOffset
         // The tempo our clock sends: the song as the engine plays it, a followed clock's or Flow's
-        // tempo in place of its own.
-        let fastest = Launchpad.fastestBPM(of: engine.playing(store.project))
+        // tempo in place of its own; unknown while a followed clock is not measured yet, or while
+        // a timecode paces the song.
+        let fastest = Launchpad.clockBPM(playing: engine.playing(store.project),
+                                         followsClock: engine.followsExternalClock,
+                                         clockTempo: engine.externalTempo, chasesTimecode: engine.timecodeRuns)
         // No pulse leaves while the song is stopped or counts in, or while the engine is down.
         let transportRuns = engine.isRunning && engine.isPlaying && !engine.countsIn
         let renders = engine.renderCount

@@ -243,6 +243,17 @@ public enum Launchpad {
         }
     }
 
+    /// The fastest tempo our clock may send while the engine plays `song`, the song as
+    /// `AudioEngine.playing` gives it. NaN, unknown, while the song follows a clock whose tempo is
+    /// not measured yet (the engine is already pulled to that clock), or a timecode, which paces
+    /// the song by nudging its playhead, so a sender running fast sends our pulses faster.
+    public static func clockBPM(playing song: Project, followsClock: Bool, clockTempo: Double?,
+                                chasesTimecode: Bool) -> Double {
+        if chasesTimecode { return Double.nan }
+        if followsClock, !(clockTempo?.isFinite ?? false) { return Double.nan }
+        return fastestBPM(of: song)
+    }
+
     /// The messages that bring the device's lights from `previous` (nil: unknown, send all) to
     /// `grid`, three bytes each. With `animated` false every pad is lit steadily (channel 1). A
     /// caller that switches `animated` passes `previous` nil, so every pad is sent again.

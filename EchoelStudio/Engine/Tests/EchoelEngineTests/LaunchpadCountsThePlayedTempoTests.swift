@@ -28,6 +28,17 @@ final class LaunchpadCountsThePlayedTempoTests: XCTestCase {
         XCTAssertFalse(Launchpad.animates(keptClockBPM: followed), "a 200 BPM clock sent on keeps the pads steady")
     }
 
+    func testAClockOrATimecodeWithoutAKnownTempoCountsAsTooFast() {
+        let slow = song(tempo: 120, changes: [])
+        XCTAssertEqual(Launchpad.clockBPM(playing: slow, followsClock: false, clockTempo: nil, chasesTimecode: false), 120)
+        XCTAssertTrue(Launchpad.clockBPM(playing: slow, followsClock: true, clockTempo: nil, chasesTimecode: false).isNaN,
+                      "the followed clock's tempo is not measured yet")
+        let followed = ClockFollower.played(slow, tempo: 200)
+        XCTAssertEqual(Launchpad.clockBPM(playing: followed, followsClock: true, clockTempo: 200, chasesTimecode: false), 200)
+        XCTAssertTrue(Launchpad.clockBPM(playing: slow, followsClock: false, clockTempo: nil, chasesTimecode: true).isNaN,
+                      "a timecode paces the song by nudging it")
+    }
+
     func testAnUnknownTempoAnywhereCountsAsTooFast() {
         XCTAssertTrue(Launchpad.fastestBPM(of: song(tempo: 120, changes: [.nan, 90])).isNaN)
         XCTAssertTrue(Launchpad.fastestBPM(of: song(tempo: .nan, changes: [90])).isNaN)
