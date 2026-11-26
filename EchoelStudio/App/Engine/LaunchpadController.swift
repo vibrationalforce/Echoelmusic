@@ -22,6 +22,10 @@ final class LaunchpadController {
     /// What one Launchpad's lights last showed; nil until the first frame is sent.
     private struct Output {
         var shown: ClipGrid?
+        /// The device's CoreMIDI unique id: whether our MIDI clock is sent to it.
+        var id: MIDIUniqueID = 0
+        /// Whether its pads flashed and pulsed in the frame last sent.
+        var animated = true
     }
 
     @ObservationIgnored private var outputs: [MIDIEndpointRef: Output] = [:]
@@ -62,7 +66,9 @@ final class LaunchpadController {
             } else {
                 log.info("midi: Launchpad \(title, privacy: .public)")
                 send([Launchpad.programmerMode(model)], to: endpoint)
-                found[endpoint] = Output()
+                var id: MIDIUniqueID = 0
+                _ = MIDIObjectGetIntegerProperty(endpoint, kMIDIPropertyUniqueID, &id)
+                found[endpoint] = Output(id: id)
             }
             names.append(title)
         }
@@ -99,10 +105,16 @@ final class LaunchpadController {
         let now = grid()
         trackOffset = now.trackOffset
         sceneOffset = now.sceneOffset
+        let project = store.project
+        let fastest = project.tempoChanges.reduce(project.tempo) { Swift.max($0, $1.bpm) }
         for (endpoint, output) in outputs {
-            let messages = Launchpad.lights(now, previous: output.shown)
+            // Our clock drives the device's flashing: past three a second the pads stay steady.
+            let animated = Launchpad.animates(clockReachesDevice: engine.clock.chosen.contains(output.id),
+                                              fastestBPM: fastest)
+            let previous = animated == output.animated ? output.shown : nil
+            let messages = Launchpad.lights(now, previous: previous, animated: animated)
             if !messages.isEmpty { send(messages, to: endpoint) }
-            outputs[endpoint] = Output(shown: now)
+            outputs[endpoint] = Output(shown: now, id: output.id, animated: animated)
         }
     }
 
