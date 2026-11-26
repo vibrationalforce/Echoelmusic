@@ -26,15 +26,16 @@ final class LaunchpadController {
         var id: MIDIUniqueID = 0
         /// Whether its pads flashed and pulsed in the frame last sent.
         var animated = true
-        /// The fastest tempo the device may keep from our clock, nil while our clock never could
-        /// have reached it (`Launchpad.keptClockBPM`): it keeps flashing to that clock after ours stops.
-        var keptClockBPM: Double?
+        /// What the device may keep from our clock: it keeps flashing to that clock after ours stops.
+        var kept = Launchpad.KeptClock()
     }
 
     @ObservationIgnored private var outputs: [MIDIEndpointRef: Output] = [:]
     @ObservationIgnored private var trackOffset = 0
     @ObservationIgnored private var sceneOffset = 0
     @ObservationIgnored private var lightTask: Task<Void, Never>?
+    /// The light loop's time base.
+    @ObservationIgnored private let started = ContinuousClock.now
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "midi")
 
     init(store: ProjectStore, engine: AudioEngine, midi: MIDIInput) {
@@ -111,19 +112,21 @@ final class LaunchpadController {
         // The tempo our clock sends: the song as the engine plays it, a followed clock's or Flow's
         // tempo in place of its own.
         let fastest = Launchpad.fastestBPM(of: engine.playing(store.project))
-        // Our clock's pulses leave only while the song plays: none while stopped or counting in.
-        let clockRuns = engine.isPlaying && !engine.countsIn
+        // No pulse leaves while the song is stopped or counts in, or while the engine is down.
+        let transportRuns = engine.isRunning && engine.isPlaying && !engine.countsIn
+        let renders = engine.renderCount
+        let elapsed = ContinuousClock.now - started
         for (endpoint, output) in outputs {
             // The device flashes to our clock, and after it stops to the last tempo it heard from
             // us: past three a second the pads stay steady.
-            let chosen = engine.clock.chosen.contains(output.id)
-            let kept = Launchpad.keptClockBPM(previous: output.keptClockBPM, clockChosen: chosen,
-                                              clockRunning: clockRuns, fastestBPM: fastest)
-            let animated = Launchpad.animates(keptClockBPM: kept)
+            var kept = output.kept
+            kept.look(clockChosen: engine.clock.chosen.contains(output.id), transportRuns: transportRuns,
+                      renderCount: renders, fastestBPM: fastest, now: elapsed)
+            let animated = Launchpad.animates(keptClockBPM: kept.bpm)
             let previous = animated == output.animated ? output.shown : nil
             let messages = Launchpad.lights(now, previous: previous, animated: animated)
             if !messages.isEmpty { send(messages, to: endpoint) }
-            outputs[endpoint] = Output(shown: now, id: output.id, animated: animated, keptClockBPM: kept)
+            outputs[endpoint] = Output(shown: now, id: output.id, animated: animated, kept: kept)
         }
     }
 

@@ -374,6 +374,9 @@ final class AudioEngine {
 
     /// Render calls of the current core, for the ladder's rungs (0 without a core).
     private var renderedBuffers: Double { Double(core?.renderCount ?? 0) }
+    /// Render calls of the current core so far: a count that stands still means nothing renders,
+    /// whatever `isRunning` says. The Launchpad's clock memory reads it (`Launchpad.KeptClock`).
+    var renderCount: UInt64 { core?.renderCount ?? 0 }
 
     /// One rung of the lifecycle ladder: the diagnostic file first, with an unbuffered write, then
     /// os_log. Only source text and numbers reach the file, never a name a musician typed.

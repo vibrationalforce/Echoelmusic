@@ -162,23 +162,72 @@ public enum Launchpad {
         return fastestBPM / 60 <= maximumFlashesPerSecond
     }
 
-    /// The fastest tempo a device may keep from our clock, nil while our clock never could have
-    /// reached it: after a clock stops the device keeps "the last clock if no clock is provided"
-    /// (Novation's programmer reference), not its own 120 BPM. A bound, not an estimate, because
-    /// the light loop looks every 40 ms and misses a start and stop between two looks. While our
-    /// clock is chosen for the device and its pulses leave (`clockRunning`), the device hears the
-    /// song's fastest tempo, and only then may the bound fall; chosen and not running, it never
-    /// falls and covers that tempo too; not chosen, it stays as it was.
-    public static func keptClockBPM(previous: Double?, clockChosen: Bool, clockRunning: Bool,
-                                    fastestBPM: Double) -> Double? {
-        guard clockChosen else { return previous }
-        guard !clockRunning, let previous else { return fastestBPM }
-        return previous.isNaN || fastestBPM.isNaN ? Double.nan : Swift.max(previous, fastestBPM)
+    /// What a Launchpad may keep from our clock, for the light loop, which looks every 40 ms.
+    /// After a clock stops the device keeps "the last clock if no clock is provided" (Novation's
+    /// programmer reference), not its own 120 BPM, and it follows a new tempo only once enough of
+    /// its pulses have reached it. So `bpm` is a bound, never an estimate: while our clock is
+    /// chosen for the device, it covers at once the fastest tempo the clock may send (Play brings
+    /// it, and a start and stop between two looks goes unseen), and it falls to a slower tempo
+    /// only after the clock has sent that one without a break for `settle`. Not chosen, it stays.
+    public struct KeptClock: Equatable, Sendable {
+        /// Output latency, the clock's offset (up to 100 ms), Bluetooth MIDI (150 to 250 ms) and
+        /// the device locking on to the new tempo. ANNAHME: the lock-on time is not measured.
+        public static let settle: Duration = .seconds(3)
+        /// The longest gap between two render calls while the engine renders (a 4,096-frame
+        /// buffer at 44.1 kHz is 93 ms); a longer one counts as no pulse leaving.
+        public static let renderGap: Duration = .milliseconds(250)
+
+        /// The fastest tempo the device may keep from our clock, infinity while it is unknown;
+        /// nil while our clock never could have reached the device.
+        public private(set) var bpm: Double?
+        /// The slower tempo our clock has been sending without a break, and since when.
+        private var slower: Double?
+        private var slowerSince: Duration = .zero
+        private var renders: UInt64 = 0
+        private var renderedAt: Duration?
+
+        public init(bpm: Double? = nil) {
+            self.bpm = bpm.map { $0.isNaN ? Double.infinity : $0 }
+        }
+
+        /// One look. `clockChosen`: our clock goes to this device. `transportRuns`: the song plays,
+        /// past any count-in; no pulse leaves before. `renderCount`: the engine's render calls so
+        /// far; pulses leave only while it moves. `fastestBPM`: the fastest tempo the pulses
+        /// carry, NaN when unknown. `now`: time on a steady clock.
+        public mutating func look(clockChosen: Bool, transportRuns: Bool, renderCount: UInt64,
+                                  fastestBPM: Double, now: Duration) {
+            if renderCount != renders {
+                renders = renderCount
+                renderedAt = now
+            }
+            guard clockChosen else {
+                slower = nil
+                return
+            }
+            let sent = fastestBPM.isNaN ? Double.infinity : fastestBPM
+            guard let kept = bpm, kept > sent else {
+                bpm = sent
+                slower = nil
+                return
+            }
+            let rendering = renderedAt.map { now - $0 <= Self.renderGap } ?? false
+            guard transportRuns, rendering else {
+                slower = nil
+                return
+            }
+            if slower != sent {
+                slower = sent
+                slowerSince = now
+            } else if now - slowerSince >= Self.settle {
+                bpm = sent
+                slower = nil
+            }
+        }
     }
 
     /// Whether the pads may flash and pulse on a device that keeps at most `kept` BPM from our
-    /// clock (`keptClockBPM(previous:clockChosen:clockRunning:fastestBPM:)`); nil, a device our
-    /// clock never reached, flashes on its own default tempo.
+    /// clock (`KeptClock.bpm`); nil, a device our clock never reached, flashes on its own default
+    /// tempo.
     public static func animates(keptClockBPM kept: Double?) -> Bool {
         guard let kept else { return true }
         return animates(clockReachesDevice: true, fastestBPM: kept)
