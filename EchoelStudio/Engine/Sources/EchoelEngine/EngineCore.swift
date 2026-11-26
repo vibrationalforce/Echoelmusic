@@ -2846,8 +2846,7 @@ public final class EngineCore: @unchecked Sendable {
         }
         anchorArps(snapshot, playing: false)
         let spt = freeSamplesPerTick(snapshot)
-        let origin = freeTick
-        let sampleOf = { (tick: Tick) -> Int64 in Int64(((Double(tick) - origin) * spt).rounded(.up)) }
+        let clock = StoppedClock(origin: freeTick, samplesPerTick: spt)
         var rendered = 0
         while true {
             var best: Int64 = .max
@@ -2855,8 +2854,8 @@ public final class EngineCore: @unchecked Sendable {
             for (index, lane) in snapshot.lanes.enumerated() where lane.arpeggio != nil {
                 let state = arps[lane.slot]
                 var due: Int64 = .max
-                if state.sounding >= 0 { due = sampleOf(state.off) }
-                if let next = state.next, state.count > 0 { due = Swift.min(due, sampleOf(next)) }
+                if state.sounding >= 0 { due = clock.sample(of: state.off) }
+                if let next = state.next, state.count > 0 { due = Swift.min(due, clock.sample(of: next)) }
                 if due < best {
                     best = due
                     at = index
@@ -2866,7 +2865,7 @@ public final class EngineCore: @unchecked Sendable {
             let offset = Swift.min(Swift.max(Int(best), rendered), frames)
             renderVoices(rendered..<offset)
             rendered = offset
-            stepArp(snapshot.lanes[at], at: best, offset: offset, sampleOf: sampleOf)
+            stepArp(snapshot.lanes[at], at: best, offset: offset) { clock.sample(of: $0) }
         }
         renderVoices(rendered..<frames)
         freeTick += Double(frames) / spt
@@ -2885,6 +2884,18 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         metronome.render(left: clickLeft, right: clickRight, range: range, sound: clickSound.sound)
+    }
+}
+
+/// Where a tick of the stopped clock falls in a chunk's samples. A value with a method, not a
+/// closure value: a closure stored in a local is an escaping value, and its captures may be boxed
+/// on the heap, on the render thread, every stopped chunk (render audit 2026-11-25, B17).
+private struct StoppedClock {
+    let origin: Double
+    let samplesPerTick: Double
+
+    func sample(of tick: Tick) -> Int64 {
+        Int64(((Double(tick) - origin) * samplesPerTick).rounded(.up))
     }
 }
 
