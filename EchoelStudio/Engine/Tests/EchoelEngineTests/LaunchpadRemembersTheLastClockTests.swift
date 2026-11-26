@@ -7,17 +7,18 @@ import XCTest
 /// reached the device. The light loop keeps the fastest tempo the device may hold from our clock,
 /// and the pads animate only while that tempo keeps them at three a second or less.
 final class LaunchpadRemembersTheLastClockTests: XCTestCase {
-    /// The light loop: one look every 40 ms, with a render call between two looks unless the engine
-    /// does not render.
+    /// The light loop: one look every 40 ms, or `every` when the main thread is late, with a render
+    /// call between two looks unless the engine does not render.
     private struct Loop {
         var kept = Launchpad.KeptClock()
         var now: Duration = .zero
         var renders: UInt64 = 0
 
-        mutating func run(for duration: Duration, chosen: Bool, playing: Bool, song: Double, rendering: Bool = true) {
+        mutating func run(for duration: Duration, every step: Duration = .milliseconds(40), chosen: Bool,
+                          playing: Bool, song: Double, rendering: Bool = true) {
             let stop = now + duration
             repeat {
-                now += .milliseconds(40)
+                now += step
                 if rendering { renders += 1 }
                 kept.look(clockChosen: chosen, transportRuns: playing, renderCount: renders, fastestBPM: song, now: now)
             } while now < stop
@@ -72,6 +73,29 @@ final class LaunchpadRemembersTheLastClockTests: XCTestCase {
         XCTAssertEqual(loop.kept.bpm, 200, "two seconds, a stop, two seconds: never three without a break")
         loop.run(for: .seconds(2), chosen: true, playing: true, song: 120)
         XCTAssertEqual(loop.kept.bpm, 120)
+    }
+
+    func testALateLookStartsTheWaitAgain() {
+        var loop = Loop()
+        loop.run(for: .seconds(5), chosen: true, playing: true, song: 200)
+        loop.run(for: .seconds(2), chosen: true, playing: true, song: 120)
+        // The main thread stalls for half a second: a break in the pulses could hide in it.
+        loop.run(for: .milliseconds(500), every: .milliseconds(500), chosen: true, playing: true, song: 120)
+        loop.run(for: .seconds(2), chosen: true, playing: true, song: 120)
+        XCTAssertEqual(loop.kept.bpm, 200, "the wait started again after the late look")
+        loop.run(for: .seconds(2), chosen: true, playing: true, song: 120)
+        XCTAssertEqual(loop.kept.bpm, 120)
+    }
+
+    func testAFollowedClockThatMovesByAHundredthStillLowersIt() {
+        var loop = Loop()
+        loop.run(for: .seconds(5), chosen: true, playing: true, song: 200)
+        for step in 0..<10 {
+            let tempo: Double = step % 2 == 0 ? 120.01 : 120
+            loop.run(for: .milliseconds(500), chosen: true, playing: true, song: tempo)
+        }
+        XCTAssertEqual(loop.kept.bpm, 120.01, "the bound falls to the faster of the two")
+        XCTAssertTrue(loop.animates)
     }
 
     func testAnEngineThatDoesNotRenderSendsNoPulse() {

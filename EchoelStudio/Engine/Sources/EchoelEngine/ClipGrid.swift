@@ -185,6 +185,7 @@ public enum Launchpad {
         private var slowerSince: Duration = .zero
         private var renders: UInt64 = 0
         private var renderedAt: Duration?
+        private var lastLook: Duration?
 
         public init(bpm: Double? = nil) {
             self.bpm = bpm.map { $0.isNaN ? Double.infinity : $0 }
@@ -196,6 +197,9 @@ public enum Launchpad {
         /// carry, NaN when unknown. `now`: time on a steady clock.
         public mutating func look(clockChosen: Bool, transportRuns: Bool, renderCount: UInt64,
                                   fastestBPM: Double, now: Duration) {
+            // A look that comes late may have missed a break in the pulses: the wait starts again.
+            let inTime = lastLook.map { now - $0 <= Self.renderGap } ?? false
+            lastLook = now
             if renderCount != renders {
                 renders = renderCount
                 renderedAt = now
@@ -211,15 +215,20 @@ public enum Launchpad {
                 return
             }
             let rendering = renderedAt.map { now - $0 <= Self.renderGap } ?? false
-            guard transportRuns, rendering else {
+            guard transportRuns, rendering, inTime else {
                 slower = nil
                 return
             }
-            if slower != sent {
+            // Only a faster tempo than the one waited for starts the wait again; a slower one
+            // keeps it, and the bound falls to the faster of the two. A followed clock that moves
+            // by a hundredth would otherwise never let it fall.
+            guard let waiting = slower, sent <= waiting else {
                 slower = sent
                 slowerSince = now
-            } else if now - slowerSince >= Self.settle {
-                bpm = sent
+                return
+            }
+            if now - slowerSince >= Self.settle {
+                bpm = waiting
                 slower = nil
             }
         }
