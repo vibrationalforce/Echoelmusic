@@ -150,15 +150,38 @@ public enum Launchpad {
     /// The most a light may flash in one second (WCAG 2.3.1, the 3 Hz ceiling).
     public static let maximumFlashesPerSecond = 3.0
 
-    /// Whether a waiting pad may flash and a playing one pulse. The device runs those animations on
-    /// its own default tempo, or on the MIDI clock it is sent, one cycle a beat (ANNAHME from
-    /// Novation's programmer reference, not measured on a device). So they stay on unless our clock
-    /// reaches the device and the song's fastest tempo would take them past three a second; an
-    /// unknown tempo counts as too fast.
+    /// Whether a waiting pad may flash and a playing one pulse on a device that a clock drives at
+    /// `fastestBPM` at most (`clockReachesDevice`), or that never heard one and runs on its own
+    /// default tempo. The device runs those animations one cycle a beat (ANNAHME from Novation's
+    /// programmer reference, not measured on a device), so they stay on only up to three a second;
+    /// an unknown tempo counts as too fast. A device keeps the last clock it heard after that clock
+    /// stops, so the light loop asks `animates(keptClockBPM:)`.
     public static func animates(clockReachesDevice: Bool, fastestBPM: Double) -> Bool {
         guard clockReachesDevice else { return true }
         guard fastestBPM.isFinite, fastestBPM > 0 else { return false }
         return fastestBPM / 60 <= maximumFlashesPerSecond
+    }
+
+    /// The fastest tempo a device may keep from our clock, nil while our clock never could have
+    /// reached it: after a clock stops the device keeps "the last clock if no clock is provided"
+    /// (Novation's programmer reference), not its own 120 BPM. A bound, not an estimate, because
+    /// the light loop looks every 40 ms and misses a start and stop between two looks. While our
+    /// clock is chosen for the device and its pulses leave (`clockRunning`), the device hears the
+    /// song's fastest tempo, and only then may the bound fall; chosen and not running, it never
+    /// falls and covers that tempo too; not chosen, it stays as it was.
+    public static func keptClockBPM(previous: Double?, clockChosen: Bool, clockRunning: Bool,
+                                    fastestBPM: Double) -> Double? {
+        guard clockChosen else { return previous }
+        guard !clockRunning, let previous else { return fastestBPM }
+        return previous.isNaN || fastestBPM.isNaN ? Double.nan : Swift.max(previous, fastestBPM)
+    }
+
+    /// Whether the pads may flash and pulse on a device that keeps at most `kept` BPM from our
+    /// clock (`keptClockBPM(previous:clockChosen:clockRunning:fastestBPM:)`); nil, a device our
+    /// clock never reached, flashes on its own default tempo.
+    public static func animates(keptClockBPM kept: Double?) -> Bool {
+        guard let kept else { return true }
+        return animates(clockReachesDevice: true, fastestBPM: kept)
     }
 
     /// The messages that bring the device's lights from `previous` (nil: unknown, send all) to

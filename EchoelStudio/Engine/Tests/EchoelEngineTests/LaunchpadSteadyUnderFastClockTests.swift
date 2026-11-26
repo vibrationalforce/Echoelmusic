@@ -19,7 +19,7 @@ final class LaunchpadSteadyUnderFastClockTests: XCTestCase {
 
     func testThePadsAnimateOnlyWhileTheClockCannotDriveThemPastThreeTimesASecond() {
         XCTAssertTrue(Launchpad.animates(clockReachesDevice: false, fastestBPM: 999),
-                      "without our clock the device keeps its own default tempo")
+                      "a device that never heard a clock keeps its own default tempo")
         XCTAssertTrue(Launchpad.animates(clockReachesDevice: true, fastestBPM: 120))
         XCTAssertTrue(Launchpad.animates(clockReachesDevice: true, fastestBPM: 180), "three a second is the limit")
         XCTAssertFalse(Launchpad.animates(clockReachesDevice: true, fastestBPM: 181))

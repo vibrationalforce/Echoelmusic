@@ -26,6 +26,9 @@ final class LaunchpadController {
         var id: MIDIUniqueID = 0
         /// Whether its pads flashed and pulsed in the frame last sent.
         var animated = true
+        /// The fastest tempo the device may keep from our clock, nil while our clock never could
+        /// have reached it (`Launchpad.keptClockBPM`): it keeps flashing to that clock after ours stops.
+        var keptClockBPM: Double?
     }
 
     @ObservationIgnored private var outputs: [MIDIEndpointRef: Output] = [:]
@@ -107,14 +110,19 @@ final class LaunchpadController {
         sceneOffset = now.sceneOffset
         let project = store.project
         let fastest = project.tempoChanges.reduce(project.tempo) { Swift.max($0, $1.bpm) }
+        // Our clock's pulses leave only while the song plays: none while stopped or counting in.
+        let clockRuns = engine.isPlaying && !engine.countsIn
         for (endpoint, output) in outputs {
-            // Our clock drives the device's flashing: past three a second the pads stay steady.
-            let animated = Launchpad.animates(clockReachesDevice: engine.clock.chosen.contains(output.id),
-                                              fastestBPM: fastest)
+            // The device flashes to our clock, and after it stops to the last tempo it heard from
+            // us: past three a second the pads stay steady.
+            let chosen = engine.clock.chosen.contains(output.id)
+            let kept = Launchpad.keptClockBPM(previous: output.keptClockBPM, clockChosen: chosen,
+                                              clockRunning: clockRuns, fastestBPM: fastest)
+            let animated = Launchpad.animates(keptClockBPM: kept)
             let previous = animated == output.animated ? output.shown : nil
             let messages = Launchpad.lights(now, previous: previous, animated: animated)
             if !messages.isEmpty { send(messages, to: endpoint) }
-            outputs[endpoint] = Output(shown: now, id: output.id, animated: animated)
+            outputs[endpoint] = Output(shown: now, id: output.id, animated: animated, keptClockBPM: kept)
         }
     }
 
