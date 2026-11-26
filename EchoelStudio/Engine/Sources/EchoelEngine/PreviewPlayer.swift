@@ -158,22 +158,28 @@ public final class PreviewPlayer: @unchecked Sendable {
             acknowledged.store(take.number, ordering: .releasing)
             if let replaced { released.store(replaced, ordering: .releasing) }
         }
-        guard let take = current, frames > 0 else { return }
-        let buffer = take.buffer
-        guard outputRate.isFinite, outputRate > 0 else { return }
-        let step = buffer.sampleRate / outputRate
-        let fade = Self.fadeSeconds * buffer.sampleRate
-        if !stopping, stopRequest.load(ordering: .acquiring) >= take.number {
-            stopping = true
-            end = Swift.min(end, Double(elapsed) * step + fade)
+        guard frames > 0, outputRate.isFinite, outputRate > 0 else { return }
+        var ended: UInt64 = 0
+        if let take = current {
+            let buffer = take.buffer
+            let step = buffer.sampleRate / outputRate
+            let fade = Self.fadeSeconds * buffer.sampleRate
+            if !stopping, stopRequest.load(ordering: .acquiring) >= take.number {
+                stopping = true
+                end = Swift.min(end, Double(elapsed) * step + fade)
+            }
+            let envelope = RegionEnvelope(gain: gain)
+            buffer.add(intoLeft: left, right: right, count: frames, elapsed: elapsed, step: step,
+                       offset: 0, length: end, fade: fade, envelope: envelope)
+            elapsed += Int64(frames)
+            if Double(elapsed) * step >= end { ended = take.number }
         }
-        let envelope = RegionEnvelope(gain: gain)
-        buffer.add(intoLeft: left, right: right, count: frames, elapsed: elapsed, step: step,
-                   offset: 0, length: end, fade: fade, envelope: envelope)
-        elapsed += Int64(frames)
-        if Double(elapsed) * step >= end {
-            current = nil
-            released.store(take.number, ordering: .releasing)
-        }
+        // The block's `take` and `buffer` are gone here. Dropping `current` now leaves the main
+        // thread's `held` with the last reference, and only `released` lets `prune` drop it there:
+        // published while a local still held the take, the main thread could let go first and the
+        // last release, with the buffer's `free`, would fall on this thread.
+        guard ended > 0 else { return }
+        current = nil
+        released.store(ended, ordering: .releasing)
     }
 }

@@ -47,6 +47,24 @@ final class PreviewPlayerTests: XCTestCase {
         XCTAssertEqual(player.heldTakes, 0, "a take that ended is let go")
     }
 
+    /// The render thread never frees: a take that played to its end stays alive until the main
+    /// thread lets go of it, so its buffer is freed there. One thread cannot interleave the race
+    /// this guards (the main thread letting go while the render still holds the take); this pins
+    /// the hand-over around it.
+    func testATakeThatEndedIsFreedByTheMainThread() throws {
+        let player = PreviewPlayer()
+        weak var gone: SampleBuffer?
+        do {
+            let buffer = try constant(4_800)
+            gone = buffer
+            player.play(buffer)
+        }
+        _ = render(player, frames: 9_600)
+        XCTAssertNotNil(gone, "the render let the take go; the main thread still holds it")
+        XCTAssertEqual(player.heldTakes, 0, "the main thread lets go")
+        XCTAssertNil(gone, "and only then is the buffer freed")
+    }
+
     func testStopFadesOutInsteadOfCutting() throws {
         let player = PreviewPlayer()
         let take = player.play(try constant(48_000))
