@@ -1,28 +1,38 @@
-11.0.0 — loops in time on their own, drawn longer, and Arrange that follows the song
+11.0.0 — the app asks for Inter-App Audio, other makers' plugins load and play more reliably, and a Launchpad never flashes past three a second
 
-New since 10086, built by the Echoel Studio run; nothing here is device-verified yet. Each point
-answers the recording on 10085.
-- An imported audio loop follows the song's tempo at once, its pitch unchanged: the tempo heard
-  in it becomes its native tempo, and a tempo in its file name ("jungle 132", "break_174bpm")
-  settles short loops and the octave. A file with no steady pulse and no tempo in its name plays
-  as imported.
-- Slice to Pads places the pattern at the loop's tempo, heard or named: every hit on the song's
-  grid even when the file has a tail. The Slice section says which tempo it used.
-- Draw a loop longer: drag the right edge of an audio region past the end of its file and it
-  repeats up to where you let go, the last pass cut on the magnet's line. One undo step,
-  "Loop Region".
-- Arrange turns the page with the playhead while the song plays. The new button in the zoom bar
-  (Follow Playhead) turns it off.
-Limits as in 10086: several notes are chosen with the Select More switch; the note editor zooms in
-four sizes; the drum step grid has no zoom strip; a sample click above 300 BPM is cut by the next
-one. Session clips in the Session grid still play at the file's own speed.
+New since 10087, built by the Echoel Studio run; nothing here is device-verified yet.
+- The app now asks iOS for Inter-App Audio (F44). With it, instruments of other makers may appear
+  in Audio Unit Instrument on a track's Sound page; whether they do only a device shows.
+- A plugin of another maker whose busses take one channel plays through the host, and a unit
+  that refuses stereo when it allocates is tried in mono.
+- Its main busses are switched on and set after its saved settings, so an effect hears its input.
+- A unit that does not start within 15 seconds says so instead of loading for ever.
+- Reload Plugin on its page loads a unit again that failed, stopped too often or refuses audio,
+  and the page says how many audio blocks it refused. Reloading one plugin keeps what the status
+  line says about the others.
+- A plugin that hands back less audio than a block asked for no longer plays stray sound: an
+  instrument adds nothing for that block, an effect lets the sound through as it was, and the
+  page counts the block as refused.
+- A plugin's page says when its settings did not reach the song.
+- A unit that builds a new parameter tree (a mode, a preset) is followed by automation and its page.
+- Channel pressure, poly pressure and program change from your controller reach a plugin
+  instrument; under a key lock, poly pressure follows the note its key plays.
+- A plugin installed while the app runs appears in the list without an older scan hiding it.
+- A Launchpad's waiting and playing pads flash and pulse only while the clock it follows stays at
+  180 BPM or below; above that they stay steady, in colour. After our clock stops, the device keeps
+  the tempo it heard last, so the pads stay steady until a slower clock of ours has run three
+  seconds, also after a reconnect or a relaunch.
+- A note sent through MPE Out is never left hanging when the app falls behind: every note ends.
+- A media-browser preview that ends, and a stopped song with an arpeggiator, no longer free or
+  allocate memory on the audio thread.
 
-Previous: 10086. A green commit that changes this file uploads build 10000 + run number. A test
+Previous: 10087. A green commit that changes this file uploads build 10000 + run number. A test
 list, not a source for claims (ContentPipeline/CLAIMS.md).
 
-One ask, as for 10083 to 10086. Start a screen recording, open the app, and try to make sixteen
+One ask, as for 10083 to 10087. Start a screen recording, open the app, and try to make sixteen
 bars in two to five minutes: a beat, a bass line or a chord, then Play. No list and no protocol; stop wherever
 it stops being possible or pleasant. The recording is the answer. What gets in the way in it is
-the next work, in the order it happened.
+the next work, in the order it happened. Before you stop, open Audio Unit Instrument on a track's
+Sound page once, so the recording shows whether other makers' instruments are listed (F44).
 
 The five checks of 10079 stay open and unchanged and rest until that recording exists.
