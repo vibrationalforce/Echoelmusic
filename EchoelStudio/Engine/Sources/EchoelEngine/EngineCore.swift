@@ -655,6 +655,14 @@ public final class EngineCore: @unchecked Sendable {
         return nil
     }
 
+    /// A tick from a song position that may not be a number. `Tick(_:)` traps on NaN, on infinity
+    /// and past Int64's range, and a trap on the render thread ends the app (render audit
+    /// 2026-11-25, B30): such a position reads as the song's start, every other one as before.
+    static func songTick(_ position: Double) -> Tick {
+        guard position.isFinite, position.magnitude < 9.0e18 else { return 0 }
+        return Tick(position)
+    }
+
     /// Render thread, after a whole buffer.
     private func publishAnchor(frames: Int) {
         anchorSequence.add(1, ordering: .acquiringAndReleasing)
@@ -663,7 +671,7 @@ public final class EngineCore: @unchecked Sendable {
             anchorHostTime.store(callHostTime, ordering: .releasing)
             anchorFrames.store(Int64(frames), ordering: .releasing)
             anchorTick.store(tick.bitPattern, ordering: .releasing)
-            anchorSamplesPerTick.store(time.samplesPerTick(at: Tick(Swift.max(0, tick))).bitPattern, ordering: .releasing)
+            anchorSamplesPerTick.store(time.samplesPerTick(at: Self.songTick(Swift.max(0, tick))).bitPattern, ordering: .releasing)
         } else {
             anchorHostTime.store(0, ordering: .releasing)
         }
@@ -2770,7 +2778,7 @@ public final class EngineCore: @unchecked Sendable {
             guard let settings = arps[slot].settings else { continue }
             var state = arps[slot]
             if playing {
-                let tick = Tick(snapshot.time.position(atSample: playhead).rounded(.up))
+                let tick = Self.songTick(snapshot.time.position(atSample: playhead).rounded(.up))
                 state.next = ArpGrid.start(atOrAfter: Swift.max(tick, 0), step: settings.step, meter: snapshot.meter)
             } else {
                 state.next = Tick(freeTick.rounded(.up))
