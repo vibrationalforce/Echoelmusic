@@ -355,14 +355,26 @@ final class MPEPump: Sendable {
         let (batches, port) = state.withLock { (current: inout State) -> ([Batch], MIDIPortRef) in
             guard let core = current.core else { return ([], current.port) }
             var out: [Batch] = []
+            var latest: MIDITimeStamp = 0
             while let message = core.noteOut.pop() {
                 guard current.hasOutput else { continue }
+                let time = timestamp(message, sampleRate: current.sampleRate, latency: current.latency)
+                latest = Swift.max(latest, time)
                 let messages = Self.translate(message, zone: &current.zone)
                 guard !messages.isEmpty else { continue }
-                let time = timestamp(message, sampleRate: current.sampleRate, latency: current.latency)
                 let words = MPEOutputWords.midi2(messages, translator: &current.midi2)
                 out.append(Batch(endpoints: current.endpoints, time: time, messages: messages,
                                  midi2Source: current.midi2Source, midi2Words: words))
+            }
+            // A message the ring had no room for may have been a key's release: every note the zone
+            // holds ends, after what was just sent, rather than one hanging on the device.
+            if core.takeNoteOutDropped(), current.hasOutput {
+                let offs = current.zone.allNotesOff()
+                if !offs.isEmpty {
+                    let words = MPEOutputWords.midi2(offs, translator: &current.midi2)
+                    out.append(Batch(endpoints: current.endpoints, time: latest, messages: offs,
+                                     midi2Source: current.midi2Source, midi2Words: words))
+                }
             }
             if current.hasOutput, let modulation = current.modulation {
                 var expression: [MPEZone.Message] = []

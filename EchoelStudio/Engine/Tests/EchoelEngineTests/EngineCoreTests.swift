@@ -760,6 +760,33 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(TimedMIDIMessage(hostTime: 0, frame: 0, status: 0xD1, data1: 5, data2: 0).bytes, [0xD1, 5])
     }
 
+    /// The note out's ring holds 2,048 messages; one that does not fit is dropped, and a dropped
+    /// release would leave its note hanging on the device. The drop is told to the sender, once,
+    /// which then ends every note (render audit 2026-11-25, B4).
+    func testANoteOutMessageThatDoesNotFitIsToldToTheSender() throws {
+        let s = try song([[Note(pitch: 60, start: 0, length: 960)]])
+        var assigner = SlotAssigner(capacity: EngineCore(sampleRate: rate).slotCapacity)
+        assigner.update(for: s.project)
+        let slot = try XCTUnwrap(assigner.slots[s.tracks[0]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.setNoteOut(slot: slot)
+        _ = render(engine, frames: 256)
+        XCTAssertFalse(engine.takeNoteOutDropped(), "nothing dropped yet")
+        for _ in 0..<30 {
+            for pitch in 0..<50 {
+                engine.playLive(slot: slot, status: 0x90, UInt8(pitch), 90)
+                engine.playLive(slot: slot, status: 0x80, UInt8(pitch), 0)
+            }
+            _ = render(engine, frames: 256)
+        }
+        XCTAssertTrue(engine.takeNoteOutDropped(), "3,000 messages into 2,048 places that nobody drained")
+        XCTAssertFalse(engine.takeNoteOutDropped(), "told once")
+        var drained = 0
+        while engine.noteOut.pop() != nil { drained += 1 }
+        XCTAssertEqual(drained, engine.noteOut.capacity, "the ring kept what fitted")
+    }
+
     func testALaunchedClipLoopsFromTheNextBarAndStopsOnABar() throws {
         var s = try song([[]])
         let loop = ClipID()

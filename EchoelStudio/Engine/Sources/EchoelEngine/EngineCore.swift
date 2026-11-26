@@ -93,6 +93,9 @@ public final class EngineCore: @unchecked Sendable {
     /// live — and its all-notes-off, timed like the clock, written only while `setNoteOut(slot:)`
     /// names a slot. Channel messages on channel 1; the sender spreads them over a zone.
     public let noteOut = MIDIClockRing()
+    /// A message `noteOut` had no room for: a key's release may be among them, and its note would
+    /// hang on the device. The sender ends every note once it reads this (`takeNoteOutDropped()`).
+    private let noteOutDropped = Atomic<Bool>(false)
     /// Render → MTC sender (W17-TC): quarter frames while playing, a full frame at a start, a
     /// locate and a stop, written only while `setTimecodeOut` names a rate.
     public let timecodeOut = TimecodeRing()
@@ -1917,10 +1920,18 @@ public final class EngineCore: @unchecked Sendable {
                                        status: status, data1: data1, data2: data2))
     }
 
-    /// One channel message of the `noteOut` slot, at its frame in this chunk.
+    /// One channel message of the `noteOut` slot, at its frame in this chunk. One the ring has no
+    /// room for is dropped and told to the sender (render audit 2026-11-25, B4).
     private func sendNote(_ status: UInt8, _ data1: UInt8, _ data2: UInt8, at offset: Int = 0) {
-        noteOut.push(TimedMIDIMessage(hostTime: callHostTime, frame: chunkStart + offset,
-                                      status: status, data1: data1 & 0x7F, data2: data2 & 0x7F))
+        let message = TimedMIDIMessage(hostTime: callHostTime, frame: chunkStart + offset,
+                                       status: status, data1: data1 & 0x7F, data2: data2 & 0x7F)
+        if !noteOut.push(message) { noteOutDropped.store(true, ordering: .releasing) }
+    }
+
+    /// Whether a note-out message was dropped since the last call. Any thread; the sender that
+    /// drains `noteOut` asks after each drain and then ends every note it sent.
+    public func takeNoteOutDropped() -> Bool {
+        noteOutDropped.exchange(false, ordering: .acquiringAndReleasing)
     }
 
     /// Start from the top, or stop · song position · continue from anywhere else, so a device
