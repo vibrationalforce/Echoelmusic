@@ -6,9 +6,19 @@ import SwiftUI
 /// the same modulation cells (one producer per source). Off is its own explicit entry, so turning
 /// the body off is a choice the musician can see, not the absence of one.
 ///
+/// The safety sentence heads the choices, so it stands where a source is chosen, through either
+/// door: the Song menu's Connect section and the Instrument page. Whether iOS shows a header this
+/// long whole on a phone, at every text size, is a device question (SIMP-6); the Instrument page
+/// shows the sentence whole under the pulse while a source is on.
+///
 /// A leaf on purpose: it reads `isOn` of both sources, which changes only when the musician
 /// chooses, and the Song menu around it reads neither (Law 6).
 struct BodySourceMenu: View {
+    /// The safety sentence of the body sources, word for word: the header of this menu's choices,
+    /// and under the Instrument page's pulse while a source is on. The root CLAUDE.md requires it in
+    /// the app.
+    static let safetyLine = "Pulse, HRV, coherence and breath are for self-observation, not a medical diagnosis. Do not play the Instrument while driving or steering a boat, or under the influence of alcohol or drugs."
+
     @Environment(HeartRateStrap.self) private var strap
     @Environment(CameraPulseSource.self) private var camera
     @Environment(HealthHeartRate.self) private var health
@@ -16,40 +26,43 @@ struct BodySourceMenu: View {
 
     var body: some View {
         Menu("Body Source", systemImage: "heart") {
-            Button {
-                strap.stop()
-                camera.stop()
-                health.stop()
-                phoneMotion.stop()
-            } label: {
-                choice("Off", chosen: !strap.isOn && !camera.isOn && !health.isOn && !phoneMotion.isOn)
-            }
-            Button {
-                camera.stop()
-                health.stop()
-                strap.start()
-            } label: {
-                choice("Heart Rate Strap", chosen: strap.isOn)
-            }
-            // The rear camera reads the pulse from a fingertip over the lens and flash; the frames
-            // never leave the device.
-            Button {
-                strap.stop()
-                health.stop()
-                camera.start()
-            } label: {
-                choice("Camera (fingertip on the rear lens)", chosen: camera.isOn)
-            }
-            // Apple Health: read only, never written, never sent off the device. A Watch reading comes
-            // only when Health syncs, which iOS does not time, so it modulates slowly and never sets the
-            // beat — the caption says so, without a figure Apple does not give.
-            Button {
-                strap.stop()
-                camera.stop()
-                health.start()
-            } label: {
-                choice("Apple Health (Apple Watch)", chosen: health.isOn,
-                       caption: "Arrives late, whenever Health syncs: slow modulation only, never the beat. Read only; the reading stays on this device.")
+            // A sentence, not a control: the header above the choices, where a source is chosen.
+            Section(Self.safetyLine) {
+                Button {
+                    strap.stop()
+                    camera.stop()
+                    health.stop()
+                    phoneMotion.stop()
+                } label: {
+                    choice("Off", chosen: !strap.isOn && !camera.isOn && !health.isOn && !phoneMotion.isOn)
+                }
+                Button {
+                    camera.stop()
+                    health.stop()
+                    strap.start()
+                } label: {
+                    choice("Heart Rate Strap", chosen: strap.isOn)
+                }
+                // The rear camera reads the pulse from a fingertip over the lens and flash; the frames
+                // never leave the device.
+                Button {
+                    strap.stop()
+                    health.stop()
+                    camera.start()
+                } label: {
+                    choice("Camera (fingertip on the rear lens)", chosen: camera.isOn)
+                }
+                // Apple Health: read only, never written, never sent off the device. A Watch reading
+                // comes only when Health syncs, which iOS does not time, so it modulates slowly and never
+                // sets the beat — the caption says so, without a figure Apple does not give.
+                Button {
+                    strap.stop()
+                    camera.stop()
+                    health.start()
+                } label: {
+                    choice("Apple Health (Apple Watch)", chosen: health.isOn,
+                           caption: "Arrives late, whenever Health syncs: slow modulation only, never the beat. Read only; the reading stays on this device.")
+                }
             }
             // The phone itself, beside whichever pulse source is chosen: it feeds other sources
             // (tilt, turning, movement), so it is a switch of its own rather than a fifth choice.

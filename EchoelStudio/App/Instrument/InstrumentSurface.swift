@@ -2,14 +2,19 @@ import EchoelCore
 import SwiftUI
 
 /// The Instrument (W12): the heart of Echoel as a view of its own. The Field on top; under it the
-/// pulse, the Body Voice, the tempo lock, and the sound and mood of the track the keys play — the
-/// keys under the view play it. A fingertip on the rear camera, or a chest strap, and the body
-/// plays, with nothing to learn first.
+/// sound and mood of the track the keys play — the keys under the view play it — and then the body:
+/// the pulse, the Body Voice, the tempo lock. While no body source is on, the Body Voice is off and
+/// the tempo is Fixed, the body is one row, "Body: Off", that opens to its controls. `InstrumentPage`
+/// decides the sections and their order. A fingertip on the rear camera, or a chest strap, and the
+/// body plays, with nothing to learn first.
 ///
 /// This body reads only what changes with an edit or a choice: the song, the live track, the lock.
-/// What moves with the body or the clock — the pulse, what is measured, what Flow follows — is read
-/// by its own leaf, and no leaf holds a menu (Law 6), so an open menu here is never torn down by a
-/// heartbeat.
+/// Whether a body source is on is read by `InstrumentBodySections`, which draws the body's sections:
+/// it reads only the sources' `isOn`, which follows each source's status. That moves when a source
+/// starts, stops, finds or loses its signal, never with the pulse, and redraws the body's sections
+/// alone, never the Sound and Mood menus above them. What moves with the body or the clock — the
+/// pulse, what is measured, what Flow follows — is read by its own leaf, and no such leaf holds a
+/// menu (Law 6), so an open menu here is never torn down by a heartbeat.
 struct InstrumentSurface: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -26,15 +31,29 @@ struct InstrumentSurface: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Space.l) {
-                field
-                pulse
-                bodyVoice
-                tempo
-                sound
+                ForEach(InstrumentPage.lead, id: \.self) { section in
+                    sectionView(section)
+                }
+                InstrumentBodySections(bodyVoiceOn: BodyVoice.isOn(in: store.project),
+                                       flows: flow.lock == .flow) { section in
+                    sectionView(section)
+                }
             }
             .padding(Theme.Space.m)
         }
         .background(Theme.Color.background)
+    }
+
+    /// One section of the page, as `InstrumentPage` names it.
+    @ViewBuilder private func sectionView(_ section: InstrumentPage.Section) -> some View {
+        switch section {
+        case .field: field
+        case .sound: sound
+        case .bodyRow: bodyRow
+        case .pulse(let showsSafety): pulse(showsSafety: showsSafety)
+        case .bodyVoice: bodyVoice
+        case .tempo: tempo
+        }
     }
 
     // MARK: Field
@@ -58,23 +77,63 @@ struct InstrumentSurface: View {
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.large).stroke(Theme.Color.border, lineWidth: 1))
     }
 
-    // MARK: Pulse
+    // MARK: Body, off
 
-    private var pulse: some View {
-        VStack(alignment: .leading, spacing: Theme.Space.s) {
-            InstrumentPulse()
-            // Out of the pulse's leaf on purpose: a menu redrawn once a second would close itself.
-            BodySourceMenu()
-                .menuStyle(.button)
-                .buttonStyle(ToolButtonStyle())
-                .accessibilityHint("A fingertip on the rear camera and flash, or a heart rate strap.")
+    /// The body in one row while nothing of it is on: closed, "Body: Off"; open, the controls its
+    /// cards would hold — the body-source chooser, the Body Voice switch, the tempo lock. Turning one
+    /// of them on brings the cards back (`InstrumentPage`). Its name is the one Learn quotes
+    /// (`StudioPlace.bodyOff`), and the whole row is a touch target: it is the page's one door to
+    /// the body while the body is off.
+    private var bodyRow: some View {
+        DisclosureGroup {
+            VStack(alignment: .leading, spacing: Theme.Space.s) {
+                sourceMenu
+                Divider().overlay(Theme.Color.border)
+                bodyVoiceControls
+                Divider().overlay(Theme.Color.border)
+                tempoControls
+            }
+            .padding(.top, Theme.Space.s)
+        } label: {
+            // The hint is on the label, the disclosure's button, not on the group, which also holds
+            // the row's controls with hints of their own.
+            Text(StudioPlace.bodyOff.title)
+                .font(Theme.Font.body)
+                .foregroundStyle(Theme.Color.text)
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.touch, alignment: .leading)
+                .contentShape(Rectangle())
+                .accessibilityHint("Opens the body source, the Body Voice and the tempo lock.")
         }
         .card()
+    }
+
+    // MARK: Pulse
+
+    private func pulse(showsSafety: Bool) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            InstrumentPulse(showsSafety: showsSafety)
+            // Out of the pulse's leaf on purpose: a menu redrawn once a second would close itself.
+            sourceMenu
+        }
+        .card()
+    }
+
+    /// The body-source chooser as the page shows it: under the pulse, and in the body row.
+    private var sourceMenu: some View {
+        BodySourceMenu()
+            .menuStyle(.button)
+            .buttonStyle(ToolButtonStyle())
+            .accessibilityHint("A fingertip on the rear camera and flash, or a heart rate strap.")
     }
 
     // MARK: Body Voice
 
     private var bodyVoice: some View {
+        bodyVoiceControls.card()
+    }
+
+    /// The Body Voice's switch, what it does and its routes: on its card, and in the body row.
+    private var bodyVoiceControls: some View {
         let project = store.project
         let voice = BodyVoice.track(in: project)
         return VStack(alignment: .leading, spacing: Theme.Space.xs) {
@@ -103,7 +162,6 @@ struct InstrumentSurface: View {
                     .accessibilityHint("How the body moves the Body Voice: see and change it here.")
             }
         }
-        .card()
     }
 
     /// On: the voice's track the first time, else unmuted, and the keys play it. Off: muted, and the
@@ -129,6 +187,11 @@ struct InstrumentSurface: View {
     // MARK: Tempo
 
     private var tempo: some View {
+        tempoControls.card()
+    }
+
+    /// The tempo lock and what Flow does now: on its card, and in the body row.
+    private var tempoControls: some View {
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
             Text("Tempo")
                 .font(Theme.Font.label)
@@ -142,7 +205,6 @@ struct InstrumentSurface: View {
             .accessibilityHint("Fixed keeps the tempo where you set it. Flow lets your pulse move it, one step per bar.")
             FlowStatusLine()
         }
-        .card()
     }
 
     // MARK: Sound and Mood
@@ -244,6 +306,33 @@ struct InstrumentSurface: View {
     }
 }
 
+/// The body's sections of the page, as `InstrumentPage` decides them from whether a body source is
+/// on (Law 6): the one view of the page that asks, and it reads only the sources' `isOn`, never the
+/// rate. `isOn` follows each source's status, which moves when a source starts, stops, finds or
+/// loses its signal; that redraws these sections alone, never the Field or the Sound and Mood menus
+/// that lead the page.
+private struct InstrumentBodySections<Content: View>: View {
+    @Environment(HeartRateStrap.self) private var strap
+    @Environment(CameraPulseSource.self) private var camera
+    @Environment(HealthHeartRate.self) private var health
+    @Environment(PhoneMotionSource.self) private var phoneMotion
+    let bodyVoiceOn: Bool
+    let flows: Bool
+    private let content: (InstrumentPage.Section) -> Content
+
+    init(bodyVoiceOn: Bool, flows: Bool, @ViewBuilder content: @escaping (InstrumentPage.Section) -> Content) {
+        self.bodyVoiceOn = bodyVoiceOn
+        self.flows = flows
+        self.content = content
+    }
+
+    var body: some View {
+        let sourceOn = strap.isOn || camera.isOn || health.isOn || phoneMotion.isOn
+        ForEach(InstrumentPage.bodySections(bodySourceOn: sourceOn, bodyVoiceOn: bodyVoiceOn, flows: flows),
+                id: \.self, content: content)
+    }
+}
+
 /// The pulse, large, with the body source and what it measures: the one view of the page that
 /// reads the body (Law 6). The rate changes about once a second, the rest when a source starts,
 /// stops or finds its signal; it holds no menu, so nothing open closes when it changes.
@@ -252,6 +341,8 @@ private struct InstrumentPulse: View {
     @Environment(CameraPulseSource.self) private var camera
     @Environment(HealthHeartRate.self) private var health
     @Environment(PhoneMotionSource.self) private var phoneMotion
+    /// The safety sentence stands under the pulse: while a body source is on (`InstrumentPage`).
+    let showsSafety: Bool
 
     var body: some View {
         let rate: Int? = strap.isOn ? strap.beatsPerMinute
@@ -273,8 +364,10 @@ private struct InstrumentPulse: View {
             .accessibilityValue(rate.map { "\($0) beats per minute" } ?? "Not measured")
             NoteText(sourceLine(measured: rate != nil))
             NoteText(ModulateMenu.measuringLine(measuring, sourceOn: strap.isOn || camera.isOn || health.isOn || phoneMotion.isOn))
-            // The safety line is the page's plainest text, not its smallest: body size, full colour.
-            ParagraphText("Pulse, HRV, coherence and breath are for self-observation, not a medical diagnosis. Do not play the Instrument while driving or steering a boat, or under the influence of alcohol or drugs.")
+            if showsSafety {
+                // The safety line is the page's plainest text, not its smallest: body size, full colour.
+                ParagraphText(BodySourceMenu.safetyLine)
+            }
         }
     }
 

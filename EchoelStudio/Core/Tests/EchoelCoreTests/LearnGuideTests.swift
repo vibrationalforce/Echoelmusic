@@ -40,6 +40,11 @@ final class LearnGuideTests: XCTestCase {
     private static let exportsInSight: Set<StudioPlace> = [.exportWAV, .exportStems, .exportMIDI, .exportVideo,
                                                            .moreFormats]
 
+    /// What the Instrument page's one row for the body, “Body: Off”, holds while no body source is
+    /// on, the Body Voice is off and the tempo is Fixed (SIMP-6, `InstrumentPage`): read off
+    /// `InstrumentSurface` by hand, as every title of the list is.
+    private static let underBodyOff: Set<StudioPlace> = [.bodySource, .bodyVoice, .tempo]
+
     private func guideChapter(_ id: String) throws -> LearnChapter {
         try XCTUnwrap(LearnGuide.chapters.first { $0.id == id }, "chapter \(id)")
     }
@@ -95,6 +100,40 @@ final class LearnGuideTests: XCTestCase {
                 }
             }
         }
+    }
+
+    /// The Instrument page shows the body as one row, “Body: Off”, while nothing of it is on, and as
+    /// cards once something is (SIMP-6): a chapter that shows the way to one of the row's controls on
+    /// the page shows the way through the row beside it and names the row, and a way through the
+    /// row starts on the page, leads to what the row holds and has the way past it beside it.
+    func testThePathsToTheBodyOnTheInstrumentPageFollowWhatIsInSight() throws {
+        let allOff = InstrumentPage.sections(bodySourceOn: false, bodyVoiceOn: false, flows: false)
+        XCTAssertTrue(allOff.contains(.bodyRow), "the row stands while nothing of the body is on")
+        XCTAssertFalse(allOff.contains(.bodyVoice) || allOff.contains(.tempo), "and the cards do not")
+        let sourceOn = InstrumentPage.sections(bodySourceOn: true, bodyVoiceOn: false, flows: false)
+        XCTAssertTrue(sourceOn.contains(.bodyVoice) && sourceOn.contains(.tempo), "the cards stand once a source is on")
+        for chapter in LearnGuide.chapters {
+            for path in chapter.paths {
+                let way = LearnChapter.line(path)
+                if path.count > 1, path[0] == .instrument, Self.underBodyOff.contains(path[1]) {
+                    let throughTheRow: [StudioPlace] = [StudioPlace.instrument, .bodyOff] + Array(path.dropFirst())
+                    XCTAssertTrue(chapter.paths.contains(throughTheRow),
+                                  "\(chapter.id): “\(way)” is under “Body: Off” while nothing of the body is on")
+                    XCTAssertTrue(chapter.quotedNames.contains(StudioPlace.bodyOff.title),
+                                  "\(chapter.id) names the row")
+                }
+                guard let row = path.firstIndex(of: .bodyOff) else { continue }
+                XCTAssertEqual(row, 1, "\(chapter.id): “\(way)”: the row is on the Instrument page")
+                XCTAssertEqual(path.first, .instrument, "\(chapter.id): “\(way)”")
+                XCTAssertTrue(path.count > 2 && Self.underBodyOff.contains(path[2]),
+                              "\(chapter.id): “\(way)” leads to what the row holds")
+                let pastTheRow: [StudioPlace] = [StudioPlace.instrument] + Array(path.dropFirst(2))
+                XCTAssertTrue(chapter.paths.contains(pastTheRow),
+                              "\(chapter.id): “\(way)”: the way once something of the body is on stands beside it")
+            }
+        }
+        XCTAssertTrue(try guideChapter("instrumentBody").paths.contains([.instrument, .bodyOff, .bodyVoice]))
+        XCTAssertTrue(try guideChapter("body").paths.contains([.instrument, .bodyOff, .tempo]))
     }
 
     /// The lengths the sixteen-bars chapter names are the ones the editor's length menu offers

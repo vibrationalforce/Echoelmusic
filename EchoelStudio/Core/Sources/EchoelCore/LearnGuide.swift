@@ -42,8 +42,9 @@ public enum StudioPlace: String, CaseIterable, Sendable {
     case modulate, bodySource, off, heartRateStrap, camera, appleHealth, phoneMotion
     case heartRate, hrv, coherence, breath, tiltLeftRight, tiltForwardBack, turning, movement
     case invert, remove, tempo, fixed, flow
-    // The Instrument page and the Song menu's Flow switch.
-    case bodyVoice, playOnTheKeys, mood, followPulse
+    // The Instrument page, its one row for the body while none of it is on, and the Song menu's
+    // Flow switch.
+    case bodyVoice, playOnTheKeys, mood, followPulse, bodyOff
     // The Field.
     case fullScreen, pattern, show, blendWith, externalDisplay, fieldOnExternalDisplay
     case cornerPin, resetCorners
@@ -177,6 +178,9 @@ public enum StudioPlace: String, CaseIterable, Sendable {
         case .playOnTheKeys: "Play on the Keys"
         case .mood: "Mood"
         case .followPulse: "Follow Pulse (Flow)"
+        // The Instrument page's row for the body while no source is on, the Body Voice is off and
+        // the tempo is Fixed (SIMP-6, `InstrumentPage`); the row shows this title.
+        case .bodyOff: "Body: Off"
         case .fullScreen: "Full Screen"
         case .pattern: "Pattern"
         case .show: "Show"
@@ -350,22 +354,24 @@ public enum LearnGuide {
             paragraphs: [
                 "Choose a source under “Song menu” › “Connect” › “Body Source”: “Heart Rate Strap”, “Camera (fingertip on the rear lens)” or “Apple Health (Apple Watch)”, one at a time, and “Phone Motion” beside any of them. “Off” stops them all.",
                 "In “Arrange”, touch and hold a track's name for “Modulate” and choose what moves what, for example “Heart Rate”, “HRV”, “Coherence”, “Breath”, “Tilt Left/Right”, “Tilt Forward/Back”, “Turning” or “Movement” onto a volume, a pan or a synth value. Each route has its depth, “Invert” and “Remove”.",
-                "Know the limits. HRV needs about 8 clean beats and coherence about 16 before they add anything; a camera reading takes a still fingertip. Apple Health arrives late: a Watch reading comes only when Health syncs, and Apple gives no figure for how long that takes; a reading older than 2 minutes moves nothing. So it suits slow changes only. The body never sets the beat. On the “Instrument” view, “Tempo” offers “Flow”, which waits for a steady pulse and then moves the tempo one step per bar, and “Fixed”, which keeps it where you set it.",
+                "Know the limits. HRV needs about 8 clean beats and coherence about 16 before they add anything; a camera reading takes a still fingertip. Apple Health arrives late: a Watch reading comes only when Health syncs, and Apple gives no figure for how long that takes; a reading older than 2 minutes moves nothing. So it suits slow changes only. The body never sets the beat. On the “Instrument” view, “Tempo” offers “Flow”, which waits for a steady pulse and then moves the tempo one step per bar, and “Fixed”, which keeps it where you set it. While no body source is on, “Body Voice” is off and the tempo is “Fixed”, the view shows the body as one row, “Body: Off”, with “Tempo” inside it.",
                 "Body readings are for self-observation only, not a diagnosis. They stay on the device unless you share them yourself in “Connections…”.",
             ],
-            paths: [[.songMenu, .connectSection, .bodySource], [.arrange, .modulate], [.instrument, .tempo]],
+            paths: [[.songMenu, .connectSection, .bodySource], [.arrange, .modulate], [.instrument, .tempo],
+                    [.instrument, .bodyOff, .tempo]],
             keywords: ["pulse", "heart", "bpm", "strap", "watch", "motion", "lfo", "route"]),
         LearnChapter(
             id: "instrumentBody", title: "The Instrument and the Body",
             summary: "Body Voice, Mood and Flow: the Instrument page and what the body changes there.",
             paragraphs: [
-                "“Instrument” in the bar of views is the page for playing with the body. “Body Voice” adds a pad that the keys play: your breath swells its level, coherence opens and brightens its sound, and your pulse sets its vibrato. It is silent until switched on. If the keys play another track, “Play on the Keys” gives them back to it, and “Modulate” under it shows and changes how the body moves it.",
+                "“Instrument” in the bar of views is the page for playing with the body. “Body Voice” adds a pad that the keys play: your breath swells its level, coherence opens and brightens its sound, and your pulse sets its vibrato. It is silent until switched on. If the keys play another track, “Play on the Keys” gives them back to it, and “Modulate” under it shows and changes how the body moves it. While no body source is on, “Body Voice” is off and the tempo is “Fixed”, the page shows the body as one row, “Body: Off”, that opens to “Body Source”, “Body Voice” and “Tempo”.",
                 "Breath is read from the timing of your heartbeats, so it joins after a few slow, even breaths. Choose a source first under “Song menu” › “Connect” › “Body Source”.",
                 "“Mood” sets a few of the synth's own values at once — its cutoff, resonance, character and filter — under one name: Warm, Clear, Dark or Bright. It changes the synth track the keys play, one undo step, and every value stays on its “Sound” page to change further.",
                 "“Tempo” chooses “Fixed”, the song's own tempo, or “Flow”, which waits for a steady pulse and then moves the tempo one bounded step per bar, gliding there. The same switch is “Follow Pulse (Flow)” under “Song menu” › “Play and Sync”. While it flows, a tap on the tempo in the transport holds it where it is. While a MIDI clock or a jam sets the pace, Flow cannot be chosen.",
                 "Readings are for self-observation only, not a diagnosis. Do not play the Instrument while driving or steering a boat, or under the influence of alcohol or drugs.",
             ],
-            paths: [[.instrument, .bodyVoice], [.instrument, .mood], [.songMenu, .playAndSyncSection, .followPulse]],
+            paths: [[.instrument, .bodyVoice], [.instrument, .bodyOff, .bodyVoice], [.instrument, .mood],
+                    [.songMenu, .playAndSyncSection, .followPulse]],
             keywords: ["pad", "breath", "vibrato", "preset", "tempo", "pulse", "follow", "bpm", "hold"]),
         LearnChapter(
             id: "field", title: "The Field and an External Screen",
