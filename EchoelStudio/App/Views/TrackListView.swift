@@ -137,6 +137,7 @@ struct TrackRow: View {
             .buttonStyle(ToolButtonStyle(isActive: track.mixer.isMuted))
             .accessibilityLabel("Mute \(track.name)")
             .accessibilityValue(track.mixer.isMuted ? "On" : "Off")
+            .voiceNames(shown: "M", word: "Mute", spoken: "Mute \(track.name)")
             Button {
                 documents.attempt(.setSolo(track.id, !track.mixer.isSoloed))
             } label: {
@@ -145,6 +146,7 @@ struct TrackRow: View {
             .buttonStyle(ToolButtonStyle(isActive: track.mixer.isSoloed))
             .accessibilityLabel("Solo \(track.name)")
             .accessibilityValue(track.mixer.isSoloed ? "On" : "Off")
+            .voiceNames(shown: "S", word: "Solo", spoken: "Solo \(track.name)")
         }
     }
 

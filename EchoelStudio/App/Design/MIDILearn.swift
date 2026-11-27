@@ -60,5 +60,6 @@ struct MIDILearnButton: View {
         .accessibilityLabel("MIDI Learn")
         .accessibilityValue(midi.isLearning ? "On" : "Off")
         .accessibilityHint("Tap a control, then move a knob on your MIDI device.")
+        .voiceNames(shown: "MIDI", spoken: "MIDI Learn")
     }
 }

@@ -1,3 +1,5 @@
+import Foundation
+
 /// What VoiceOver says where the screen writes a short form: the screen keeps its few letters
 /// ("C", "L20", "CC 7 · Ch 1"), the voice says words, because VoiceOver reads a short form letter
 /// by letter ("L 20") and a symbol by its name ("middle dot").
@@ -16,5 +18,21 @@ public enum Spoken {
     /// channel 1".
     public static func control(_ control: MIDIControl) -> String {
         "controller \(control.number) on channel \(Int(control.channel) + 1)"
+    }
+
+    /// The names Voice Control answers to where a key shows a short form ("M", "S", "MIDI"): what
+    /// the key shows first, because that is what the player reads and says; then the action's one
+    /// word ("Mute"); then the whole spoken name ("Mute Lead"), which VoiceOver says. Once a key
+    /// has input names, Voice Control no longer falls back on its accessibility label, so the
+    /// spoken name is always in the list. No name twice, whatever its case, and none empty: a key
+    /// that shows a symbol passes no shown name.
+    public static func voiceNames(shown: String, word: String = "", spoken: String) -> [String] {
+        var names: [String] = []
+        for candidate in [shown, word, spoken] {
+            let name = candidate.trimmingCharacters(in: .whitespacesAndNewlines)
+            let isKnown = names.contains { $0.caseInsensitiveCompare(name) == .orderedSame }
+            if !name.isEmpty, !isKnown { names.append(name) }
+        }
+        return names
     }
 }
