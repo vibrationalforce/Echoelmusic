@@ -59,7 +59,7 @@ public enum StudioPlace: String, CaseIterable, Sendable {
     // Siri and Shortcuts: the actions as the Shortcuts app lists them.
     case setTempo, launchScene, setKey, muteOrUnmuteTrack, stop, exportStemsAction
     // Help with the song's frame: its key, a style's parts, exact lengths.
-    case findKey, styles, useStyle, tempoCalculator, useForSong
+    case findKey, styles, useStyle, tempoCalculator, useForSong, idea, another, addToTrack
 
     /// The name as it stands on the screen (or, for a button drawn as an icon, as VoiceOver says it).
     public var title: String {
@@ -236,6 +236,9 @@ public enum StudioPlace: String, CaseIterable, Sendable {
         case .useStyle: "Use Style"
         case .tempoCalculator: "Tempo Calculator…"
         case .useForSong: "Use for Song"
+        case .idea: "Idea…"
+        case .another: "Another"
+        case .addToTrack: "Add to Track"
         }
     }
 
@@ -415,10 +418,12 @@ public enum LearnGuide {
                 "“Find Key…” in the “Song menu” under “Song” reads the notes on the tracks played on keys and names the major or minor key they fit best, with the runner-up. It is a proposal: nothing is set until “Use for Song”, and one Undo takes that back. Drum kits and sliced samplers are left out, because their notes pick a sound, not a pitch.",
                 "“Styles…”, there too, lists styles by family. A style's page shows what it is usually made of: a tempo, a time signature, a scale, a tone system and a swing. Tick the parts you want, and “Use Style” sets them in one step; the key's root stays yours and no note is written. The lines on sound and mix under it are reference notes, not rules.",
                 "“Tempo Calculator…” shows bar and note lengths at the song's tempo, or at one you type or tap, in seconds, milliseconds and hertz, with samples and video frames. No value is rounded: a long one is shortened with three dots, and a long press shows it whole, as on every value field of the app.",
+                "“Idea…”, there too, proposes chords for the song's key, one a bar, with a bass line if you want one. “Another” gives the next idea. Nothing is written until “Add to Track”, which puts the idea on the track as a new clip after its last one, and one Undo takes it back. The key, the tempo and the sound stay yours.",
             ],
             paths: [[.songMenu, .songSection, .findKey], [.songMenu, .songSection, .styles],
-                    [.songMenu, .songSection, .tempoCalculator]],
-            keywords: ["key", "scale", "style", "genre", "tempo", "calculator", "delay", "hertz", "swing", "exact"]),
+                    [.songMenu, .songSection, .tempoCalculator], [.songMenu, .songSection, .idea]],
+            keywords: ["key", "scale", "style", "genre", "tempo", "calculator", "delay", "hertz", "swing", "exact",
+                       "idea", "chords", "compose", "progression"]),
         LearnChapter(
             id: "export", title: "Export to Resolve, DAWproject, MIDI, Stems and Spatial",
             summary: "Take the song to another app, an editor or a DAW.",

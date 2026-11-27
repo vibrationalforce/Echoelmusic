@@ -262,6 +262,7 @@ struct StudioView: View {
         case .tempoCalculator: TempoCalculatorView()
         case .styles: StyleView()
         case .keyFinder: KeyFinderView()
+        case .idea: IdeaView()
         case .renameSong: RenameSongView()
         case .rename(let target): RenameView(target: target)
         case .streaming: StreamingView()
@@ -1436,6 +1437,8 @@ struct SongMenu: View {
                 // Which key the notes on keys fit best: a proposal, set only by Use for Song.
                 Button("Find Key…", systemImage: "key") { router.sheet = .keyFinder }
                 Button("Styles…", systemImage: "music.note.list") { router.sheet = .styles }
+                // A chord sketch in the song's key: a proposal, written only by Add to Track.
+                Button("Idea…", systemImage: "lightbulb") { router.sheet = .idea }
             }
             Section("Export") {
                 // Why the entries below are dimmed, as a line of the menu that cannot be tapped

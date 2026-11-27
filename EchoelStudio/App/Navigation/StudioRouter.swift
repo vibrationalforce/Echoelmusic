@@ -39,6 +39,8 @@ enum StudioSheet: Identifiable, Hashable {
     case styles
     /// Which key the song's notes fit best, as a proposal (TH-9).
     case keyFinder
+    /// A chord sketch for the song's key, proposed and added only on the musician's word (TH-7).
+    case idea
     /// A new name for the open song, which its package takes too.
     case renameSong
     /// A new name for a track, a clip or a scene.
