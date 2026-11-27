@@ -2,9 +2,10 @@ import Foundation
 import XCTest
 @testable import EchoelCore
 
-/// The Moiré look's measure: the song's third as its tone system tunes it, as the beat of the
-/// partials that coincide in the pure ratio. Numbers worked out from the formulas (C4 = 261.6256 Hz,
-/// A4 = 440 Hz): a 12-equal major third beats 10.38 Hz on C and 17.46 Hz on A.
+/// The Moiré look's measure: the song's third (its fourth, in a scale without one) as its tone
+/// system tunes it, as the beat of the partials that coincide in the pure ratio. Numbers worked out
+/// from the formulas (C4 = 261.6256 Hz, A4 = 440 Hz): a 12-equal major third beats 10.38 Hz on C
+/// and 17.46 Hz on A, a 12-equal fourth 1.18 Hz on C.
 final class TuningBeatTests: XCTestCase {
     private func context(root: Int = 0, scale: Scale = .major, tuning: String = "edo12",
                          concertPitch: Double = 440) -> MusicalContext {
@@ -47,6 +48,30 @@ final class TuningBeatTests: XCTestCase {
         XCTAssertEqual(played.p, 6)
         XCTAssertEqual(played.q, 5)
         XCTAssertLessThan(played.beatHz, 0.001)
+    }
+
+    /// The beat is always of an interval the song's scale holds: a scale with neither third, as Yo,
+    /// Iwato or Messiaen's fifth mode, is judged by its fourth, against 4/3.
+    func testAScaleWithoutAThirdIsJudgedByItsFourth() {
+        for scale in Scale.allCases where scale != .chromatic {
+            for root in 0..<12 {
+                let beat = TuningBeat.of(context(root: root, scale: scale))
+                XCTAssertTrue(scale.intervals.contains(beat.semitones), "\(scale) on \(root) is judged by \(beat.semitones)")
+            }
+        }
+        let yo = TuningBeat.of(context(scale: .yo))
+        XCTAssertEqual(yo.semitones, 5)
+        XCTAssertEqual(yo.p, 4)
+        XCTAssertEqual(yo.q, 3)
+        XCTAssertEqual(yo.beatHz, 1.182, accuracy: 0.01, "|3 · 349.2282 − 4 · 261.6256|")
+        XCTAssertTrue(yo.spoken.hasPrefix("fourth 4 to 3, beats 1.2"), yo.spoken)
+        let pure = TuningBeat.of(context(scale: .yo, tuning: "just-major"))
+        XCTAssertLessThan(pure.beatHz, 0.001, "just intonation plays the fourth as 4/3")
+        XCTAssertTrue(pure.spoken.hasSuffix("pure, stands still"), pure.spoken)
+        // The order holds where a scale has more than one: the major third before the minor, the
+        // minor third before the fourth.
+        XCTAssertEqual(TuningBeat.of(context(scale: .bluesMajor)).semitones, 4, "Blues Major holds 3 and 4")
+        XCTAssertEqual(TuningBeat.of(context(scale: .malkauns)).semitones, 3, "Malkauns holds 3 and 5")
     }
 
     func testSystemsThatPlayTwelveEqualShowItsBeat() {

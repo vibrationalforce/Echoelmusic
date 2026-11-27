@@ -19,8 +19,9 @@ public enum FieldPattern: String, CaseIterable, Sendable {
     case aurora
     /// The dish's ripples seen from under the water: the caustic network on the floor below.
     case depth
-    /// Two line gratings spaced by the song's third as its tone system tunes it: a pure third
-    /// stands still, a tempered one drifts at its beat (`TuningBeat`, capped under 2 Hz).
+    /// Two line gratings spaced by the song's third (its fourth, in a scale without one) as its tone
+    /// system tunes it: a pure interval stands still, a tempered one drifts at its beat
+    /// (`TuningBeat`, capped under 2 Hz).
     case moire
     /// The song's key woven one row per bar: rule 90, a cellular automaton, started from the key's
     /// pitch classes (`BarWeave`), so each key and scale weaves its own figure.

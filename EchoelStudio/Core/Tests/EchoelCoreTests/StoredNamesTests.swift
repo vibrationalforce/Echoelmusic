@@ -15,7 +15,15 @@ import XCTest
 /// until it is added — at the end.
 final class StoredNamesTests: XCTestCase {
     private let scales = ["chromatic", "major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "locrian",
-                          "harmonicMinor", "melodicMinor", "majorPentatonic", "minorPentatonic", "blues", "wholeTone"]
+                          "harmonicMinor", "melodicMinor", "majorPentatonic", "minorPentatonic", "blues", "wholeTone",
+                          // The earlier app's other 43, appended in its order and under its names (TH-4, 2026-11-27).
+                          "lydianDominant", "altered", "bebopDominant", "bluesMajor", "diminishedWholeHalf",
+                          "diminishedHalfWhole", "phrygianDominant", "harmonicMajor", "hungarianMinor", "doubleHarmonic",
+                          "neapolitanMinor", "neapolitanMajor", "romanianMinor", "persian", "hirajoshi", "iwato", "insen",
+                          "yo", "inSakura", "egyptian", "pelog", "enigmatic", "prometheus", "augmented", "tritone",
+                          "hungarianMajor", "bebopMajor", "majorLocrian", "lydianAugmented", "spanishEightTone", "kumoi",
+                          "messiaen3", "messiaen4", "messiaen5", "messiaen6", "messiaen7", "marwa", "purvi", "todi",
+                          "malkauns", "charukeshi", "hamsadhwani", "shanmukhapriya"]
     private let toneSystems = ["edo12", "edo24", "edo19", "edo31", "just-major", "just-minor", "pythagorean",
                                "meantone-quarter", "maqam-rast", "maqam-bayati", "maqam-hijaz", "gamelan-slendro",
                                "gamelan-pelog", "hirajoshi", "bohlen-pierce", "archytas-diatonic",
@@ -236,5 +244,14 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(ParameterKey(rawValue: "plugin.insert/\(insert)/3").pluginParameter,
                        PluginParameter(.insert(insert), address: 3))
         XCTAssertEqual(ParameterKey(rawValue: "mixer.send/\(room)").sendTarget, room)
+    }
+
+    /// The reader's note names are the device's choice, never the song's (TH-3), and the app keeps
+    /// the choice by its raw value. The first four are the earlier app's values, which it wrote to
+    /// the same devices under `music.noteNaming`, so a reader who chose German there keeps H after
+    /// the update. Never rename one; a new naming goes at the end.
+    func testTheReadersNoteNamingKeepsTheEarlierAppsStoredValues() {
+        XCTAssertEqual(NoteNaming.allCases.map(\.rawValue),
+                       ["english", "german", "solfege", "sargam", "movableDo", "numbered"])
     }
 }

@@ -134,6 +134,22 @@ final class AgentToolsTests: XCTestCase {
         XCTAssertEqual(try AgentTools.standardEffect("dyn EQ"), .dynamicEQ)
     }
 
+    /// Every scale is found by its title and by its stored name, its digits counted: "Messiaen 5" is
+    /// the fifth mode, not the third, whose title differs only in the digit; and the common words still
+    /// find what they mean.
+    func testEveryScaleIsFoundByItsTitleAndItsStoredName() throws {
+        for scale in Scale.allCases {
+            XCTAssertEqual(try AgentTools.scale(scale.title), scale, scale.title)
+            XCTAssertEqual(try AgentTools.scale(scale.rawValue), scale, scale.rawValue)
+        }
+        XCTAssertEqual(try AgentTools.scale("messiaen 5"), .messiaen5)
+        XCTAssertEqual(try AgentTools.scale("Spanish 8-Tone"), .spanishEightTone)
+        XCTAssertEqual(try AgentTools.scale("diminished (h-w)"), .diminishedHalfWhole)
+        XCTAssertEqual(try AgentTools.scale("Ionian"), .major)
+        XCTAssertEqual(try AgentTools.scale("minor penta"), .minorPentatonic)
+        XCTAssertThrowsError(try AgentTools.scale("messiaen 8"), "there is no eighth mode")
+    }
+
     func testAPatternOnPartOfALongerClipKeepsTheRestAndASharedClipIsNotStretched() async throws {
         try await MainActor.run {
             let store = ProjectStore()
@@ -435,5 +451,22 @@ final class AgentToolsTests: XCTestCase {
         XCTAssertTrue(text.hasPrefix("In G Major, after D: "), text)
         XCTAssertTrue(text.contains("G (tonic, "), "the tonic is among the answers after the dominant: \(text)")
         XCTAssertTrue(text.contains("borrowed:") == false || text.contains("outside the scale"), text)
+    }
+
+    /// The chord, its notes and the notes it borrows read as the key writes them (TH-3): C minor's
+    /// Neapolitan is D♭ with D♭ in it, F♯ major's ii is G♯m on G♯ — in the ASCII the model writes.
+    func testChordSuggestionsSpellTheChordsAsTheKeyDoes() throws {
+        var project = Project()
+        let track = TrackID()
+        try Command.addTrack(id: track, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        try Command.setScale(.minor).apply(to: &project)
+        let cMinor = try AgentTools.chordSuggestions(track: "Keys", bar: 1, in: project, count: 10)
+        XCTAssertTrue(cMinor.contains("D♭ (subdominant, Db4+F4+Ab4, borrowed: D♭ outside the scale)"), cMinor)
+        try Command.setScale(.major).apply(to: &project)
+        try Command.setKeyRoot(6).apply(to: &project)
+        let fSharpMajor = try AgentTools.chordSuggestions(track: "Keys", bar: 1, in: project, count: 10)
+        XCTAssertTrue(fSharpMajor.hasPrefix("In F♯ Major, to open: "), fSharpMajor)
+        XCTAssertTrue(fSharpMajor.contains("G♯m (subdominant, B3+D#4+G#4)"), fSharpMajor)
+        XCTAssertEqual(AgentTools.pitch("Db4"), 61, "the model can write back what it reads")
     }
 }

@@ -22,7 +22,8 @@ public struct FieldFrame: Equatable, Sendable {
     /// Lungs empty (0) … full (1), where a source measures the breath.
     public var breath: Double?
     public var isPlaying: Bool
-    /// The song's third as its tone system tunes it, as a beat (`TuningBeat`): the Moiré look.
+    /// The song's third (its fourth, in a scale without one) as its tone system tunes it, as a beat
+    /// (`TuningBeat`): the Moiré look.
     public var tuningBeat: TuningBeat
     /// Where the playhead is in the song, in bars from its start (the bar's number plus its
     /// phase) — playing or not, so a paused song keeps its place. The Weave look's clock (`BarWeave`).

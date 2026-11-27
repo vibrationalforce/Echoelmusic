@@ -91,6 +91,151 @@ final class MusicalContextTests: XCTestCase {
         XCTAssertEqual(MusicalContext(root: 2, scale: .major).nearest(0), 1, "C is not in D major; C♯ is")
     }
 
+    // MARK: Scales
+
+    /// Every scale a song can store, in its stored order: the notes its name plays, the title the
+    /// menu shows and the shelf it sits on. The first fourteen are the first build's; the 43 after
+    /// them are the earlier app's other scales under its names and in its order (TH-4, 2026-11-27,
+    /// from `Sources/Echoelmusic/Sequencer/MusicalKey.swift`), so a song that stores one of those
+    /// names plays the notes the name stood for there. A changed set would retune every such song.
+    private let everyScale: [(name: String, steps: [Int], title: String, shelf: Scale.Shelf)] = [
+        ("chromatic", Array(0...11), "Chromatic", .symmetric),
+        ("major", [0, 2, 4, 5, 7, 9, 11], "Major", .modes),
+        ("minor", [0, 2, 3, 5, 7, 8, 10], "Minor", .modes),
+        ("dorian", [0, 2, 3, 5, 7, 9, 10], "Dorian", .modes),
+        ("phrygian", [0, 1, 3, 5, 7, 8, 10], "Phrygian", .modes),
+        ("lydian", [0, 2, 4, 6, 7, 9, 11], "Lydian", .modes),
+        ("mixolydian", [0, 2, 4, 5, 7, 9, 10], "Mixolydian", .modes),
+        ("locrian", [0, 1, 3, 5, 6, 8, 10], "Locrian", .modes),
+        ("harmonicMinor", [0, 2, 3, 5, 7, 8, 11], "Harmonic Minor", .minorAndAltered),
+        ("melodicMinor", [0, 2, 3, 5, 7, 9, 11], "Melodic Minor", .minorAndAltered),
+        ("majorPentatonic", [0, 2, 4, 7, 9], "Major Pentatonic", .pentatonicAndBlues),
+        ("minorPentatonic", [0, 3, 5, 7, 10], "Minor Pentatonic", .pentatonicAndBlues),
+        ("blues", [0, 3, 5, 6, 7, 10], "Blues", .pentatonicAndBlues),
+        ("wholeTone", [0, 2, 4, 6, 8, 10], "Whole Tone", .symmetric),
+        ("lydianDominant", [0, 2, 4, 6, 7, 9, 10], "Lydian Dominant", .minorAndAltered),
+        ("altered", [0, 1, 3, 4, 6, 8, 10], "Altered", .minorAndAltered),
+        ("bebopDominant", [0, 2, 4, 5, 7, 9, 10, 11], "Bebop Dominant", .minorAndAltered),
+        ("bluesMajor", [0, 2, 3, 4, 7, 9], "Blues Major", .pentatonicAndBlues),
+        ("diminishedWholeHalf", [0, 2, 3, 5, 6, 8, 9, 11], "Diminished (W–H)", .symmetric),
+        ("diminishedHalfWhole", [0, 1, 3, 4, 6, 7, 9, 10], "Diminished (H–W)", .symmetric),
+        ("phrygianDominant", [0, 1, 4, 5, 7, 8, 10], "Phrygian Dominant", .maqamAndNearEast),
+        ("harmonicMajor", [0, 2, 4, 5, 7, 8, 11], "Harmonic Major", .minorAndAltered),
+        ("hungarianMinor", [0, 2, 3, 6, 7, 8, 11], "Hungarian Minor", .europeanFolk),
+        ("doubleHarmonic", [0, 1, 4, 5, 7, 8, 11], "Double Harmonic", .maqamAndNearEast),
+        ("neapolitanMinor", [0, 1, 3, 5, 7, 8, 11], "Neapolitan Minor", .europeanFolk),
+        ("neapolitanMajor", [0, 1, 3, 5, 7, 9, 11], "Neapolitan Major", .europeanFolk),
+        ("romanianMinor", [0, 2, 3, 6, 7, 9, 10], "Romanian Minor", .europeanFolk),
+        ("persian", [0, 1, 4, 5, 6, 8, 11], "Persian", .maqamAndNearEast),
+        ("hirajoshi", [0, 2, 3, 7, 8], "Hirajoshi", .eastAndSoutheastAsia),
+        ("iwato", [0, 1, 5, 6, 10], "Iwato", .eastAndSoutheastAsia),
+        ("insen", [0, 1, 5, 7, 10], "Insen", .eastAndSoutheastAsia),
+        ("yo", [0, 2, 5, 7, 9], "Yo", .eastAndSoutheastAsia),
+        ("inSakura", [0, 1, 5, 7, 8], "In (Sakura)", .eastAndSoutheastAsia),
+        ("egyptian", [0, 2, 5, 7, 10], "Egyptian", .pentatonicAndBlues),
+        ("pelog", [0, 1, 3, 7, 8], "Pelog", .eastAndSoutheastAsia),
+        ("enigmatic", [0, 1, 4, 6, 8, 10, 11], "Enigmatic", .europeanFolk),
+        ("prometheus", [0, 2, 4, 6, 9, 10], "Prometheus", .europeanFolk),
+        ("augmented", [0, 3, 4, 7, 8, 11], "Augmented", .symmetric),
+        ("tritone", [0, 1, 4, 6, 7, 10], "Tritone", .symmetric),
+        ("hungarianMajor", [0, 3, 4, 6, 7, 9, 10], "Hungarian Major", .europeanFolk),
+        ("bebopMajor", [0, 2, 4, 5, 7, 8, 9, 11], "Bebop Major", .minorAndAltered),
+        ("majorLocrian", [0, 2, 4, 5, 6, 8, 10], "Major Locrian", .minorAndAltered),
+        ("lydianAugmented", [0, 2, 4, 6, 8, 9, 11], "Lydian Augmented", .minorAndAltered),
+        ("spanishEightTone", [0, 1, 3, 4, 5, 6, 8, 10], "Spanish 8-Tone", .europeanFolk),
+        ("kumoi", [0, 2, 3, 7, 9], "Kumoi", .eastAndSoutheastAsia),
+        ("messiaen3", [0, 2, 3, 4, 6, 7, 8, 10, 11], "Messiaen 3", .symmetric),
+        ("messiaen4", [0, 1, 2, 5, 6, 7, 8, 11], "Messiaen 4", .symmetric),
+        ("messiaen5", [0, 1, 5, 6, 7, 11], "Messiaen 5", .symmetric),
+        ("messiaen6", [0, 2, 4, 5, 6, 8, 10, 11], "Messiaen 6", .symmetric),
+        ("messiaen7", [0, 1, 2, 3, 5, 6, 7, 8, 9, 11], "Messiaen 7", .symmetric),
+        ("marwa", [0, 1, 4, 6, 7, 9, 11], "Marwa", .hindustaniAndCarnatic),
+        ("purvi", [0, 1, 4, 6, 7, 8, 11], "Purvi", .hindustaniAndCarnatic),
+        ("todi", [0, 1, 3, 6, 7, 8, 11], "Todi (Hindustani)", .hindustaniAndCarnatic),
+        ("malkauns", [0, 3, 5, 8, 10], "Malkauns", .hindustaniAndCarnatic),
+        ("charukeshi", [0, 2, 4, 5, 7, 8, 10], "Charukeshi", .hindustaniAndCarnatic),
+        ("hamsadhwani", [0, 2, 4, 7, 11], "Hamsadhwani", .hindustaniAndCarnatic),
+        ("shanmukhapriya", [0, 2, 3, 6, 7, 8, 10], "Shanmukhapriya", .hindustaniAndCarnatic),
+    ]
+
+    func testEveryStoredScaleNamePlaysItsNotesUnderItsTitleOnItsShelf() {
+        XCTAssertEqual(Scale.allCases.map(\.rawValue), everyScale.map(\.name), "every scale, in its stored order")
+        for row in everyScale {
+            guard let scale = Scale(rawValue: row.name) else {
+                XCTFail("\(row.name) names no scale")
+                continue
+            }
+            XCTAssertEqual(scale.intervals, Set(row.steps), "\(row.name): the notes the name stands for")
+            XCTAssertEqual(scale.title, row.title, row.name)
+            XCTAssertEqual(scale.shelf, row.shelf, row.name)
+        }
+    }
+
+    /// A scale of the earlier app plays on the song's root like any other: A Hirajoshi is A B C E F,
+    /// D Hungarian Minor holds G♯ and C♯, and the frame reads them by their titles.
+    func testAnAppendedScalePlaysOnTheSongsRoot() {
+        let hirajoshi = MusicalContext(root: 9, scale: .hirajoshi)
+        XCTAssertEqual((57...68).filter(hirajoshi.contains), [57, 59, 60, 64, 65])
+        XCTAssertEqual(hirajoshi.title, "A Hirajoshi")
+        XCTAssertEqual(hirajoshi.nearest(62), 60, "D lies between C and E: the lower wins")
+        let hungarian = MusicalContext(root: 2, scale: .hungarianMinor)
+        XCTAssertEqual((62...73).filter(hungarian.contains), [62, 64, 65, 68, 69, 70, 73])
+        XCTAssertEqual(hungarian.keyMark(of: 68), .scaleTone, "G♯ is its raised fourth")
+        XCTAssertEqual(MusicalContext(root: 0, scale: .todi).title, "C Todi (Hindustani)")
+    }
+
+    /// No two scales are the same notes, each holds its root and has five to twelve tones: a second
+    /// case for a pitch set would put the same notes in the menu twice. A tradition's own name for a
+    /// set the menu already has is a shelf's work, never another case — the earlier app's three that
+    /// Studio already had are `majorPentatonic`, `minorPentatonic` and `blues`, added once.
+    func testEveryScaleIsADistinctPitchSet() {
+        var seen: [Set<Int>: Scale] = [:]
+        for scale in Scale.allCases {
+            let tones = scale.intervals
+            XCTAssertTrue(tones.contains(0), "\(scale) holds its root")
+            XCTAssertTrue(tones.allSatisfy { (step: Int) -> Bool in (0...11).contains(step) }, "\(scale)")
+            XCTAssertTrue((5...12).contains(tones.count), "\(scale) has \(tones.count) tones")
+            if let earlier = seen[tones] { XCTFail("\(scale) plays the notes of \(earlier)") }
+            seen[tones] = scale
+        }
+        XCTAssertEqual(Scale.allCases.count, 57)
+    }
+
+    /// A grouped menu shows every scale exactly once: eight shelves, none empty, each scale on one,
+    /// its scales in their stored order. Chromatic, which frames nothing, sits with the other scales
+    /// of equal steps, as in the earlier app.
+    func testEveryScaleSitsOnExactlyOneShelf() {
+        XCTAssertEqual(Scale.Shelf.allCases.map(\.title),
+                       ["Modes", "Minor & Altered", "Pentatonic & Blues", "Symmetric", "European Folk",
+                        "Maqām & Near East", "East & Southeast Asia", "Hindustani & Carnatic"])
+        let shelved = Scale.Shelf.allCases.flatMap(\.scales)
+        XCTAssertEqual(shelved.count, Scale.allCases.count, "no scale on two shelves")
+        XCTAssertEqual(Set(shelved), Set(Scale.allCases), "no scale left off the shelves")
+        for shelf in Scale.Shelf.allCases {
+            XCTAssertFalse(shelf.scales.isEmpty, shelf.title)
+            XCTAssertTrue(shelf.scales.allSatisfy { (scale: Scale) -> Bool in scale.shelf == shelf }, shelf.title)
+            let order = shelf.scales.compactMap { (scale: Scale) -> Int? in Scale.allCases.firstIndex(of: scale) }
+            XCTAssertEqual(order, order.sorted(), shelf.title)
+        }
+        XCTAssertEqual(Scale.Shelf.modes.scales, [.major, .minor, .dorian, .phrygian, .lydian, .mixolydian, .locrian])
+        XCTAssertEqual(Scale.Shelf.maqamAndNearEast.scales, [.phrygianDominant, .doubleHarmonic, .persian])
+        XCTAssertEqual(Scale.chromatic.shelf, .symmetric)
+    }
+
+    /// Every scale and shelf has its own title, and none uses a word the language law keeps out
+    /// (`LearnGuideTests.forbiddenWords`); a tradition's name is a name.
+    func testEveryScaleAndShelfHasItsOwnPlainTitle() {
+        let titles = Scale.allCases.map(\.title)
+        XCTAssertEqual(Set(titles).count, titles.count, "two scales would read alike")
+        for title in titles + Scale.Shelf.allCases.map(\.title) {
+            XCTAssertFalse(title.isEmpty)
+            let words = title.lowercased().split(whereSeparator: { (character: Character) -> Bool in
+                !character.isLetter && !character.isNumber
+            }).map(String.init)
+            XCTAssertTrue(Set(words).isDisjoint(with: LearnGuideTests.forbiddenWords), title)
+        }
+    }
+
     func testAToneSystemRetunesFromTheKeysRoot() {
         let justThird = 386.314 - 400
         let inC = MusicalContext(tuning: "just-major").centsTable()

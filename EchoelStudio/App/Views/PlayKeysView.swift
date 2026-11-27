@@ -432,7 +432,9 @@ private struct SlicePads: View {
 /// fingers never stack two chords into a cluster. The chord played last is kept while the row
 /// shows, for the voices to lead from; a change of the song's key or scale ends what sounds and
 /// forgets it, and a change of its swing, tuning or A4 leaves a held chord sounding. Like the
-/// keys, it plays on MIDI channel 16 through the one live router.
+/// keys, it plays on MIDI channel 16 through the one live router. A key with more than seven
+/// chords shows them in even lines of at most seven (`ChordRow.lines`), so every pad stays a
+/// finger wide.
 private struct ChordPads: View {
     let router: LiveRouter
     let context: MusicalContext
@@ -457,12 +459,9 @@ private struct ChordPads: View {
                     .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
             } else {
                 // Narrow gaps, so seven pads stay a finger wide on a phone in portrait.
-                HStack(spacing: Theme.Space.xs) {
-                    ForEach(row.indices, id: \.self) { index in
-                        ChordPad(label: row[index].label, spoken: row[index].chord.spokenName,
-                                 isDown: held == index,
-                                 press: { press(index) }, release: { release(index) })
-                            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+                VStack(spacing: Theme.Space.xs) {
+                    ForEach(ChordRow.lines(count: row.count), id: \.lowerBound) { line in
+                        padLine(line, of: row)
                     }
                 }
                 .accessibilityElement(children: .contain)
@@ -481,6 +480,18 @@ private struct ChordPads: View {
     }
 
     private var height: CGFloat { compact ? Theme.Size.touch : Swift.min(padHeight, 88) }
+
+    /// One line of pads: the row's chords `line`, side by side.
+    private func padLine(_ line: Range<Int>, of row: [ChordRow.Entry]) -> some View {
+        HStack(spacing: Theme.Space.xs) {
+            ForEach(line, id: \.self) { index in
+                ChordPad(label: row[index].label, spoken: row[index].chord.spokenName,
+                         isDown: held == index,
+                         press: { press(index) }, release: { release(index) })
+                    .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+            }
+        }
+    }
 
     private func press(_ index: Int) {
         endSounding()

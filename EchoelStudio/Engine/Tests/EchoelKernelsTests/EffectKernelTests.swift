@@ -224,6 +224,36 @@ final class EffectKernelTests: XCTestCase {
         XCTAssertEqual(cents(PitchTracker.frequency(of: Array(output.suffix(4_096)), sampleRate: rate), 369.99), 0, accuracy: 3)
     }
 
+    /// No target lies beyond the correction's reach, in any scale, tone system and key the kernel
+    /// offers: half the widest gap between two allowed pitches, plus the hysteresis a held target
+    /// keeps, is within `PitchCorrector.reach`. The pitches are placed as the kernel hands them to
+    /// the corrector — the scale's pitch classes, each moved by the tone system's cents for the key,
+    /// clamped to 100 as the corrector clamps them. A tone system widens a gap past a scale's 4.
+    func testEveryTargetOfEveryScaleAndToneSystemLiesWithinTheCorrectionsReach() {
+        var widest = 0.0
+        for system in TuningSystem.library {
+            for root in MusicalContext.rootRange {
+                let cents = MusicalContext(root: root, tuning: system.id).centsTable()
+                for scale in Scale.allCases {
+                    let mask = PitchCorrector.Settings.mask(root: root, steps: scale.intervals)
+                    let places = (0..<12)
+                        .filter { (pitchClass: Int) -> Bool in mask & (1 << UInt16(pitchClass)) != 0 }
+                        .map { (pitchClass: Int) -> Double in
+                            Double(pitchClass) + Swift.min(Swift.max(cents[pitchClass], -100), 100) / 100
+                        }
+                        .sorted()
+                    guard let lowest = places.first, let highest = places.last else { continue }
+                    var gap = lowest + 12 - highest
+                    for index in places.indices.dropFirst() { gap = Swift.max(gap, places[index] - places[index - 1]) }
+                    widest = Swift.max(widest, gap)
+                    XCTAssertLessThanOrEqual(gap / 2 + PitchCorrector.hysteresis, PitchCorrector.reach,
+                                             "\(scale) in \(system.id) on \(root)")
+                }
+            }
+        }
+        XCTAssertGreaterThan(widest, 4, "a tone system widens a scale's gap of 4 semitones")
+    }
+
     /// Both sides of the effect's output, minus the dry sound: the voices alone.
     private func voices(_ kernel: EffectKernel, _ input: [Float]) -> (left: [Float], right: [Float]) {
         var l = input, r = input

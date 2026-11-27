@@ -110,9 +110,16 @@ them and counts the first bar's signature throughout (its notes and tempo are un
 
 **Musical context:** `{root, scale, tuning, concertPitch, swing}` — `root` a pitch class 0 (C) …
 11 (B); `scale` one of `chromatic` `major` `minor` `dorian` `phrygian` `lydian` `mixolydian`
-`locrian` `harmonicMinor` `melodicMinor` `majorPentatonic` `minorPentatonic` `blues` `wholeTone`;
-`tuning` a tone-system id (`edo12` and others); an unknown scale or tone system is kept by name
-and plays as chromatic or 12 equal;
+`locrian` `harmonicMinor` `melodicMinor` `majorPentatonic` `minorPentatonic` `blues` `wholeTone`
+and, added on 2026-11-27, `lydianDominant` `altered` `bebopDominant` `bluesMajor`
+`diminishedWholeHalf` `diminishedHalfWhole` `phrygianDominant` `harmonicMajor` `hungarianMinor`
+`doubleHarmonic` `neapolitanMinor` `neapolitanMajor` `romanianMinor` `persian` `hirajoshi` `iwato`
+`insen` `yo` `inSakura` `egyptian` `pelog` `enigmatic` `prometheus` `augmented` `tritone`
+`hungarianMajor` `bebopMajor` `majorLocrian` `lydianAugmented` `spanishEightTone` `kumoi`
+`messiaen3` `messiaen4` `messiaen5` `messiaen6` `messiaen7` `marwa` `purvi` `todi` `malkauns`
+`charukeshi` `hamsadhwani` `shanmukhapriya` (an earlier build that opens such a song keeps the
+name and plays chromatic); `tuning` a tone-system id (`edo12` and others); an unknown scale or tone
+system is kept by name and plays as chromatic or 12 equal;
 `concertPitch` 400–480 Hz; `swing` 0 (straight) … 1 (triplet feel). It frames what is played and
 writes no notes.
 

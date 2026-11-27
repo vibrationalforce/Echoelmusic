@@ -61,8 +61,14 @@ public final class PitchCorrector: @unchecked Sendable {
         }
     }
 
-    /// The largest correction, in semitones: half the widest gap of any scale, and a little more.
-    public static let reach = 2.0
+    /// The largest correction, in semitones, so that no target is cut short. The widest gap of a
+    /// scale is 4 semitones in twelve equal steps, and a tone system moves each end by at most 100
+    /// cents (`Settings.cents`): a gap is at most 6, its nearest pitch at most 3 away, and a held
+    /// target at most `hysteresis` farther. 3.5 is that and a little more; `EffectKernelTests`
+    /// measures it over every scale, tone system and root. (2.0 until 2026-11-27: half the widest
+    /// gap of the first fourteen scales in twelve equal steps, and a little more — too short for a
+    /// gap of 4, and for a gap a tone system widens.)
+    public static let reach = 3.5
     /// How much nearer another pitch must be before the held target lets go, in semitones.
     public static let hysteresis = 0.2
     /// How long without a pitch before the correction lets go, in seconds.

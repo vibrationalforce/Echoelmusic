@@ -190,7 +190,9 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
-    /// A song from a later build, with a scale and a monitoring mode this build does not know.
+    /// A song from a later build, with a monitoring mode this build does not know, and a scale,
+    /// "hirajoshi", that Studio did not know when the file was written and knows since TH-4
+    /// (2026-11-27).
     private let laterNames = Data("""
     {
       "formatVersion": 2,
@@ -1057,9 +1059,14 @@ final class FormatGoldenTests: XCTestCase {
     /// fallback and is written back unchanged; the track kind decides what a track holds and has
     /// no fallback, so a new kind comes with a new format number.
     func testANameFromALaterBuildIsKeptAndPlaysAsTheFallback() throws {
-        let project = try ProjectCodec.decode(laterNames)
+        // The file's scale, "hirajoshi", became a scale of this build with TH-4 (2026-11-27); the rule
+        // is shown with a name no build will define, put in its place. The file itself is unchanged.
+        let renamed = String(decoding: laterNames, as: UTF8.self)
+            .replacingOccurrences(of: "\"scale\": \"hirajoshi\"", with: "\"scale\": \"scale-from-a-later-build\"")
+        XCTAssertNotEqual(Data(renamed.utf8), laterNames, "the replacement must land")
+        let project = try ProjectCodec.decode(Data(renamed.utf8))
         XCTAssertEqual(project.context.scale, .chromatic, "an unknown scale frames nothing")
-        XCTAssertEqual(project.context.unrecognizedScale, "hirajoshi")
+        XCTAssertEqual(project.context.unrecognizedScale, "scale-from-a-later-build")
         XCTAssertEqual(project.context.root, 9)
         let voice = try XCTUnwrap(project.tracks.first)
         XCTAssertEqual(voice.monitor, .auto, "an unknown monitoring mode behaves as the default")
@@ -1069,7 +1076,8 @@ final class FormatGoldenTests: XCTestCase {
         struct Monitored: Decodable { let monitor: String }
         struct Saved: Decodable { let context: Context; let tracks: [Monitored] }
         let saved = try JSONDecoder().decode(Saved.self, from: ProjectCodec.encode(project))
-        XCTAssertEqual(saved.context.scale, "hirajoshi", "saved again, the name is still there for the build that knows it")
+        XCTAssertEqual(saved.context.scale, "scale-from-a-later-build",
+                       "saved again, the name is still there for the build that knows it")
         XCTAssertEqual(saved.tracks.map(\.monitor), ["tape"])
 
         var picked = project
@@ -1078,6 +1086,22 @@ final class FormatGoldenTests: XCTestCase {
         XCTAssertNil(picked.context.unrecognizedScale, "choosing a scale replaces the unknown one")
         XCTAssertNil(picked.tracks[0].unrecognizedMonitor)
         XCTAssertEqual(picked.context.scale, .dorian)
+    }
+
+    /// The promise of the rule above, kept: a name an earlier build did not know and saved back
+    /// unchanged plays as its scale in the build that knows it. The file's "hirajoshi" was such a
+    /// name until the earlier app's scales came to this build (TH-4, 2026-11-27).
+    func testAKeptScaleNameOpensAsItsScaleInTheBuildThatKnowsIt() throws {
+        let project = try ProjectCodec.decode(laterNames)
+        XCTAssertEqual(project.context.scale, .hirajoshi)
+        XCTAssertNil(project.context.unrecognizedScale)
+        XCTAssertEqual(project.context.title, "A Hirajoshi")
+        XCTAssertEqual(project.tracks.first?.unrecognizedMonitor, "tape", "the monitoring mode is still a later build's")
+
+        struct Context: Decodable { let scale: String }
+        struct Saved: Decodable { let context: Context }
+        let saved = try JSONDecoder().decode(Saved.self, from: ProjectCodec.encode(project))
+        XCTAssertEqual(saved.context.scale, "hirajoshi", "saved under the same name")
     }
 
     // MARK: - Media, regions, effects and plugins (format 2)

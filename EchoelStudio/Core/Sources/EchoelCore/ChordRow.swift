@@ -4,13 +4,18 @@ import Foundation
 /// song's key counts as PLAYING — it sounds only while the finger is down and writes nothing). The
 /// order is keys, then chords, then strum; this is the chord step, as a pure rule the screen calls.
 ///
-/// The row holds the key's own chords: one third-stack per scale degree, in the scale's order, the
-/// same chords `ChordSuggest` ranks — borrowed chords are not in this row. Each button shows the
-/// chord's name ("Dm", "B°"), never a roman numeral. A press voice-leads from the chord pressed
-/// before it through `ChordSuggest.voicing`, so common tones stay and the other voices take the
-/// smallest step, and keeps the three voices inside `voiceRange`. Under them the chord's root sounds
-/// in `bassRange`. Nothing is stored and nothing reaches the song: the screen holds the last
-/// `Press` while it shows the row, and forgets it with the row.
+/// The row holds the key's own chords: one triad on each degree of the scale that holds one, in the
+/// scale's order, the same chords `ChordSuggest` ranks — borrowed chords are not in this row. In a
+/// seven-note scale that is the degree's third-stack wherever it has a name, as on every degree of
+/// the church modes; otherwise, and in a pentatonic or any other scale, the first triad of the
+/// vocabulary whose tones the scale holds (TH-5), so every button names its chord — C major
+/// pentatonic plays C, Dsus2, Gsus2 and Am, and its E, on which no triad of the scale sits, has no
+/// button. Each button shows the chord's name ("Dm", "B°"), never a roman numeral. A press
+/// voice-leads from the chord pressed before it through `ChordSuggest.voicing`, so common tones
+/// stay and the other voices take the smallest step, and keeps the three voices inside
+/// `voiceRange`. Under them the chord's root sounds in `bassRange`. Nothing is stored and nothing
+/// reaches the song: the screen holds the last `Press` while it shows the row, and forgets it with
+/// the row.
 public enum ChordRow {
     /// One button of the row.
     public struct Entry: Equatable, Sendable {
@@ -42,14 +47,37 @@ public enum ChordRow {
     /// every voice by at least a whole tone, because no triad tone lies a semitone above its root.
     public static let bassRange: ClosedRange<Int> = 40...51
 
-    /// The row for `context`: one chord per degree of its scale, in order. Empty for a song without
-    /// a key (chromatic, or a scale this build does not know) and for a root outside 0 … 11, which
-    /// names no key either (`MusicalContext.title` reads it as Chromatic too).
+    /// The row for `context`: one chord per degree of its scale that holds one, in order. Empty for a
+    /// song without a key (chromatic, or a scale this build does not know) and for a root outside
+    /// 0 … 11, which names no key either (`MusicalContext.title` reads it as Chromatic too).
     public static func entries(in context: MusicalContext) -> [Entry] {
         guard MusicalContext.rootRange.contains(context.root) else { return [] }
         return ChordSuggest.candidates(in: context)
             .filter { !$0.borrowed }
             .map { Entry(chord: $0, label: $0.name) }
+    }
+
+    /// The most buttons one line of the row holds: seven buttons and their narrow gaps stay a finger
+    /// wide on a phone held upright. A scale of eight notes or more can give a longer row (TH-5).
+    public static let longestLine = 7
+
+    /// Where the row's `count` buttons stand, line by line: one line up to `longestLine` buttons,
+    /// otherwise as few lines as hold them, as even as they come, each a run of the row's order —
+    /// eight buttons are two lines of four, nine a line of five over one of four, ten two of five.
+    /// No line for an empty row.
+    public static func lines(count: Int) -> [Range<Int>] {
+        guard count > 0 else { return [] }
+        let lineCount = (count + longestLine - 1) / longestLine
+        let shortest = count / lineCount
+        let longer = count % lineCount
+        var out: [Range<Int>] = []
+        var start = 0
+        for line in 0..<lineCount {
+            let length = shortest + (line < longer ? 1 : 0)
+            out.append(start..<(start + length))
+            start += length
+        }
+        return out
     }
 
     /// What pressing chord `index` of the row sounds after `previous` (nil when nothing was pressed
@@ -77,25 +105,7 @@ public enum ChordRow {
 
 extension ChordSuggest.Chord {
     /// The chord as VoiceOver says it: "D minor", "B diminished", "F sharp major", "C suspended
-    /// fourth"; another stack names its tones, "C, E, A". `name` writes it short ("Dm", "B°").
-    public var spokenName: String {
-        guard let root = pitchClasses.first, pitchClasses.count == 3 else { return "" }
-        let spokenRoot = { (pitchClass: Int) -> String in
-            MusicalContext.rootNames[ChordSuggest.pitchClass(pitchClass)]
-                .replacingOccurrences(of: "♯", with: " sharp")
-                .replacingOccurrences(of: "♭", with: " flat")
-        }
-        let third = ChordSuggest.pitchClass(pitchClasses[1] - root)
-        let fifth = ChordSuggest.pitchClass(pitchClasses[2] - root)
-        let base = spokenRoot(root)
-        switch (third, fifth) {
-        case (4, 7): return base + " major"
-        case (3, 7): return base + " minor"
-        case (3, 6): return base + " diminished"
-        case (4, 8): return base + " augmented"
-        case (2, 7): return base + " suspended second"
-        case (5, 7): return base + " suspended fourth"
-        default: return pitchClasses.map(spokenRoot).joined(separator: ", ")
-        }
-    }
+    /// fourth", spelled as its key writes it ("G sharp minor" in F♯ major); another stack names its
+    /// tones, "C, E, A". `name` writes it short ("Dm", "B°").
+    public var spokenName: String { spokenName(.english) }
 }

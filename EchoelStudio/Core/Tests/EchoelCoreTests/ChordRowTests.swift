@@ -142,12 +142,101 @@ final class ChordRowTests: XCTestCase {
         }
     }
 
+    /// A seventh and every other quality are spoken in words too, on any root: "G dominant seventh",
+    /// "B half-diminished seventh", "F sharp minor major seventh".
+    func testASeventhIsSpokenInWords() throws {
+        let sevenths = ChordSuggest.vocabulary(in: cMajor, qualities: ChordSuggest.Quality.sevenths)
+        XCTAssertEqual(sevenths.first { $0.name == "G7" }?.spokenName, "G dominant seventh")
+        XCTAssertEqual(sevenths.first { $0.name == "Bø7" }?.spokenName, "B half-diminished seventh")
+        XCTAssertEqual(sevenths.first { $0.name == "D7sus4" }?.spokenName, "D dominant seventh suspended fourth")
+        for quality in ChordSuggest.Quality.allCases {
+            let chord = ChordSuggest.Chord(rootDegree: 0, alterations: quality.intervals.map { _ in 0 }, function: .tonic,
+                                           borrowed: false, pitchClasses: quality.intervals.map { ($0 + 6) % 12 },
+                                           spelledIn: KeySpelling(MusicalContext()))
+            XCTAssertEqual(chord.quality, quality)
+            XCTAssertEqual(chord.name, "F♯" + quality.symbol)
+            XCTAssertEqual(chord.spokenName, "F sharp " + quality.spokenName)
+        }
+        let nameless = ChordSuggest.Chord(rootDegree: 0, alterations: [0, 0, 0], function: .tonic, borrowed: false,
+                                          pitchClasses: [0, 4, 9], spelledIn: KeySpelling(MusicalContext()))
+        XCTAssertNil(nameless.quality)
+        XCTAssertEqual(nameless.name, "C-E-A", "a stack without a name lists its tones")
+        XCTAssertEqual(nameless.spokenName, "C, E, A")
+    }
+
+    /// Every button of every key names a chord whose tones all lie in the scale, one per degree at
+    /// most, the degrees rising — in pentatonic and other scales too (TH-5). Until 2026-11-27 both
+    /// pentatonic rows held only stacks without a name, such as C-E-A.
+    func testEveryButtonNamesAChordOfTheScale() {
+        for scale in Scale.allCases where scale != .chromatic {
+            for root in MusicalContext.rootRange {
+                let context = MusicalContext(root: root, scale: scale)
+                let steps = scale.intervals.sorted()
+                let row = ChordRow.entries(in: context)
+                XCTAssertFalse(row.isEmpty, context.title)
+                let degrees = row.map(\.chord.rootDegree)
+                XCTAssertEqual(degrees, degrees.sorted(), context.title)
+                XCTAssertEqual(Set(degrees).count, degrees.count, "\(context.title): one chord per degree")
+                for entry in row {
+                    let label = "\(context.title) \(entry.label)"
+                    let quality = entry.chord.quality
+                    XCTAssertNotNil(quality, label)
+                    XCTAssertTrue(quality.map { ChordSuggest.Quality.triads.contains($0) } ?? false, "\(label): a triad")
+                    XCTAssertTrue(ChordSuggest.outside(entry.chord, in: context).isEmpty, label)
+                    XCTAssertEqual(entry.chord.pitchClasses.first, ChordSuggest.pitchClass(root + steps[entry.chord.rootDegree]), label)
+                }
+            }
+        }
+    }
+
+    /// C major pentatonic plays C, Dsus2, Gsus2 and Am, the first triad each degree holds; its E has no
+    /// button, because no triad of the vocabulary sits on E inside the scale. A minor pentatonic, the
+    /// same notes, plays the same four chords from A.
+    func testAPentatonicRowNamesItsChords() throws {
+        let cMajorPentatonic = MusicalContext(root: 0, scale: .majorPentatonic)
+        XCTAssertEqual(ChordRow.entries(in: cMajorPentatonic).map(\.label), ["C", "Dsus2", "Gsus2", "Am"])
+        XCTAssertEqual(ChordRow.entries(in: cMajorPentatonic).map(\.chord.rootDegree), [0, 1, 3, 4])
+        XCTAssertEqual(ChordRow.entries(in: MusicalContext(root: 9, scale: .minorPentatonic)).map(\.label),
+                       ["Am", "C", "Dsus2", "Gsus2"])
+        let sus = try XCTUnwrap(ChordRow.press(1, in: cMajorPentatonic, after: nil))
+        XCTAssertEqual(Set(sus.voices.map { ChordSuggest.pitchClass($0) }), [2, 4, 9], "D, E and A")
+        XCTAssertEqual(sus.bass, 50, "D3 under the voices")
+    }
+
+    /// A row of more than seven buttons stands in lines of at most seven, as even as they come, each a
+    /// run of the row's order; the row of every key fits, and some need a second line.
+    func testALongRowStandsInEvenLinesOfAtMostSeven() {
+        XCTAssertEqual(ChordRow.lines(count: 0), [])
+        XCTAssertEqual(ChordRow.lines(count: -3), [])
+        XCTAssertEqual(ChordRow.lines(count: 4), [0..<4])
+        XCTAssertEqual(ChordRow.lines(count: 7), [0..<7])
+        XCTAssertEqual(ChordRow.lines(count: 8), [0..<4, 4..<8])
+        XCTAssertEqual(ChordRow.lines(count: 9), [0..<5, 5..<9])
+        XCTAssertEqual(ChordRow.lines(count: 10), [0..<5, 5..<10])
+        XCTAssertEqual(ChordRow.lines(count: 15), [0..<5, 5..<10, 10..<15])
+        var longest = 0
+        for scale in Scale.allCases {
+            for root in MusicalContext.rootRange {
+                let context = MusicalContext(root: root, scale: scale)
+                let count = ChordRow.entries(in: context).count
+                let laidOut = ChordRow.lines(count: count)
+                XCTAssertEqual(laidOut.flatMap { (line: Range<Int>) -> [Int] in Array(line) }, Array(0..<count),
+                               "\(context.title): every button once, in order")
+                let lengths = laidOut.map(\.count)
+                XCTAssertLessThanOrEqual(lengths.max() ?? 0, ChordRow.longestLine, context.title)
+                XCTAssertLessThanOrEqual((lengths.max() ?? 0) - (lengths.min() ?? 0), 1, "\(context.title): even lines")
+                longest = Swift.max(longest, count)
+            }
+        }
+        XCTAssertGreaterThan(longest, ChordRow.longestLine, "some key's row needs a second line")
+    }
+
     func testAnIndexOutsideTheRowSoundsNothing() {
         for index in [-1, 7, 8, Int.max, Int.min] {
             XCTAssertNil(ChordRow.press(index, in: cMajor, after: nil), "\(index)")
         }
-        XCTAssertNil(ChordRow.press(5, in: MusicalContext(root: 0, scale: .majorPentatonic), after: nil),
-                     "a pentatonic key has five chords")
-        XCTAssertNotNil(ChordRow.press(4, in: MusicalContext(root: 0, scale: .majorPentatonic), after: nil))
+        XCTAssertNil(ChordRow.press(4, in: MusicalContext(root: 0, scale: .majorPentatonic), after: nil),
+                     "C major pentatonic has four chords: none sits on its E")
+        XCTAssertNotNil(ChordRow.press(3, in: MusicalContext(root: 0, scale: .majorPentatonic), after: nil))
     }
 }

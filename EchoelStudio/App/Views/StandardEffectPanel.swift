@@ -187,13 +187,18 @@ private struct EffectChoiceField: View {
         // the check mark every other menu of the studio shows (W18, m12).
         let chosen = currentChoice(after: picks)
         Menu {
-            ForEach(parameter.choices.indices, id: \.self) { index in
-                Button { pick(index) } label: {
-                    if parameter.choices[index] == chosen {
-                        Label(parameter.choices[index], systemImage: "checkmark")
-                    } else {
-                        Text(parameter.choices[index])
+            if parameter.choices == Scale.allCases.map(\.title) {
+                // The pitch corrector's scales, on the shelves the Song menu shows them on.
+                ForEach(Scale.Shelf.allCases, id: \.self) { shelf in
+                    Section(shelf.title) {
+                        ForEach(shelf.scales, id: \.self) { scale in
+                            choiceButton(Scale.allCases.firstIndex(of: scale) ?? 0, chosen: chosen)
+                        }
                     }
+                }
+            } else {
+                ForEach(parameter.choices.indices, id: \.self) { index in
+                    choiceButton(index, chosen: chosen)
                 }
             }
         } label: {
@@ -201,6 +206,17 @@ private struct EffectChoiceField: View {
         }
         .accessibilityLabel(parameter.title)
         .midiLearnable(address, title: parameter.title)
+    }
+
+    /// One name of the menu, checked when it is the unit's choice.
+    private func choiceButton(_ index: Int, chosen: String?) -> some View {
+        Button { pick(index) } label: {
+            if parameter.choices[index] == chosen {
+                Label(parameter.choices[index], systemImage: "checkmark")
+            } else {
+                Text(parameter.choices[index])
+            }
+        }
     }
 
     /// The unit's choice now, or nil before it loads. `picks` only ties the read to the last pick.

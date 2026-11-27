@@ -688,8 +688,11 @@ struct PianoRoll: View {
         }
     }
 
+    /// "D♭ — borrowed, D♭ outside the scale": the notes a borrowed chord brings, spelled as the
+    /// chord and its name spell them (`ChordSuggest.outsideNames`), so one line never writes a
+    /// pitch two ways.
     private func chordTitle(_ chord: ChordSuggest.Chord, in context: MusicalContext) -> String {
-        let outside = ChordSuggest.outside(chord, in: context).map { MusicalContext.rootNames[$0] }
+        let outside = ChordSuggest.outsideNames(of: chord, in: context)
         return outside.isEmpty ? chord.name : "\(chord.name) — borrowed, \(outside.joined(separator: " ")) outside the scale"
     }
 

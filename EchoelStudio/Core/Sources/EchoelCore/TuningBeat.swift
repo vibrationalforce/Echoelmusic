@@ -1,13 +1,16 @@
 import Foundation
 
-/// How the song's tone system tunes its third, as the beat the ear hears: the third above the
-/// key's tonic, as the system plays it, against the pure ratio nearest it. Two notes a pure 5 : 4
-/// apart share a partial (the fifth of the lower is the fourth of the upper) and do not beat; a
-/// tempered third puts those partials a few hertz apart, and they beat at the difference. The
-/// Moiré look (`FieldPattern.moire`) shows it: pure stands still, tempered drifts. Pure.
+/// How the song's tone system tunes its third (its fourth, in a scale without one), as the beat the
+/// ear hears: the third above the key's tonic, as the system plays it, against the pure ratio
+/// nearest it. Two notes a pure 5 : 4 apart share a partial (the fifth of the lower is the fourth
+/// of the upper) and do not beat; a tempered third puts those partials a few hertz apart, and they
+/// beat at the difference. The Moiré look (`FieldPattern.moire`) shows it: pure stands still,
+/// tempered drifts. Pure.
 ///
 /// - The interval is the major third (4 semitones) where the song's scale has one, else the minor
-///   third (3); every scale has one of the two.
+///   third (3), else the fourth (5): Iwato, Insen, Yo, In (Sakura), Egyptian and Messiaen's modes
+///   4 and 5 hold neither third, and the beat is always of an interval the scale holds. Every scale
+///   holds one of the three.
 /// - Its size is what the system really plays there (`TuningSystem.centsDeviation`), so a system
 ///   that plays semitone 4 as 6/5 is judged as a 6/5.
 /// - The pure ratio p/q is the nearest of 9/8, 6/5, 5/4 and 4/3; the beat is |q·f₂ − p·f₁| Hz,
@@ -17,7 +20,7 @@ import Foundation
 ///   exactly), faster beats never slower — and always under `FieldPulse.maximumRateHz`, the house
 ///   flash ceiling.
 public struct TuningBeat: Equatable, Sendable {
-    /// Semitones above the tonic: 4 or 3.
+    /// Semitones above the tonic: 4, 3 or 5.
     public var semitones: Int
     /// The pure ratio p/q the interval is judged against.
     public var p: Int
@@ -49,9 +52,10 @@ public struct TuningBeat: Equatable, Sendable {
         self.driftHz = driftHz
     }
 
-    /// The third of the song's key in its tone system.
+    /// The third of the song's key in its tone system, or its fourth in a scale without a third.
     public static func of(_ context: MusicalContext) -> TuningBeat {
-        let semitones = context.scale.intervals.contains(4) ? 4 : 3
+        let intervals = context.scale.intervals
+        let semitones = intervals.contains(4) ? 4 : intervals.contains(3) ? 3 : 5
         let system = TuningSystem.named(context.tuning)
         let cents = 100 * Double(semitones) + system.centsDeviation(forSemitone: semitones)
             - system.centsDeviation(forSemitone: 0)

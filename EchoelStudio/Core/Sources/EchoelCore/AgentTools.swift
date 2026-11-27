@@ -328,10 +328,11 @@ public enum AgentTools {
         return ((pitch % 12) + 12) % 12
     }
 
-    /// A scale by its name or a common word for it, ignoring case and spaces.
+    /// A scale by its name or a common word for it, ignoring case, spaces and punctuation but not
+    /// digits: "Messiaen 5" is the fifth of Messiaen's modes, whose titles differ only in the digit.
     public static func scale(_ name: String) throws -> Scale {
-        let key = name.lowercased().filter(\.isLetter)
-        if let scale = Scale.allCases.first(where: { $0.rawValue.lowercased() == key || $0.title.lowercased().filter(\.isLetter) == key }) {
+        let key = scaleKey(name)
+        if let scale = Scale.allCases.first(where: { $0.rawValue.lowercased() == key || scaleKey($0.title) == key }) {
             return scale
         }
         let aliases: [String: Scale] = ["ionian": .major, "aeolian": .minor, "naturalminor": .minor,
@@ -342,6 +343,11 @@ public enum AgentTools {
             throw AgentError.invalid("There is no scale \"\(name)\". Scales: \(Scale.allCases.map(\.title).joined(separator: ", ")).")
         }
         return scale
+    }
+
+    /// A scale's name as `scale(_:)` compares it: lower case, letters and digits only.
+    private static func scaleKey(_ text: String) -> String {
+        text.lowercased().filter { $0.isLetter || $0.isNumber }
     }
 
     /// The chords that could follow in an instrument track's clip at `bar`, best first, for the
@@ -363,10 +369,16 @@ public enum AgentTools {
         let place = clip.map { ChordSuggest.position(in: $0, context: context) }
         let chords = ChordSuggest.ranked(after: place?.previous, sounding: place?.sounding ?? [], in: context)
         guard !chords.isEmpty else { throw AgentError.invalid("\(context.title) has too few notes for chords.") }
+        // The chord, its notes and what it borrows as the chord is written in the key (TH-3,
+        // `KeySpelling.chordSpelling`), the notes in the ASCII `pitch(_:)` reads back: Db4, G#4.
+        let key = context.spelling
         let listed = chords.prefix(Swift.max(1, count)).map { chord -> String in
-            let notes = ChordSuggest.voicing(of: chord, after: place?.sounding ?? []).map { NoteEditing.name(of: $0).replacingOccurrences(of: "♯", with: "#") }
-            let outside = ChordSuggest.outside(chord, in: context)
-            let tail = outside.isEmpty ? "" : ", borrowed: \(outside.map { MusicalContext.rootNames[$0] }.joined(separator: " ")) outside the scale"
+            let notes = ChordSuggest.voicing(of: chord, after: place?.sounding ?? []).map { (pitch: Int) -> String in
+                NoteNaming.english.name(ofPitch: pitch, writtenAs: chord.spelledTone(pitch) ?? key.note(pitch))
+                    .replacingOccurrences(of: "♯", with: "#").replacingOccurrences(of: "♭", with: "b")
+            }
+            let outside = ChordSuggest.outsideNames(of: chord, in: context)
+            let tail = outside.isEmpty ? "" : ", borrowed: \(outside.joined(separator: " ")) outside the scale"
             return "\(chord.name) (\(chord.function.rawValue), \(notes.joined(separator: "+"))\(tail))"
         }
         let after = place?.previous.map { "after \($0.name)" } ?? "to open"

@@ -2,10 +2,20 @@ import Foundation
 
 /// Which chord could come next, without a model (ECHOELTOOLS D5): the deterministic core of the
 /// earlier app's `Sequencer/ChordSuggest.swift` (H2), ported without its subsystem — no seeded
-/// journey, no coherence selector, no `VoiceLeader`. What it keeps is the ranking: a third-stack
-/// triad on every degree of the song's scale plus a short list of borrowed chords, ordered by
-/// classical harmonic function (tonic → subdominant → dominant → tonic, the cadence D → T free),
-/// with how far the voices move as the tie-break inside a function.
+/// journey, no coherence selector, no `VoiceLeader`. What it keeps is the ranking: a chord on every
+/// degree of the song's scale plus a short list of borrowed chords, ordered by classical harmonic
+/// function (tonic → subdominant → dominant → tonic, the cadence D → T free), with how far the
+/// voices move as the tie-break inside a function.
+///
+/// The chords of a scale come from its pitch classes (TH-5, 2026-11-27): a vocabulary of named
+/// chords — six triads and the sevenths on them (`Quality`) — of which a scale holds those whose
+/// tones all lie in it (`vocabulary`). In a seven-note scale every other step is a third, so a
+/// degree's chord is its third-stack, the scale's own third and fifth above it, wherever the
+/// vocabulary names it: on every degree of the church modes and of harmonic and melodic minor, as
+/// before. In a scale of another size every other step is no third (C major pentatonic stacks
+/// C-E-A), so a degree takes the first triad of the vocabulary that the scale holds there; so does
+/// a seven-note degree whose third-stack has no name. A degree on which none fits has no chord: C
+/// major pentatonic has C, Dsus2, Gsus2 and Am, and nothing on E.
 ///
 /// It writes nothing by itself. The note editor and the assistant offer the list; a chord lands
 /// in a clip only when the musician picks one (`insert`), through the one door like every note.
@@ -17,32 +27,125 @@ public enum ChordSuggest {
         case tonic, subdominant, dominant
     }
 
-    /// One chord: the third-stack on `rootDegree` of the scale, each of its three tones moved by
-    /// `alterations` semitones (all zero for a chord of the scale).
+    /// What kind of chord a chord is: its tones in semitones above the root, the root first. The six
+    /// triads name the scale's own chords (`candidates`, the chord row); the sevenths add a seventh to
+    /// five of them, for a caller that asks for them (`vocabulary`). Never stored.
+    public enum Quality: CaseIterable, Sendable {
+        case major, minor, diminished, augmented, suspendedSecond, suspendedFourth
+        case majorSeventh, dominantSeventh, minorSeventh, minorMajorSeventh, halfDiminishedSeventh
+        case diminishedSeventh, augmentedMajorSeventh, augmentedSeventh, dominantSeventhSuspendedFourth
+
+        /// The six triads, in the order a degree tries them.
+        public static let triads: [Quality] = [.major, .minor, .diminished, .augmented, .suspendedSecond, .suspendedFourth]
+        /// The sevenths on the major, minor, diminished, augmented and suspended-fourth triads.
+        public static let sevenths: [Quality] = [.majorSeventh, .dominantSeventh, .minorSeventh, .minorMajorSeventh,
+                                                 .halfDiminishedSeventh, .diminishedSeventh, .augmentedMajorSeventh,
+                                                 .augmentedSeventh, .dominantSeventhSuspendedFourth]
+
+        /// The tones in semitones above the root, rising from 0.
+        public var intervals: [Int] {
+            switch self {
+            case .major: [0, 4, 7]
+            case .minor: [0, 3, 7]
+            case .diminished: [0, 3, 6]
+            case .augmented: [0, 4, 8]
+            case .suspendedSecond: [0, 2, 7]
+            case .suspendedFourth: [0, 5, 7]
+            case .majorSeventh: [0, 4, 7, 11]
+            case .dominantSeventh: [0, 4, 7, 10]
+            case .minorSeventh: [0, 3, 7, 10]
+            case .minorMajorSeventh: [0, 3, 7, 11]
+            case .halfDiminishedSeventh: [0, 3, 6, 10]
+            case .diminishedSeventh: [0, 3, 6, 9]
+            case .augmentedMajorSeventh: [0, 4, 8, 11]
+            case .augmentedSeventh: [0, 4, 8, 10]
+            case .dominantSeventhSuspendedFourth: [0, 5, 7, 10]
+            }
+        }
+
+        /// What a chord's name writes after its root: "" (C), "m" (Dm), "°", "+", "sus2", "sus4",
+        /// "maj7", "7", "m7", "m(maj7)", "ø7", "°7", "+maj7", "+7", "7sus4".
+        public var symbol: String {
+            switch self {
+            case .major: ""
+            case .minor: "m"
+            case .diminished: "°"
+            case .augmented: "+"
+            case .suspendedSecond: "sus2"
+            case .suspendedFourth: "sus4"
+            case .majorSeventh: "maj7"
+            case .dominantSeventh: "7"
+            case .minorSeventh: "m7"
+            case .minorMajorSeventh: "m(maj7)"
+            case .halfDiminishedSeventh: "ø7"
+            case .diminishedSeventh: "°7"
+            case .augmentedMajorSeventh: "+maj7"
+            case .augmentedSeventh: "+7"
+            case .dominantSeventhSuspendedFourth: "7sus4"
+            }
+        }
+
+        /// What VoiceOver says after the root, in words: "minor", "dominant seventh".
+        public var spokenName: String {
+            switch self {
+            case .major: "major"
+            case .minor: "minor"
+            case .diminished: "diminished"
+            case .augmented: "augmented"
+            case .suspendedSecond: "suspended second"
+            case .suspendedFourth: "suspended fourth"
+            case .majorSeventh: "major seventh"
+            case .dominantSeventh: "dominant seventh"
+            case .minorSeventh: "minor seventh"
+            case .minorMajorSeventh: "minor major seventh"
+            case .halfDiminishedSeventh: "half-diminished seventh"
+            case .diminishedSeventh: "diminished seventh"
+            case .augmentedMajorSeventh: "augmented major seventh"
+            case .augmentedSeventh: "augmented seventh"
+            case .dominantSeventhSuspendedFourth: "dominant seventh suspended fourth"
+            }
+        }
+    }
+
+    /// One chord on degree `rootDegree` of the scale. A chord of the scale moves none of its tones
+    /// (`alterations` all zero); a borrowed one is the scale's third-stack on that degree with each
+    /// tone moved by `alterations` semitones.
     public struct Chord: Equatable, Sendable {
         public let rootDegree: Int
         public let alterations: [Int]
         public let function: Function
         public let borrowed: Bool
-        /// Root, third and fifth as pitch classes, 0 = C … 11 = B.
+        /// The tones as pitch classes, 0 = C … 11 = B: the root first, then the others in the order
+        /// of the chord's quality — third and fifth, and the seventh where it has one.
         public let pitchClasses: [Int]
+        /// Root, third and fifth as written in the key they were suggested in (TH-3), by the rules
+        /// of `KeySpelling.chordSpelling`: the root as the key writes it and the other tones on the
+        /// letters their intervals have above it — G♯ B D♯ for F♯ major's ii, D♭ F A♭ for C minor's
+        /// Neapolitan, C♭ E♭ G♭ for E♭ major's ♭VI.
+        public let spelling: [SpelledNote]
 
-        /// "C", "Dm", "B°", "C+", "Gsus4"; another stack names its tones.
-        public var name: String {
-            guard let root = pitchClasses.first, pitchClasses.count == 3 else { return "" }
-            let third = ChordSuggest.pitchClass(pitchClasses[1] - root)
-            let fifth = ChordSuggest.pitchClass(pitchClasses[2] - root)
-            let base = MusicalContext.rootNames[root]
-            switch (third, fifth) {
-            case (4, 7): return base
-            case (3, 7): return base + "m"
-            case (3, 6): return base + "°"
-            case (4, 8): return base + "+"
-            case (2, 7): return base + "sus2"
-            case (5, 7): return base + "sus4"
-            default: return pitchClasses.map { MusicalContext.rootNames[$0] }.joined(separator: "-")
-            }
+        /// `key` is the key the chord is written in. It has no default, so no chord is ever spelled
+        /// without one by accident; a chord of no key is written in `KeySpelling(MusicalContext())`.
+        init(rootDegree: Int, alterations: [Int], function: Function, borrowed: Bool, pitchClasses: [Int],
+             spelledIn key: KeySpelling) {
+            self.rootDegree = rootDegree
+            self.alterations = alterations
+            self.function = function
+            self.borrowed = borrowed
+            self.pitchClasses = pitchClasses
+            spelling = key.chordSpelling(of: pitchClasses)
         }
+
+        /// What the chord is above its root; nil for a stack of tones the vocabulary has no name for.
+        public var quality: Quality? {
+            guard let root = pitchClasses.first else { return nil }
+            let above = pitchClasses.map { ChordSuggest.pitchClass($0 - root) }
+            return Quality.allCases.first { $0.intervals == above }
+        }
+
+        /// "C", "Dm", "B°", "C+", "Gsus4", "G♯m" in F♯ major; a stack without a name lists its tones,
+        /// "C-E-A".
+        public var name: String { name(.english) }
     }
 
     // MARK: Weights — the laws of the ranking (ChordSuggestTests)
@@ -65,18 +168,47 @@ public enum ChordSuggest {
         context.scale == .chromatic ? [] : context.scale.intervals.sorted()
     }
 
-    /// Every chord the ranking considers: one third-stack per scale degree, then the borrowed
-    /// chords of the key's tonality that are not already in the scale. Empty without a key.
+    /// Every chord the ranking considers: the scale's own chord on each degree that holds one, in the
+    /// scale's order — in a seven-note scale the third-stack where the vocabulary names it, otherwise
+    /// the first triad of the vocabulary there (see the type's notes) — then the borrowed chords of
+    /// the key's tonality. Empty without a key.
     public static func candidates(in context: MusicalContext) -> [Chord] {
         let steps = degrees(context)
         guard steps.count >= 3 else { return [] }
+        let triads = vocabulary(in: context, qualities: Quality.triads)
         var out: [Chord] = []
         for degree in steps.indices {
-            let interval = steps[degree]
-            out.append(chord(degree: degree, alterations: [0, 0, 0], function: function(interval: interval),
-                             borrowed: false, in: context, steps: steps))
+            let stack = chord(degree: degree, alterations: [0, 0, 0], function: function(interval: steps[degree]),
+                              borrowed: false, in: context, steps: steps)
+            if steps.count == 7, stack.quality != nil {
+                out.append(stack)
+            } else if let first = triads.first(where: { $0.rootDegree == degree }) {
+                out.append(first)
+            }
         }
         return out + borrowedCandidates(in: context, steps: steps)
+    }
+
+    /// Every chord of `qualities` that the song's scale holds: its root a degree of the scale and each
+    /// of its tones in the scale, worked out from the scale's pitch classes. Root by root in the
+    /// scale's order and, on one root, in the order of `qualities` (a quality named twice counts
+    /// once); none is borrowed. Empty for a song without a key.
+    public static func vocabulary(in context: MusicalContext, qualities: [Quality] = Quality.allCases) -> [Chord] {
+        let steps = degrees(context)
+        guard steps.count >= 3 else { return [] }
+        let held = Set(steps)
+        var asked: [Quality] = []
+        for quality in qualities where !asked.contains(quality) { asked.append(quality) }
+        var out: [Chord] = []
+        for (degree, interval) in steps.enumerated() {
+            for quality in asked where quality.intervals.allSatisfy({ held.contains(pitchClass(interval + $0)) }) {
+                out.append(Chord(rootDegree: degree, alterations: quality.intervals.map { _ in 0 },
+                                 function: function(interval: interval), borrowed: false,
+                                 pitchClasses: quality.intervals.map { pitchClass(context.root + interval + $0) },
+                                 spelledIn: KeySpelling(context)))
+            }
+        }
+        return out
     }
 
     /// The T/S/D family of a root by its distance from the tonic in semitones.
@@ -101,10 +233,13 @@ public enum ChordSuggest {
     }
 
     /// The target chord as the nearest third-stack of the scale with each tone moved at most a
-    /// semitone; the smallest total move wins, the lower degree on a tie. Nil when none fits or
-    /// the chord is already in the scale.
+    /// semitone; the smallest total move wins, the lower degree on a tie. Nil when none fits, and
+    /// when every tone of the target lies in the scale: a chord the scale holds is not borrowed,
+    /// though in a scale of other than seven notes it need not be a third-stack (TH-5).
     static func borrowed(target: [Int], function: Function, in context: MusicalContext, steps: [Int]) -> Chord? {
         let wanted = target.map { pitchClass(context.root + $0) }
+        let held = Set(steps.map { pitchClass(context.root + $0) })
+        guard wanted.contains(where: { !held.contains($0) }) else { return nil }
         var best: (degree: Int, alterations: [Int], total: Int)?
         for degree in steps.indices {
             var alterations: [Int] = []
@@ -131,7 +266,7 @@ public enum ChordSuggest {
             pitchClass(tone(degree + offset, in: context, steps: steps) + alterations[index])
         }
         return Chord(rootDegree: degree, alterations: alterations, function: function, borrowed: borrowed,
-                     pitchClasses: classes)
+                     pitchClasses: classes, spelledIn: KeySpelling(context))
     }
 
     /// The pitch class of a scale degree counted from the root, any number of octaves up.

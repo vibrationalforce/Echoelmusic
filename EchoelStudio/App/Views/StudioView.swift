@@ -1658,17 +1658,15 @@ struct SongMenu: View {
     /// writer sets them directly. Cycle Tones sets the key and concert pitch too.
     private var keyAndScale: some View {
         let context = store.project.context
+        // Each root as a key in the song's scale writes its tonic, as the label below names the
+        // key: D♭ under Major, C♯ under Minor (`MusicalContext.tonicNames`).
+        let roots = MusicalContext.tonicNames(for: context.scale)
         return Menu {
             Picker("Key", selection: Binding(get: { context.root }, set: { pick(.keyRoot, Double($0)) })) {
-                ForEach(MusicalContext.rootRange, id: \.self) { Text(MusicalContext.rootNames[$0]).tag($0) }
+                ForEach(MusicalContext.rootRange, id: \.self) { Text(roots[$0]).tag($0) }
             }
             .pickerStyle(.menu)
-            Picker("Scale", selection: Binding(get: { context.scale }, set: { scale in
-                pick(.scale, Double(Scale.allCases.firstIndex(of: scale) ?? 0))
-            })) {
-                ForEach(Scale.allCases, id: \.self) { Text($0.title).tag($0) }
-            }
-            .pickerStyle(.menu)
+            scalePicker(context)
             // The tone system and concert pitch every built-in tuned voice plays in (synth with all
             // its engines, the Body voice and the choir among them; the sampler's keymapped pitch)
             // and the pitch corrector corrects to. The drum kit is not retuned (a drum note names a
@@ -1706,6 +1704,21 @@ struct SongMenu: View {
         } label: {
             Label("Key \u{00B7} \(context.title)", systemImage: "music.note")
         }
+    }
+
+    /// The song's scale, its choices on the shelves of `Scale.Shelf` rather than in one long list. A
+    /// pick sets the scale parameter to the scale's place in `Scale.allCases`, whichever shelf shows it.
+    private func scalePicker(_ context: MusicalContext) -> some View {
+        Picker("Scale", selection: Binding(get: { context.scale }, set: { scale in
+            pick(.scale, Double(Scale.allCases.firstIndex(of: scale) ?? 0))
+        })) {
+            ForEach(Scale.Shelf.allCases, id: \.self) { shelf in
+                Section(shelf.title) {
+                    ForEach(shelf.scales, id: \.self) { Text($0.title).tag($0) }
+                }
+            }
+        }
+        .pickerStyle(.menu)
     }
 
     /// The song's time signature: the common ones by name, any other by its two numbers. A

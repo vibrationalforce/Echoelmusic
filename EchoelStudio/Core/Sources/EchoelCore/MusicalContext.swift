@@ -55,12 +55,10 @@ public struct MusicalContext: Codable, Equatable, Sendable {
     ]
     public static let rootNames = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"]
 
-    /// The frame as the musician reads it: "D Dorian". Chromatic has no key to name and reads
-    /// "Chromatic", and so does a scale this build does not know, which frames nothing either.
-    public var title: String {
-        guard scale != .chromatic, Self.rootNames.indices.contains(root) else { return Scale.chromatic.title }
-        return "\(Self.rootNames[root]) \(scale.title)"
-    }
+    /// The frame as the musician reads it: "D Dorian", its tonic written as the key writes it —
+    /// "D♭ Major", "C♯ Minor" (`KeySpelling`). Chromatic has no key to name and reads "Chromatic",
+    /// and so does a scale this build does not know, which frames nothing either.
+    public var title: String { title(naming: .english) }
 
     /// Whether a MIDI pitch belongs to the key and scale.
     public func contains(_ pitch: Int) -> Bool {
@@ -104,7 +102,6 @@ public struct MusicalContext: Codable, Equatable, Sendable {
     }
 }
 
-/// A scale as the semitone steps above its root. Stored by name in the song; never rename a case.
 /// What a key on the screen shows of the song's key: its root, another tone of its scale, or
 /// nothing. Shown, never enforced — the key lock is a switch of its own (`LiveKeys`).
 public enum KeyMark: Equatable, Sendable {
@@ -113,46 +110,159 @@ public enum KeyMark: Equatable, Sendable {
     case unmarked
 }
 
+/// A scale as the semitone steps above its root. A song stores it by name, and the scale parameter
+/// (MIDI Learn) and the pitch corrector's Scale choice, which a saved insert keeps, choose it by its
+/// index: never rename or reorder a case; a new one goes at the end (`StoredNamesTests`).
+///
+/// The first fourteen are the first build's. The 43 after them are the rest of the earlier app's 57
+/// (`Sources/Echoelmusic/Sequencer/MusicalKey.swift`), appended on 2026-11-27 (TH-4) in its order and
+/// under its stored names, so a name from there plays the same notes here. Three of its 57 were
+/// already among the fourteen under other names — its `pentatonicMajor`, `pentatonicMinor` and
+/// `bluesMinor` are `majorPentatonic`, `minorPentatonic` and `blues` — and no set is here twice.
+///
+/// HONESTY: a scale is a choice among the twelve keys, named after where it comes from, never the
+/// tradition itself. A rāga is not a pitch set — its ascent and descent differ, and its emphasis
+/// and phrases are the rāga; a maqām's own intervals lie between the twelve keys. The tone system
+/// (`TuningSystem`) chooses which pitches the keys play, the scale which keys are used.
 public enum Scale: String, Codable, CaseIterable, Sendable {
     case chromatic, major, minor, dorian, phrygian, lydian, mixolydian, locrian
     case harmonicMinor, melodicMinor, majorPentatonic, minorPentatonic, blues, wholeTone
+    // The earlier app's, in its order (TH-4).
+    case lydianDominant, altered, bebopDominant, bluesMajor, diminishedWholeHalf, diminishedHalfWhole
+    case phrygianDominant, harmonicMajor, hungarianMinor, doubleHarmonic, neapolitanMinor, neapolitanMajor
+    case romanianMinor, persian, hirajoshi, iwato, insen, yo, inSakura, egyptian, pelog, enigmatic, prometheus
+    case augmented, tritone, hungarianMajor, bebopMajor, majorLocrian, lydianAugmented, spanishEightTone, kumoi
+    case messiaen3, messiaen4, messiaen5, messiaen6, messiaen7
+    case marwa, purvi, todi, malkauns, charukeshi, hamsadhwani, shanmukhapriya
 
-    public var intervals: Set<Int> {
-        switch self {
-        case .chromatic: Set(0...11)
-        case .major: [0, 2, 4, 5, 7, 9, 11]
-        case .minor: [0, 2, 3, 5, 7, 8, 10]
-        case .dorian: [0, 2, 3, 5, 7, 9, 10]
-        case .phrygian: [0, 1, 3, 5, 7, 8, 10]
-        case .lydian: [0, 2, 4, 6, 7, 9, 11]
-        case .mixolydian: [0, 2, 4, 5, 7, 9, 10]
-        case .locrian: [0, 1, 3, 5, 6, 8, 10]
-        case .harmonicMinor: [0, 2, 3, 5, 7, 8, 11]
-        case .melodicMinor: [0, 2, 3, 5, 7, 9, 11]
-        case .majorPentatonic: [0, 2, 4, 7, 9]
-        case .minorPentatonic: [0, 3, 5, 7, 10]
-        case .blues: [0, 3, 5, 6, 7, 10]
-        case .wholeTone: [0, 2, 4, 6, 8, 10]
+    /// The steps above the root, 0 the root itself.
+    public var intervals: Set<Int> { Set(row.steps) }
+
+    /// How the scale reads in a menu and in the frame's title ("D Dorian").
+    public var title: String { row.title }
+
+    /// Where a grouped menu shows it.
+    public var shelf: Shelf { row.shelf }
+
+    /// What one scale is: its steps, ascending from 0, its title and its shelf.
+    private struct Row {
+        let steps: [Int]
+        let title: String
+        let shelf: Shelf
+
+        init(_ steps: [Int], _ title: String, _ shelf: Shelf) {
+            self.steps = steps
+            self.title = title
+            self.shelf = shelf
         }
     }
 
-    public var title: String {
+    /// One row per scale, in the stored order.
+    private var row: Row {
         switch self {
-        case .chromatic: "Chromatic"
-        case .major: "Major"
-        case .minor: "Minor"
-        case .dorian: "Dorian"
-        case .phrygian: "Phrygian"
-        case .lydian: "Lydian"
-        case .mixolydian: "Mixolydian"
-        case .locrian: "Locrian"
-        case .harmonicMinor: "Harmonic Minor"
-        case .melodicMinor: "Melodic Minor"
-        case .majorPentatonic: "Major Pentatonic"
-        case .minorPentatonic: "Minor Pentatonic"
-        case .blues: "Blues"
-        case .wholeTone: "Whole Tone"
+        // Chromatic frames nothing (`MusicalContext`); in a menu it stands with the other scales of
+        // equal steps, as it did in the earlier app.
+        case .chromatic: Row(Array(0...11), "Chromatic", .symmetric)
+        case .major: Row([0, 2, 4, 5, 7, 9, 11], "Major", .modes)
+        case .minor: Row([0, 2, 3, 5, 7, 8, 10], "Minor", .modes)
+        case .dorian: Row([0, 2, 3, 5, 7, 9, 10], "Dorian", .modes)
+        case .phrygian: Row([0, 1, 3, 5, 7, 8, 10], "Phrygian", .modes)
+        case .lydian: Row([0, 2, 4, 6, 7, 9, 11], "Lydian", .modes)
+        case .mixolydian: Row([0, 2, 4, 5, 7, 9, 10], "Mixolydian", .modes)
+        case .locrian: Row([0, 1, 3, 5, 6, 8, 10], "Locrian", .modes)
+        case .harmonicMinor: Row([0, 2, 3, 5, 7, 8, 11], "Harmonic Minor", .minorAndAltered)
+        case .melodicMinor: Row([0, 2, 3, 5, 7, 9, 11], "Melodic Minor", .minorAndAltered)
+        case .majorPentatonic: Row([0, 2, 4, 7, 9], "Major Pentatonic", .pentatonicAndBlues)
+        case .minorPentatonic: Row([0, 3, 5, 7, 10], "Minor Pentatonic", .pentatonicAndBlues)
+        case .blues: Row([0, 3, 5, 6, 7, 10], "Blues", .pentatonicAndBlues)
+        case .wholeTone: Row([0, 2, 4, 6, 8, 10], "Whole Tone", .symmetric)
+        // The jazz shelf keeps the earlier app's name, "Minor & Altered", though harmonic major,
+        // bebop major and major Locrian on it are major.
+        case .lydianDominant: Row([0, 2, 4, 6, 7, 9, 10], "Lydian Dominant", .minorAndAltered)
+        case .altered: Row([0, 1, 3, 4, 6, 8, 10], "Altered", .minorAndAltered)
+        case .bebopDominant: Row([0, 2, 4, 5, 7, 9, 10, 11], "Bebop Dominant", .minorAndAltered)
+        case .bluesMajor: Row([0, 2, 3, 4, 7, 9], "Blues Major", .pentatonicAndBlues)
+        case .diminishedWholeHalf: Row([0, 2, 3, 5, 6, 8, 9, 11], "Diminished (W–H)", .symmetric)
+        case .diminishedHalfWhole: Row([0, 1, 3, 4, 6, 7, 9, 10], "Diminished (H–W)", .symmetric)
+        // Maqām Ḥijāz on the twelve keys; Double Harmonic is Ḥijāz-kār.
+        case .phrygianDominant: Row([0, 1, 4, 5, 7, 8, 10], "Phrygian Dominant", .maqamAndNearEast)
+        case .harmonicMajor: Row([0, 2, 4, 5, 7, 8, 11], "Harmonic Major", .minorAndAltered)
+        case .hungarianMinor: Row([0, 2, 3, 6, 7, 8, 11], "Hungarian Minor", .europeanFolk)
+        case .doubleHarmonic: Row([0, 1, 4, 5, 7, 8, 11], "Double Harmonic", .maqamAndNearEast)
+        case .neapolitanMinor: Row([0, 1, 3, 5, 7, 8, 11], "Neapolitan Minor", .europeanFolk)
+        case .neapolitanMajor: Row([0, 1, 3, 5, 7, 9, 11], "Neapolitan Major", .europeanFolk)
+        // Also maqām Nikrīz; it sits with European folk scales, where it is used far more often.
+        case .romanianMinor: Row([0, 2, 3, 6, 7, 9, 10], "Romanian Minor", .europeanFolk)
+        // The Western catalogues' "Persian scale", not the theory of the dastgāh; on the Near East
+        // shelf because a player looks for it there, and the shelf does not say maqām alone.
+        case .persian: Row([0, 1, 4, 5, 6, 8, 11], "Persian", .maqamAndNearEast)
+        // The scale chooses the keys; the tone system of the same name (`hirajoshi`) retunes them.
+        case .hirajoshi: Row([0, 2, 3, 7, 8], "Hirajoshi", .eastAndSoutheastAsia)
+        case .iwato: Row([0, 1, 5, 6, 10], "Iwato", .eastAndSoutheastAsia)
+        case .insen: Row([0, 1, 5, 7, 10], "Insen", .eastAndSoutheastAsia)
+        case .yo: Row([0, 2, 5, 7, 9], "Yo", .eastAndSoutheastAsia)
+        case .inSakura: Row([0, 1, 5, 7, 8], "In (Sakura)", .eastAndSoutheastAsia)
+        // A rotation of the major pentatonic; the name is a catalogue's, so the scale sits with the
+        // pentatonic scales.
+        case .egyptian: Row([0, 2, 5, 7, 10], "Egyptian", .pentatonicAndBlues)
+        // Pélog selisir on the twelve keys; the tone system "Gamelan pélog" plays pitches between them.
+        case .pelog: Row([0, 1, 3, 7, 8], "Pelog", .eastAndSoutheastAsia)
+        // Verdi's scala enigmatica.
+        case .enigmatic: Row([0, 1, 4, 6, 8, 10, 11], "Enigmatic", .europeanFolk)
+        // Scriabin's Prometheus chord as a scale.
+        case .prometheus: Row([0, 2, 4, 6, 9, 10], "Prometheus", .europeanFolk)
+        case .augmented: Row([0, 3, 4, 7, 8, 11], "Augmented", .symmetric)
+        case .tritone: Row([0, 1, 4, 6, 7, 10], "Tritone", .symmetric)
+        case .hungarianMajor: Row([0, 3, 4, 6, 7, 9, 10], "Hungarian Major", .europeanFolk)
+        case .bebopMajor: Row([0, 2, 4, 5, 7, 8, 9, 11], "Bebop Major", .minorAndAltered)
+        case .majorLocrian: Row([0, 2, 4, 5, 6, 8, 10], "Major Locrian", .minorAndAltered)
+        case .lydianAugmented: Row([0, 2, 4, 6, 8, 9, 11], "Lydian Augmented", .minorAndAltered)
+        case .spanishEightTone: Row([0, 1, 3, 4, 5, 6, 8, 10], "Spanish 8-Tone", .europeanFolk)
+        case .kumoi: Row([0, 2, 3, 7, 9], "Kumoi", .eastAndSoutheastAsia)
+        // Messiaen's modes of limited transposition 3 to 7; mode 1 is the whole-tone scale and mode 2
+        // the diminished (H–W).
+        case .messiaen3: Row([0, 2, 3, 4, 6, 7, 8, 10, 11], "Messiaen 3", .symmetric)
+        case .messiaen4: Row([0, 1, 2, 5, 6, 7, 8, 11], "Messiaen 4", .symmetric)
+        case .messiaen5: Row([0, 1, 5, 6, 7, 11], "Messiaen 5", .symmetric)
+        case .messiaen6: Row([0, 2, 4, 5, 6, 8, 10, 11], "Messiaen 6", .symmetric)
+        case .messiaen7: Row([0, 1, 2, 3, 5, 6, 7, 8, 9, 11], "Messiaen 7", .symmetric)
+        // Sa is the root of each. Mārvā, Pūrvī and Toḍī are thāts (the rāga Mārvā leaves out Pa,
+        // which its thāt holds); Mālkauns and Haṃsadhvani are rāgas of five notes; Cārukeśī and
+        // Ṣaṇmukhapriyā are Carnatic mēḷas. Todi says "Hindustani" because Carnatic Todi,
+        // Hanumatōḍi, is another set — this app's Phrygian.
+        case .marwa: Row([0, 1, 4, 6, 7, 9, 11], "Marwa", .hindustaniAndCarnatic)
+        case .purvi: Row([0, 1, 4, 6, 7, 8, 11], "Purvi", .hindustaniAndCarnatic)
+        case .todi: Row([0, 1, 3, 6, 7, 8, 11], "Todi (Hindustani)", .hindustaniAndCarnatic)
+        case .malkauns: Row([0, 3, 5, 8, 10], "Malkauns", .hindustaniAndCarnatic)
+        case .charukeshi: Row([0, 2, 4, 5, 7, 8, 10], "Charukeshi", .hindustaniAndCarnatic)
+        case .hamsadhwani: Row([0, 2, 4, 7, 11], "Hamsadhwani", .hindustaniAndCarnatic)
+        case .shanmukhapriya: Row([0, 2, 3, 6, 7, 8, 10], "Shanmukhapriya", .hindustaniAndCarnatic)
         }
+    }
+
+    /// The eight shelves of a grouped scale menu, the earlier app's (`Scale.Family` there). Every
+    /// scale sits on exactly one, and a shelf lists its scales in their stored order. A shelf names
+    /// where a scale comes from without a second case for the same notes, and points to a tradition
+    /// without claiming to be it (see `Scale`). Shown, never stored.
+    public enum Shelf: CaseIterable, Hashable, Sendable {
+        case modes, minorAndAltered, pentatonicAndBlues, symmetric, europeanFolk, maqamAndNearEast
+        case eastAndSoutheastAsia, hindustaniAndCarnatic
+
+        public var title: String {
+            switch self {
+            case .modes: "Modes"
+            case .minorAndAltered: "Minor & Altered"
+            case .pentatonicAndBlues: "Pentatonic & Blues"
+            case .symmetric: "Symmetric"
+            case .europeanFolk: "European Folk"
+            case .maqamAndNearEast: "Maqām & Near East"
+            case .eastAndSoutheastAsia: "East & Southeast Asia"
+            case .hindustaniAndCarnatic: "Hindustani & Carnatic"
+            }
+        }
+
+        /// The scales on this shelf, in their stored order.
+        public var scales: [Scale] { Scale.allCases.filter { $0.shelf == self } }
     }
 }
 

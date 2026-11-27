@@ -24,6 +24,19 @@ final class PitchCorrectorTests: XCTestCase {
         return l
     }
 
+    /// A tone that holds `start` (a fractional MIDI number) for 0.3 s, slides to `end` in 0.4 s and
+    /// holds that for 0.6 s, its phase unbroken.
+    private func slide(from start: Double, to end: Double) -> [Float] {
+        let hold = Int(rate * 0.3), glide = Int(rate * 0.4), stay = Int(rate * 0.6)
+        var phase = 0.0
+        return (0..<(hold + glide + stay)).map { (index: Int) -> Float in
+            let progress = Swift.min(Swift.max(Double(index - hold) / Double(glide), 0), 1)
+            let note = start + (end - start) * progress
+            phase += 2 * Double.pi * 440 * Foundation.pow(2, (note - 69) / 12) / rate
+            return Float(0.5 * Foundation.sin(phase) + 0.2 * Foundation.sin(2 * phase))
+        }
+    }
+
     private func cents(_ found: Double, _ expected: Double) -> Double {
         1_200 * Foundation.log2(found / expected)
     }
@@ -82,6 +95,28 @@ final class PitchCorrectorTests: XCTestCase {
         let output = run(corrector, tone(329.63))
         XCTAssertEqual(cents(try pitch(of: output.suffix(4_096)), 329.63), -13.686, accuracy: 2)
         XCTAssertLessThan(corrector.correction, 0)
+    }
+
+    /// A held target is reached in full, however far the hysteresis keeps it. In C Hirajoshi, D♯ and
+    /// G lie 4 semitones apart; a voice that slides down from G to the middle of the gap keeps G and is
+    /// lifted all the way to it — with G played 40 cents high (a gap of 4.4, the voice 2.2 below it),
+    /// and with each end moved 100 cents out, the widest gap the settings allow (6, the voice 3 below).
+    /// Until 2026-11-27 the correction stopped at 2 semitones and left both short.
+    func testAHeldTargetAcrossAWideGapIsReachedInFull() throws {
+        let hirajoshi = PitchCorrector.Settings.mask(root: 0, steps: [0, 2, 3, 7, 8])
+        var fortyHigh = SIMD16<Float>.zero
+        fortyHigh[7] = 40
+        var widest = SIMD16<Float>.zero
+        widest[3] = -100
+        widest[7] = 100
+        let cases: [(cents: SIMD16<Float>, target: Double, voice: Double)] = [(fortyHigh, 67.4, 65.2), (widest, 68, 65)]
+        for (deviations, target, voice) in cases {
+            let corrector = PitchCorrector(sampleRate: rate, settings: .init(allowed: hirajoshi, cents: deviations))
+            let output = run(corrector, slide(from: target, to: voice))
+            let expected = 440 * Foundation.pow(2, (target - 69) / 12)
+            XCTAssertEqual(cents(try pitch(of: output.suffix(4_096)), expected), 0, accuracy: 3, "the voice at \(voice)")
+            XCTAssertEqual(corrector.correction, target - voice, accuracy: 0.05, "the voice at \(voice)")
+        }
     }
 
     func testSettingsAreClampedAndABadSampleDoesNotRingOn() {
