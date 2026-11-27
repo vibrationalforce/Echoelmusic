@@ -170,28 +170,62 @@ public struct ConcertPitchPreset: Equatable, Sendable {
     }
 }
 
-/// A tone system: ascending pitches in cents within one repeating period (1200 = an octave).
-/// Ported from the earlier app's `TuningSystem` without its pitch-correction half.
+/// A tone system: ascending pitches in cents within one repeating period (1200 = an octave), worked
+/// out once from what the system is — pure ratios, an equal division, a chain of tempered fifths or
+/// a published table (`Definition`) — so that no table is a hand-rounded copy of its definition
+/// (TH-2, 2026-11-27). Ported from the earlier app's `TuningSystem` without its pitch-correction
+/// half.
+///
+/// The twelve keys of an octave play it: each key plays the degree nearest it, the 1/1 an octave up
+/// among them (`centsDeviation`). A system of five or seven degrees therefore gives several keys the
+/// same pitch, and one of more than twelve plays only twelve of its steps (`reachesEveryStep`).
 ///
 /// HONESTY: the world tunings are REPRESENTATIVE. Maqām, gamelan and Japanese tunings vary by
 /// region, ensemble and instrument; there is no single canonical table. The values follow widely
 /// cited theory and are approximations. No claim of any kind is attached to any tuning.
 public struct TuningSystem: Equatable, Sendable, Identifiable {
+    /// What a tone system is. Its degrees are worked out from this once, in `Double` arithmetic, so
+    /// one that a `Double` cannot hold comes out rounded, by far less than the billionth of a cent
+    /// the tests allow (under a trillionth, measured on Linux); the octave is 1200 exactly.
+    public enum Definition: Equatable, Sendable {
+        /// `steps` equal steps of the frequency ratio `period` — 2 is the octave, 3 the tritave of
+        /// Bohlen–Pierce: step k lies k/steps of the way up.
+        case equal(steps: Int, period: Rational)
+        /// Pure frequency ratios above the 1/1 within the octave, ascending from 1/1.
+        case ratios([Rational])
+        /// A chain of equal fifths, from `below` fifths under the 1/1 to `above` fifths over it, each
+        /// brought into the octave. The fifth is the ratio `base` raised to `exponent`: quarter-comma
+        /// meantone's is 5 to the 1/4, so four fifths make two octaves and a pure 5/4.
+        case fifths(base: Rational, exponent: Rational, below: Int, above: Int)
+        /// Cents as a source gives them, ascending from 0: a representative table, or theory written
+        /// in cents.
+        case cents([Double], period: Double)
+    }
+
     public let id: String
     public let name: String
+    /// What the system is; the degrees and the period are worked out from it.
+    public let definition: Definition
     /// Ascending cent offsets within one period; the first is 0.
     public let degreesCents: [Double]
     public let periodCents: Double
 
-    public init(id: String, name: String, degreesCents: [Double], periodCents: Double = 1200) {
+    public init(id: String, name: String, definition: Definition) {
         self.id = id
         self.name = name
-        self.degreesCents = degreesCents
-        self.periodCents = periodCents
+        self.definition = definition
+        let derived = Self.degreesAndPeriod(of: definition)
+        degreesCents = derived.degrees
+        periodCents = derived.period
+    }
+
+    /// A system given as cents, such as a published table.
+    public init(id: String, name: String, degreesCents: [Double], periodCents: Double = 1200) {
+        self.init(id: id, name: name, definition: .cents(degreesCents, period: periodCents))
     }
 
     static func equal(_ steps: Int, id: String, name: String) -> TuningSystem {
-        TuningSystem(id: id, name: name, degreesCents: (0..<steps).map { Double($0) * 1200 / Double(steps) })
+        TuningSystem(id: id, name: name, definition: .equal(steps: steps, period: 2))
     }
 
     public static let equalTemperament = equal(12, id: "edo12", name: "12 equal (standard)")
@@ -203,30 +237,37 @@ public struct TuningSystem: Equatable, Sendable, Identifiable {
         equal(19, id: "edo19", name: "19 equal"),
         equal(31, id: "edo31", name: "31 equal"),
         TuningSystem(id: "just-major", name: "Just intonation, major",
-                     degreesCents: [0, 203.910, 386.314, 498.045, 701.955, 884.359, 1088.269]),
+                     definition: .ratios([1, .constant(9, 8), .constant(5, 4), .constant(4, 3), .constant(3, 2),
+                                          .constant(5, 3), .constant(15, 8)])),
         TuningSystem(id: "just-minor", name: "Just intonation, minor",
-                     degreesCents: [0, 203.910, 315.641, 498.045, 701.955, 813.686, 1017.596]),
+                     definition: .ratios([1, .constant(9, 8), .constant(6, 5), .constant(4, 3), .constant(3, 2),
+                                          .constant(8, 5), .constant(9, 5)])),
         TuningSystem(id: "pythagorean", name: "Pythagorean",
-                     degreesCents: [0, 203.910, 407.820, 498.045, 701.955, 905.865, 1109.775]),
+                     definition: .ratios([1, .constant(9, 8), .constant(81, 64), .constant(4, 3), .constant(3, 2),
+                                          .constant(27, 16), .constant(243, 128)])),
+        // Fifths a quarter of the syntonic comma (81/80) narrower than 3/2, from E♭ to G♯.
         TuningSystem(id: "meantone-quarter", name: "Quarter-comma meantone",
-                     degreesCents: [0, 76.0, 193.2, 310.3, 386.3, 503.4, 579.5, 696.6, 772.6, 889.7, 1006.8, 1082.9]),
+                     definition: .fifths(base: 5, exponent: .constant(1, 4), below: 3, above: 8)),
         TuningSystem(id: "maqam-rast", name: "Maqām Rāst (24-equal theory)",
                      degreesCents: [0, 200, 350, 500, 700, 900, 1050]),
         TuningSystem(id: "maqam-bayati", name: "Maqām Bayātī (24-equal theory)",
                      degreesCents: [0, 150, 300, 500, 700, 800, 1000]),
         TuningSystem(id: "maqam-hijaz", name: "Maqām Ḥijāz", degreesCents: [0, 100, 400, 500, 700, 800, 1000]),
-        TuningSystem(id: "gamelan-slendro", name: "Gamelan sléndro (about 5 equal)", degreesCents: [0, 240, 480, 720, 960]),
+        TuningSystem(id: "gamelan-slendro", name: "Gamelan sléndro (about 5 equal)",
+                     definition: .equal(steps: 5, period: 2)),
         TuningSystem(id: "gamelan-pelog", name: "Gamelan pélog (representative)",
                      degreesCents: [0, 120, 270, 540, 670, 785, 950]),
         TuningSystem(id: "hirajoshi", name: "Hirajōshi", degreesCents: [0, 200, 300, 700, 800]),
         TuningSystem(id: "bohlen-pierce", name: "Bohlen–Pierce (non-octave)",
-                     degreesCents: (0..<13).map { Double($0) * 1901.955 / 13 }, periodCents: 1901.955),
+                     definition: .equal(steps: 13, period: 3)),
         // Ancient Greek: two tetrachords a 9/8 tone apart, as Archytas (28/27 · 8/7 · 9/8) and
         // Ptolemy's intense diatonic (16/15 · 9/8 · 10/9) give them; the ratios are documented.
         TuningSystem(id: "archytas-diatonic", name: "Archytas diatonic (ancient Greek)",
-                     degreesCents: [0, 62.961, 294.135, 498.045, 701.955, 764.916, 996.090]),
+                     definition: .ratios([1, .constant(28, 27), .constant(32, 27), .constant(4, 3), .constant(3, 2),
+                                          .constant(14, 9), .constant(16, 9)])),
         TuningSystem(id: "ptolemy-intense-diatonic", name: "Ptolemy intense diatonic (ancient Greek)",
-                     degreesCents: [0, 111.731, 315.641, 498.045, 701.955, 813.686, 1017.596]),
+                     definition: .ratios([1, .constant(16, 15), .constant(6, 5), .constant(4, 3), .constant(3, 2),
+                                          .constant(8, 5), .constant(9, 5)])),
     ]
 
     /// The system with `id`, or twelve equal steps.
@@ -234,23 +275,110 @@ public struct TuningSystem: Equatable, Sendable, Identifiable {
         library.first { $0.id == id } ?? equalTemperament
     }
 
-    /// The cents from twelve equal steps of the system degree nearest a note `semitones` above
-    /// the root. Zero for twelve equal steps, and for a system that does not repeat at the
-    /// octave, which has no twelve-note retuning.
-    func centsDeviation(forSemitone semitones: Int) -> Double {
-        guard abs(periodCents - 1200) < 1, !degreesCents.isEmpty else { return 0 }
-        let target = Double(((semitones % 12) + 12) % 12) * 100
-        var best = 0.0
-        var bestDelta = Double.greatestFiniteMagnitude
-        for cents in degreesCents where abs(cents - target) < bestDelta {
-            bestDelta = abs(cents - target)
-            best = cents
+    /// Two values in cents closer than this are the same: a key's distances to two degrees (a tie,
+    /// which the lower degree wins), or a deviation and zero. A key can sit exactly midway between
+    /// two degrees — the F♯ key between 4/3 and 3/2, which together make the octave — and worked out
+    /// from the ratios its two distances then differ only in the last bit of a logarithm, which must
+    /// not choose the note, nor choose it differently on another platform. A billionth of a cent is
+    /// far below any difference anyone hears and far above that rounding.
+    static let sameCents = 1e-9
+
+    /// Whether the period is the octave, within a cent: only such a system retunes the twelve keys.
+    var repeatsAtTheOctave: Bool { Swift.abs(periodCents - 1200) < 1 }
+
+    /// How many of its steps the twelve keys of an octave play, each key the degree nearest it. Every
+    /// system of the library with up to twelve degrees has all of them on keys, 19, 24 and 31 equal
+    /// have twelve, and a system that does not repeat at the octave has none: the keys play twelve
+    /// equal steps instead (Bohlen–Pierce).
+    public var stepsTheKeysReach: Int {
+        guard repeatsAtTheOctave, !degreesCents.isEmpty else { return 0 }
+        var reached = Set<Int>()
+        for key in 0..<12 { reached.insert(nearestDegree(to: Self.keyCents(key)).index) }
+        return reached.count
+    }
+
+    /// Whether the twelve keys reach every step of the system. False for 19, 24 and 31 equal, which
+    /// have more steps than an octave has keys, and for Bohlen–Pierce, which does not repeat at the
+    /// octave: such a system needs a key for each of its steps, which the keyboard does not have yet,
+    /// and the picker can say what the keys play instead.
+    public var reachesEveryStep: Bool {
+        let reached = stepsTheKeysReach
+        return reached > 0 && reached == degreesCents.count
+    }
+
+    /// Whether the twelve keys play exactly twelve equal steps in this system, from any root: twelve
+    /// equal itself; 24 equal, whose steps nearest the keys are the semitones, so no quarter tone
+    /// sounds; and a system that does not repeat at the octave, which retunes nothing.
+    public var playsAsTwelveEqual: Bool {
+        (0..<12).allSatisfy { (key: Int) -> Bool in
+            Swift.abs(centsDeviation(forSemitone: key)) <= Self.sameCents
         }
-        return best - target
+    }
+
+    /// The cents from twelve equal steps of the system degree nearest a note `semitones` above the
+    /// root, the 1/1 an octave up among them: a key near the octave plays the tonic above when that
+    /// is nearer than the highest degree (TH-1, 2026-11-27; until then the B key fell to the highest
+    /// degree, 140 cents down in sléndro and 300 in Hirajōshi). On a tie the lower degree. Zero for
+    /// twelve equal steps, and for a system that does not repeat at the octave, which has no
+    /// twelve-note retuning.
+    func centsDeviation(forSemitone semitones: Int) -> Double {
+        guard repeatsAtTheOctave, !degreesCents.isEmpty else { return 0 }
+        let target = Self.keyCents(semitones)
+        return nearestDegree(to: target).cents - target
     }
 
     /// The deviation of each absolute pitch class (0 = C … 11 = B) with the system's 1/1 on `root`.
     func pitchClassCents(root: Int) -> [Double] {
         (0..<12).map { centsDeviation(forSemitone: $0 - root) }
+    }
+
+    /// The degree nearest `target` cents above the 1/1: its index (0 also for the 1/1 above) and
+    /// its cents (the period for the 1/1 above). Degrees are tried from the bottom up, and a later
+    /// one wins only when it is nearer by more than `sameCents`, so a tie goes to the lower.
+    private func nearestDegree(to target: Double) -> (index: Int, cents: Double) {
+        var best = (index: 0, cents: 0.0)
+        var bestDistance = Double.infinity
+        for (index, degree) in degreesCents.enumerated() {
+            let distance = Swift.abs(degree - target)
+            guard distance < bestDistance - Self.sameCents else { continue }
+            best = (index, degree)
+            bestDistance = distance
+        }
+        if Swift.abs(periodCents - target) < bestDistance - Self.sameCents { best = (0, periodCents) }
+        return best
+    }
+
+    /// A key `semitones` above the root, in cents within the octave: 0, 100 … 1100.
+    private static func keyCents(_ semitones: Int) -> Double {
+        Double(((semitones % 12) + 12) % 12) * 100
+    }
+
+    /// The size of a frequency ratio in cents, 1200 · log2 of it. The octave is 1200 exactly,
+    /// whatever the platform's logarithm rounds.
+    static func cents(of ratio: Rational) -> Double {
+        ratio == 2 ? 1200 : 1200 * Foundation.log2(ratio.doubleValue)
+    }
+
+    /// The degrees and the period a definition describes.
+    static func degreesAndPeriod(of definition: Definition) -> (degrees: [Double], period: Double) {
+        switch definition {
+        case .equal(let steps, let period):
+            let span = cents(of: period)
+            let degrees = (0..<Swift.max(steps, 0)).map { (step: Int) -> Double in
+                Double(step) * span / Double(steps)
+            }
+            return (degrees, span)
+        case .ratios(let ratios):
+            return (ratios.map(cents(of:)), 1200)
+        case .fifths(let base, let exponent, let below, let above):
+            let fifth = cents(of: base) * exponent.doubleValue
+            let chain = stride(from: -below, through: above, by: 1).map { (count: Int) -> Double in
+                let raised = Double(count) * fifth
+                return raised - 1200 * (raised / 1200).rounded(.down)
+            }
+            return (chain.sorted(), 1200)
+        case .cents(let degrees, let period):
+            return (degrees, period)
+        }
     }
 }

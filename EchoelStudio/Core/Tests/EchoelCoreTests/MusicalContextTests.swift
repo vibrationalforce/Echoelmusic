@@ -108,6 +108,172 @@ final class MusicalContextTests: XCTestCase {
         XCTAssertEqual(MusicalContext(tuning: "from-a-later-build").centsTable(), Array(repeating: 0, count: 12))
     }
 
+    // MARK: Which degree a key plays
+
+    /// A key near the octave plays the 1/1 above when that is the nearest degree (TH-1). In sléndro,
+    /// pélog, Hirajōshi and Archytas the B key fell to the octave's highest degree, 104 to 300 cents
+    /// below it, while the 1/1 an octave up is 100 cents away: B now plays the C above, and from any
+    /// root the key a semitone under the root plays the root above. A song stored in one of these
+    /// systems sounds different on that key.
+    func testAKeyNearTheOctaveTakesTheTonicAbove() {
+        for id in ["gamelan-slendro", "gamelan-pelog", "hirajoshi", "archytas-diatonic"] {
+            XCTAssertEqual(MusicalContext(tuning: id).centsTable()[11], 100, accuracy: 1e-9, "\(id): B plays the C above")
+            for root in MusicalContext.rootRange {
+                let under = (root + 11) % 12
+                XCTAssertEqual(MusicalContext(root: root, tuning: id).centsTable()[under], 100, accuracy: 1e-9,
+                               "\(id) on \(root)")
+            }
+        }
+    }
+
+    /// No key plays farther from its own place than half the widest gap between two degrees of its
+    /// system, counting the gap from the highest degree to the 1/1 above, which the rule now sees.
+    func testNoKeyPlaysFartherThanHalfItsSystemsWidestGap() {
+        for system in TuningSystem.library where system.repeatsAtTheOctave {
+            let bounds = system.degreesCents + [system.periodCents]
+            let gaps = zip(bounds, bounds.dropFirst()).map { (pair: (Double, Double)) -> Double in pair.1 - pair.0 }
+            let widest = gaps.max() ?? 0
+            for root in MusicalContext.rootRange {
+                for deviation in MusicalContext(root: root, tuning: system.id).centsTable() {
+                    XCTAssertLessThanOrEqual(Swift.abs(deviation), widest / 2 + 1e-9, "\(system.id) on \(root)")
+                }
+            }
+        }
+    }
+
+    /// A key exactly midway between two degrees plays the lower one, the same on every platform. The F♯
+    /// key sits exactly between 4/3 and 3/2 (together they make the octave) and plays the fourth; in
+    /// Maqām Bayātī and Ḥijāz the B key sits exactly between B♭ and the C above and plays B♭; in 19
+    /// equal F♯ sits between steps 9 and 10 and plays step 9. Worked out from exact ratios, two such
+    /// distances can differ in the logarithm's last bit, and that must not choose the note.
+    func testAKeyMidwayBetweenTwoDegreesPlaysTheLowerOne() {
+        let fourth = 1200 * Foundation.log2(4.0 / 3)
+        for id in ["just-major", "just-minor", "pythagorean", "archytas-diatonic", "ptolemy-intense-diatonic"] {
+            XCTAssertEqual(MusicalContext(tuning: id).centsTable()[6], fourth - 600, accuracy: 1e-9, "\(id): F♯ plays 4/3")
+        }
+        XCTAssertEqual(MusicalContext(tuning: "maqam-bayati").centsTable()[11], -100, accuracy: 1e-9)
+        XCTAssertEqual(MusicalContext(tuning: "maqam-hijaz").centsTable()[11], -100, accuracy: 1e-9)
+        XCTAssertEqual(MusicalContext(tuning: "edo19").centsTable()[6], 1200.0 * 9 / 19 - 600, accuracy: 1e-9)
+    }
+
+    // MARK: Tone systems from their definitions
+
+    /// Just intonation, Pythagorean tuning and the two ancient Greek tetrachords play their ratios, not
+    /// a table rounded to a thousandth of a cent (TH-2).
+    func testJustDegreesAreTheirRatios() {
+        let systems: [(id: String, ratios: [(Double, Double)])] = [
+            ("just-major", [(1, 1), (9, 8), (5, 4), (4, 3), (3, 2), (5, 3), (15, 8)]),
+            ("just-minor", [(1, 1), (9, 8), (6, 5), (4, 3), (3, 2), (8, 5), (9, 5)]),
+            ("pythagorean", [(1, 1), (9, 8), (81, 64), (4, 3), (3, 2), (27, 16), (243, 128)]),
+            ("archytas-diatonic", [(1, 1), (28, 27), (32, 27), (4, 3), (3, 2), (14, 9), (16, 9)]),
+            ("ptolemy-intense-diatonic", [(1, 1), (16, 15), (6, 5), (4, 3), (3, 2), (8, 5), (9, 5)]),
+        ]
+        for system in systems {
+            let tuning = TuningSystem.named(system.id)
+            XCTAssertEqual(tuning.id, system.id)
+            XCTAssertEqual(tuning.periodCents, 1200, system.id)
+            XCTAssertEqual(tuning.degreesCents.count, system.ratios.count, system.id)
+            for (degree, ratio) in zip(tuning.degreesCents, system.ratios) {
+                XCTAssertEqual(degree, 1200 * Foundation.log2(ratio.0 / ratio.1), accuracy: 1e-9, "\(system.id) \(ratio)")
+            }
+        }
+    }
+
+    /// Quarter-comma meantone is built from its fifth, 5 to the 1/4 (TH-2): the eleven fifths of the
+    /// chain from E♭ to G♯ are one size, 300 · log2(5) cents, four of them make two octaves and a pure
+    /// major third, and C♯ sits 76.048999… cents above C — the table stored 76.0.
+    func testMeantoneIsBuiltFromItsFifth() {
+        let degrees = TuningSystem.named("meantone-quarter").degreesCents
+        XCTAssertEqual(degrees.count, 12)
+        guard degrees.count == 12 else { return }
+        let fifth = 300 * Foundation.log2(5.0)
+        let chain = [3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8]  // E♭ B♭ F C G D A E B F♯ C♯ G♯
+        for (lower, upper) in zip(chain, chain.dropFirst()) {
+            let rise = degrees[upper] - degrees[lower]
+            XCTAssertEqual(rise < 0 ? rise + 1200 : rise, fifth, accuracy: 1e-9, "\(lower) to \(upper)")
+        }
+        XCTAssertEqual(degrees[4], 1200 * Foundation.log2(5.0 / 4), accuracy: 1e-9, "the major third is pure")
+        XCTAssertEqual(degrees[1], 76.04899926346, accuracy: 1e-9)
+    }
+
+    /// An equal division is whole steps of its period (TH-2): step k of n lies k/n of the way up,
+    /// worked out from that definition; sléndro here is five equal steps. Bohlen–Pierce divides the
+    /// 3/1 tritave, 1200 · log2(3) cents, which the table stored as 1901.955.
+    func testEqualDivisionsAreWholeStepsOfTheirPeriod() {
+        for (id, steps) in [("edo12", 12), ("edo24", 24), ("edo19", 19), ("edo31", 31), ("gamelan-slendro", 5)] {
+            let system = TuningSystem.named(id)
+            XCTAssertEqual(system.id, id)
+            XCTAssertEqual(system.periodCents, 1200, id)
+            let expected = (0..<steps).map { (step: Int) -> Double in Double(step) * 1200 / Double(steps) }
+            XCTAssertEqual(system.degreesCents, expected, id)
+        }
+        let tritave = 1200 * Foundation.log2(3.0)
+        let bohlenPierce = TuningSystem.named("bohlen-pierce")
+        XCTAssertEqual(bohlenPierce.periodCents, tritave, accuracy: 1e-9)
+        XCTAssertEqual(bohlenPierce.degreesCents.count, 13)
+        for (step, degree) in bohlenPierce.degreesCents.enumerated() {
+            XCTAssertEqual(degree, tritave * Double(step) / 13, accuracy: 1e-9, "step \(step)")
+        }
+    }
+
+    /// Every system ascends from its 1/1 and stays inside its period, so each key's nearest degree
+    /// lies between the 1/1 and the 1/1 above.
+    func testEverySystemAscendsFromItsOneOneInsideItsPeriod() {
+        for system in TuningSystem.library {
+            XCTAssertEqual(system.degreesCents.first, 0, system.id)
+            XCTAssertEqual(system.degreesCents, system.degreesCents.sorted(), system.id)
+            XCTAssertEqual(Set(system.degreesCents).count, system.degreesCents.count, system.id)
+            XCTAssertTrue(system.degreesCents.allSatisfy { (degree: Double) -> Bool in
+                degree.isFinite && degree >= 0 && degree < system.periodCents
+            }, system.id)
+        }
+    }
+
+    // MARK: What the twelve keys reach
+
+    /// "24 equal (quarter tones)" and "Bohlen–Pierce (non-octave)" play as twelve equal steps in this
+    /// build, and Core says so (TS-1): twelve keys to the octave reach no quarter tone, and a system
+    /// that repeats at the 3/1 tritave has no retuning of twelve keys. Neither reaches every step; a
+    /// keyboard with a key for every step is a later slice.
+    func testQuarterTonesAndBohlenPiercePlayAsTwelveEqualStepsToday() {
+        let twelveEqual = MusicalContext().centsTable()
+        for id in ["edo24", "bohlen-pierce"] {
+            let system = TuningSystem.named(id)
+            XCTAssertEqual(system.id, id)
+            for root in MusicalContext.rootRange {
+                XCTAssertEqual(MusicalContext(root: root, tuning: id).centsTable(), twelveEqual, "\(id) on \(root)")
+            }
+            XCTAssertTrue(system.playsAsTwelveEqual, id)
+            XCTAssertFalse(system.reachesEveryStep, id)
+        }
+        XCTAssertEqual(TuningSystem.named("edo24").stepsTheKeysReach, 12, "twelve of its 24 steps: the semitones")
+        XCTAssertEqual(TuningSystem.named("bohlen-pierce").stepsTheKeysReach, 0, "none: the keys play twelve equal steps")
+        XCTAssertEqual(TuningSystem.library.filter(\.playsAsTwelveEqual).map(\.id), ["edo12", "edo24", "bohlen-pierce"])
+    }
+
+    /// Every system of up to twelve degrees to the octave has each of them on some key — no degree
+    /// falls between two keys — and the keys sound as many pitches as they reach steps. Only four
+    /// systems do not reach every step: 24, 19 and 31 equal have more steps than an octave has keys
+    /// (the keys play twelve of them), and Bohlen–Pierce does not repeat at the octave.
+    func testTheKeysReachEveryStepOfEverySystemWithTwelveOrFewer() {
+        for system in TuningSystem.library where system.repeatsAtTheOctave {
+            XCTAssertEqual(system.stepsTheKeysReach, Swift.min(system.degreesCents.count, 12), system.id)
+            let table = MusicalContext(tuning: system.id).centsTable()
+            let sounding = (0..<12).map { (key: Int) -> Double in
+                let above = 100 * Double(key) + table[key]
+                return above > 1200 - 1e-6 ? above - 1200 : above
+            }
+            var distinct: [Double] = []
+            for pitch in sounding.sorted() {
+                if let last = distinct.last, pitch - last < 1e-6 { continue }
+                distinct.append(pitch)
+            }
+            XCTAssertEqual(distinct.count, system.stepsTheKeysReach, system.id)
+        }
+        let partlyReached = TuningSystem.library.filter { (system: TuningSystem) -> Bool in !system.reachesEveryStep }
+        XCTAssertEqual(partlyReached.map(\.id), ["edo24", "edo19", "edo31", "bohlen-pierce"])
+    }
+
     func testConcertPitchShiftsEveryPitchClassAlike() {
         let shift = 1200 * Foundation.log2(432.0 / 440)
         for cents in MusicalContext(concertPitch: 432).centsTable() {
