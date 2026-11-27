@@ -10,10 +10,15 @@ import SwiftUI
 /// show it: a filled dot on its root, a ring on the other tones of its scale (`KeyMark`). Shown,
 /// not enforced; Keys Follow Scale stays the switch that bends a key to the scale. Where on a key
 /// the finger lands sets how hard it plays (`TouchVelocity`) while Touch Loudness is on; both
-/// switches sit in the Song menu's key section.
+/// switches sit in the Song menu's key section. The header names the track the keys play; with two
+/// instrument tracks or more it is the menu that points them at another one, from every view the
+/// keys show under — not while a take records, and an armed instrument track's arm goes along
+/// (`LiveTrackChoice`), so a choice there never parts what the keys play from what a take writes.
 struct PlayKeysView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
+    /// Whether a take records and which track is armed, for the header's menu.
+    @Environment(RecordController.self) private var recording
     /// The lowest key shown, always a C; kept on this device, never in the song.
     @AppStorage("playKeys.lowestNote") private var lowest = 48
     /// Whether the keys show under the surface; the transport's keys button switches it.
@@ -114,10 +119,7 @@ struct PlayKeysView: View {
 
     private func header(_ track: Track?) -> some View {
         HStack(spacing: Theme.Space.s) {
-            Text(track.map { "Plays \($0.name)" } ?? "No instrument track")
-                .font(Theme.Font.caption)
-                .foregroundStyle(Theme.Color.textSecondary)
-                .lineLimit(1)
+            liveTrackHeader(track)
             Spacer(minLength: Theme.Space.s)
             if let track, PlaySurface.surface(for: track.instrument) == .keys {
                 Menu {
@@ -155,6 +157,77 @@ struct PlayKeysView: View {
                     .accessibilityLabel("Octave Up")
                     .accessibilityValue("Lowest key \(Keyboard.name(of: clampedLowest))")
             }
+        }
+    }
+
+    /// What the keys play ("Plays Keys"). With two instrument tracks or more it is a menu of them in
+    /// song order, the live one checked (`LiveTrackChoice`): a choice points the keys at that track
+    /// (`choose(_:)`). While a take records it is the name alone: the take is written to the track
+    /// armed when it began, so the keys stay on it. The song, the live track and the take change only
+    /// with an edit, a choice, Record or Stop, never with the clock, so the menu sits in this cold
+    /// body (Law 6).
+    @ViewBuilder private func liveTrackHeader(_ track: Track?) -> some View {
+        let project = store.project
+        let choices = LiveTrackChoice.choices(in: project)
+        let title = LiveTrackChoice.header(live: track?.id, in: project)
+        let recordsTake = recording.isRecording
+        if let track, LiveTrackChoice.offersMenu(choices, recording: recordsTake) {
+            Menu {
+                Picker("Plays", selection: liveTrack(track.id)) {
+                    ForEach(choices) { choice in
+                        Text(choice.label).tag(choice.id)
+                    }
+                }
+            } label: {
+                HStack(spacing: Theme.Space.xxs) {
+                    Text(title)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.down")
+                        .imageScale(.small)
+                }
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+                .frame(minHeight: Theme.Size.touch)
+                .contentShape(Rectangle())
+            }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .accessibilityLabel(title)
+            .accessibilityHint("Choose the instrument track the keys play.")
+        } else if recordsTake, choices.count > 1 {
+            headerText(title)
+                .accessibilityHint("Locked while a take records.")
+        } else {
+            headerText(title)
+        }
+    }
+
+    /// The header as a plain line: one instrument track, none, or a take recording.
+    private func headerText(_ title: String) -> some View {
+        Text(title)
+            .font(Theme.Font.caption)
+            .foregroundStyle(Theme.Color.textSecondary)
+            .lineLimit(1)
+    }
+
+    /// The live track as the menu's selection: it reads the track the keys play now, and a choice
+    /// points them at another (`choose(_:)`).
+    private func liveTrack(_ current: TrackID) -> Binding<TrackID> {
+        Binding(get: { current }, set: { choose($0) })
+    }
+
+    /// Points the keys at `track`, as the keys button on its row in Tracks does
+    /// (`AudioEngine.setLiveTrack`). While another instrument track is armed, `track` is armed in its
+    /// place (`LiveTrackChoice.movesArm`): arming an instrument track makes it the live one and opens
+    /// or closes no input (`RecordController.toggleArm`), and the next take goes to the track the
+    /// keys play. Nothing while a take records: the menu has gone, and a choice that arrives as one
+    /// begins is dropped.
+    private func choose(_ track: TrackID) {
+        guard !recording.isRecording else { return }
+        if LiveTrackChoice.movesArm(to: track, armed: recording.armedTrack, in: store.project) {
+            Task { await recording.toggleArm(track) }
+        } else {
+            engine.setLiveTrack(track)
         }
     }
 }

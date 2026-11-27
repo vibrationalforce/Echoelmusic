@@ -21,7 +21,10 @@ import SwiftUI
 /// lanes do the same one step at a time, so one finger is enough. The ruler, the lanes and the
 /// playhead line sit in ONE horizontal scroll view and draw with ONE ticks-per-point, so they
 /// never drift apart at any zoom; a drag spans as many ticks as the points it covers at that zoom.
-/// The zoom is kept on this device, never in the song, and is not an edit.
+/// The zoom is kept on this device, never in the song, and is not an edit. Arrange opens where it
+/// was left in this window, not at bar 1; only when the playhead moved while another view was open
+/// does it open on where Play starts — stopped, with Follow Playhead on, and if that would be out
+/// of sight from the kept place (`ArrangePaging`).
 struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(StudioRouter.self) private var router
@@ -46,7 +49,8 @@ struct ArrangeView: View {
     /// Whether the lanes page along with the playhead while the song plays, kept on this device
     /// (Michael on 10085: the song ran on past the screen's edge).
     @AppStorage("arrange.followsPlayhead") private var followsPlayhead = true
-    /// Where the lanes are scrolled to; written only when the playhead pages them.
+    /// Where the lanes are scrolled to; written only when they page by themselves — the playhead's
+    /// page and the place Arrange opens at (`PlayheadFollower`).
     @State private var lanePosition = ScrollPosition(edge: .leading)
     /// What the lanes show now, read by the follower; not observed, so a scroll redraws nothing.
     @State private var viewport = ArrangeViewport()
@@ -196,7 +200,7 @@ struct ArrangeView: View {
             viewport.visible = shown
         }
         .background {
-            PlayheadFollower(ticksPerPoint: ticksPerPoint, follows: followsPlayhead,
+            PlayheadFollower(ticksPerPoint: ticksPerPoint, follows: followsPlayhead, contentWidth: Double(laneWidth),
                              viewport: viewport, position: $lanePosition)
         }
         .simultaneousGesture(pinchGesture)
@@ -229,7 +233,8 @@ struct ArrangeView: View {
         }
     }
 
-    /// Turns the lanes' paging with the playhead on or off; drawn as on while it follows.
+    /// Turns the lanes' paging with the playhead on or off — while the song plays, and when Arrange
+    /// opens stopped after the playhead moved elsewhere; drawn as on while it follows.
     private var followToggle: some View {
         Button {
             let on = !followsPlayhead
@@ -245,7 +250,7 @@ struct ArrangeView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Follow Playhead")
         .accessibilityValue(followsPlayhead ? "On" : "Off")
-        .accessibilityHint("While the song plays, the lanes turn the page when the playhead reaches the edge.")
+        .accessibilityHint("While the song plays, the lanes turn the page when the playhead reaches the edge. Stopped, Arrange opens on the playhead if it moved while another view was open.")
     }
 
     /// Shows or hides the modulation rows; drawn as on while they show.
@@ -552,17 +557,31 @@ private struct PlayheadLine: View {
 @MainActor
 private final class ArrangeViewport {
     var visible: CGRect = .zero
+    /// Whether this appearance of Arrange has opened on its place yet (`PlayheadFollower.open`); a
+    /// new appearance starts with a new viewport, so it opens once each time.
+    var opened = false
 }
 
-/// Turns the lanes' page while the song plays: five times a second it reads where the playhead is
-/// heard and, when it nears the right edge or has jumped out of view (a loop's wrap, a locate),
-/// scrolls so it stands a tenth of the width in from the left. Reads the playhead in a task, never
-/// in a body (Law 6); draws nothing and takes no touch.
+/// Turns the lanes' page by itself (`ArrangePaging`). While the song plays and Follow Playhead is
+/// on, five times a second it reads where the playhead is heard and, when it nears the right edge
+/// or has jumped out of view (a loop's wrap, a locate), scrolls so it stands a tenth of the width
+/// in from the left. When Arrange is left it keeps, for this window (scene storage, never in the
+/// song), the tick at the lanes' left edge and the tick the playhead stands on; when Arrange opens
+/// again it opens on that place, at the first width it is laid out with — unless the playhead moved
+/// meanwhile and, stopped with Follow on, where Play starts would be out of sight there. Reads the
+/// playhead in a task and the transport in its actions, never in a body (Law 6); draws nothing and
+/// takes no touch.
 private struct PlayheadFollower: View {
     @Environment(AudioEngine.self) private var engine
     @Environment(ProjectStore.self) private var store
+    /// The tick at the lanes' left edge when Arrange was last left in this window.
+    @SceneStorage(ArrangePaging.storageKey) private var leftEdgeTick = 0
+    /// The tick the playhead stood on then; `ArrangePaging.nothingKept` until Arrange is first left.
+    @SceneStorage(ArrangePaging.playheadStorageKey) private var playheadWhenLeft = ArrangePaging.nothingKept
     let ticksPerPoint: Double
     let follows: Bool
+    /// The lanes' whole width, so a kept place past the song's end opens on their last page.
+    let contentWidth: Double
     let viewport: ArrangeViewport
     @Binding var position: ScrollPosition
 
@@ -571,6 +590,9 @@ private struct PlayheadFollower: View {
         Color.clear
             .allowsHitTesting(false)
             .accessibilityHidden(true)
+            // A background has the scroll view's frame: its width is the lanes' visible width.
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in open(width: width) }
+            .onDisappear { keep() }
             .task(id: "\(playing) \(follows) \(ticksPerPoint)") {
                 guard playing, follows else { return }
                 while !Task.isCancelled {
@@ -580,14 +602,31 @@ private struct PlayheadFollower: View {
             }
     }
 
+    /// Once per appearance, at the first width: where Arrange was left, or where Play starts when the
+    /// playhead moved while Arrange was away.
+    private func open(width: CGFloat) {
+        guard !viewport.opened, width > 0 else { return }
+        viewport.opened = true
+        let x = ArrangePaging.opening(leftEdge: Tick(leftEdgeTick),
+                                      playheadWhenLeft: ArrangePaging.keptTick(playheadWhenLeft),
+                                      restingAt: engine.restingTick, playing: engine.isPlaying, follows: follows,
+                                      ticksPerPoint: ticksPerPoint, width: Double(width), contentWidth: contentWidth)
+        if x > 0 { position.scrollTo(x: CGFloat(x)) }
+    }
+
+    /// The tick at the left edge and the one the playhead stands on, for the next time Arrange opens
+    /// in this window.
+    private func keep() {
+        leftEdgeTick = Int(clamping: ArrangePaging.leftEdgeTick(atX: Double(viewport.visible.minX),
+                                                                ticksPerPoint: ticksPerPoint))
+        playheadWhenLeft = Int(clamping: ArrangePaging.playheadTick(heard: engine.heardTick(in: store.project)))
+    }
+
     private func page() {
         let shown = viewport.visible
-        guard shown.width > 0, ticksPerPoint > 0 else { return }
-        let x = CGFloat(TimelineGeometry.x(ofPosition: engine.heardTick(in: store.project), ticksPerPoint: ticksPerPoint))
-        guard x.isFinite else { return }
-        let margin = shown.width / 10
-        guard x > shown.maxX - margin || x < shown.minX else { return }
-        position.scrollTo(x: Swift.max(0, x - margin))
+        guard let x = ArrangePaging.target(showing: engine.heardTick(in: store.project), ticksPerPoint: ticksPerPoint,
+                                           left: Double(shown.minX), width: Double(shown.width)) else { return }
+        position.scrollTo(x: CGFloat(x))
     }
 }
 
