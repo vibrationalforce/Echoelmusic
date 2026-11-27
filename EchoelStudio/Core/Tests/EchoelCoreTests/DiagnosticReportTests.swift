@@ -242,4 +242,238 @@ final class DiagnosticReportTests: XCTestCase {
         XCTAssertNil(DiagnosticReport.seconds(of: "2026-11-27T10:26:00Z"))
         XCTAssertNil(DiagnosticReport.seconds(of: "2026-11-27T25:00:00.000Z"))
     }
+
+    // MARK: - Body sources (BR-8)
+
+    /// A strap as `HeartRateStrap` runs one, for `seconds` after it was turned on: a packet carrying
+    /// `value` at each second in `packets` into its `BodyChannel`, a tick each second, and whether the
+    /// channel holds a value into its `BodySourceLog`, whose lines go into a real log. The reading
+    /// itself stays in the channel. Returns the log's text.
+    private func strapRun(packets: [ClosedRange<Int>], value: Double, seconds: Int) throws -> String {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("body-report-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: folder) }
+        let diagnostics = DiagnosticLog(url: folder.appendingPathComponent("a.log"),
+                                        clock: { Date(timeIntervalSince1970: 1_795_775_160) })
+        diagnostics.begin(version: "11.0.0", build: "10089")
+        var channel = BodyChannel(maximumAgeMilliseconds: 3_000)
+        var lifecycle = BodySourceLog(.strap)
+        if let line = lifecycle.start(at: 0) { diagnostics.note(line) }
+        _ = try channel.step(.start(.ble, .granted), at: 0)
+        for second in 0...seconds {
+            let now = Int64(second) * 1_000
+            if packets.contains(where: { $0.contains(second) }) {
+                _ = try channel.step(.sample(.init(source: .ble, epoch: channel.epoch, sequence: Int64(second),
+                                                   capturedMilliseconds: now, value: value, quality: 1)), at: now)
+            }
+            _ = try channel.step(.tick, at: now)
+            if let line = lifecycle.measures(channel.value != nil, at: now) { diagnostics.note(line) }
+        }
+        if let line = lifecycle.stop(at: Int64(seconds) * 1_000) { diagnostics.note(line) }
+        return diagnostics.text()
+    }
+
+    func testDropsAreReportedWithoutValues() throws {
+        // 0.734519 of the travel is 157.52304 bpm: neither may appear anywhere in the report.
+        let text = try strapRun(packets: [0...100, 121...200], value: 0.734519, seconds: 260)
+        let report = DiagnosticReport(log: text)
+        let drop = try XCTUnwrap(report.findings.first)
+        XCTAssertEqual(report.findings.count, 1, "\(report.findings)")
+        XCTAssertEqual(drop.weight, .notice)
+        XCTAssertEqual(drop.run, .latest)
+        XCTAssertEqual(drop.title,
+                       "The heart rate strap stopped measuring 2 times; the longest gap was 17 s, and after the last it was not measured again.")
+        XCTAssertEqual(drop.count, 2)
+        XCTAssertEqual(drop.evidence, report.lines.filter { $0.event == "body: strap lost" }.map(\.text))
+        XCTAssertEqual(drop.evidence.map { DiagnosticReport.parse($0, run: .latest)?.number("measured_s") }, [104, 83],
+                       "each loss says how long the strap had measured: the last packet ages out after three seconds")
+
+        let body = report.lines.filter { $0.event.hasPrefix("body: ") }
+        XCTAssertEqual(body.map(\.event), ["body: strap started", "body: strap lost", "body: strap regained",
+                                           "body: strap lost", "body: strap stopped"])
+        for line in body {
+            XCTAssertTrue(Set(line.fields.keys).isSubset(of: ["measured_s", "absent_s"]), "durations only: \(line.text)")
+        }
+        let shown = report.markdown
+        for reading in ["0.734519", "0.7345", "157.523", "157.52"] {
+            XCTAssertFalse(shown.contains(reading), "a reading reached the report: \(reading)")
+        }
+    }
+
+    func testAPauseByIOSOrAVideoTakeIsNoDrop() throws {
+        let paused = [
+            "2026-11-27T10:27:00.000Z  body: camera started",
+            "2026-11-27T10:27:40.000Z  body: camera lost (paused by iOS) measured_s=40",
+            "2026-11-27T10:27:52.000Z  body: camera regained absent_s=12",
+            "2026-11-27T10:28:22.000Z  body: camera lost (a video take holds the camera) measured_s=30",
+            "2026-11-27T10:29:57.500Z  body: camera regained absent_s=95.5",
+        ]
+        XCTAssertTrue(DiagnosticReport(log: log([launch] + paused)).findings.isEmpty,
+                      "iOS and a take give the camera back by themselves: nothing to try")
+
+        let report = DiagnosticReport(log: log([launch] + paused + [
+            "2026-11-27T10:30:30.000Z  body: camera lost (no reading) measured_s=32.5",
+            "2026-11-27T10:30:36.125Z  body: camera regained absent_s=6.125",
+            "2026-11-27T10:31:00.000Z  body: camera lost (no reading) measured_s=23.875",
+            "2026-11-27T10:31:12.500Z  body: camera regained absent_s=12.5",
+            "2026-11-27T10:32:00.000Z  body: camera stopped measured_s=47.5",
+        ]))
+        let drop = try XCTUnwrap(report.findings.first)
+        XCTAssertEqual(report.findings.count, 1)
+        XCTAssertEqual(drop.title, "The camera pulse stopped measuring 2 times; the longest gap was 12.5 s.",
+                       "the gaps are those of its own losses, quoted as the log wrote them")
+        XCTAssertEqual(drop.count, 2)
+        XCTAssertTrue(drop.evidence.allSatisfy { $0.contains("(no reading)") }, "\(drop.evidence)")
+    }
+
+    func testEachBodySourceSaysWhatToTry() {
+        let report = DiagnosticReport(log: log([
+            launch,
+            "2026-11-27T10:27:00.000Z  body: strap lost (disconnected) measured_s=60",
+            "2026-11-27T10:27:09.000Z  body: strap regained absent_s=9",
+            "2026-11-27T10:28:00.000Z  body: camera lost (failed) measured_s=31.5",
+            "2026-11-27T10:29:00.000Z  body: apple health lost (no reading) measured_s=120",
+            "2026-11-27T10:30:00.000Z  body: phone motion lost (no reading) measured_s=4.25",
+        ]))
+        XCTAssertEqual(report.findings.map(\.weight), [.notice, .notice, .notice, .notice])
+        XCTAssertEqual(report.findings.map(\.title), [
+            "The heart rate strap stopped measuring once, for 9 s.",
+            "The camera pulse stopped measuring once and was not measured again.",
+            "The Apple Health pulse stopped measuring once and was not measured again.",
+            "Phone Motion stopped measuring once and was not measured again.",
+        ])
+        let tries = report.findings.map(\.suggestion)
+        XCTAssertEqual(tries.count, 4)
+        guard tries.count == 4 else { return }
+        XCTAssertTrue(tries[0].contains("battery") && tries[0].contains("skin"), tries[0])
+        XCTAssertTrue(tries[0].contains("No strap found") && tries[0].contains("Off and then Heart Rate Strap"),
+                      "the app searches once after a lost link; the way back is the musician's: \(tries[0])")
+        XCTAssertTrue(tries[1].contains("fingertip") && tries[1].contains("flash") && tries[1].contains("off and on again"), tries[1])
+        XCTAssertTrue(tries[1].contains("lamp"), "a bright lamp reads too, as the camera's cue says: \(tries[1])")
+        XCTAssertTrue(tries[0].contains("Off stops Phone Motion too") && tries[1].contains("Off stops Phone Motion too"),
+                      "advice that goes through Off says what else Off stops")
+        XCTAssertTrue(tries[2].contains("Watch") && tries[2].contains("synced"), tries[2])
+        XCTAssertTrue(tries[3].contains("next sample"), tries[3])
+        XCTAssertEqual(Set(tries).count, 4, "each source its own")
+    }
+
+    func testABodyLineEditedInTheFileCannotStopTheReport() throws {
+        let report = DiagnosticReport(log: log([
+            launch,
+            "2026-11-27T10:27:00.000Z  body: strap regained absent_s=5",
+            "2026-11-27T10:27:10.000Z  body: strap lost",
+            "2026-11-27T10:27:20.000Z  body: strap regained absent_s=nan",
+            "2026-11-27T10:27:30.000Z  body: strap lost (no reading) measured_s=-1e300",
+            "2026-11-27T10:27:40.000Z  body: strap regained absent_s=1e300",
+            "2026-11-27T10:27:50.000Z  body: strap lost (something new) measured_s=2",
+            "2026-11-27T10:28:00.000Z  body: strap regained absent_s=-4",
+        ]))
+        let drop = try XCTUnwrap(report.findings.first)
+        XCTAssertEqual(drop.count, 3, "a regain without a loss before it is no loss, and a reason not known is still one")
+        XCTAssertEqual(drop.title, "The heart rate strap stopped measuring 3 times; the longest gap was 1e300 s.")
+    }
+
+    func testAStartAStopOrAPauseEndsALossThatWasNotMeasuredAgain() {
+        // An order the app does not write (an edited file): a regain after a stop and a start, or after
+        // a pause, belongs to no loss before them.
+        let report = DiagnosticReport(log: log([
+            launch,
+            "2026-11-27T10:27:00.000Z  body: strap lost (no reading) measured_s=60",
+            "2026-11-27T10:27:30.000Z  body: strap stopped measured_s=0",
+            "2026-11-27T10:28:00.000Z  body: strap started",
+            "2026-11-27T10:28:05.000Z  body: strap regained absent_s=65",
+            "2026-11-27T10:29:00.000Z  body: camera lost (no reading) measured_s=40",
+            "2026-11-27T10:29:10.000Z  body: camera lost (paused by iOS) measured_s=0",
+            "2026-11-27T10:29:22.000Z  body: camera regained absent_s=22",
+        ]))
+        XCTAssertEqual(report.findings.map(\.title), [
+            "The heart rate strap stopped measuring once and was not measured again.",
+            "The camera pulse stopped measuring once and was not measured again.",
+        ])
+    }
+
+    func testALossWhileTheAppWasInTheBackgroundIsCountedApart() throws {
+        let report = DiagnosticReport(log: log([
+            launch,
+            "2026-11-27T10:27:00.000Z  body: strap started",
+            "2026-11-27T10:30:00.000Z  app: inactive",
+            "2026-11-27T10:30:00.250Z  app: background",
+            "2026-11-27T10:30:10.000Z  app: inactive",
+            "2026-11-27T10:30:10.125Z  app: active",
+            "2026-11-27T10:30:10.500Z  body: strap lost (no reading) measured_s=190.5",
+            "2026-11-27T10:30:11.750Z  body: strap regained absent_s=1.25",
+            "2026-11-27T10:40:00.000Z  body: strap lost (disconnected) measured_s=588.25",
+            "2026-11-27T10:40:09.000Z  body: strap regained absent_s=9",
+        ]))
+        let drop = try XCTUnwrap(report.findings.first)
+        XCTAssertEqual(report.findings.count, 1, "\(report.findings)")
+        XCTAssertEqual(drop.weight, .notice, "one of the losses came with the app on the screen")
+        XCTAssertEqual(drop.title,
+                       "The heart rate strap stopped measuring 2 times, one of them while the app was in the background; the longest gap was 9 s.",
+                       "the loss found just after the app came back belongs to the time away")
+        XCTAssertEqual(drop.count, 2)
+        XCTAssertEqual(drop.evidence.count, 2)
+        XCTAssertTrue(drop.suggestion.hasPrefix("Check the strap's battery"), drop.suggestion)
+        XCTAssertTrue(drop.suggestion.hasSuffix("keep it on the screen while a body source should move the song."), drop.suggestion)
+    }
+
+    func testLossesThatAllCameWhileAwayAreANoteWithoutTheSourcesAdvice() throws {
+        let awayAndBack = DiagnosticReport(log: log([
+            launch,
+            "2026-11-27T10:27:00.000Z  body: strap started",
+            "2026-11-27T10:30:00.250Z  app: background",
+            "2026-11-27T10:30:04.000Z  body: strap lost (no reading) measured_s=184",
+            "2026-11-27T10:30:20.000Z  app: active",
+            "2026-11-27T10:30:21.000Z  body: strap regained absent_s=17",
+            "2026-11-27T10:45:00.000Z  app: background",
+            "2026-11-27T10:45:30.000Z  app: active",
+            "2026-11-27T10:45:30.400Z  body: strap lost (no reading) measured_s=909.4",
+            "2026-11-27T10:45:31.400Z  body: strap regained absent_s=1",
+        ]))
+        let finding = try XCTUnwrap(awayAndBack.findings.first)
+        XCTAssertEqual(awayAndBack.findings.count, 1)
+        XCTAssertEqual(finding.weight, .note, "leaving the screen and coming back explains them")
+        XCTAssertEqual(finding.title,
+                       "The heart rate strap stopped measuring 2 times, each while the app was in the background; the longest gap was 17 s.")
+        XCTAssertFalse(finding.suggestion.contains("battery"), "nothing about the strap to fix: \(finding.suggestion)")
+        XCTAssertTrue(finding.suggestion.contains("on the screen"), finding.suggestion)
+        XCTAssertTrue(awayAndBack.markdown.contains(DiagnosticReport.nothingFound), "time away alone is no fault")
+
+        let endedAway = DiagnosticReport(log: log([
+            launch,
+            "2026-11-27T10:50:00.000Z  body: phone motion started",
+            "2026-11-27T10:55:00.000Z  app: background",
+            "2026-11-27T10:55:00.600Z  body: phone motion lost (no reading) measured_s=300.6",
+        ]))
+        let unfinished = try XCTUnwrap(endedAway.findings.first)
+        XCTAssertEqual(unfinished.weight, .notice, "it was not measured again, so the source's own advice stays")
+        XCTAssertEqual(unfinished.title,
+                       "Phone Motion stopped measuring once, while the app was in the background, and was not measured again.")
+        XCTAssertTrue(unfinished.suggestion.contains("next sample") && unfinished.suggestion.contains("on the screen"),
+                      unfinished.suggestion)
+    }
+
+    func testTheTimeAwayEndsFiveSecondsAfterTheAppIsBack() throws {
+        let report = DiagnosticReport(log: log([
+            launch,
+            "2026-11-27T10:27:00.000Z  body: phone motion started",
+            "2026-11-27T10:28:00.000Z  app: inactive",
+            "2026-11-27T10:28:02.000Z  app: active",
+            "2026-11-27T10:28:03.000Z  body: phone motion lost (no reading) measured_s=63",
+            "2026-11-27T10:28:10.000Z  body: phone motion regained absent_s=7",
+            "2026-11-27T10:30:00.000Z  app: background",
+            "2026-11-27T10:30:30.000Z  app: active",
+            "2026-11-27T10:30:34.900Z  body: phone motion lost (no reading) measured_s=144.9",
+            "2026-11-27T10:30:40.000Z  body: phone motion regained absent_s=5.1",
+            "2026-11-27T10:32:00.000Z  app: background",
+            "2026-11-27T10:32:30.000Z  app: active",
+            "2026-11-27T10:32:35.100Z  body: phone motion lost (no reading) measured_s=115.1",
+            "2026-11-27T10:32:44.000Z  body: phone motion regained absent_s=8.9",
+        ]))
+        let drop = try XCTUnwrap(report.findings.first)
+        XCTAssertEqual(drop.title,
+                       "Phone Motion stopped measuring 3 times, one of them while the app was in the background; the longest gap was 8.9 s.",
+                       "Control Centre alone is no time away; 4.9 s after coming back still is, 5.1 s is not")
+        XCTAssertEqual(drop.weight, .notice)
+    }
 }

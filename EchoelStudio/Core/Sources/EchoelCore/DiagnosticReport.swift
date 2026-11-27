@@ -356,6 +356,7 @@ public struct DiagnosticReport: Equatable, Sendable {
             "Being apart or a weak link ends a jam; start it again from Jam.")
         add(.notice, ["jam: refused"], { times("A jam could not connect", $0.count) },
             "The Jam page said why; most often Local Network is off for Echoelmusic in Settings. Allow it, then try again.")
+        out += bodySourceRules(on: lines, run: run)
         add(.notice, [DiagnosticLog.fullLine], { _ in "The log filled up; the rest of that run is not in it." },
             "Opening the app again starts a new run with room in the log.")
 
@@ -395,6 +396,158 @@ public struct DiagnosticReport: Equatable, Sendable {
     static func whole(_ value: Double?) -> Int {
         guard let value, value.isFinite else { return 0 }
         return Int(Swift.min(Swift.max(value.rounded(), -1_000_000_000), 1_000_000_000))
+    }
+
+    // MARK: - Body sources (BR-8)
+
+    /// How long after the app is back from the background a loss still counts as one of the time
+    /// away. A source that stopped delivering when the app left is found missing at its owner's next
+    /// tick once its reading has aged out: the strap ticks once a second and holds a reading for three
+    /// seconds, so its loss can land up to four seconds after the app is back. Five covers that.
+    private static let awayGraceSeconds = 5.0
+
+    /// What the report says about losses that came while the app was away from the screen. iOS can
+    /// pause an app in the background (Echoelmusic stops its audio there when nothing plays, records
+    /// or follows a clock), and nothing reads a body source while the app is paused.
+    private static let awaySuggestion = "When Echoelmusic leaves the screen, iOS can pause it, and its body sources with it; keep it on the screen while a body source should move the song."
+
+    /// One loss of a body source, and what came after it while the source stayed on.
+    private struct BodySourceDrop {
+        let line: Line
+        /// The loss came while the app was in the background, or just after it came back.
+        let whileAway: Bool
+        var measuredAgain = false
+        /// The gap as the log measured it, the number and its text as written; nil without a regain
+        /// or with a number that is none.
+        var gapSeconds: Double?
+        var gapText: String?
+    }
+
+    /// Each body source that stopped measuring while it was on (`BodySourceLog`): how often, how many
+    /// of those while the app was in the background, the longest gap the log measured, and what to
+    /// try. A pause that iOS or the app made on purpose, iOS holding the camera or a video take filming
+    /// with it, is not counted: it ends by itself and the source needs nothing. Losses that all came
+    /// while the app was away, each measured again after, are a note: leaving the screen explains them.
+    /// The lines hold fixed words and durations only, so neither a finding nor its evidence can carry
+    /// a body value.
+    private static func bodySourceRules(on lines: [Line], run: Run) -> [Finding] {
+        let away = awayFromTheScreen(lines)
+        return BodySourceLog.Source.allCases.compactMap { bodySourceDrops($0, in: lines, away: away, run: run) }
+    }
+
+    /// For each line, whether it came while the app was in the background, from `app: background`
+    /// to the next `app: active`, or within `awayGraceSeconds` after that. An `app: active` after an
+    /// `app: inactive` alone (Control Centre, the app switcher) was no time away.
+    private static func awayFromTheScreen(_ lines: [Line]) -> [Bool] {
+        var flags: [Bool] = []
+        flags.reserveCapacity(lines.count)
+        var inBackground = false
+        var backAt: Double?
+        for line in lines {
+            let time = seconds(of: line.time)
+            if line.event == "app: background" {
+                inBackground = true
+            } else if line.event == "app: active", inBackground {
+                inBackground = false
+                backAt = time
+            }
+            if inBackground {
+                flags.append(true)
+            } else if let backAt, let time {
+                flags.append(time >= backAt && time - backAt <= awayGraceSeconds)
+            } else {
+                flags.append(false)
+            }
+        }
+        return flags
+    }
+
+    /// One source's losses. A regain belongs to the loss before it, and only while the source stayed
+    /// on: a start or a stop between them ends the pair.
+    private static func bodySourceDrops(_ source: BodySourceLog.Source, in lines: [Line], away: [Bool],
+                                        run: Run) -> Finding? {
+        let lost = source.lostEvent.description
+        let regained = source.regainedEvent.description
+        let onOrOff: Set<String> = [source.startedEvent.description, source.stoppedEvent.description]
+        let pauses = Set(BodySourceLog.Loss.allCases.filter(\.isPause).map { $0.reason.description })
+        let absent = BodySourceLog.absentField.description
+        var drops: [BodySourceDrop] = []
+        var open: Int?
+        for (position, line) in lines.enumerated() {
+            if line.event == lost {
+                if let reason = line.reason, pauses.contains(reason) {
+                    open = nil
+                } else {
+                    drops.append(BodySourceDrop(line: line, whileAway: position < away.count && away[position]))
+                    open = drops.count - 1
+                }
+            } else if line.event == regained {
+                if let index = open {
+                    drops[index].measuredAgain = true
+                    if let gap = line.number(absent), gap >= 0 {
+                        drops[index].gapSeconds = gap
+                        drops[index].gapText = line.fields[absent]
+                    }
+                }
+                open = nil
+            } else if onOrOff.contains(line.event) {
+                open = nil
+            }
+        }
+        guard let last = drops.last else { return nil }
+        let awayCount = drops.filter(\.whileAway).count
+        // The longest gap is quoted as the log wrote it, never rounded again.
+        let longest = drops.filter { $0.gapSeconds != nil }.max { ($0.gapSeconds ?? 0) < ($1.gapSeconds ?? 0) }
+        var title = "\(bodySourceName(source)) stopped measuring \(count(drops.count))"
+        if awayCount == drops.count {
+            title += drops.count == 1 ? ", while the app was in the background" : ", each while the app was in the background"
+        } else if awayCount > 0 {
+            title += ", \(awayCount == 1 ? "one" : String(awayCount)) of them while the app was in the background"
+        }
+        if let text = longest?.gapText {
+            title += drops.count == 1 ? ", for \(text) s" : "; the longest gap was \(text) s"
+        }
+        if !last.measuredAgain {
+            let continued = awayCount > 0 || longest?.gapText != nil
+            title += (continued ? ", " : " ")
+                + (drops.count == 1 ? "and was not measured again" : "and after the last it was not measured again")
+        }
+        // Away from the screen and back again: nothing about the source to fix, so its advice would mislead.
+        let onlyAway = awayCount == drops.count && last.measuredAgain
+        var suggestion = onlyAway ? awaySuggestion : bodySourceSuggestion(source)
+        if awayCount > 0, !onlyAway { suggestion += " " + awaySuggestion }
+        return Finding(weight: onlyAway ? .note : .notice, run: run, title: title + ".", suggestion: suggestion,
+                       count: drops.count, evidence: drops.suffix(evidenceLimit).map { $0.line.text })
+    }
+
+    /// What the report calls a body source.
+    private static func bodySourceName(_ source: BodySourceLog.Source) -> String {
+        switch source {
+        case .strap: "The heart rate strap"
+        case .camera: "The camera pulse"
+        case .health: "The Apple Health pulse"
+        case .motion: "Phone Motion"
+        }
+    }
+
+    /// What to try when a source stopped measuring, from what the app itself does and says to the
+    /// musician about that source: its status words, its entries in Body Source, its camera cues.
+    private static func bodySourceSuggestion(_ source: BodySourceLog.Source) -> String {
+        switch source {
+        case .strap:
+            // A strap off the skin keeps sending, and the app drops those readings
+            // (`HeartRateMeasurement`). After a lost link the app searches once, for
+            // `HeartRateStrap.scanSeconds`, and choosing the strap again does nothing while it is on.
+            // Off in Body Source stops every source, Phone Motion too (`BodySourceMenu`).
+            "Check the strap's battery and that it sits snug on the skin: off the skin the app takes no pulse from it. When its link ends, the app looks for it for up to 20 seconds; after No strap found or Strap lost, choose Off and then Heart Rate Strap in Body Source (Off stops Phone Motion too). Until it measures again, routes from it add nothing."
+        case .camera:
+            // `PulseCue`: the flash's light or a bright lamp's; a hot phone can switch the flash off.
+            "Keep a fingertip over the rear camera and flash, still and pressing gently: the camera reads the pulse from light through the finger, the flash's, which a hot phone can switch off, or a bright lamp's. If a line says the camera failed, turn it off and on again in Body Source (Off stops Phone Motion too). A heart rate strap is the reliable alternative."
+        case .health:
+            "Apple Health has a reading only once the Watch measured one and Health synced it, and at rest the Watch measures less often, so gaps are expected; routes from it add nothing until the next reading. A heart rate strap sends a reading about once a second."
+        case .motion:
+            "Its four sources add nothing until the next sample comes, then follow the phone again. Phone Motion needs no setting; if this repeats, share this report with what the app was doing."
+        }
     }
 
     // MARK: - The report as text

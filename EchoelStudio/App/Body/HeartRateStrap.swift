@@ -73,12 +73,16 @@ final class HeartRateStrap: NSObject {
     static let glideSeconds = 0.6
     static let glideStepSeconds = 1.0 / 30
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "body")
+    /// The strap's life in the diagnostics log (BR-8): on, lost, measured again, off. Fixed words and
+    /// durations only, never a pulse: the log is a file the musician shares.
+    @ObservationIgnored private var lifecycle = BodySourceLog(.strap)
 
     var isOn: Bool { status != .off }
 
     /// The musician turned the strap on.
     func start() {
         guard !isOn else { return }
+        noteLifecycle(lifecycle.start(at: nowMilliseconds))
         apply(.start(.ble, Self.permission(CBCentralManager.authorization)))
         status = .searching
         rrIntervalsMilliseconds = []
@@ -134,12 +138,16 @@ final class HeartRateStrap: NSObject {
             output?.set(source, next)
         }
         let now = Set(gliding.keys)
-        if now != measuring { measuring = now }
+        if now != measuring {
+            measuring = now
+            noteLifecycle(lifecycle.measures(!now.isEmpty, at: nowMilliseconds))
+        }
     }
 
     /// The musician turned it off: the connection ends and the value is gone.
     func stop() {
         guard isOn else { return }
+        noteLifecycle(lifecycle.stop(at: nowMilliseconds))
         scanTimeout?.cancel()
         ticker?.cancel()
         glide?.cancel()
@@ -172,6 +180,11 @@ final class HeartRateStrap: NSObject {
             log.error("body clock went back — \(String(describing: error), privacy: .public)")
         }
         if pulse.value == nil { beatsPerMinute = nil }
+    }
+
+    /// Writes a line of the strap's life to the diagnostics log; nil writes nothing.
+    private func noteLifecycle(_ line: BodySourceLog.Line?) {
+        if let line { DiagnosticLog.app.note(line) }
     }
 
     private static func permission(_ authorization: CBManagerAuthorization) -> BodyChannel.Permission {
@@ -288,6 +301,8 @@ extension HeartRateStrap: @preconcurrency CBCentralManagerDelegate, @preconcurre
         guard isOn, peripheral == self.peripheral else { return }
         self.peripheral = nil
         status = .lost(peripheral.name ?? "Heart rate strap")
+        // A pulse it was measuring is lost here, with this reason, before the glide finds it gone.
+        noteLifecycle(lifecycle.measures(false, at: nowMilliseconds, losing: .disconnected))
         // The value ends with the strap; a new run starts when it is found again, and its
         // intervals do not continue the old run's — a gap is not a beat.
         rrIntervalsMilliseconds = []

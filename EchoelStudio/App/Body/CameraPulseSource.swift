@@ -57,7 +57,6 @@ final class CameraPulseSource {
     // The same numbers as the strap's (`HeartRateStrap`), written out: a `static let` on a
     // `@MainActor` class is isolated on Xcode's toolchain, and a static initializer is not a place
     // to read another class's.
-    nonisolated static let plausibleBeats = 40...200
     /// A trusted reading is published about once a second; three missed and the pulse is no
     /// longer live — the hold that keeps a brief dropout from snapping anything to zero.
     nonisolated static let freshMilliseconds: Int64 = 3_000
@@ -118,6 +117,9 @@ final class CameraPulseSource {
     var cameraGeneration: UInt64 { arbitration.generation }
     func isCameraCurrent(_ generation: UInt64) -> Bool { arbitration.isCurrent(generation) }
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "body")
+    /// The camera pulse's life in the diagnostics log (BR-8): on, lost, measured again, off. Fixed
+    /// words and durations only, never a pulse: the log is a file the musician shares.
+    @ObservationIgnored private var lifecycle = BodySourceLog(.camera)
 
     var isOn: Bool { status != .off }
 
@@ -128,6 +130,7 @@ final class CameraPulseSource {
     /// of letting iOS end the app at the first access.
     func start() {
         guard !isOn else { return }
+        noteLifecycle(lifecycle.start(at: nowMilliseconds))
         guard CameraCapture.hasUsageDescription else {
             status = .unavailable("This build carries no camera permission text; the camera stays closed.")
             cue = .coverLens
@@ -155,6 +158,7 @@ final class CameraPulseSource {
     /// The musician turned it off: the camera is released, the flash is off, every value is gone.
     func stop() {
         guard isOn else { return }
+        noteLifecycle(lifecycle.stop(at: nowMilliseconds))
         generation &+= 1
         closeCamera()
         // After the camera is closed: a waiting sky layer may take it now.
@@ -209,6 +213,7 @@ final class CameraPulseSource {
     /// without turning off, and `resume()` reopens it. Called through `beginTake()`/`endTake()`.
     func suspend() {
         guard isOn, !suspended else { return }
+        noteLifecycle(lifecycle.measures(false, at: nowMilliseconds, losing: .takeHoldsCamera))
         suspended = true
         generation &+= 1
         closeCamera()
@@ -320,6 +325,7 @@ final class CameraPulseSource {
         guard isOn, !suspended else { return }
         switch event {
         case .interrupted:
+            noteLifecycle(lifecycle.measures(false, at: nowMilliseconds, losing: .interrupted))
             apply(.suspend)
             if status != .interrupted { status = .interrupted }
             clearMeasured()
@@ -340,6 +346,7 @@ final class CameraPulseSource {
             analyzer.resetForRecovery(keepEstimate: false)
             inboundRate = 15
         case .failed(let reason):
+            noteLifecycle(lifecycle.measures(false, at: nowMilliseconds, losing: .failed))
             generation &+= 1
             closeCamera()
             apply(.stop)
@@ -401,15 +408,15 @@ final class CameraPulseSource {
             return
         }
         sequence += 1
-        let rounded = Int(bpm.rounded())
-        let normalized: Double? = Self.plausibleBeats.contains(rounded)
-            ? Double(rounded - Self.plausibleBeats.lowerBound)
-                / Double(Self.plausibleBeats.upperBound - Self.plausibleBeats.lowerBound)
-            : nil
+        // The analyzer's own estimate moves the song, as measured and never rounded to a whole beat
+        // first (BR-12): on the scale Apple Health shares (`PulseScale`), outside 40 … 200 bpm no
+        // pulse. Only the number shown is whole beats.
+        let normalized = PulseScale.normalized(beatsPerMinute: bpm)
         apply(.sample(.init(source: .camera, epoch: pulse.epoch, sequence: sequence, capturedMilliseconds: nowMilliseconds,
                             value: normalized, quality: quality)))
         if pulse.value != nil {
-            if beatsPerMinute != rounded { beatsPerMinute = rounded }
+            let shown = Int(bpm.rounded())
+            if beatsPerMinute != shown { beatsPerMinute = shown }
             takeNewBeats()
         }
     }
@@ -534,7 +541,10 @@ final class CameraPulseSource {
             output?.set(source, next)
         }
         let now = Set(gliding.keys)
-        if now != measuring { measuring = now }
+        if now != measuring {
+            measuring = now
+            noteLifecycle(lifecycle.measures(!now.isEmpty, at: nowMilliseconds))
+        }
     }
 
     private func clearMeasured() {
@@ -558,5 +568,10 @@ final class CameraPulseSource {
             log.error("body clock went back — \(String(describing: error), privacy: .public)")
         }
         if pulse.value == nil, beatsPerMinute != nil { beatsPerMinute = nil }
+    }
+
+    /// Writes a line of the camera pulse's life to the diagnostics log; nil writes nothing.
+    private func noteLifecycle(_ line: BodySourceLog.Line?) {
+        if let line { DiagnosticLog.app.note(line) }
     }
 }

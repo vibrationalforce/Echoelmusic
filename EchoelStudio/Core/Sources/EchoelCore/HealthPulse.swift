@@ -14,8 +14,9 @@ import Foundation
 ///
 /// Pure: the caller supplies its monotonic clock and each reading's age.
 public enum HealthPulse {
-    /// The same plausible range and normalization as the chest strap: 0 … 1 over 40 … 200 bpm.
-    public static let plausibleBeats = 40.0...200.0
+    /// The range and normalization every pulse source shares (`PulseScale`): 0 … 1 over 40 … 200
+    /// bpm, the chest strap's and the camera's too.
+    public static let plausibleBeats = PulseScale.plausibleBeats
     /// How old a reading may be and still move anything.
     public static let freshSeconds = 120.0
     public static let freshMilliseconds = Int64(freshSeconds * 1_000)
@@ -25,10 +26,10 @@ public enum HealthPulse {
     /// Apple Health gives no quality figure; a reading it stores counts as measured.
     public static let quality = 1.0
 
-    /// The reading normalized to 0 … 1, or nil when it is not a plausible pulse.
+    /// The reading on the shared pulse scale, exactly as measured (`PulseScale`); nil when it is
+    /// not a plausible pulse.
     public static func normalized(beatsPerMinute: Double) -> Double? {
-        guard beatsPerMinute.isFinite, plausibleBeats.contains(beatsPerMinute) else { return nil }
-        return (beatsPerMinute - plausibleBeats.lowerBound) / (plausibleBeats.upperBound - plausibleBeats.lowerBound)
+        PulseScale.normalized(beatsPerMinute: beatsPerMinute)
     }
 
     /// One reading as a `BodyChannel` sample. Its capture time is `nowMilliseconds` minus its age:

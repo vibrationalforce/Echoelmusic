@@ -52,12 +52,17 @@ final class PhoneMotionSource {
     @ObservationIgnored private var processor: PhoneMotionProcessor?
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "body")
+    @ObservationIgnored private let started = ContinuousClock.now
+    /// Phone Motion's life in the diagnostics log (BR-8): on, lost, measured again, off. Fixed words
+    /// and durations only, never a tilt or a movement: the log is a file the musician shares.
+    @ObservationIgnored private var lifecycle = BodySourceLog(.motion)
 
     var isOn: Bool { status != .off }
 
     /// The musician turned Phone Motion on.
     func start() {
         guard !isOn else { return }
+        noteLifecycle(lifecycle.start(at: nowMilliseconds))
         guard motion.isDeviceMotionAvailable else {
             status = .unavailable
             log.notice("motion: no device motion on this device")
@@ -87,6 +92,7 @@ final class PhoneMotionSource {
     /// The musician turned it off, or chose Off: the sensor stops and the four values are gone.
     func stop() {
         guard isOn else { return }
+        noteLifecycle(lifecycle.stop(at: nowMilliseconds))
         ticker?.cancel()
         ticker = nil
         if motion.isDeviceMotionActive { motion.stopDeviceMotionUpdates() }
@@ -106,15 +112,30 @@ final class PhoneMotionSource {
         guard isOn, let processor else { return }
         if fresh, count > 0 {
             if status != .measuring { status = .measuring }
-            if measuring.isEmpty { measuring = Set(PhoneMotion.sources) }
+            if measuring.isEmpty {
+                measuring = Set(PhoneMotion.sources)
+                noteLifecycle(lifecycle.measures(true, at: nowMilliseconds))
+            }
         } else {
             if status == .measuring { status = .waiting }
             if !measuring.isEmpty {
                 measuring = []
+                noteLifecycle(lifecycle.measures(false, at: nowMilliseconds))
                 // The cells belong to the queue while it runs; it clears them, and starts afresh.
                 queue.addOperation { @Sendable in processor.clear() }
             }
         }
+    }
+
+    /// This class's own monotonic clock in milliseconds, for how long the motion sources measured.
+    private var nowMilliseconds: Int64 {
+        let elapsed = ContinuousClock.now - started
+        return elapsed.components.seconds * 1_000 + elapsed.components.attoseconds / 1_000_000_000_000_000
+    }
+
+    /// Writes a line of Phone Motion's life to the diagnostics log; nil writes nothing.
+    private func noteLifecycle(_ line: BodySourceLog.Line?) {
+        if let line { DiagnosticLog.app.note(line) }
     }
 }
 

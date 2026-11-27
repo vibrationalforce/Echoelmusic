@@ -53,6 +53,9 @@ final class HealthHeartRate {
     @ObservationIgnored private var gliding: Double?
     @ObservationIgnored private let started = ContinuousClock.now
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "body")
+    /// The Apple Health pulse's life in the diagnostics log (BR-8): on, lost, measured again, off.
+    /// Fixed words and durations only, never a pulse: the log is a file the musician shares.
+    @ObservationIgnored private var lifecycle = BodySourceLog(.health)
     #if canImport(HealthKit)
     @ObservationIgnored private var health: HKHealthStore?
     @ObservationIgnored private var query: HKAnchoredObjectQuery?
@@ -69,6 +72,7 @@ final class HealthHeartRate {
     /// The musician chose Apple Health.
     func start() {
         guard !isOn else { return }
+        noteLifecycle(lifecycle.start(at: nowMilliseconds))
         run &+= 1
         apply(.start(.health, .unknown))
         #if canImport(HealthKit)
@@ -105,6 +109,7 @@ final class HealthHeartRate {
     /// The musician chose another source or Off: the query ends and the value is gone.
     func stop() {
         guard isOn else { return }
+        noteLifecycle(lifecycle.stop(at: nowMilliseconds))
         run &+= 1
         ticker?.cancel()
         glide?.cancel()
@@ -143,20 +148,31 @@ final class HealthHeartRate {
         }
     }
 
+    /// Writes a line of the Apple Health pulse's life to the diagnostics log; nil writes nothing.
+    private func noteLifecycle(_ line: BodySourceLog.Line?) {
+        if let line { DiagnosticLog.app.note(line) }
+    }
+
     private func glideTowardsPulse() {
         guard let target = pulse.value else {
             if gliding != nil {
                 gliding = nil
                 output?.set(.heartRate, nil, mayLeaveDevice: false)
             }
-            if !measuring.isEmpty { measuring = [] }
+            if !measuring.isEmpty {
+                measuring = []
+                noteLifecycle(lifecycle.measures(false, at: nowMilliseconds))
+            }
             return
         }
         let factor = 1 - Foundation.exp(-Self.glideStepSeconds / Self.glideSeconds)
         let next = gliding.map { $0 + (target - $0) * factor } ?? target
         gliding = next
         output?.set(.heartRate, next, mayLeaveDevice: false)
-        if measuring != [.heartRate] { measuring = [.heartRate] }
+        if measuring != [.heartRate] {
+            measuring = [.heartRate]
+            noteLifecycle(lifecycle.measures(true, at: nowMilliseconds))
+        }
     }
 
     private func received(beatsPerMinute bpm: Double, measuredAt end: Date, run current: UInt64) {
