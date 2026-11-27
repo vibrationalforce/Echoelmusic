@@ -208,6 +208,7 @@ struct StudioView: View {
         case .agent: AgentView()
         case .about: AboutView()
         case .learn: LearnView()
+        case .report: ReportView()
         case .renameSong: RenameSongView()
         case .rename(let target): RenameView(target: target)
         case .streaming: StreamingView()
@@ -1568,6 +1569,8 @@ struct SongMenu: View {
                 Button("Echoelmusic Plugins…", systemImage: "puzzlepiece.extension") { router.sheet = .store }
                 // Short chapters on what this build does and where its controls are (Recovery 8).
                 Button(StudioPlace.learn.title, systemImage: "book") { router.sheet = .learn }
+                // The app's own report from its diagnostics log: findings, what to try, the log to share.
+                Button("Report…", systemImage: "doc.text.magnifyingglass") { router.sheet = .report }
                 Button("About Echoelmusic", systemImage: "info.circle") { router.sheet = .about }
             }
         } label: {

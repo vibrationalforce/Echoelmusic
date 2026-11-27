@@ -31,6 +31,8 @@ enum StudioSheet: Identifiable, Hashable {
     case about
     /// Short chapters on what the app does today, each with the way to its controls (Recovery 8).
     case learn
+    /// What the diagnostics log says, as findings to read and a report to share (test agent, 2026-11-27).
+    case report
     /// A new name for the open song, which its package takes too.
     case renameSong
     /// A new name for a track, a clip or a scene.
