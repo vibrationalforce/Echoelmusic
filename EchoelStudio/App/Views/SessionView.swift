@@ -7,6 +7,7 @@ import SwiftUI
 /// is a command.
 struct SessionView: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
     /// Opens a clip in the editor.
     let open: (TrackID, ClipID) -> Void
@@ -68,7 +69,7 @@ struct SessionView: View {
     private var addScene: some View {
         Button("Add Scene", systemImage: "plus") {
             let name = "Scene \(store.project.scenes.count + 1)"
-            try? store.perform(.addScene(id: SceneID(), name: name, index: nil))
+            documents.attempt(.addScene(id: SceneID(), name: name, index: nil))
         }
         .buttonStyle(ToolButtonStyle())
         .padding(.top, Theme.Space.s)
@@ -109,6 +110,7 @@ struct SessionTrackHeader: View {
 /// Launches every clip of its row.
 struct SceneButton: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
     @Environment(StudioRouter.self) private var router
     let scene: EchoelCore.Scene
@@ -132,7 +134,7 @@ struct SceneButton: View {
         .contextMenu {
             Button("Rename Scene…", systemImage: "pencil") { router.sheet = .rename(.scene(scene.id)) }
             Button("Delete Scene", systemImage: "trash", role: .destructive) {
-                try? store.perform(.removeScene(scene.id))
+                documents.attempt(.removeScene(scene.id))
             }
         }
         .accessibilityLabel("Launch \(scene.name)")
@@ -143,6 +145,7 @@ struct SceneButton: View {
 /// One slot: a clip to launch, or an empty slot that makes one.
 struct SessionCell: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
     @Environment(StudioRouter.self) private var router
     let track: Track
@@ -196,11 +199,11 @@ struct SessionCell: View {
             }
             Button("Rename Clip…", systemImage: "pencil") { router.sheet = .rename(.clip(clip.id)) }
             Button("Remove from Slot", systemImage: "minus.circle") {
-                try? store.perform(.setSlot(track: track.id, scene: scene.id, clip: nil))
+                documents.attempt(.setSlot(track: track.id, scene: scene.id, clip: nil))
             }
             // The clip itself: out of every slot and every place in the arrangement (undoable).
             Button("Delete Clip Everywhere", systemImage: "trash", role: .destructive) {
-                try? store.perform(.deleteClip(clip.id))
+                documents.attempt(.deleteClip(clip.id))
             }
         }
         .accessibilityLabel("\(clip.name) on \(track.name)")
@@ -209,7 +212,7 @@ struct SessionCell: View {
         .accessibilityActions {
             if clip.audio == nil { Button("Edit Notes") { open(track.id, clip.id) } }
             Button("Rename Clip") { router.sheet = .rename(.clip(clip.id)) }
-            Button("Delete Clip Everywhere") { try? store.perform(.deleteClip(clip.id)) }
+            Button("Delete Clip Everywhere") { documents.attempt(.deleteClip(clip.id)) }
         }
     }
 
@@ -222,7 +225,7 @@ struct SessionCell: View {
             ForEach([1, 2, 4, 8, 16], id: \.self) { bars in
                 let length = Swift.max(Arranging.ticks(movingBars: Int64(bars), from: 0, meter: meter), 1)
                 Button {
-                    try? store.perform(.setClipLength(clip.id, length: length))
+                    documents.attempt(.setClipLength(clip.id, length: length))
                 } label: {
                     let title = bars == 1 ? "1 Bar" : "\(bars) Bars"
                     if clip.length == length { Label(title, systemImage: "checkmark") } else { Text(title) }
