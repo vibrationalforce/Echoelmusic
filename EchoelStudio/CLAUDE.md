@@ -1,9 +1,13 @@
 # EchoelStudio/ — the restart (2026-10-17)
 
 This directory is the new app. **The build plan (`NEUPLANUNG_2026-10-18.md`, approved
-2026-10-18: no genres, no generated notes, EchoelStudio is ordered rather than rewritten,
-phase P0 before 1.0) and the product scope (`NEUSTART_2026-10-17.md`) live under `docs/dev/` in
-the private repo `echoelmusic-intern` since 2026-11-05. Read both there before any change here.
+2026-10-18: EchoelStudio is ordered rather than rewritten, phase P0 before 1.0) and the product
+scope (`NEUSTART_2026-10-17.md`) live under `docs/dev/` in the private repo `echoelmusic-intern`
+since 2026-11-05. Read both there before any change here. Its line "no genres, no generated notes"
+was loosened on 2026-11-27 (`decisions.csv` there): composing help is allowed as a PROPOSAL the
+musician hears and keeps or drops with one undo step, never written by itself; genres and vibes are
+reference data a musician applies piece by piece; the musician stays the composer. "AI" names only
+what an on-device model runs (the assistant); the rest is "Idea".
 The song format is public: `docs/FORMAT.md`, pinned by
 `Core/Tests/EchoelCoreTests/FormatGoldenTests.swift` — a change that breaks it is a format
 version bump with a migration, never an edit to the golden files.** The root `CLAUDE.md` is
