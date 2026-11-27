@@ -1,51 +1,41 @@
-11.0.0 — 57 scales with chords for every one, Styles, Find Key and Idea in the Song menu, the note grid on the Instrument page, and clouds that cannot flash red
+11.0.0 — note values by default on delay and LFO fields, a loop strip in Arrange, and the note editor's Transpose, Duplicate and Legato
 
-New since 10089, built by the Echoel Studio run; nothing here is device-verified yet.
-- Safety first: the clouds the note grid leaves in the picture are now colourless, a soft grey
-  light. In 10089 they wore their notes' colours, and a simulation showed a blue note tapped four
-  times a second over a red picture changing colour more than three times a second. The grey is
-  dim enough that it cannot. The drops under a finger stay held back.
-- The scale picker holds 57 scales on eight shelves instead of 14 in one list. The chord pads
-  name chords in every scale that holds them, pentatonic ones too, in lines of at most seven.
-  Notes and chords are written as the key writes them (G sharp minor in F sharp major), and the
-  key picker names each root as its key does.
-- "Styles…" in the Song menu: 68 styles in three families. A style's page shows what it is
-  usually made of; tick tempo, time signature, scale, tone system or swing and "Use Style" sets
-  them as one undo step. It writes no note and leaves the key's root alone. The lines on sound
-  and mix are reference notes, not rules.
-- "Find Key…" in the Song menu proposes the major or minor key the notes on your keys tracks fit
-  best, with the runner-up, and says when the call is close. Nothing is set until "Use for Song".
-- "Idea…" in the Song menu proposes chords for the song's key, one a bar, with a bass line if
-  you want one. "Another" gives the next idea; "Add to Track" writes it as a new clip after the
-  track's last one, one undo step. No model runs in it.
-- The note grid also plays on the Instrument page, over the Field card, with its switch, "Hold"
-  and the octave buttons in a bar under the card.
-- The body's safety sentence stands in plain text in the opened "Body: Off" row. The app's log no
-  longer writes the tempo Flow steps to, only the direction. About names the Jam where it lists
-  the network's uses.
-- Learn has a chapter on Find Key, Styles, the Tempo Calculator and Idea.
-- A song that names one of the new scales plays the chromatic scale in 10089 and earlier.
+New since 10090, built by the Echoel Studio run; nothing here is device-verified yet.
+- Times and slow rates read as note values first: a delay's time, a chorus, phaser, flanger or
+  tremolo rate, an envelope time where it lies on a note. "1/8 dotted" for 375 ms at 120 BPM,
+  "≈ 1/8 dotted" when near, and the exact time and rate beside it in the small line. A long press
+  chooses how times read on this device (Note Value, Seconds, Milliseconds, Hertz), sets a note
+  value exactly, and copies each form. Pitches and filter frequencies stay in Hz.
+- While times read as note values, moving a delay time or a modulation rate lands on note values
+  (straight, dotted, triplet) at the song's tempo. Envelope and compressor times stay free. A
+  later tempo change does not move a time that was set before it.
+- Arrange: a loop strip above the ruler. Drag across it to draw the bars the song loops over, tap
+  the drawn bars to turn the loop on or off, "Loop the Whole Song" in its menu goes back. The
+  drawn loop is kept for the song while the app runs and is not saved in the song file.
+- Arrange: a tap on a marker plays from it. On a hardware keyboard "[" and "]" go to the marker
+  before or after the playhead.
+- Note editor: Select All (⌘A) when nothing is chosen; for chosen notes, "Edit Notes" with Up or
+  Down a semitone (⌥↑, ⌥↓) or an octave, Duplicate (⌘D) and Legato. Each is one undo step.
+- The note editor and the drum step grid show where the song plays, while it plays the clip from
+  Arrange.
 
-Still new for a first look, from 10089: every value field exact in s, Hz and note value, with the
-full value on a long press; "Tempo Calculator…"; the note grid over the full-screen Field; the
-Instrument page leading with the sound; a shorter Song menu; "Number Them" for shared track names;
-"Report…" with "Run Self-Test"; songs written as format 5.
+Still new for a first look, from 10089 and 10090: exact values, "Tempo Calculator…", the note
+grid on the full-screen Field and on the Instrument page with colourless clouds, 57 scales with
+chords for every one, "Styles…", "Find Key…", "Idea…", "Report…", songs as format 5.
 
-Previous: 10089. A green commit that changes this file uploads build 10000 + run number. A test
+Previous: 10090. A green commit that changes this file uploads build 10000 + run number. A test
 list, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five checks, each one action and a yes or no. A screen recording of all five is the best answer.
-1. Instrument page, "Note Grid" on: play with several fingers, slide, switch "Hold" on and off.
-   Do taps sound at once, does every note end, are the clouds soft grey lights, and does the page
-   still scroll when you drag the sound card?
-2. Open a delay or any effect with a time: is the value shown in s with its note value, does a
-   long press show the full value with Copy, and do the note values in "Tempo Calculator…" match
-   the calculator you trust, digit for digit?
-3. "Styles…": open a style, tick tempo and scale, "Use Style". Did both change, and does one Undo
-   take both back? Then "Find Key…" on a song with notes: is the proposal the key you hear?
-4. "Idea…": "Another" twice, "Add to Track", Play. Does the clip sound in the song's key, and
-   does one Undo take it back?
+1. Add a Delay. Does its Time read as a note value with the ms beside it, and does dragging it
+   land on note values? Long press: switch to Milliseconds and back. Does the field follow?
+2. Arrange: drag across the strip above the ruler over bars 3 to 4, Play. Does the song loop
+   there, and does a tap on the band stop the looping?
+3. Note editor: choose some notes, "Edit Notes", Duplicate, then Up an Octave. Did each land
+   right, and does Undo take back one step at a time?
+4. Add a marker, Stop, tap it, Play. Does the song start at the marker? With a keyboard, do "["
+   and "]" jump between markers?
 5. Sixteen bars in two to five minutes, as before: a beat, a bass line or a chord, then Play.
    Where does it stop being possible or pleasant?
 
-The open checks of 10079 to 10089 rest until this recording exists.
+The open checks of 10079 to 10090 rest until this recording exists.
