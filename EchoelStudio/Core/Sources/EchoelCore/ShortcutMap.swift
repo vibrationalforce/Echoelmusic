@@ -13,6 +13,8 @@ public enum ShortcutMap {
         case toStart
         /// To the bar line before the playhead, or after it.
         case barBack, barForward
+        /// To the marker before the playhead, or after it.
+        case markerBack, markerForward
     }
 
     public struct Key: Hashable, Sendable {
@@ -54,6 +56,8 @@ public enum ShortcutMap {
             (Key("\r"), .toStart),
             (Key(","), .barBack),
             (Key("."), .barForward),
+            (Key("["), .markerBack),
+            (Key("]"), .markerForward),
         ]
         let digits: [Character] = ["1", "2", "3", "4", "5", "6", "7"]
         for (index, digit) in digits.prefix(viewCount).enumerated() {
@@ -90,5 +94,15 @@ public enum ShortcutMap {
             target = at
         }
         return Swift.min(Swift.max(0, target), MusicalTime.maximumTick)
+    }
+
+    /// Where a marker key sends a playhead standing at `tick`: to the last marker before it, or the
+    /// first after it; nil when there is none that way, so the playhead stays.
+    public static func marker(_ action: Action, from tick: Tick, markers: [Tick]) -> Tick? {
+        switch action {
+        case .markerBack: return markers.filter { $0 < tick }.max()
+        case .markerForward: return markers.filter { $0 > tick }.min()
+        default: return nil
+        }
     }
 }

@@ -67,4 +67,20 @@ final class ShortcutMapTests: XCTestCase {
         XCTAssertEqual(ShortcutMap.locate(.barForward, from: four, meter: meter), four + three)
         XCTAssertEqual(ShortcutMap.locate(.barBack, from: four + three, meter: meter), four)
     }
+
+    /// The bracket keys go from marker to marker: back to the last one before the playhead (the one
+    /// before that when it stands on one), forward to the next, and nowhere when there is none.
+    func testTheBracketKeysGoFromMarkerToMarker() {
+        XCTAssertEqual(ShortcutMap.action(for: ShortcutMap.Key("[")), .markerBack)
+        XCTAssertEqual(ShortcutMap.action(for: ShortcutMap.Key("]")), .markerForward)
+        let markers: [Tick] = [7_680, 0, 15_360]
+        XCTAssertEqual(ShortcutMap.marker(.markerForward, from: 100, markers: markers), 7_680)
+        XCTAssertEqual(ShortcutMap.marker(.markerForward, from: 7_680, markers: markers), 15_360, "standing on one: the next")
+        XCTAssertEqual(ShortcutMap.marker(.markerBack, from: 7_680, markers: markers), 0, "standing on one: the one before")
+        XCTAssertEqual(ShortcutMap.marker(.markerBack, from: 9_000, markers: markers), 7_680)
+        XCTAssertNil(ShortcutMap.marker(.markerForward, from: 15_360, markers: markers), "no marker after the last")
+        XCTAssertNil(ShortcutMap.marker(.markerBack, from: 0, markers: markers))
+        XCTAssertNil(ShortcutMap.marker(.markerForward, from: 0, markers: []))
+        XCTAssertNil(ShortcutMap.marker(.barForward, from: 0, markers: markers), "a bar key is no marker key")
+    }
 }

@@ -781,6 +781,7 @@ private struct MarkerStrip: View {
 private struct MarkerFlag: View {
     @Environment(ProjectStore.self) private var store
     @Environment(DocumentController.self) private var documents
+    @Environment(RecordController.self) private var recording
     @Environment(StudioRouter.self) private var router
     @Environment(AudioEngine.self) private var engine
     @AppStorage(SnapGrid.storageKey) private var snap: SnapGrid = .standard
@@ -803,9 +804,13 @@ private struct MarkerFlag: View {
         }
         .frame(height: Theme.Size.rulerHeight)
         .contentShape(Rectangle())
+        // A tap plays from the marker, as on a desktop DAW's marker list; the menu edits it.
+        .onTapGesture { playFromHere() }
         .contextMenu { menu }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Marker \(marker.name), bar \(bar)")
+        .accessibilityAction { playFromHere() }
+        .accessibilityHint("Plays from the marker. Its other actions rename, move or delete it.")
         .accessibilityAction(named: "Rename") { rename() }
         .accessibilityAction(named: "Move to Playhead") { moveToPlayhead() }
         .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
@@ -822,6 +827,13 @@ private struct MarkerFlag: View {
     }
 
     private func rename() { router.sheet = .rename(.marker(marker.tick)) }
+
+    /// The song plays on from the marker, or will start there; refused while a take records or an
+    /// export is written, as the ruler's tap is.
+    private func playFromHere() {
+        guard TimelineGeometry.mayLocate(recording: recording.isRecording, exporting: documents.isExporting) else { return }
+        engine.locate(to: marker.tick)
+    }
 
     private func moveToPlayhead() {
         let project = store.project

@@ -2029,7 +2029,7 @@ private struct LocateKeys: View {
     @Environment(RecordController.self) private var recording
     @Environment(DocumentController.self) private var documents
 
-    private static let actions: [ShortcutMap.Action] = [.toStart, .barBack, .barForward]
+    private static let actions: [ShortcutMap.Action] = [.toStart, .barBack, .barForward, .markerBack, .markerForward]
 
     var body: some View {
         HStack(spacing: 0) {
@@ -2048,7 +2048,13 @@ private struct LocateKeys: View {
         let project = store.project
         let heard = engine.heardTick(in: project)
         let from = engine.isPlaying && heard.isFinite ? MusicalTime.integer(heard.rounded(.down)) : engine.restingTick
-        engine.locate(to: ShortcutMap.locate(action, from: from, meter: engine.playedMeterMap(of: project)))
+        switch action {
+        case .markerBack, .markerForward:
+            guard let marker = ShortcutMap.marker(action, from: from, markers: project.markers.map(\.tick)) else { return }
+            engine.locate(to: marker)
+        default:
+            engine.locate(to: ShortcutMap.locate(action, from: from, meter: engine.playedMeterMap(of: project)))
+        }
     }
 }
 
