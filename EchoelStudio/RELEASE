@@ -1,38 +1,53 @@
-11.0.0 — the app asks for Inter-App Audio, other makers' plugins load and play more reliably, and a Launchpad never flashes past three a second
+11.0.0 — every value exact in s, Hz and note value, a tempo calculator, the note grid back over the Field, a simpler Instrument page and Song menu
 
-New since 10087, built by the Echoel Studio run; nothing here is device-verified yet.
-- The app now asks iOS for Inter-App Audio (F44). With it, instruments of other makers may appear
-  in Audio Unit Instrument on a track's Sound page; whether they do only a device shows.
-- A plugin of another maker whose busses take one channel plays through the host, and a unit
-  that refuses stereo when it allocates is tried in mono.
-- Its main busses are switched on and set after its saved settings, so an effect hears its input.
-- A unit that does not start within 15 seconds says so instead of loading for ever.
-- Reload Plugin on its page loads a unit again that failed, stopped too often or refuses audio,
-  and the page says how many audio blocks it refused. Reloading one plugin keeps what the status
-  line says about the others.
-- A plugin that hands back less audio than a block asked for no longer plays stray sound: an
-  instrument adds nothing for that block, an effect lets the sound through as it was, and the
-  page counts the block as refused.
-- A plugin's page says when its settings did not reach the song.
-- A unit that builds a new parameter tree (a mode, a preset) is followed by automation and its page.
-- Channel pressure, poly pressure and program change from your controller reach a plugin
-  instrument; under a key lock, poly pressure follows the note its key plays.
-- A plugin installed while the app runs appears in the list without an older scan hiding it.
-- A Launchpad's waiting and playing pads flash and pulse only while the clock it follows stays at
-  180 BPM or below; above that they stay steady, in colour. After our clock stops, the device keeps
-  the tempo it heard last, so the pads stay steady until a slower clock of ours has run three
-  seconds, also after a reconnect or a relaunch.
-- A note sent through MPE Out is never left hanging when the app falls behind: every note ends.
-- A media-browser preview that ends, and a stopped song with an arpeggiator, no longer free or
-  allocate memory on the audio thread.
+New since 10088, built by the Echoel Studio run; nothing here is device-verified yet.
+- Every value field reads exactly: times in s, rates and pitches in Hz, and the note value at the
+  song's tempo. Nothing is rounded for you. A long value is shown compact and ends in "…"; a long
+  press shows the full value, with Copy. Moving a control lands on a readable grid; the number
+  pad takes milliseconds for a time and hundredths of a hertz up to 1 kHz.
+- "Tempo Calculator…" in the Song menu: the song's tempo or one you type or tap, every note value
+  in s, ms and Hz (straight, dotted, triplet), bar length, samples and frames, the tempo from a
+  length, pitch and wavelength. "Use for Song" sets the tempo.
+- The note grid is back over the full-screen Field: "Note Grid" in its bar. The song's scale
+  across, an octave a row, the lowest at the bottom. A touch plays the track the keys play, so
+  any instrument or plugin on it sounds, a take records it and MPE Out sends it. "Hold" keeps
+  notes, the octave buttons move the grid. Every sounding note lights its cell as a cloud in the
+  picture. The drops under a finger are held back in this build: their red light is not yet
+  bounded under three flashes a second.
+- The Instrument page leads with the Field and the sound. While no body source is on, the Body
+  Voice is off and the tempo is Fixed, the body is one row, "Body: Off", that opens to its
+  controls. The safety sentence stands where a body source is chosen.
+- A shorter Song menu with one word per function, and Learn reachable from the first screen. A
+  plain store page. Arrange keeps its place. The on-screen keys name the track they play and
+  offer the others.
+- No two tracks share a name by accident; where two do, the track list offers "Number Them".
+- "Report…" in the Song menu shows the app's own report of this session and shares it only when
+  you do; "Run Self-Test" on that page measures this device, offline.
+- An edit the song refuses in the Mixer or the Session says why. Escape closes the Region, Color
+  and Subtitles sheets. Voice Control answers to the letters on Mute, Solo and MIDI Learn.
+- Tone systems: a key just under the root now sounds the tonic above in sléndro, pélog, Hirajōshi
+  and Archytas, and the tables come from their exact definitions. A song in one of these systems
+  sounds different on that key than in 10088.
+- The camera pulse moves the song as measured; it is no longer rounded to a whole beat first.
+  The number shown stays whole.
+- Songs are now written as format 5 (it can hold recorded body movement; this build does not
+  record it yet). A song saved by this build does not open in 10088 or earlier. Songs from
+  earlier builds open unchanged.
 
-Previous: 10087. A green commit that changes this file uploads build 10000 + run number. A test
+Previous: 10088. A green commit that changes this file uploads build 10000 + run number. A test
 list, not a source for claims (ContentPipeline/CLAIMS.md).
 
-One ask, as for 10083 to 10087. Start a screen recording, open the app, and try to make sixteen
-bars in two to five minutes: a beat, a bass line or a chord, then Play. No list and no protocol; stop wherever
-it stops being possible or pleasant. The recording is the answer. What gets in the way in it is
-the next work, in the order it happened. Before you stop, open Audio Unit Instrument on a track's
-Sound page once, so the recording shows whether other makers' instruments are listed (F44).
+Five checks, each one action and a yes or no. A screen recording of all five is the best answer.
+1. Field, full screen, "Note Grid" on: play with several fingers, slide, switch "Hold" on and
+   off, leave the full screen. Does every note end, do the clouds follow the notes, and does the
+   bar fit on a phone held upright?
+2. Open a delay or any effect with a time: is the value shown in s with its note value, and does
+   a long press show the full value with Copy?
+3. Song menu, "Tempo Calculator…": type the tempo of a song you know. Do the note values match
+   the calculator you trust, digit for digit?
+4. Instrument page with the body off: are Sound and Mood in sight without scrolling, does one tap
+   on "Body: Off" open it, and is the safety sentence above the body sources shown whole?
+5. Sixteen bars in two to five minutes, as before: a beat, a bass line or a chord, then Play.
+   Where does it stop being possible or pleasant?
 
-The five checks of 10079 stay open and unchanged and rest until that recording exists.
+The open checks of 10079 to 10088 rest until this recording exists.
