@@ -60,6 +60,7 @@ struct MixerView: View {
 
 struct ChannelStrip: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(StudioRouter.self) private var router
     @Environment(ParameterWriter.self) private var writer
     @Environment(NumberPadController.self) private var pad: NumberPadController?
@@ -133,12 +134,12 @@ struct ChannelStrip: View {
             levelReadout
             if let track {
                 HStack(spacing: Theme.Space.xs) {
-                    Button("M") { try? store.perform(.setMute(track.id, !track.mixer.isMuted)) }
+                    Button("M") { documents.attempt(.setMute(track.id, !track.mixer.isMuted)) }
                         .buttonStyle(ToolButtonStyle(isActive: track.mixer.isMuted))
                         .accessibilityLabel("Mute \(track.name)")
                         .accessibilityValue(track.mixer.isMuted ? "On" : "Off")
                         .voiceNames(shown: "M", word: "Mute", spoken: "Mute \(track.name)")
-                    Button("S") { try? store.perform(.setSolo(track.id, !track.mixer.isSoloed)) }
+                    Button("S") { documents.attempt(.setSolo(track.id, !track.mixer.isSoloed)) }
                         .buttonStyle(ToolButtonStyle(isActive: track.mixer.isSoloed))
                         .accessibilityLabel("Solo \(track.name)")
                         .accessibilityValue(track.mixer.isSoloed ? "On" : "Off")
@@ -242,7 +243,7 @@ struct PeakMeter: View {
 /// Where a track plays: the master, or a stereo pair of the interface (3/4, 5/6 …). A pair the
 /// interface lacks is kept and shown, and the track plays in the master until it is back.
 struct OutputMenu: View {
-    @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
     let track: Track
 
@@ -281,7 +282,7 @@ struct OutputMenu: View {
     }
 
     private func set(_ channel: Int?) {
-        try? store.perform(.setOutput(track.id, channel: channel))
+        documents.attempt(.setOutput(track.id, channel: channel))
     }
 
     /// Channel 2 is "3/4": outputs are counted from 1 on the interface.
@@ -292,7 +293,7 @@ struct OutputMenu: View {
 /// (a track is armed); a chosen input the interface lacks is kept and shown, and the first records;
 /// a pair without its right input records its left alone, and says so.
 struct InputMenu: View {
-    @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
     @Environment(RecordController.self) private var recording
     let track: Track
@@ -381,6 +382,6 @@ struct InputMenu: View {
     }
 
     private func set(_ channel: Int, pair: Bool) {
-        try? store.perform(.setInput(track.id, channel: channel == 0 ? nil : channel, stereo: pair))
+        documents.attempt(.setInput(track.id, channel: channel == 0 ? nil : channel, stereo: pair))
     }
 }
