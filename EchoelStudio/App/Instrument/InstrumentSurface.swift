@@ -118,6 +118,9 @@ struct InstrumentSurface: View {
     private var bodyRow: some View {
         DisclosureGroup {
             VStack(alignment: .leading, spacing: Theme.Space.s) {
+                // Whole and in plain text where a source is chosen: the menu's own header may be
+                // cut by iOS at a large text size.
+                ParagraphText(BodySourceMenu.safetyLine)
                 sourceMenu
                 Divider().overlay(Theme.Color.border)
                 bodyVoiceControls

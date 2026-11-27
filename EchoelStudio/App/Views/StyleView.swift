@@ -218,10 +218,5 @@ private struct StylePage: View {
                 ForEach(guide.mix, id: \.self) { NoteText($0) }
             }
         }
-        if !guide.uncertainty.notes.isEmpty {
-            EchoelSection("How Sure") {
-                NoteText(guide.uncertainty.notes)
-            }
-        }
     }
 }

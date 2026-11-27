@@ -120,7 +120,8 @@ final class FlowController {
         }
         engine?.flowTempo = nil
         if keeping {
-            DiagnosticLog.app.note("tempo: fixed", [("tempo", kept ?? 0)])
+            // No tempo in the line: after Flow it is the pulse, folded, and the log can be shared.
+            DiagnosticLog.app.note("tempo: fixed")
         } else {
             DiagnosticLog.app.note("tempo: flow off", because: "a clock or another song sets the pace")
         }
@@ -151,9 +152,11 @@ final class FlowController {
             lastBar = nil
         }
         if let before, let after = flow.target, after != before {
-            // T1: every change of where the tempo goes is named, with its source — Flow. The
-            // pulse itself is not written: the log is a file the musician can share.
-            DiagnosticLog.app.note("tempo: flow step", [("from", before), ("to", after)])
+            // T1: every change of where the tempo goes is named, with its source — Flow. Neither
+            // the pulse nor the tempo it leads to is written, only the direction: the target is
+            // the pulse folded by octaves, and the log is a file the musician can share.
+            let direction: StaticString = after > before ? "up" : "down"
+            DiagnosticLog.app.note("tempo: flow step", because: direction)
         }
         looksSinceWrite += 1
         if let tempo = flow.tempo, looksSinceWrite >= Self.looksPerWrite,

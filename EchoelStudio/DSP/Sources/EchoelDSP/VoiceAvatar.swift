@@ -81,6 +81,9 @@ public struct VoiceAvatar: Equatable, Sendable {
     /// The encoding this build writes, and the newest it reads (`encoded()`). Changing the grid, a
     /// table's layout or the list of origins is a new version.
     public static let formatVersion = 1
+    /// The most bytes an encoded avatar may have: eight snapshots, the noise table and the label
+    /// come to about three kilobytes.
+    public static let maximumEncodedBytes = 16_384
 
     /// Where an avatar came from. Stored by name: never rename one. A new origin goes at the end and
     /// is a new format version, so an older build refuses the avatar instead of telling the wrong
@@ -350,6 +353,8 @@ public struct VoiceAvatar: Equatable, Sendable {
     /// rule above holds for a stored avatar too. Refuses whole, never half read: data that is not an
     /// avatar, an avatar written by a newer version, and one whose label or tables `init` refuses.
     public init(encoded data: Data) throws(Refusal) {
+        // An avatar is a few kilobytes; anything far larger is not one, and is refused unread.
+        guard data.count <= Self.maximumEncodedBytes else { throw .unreadable }
         do {
             self = try JSONDecoder().decode(VoiceAvatar.self, from: data)
         } catch let refusal as Refusal {

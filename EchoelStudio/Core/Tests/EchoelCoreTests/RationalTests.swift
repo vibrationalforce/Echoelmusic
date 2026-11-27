@@ -112,4 +112,14 @@ final class RationalTests: XCTestCase {
         XCTAssertTrue(Rational.constant(1, 97).decimalDigits(limit: 96).isComplete)
         XCTAssertEqual(Rational.constant(1, 97).decimalDigits(limit: 96).repeating.count, 96)
     }
+
+    /// Input no caller sends today must still refuse instead of trapping: an exponent beyond any
+    /// finite number's, and the largest denominator bound there is.
+    func testAbsurdInputIsRefusedAndNeverTraps() {
+        XCTAssertNil(Rational(decimal: "1e-9223372036854775808"))
+        XCTAssertNil(Rational(decimal: "1e9223372036854775807"))
+        XCTAssertNil(Rational(decimal: "1e401"))
+        XCTAssertEqual(Rational(stored: 0, maxDenominator: .max), Rational(numerator: 0, denominator: 1))
+        XCTAssertEqual(Rational(stored: 0.5, maxDenominator: .max), Rational(numerator: 1, denominator: 2))
+    }
 }

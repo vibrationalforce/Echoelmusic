@@ -26,7 +26,7 @@ struct AboutView: View {
                 }
                 EchoelSection("Your Data") {
                     ParagraphText("No account, no ads, no tracking, no server of ours. Songs are files on this device, in an open, documented format.")
-                    ParagraphText("Echoelmusic uses the network only for the App Store (at launch, to check whether you bought Echoelmusic Plugins, and when you open the store: prices, buying, Restore Purchases), for Network MIDI when you turn it on, for each connection you turn on in Connections, to the address you type, and for a live stream, from Go Live to Stop, to the servers you enter.")
+                    ParagraphText("Echoelmusic uses the network only for the App Store (at launch, to check whether you bought Echoelmusic Plugins, and when you open the store: prices, buying, Restore Purchases), for Network MIDI when you turn it on, for each connection you turn on in Connections, to the address you type, and for a live stream, from Go Live to Stop, to the servers you enter. A Jam uses the local network between the devices in it, while you host or join one.")
                     ParagraphText("A diagnostics log stays on this device: what the audio and the app did, and how earlier runs ended as iOS reports it — numbers only, never a name you typed. It leaves only when you share it.")
                     // The share comes up once this page has closed: the one sheet slot waits for it.
                     Button("Share Diagnostics") {

@@ -442,4 +442,12 @@ final class VoiceAvatarTests: XCTestCase {
         XCTAssertEqual(avatar.vibrato?.depth, 30)
         XCTAssertEqual(try jsonObject(of: try avatar.encoded())["noise"] as? String, table, "and written the same way")
     }
+
+    /// Data far larger than any avatar is refused before it is parsed.
+    func testOversizedDataIsRefusedUnread() {
+        let oversized = Data(repeating: UInt8(ascii: " "), count: VoiceAvatar.maximumEncodedBytes + 1)
+        XCTAssertThrowsError(try VoiceAvatar(encoded: oversized)) { (error: any Error) in
+            XCTAssertEqual(error as? VoiceAvatar.Refusal, .unreadable)
+        }
+    }
 }

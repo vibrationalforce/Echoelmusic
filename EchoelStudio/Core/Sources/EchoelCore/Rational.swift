@@ -53,6 +53,8 @@ public struct Rational: Hashable, Sendable {
             guard !shiftOverflow, !addOverflow else { return nil }
             digits = added
         }
+        // An exponent no decimal of a finite number carries would overflow the count below.
+        guard (-400...400).contains(exponent) else { return nil }
         let scale = fractionPart.count - exponent
         guard let power = Rational.powerOfTen(Swift.abs(scale)) else { return nil }
         let signed = negative ? -digits : digits
@@ -93,7 +95,8 @@ public struct Rational: Hashable, Sendable {
         let negative = value < 0
         let target = Swift.abs(value)
         let sizeBound = target == 0 ? Double(maxDenominator) : (1e-4 / target.ulp).squareRoot()
-        let maxDenominator = Int64(Swift.min(Double(maxDenominator), Swift.max(sizeBound, 1)))
+        // Held under 9e18, so the conversion back to Int64 cannot trap for any bound handed in.
+        let maxDenominator = Int64(Swift.min(Double(maxDenominator), Swift.max(sizeBound, 1), 9.0e18))
         var (previousTop, top): (Int64, Int64) = (0, 1)
         var (previousBottom, bottom): (Int64, Int64) = (1, 0)
         var rest = target
