@@ -159,9 +159,10 @@ struct FieldSurface: View {
 
 /// The Field filling the screen, under the sensor housing and the home indicator; one button leads
 /// back. Layered over the studio by `StudioView`, never presented: no modal chain grows for it.
-/// The note grid plays the picture while it is switched on (`FieldGridView`); its switch, Hold and
-/// its octave sit in the bar, the two settings in a second row while the grid shows, so the bar
-/// still fits a phone held upright. Leaving the full screen ends every note the grid holds.
+/// The note grid plays the picture while it is switched on (`FieldGridView`, the same grid the
+/// Instrument page's Field card carries, here with its cells inside the safe area); its switch,
+/// Hold and its octave sit in the bar, the two settings in a second row while the grid shows, so
+/// the bar still fits a phone held upright. Leaving the full screen ends every note the grid holds.
 struct FieldFullscreen: View {
     let close: () -> Void
 
@@ -169,7 +170,7 @@ struct FieldFullscreen: View {
         ZStack(alignment: .topTrailing) {
             Theme.Color.background.ignoresSafeArea()
             FieldView().ignoresSafeArea()
-            FieldGridView()
+            FieldGridView(place: .fullScreen)
             VStack(alignment: .trailing, spacing: Theme.Space.s) {
                 HStack(spacing: Theme.Space.s) {
                     FieldGridSwitch()

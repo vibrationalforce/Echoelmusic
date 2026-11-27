@@ -136,6 +136,51 @@ final class LearnGuideTests: XCTestCase {
         XCTAssertTrue(try guideChapter("body").paths.contains([.instrument, .bodyOff, .tempo]))
     }
 
+    /// The note grid plays the Field on the Instrument page and in the full screen (G5): the Field
+    /// chapter shows the way to the grid's switch from both, under the names the two places and
+    /// the switch carry, names Hold, and a search for the grid finds it. Hold shows only while the
+    /// grid does, so a way to it passes the grid's switch.
+    func testTheWayToTheNoteGridStartsOnTheInstrumentPageAndInTheFullScreenField() throws {
+        let field = try guideChapter("field")
+        XCTAssertTrue(field.paths.contains([.instrument, .noteGrid]), "the switch under the Field on the Instrument page")
+        XCTAssertTrue(field.paths.contains([.field, .fullScreen, .noteGrid]), "the switch in the full screen's bar")
+        for place in [StudioPlace.noteGrid, .hold, .instrument, .fullScreen] {
+            XCTAssertTrue(field.quotedNames.contains(place.title), place.title)
+        }
+        XCTAssertEqual(StudioPlace(title: "Note Grid"), .noteGrid)
+        XCTAssertEqual(StudioPlace(title: "Hold"), .hold)
+        XCTAssertTrue(LearnGuide.search("note grid").map(\.id).contains("field"))
+        XCTAssertTrue(LearnGuide.search("octave").map(\.id).contains("field"))
+        for chapter in LearnGuide.chapters {
+            for path in chapter.paths {
+                guard let hold = path.firstIndex(of: .hold) else { continue }
+                XCTAssertTrue(hold > 0 && path[hold - 1] == .noteGrid,
+                              "\(chapter.id): “\(LearnChapter.line(path))”: Hold shows only while the grid does")
+            }
+        }
+    }
+
+    /// What the Field chapter says the note grid plays is what it plays: the song's scale across
+    /// (`FieldGrid.columns`), an octave a row with the lowest at the bottom, and no grid for a drum
+    /// kit or a sliced sampler, whose keys pick a sound (`PlaySurface`), so they keep their pads.
+    func testTheFieldChapterSaysWhatTheNoteGridPlays() throws {
+        let text = try guideChapter("field").paragraphs.joined(separator: " ")
+        XCTAssertTrue(text.contains("the song's scale across"))
+        XCTAssertTrue(text.contains("an octave a row with the lowest at the bottom"))
+        XCTAssertTrue(text.contains("a drum kit and a sliced sampler keep their pads"))
+        let grid = FieldGrid(context: MusicalContext(scale: .major), device: .synth)
+        XCTAssertEqual(grid.columns.map(\.interval), Scale.major.intervals.sorted(), "the scale across")
+        let bottom = try XCTUnwrap(grid.cell(column: 0, row: 0))
+        let above = try XCTUnwrap(grid.cell(column: 0, row: 1))
+        XCTAssertEqual(above.pitch - bottom.pitch, 12, "an octave a row")
+        XCTAssertEqual(bottom.pitch, grid.lowestPitch, "the lowest at the bottom")
+        var sliced = InstrumentSettings(device: .sampler)
+        sliced.slices = [SampleSlice(start: 0), SampleSlice(start: 12_000)]
+        XCTAssertNotEqual(PlaySurface.surface(for: InstrumentSettings(device: .drums)), .keys)
+        XCTAssertNotEqual(PlaySurface.surface(for: sliced), .keys)
+        XCTAssertEqual(PlaySurface.surface(for: InstrumentSettings(device: .sampler)), .keys, "a whole sample plays on keys")
+    }
+
     /// The lengths the sixteen-bars chapter names are the ones the editor's length menu offers
     /// (`ClipLength.choices`), from one bar to sixteen.
     func testTheSixteenBarsChapterNamesTheLengthsTheEditorOffers() throws {

@@ -48,6 +48,8 @@ public enum StudioPlace: String, CaseIterable, Sendable {
     // The Field.
     case fullScreen, pattern, show, blendWith, externalDisplay, fieldOnExternalDisplay
     case cornerPin, resetCorners
+    // The note grid over the Field: its switch, and Hold while the grid shows.
+    case noteGrid, hold
     // Connections and the light show.
     case connections, artNet, sACN, admOSC, lightShow, fixturesAndCues, addFixture, addCue
     case go, blackout, look, snapshot, goThisCue, placeAtPlayhead, onTheTimeline, renderDMX, shareDMX
@@ -189,6 +191,10 @@ public enum StudioPlace: String, CaseIterable, Sendable {
         case .fieldOnExternalDisplay: "Field on External Display"
         case .cornerPin: "Corner Pin"
         case .resetCorners: "Reset Corners"
+        // The grid's switch is drawn as an icon in the bar under the Instrument page's Field and in
+        // the full screen's bar; the app labels it, and Hold, with these titles (G5).
+        case .noteGrid: "Note Grid"
+        case .hold: "Hold"
         case .connections: "Connections…"
         case .artNet: "Art-Net"
         case .sACN: "sACN (E1.31)"
@@ -378,11 +384,13 @@ public enum LearnGuide {
             summary: "A picture that moves with the song, on the phone or a projector.",
             paragraphs: [
                 "“Field” in the bar of views shows the picture; “Field Window” in the transport keeps it as a small window over the other views, and “Full Screen” fills the screen with it.",
+                "“Note Grid”, under the picture on the “Instrument” page and in “Full Screen”, lays notes over the picture for the track the keys play — the song's scale across, an octave a row with the lowest at the bottom — and “Hold” keeps each note sounding until its cell is touched again; a drum kit and a sliced sampler keep their pads.",
                 "The button with the palette, “Pattern”, chooses the look, a second look under “Blend With”, and under “Show” a meter of the master in its place.",
                 "Connect a display or projector and the Field goes out there; “Field on External Display” under “External Display” turns that off. “Corner Pin” squares a projected picture, and “Reset Corners” takes it back.",
             ],
-            paths: [[.field, .pattern], [.field, .pattern, .externalDisplay]],
-            keywords: ["visual", "picture", "projector", "screen", "monitor", "beamer"]),
+            paths: [[.field, .pattern], [.field, .pattern, .externalDisplay], [.instrument, .noteGrid],
+                    [.field, .fullScreen, .noteGrid]],
+            keywords: ["visual", "picture", "projector", "screen", "monitor", "beamer", "playable"]),
         LearnChapter(
             id: "light", title: "Light Cues",
             summary: "Patch fixtures, build cues and run a light show with the song.",

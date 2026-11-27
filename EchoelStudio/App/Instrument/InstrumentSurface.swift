@@ -1,14 +1,17 @@
 import EchoelCore
 import SwiftUI
 
-/// The Instrument (W12): the heart of Echoel as a view of its own. The Field on top; under it the
-/// sound and mood of the track the keys play — the keys under the view play it — and then the body:
-/// the pulse, the Body Voice, the tempo lock. While no body source is on, the Body Voice is off and
-/// the tempo is Fixed, the body is one row, "Body: Off", that opens to its controls. `InstrumentPage`
+/// The Instrument (W12): the heart of Echoel as a view of its own. The Field on top, playable as
+/// the note grid while the grid is switched on (G5), with its bar under it; under that the sound and
+/// mood of the track the keys play — the keys under the view play it — and then the body: the
+/// pulse, the Body Voice, the tempo lock. While no body source is on, the Body Voice is off and the
+/// tempo is Fixed, the body is one row, "Body: Off", that opens to its controls. `InstrumentPage`
 /// decides the sections and their order. A fingertip on the rear camera, or a chest strap, and the
 /// body plays, with nothing to learn first.
 ///
 /// This body reads only what changes with an edit or a choice: the song, the live track, the lock.
+/// The grid, its switch and its settings are leaves of their own, which read the song, the live
+/// track and the switches; the touches and the light they leave are read by no body (Law 6).
 /// Whether a body source is on is read by `InstrumentBodySections`, which draws the body's sections:
 /// it reads only the sources' `isOn`, which follows each source's status. That moves when a source
 /// starts, stops, finds or loses its signal, never with the pulse, and redraws the body's sections
@@ -58,23 +61,51 @@ struct InstrumentSurface: View {
 
     // MARK: Field
 
+    /// The Field card, and under it its bar.
     private var field: some View {
-        ZStack(alignment: .topTrailing) {
+        VStack(alignment: .trailing, spacing: Theme.Space.s) {
+            fieldPicture
+            fieldBar
+        }
+    }
+
+    /// The Field, and over it the note grid while the grid is switched on and the keys play a
+    /// pitched instrument (`FieldGridView`, the full screen's grid, here over the card's whole
+    /// bounds). While the Field fills the screen the card is blank and holds no grid: one window
+    /// plays one grid, and the card's notes end as the full screen opens.
+    private var fieldPicture: some View {
+        ZStack {
             if showsField {
                 FieldView()
+                FieldGridView(place: .card)
             } else {
                 Theme.Color.background
             }
-            Button(action: expand) { Image(systemName: "arrow.up.left.and.arrow.down.right") }
-                .buttonStyle(ToolButtonStyle())
-                .accessibilityLabel("Full Screen")
-                .accessibilityHint("Opens the Field in full screen.")
-                .padding(Theme.Space.s)
         }
         .aspectRatio(16 / 10, contentMode: .fit)
         .frame(maxWidth: .infinity, maxHeight: Self.fieldHeightLimit)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.large))
         .overlay(RoundedRectangle(cornerRadius: Theme.Radius.large).stroke(Theme.Color.border, lineWidth: 1))
+    }
+
+    /// The card's controls, under the picture rather than on it, so none covers a cell of the grid:
+    /// the grid's switch and the way to the full screen, at the trailing edge where the button sat
+    /// on the picture before; under them, while the grid shows, Hold and the octave. The full
+    /// screen's bar in the same order and in the same two rows, so it fits a phone held upright.
+    private var fieldBar: some View {
+        VStack(alignment: .trailing, spacing: Theme.Space.s) {
+            HStack(spacing: Theme.Space.s) {
+                FieldGridSwitch()
+                Button(action: expand) { Image(systemName: "arrow.up.left.and.arrow.down.right") }
+                    .buttonStyle(ToolButtonStyle())
+                    .accessibilityLabel(StudioPlace.fullScreen.title)
+                    .accessibilityHint("Opens the Field in full screen.")
+            }
+            if showsField {
+                FieldGridControls()
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     // MARK: Body, off
