@@ -260,6 +260,8 @@ struct StudioView: View {
         case .learn: LearnView()
         case .report: ReportView()
         case .tempoCalculator: TempoCalculatorView()
+        case .styles: StyleView()
+        case .keyFinder: KeyFinderView()
         case .renameSong: RenameSongView()
         case .rename(let target): RenameView(target: target)
         case .streaming: StreamingView()
@@ -1430,6 +1432,10 @@ struct SongMenu: View {
                 timeSignatureMenu
                 // Bar and note lengths at the song's tempo, exactly, in s, ms, Hz, samples and frames.
                 Button("Tempo Calculator…", systemImage: "metronome") { router.sheet = .tempoCalculator }
+                // What a genre is usually made of; "Use Style" sets the parts ticked, one undo step.
+                // Which key the notes on keys fit best: a proposal, set only by Use for Song.
+                Button("Find Key…", systemImage: "key") { router.sheet = .keyFinder }
+                Button("Styles…", systemImage: "music.note.list") { router.sheet = .styles }
             }
             Section("Export") {
                 // Why the entries below are dimmed, as a line of the menu that cannot be tapped

@@ -180,3 +180,38 @@ public enum KeyFinder {
         return overflow ? .max : sum
     }
 }
+
+// MARK: - A whole song
+
+extension KeyFinder {
+    /// The tracks the finder reads in `project`: those played on keys that hold at least one clip
+    /// with a note. A drum kit's and a sliced sampler's notes pick a sound, not a pitch
+    /// (`PlaySurface`), so their tracks are left out.
+    public static func tracks(in project: Project) -> [Track] {
+        project.tracks.filter { (track: Track) -> Bool in
+            PlaySurface.surface(for: track.instrument) == .keys && track.clips.contains { !$0.notes.isEmpty }
+        }
+    }
+
+    /// How long each pitch class sounds in the clips of the tracks the finder reads, C first: every
+    /// such track of `project`, or `track` alone. Each clip counts once, however often the
+    /// arrangement or the session plays it, so a loop placed sixteen times weighs no more than a
+    /// melody placed once.
+    public static func weights(of project: Project, track: TrackID? = nil) -> [Tick] {
+        var sounding = [Tick](repeating: 0, count: 12)
+        for candidate in tracks(in: project) where track == nil || candidate.id == track {
+            for clip in candidate.clips {
+                for (pitchClass, duration) in weights(of: clip).enumerated() {
+                    sounding[pitchClass] = saturating(sounding[pitchClass], duration)
+                }
+            }
+        }
+        return sounding
+    }
+
+    /// The key the song's notes fit best, with the runner-up: of every track played on keys, or of
+    /// `track` alone. Nil when nothing sounds there. A proposal, as `find(in:)` is.
+    public static func find(in project: Project, track: TrackID? = nil) -> Finding? {
+        find(weights: weights(of: project, track: track))
+    }
+}

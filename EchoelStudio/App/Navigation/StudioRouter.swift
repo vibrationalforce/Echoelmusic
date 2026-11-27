@@ -35,6 +35,10 @@ enum StudioSheet: Identifiable, Hashable {
     case report
     /// Bar and note lengths at a tempo in s, samples, Hz and frames, exactly (2026-11-27).
     case tempoCalculator
+    /// The style library: what a genre is usually made of, and "Use Style" for the parts ticked (S8).
+    case styles
+    /// Which key the song's notes fit best, as a proposal (TH-9).
+    case keyFinder
     /// A new name for the open song, which its package takes too.
     case renameSong
     /// A new name for a track, a clip or a scene.

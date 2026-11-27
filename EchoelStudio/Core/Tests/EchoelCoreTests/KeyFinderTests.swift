@@ -295,4 +295,45 @@ final class KeyFinderTests: XCTestCase {
             XCTAssertEqual(store.project, before)
         }
     }
+
+    // MARK: A whole song
+
+    /// A song with a keys track in A minor, a bass in the same key and a drum kit whose notes would
+    /// read as another key: the song is found in A minor, the drums are not read, one track alone
+    /// is read alone, and a song without a note on keys has no key to find.
+    func testASongIsFoundFromItsTracksOnKeysAndNeverFromItsDrums() throws {
+        var project = Project()
+        let keys = TrackID(), bass = TrackID(), drums = TrackID(), empty = TrackID()
+        for (id, name) in [(keys, "Keys"), (bass, "Bass"), (drums, "Drums"), (empty, "Empty")] {
+            try Command.addTrack(id: id, name: name, kind: .instrument, index: nil).apply(to: &project)
+        }
+        let minor = clip(line([57, 59, 60, 62, 64, 65, 67, 69, 57, 64, 57]))
+        let low = clip(line([45, 45, 52, 45]))
+        // F sharp major's notes, as a kit would never mean them.
+        let kit = clip(line([54, 56, 58, 59, 61, 63, 65, 66, 54, 61, 54, 54, 54, 54, 54, 54]))
+        for index in project.tracks.indices {
+            switch project.tracks[index].id {
+            case keys: project.tracks[index].clips = [minor]
+            case bass: project.tracks[index].clips = [low]
+            case drums:
+                project.tracks[index].clips = [kit]
+                project.tracks[index].instrument.device = .drums
+            default: break
+            }
+        }
+        XCTAssertEqual(KeyFinder.tracks(in: project).map(\.id), [keys, bass], "tracks on keys that hold a note, in the song's order")
+        XCTAssertEqual(KeyFinder.find(in: project)?.best.key, key(9, .minor))
+        XCTAssertEqual(KeyFinder.find(in: project, track: keys)?.best.key, key(9, .minor))
+        XCTAssertNil(KeyFinder.find(in: project, track: drums), "a kit's notes pick a sound, not a pitch")
+        XCTAssertNil(KeyFinder.find(in: project, track: empty))
+        XCTAssertNil(KeyFinder.find(in: Project()))
+        let summed = zip(KeyFinder.weights(of: minor), KeyFinder.weights(of: low)).map { (pair: (Tick, Tick)) -> Tick in pair.0 + pair.1 }
+        XCTAssertEqual(KeyFinder.weights(of: project), summed, "each clip once, the kit's left out")
+        // The same clip twice in a track weighs twice; placing it often does not.
+        var doubled = project
+        if let index = doubled.tracks.firstIndex(where: { $0.id == keys }) {
+            doubled.tracks[index].placements = [Placement(clip: minor.id, start: 0), Placement(clip: minor.id, start: minor.length)]
+        }
+        XCTAssertEqual(KeyFinder.weights(of: doubled), summed)
+    }
 }
