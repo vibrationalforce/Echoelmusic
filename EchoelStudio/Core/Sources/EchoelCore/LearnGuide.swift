@@ -21,8 +21,11 @@ public enum StudioPlace: String, CaseIterable, Sendable {
     case addTrack, audio, returnTrack, video, drums, editNotes
     // Recording and takes.
     case monitor, useTheWholeTake, unfoldTakes
-    // The track editor.
-    case notes, steps, sound, done, timing, chords
+    // The track editor, and its length menu at the bottom.
+    case notes, steps, sound, done, quantize, chords
+    case length, repeatTheClipTo, setTheLengthTo
+    // Session.
+    case addScene, stopAll, backToArrangement, launchQuantization
     // The Sound page.
     case synth, sampler, engine, wavetable, texture, wavetableFromFile, builtInShapes, songFiles
     case character, rule, density, evolveRate, seed, audioUnitInstrument, importAudioFile
@@ -47,9 +50,9 @@ public enum StudioPlace: String, CaseIterable, Sendable {
     // Connections and the light show.
     case connections, artNet, sACN, admOSC, lightShow, fixturesAndCues, addFixture, addCue
     case go, blackout, look, snapshot, goThisCue, placeAtPlayhead, onTheTimeline, renderDMX, shareDMX
-    // Export.
+    // Export, and the submenu that holds the formats not in sight.
     case exportWAV, exportSpatialHeadphoneMix, exportStems, exportMIDI, exportEDL, exportOTIO
-    case exportDAWproject, exportVideo, exportFieldLayer, headphoneSpatialMonitor
+    case exportDAWproject, exportVideo, exportFieldLayer, headphoneSpatialMonitor, moreFormats
     // Siri and Shortcuts: the actions as the Shortcuts app lists them.
     case setTempo, launchScene, setKey, muteOrUnmuteTrack, stop, exportStemsAction
 
@@ -96,8 +99,18 @@ public enum StudioPlace: String, CaseIterable, Sendable {
         case .steps: "Steps"
         case .sound: "Sound"
         case .done: "Done"
-        case .timing: "Timing"
+        // The note editor's menu of Quantize and Humanize, named as its first section is; it was
+        // "Timing" until the simplify audit of 2026-11-27 (SIMP-10b: one word per function).
+        case .quantize: "Quantize"
         case .chords: "Chords"
+        case .length: "Length"
+        case .repeatTheClipTo: "Repeat the Clip to"
+        case .setTheLengthTo: "Set the Length to"
+        case .addScene: "Add Scene"
+        case .stopAll: "Stop All"
+        case .backToArrangement: "Back to Arrangement"
+        // The menu at the foot of Session: "Launch" and how long a launch waits.
+        case .launchQuantization: "Launch"
         case .synth: "Synth"
         case .sampler: "Sampler"
         case .engine: "Engine"
@@ -199,6 +212,7 @@ public enum StudioPlace: String, CaseIterable, Sendable {
         case .exportVideo: "Export Video…"
         case .exportFieldLayer: "Export Field Layer (Alpha)"
         case .headphoneSpatialMonitor: "Headphone Spatial Monitor"
+        case .moreFormats: "More Formats"
         case .setTempo: "Set Tempo"
         case .launchScene: "Launch Scene"
         case .setKey: "Set Key"
@@ -270,6 +284,16 @@ public enum LearnGuide {
             paths: [[.tracks, .addTrack], [.record], [.mixer, .monitor]],
             keywords: ["start", "begin", "microphone", "input", "arm", "undo", "save"]),
         LearnChapter(
+            id: "sixteenBars", title: "From One Bar to Sixteen",
+            summary: "Repeat a short clip into a longer part, or set its length.",
+            paragraphs: [
+                "Open a clip in the editor: tap an instrument track in “Tracks”, or touch and hold a clip in “Arrange” for “Edit Notes”. The “Length” menu at the bottom of the editor shows how many bars the clip lasts.",
+                "“Repeat the Clip to” repeats what the clip holds until it is 2, 4, 8 or 16 bars long, so a one-bar beat becomes sixteen bars of that beat; a note that rang past the old end is cut there in every copy, so the repeat sounds as the clip did. “Set the Length to” sets the length outright: longer adds empty bars, shorter drops what starts past the new end. Each is one undo step.",
+                "A length that would run into the next clip on the track is dimmed, and the menu says why. Before repeating notes played in by hand, “Quantize” beside “Chords” on the “Notes” page puts them on the grid.",
+            ],
+            paths: [[.tracks, .length, .repeatTheClipTo], [.arrange, .editNotes, .length]],
+            keywords: ["extend", "loop", "copy", "phrase", "humanize", "timing"]),
+        LearnChapter(
             id: "comping", title: "Comping and Loop Record",
             summary: "Record pass after pass, then choose the best stretch of each.",
             paragraphs: [
@@ -300,6 +324,16 @@ public enum LearnGuide {
             ],
             paths: [[.tracks, .addTrack, .drums], [.tracks, .sound, .sliceToPads]],
             keywords: ["beat", "steps", "kit", "break", "slicer", "pads", "euclid"]),
+        LearnChapter(
+            id: "session", title: "Clips and Scenes in Session",
+            summary: "Launch clips and scenes on the next bar, then give the tracks back to the arrangement.",
+            paragraphs: [
+                "“Session” in the bar of views shows the song's instrument and audio tracks as columns and its scenes as rows. Tap a clip to launch it: it starts on the next bar and plays as a loop, and while it waits it counts down what is left. The button at the start of a row launches its scene: every track with a clip in that row plays it, and the clips of the other tracks stop. A launch starts the song if it is stopped.",
+                "Tap an empty slot to make a clip there: on an instrument track a one-bar clip that opens in the editor, on an audio track a loop from a file. “Add Scene” adds a row. Touch and hold a clip of notes for “Edit Notes”; on an audio clip the same hold sets how many bars it loops.",
+                "A track that plays a clip from here leaves the arrangement: its parts in “Arrange” stay silent until “Back to Arrangement” lets the arrangement play every such track again, at once. “Stop All” stops every clip, one still waiting too, and the stop button beside a track's name stops that track's clip. “Launch” at the foot of the view sets how long a launch waits: a bar, a quarter note or not at all.",
+            ],
+            paths: [[.session, .addScene], [.session, .backToArrangement], [.session, .launchQuantization]],
+            keywords: ["live", "perform", "gig", "trigger", "matrix", "quantization"]),
         LearnChapter(
             id: "effects", title: "Effects and Mix Analysis",
             summary: "Insert effects on any track or the master, then measure the mix.",
@@ -357,12 +391,13 @@ public enum LearnGuide {
             id: "export", title: "Export to Resolve, DAWproject, MIDI, Stems and Spatial",
             summary: "Take the song to another app, an editor or a DAW.",
             paragraphs: [
-                "Every export is in the “Song menu” under “Export”; a finished file comes up in the share sheet.",
-                "“Export WAV…” renders the arrangement and reports its loudness and true peak. “Export Stems…” writes one WAV per track the mix hears, before the master effects. “Export MIDI…” writes a Standard MIDI File.",
-                "For DaVinci Resolve, “Export EDL for Resolve” and “Export for Resolve (OTIO)” write the song's video and audio parts with their files; “Export Field Layer (Alpha)” writes the Field alone with transparency, and “Export Video…” the song as an MP4. “Export DAWproject” hands tracks, clips, notes, tempo, markers and audio to another DAW.",
-                "Spatial: “Headphone Spatial Monitor” under “Play and Sync” places every track around you on headphones, and “Export Spatial Headphone Mix (WAV)…” renders exactly that. “ADM-OSC” in “Connections…” sends every track as an audio object to an immersive renderer.",
+                "Every export is in the “Song menu” under “Export”; a finished file comes up in the share sheet. WAV, stems, MIDI and video are right there; every other format is under “More Formats”.",
+                "“Export WAV…” renders the arrangement and reports its loudness and true peak. “Export Stems…” writes one WAV per track the mix hears, before the master effects. “Export MIDI…” writes a Standard MIDI File, and “Export Video…” the song as an MP4.",
+                "For DaVinci Resolve, “More Formats” holds “Export EDL for Resolve” and “Export for Resolve (OTIO)”, which write the song's video and audio parts with their files, and “Export Field Layer (Alpha)”, which writes the Field alone with transparency. “Export DAWproject”, there too, hands tracks, clips, notes, tempo, markers and audio to another DAW.",
+                "Spatial: “Headphone Spatial Monitor” under “Play and Sync” places every track around you on headphones, and “Export Spatial Headphone Mix (WAV)…” under “More Formats” renders exactly that. “ADM-OSC” in “Connections…” sends every track as an audio object to an immersive renderer.",
             ],
-            paths: [[.songMenu, .exportSection], [.songMenu, .playAndSyncSection, .headphoneSpatialMonitor]],
+            paths: [[.songMenu, .exportSection], [.songMenu, .exportSection, .moreFormats],
+                    [.songMenu, .playAndSyncSection, .headphoneSpatialMonitor]],
             keywords: ["resolve", "edl", "otio", "dawproject", "midi", "stems", "wav", "video", "spatial", "share"]),
         LearnChapter(
             id: "siri", title: "Siri and Shortcuts",

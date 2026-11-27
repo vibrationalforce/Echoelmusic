@@ -18,7 +18,10 @@ struct AboutView: View {
                     EchoelMark()
                         .frame(width: 72, height: 72)
                     ParagraphText("A music workstation for iPhone and iPad: instruments, effects, arrangement, a session view for live sets, mixing and export.")
-                    ParagraphText("Around the music: the Field, a picture that moves with the song; the Sky, the stars above you computed for your place and time; Connections, which send OSC, ADM-OSC, Art-Net and sACN to devices you name; and Body, a heart rate strap or the rear camera as a source for modulation.")
+                    // By the names on screen (simplify audit 2026-11-27, SIMP-10b): the sky is a look of
+                    // Cycle Tones since 2026-11-15, and Body Source offers three pulse sources, one at a
+                    // time, and Phone Motion as a switch beside them (`BodySourceMenu`).
+                    ParagraphText("Around the music: the Field, a picture that moves with the song; Cycle Tones, which turns the planets' cycles, the lines of hydrogen and everyday molecules and your own pulse into tones, and draws the sky above you for your place and time; Connections, which send OSC, ADM-OSC, Art-Net and sACN to devices you name; and Body Source, which takes the pulse from a heart rate strap, a fingertip on the rear camera or Apple Health, and beside it the phone's motion, as sources for modulation.")
                     ParagraphText("Body readings are for self-observation, not a medical diagnosis. Echoelmusic is a tool for making music. It is not a medical product.")
                 }
                 EchoelSection("Your Data") {

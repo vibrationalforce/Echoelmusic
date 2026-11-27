@@ -5,6 +5,7 @@ import SwiftUI
 /// go through commands.
 struct TrackListView: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(StudioRouter.self) private var router
     /// Opens a track's editor.
     let open: (TrackID) -> Void
 
@@ -26,6 +27,17 @@ struct TrackListView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, Theme.Space.m)
                 }
+                // Learn from the first screen, not only from the Song menu's App section (simplify
+                // audit 2026-11-27, SIMP-10a): the same sheet, through the one slot (Law 7).
+                Button {
+                    router.sheet = .learn
+                } label: {
+                    Label(StudioPlace.learn.title, systemImage: "book")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(EchoelRowButtonStyle())
+                .padding(.horizontal, Theme.Space.m)
+                .accessibilityHint("Short chapters on what the app does and where its controls are.")
             }
         }
         .background(Theme.Color.background)

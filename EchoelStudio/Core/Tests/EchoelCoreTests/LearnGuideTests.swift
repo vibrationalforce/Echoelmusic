@@ -28,6 +28,22 @@ final class LearnGuideTests: XCTestCase {
             + chapter.paths.flatMap { $0.map(\.title) }
     }
 
+    /// Where a path may start: a view of the bar at the bottom, the Song menu or a control of the
+    /// transport — what is on screen wherever the musician is.
+    private static let starts: Set<StudioPlace> = [
+        .instrument, .tracks, .arrange, .session, .mixer, .field, .cycleTones,
+        .songMenu, .play, .record, .loop, .keys, .click, .more,
+    ]
+
+    /// The exports the Song menu keeps in sight under Export, and the submenu that holds the others
+    /// (SIMP-4, 2026-11-27): read off `SongMenu` by hand, as every title of the list is.
+    private static let exportsInSight: Set<StudioPlace> = [.exportWAV, .exportStems, .exportMIDI, .exportVideo,
+                                                           .moreFormats]
+
+    private func guideChapter(_ id: String) throws -> LearnChapter {
+        try XCTUnwrap(LearnGuide.chapters.first { $0.id == id }, "chapter \(id)")
+    }
+
     func testEveryChapterHasATitleASummaryTextAndAPath() {
         XCTAssertFalse(LearnGuide.chapters.isEmpty)
         for chapter in LearnGuide.chapters {
@@ -46,9 +62,66 @@ final class LearnGuideTests: XCTestCase {
 
     func testTheGuideCoversWhatTheAppDoesToday() {
         let ids = Set(LearnGuide.chapters.map(\.id))
-        for required in ["firstTrack", "comping", "sound", "drums", "effects", "body", "instrumentBody", "field",
-                         "light", "export", "siri", "safety"] {
+        for required in ["firstTrack", "sixteenBars", "comping", "sound", "drums", "session", "effects", "body",
+                         "instrumentBody", "field", "light", "export", "siri", "safety"] {
             XCTAssertTrue(ids.contains(required), "chapter \(required)")
+        }
+    }
+
+    func testEveryPathStartsWhereTheMusicianCanStart() {
+        for chapter in LearnGuide.chapters {
+            for path in chapter.paths {
+                guard let first = path.first else { continue }
+                XCTAssertTrue(Self.starts.contains(first),
+                              "\(chapter.id): “\(LearnChapter.line(path))” starts where nothing is on screen")
+            }
+        }
+    }
+
+    /// The Song menu keeps the everyday exports in sight and the other formats under “More
+    /// Formats” (SIMP-4): the export chapter says so and shows the way there, and no path sends the
+    /// musician to an export that is no longer straight under Export — Siri's way to Export Stems
+    /// among them.
+    func testThePathsIntoExportFollowWhatStaysInSight() throws {
+        let export = try guideChapter("export")
+        XCTAssertTrue(export.quotedNames.contains(StudioPlace.moreFormats.title), "the export chapter names More Formats")
+        XCTAssertTrue(export.paths.contains([.songMenu, .exportSection, .moreFormats]))
+        XCTAssertTrue(try guideChapter("siri").paths.contains([.songMenu, .exportSection, .exportStems]))
+        for chapter in LearnGuide.chapters {
+            for path in chapter.paths {
+                for index in path.indices.dropLast() where path[index] == .exportSection {
+                    XCTAssertTrue(Self.exportsInSight.contains(path[index + 1]),
+                                  "\(chapter.id): “\(LearnChapter.line(path))” is under More Formats now")
+                }
+            }
+        }
+    }
+
+    /// The lengths the sixteen-bars chapter names are the ones the editor's length menu offers
+    /// (`ClipLength.choices`), from one bar to sixteen.
+    func testTheSixteenBarsChapterNamesTheLengthsTheEditorOffers() throws {
+        let sixteen = try guideChapter("sixteenBars")
+        let text = sixteen.paragraphs.joined(separator: " ")
+        let longer: [String] = ClipLength.choices.filter { $0 > 1 }.map { String($0) }
+        let named = longer.dropLast().joined(separator: ", ") + " or " + (longer.last ?? "")
+        XCTAssertTrue(text.contains("\(named) bars"), "the lengths “Repeat the Clip to” offers: \(named)")
+        XCTAssertEqual(ClipLength.choices.first, 1)
+        XCTAssertEqual(ClipLength.choices.last, 16, "the chapter's title says sixteen")
+        XCTAssertTrue(sixteen.title.lowercased().contains("sixteen"))
+        for place in [StudioPlace.length, .repeatTheClipTo, .setTheLengthTo] {
+            XCTAssertTrue(sixteen.quotedNames.contains(place.title), place.title)
+        }
+    }
+
+    /// The session chapter shows its controls where they are, in Session, and names the ones that
+    /// launch, stop and give the tracks back to the arrangement.
+    func testTheSessionChapterShowsItsControlsInSession() throws {
+        let session = try guideChapter("session")
+        for path in session.paths {
+            XCTAssertEqual(path.first, .session, LearnChapter.line(path))
+        }
+        for place in [StudioPlace.addScene, .stopAll, .backToArrangement, .launchQuantization] {
+            XCTAssertTrue(session.quotedNames.contains(place.title), place.title)
         }
     }
 
@@ -89,6 +162,13 @@ final class LearnGuideTests: XCTestCase {
             XCTAssertEqual(place.title, place.title.trimmingCharacters(in: .whitespaces))
         }
         XCTAssertNil(StudioPlace(title: "Make It Sound Good"))
+    }
+
+    /// One word per function (SIMP-10b): the note editor's menu of Quantize and Humanize is called
+    /// “Quantize”, as its sections are, and the word it had before names nothing.
+    func testTheNoteEditorsTimingMenuIsCalledQuantize() {
+        XCTAssertEqual(StudioPlace(title: "Quantize"), .quantize)
+        XCTAssertNil(StudioPlace(title: "Timing"))
     }
 
     func testTheNamesTheModelCarriesAreSpelledAsTheModelSpellsThem() {

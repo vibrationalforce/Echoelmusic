@@ -518,7 +518,9 @@ struct PianoRoll: View {
     private var quantizeSnap: SnapGrid { snap == .off ? .sixteenth : snap }
 
     /// Quantize and Humanize, on the chosen note or, with none chosen, on every note of the clip.
-    /// Each is one undo step; Humanize draws a new seed each time and redo replays its notes.
+    /// Each is one undo step; Humanize draws a new seed each time and redo replays its notes. The
+    /// button says Quantize, as its first section and Learn do (`StudioPlace.quantize`); it said
+    /// "Timing" until the simplify audit of 2026-11-27 (SIMP-10b: one word per function).
     private var timingMenu: some View {
         Menu {
             Section("Quantize to \(quantizeSnap.title)") {
@@ -536,11 +538,11 @@ struct PianoRoll: View {
                 Button("Humanize Strong") { humanize(timing: 60, velocity: 24) }
             }
         } label: {
-            Label("Timing", systemImage: "metronome")
+            Label(StudioPlace.quantize.title, systemImage: "metronome")
         }
         .menuStyle(.button)
         .buttonStyle(ToolButtonStyle())
-        .accessibilityLabel("Timing")
+        .accessibilityLabel(StudioPlace.quantize.title)
         .accessibilityHint(chosen.isEmpty ? "Quantize or humanize every note." : "Quantize or humanize the chosen notes.")
     }
 

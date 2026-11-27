@@ -22,7 +22,25 @@ struct StudioView: View {
     @State private var sceneID = UUID()
     /// This window's phase (a view reads its own scene's, not the app's).
     @Environment(\.scenePhase) private var scenePhase
-    @State private var surface: Surface = .tracks
+    /// The view this window was left on (`surfaceKey`). iOS keeps it with the window and drops it
+    /// when the window is closed or the app is swiped away in the app switcher, so a new window and
+    /// a launch after such a quit start without one.
+    @SceneStorage(StudioView.surfaceKey) private var windowSurface: Surface?
+    /// The view last chosen in any window of this device (`lastSurfaceKey`): where a window without
+    /// a view of its own opens. Tracks until one is chosen.
+    @AppStorage(StudioView.lastSurfaceKey) private var lastSurface: Surface = .tracks
+    /// The chosen view: the window's own, else the device's last (simplify audit 2026-11-27,
+    /// SIMP-11a; before, every launch opened Tracks). Neither is part of a song. Choosing one sets
+    /// both, so a window reopens on the view it was left on, and the app, after a quit, on the last
+    /// one chosen. A window takes the device's last as its own when it appears (`onAppear`), so on
+    /// an iPad one window's choice never moves another's.
+    private var surface: Surface {
+        get { windowSurface ?? lastSurface }
+        nonmutating set {
+            windowSurface = newValue
+            lastSurface = newValue
+        }
+    }
     /// The keys and pads under the surface; on by default so the phone alone makes sound.
     @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
     /// The Field as a small window over the other views (wave W3); on by default, so the picture
@@ -46,7 +64,15 @@ struct StudioView: View {
     /// The hits of the song's video files (CUT): found once per file, shown and snapped to in Arrange.
     @State private var videoHits = VideoHits()
 
-    enum Surface: Hashable {
+    /// Where a window keeps its chosen view, and where the device keeps the last one chosen
+    /// (conveniences, never part of a song).
+    nonisolated static let surfaceKey = "studio.surface"
+    nonisolated static let lastSurfaceKey = "studio.lastSurface"
+
+    /// A view of the bar at the bottom. Its raw value is what a window and the device remember
+    /// (`surfaceKey`, `lastSurfaceKey`): keep each one, or a window left on that view opens on
+    /// Tracks once.
+    enum Surface: String, Hashable {
         case instrument, tracks, arrange, session, mixer, field, cycles
 
         /// Its name on the bar of views, and the name of its area for VoiceOver.
@@ -139,6 +165,10 @@ struct StudioView: View {
         .environment(videoHits)
         .background(Theme.Color.background)
         .onAppear {
+            // A window that opens without a view of its own (a new one, or the first after the app
+            // was swiped away) keeps the device's last as its own, so a choice in another window
+            // never moves it (SIMP-11a).
+            if windowSurface == nil { windowSurface = lastSurface }
             // A stem export asked for by Siri or Shortcuts comes up in the share sheet (PRO-W1).
             StudioIntentBridge.shared.share = { [weak router = self.router] url in router?.share(url) }
             engine.setSamples(documents.samples)
@@ -209,7 +239,8 @@ struct StudioView: View {
                     .accessibilityLabel("Keys")
             }
             // The earlier instrument's chip bar at the bottom: one chip per view, in thumb reach.
-            SurfaceBar(selection: $surface)
+            // A choice goes through `surface`, which keeps it for the window and the device.
+            SurfaceBar(selection: Binding(get: { surface }, set: { surface = $0 }))
         }
         // A typed value (the tempo, a mixer strip) opens Echoel's number pad at the bottom
         // edge — a layer, not a presentation, so the sheet slot stays one (Law 7).
@@ -1341,7 +1372,11 @@ struct SongMenu: View {
 
     var body: some View {
         Menu {
-            // In sections, so twenty entries read as five groups (device video 10021).
+            // In sections, so its entries read as five groups (device video 10021). The rarer
+            // exports wait under More Formats and every MIDI entry under Connect › MIDI (simplify
+            // audit 2026-11-27, SIMP-4 and SIMP-5). Counted then, one per control at a section's own
+            // level: 28 entries, 30 while the export wait reason and the assistant show (41 and 44
+            // before).
             Section("Song") {
                 Menu("New Song", systemImage: "plus") {
                     ForEach(StarterProject.allCases, id: \.self) { starter in
@@ -1416,18 +1451,6 @@ struct SongMenu: View {
                 // would have no length.
                 .disabled(documents.isExporting || !store.project.arrangementHasSound)
                 wavLoudnessMenu
-                // The mix as Headphone Spatial monitoring plays it, sample for sample (Recovery 5).
-                Button("Export Spatial Headphone Mix (WAV)…", systemImage: "headphones") {
-                    Task {
-                        let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
-                        if let url = await documents.exportWAV(plugins: engine.plugins, loudness: .off,
-                                                               headphoneSpatial: true) {
-                            if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
-                            router.share(url)
-                        }
-                    }
-                }
-                .disabled(documents.isExporting || !store.project.arrangementHasSound)
                 // One file per track and return the mix hears, for another DAW.
                 Button("Export Stems…", systemImage: "square.stack.3d.up") {
                     Task {
@@ -1439,75 +1462,14 @@ struct SongMenu: View {
                     }
                 }
                 .disabled(documents.isExporting || !store.project.arrangementHasSound)
-                // Every track on the master as an audio object, the returns as a stereo bed, in one
-                // Broadcast Wave file with ADM metadata, for an immersive renderer or a DAW that
-                // imports ADM.
-                Button("Export ADM BWF (immersive)…", systemImage: "dot.radiowaves.left.and.right") {
-                    Task {
-                        let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
-                        if let url = await documents.exportADMBWF(plugins: engine.plugins) {
-                            if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
-                            router.share(url)
-                        }
-                    }
-                }
-                .disabled(documents.isExporting || !store.project.arrangementHasSound)
                 Button("Export MIDI…", systemImage: "pianokeys") {
                     if let url = documents.exportMIDI() { router.share(url) }
                 }
                 .disabled(!store.project.arrangementHasEvents)
-                // The arrangement's video and audio regions as an edit decision list with the
-                // files beside it, for DaVinci Resolve and any editor (PRO-W1).
-                Menu("Export EDL for Resolve", systemImage: "list.and.film") {
-                    ForEach(EDLExport.FrameRate.allCases, id: \.self) { rate in
-                        Button(rate.title) {
-                            Task { if let folder = await documents.exportEDL(rate: rate) { router.share(folder) } }
-                        }
-                    }
-                }
-                .disabled(documents.isExporting || !store.project.tracks.contains { !$0.regions.isEmpty })
-                // The same regions as an OpenTimelineIO bundle (.otioz) with the files inside, the
-                // timeline Resolve reads with its tracks, clips and markers (PRO-W2).
-                Menu("Export for Resolve (OTIO)", systemImage: "film.stack") {
-                    ForEach(OTIOExport.FrameRate.allCases, id: \.self) { rate in
-                        Button(rate.title) {
-                            Task { if let url = await documents.exportOTIO(rate: rate) { router.share(url) } }
-                        }
-                    }
-                }
-                .disabled(documents.isExporting || !store.project.tracks.contains { !$0.regions.isEmpty })
-                // The song as a DAWproject — tracks, clips, notes, tempo, markers and the audio — for
-                // Bitwig, Studio One, Cubase and other DAWs (PRO-W2).
-                Button("Export DAWproject", systemImage: "square.and.arrow.up.on.square") {
-                    Task { if let url = await documents.exportDAWproject() { router.share(url) } }
-                }
-                .disabled(documents.isExporting || store.project.tracks.isEmpty)
-                // The subtitles as SubRip and WebVTT text files, for an editor or a video platform (SUBS).
-                Button("Export Subtitles (SRT)…", systemImage: "captions.bubble") {
-                    if let url = documents.exportSubtitles(.srt) { router.share(url) }
-                }
-                .disabled(store.project.subtitles.isEmpty)
-                Button("Export Subtitles (WebVTT)…", systemImage: "captions.bubble") {
-                    if let url = documents.exportSubtitles(.webVTT) { router.share(url) }
-                }
-                .disabled(store.project.subtitles.isEmpty)
                 // The song as an MP4 for social platforms or a screen: the mix under the video tracks.
                 Button("Export Video…", systemImage: "film") { router.sheet = .exportVideo }
                     .disabled(documents.isExporting || VideoPlan.program(of: store.project).isEmpty)
-                // The Field alone with transparency (ProRes 4444 or HEVC with alpha), a layer to lay
-                // over the picture in Resolve or Final Cut (PRO-W2).
-                Menu("Export Field Layer (Alpha)", systemImage: "square.2.layers.3d") {
-                    ForEach([VideoExportPlan.Shape.landscape, .vertical, .square, .portrait], id: \.self) { shape in
-                        Button(shape.title) {
-                            Task {
-                                if let url = await documents.exportFieldAlpha(plugins: engine.plugins, shape: shape) {
-                                    router.share(url)
-                                }
-                            }
-                        }
-                    }
-                }
-                .disabled(documents.isExporting)
+                moreFormatsMenu
             }
             Section("Play and Sync") {
                 // Every track at its pan's place around you, for headphones (Recovery 5). Only what
@@ -1515,31 +1477,6 @@ struct SongMenu: View {
                 Toggle(isOn: Binding(get: { engine.headphoneSpatial }, set: { engine.setHeadphoneSpatial($0) })) {
                     Label("Headphone Spatial Monitor", systemImage: "headphones")
                 }
-                Menu("Send MIDI Clock", systemImage: "metronome") {
-                    ForEach(engine.clock.destinations) { destination in
-                        Button { engine.clock.toggle(destination) } label: {
-                            if engine.clock.isChosen(destination) {
-                                Label(destination.name, systemImage: "checkmark")
-                            } else {
-                                Text(destination.name)
-                            }
-                        }
-                    }
-                }
-                .disabled(engine.clock.destinations.isEmpty)
-                Menu("Clock Offset", systemImage: "timer") {
-                    ForEach(MIDIClockOutput.offsetChoices, id: \.self) { choice in
-                        Button { engine.clock.setOffset(milliseconds: choice) } label: {
-                            if engine.clock.offsetMilliseconds == choice {
-                                Label(Self.offsetTitle(choice), systemImage: "checkmark")
-                            } else {
-                                Text(Self.offsetTitle(choice))
-                            }
-                        }
-                    }
-                }
-                .disabled(engine.clock.chosen.isEmpty)
-                mpeMenu
                 // Flow from the song itself, next to the other things a tempo can follow — before,
                 // only the Instrument page could turn it on (hidden-features audit 2026-11-20, #3).
                 if let flow {
@@ -1548,34 +1485,13 @@ struct SongMenu: View {
                     }
                     .disabled(!flow.canFlow && flow.lock != .flow)
                 }
-                Menu("Follow MIDI Clock", systemImage: "clock.arrow.2.circlepath") {
-                    Button { midi.follow(nil) } label: {
-                        if midi.followedSource == nil { Label("Off", systemImage: "checkmark") } else { Text("Off") }
-                    }
-                    ForEach(midi.sources) { source in
-                        Button { midi.follow(source.id) } label: {
-                            if midi.followedSource == source.id {
-                                Label(source.name, systemImage: "checkmark")
-                            } else {
-                                Text(source.name)
-                            }
-                        }
-                    }
-                }
-                // One external clock at a time: while a jam's host sets the pace, this waits.
-                .disabled(jam?.followsJam == true)
-                Toggle(isOn: Binding(get: { midi.networkEnabled }, set: { midi.setNetwork($0) })) {
-                    Label("Network MIDI", systemImage: "network")
-                }
-                if midi.networkEnabled { networkHostsMenu }
             }
             Section("Connect") {
                 // OSC, ADM-OSC, Art-Net and sACN out (wave W4): every one off until switched on there.
                 Button("Connections…", systemImage: "antenna.radiowaves.left.and.right") { router.sheet = .connections }
                 Button("Light Show…", systemImage: "light.max") { router.sheet = .lightShow }
-                midi2Menu
-                // MIDI Time Code out and chase (W17-TC): off until chosen there.
-                TimecodeMenu()
+                // Clock out and in, MPE Out, MIDI 2.0, Network MIDI and timecode, in one submenu.
+                midiMenu
                 // The body as a source (wave W1): off until chosen here — the chest strap or the rear
                 // camera, one at a time; only then does iOS ask for Bluetooth or the camera. The pulse
                 // shows beside Record while it is measured.
@@ -1640,6 +1556,90 @@ struct SongMenu: View {
                     }
                 }
             }
+        }
+    }
+
+    /// The formats besides WAV, stems, MIDI and video, in one submenu under Export, so the section
+    /// shows six entries rather than thirteen (simplify audit 2026-11-27, SIMP-4). Its name is the
+    /// one Learn quotes (`StudioPlace.moreFormats`); every entry keeps the condition it had.
+    private var moreFormatsMenu: some View {
+        Menu {
+            // The mix as Headphone Spatial monitoring plays it, sample for sample (Recovery 5).
+            Button("Export Spatial Headphone Mix (WAV)…", systemImage: "headphones") {
+                Task {
+                    let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
+                    if let url = await documents.exportWAV(plugins: engine.plugins, loudness: .off,
+                                                           headphoneSpatial: true) {
+                        if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
+                        router.share(url)
+                    }
+                }
+            }
+            .disabled(documents.isExporting || !store.project.arrangementHasSound)
+            // Every track on the master as an audio object, the returns as a stereo bed, in one
+            // Broadcast Wave file with ADM metadata, for an immersive renderer or a DAW that
+            // imports ADM.
+            Button("Export ADM BWF (immersive)…", systemImage: "dot.radiowaves.left.and.right") {
+                Task {
+                    let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
+                    if let url = await documents.exportADMBWF(plugins: engine.plugins) {
+                        if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
+                        router.share(url)
+                    }
+                }
+            }
+            .disabled(documents.isExporting || !store.project.arrangementHasSound)
+            // The arrangement's video and audio regions as an edit decision list with the
+            // files beside it, for DaVinci Resolve and any editor (PRO-W1).
+            Menu("Export EDL for Resolve", systemImage: "list.and.film") {
+                ForEach(EDLExport.FrameRate.allCases, id: \.self) { rate in
+                    Button(rate.title) {
+                        Task { if let folder = await documents.exportEDL(rate: rate) { router.share(folder) } }
+                    }
+                }
+            }
+            .disabled(documents.isExporting || !store.project.tracks.contains { !$0.regions.isEmpty })
+            // The same regions as an OpenTimelineIO bundle (.otioz) with the files inside, the
+            // timeline Resolve reads with its tracks, clips and markers (PRO-W2).
+            Menu("Export for Resolve (OTIO)", systemImage: "film.stack") {
+                ForEach(OTIOExport.FrameRate.allCases, id: \.self) { rate in
+                    Button(rate.title) {
+                        Task { if let url = await documents.exportOTIO(rate: rate) { router.share(url) } }
+                    }
+                }
+            }
+            .disabled(documents.isExporting || !store.project.tracks.contains { !$0.regions.isEmpty })
+            // The song as a DAWproject — tracks, clips, notes, tempo, markers and the audio — for
+            // Bitwig, Studio One, Cubase and other DAWs (PRO-W2).
+            Button("Export DAWproject", systemImage: "square.and.arrow.up.on.square") {
+                Task { if let url = await documents.exportDAWproject() { router.share(url) } }
+            }
+            .disabled(documents.isExporting || store.project.tracks.isEmpty)
+            // The subtitles as SubRip and WebVTT text files, for an editor or a video platform (SUBS).
+            Button("Export Subtitles (SRT)…", systemImage: "captions.bubble") {
+                if let url = documents.exportSubtitles(.srt) { router.share(url) }
+            }
+            .disabled(store.project.subtitles.isEmpty)
+            Button("Export Subtitles (WebVTT)…", systemImage: "captions.bubble") {
+                if let url = documents.exportSubtitles(.webVTT) { router.share(url) }
+            }
+            .disabled(store.project.subtitles.isEmpty)
+            // The Field alone with transparency (ProRes 4444 or HEVC with alpha), a layer to lay
+            // over the picture in Resolve or Final Cut (PRO-W2).
+            Menu("Export Field Layer (Alpha)", systemImage: "square.2.layers.3d") {
+                ForEach([VideoExportPlan.Shape.landscape, .vertical, .square, .portrait], id: \.self) { shape in
+                    Button(shape.title) {
+                        Task {
+                            if let url = await documents.exportFieldAlpha(plugins: engine.plugins, shape: shape) {
+                                router.share(url)
+                            }
+                        }
+                    }
+                }
+            }
+            .disabled(documents.isExporting)
+        } label: {
+            Label(StudioPlace.moreFormats.title, systemImage: "ellipsis.circle")
         }
     }
 
@@ -1757,6 +1757,63 @@ struct SongMenu: View {
     private func pick(_ address: ParameterAddress, _ value: Double) {
         writer.set(address, to: value, coalescingKey: nil)
         writer.endGesture()
+    }
+
+    /// Every MIDI entry in one submenu under Connect, where the other connections are (simplify
+    /// audit 2026-11-27, SIMP-5): before, five stood in Play and Sync and two in Connect. Clock out
+    /// and its offset, the clock to follow, MPE Out, MIDI 2.0, Network MIDI with its hosts, and
+    /// timecode — each off until chosen, each with the condition it had.
+    private var midiMenu: some View {
+        Menu("MIDI", systemImage: "pianokeys") {
+            Menu("Send MIDI Clock", systemImage: "metronome") {
+                ForEach(engine.clock.destinations) { destination in
+                    Button { engine.clock.toggle(destination) } label: {
+                        if engine.clock.isChosen(destination) {
+                            Label(destination.name, systemImage: "checkmark")
+                        } else {
+                            Text(destination.name)
+                        }
+                    }
+                }
+            }
+            .disabled(engine.clock.destinations.isEmpty)
+            Menu("Clock Offset", systemImage: "timer") {
+                ForEach(MIDIClockOutput.offsetChoices, id: \.self) { choice in
+                    Button { engine.clock.setOffset(milliseconds: choice) } label: {
+                        if engine.clock.offsetMilliseconds == choice {
+                            Label(Self.offsetTitle(choice), systemImage: "checkmark")
+                        } else {
+                            Text(Self.offsetTitle(choice))
+                        }
+                    }
+                }
+            }
+            .disabled(engine.clock.chosen.isEmpty)
+            Menu("Follow MIDI Clock", systemImage: "clock.arrow.2.circlepath") {
+                Button { midi.follow(nil) } label: {
+                    if midi.followedSource == nil { Label("Off", systemImage: "checkmark") } else { Text("Off") }
+                }
+                ForEach(midi.sources) { source in
+                    Button { midi.follow(source.id) } label: {
+                        if midi.followedSource == source.id {
+                            Label(source.name, systemImage: "checkmark")
+                        } else {
+                            Text(source.name)
+                        }
+                    }
+                }
+            }
+            // One external clock at a time: while a jam's host sets the pace, this waits.
+            .disabled(jam?.followsJam == true)
+            mpeMenu
+            midi2Menu
+            Toggle(isOn: Binding(get: { midi.networkEnabled }, set: { midi.setNetwork($0) })) {
+                Label("Network MIDI", systemImage: "network")
+            }
+            if midi.networkEnabled { networkHostsMenu }
+            // MIDI Time Code out and chase (W17-TC): off until chosen there.
+            TimecodeMenu()
+        }
     }
 
     /// The hosts Network MIDI lets in, and only they (`NetworkMIDIAccess`): each can be removed, and
