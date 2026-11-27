@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelEngine
 import SwiftUI
 
 /// The app's own report, the first of its test agents (2026-11-27): what the diagnostics log says
@@ -10,8 +11,11 @@ import SwiftUI
 struct ReportView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(StudioRouter.self) private var router
+    @Environment(AudioEngine.self) private var engine
     @State private var report: DiagnosticReport?
     @State private var problem: String?
+    /// The self-test is running (test agent TA-S1, 2026-11-27).
+    @State private var testing = false
 
     /// The file the report is written to before it is shared: in the Diagnostics folder, which the
     /// song library never lists and backups leave out.
@@ -28,6 +32,7 @@ struct ReportView: View {
                 } else {
                     EchoelSection { ParagraphText("Reading the diagnostics log…") }
                 }
+                selfTest
                 share
             }
             .echoelList()
@@ -55,6 +60,31 @@ struct ReportView: View {
             ForEach(Array(report.findings.enumerated()), id: \.offset) { _, finding in
                 FindingRow(finding: finding)
             }
+        }
+    }
+
+    /// The self-test: every instrument and effect of Echoel played offline at the rate the audio runs
+    /// at, nothing to the speakers, and how long each block took on this device written to the log,
+    /// where the report reads it. Only while the song is stopped; it runs off the main thread.
+    private var selfTest: some View {
+        EchoelSection("Self-Test", footer: "Plays every instrument and effect of Echoel offline, with no sound out, and measures how long each needs on this device. Only while the song is stopped; it takes a few seconds.") {
+            Button(testing ? "Testing…" : "Run Self-Test") { runSelfTest() }
+                .buttonStyle(EchoelRowButtonStyle())
+                .disabled(testing || engine.isPlaying)
+        }
+    }
+
+    private func runSelfTest() {
+        guard !testing, !engine.isPlaying else { return }
+        testing = true
+        let rate = engine.sampleRate ?? 48_000
+        Task {
+            let result = await Task.detached(priority: .utility) {
+                SelfTest(sampleRate: rate, blockFrames: 256).run { DispatchTime.now().uptimeNanoseconds }
+            }.value
+            result.write(to: DiagnosticLog.app)
+            report = DiagnosticReport(log: DiagnosticLog.app.text())
+            testing = false
         }
     }
 

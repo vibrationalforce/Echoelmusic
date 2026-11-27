@@ -17,6 +17,32 @@ final class DiagnosticReportTests: XCTestCase {
         "2026-11-27T\(time).000Z  engine: render load callbacks=940 peak=\(peak) over50=0 over75=\(over75) over100=\(over100) gaps=\(gaps) silent=0"
     }
 
+    func testTheSelfTestNamesAUnitThatWasLateOrBroken() {
+        let log = """
+        == latest run ==
+        2026-11-27T15:00:00.000Z  app: launch v11.0.0 (10090), times in UTC
+        2026-11-27T15:01:00.000Z  selftest: unit (synth) Hz=48000 frames=256 p99_load=0.25 nonfinite=0 over0db=0 silent=0
+        2026-11-27T15:01:01.000Z  selftest: unit (reverb) Hz=48000 frames=256 p99_load=1.4 nonfinite=0 over0db=0 silent=0
+        2026-11-27T15:01:02.000Z  selftest: unit (pitchCorrection) Hz=48000 frames=256 p99_load=0.3 nonfinite=12 over0db=0 silent=0
+        2026-11-27T15:01:03.000Z  selftest: summary Hz=48000 frames=256 units=3 highest_p99_load=1.4
+        """
+        let report = DiagnosticReport(log: log)
+        let failure = report.findings.first { $0.weight == .failure }
+        XCTAssertEqual(failure?.title, "In the self-test, pitchCorrection made samples that are not numbers.")
+        let problem = report.findings.first { $0.weight == .problem }
+        XCTAssertEqual(problem?.title,
+                       "In the self-test, reverb needed more than a block's time in its slowest percent of blocks on this device.")
+        let note = report.findings.first { $0.title.hasPrefix("The self-test played") }
+        XCTAssertEqual(note?.weight, .note)
+        XCTAssertEqual(note?.title.contains("3 units at 48000 Hz in blocks of 256 frames"), true)
+        XCTAssertFalse(report.findings.contains { $0.title.contains("synth") }, "a unit within its time is no finding")
+    }
+
+    func testARunWithoutASelfTestHasNoSelfTestFinding() {
+        let report = DiagnosticReport(log: "== latest run ==\n2026-11-27T15:00:00.000Z  app: launch v11.0.0 (10090), times in UTC\n")
+        XCTAssertFalse(report.findings.contains { $0.title.contains("self-test") })
+    }
+
     func testAnEmptyLogSaysSoAndNothingElse() {
         let report = DiagnosticReport(log: "")
         XCTAssertEqual(report.findings.count, 1)

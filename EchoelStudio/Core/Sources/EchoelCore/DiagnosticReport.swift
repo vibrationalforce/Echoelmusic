@@ -434,6 +434,7 @@ public struct DiagnosticReport: Equatable, Sendable {
         add(.notice, ["jam: refused"], { times("A jam could not connect", $0.count) },
             "The Jam page said why; most often Local Network is off for Echoelmusic in Settings. Allow it, then try again.")
         out += bodySourceRules(on: lines, run: run)
+        out += selfTestRules(on: lines, run: run)
         add(.notice, [DiagnosticLog.fullLine], { _ in "The log filled up; the rest of that run is not in it." },
             "Opening the app again starts a new run with room in the log.")
         let refused = lines.filter { $0.event == Event.editRefused.description }
@@ -599,6 +600,47 @@ public struct DiagnosticReport: Equatable, Sendable {
         /// or with a number that is none.
         var gapSeconds: Double?
         var gapText: String?
+    }
+
+    /// What the self-test measured on this device (`SelfTest` in the engine, run from this page while
+    /// the song is stopped): a unit that made samples that are no numbers is a failure, one that needed
+    /// more than a block's time in its slowest percent of blocks a problem, one that went over full
+    /// scale or stayed silent a notice; the run itself is a note with its highest load. The lines name
+    /// units by their stored names and hold numbers only.
+    private static func selfTestRules(on lines: [Line], run: Run) -> [Finding] {
+        let units = lines.filter { $0.event == "selftest: unit" }
+        var out: [Finding] = []
+        func finding(_ weight: Finding.Weight, _ matching: [Line], _ title: String, _ suggestion: String) {
+            guard !matching.isEmpty else { return }
+            out.append(Finding(weight: weight, run: run, title: title, suggestion: suggestion, count: matching.count,
+                               evidence: matching.suffix(evidenceLimit).map(\.text)))
+        }
+        func names(_ matching: [Line]) -> String {
+            matching.map { $0.reason ?? "a unit" }.joined(separator: ", ")
+        }
+        let broken = units.filter { ($0.number("nonfinite") ?? 0) > 0 }
+        finding(.failure, broken, "In the self-test, \(names(broken)) made samples that are not numbers.",
+                "That is a fault in the app, not in the song. Share this report.")
+        let late = units.filter { ($0.number("p99_load") ?? 0) > 1 }
+        finding(.problem, late,
+                "In the self-test, \(names(late)) needed more than a block's time in its slowest percent of blocks on this device.",
+                "Play fewer of it at once on this device, and share this report: it names the unit to make lighter.")
+        let loud = units.filter { ($0.number("over0db") ?? 0) > 0 }
+        finding(.notice, loud, "In the self-test, \(names(loud)) went over full scale.",
+                "The test plays a fixed signal at a moderate level. Share this report so the unit's level can be checked.")
+        let silent = units.filter { ($0.number("silent") ?? 0) > 0 }
+        finding(.notice, silent, "In the self-test, \(names(silent)) stayed silent.",
+                "The test plays every unit with a signal it should answer. Share this report.")
+        if let summary = lines.last(where: { $0.event == "selftest: summary" }) {
+            let count = whole(summary.number("units"))
+            let rate = whole(summary.number("Hz"))
+            let frames = whole(summary.number("frames"))
+            let load = summary.number("highest_p99_load") ?? 0
+            finding(.note, [summary],
+                    "The self-test played \(count) units at \(rate) Hz in blocks of \(frames) frames; the highest load was \(percent(load)) of a block's time.",
+                    "Nothing to do unless a finding above names a unit. Run it again after a change to compare.")
+        }
+        return out
     }
 
     /// Each body source that stopped measuring while it was on (`BodySourceLog`): how often, how many
