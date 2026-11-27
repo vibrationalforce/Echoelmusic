@@ -472,8 +472,9 @@ private final class FieldGridTouchView: UIView {
                 router.receive(status: Self.noteOff, UInt8(pitch), 0)
             case .drop:
                 // Not shown yet. Tapped faster than three times a second in a red tone, the drops
-                // flash red (measured in `FieldTouchLight`'s doc); the clouds alone pass. They come
-                // back once their light is bounded, through `FieldTouchChannel.drop`.
+                // flash red (measured in `FieldTouchLight`'s doc). The clouds are colourless and
+                // cannot (its `cloudLuminance`). The drops come back once their light is bounded,
+                // through `FieldTouchChannel.drop`.
                 continue
             }
         }

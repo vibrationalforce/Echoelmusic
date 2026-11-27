@@ -246,12 +246,10 @@ final class FieldTouchLightTests: XCTestCase {
         XCTAssertLessThanOrEqual(most, Touch.touchLuminance + 1e-12)
         XCTAssertGreaterThan(most, 0.9 * Touch.touchLuminance, "and comes close to it: the budget is spent, not wasted")
 
-        // A deep blue drop's ring at its brightest, passing the centre of a deep blue cloud, would pass
-        // the screen's full blue: the light is then that blue as bright as the screen shows it, and
-        // still the same blue.
+        // A deep blue drop's ring at its brightest, passing the centre of a cloud: blue is the dimmest
+        // full colour, so this is the nearest the touch light comes to the screen's gamut, and it
+        // stays inside it (a colourless cloud adds at most `cloudLuminance` to a channel).
         let deepBlue = 293.66  // D4 at A = 440
-        let full = ToneLight.colour(forToneHz: deepBlue)
-        XCTAssertLessThan(full.luminance, Touch.touchLuminance, "a blue the budget can pass")
         let cloudCentre = Self.note(1, deepBlue, x: 0.5 + 0.077)  // where the ring is just after it eased in
         var deep = Touch()
         _ = deep.shown(now: 0, still: false, sounding: [cloudCentre])
@@ -264,9 +262,9 @@ final class FieldTouchLightTests: XCTestCase {
                 if light.luminance > bluest.luminance { bluest = light }
             }
         }
-        XCTAssertEqual(bluest.peak, 1, accuracy: 1e-9, "held at the gamut's edge, not cut channel by channel")
-        XCTAssertEqual(bluest.luminance, full.luminance, accuracy: 1e-9)
-        XCTAssertEqual(bluest.green / bluest.blue, full.green / full.blue, accuracy: 1e-9, "the same blue")
+        XCTAssertLessThan(bluest.peak, 1, "inside the gamut: nothing is cut")
+        XCTAssertLessThanOrEqual(bluest.luminance, Touch.touchLuminance + 1e-12)
+        XCTAssertGreaterThan(bluest.blue, 10 * bluest.red, "the drop is still its note's blue over the grey cloud")
     }
 
     /// The worst a hand can do at one spot of the picture, in three phases: two seconds of a finger
@@ -398,6 +396,40 @@ final class FieldTouchLightTests: XCTestCase {
                 }
             }
         }
+    }
+
+    /// The clouds are colourless and dim enough that they cannot make a red transition: over any
+    /// picture, with five notes coming and going four times a second on one spot, the clouds move
+    /// no point's red signal (linear R − G − B) by a red step. They do show: the light is a grey of
+    /// up to `cloudLuminance`.
+    func testTheCloudsNeverMoveTheRedSignalByARedStep() {
+        XCTAssertLessThan(2 * Touch.cloudLuminance, VideoFlashLimit.redCellStep)
+        let notes = (0..<Touch.cloudSlots).map { (index: Int) -> Note in
+            Self.note(index, 220 * Foundation.pow(2, Double(index) * 5 / 12), x: 0.5 + 0.02 * Double(index), y: 0.5)
+        }
+        let pictures = [ToneLight.RGB(grey: 0), ToneLight.RGB(red: 1, green: 0, blue: 0), ToneLight.RGB(red: 0.6, green: 0, blue: 0),
+                        ToneLight.RGB(red: 0.3, green: 0.02, blue: 0.02), ToneLight.RGB(red: 0, green: 1, blue: 1),
+                        ToneLight.RGB(grey: 0.5)]
+        let signal = { (colour: ToneLight.RGB) -> Double in Swift.max(0, colour.red - colour.green - colour.blue) }
+        var light = Touch()
+        var most = 0.0, brightest = 0.0
+        for frame in 0..<240 {
+            let sounding = (frame / 7) % 2 == 0 ? notes : []
+            let shown = light.shown(now: Double(frame) / 60, still: false, sounding: sounding)
+            for step in 0...8 {
+                let u = 0.3 + 0.05 * Double(step)
+                let lit = shown.light(u: u, v: 0.5, aspect: 1)
+                XCTAssertEqual(lit.red, lit.green, accuracy: 1e-12, "a cloud is a grey")
+                XCTAssertEqual(lit.green, lit.blue, accuracy: 1e-12)
+                XCTAssertLessThanOrEqual(lit.red, Touch.cloudLuminance + 1e-12)
+                brightest = Swift.max(brightest, lit.red)
+                for picture in pictures {
+                    most = Swift.max(most, Swift.abs(signal(Touch.composite(lit, over: picture)) - signal(picture)))
+                }
+            }
+        }
+        XCTAssertLessThan(most, VideoFlashLimit.redCellStep, "no red transition can come from the clouds")
+        XCTAssertGreaterThan(brightest, 0.9 * Touch.cloudLuminance, "the clouds do show")
     }
 
     /// What the luminance budget does not cover, measured so that no test above is read as covering
@@ -548,10 +580,11 @@ final class FieldTouchLightTests: XCTestCase {
         let carried = touch.shown(now: 0.5, still: false, sounding: notes).clouds[4]
         shown = touch.shown(now: 0.5 + 1.0 / 60, still: false, sounding: next)
         XCTAssertGreaterThan(shown.clouds[4].amplitude, 0.9 * carried.amplitude, "carried over, not cut")
-        let target = Touch.evenColour(forToneHz: Self.violet, luminance: Touch.cloudLuminance)
+        // A cloud is a grey whatever its note, so the carried cloud has no colour to chase.
+        let target = ToneLight.RGB(grey: Touch.cloudLuminance)
         let claimed = 0.5 + 1.0 / 60
         let start = shown.clouds[4]
-        XCTAssertNotEqual(start.colour, target, "the colour chases, it does not jump")
+        XCTAssertEqual(start.colour, target, "the same grey before and after")
         // The claim's own frame chased for 1/60 s; three more frames make the chase's time constant.
         for elapsed in [0.1, 0.2, Touch.placeChaseSeconds - 1.0 / 60] {
             shown = touch.shown(now: claimed + elapsed, still: false, sounding: next)
@@ -571,7 +604,7 @@ final class FieldTouchLightTests: XCTestCase {
         let after = settle.shown(now: 4.26, still: false, sounding: Array(notes.prefix(3)) + [newcomer])
         XCTAssertEqual(after.clouds[3].x, fading.x, "the fading cloud fades where it is")
         XCTAssertEqual(after.clouds[4].x, newcomer.x, "the new note took the dark slot, in its own place")
-        XCTAssertEqual(after.clouds[4].colour, target, "and its own colour, at once: nothing showed there")
+        XCTAssertEqual(after.clouds[4].colour, target, "in the clouds' grey, at once: nothing showed there")
         XCTAssertLessThan(after.clouds[4].progress, 0.2, "a new cloud starts small and grows")
     }
 
@@ -624,7 +657,7 @@ final class FieldTouchLightTests: XCTestCase {
         XCTAssertEqual(cloud.progress, 1)
         XCTAssertEqual(cloud.x, 0.7)
         XCTAssertEqual(cloud.y, 0.3)
-        XCTAssertEqual(cloud.colour, Touch.evenColour(forToneHz: Self.red, luminance: Touch.cloudLuminance))
+        XCTAssertEqual(cloud.colour, ToneLight.RGB(grey: Touch.cloudLuminance), "a cloud is a grey, whatever its note")
         XCTAssertEqual(shown.light(u: 0.7, v: 0.3, aspect: 1).luminance, 0.8 * Touch.cloudLuminance, accuracy: 1e-12,
                        "the cloud is brightest where its note lives")
     }

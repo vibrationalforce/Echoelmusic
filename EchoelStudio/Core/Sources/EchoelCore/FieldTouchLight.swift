@@ -3,8 +3,8 @@ import Foundation
 /// The light a musician's touches leave on the Field (the playable grid over the picture), as plain
 /// numbers the Field's shader draws and nothing else. A touch is a DROP: a colour bloom where the
 /// finger landed, with one thin ring travelling out from it as it dissolves, in the played note's
-/// colour. A sounding note is a CLOUD: a big soft colour where its note lives, coming as the note
-/// begins and fading when it ends.
+/// colour. A sounding note is a CLOUD: a big soft light where its note lives, coming as the note
+/// begins and fading when it ends. A cloud is colourless (the red flash, below, says why).
 ///
 /// Ported from the earlier app: the drop slots and their policy from `TouchRippleChannel`, the
 /// drop's shape from its shader's `rippleLight`, the five cloud slots and their time constants from
@@ -13,10 +13,9 @@ import Foundation
 ///
 /// **The clouds are added light, not the earlier tint.** In the earlier app the clouds were the
 /// picture's colour itself: where notes sounded, the Field took their mixed colour, faded to a warm
-/// neutral elsewhere by the clouds' summed density (times 2.4 and held at 1, a flat top, widened
-/// from 1.6 after the founder's "VISUALS GRAU", B9, 2026-07-13), and glowed a little brighter
-/// there. Studio's Field wears its key's colour, and a cloud here is light laid over it as a
-/// screen: a plain gaussian with no flat top, at most `cloudLuminance` (0.04) at its centre. The
+/// neutral elsewhere by the clouds' summed density (times 2.4 and held at 1, a flat top), and
+/// glowed a little brighter there. Studio's Field wears its key's colour, and a cloud here is light laid over it as a
+/// screen: a plain gaussian with no flat top, at most `cloudLuminance` (0.028) at its centre. The
 /// reason is the luminance budget below: a tint moves a point by the difference between the
 /// picture's colour and the note's, far past the general-flash threshold, as fast as the notes
 /// come and go. Over the bright parts of the picture the screen shows only (1 − picture) of the
@@ -27,8 +26,8 @@ import Foundation
 ///
 /// **The general flash (WCAG 2.3.1, luminance).** The earlier app left its colour path unproven:
 /// about 73 % of a cloud's swing survived a 3 Hz on and off. Here every pitch wears its light at one
-/// relative luminance — a drop at `dropLuminance`, a cloud at `cloudLuminance` — so violet and red
-/// are as present as green. The drops together never add more than `dropLuminance` to any point, the
+/// relative luminance — a drop at `dropLuminance` in its note's colour, a cloud at `cloudLuminance`
+/// as a grey — so violet and red are as present as green. The drops together never add more than `dropLuminance` to any point, the
 /// clouds together never more than `cloudLuminance`, and both together (`touchLuminance`) stay under
 /// the general-flash threshold. A luminance swing under it is not a general flash, however fast it
 /// repeats (the argument `FieldPulse.beatRingGain` makes for the beat ring), so no tapping, no number
@@ -42,31 +41,28 @@ import Foundation
 /// lights its note's cloud at the same place at the same moment, so the two must stay under the
 /// threshold together, not each on its own.
 ///
-/// **What it does not cover: the red flash.** WCAG 2.3.1 also counts flashes of saturated red, which
-/// the luminance cannot see, and `VideoFlashLimit` counts them in footage: a move of 20/320 of the
-/// red signal (linear R − G − B) is a red transition. Nothing here bounds the red signal, and by that
-/// rule the touch light flashes red. Measured on 2026-11-27 with this type, by a probe outside the
-/// repository, per point at 60 frames a second for five seconds, as the transitions in the worst
-/// second (more than six is more than three flashes):
-/// - a red note (A4) tapped 3.5 to 6 times a second over a dark picture: 8 to 13 at 1,072 to 1,569 of
-///   1,681 points within 0.2 heights of the tap; its red signal swings 3.3 to 3.6 red steps while its
-///   luminance swings 0.05 at most;
-/// - a blue note (D4) tapped as fast over a still picture in the red of a song in A, at 0.6 to all of
-///   the screen's light: 9 to 13 at 248 to 441 of 441 points, the blue taking up to 0.49 off the shown
-///   red signal (7.8 red steps); D♯4, E4 and F4 at 4 Hz do the same at 256 to 420 points;
-/// - a finger sliding alone, its wake drops in red over a dark picture: 15 at 178 of 441 points.
+/// **The red flash.** WCAG 2.3.1 also counts flashes of saturated red, which the luminance cannot
+/// see, and `VideoFlashLimit` counts them in footage: a move of 20/320 of the red signal (linear
+/// R − G − B) is a red transition.
 ///
-/// Counted more strictly, with one end of each swing a saturated red (R / (R + G + B) ≥ 0.8, WCAG's
-/// working definition), the first and the third still flash and the second only over the brightest
-/// red, at 12 of 441 points; by WCAG 2.2's newer note, which also asks the two ends to lie more than
-/// 0.2 apart in CIE 1976 u′v′, none does, because a red that only brightens keeps its chromaticity.
-/// The Field's own rings in a song in A, untouched, at the inputs `FieldLookTests` drives to their
-/// worst (eight seconds), reach 7 at 16 of 441 points over the frame by the house's count and by
-/// the stricter one: the gap is the whole Field's, not only this light's. Which rule the Field
-/// follows is not decided. Until a rule is chosen and simulated per point, this light is not
-/// flash-safe, and the shader that draws it must not say it is.
-/// `FieldTouchLightTests.testTheRedFlashIsNotCovered` measures the gap again, in a smaller run, so
-/// that it cannot be read as covered.
+/// The clouds cannot make one, by construction. A cloud is colourless, a grey at `cloudLuminance`
+/// whatever its note. Laid over any picture as a screen, the clouds together raise each channel by
+/// at most `cloudLuminance`, so the most they move a point's red signal is twice that (green and
+/// blue rising over a red picture): 0.056, under the red step of 0.0625, however fast notes come
+/// and go and however many overlap. `testTheCloudsNeverMoveTheRedSignalByARedStep` holds it. Until
+/// 2026-11-27 the clouds wore their notes' colours at 0.04, and a simulation of the cloud path
+/// showed a blue note (D4) tapped four times a second over the red picture of a song in A making
+/// nine red transitions a second around its cell. A note's colour stays on its cell's outline and
+/// name in the grid, which do not flash.
+///
+/// The drops are NOT covered. Nothing bounds their red signal: measured on 2026-11-27, per point at
+/// 60 frames a second, a red note (A4) tapped 3.5 to 6 times a second over a dark picture makes 8
+/// to 13 red transitions a second at 1,072 to 1,569 of 1,681 points within 0.2 heights of the tap,
+/// a blue note over a red picture as many, and a sliding finger's wake drops 15. So no view sends
+/// a drop (`FieldGridView`), and none may until the drops' light is bounded and simulated per
+/// point. `FieldTouchLightTests.testTheRedFlashIsNotCovered` measures the drops' gap, so that it
+/// cannot be read as covered. The Field's own rings are another matter and not this type's: at the
+/// inputs `FieldLookTests` drives to their worst they reach 7 transitions at 16 of 441 points.
 ///
 /// Under Reduce Motion or at the Field's lowest detail (`FieldDetail.isStill`): no drops, and the
 /// clouds only fade. They do not grow, and a cloud handed to a new note fades out where it is
@@ -224,9 +220,11 @@ public struct FieldTouchLight: Equatable, Sendable {
     /// The relative luminance of a drop at its brightest point at full strength — every pitch the
     /// same — and the most all the drops together add to any point.
     public static let dropLuminance = 0.05
-    /// The relative luminance of a cloud at its centre at full strength — every pitch the same — and
-    /// the most all the clouds together add to any point.
-    public static let cloudLuminance = 0.04
+    /// The grey a cloud is at its centre at full strength — every pitch the same — and the most all
+    /// the clouds together add to any channel of any point. Twice it stays under the red step
+    /// (`VideoFlashLimit.redCellStep`), so the clouds can never make a red transition (the type's
+    /// doc); do not raise it past that without bounding the red signal another way.
+    public static let cloudLuminance = 0.028
     /// The most the touch light adds to any point's luminance: under
     /// `FlashLimit.generalFlashThreshold`, so no change of it is a general flash. It says nothing of
     /// the red flash (the type's doc).
@@ -453,7 +451,8 @@ public struct FieldTouchLight: Equatable, Sendable {
     private mutating func follow(_ note: Note, in slot: Int) {
         clouds[slot].level = note.level
         clouds[slot].isLive = note.isLive
-        clouds[slot].goalColour = Self.evenColour(forToneHz: note.toneHz, luminance: Self.cloudLuminance)
+        // Colourless on purpose: a grey cannot make a red flash (the type's doc).
+        clouds[slot].goalColour = ToneLight.RGB(grey: Self.cloudLuminance)
         clouds[slot].goalX = note.x
         clouds[slot].goalY = note.y
     }
