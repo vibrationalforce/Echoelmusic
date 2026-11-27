@@ -14,11 +14,12 @@ import Foundation
 ///
 /// One take per source, for the whole song: every route on the source follows it, a route made
 /// after the recording too, and depth, curve and polarity stay free to change, because what is
-/// kept is the source, not what it moved. Codable in the shape a song will store it in; no song
-/// stores it yet (BR-2 does storage).
+/// kept is the source, not what it moved. Codable in the shape a song stores it in
+/// (`Project.bodyTakes`, format 5; BR-2).
 public struct BodyTake: Codable, Equatable, Sendable {
-    /// One kept point: where in the song, as a tick, and the source's value there.
-    public struct Point: Codable, Equatable, Sendable {
+    /// One kept point: where in the song, as a tick, and the source's value there. A song stores
+    /// points only as the two lists of their run (`Run`), never one by one.
+    public struct Point: Equatable, Sendable {
         public var tick: Tick
         public var value: Double
 
@@ -29,11 +30,37 @@ public struct BodyTake: Codable, Equatable, Sendable {
     }
 
     /// A stretch measured without a break: two points at least, ticks rising.
+    ///
+    /// A song stores a run as two lists of one length, `ticks` and `values`, the n-th value at the
+    /// n-th tick. A take is the longest list a song holds, up to `maximumPoints`, and an object per
+    /// point, `{tick, value}` as automation stores it, would about double its bytes and make it
+    /// slower to write and to read. Two lists of different lengths are damage: the song is refused.
     public struct Run: Codable, Equatable, Sendable {
         public var points: [Point]
 
         public init(points: [Point]) {
             self.points = points
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case ticks, values
+        }
+
+        public init(from decoder: any Decoder) throws {
+            let stored = try decoder.container(keyedBy: CodingKeys.self)
+            let ticks = try stored.decode([Tick].self, forKey: .ticks)
+            let values = try stored.decode([Double].self, forKey: .values)
+            guard ticks.count == values.count else {
+                throw DecodingError.dataCorruptedError(forKey: .values, in: stored,
+                                                       debugDescription: "a run holds one value for each tick")
+            }
+            points = zip(ticks, values).map { (pair: (Tick, Double)) -> Point in Point(tick: pair.0, value: pair.1) }
+        }
+
+        public func encode(to encoder: any Encoder) throws {
+            var stored = encoder.container(keyedBy: CodingKeys.self)
+            try stored.encode(points.map { (point: Point) -> Tick in point.tick }, forKey: .ticks)
+            try stored.encode(points.map { (point: Point) -> Double in point.value }, forKey: .values)
         }
     }
 
@@ -503,5 +530,62 @@ public struct BodyTakeRecorder: Sendable {
             }
         }
         return (apart + [joined]).sorted { (a: ClosedRange<Tick>, b: ClosedRange<Tick>) -> Bool in a.lowerBound < b.lowerBound }
+    }
+}
+
+// MARK: - In the song (BR-2)
+
+extension BodyTake {
+    /// The most takes one song holds, those kept from a newer build included: one per body source,
+    /// with room to spare. The bound keeps a damaged file from carrying thousands of them.
+    public static let maximumPerSong = 64
+
+    /// The errors a take may state: from 0, every point a reading as it was read, to the largest a
+    /// recording falls back to (`tolerances`). Beyond it a take would no longer say how the body
+    /// moved, only roughly where it went.
+    public static let toleranceRange: ClosedRange<Double> = 0...0.01
+
+    /// Why a song cannot hold this take, as a clause the musician can read; nil when it can. Only a
+    /// source that measures the body has a take; the rest is what every stored take obeys
+    /// (`problem(runs:tolerance:)`).
+    public var problem: String? {
+        guard BioEgressPolicy.measuresBody(source) else { return "only a source that measures the body has a take" }
+        return Self.problem(runs: runs, tolerance: tolerance)
+    }
+
+    /// The rules of a stored take whatever its source, so a take kept from a newer build obeys them
+    /// too: a stated error within `toleranceRange`; one run at least, each of two points or more; at
+    /// most `maximumPoints` points; every tick on the song's timeline and after the tick before it,
+    /// so the ticks rise within a run and each run starts after the one before it ended; every value
+    /// finite and within 0 … 1, as it was read.
+    static func problem(runs: [Run], tolerance: Double) -> String? {
+        guard tolerance.isFinite, toleranceRange.contains(tolerance) else {
+            return "a take states an error of 0 to 1 % of its source's travel"
+        }
+        guard !runs.isEmpty else { return "a take holds at least one stretch of readings" }
+        var count = 0
+        var previous: Tick = -1
+        for run in runs {
+            guard run.points.count >= 2 else { return "every stretch of a take holds two points or more" }
+            count += run.points.count
+            guard count <= maximumPoints else { return "a take holds at most \(maximumPoints) points" }
+            for point in run.points {
+                guard point.tick > previous, point.tick <= MusicalTime.maximumTick else {
+                    return "a take's ticks rise along the song, each stretch after the one before it ends"
+                }
+                guard point.value.isFinite, point.value >= 0, point.value <= 1 else {
+                    return "a take's values lie within 0…1 of its source's travel"
+                }
+                previous = point.tick
+            }
+        }
+        return nil
+    }
+}
+
+extension Project {
+    /// The take of `source`, if the song holds one.
+    public func bodyTake(of source: ModulationSource) -> BodyTake? {
+        bodyTakes.first { (take: BodyTake) -> Bool in take.source == source }
     }
 }

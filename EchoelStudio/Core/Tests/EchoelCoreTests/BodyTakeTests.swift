@@ -457,4 +457,228 @@ final class BodyTakeTests: XCTestCase {
                                                   "body.motion.energy"],
                        "an LFO, a macro, a wheel and the Weave come from the song or a hand, not a body")
     }
+
+    // MARK: - In the song (body recording BR-2)
+
+    /// A take of `source`: one stretch from `start`, a point every 32 ticks with the values given.
+    private func oneStretch(of source: ModulationSource, from start: Tick = 0, values: [Double] = [0.4, 0.45, 0.5],
+                            tolerance: Double = BodyTake.defaultTolerance) -> BodyTake {
+        var points: [BodyTake.Point] = []
+        for (offset, value) in values.enumerated() { points.append(point(start + Tick(offset) * step, value)) }
+        return BodyTake(source: source, tolerance: tolerance, runs: [BodyTake.Run(points: points)])
+    }
+
+    /// One stretch of the points given as tick and value.
+    private func stretch(_ points: [(tick: Tick, value: Double)]) -> BodyTake.Run {
+        BodyTake.Run(points: points.map { (reading: (tick: Tick, value: Double)) -> BodyTake.Point in
+            point(reading.tick, reading.value)
+        })
+    }
+
+    func testOnlyABodySourceCanHaveATake() throws {
+        var song = Project()
+        var taken: [ModulationSource] = []
+        // Last source first: the song keeps its takes in the order of the sources, not of the recordings.
+        for source in ModulationSource.allCases.reversed() {
+            let before = song
+            do {
+                try Command.setBodyTake(oneStretch(of: source)).apply(to: &song)
+                taken.append(source)
+            } catch {
+                XCTAssertEqual(song, before, "\(source.rawValue): a refused take leaves the song as it was")
+            }
+        }
+        let bodySources = ["body.heartRate", "body.hrv", "body.coherence", "body.breath", "body.motion.tiltX",
+                           "body.motion.tiltY", "body.motion.rotation", "body.motion.energy"]
+        XCTAssertEqual(Set(taken.map(\.rawValue)), Set(bodySources),
+                       "an LFO, a macro, a wheel and the Weave come from the song or a hand: there is no body to keep")
+        XCTAssertEqual(song.bodyTakes.map(\.source.rawValue), bodySources, "one take each, in the order of the sources")
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(song)), song, "and the song opens again as it was")
+
+        var made = Project()
+        made.bodyTakes = [oneStretch(of: .lfo1)]
+        XCTAssertThrowsError(try ProjectCodec.decode(ProjectCodec.encode(made)), "a file with a take of the LFO is refused") { error in
+            guard case .invalidContent = error as? ProjectCodec.DecodeError else { return XCTFail("\(error)") }
+        }
+    }
+
+    func testABrokenTakeIsRefusedAndTheSongStaysAsItWas() throws {
+        var song = Project()
+        try Command.setBodyTake(oneStretch(of: .breath)).apply(to: &song)
+        let before = song
+        var tooMany: [(tick: Tick, value: Double)] = []
+        for index in 0...BodyTake.maximumPoints { tooMany.append((Tick(index), 0.5)) }
+        let broken: [(reason: String, take: BodyTake)] = [
+            ("two points on one tick", BodyTake(source: .breath, runs: [stretch([(0, 0.5), (0, 0.6)])])),
+            ("a tick that falls back", BodyTake(source: .breath, runs: [stretch([(0, 0.5), (64, 0.6), (32, 0.7)])])),
+            ("a stretch from the tick the one before ends on",
+             BodyTake(source: .breath, runs: [stretch([(0, 0.5), (100, 0.6)]), stretch([(100, 0.6), (200, 0.7)])])),
+            ("a stretch inside the one before",
+             BodyTake(source: .breath, runs: [stretch([(0, 0.5), (100, 0.6)]), stretch([(50, 0.6), (200, 0.7)])])),
+            ("stretches out of order",
+             BodyTake(source: .breath, runs: [stretch([(1_000, 0.5), (2_000, 0.6)]), stretch([(0, 0.6), (100, 0.7)])])),
+            ("a tick before the song", BodyTake(source: .heartRate, runs: [stretch([(-1, 0.5), (32, 0.5)])])),
+            ("a tick past the song",
+             BodyTake(source: .heartRate, runs: [stretch([(0, 0.5), (MusicalTime.maximumTick + 1, 0.5)])])),
+            ("a value that is not a number", BodyTake(source: .breath, runs: [stretch([(0, .nan), (32, 0.5)])])),
+            ("a value without end", BodyTake(source: .breath, runs: [stretch([(0, 0.5), (32, .infinity)])])),
+            ("a value below 0", BodyTake(source: .breath, runs: [stretch([(0, -0.001), (32, 0.5)])])),
+            ("a value above 1", BodyTake(source: .breath, runs: [stretch([(0, 0.5), (32, 1.001)])])),
+            ("a stretch of one point", BodyTake(source: .breath, runs: [stretch([(0, 0.5)])])),
+            ("no stretch at all", BodyTake(source: .breath, runs: [])),
+            ("one point past the limit", BodyTake(source: .breath, runs: [stretch(tooMany)])),
+            ("a stated error that is not a number", oneStretch(of: .breath, tolerance: .nan)),
+            ("a stated error below 0", oneStretch(of: .breath, tolerance: -0.001)),
+            ("a stated error above 1 %", oneStretch(of: .breath, tolerance: 0.0101)),
+            ("a stated error without end", oneStretch(of: .breath, tolerance: .infinity)),
+        ]
+        for (reason, take) in broken {
+            var attempt = song
+            XCTAssertThrowsError(try Command.setBodyTake(take).apply(to: &attempt), reason)
+            XCTAssertEqual(attempt, before, "\(reason): the song stays as it was")
+            var stored = before
+            stored.bodyTakes = [take]
+            XCTAssertThrowsError(try stored.validate(), "\(reason): the reader refuses a song that holds it")
+        }
+
+        // On each edge, a take the song keeps.
+        var full: [(tick: Tick, value: Double)] = []
+        for index in 0..<BodyTake.maximumPoints { full.append((Tick(index), 0.5)) }
+        let edges: [(reason: String, take: BodyTake)] = [
+            ("as many points as a take holds", BodyTake(source: .breath, runs: [stretch(full)])),
+            ("the song's first and last tick, 0 and 1",
+             BodyTake(source: .breath, runs: [stretch([(0, 0), (MusicalTime.maximumTick, 1)])])),
+            ("a stretch from the tick after the one before ends",
+             BodyTake(source: .breath, runs: [stretch([(0, 0.5), (100, 0.6)]), stretch([(101, 0.6), (200, 0.7)])])),
+            ("no error at all: every point a reading", oneStretch(of: .breath, tolerance: 0)),
+            ("the largest error a recording states", oneStretch(of: .breath, tolerance: 0.01)),
+        ]
+        for (reason, take) in edges {
+            var kept = song
+            XCTAssertNoThrow(try Command.setBodyTake(take).apply(to: &kept), reason)
+            XCTAssertEqual(kept.bodyTakes, [take], "\(reason): it replaces the source's take")
+            XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(kept)), kept, "\(reason): and the song opens again")
+        }
+
+        var removed = song
+        XCTAssertThrowsError(try Command.removeBodyTake(.coherence).apply(to: &removed), "a source without a take")
+        XCTAssertEqual(removed, before)
+    }
+
+    func testRecordingAndUndoAreOneStep() async throws {
+        // One recording of the breath and the pulse, landed as a capture lands it, then a second
+        // pass over part of the breath.
+        var breathing = try XCTUnwrap(BodyTakeRecorder(source: .breath))
+        var beating = try XCTUnwrap(BodyTakeRecorder(source: .heartRate))
+        for index in 0...200 {
+            let position = Double(index) * 32
+            breathing.record(0.5 + 0.3 * Foundation.sin(position / 600), atPosition: position)
+            beating.record(0.45 + Double(index) / 4_000, atPosition: position)
+        }
+        let breath = try XCTUnwrap(breathing.landing(over: nil).take)
+        let pulse = try XCTUnwrap(beating.landing(over: nil).take)
+        var again = try XCTUnwrap(BodyTakeRecorder(source: .breath))
+        for index in 80...120 { again.record(0.9, atPosition: Double(index) * 32) }
+        let punched = try XCTUnwrap(again.landing(over: breath).take)
+        XCTAssertNotEqual(punched, breath)
+        let broken = BodyTake(source: .breath, tolerance: .nan, runs: breath.runs)
+        try await MainActor.run {
+            let store = ProjectStore()
+            try store.perform([.setBodyTake(breath), .setBodyTake(pulse)], title: "Record Body")
+            XCTAssertEqual(store.undoStack.count, 1, "one Stop, one step, however many sources it kept")
+            XCTAssertEqual(store.project.bodyTakes, [pulse, breath], "in the order of the sources, not of the recording")
+            try store.perform(.setBodyTake(punched))
+            XCTAssertEqual(store.undoTitle, "Edit Body Take")
+            XCTAssertEqual(store.project.bodyTake(of: .breath), punched)
+            store.undo()
+            XCTAssertEqual(store.project.bodyTake(of: .breath), breath, "undo brings the earlier take back exactly")
+            store.undo()
+            XCTAssertEqual(store.project, Project(), "and before the recording the song had none")
+            store.redo()
+            XCTAssertEqual(store.project.bodyTakes, [pulse, breath])
+            try store.perform(.removeBodyTake(.heartRate))
+            XCTAssertEqual(store.undoTitle, "Delete Body Take")
+            XCTAssertEqual(store.project.bodyTakes, [breath])
+            store.undo()
+            XCTAssertEqual(store.project.bodyTakes, [pulse, breath], "a deleted take comes back with one undo")
+            let steps = store.undoStack.count
+            XCTAssertThrowsError(try store.perform(.setBodyTake(broken)))
+            XCTAssertThrowsError(try store.perform(.removeBodyTake(.coherence)))
+            XCTAssertEqual(store.undoStack.count, steps, "a refused edit is no step")
+            XCTAssertEqual(store.project.bodyTakes, [pulse, breath])
+            try store.perform(.removeBodyTake(.breath))
+            try store.perform(.removeBodyTake(.heartRate))
+            XCTAssertEqual(store.project, Project(), "with every take deleted the song holds none, not an empty list")
+            let root = try JSONSerialization.jsonObject(with: ProjectCodec.encode(store.project)) as? [String: Any]
+            XCTAssertNil(root?["bodyTakes"], "and its file has no key for them")
+        }
+    }
+
+    func testATakeTheRecorderLandsIsOneTheSongKeeps() throws {
+        // Recordings with gaps, over a loop's passes, across a jump, at the limit and over an
+        // earlier take: each lands as a take the door lets in and the reader opens.
+        var numbers = Numbers(state: 7)
+        var gaps = try XCTUnwrap(BodyTakeRecorder(source: .breath))
+        for index in 0..<3_000 {
+            let value = 0.5 + 0.3 * Foundation.sin(Double(index) / 90) + 0.02 * numbers.next()
+            gaps.record(index % 700 < 30 ? nil : value, atPosition: 31.75 * Double(index))
+        }
+        var loop = try XCTUnwrap(BodyTakeRecorder(source: .hrv))
+        for lap in 0..<3 {
+            for reading in pass(from: lap == 0 ? 1_920 : 10, through: 7_660, level: 0.2 + 0.3 * Double(lap)) {
+                loop.record(reading.value, atPosition: Double(reading.tick))
+            }
+            if lap < 2 { loop.wrap(from: 7_680, to: 0) }
+        }
+        var jump = try XCTUnwrap(BodyTakeRecorder(source: .motionTiltX))
+        for index in 0..<300 { jump.record(0.3, atPosition: Double(index) * 32) }
+        jump.wrap(from: 9_600, to: 50_000)
+        for index in 0..<300 { jump.record(0.7, atPosition: 50_000 + Double(index) * 32) }
+        var busy = try XCTUnwrap(BodyTakeRecorder(source: .motionEnergy, maximumPoints: 1_000))
+        for index in 0..<3_000 {
+            let size = 0.006 + 0.003 * numbers.next()
+            busy.record(index % 2 == 0 ? 0.5 + size : 0.5 - size, atPosition: Double(index) * 32)
+        }
+        let earlier = try XCTUnwrap(gaps.landing(over: nil).take)
+        var punch = try XCTUnwrap(BodyTakeRecorder(source: .breath))
+        for index in 1_000...1_400 { punch.record(0.8, atPosition: 31.75 * Double(index)) }
+        let landings = [gaps.landing(over: nil), loop.landing(over: nil), jump.landing(over: nil), busy.landing(over: nil),
+                        punch.landing(over: earlier)]
+        guard case .stopped = landings[3].outcome else { return XCTFail("the busy recording stops at the limit") }
+        var song = Project()
+        for landing in landings {
+            let take = try XCTUnwrap(landing.take)
+            XCTAssertNil(take.problem, "\(take.source.rawValue): \(landing.outcome)")
+            try Command.setBodyTake(take).apply(to: &song)
+        }
+        XCTAssertEqual(song.bodyTakes.map(\.source), [.hrv, .breath, .motionTiltX, .motionEnergy])
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(song)), song)
+    }
+
+    func testEveryBodySourceCanKeepAFullTakeInOneSong() throws {
+        // The most a song's takes can hold: every body source at the limit, the ticks past a million
+        // and each value one that needs all its digits.
+        var numbers = Numbers(state: 8)
+        var song = Project()
+        for source in ModulationSource.allCases where BioEgressPolicy.measuresBody(source) {
+            var points: [BodyTake.Point] = []
+            points.reserveCapacity(BodyTake.maximumPoints)
+            for index in 0..<BodyTake.maximumPoints {
+                points.append(point(1_000_000 + Tick(index) * step, numbers.next()))
+            }
+            try Command.setBodyTake(BodyTake(source: source, runs: [BodyTake.Run(points: points)])).apply(to: &song)
+        }
+        let data = try ProjectCodec.encode(song)
+        XCTAssertLessThan(data.count, ProjectCodec.maximumDocumentBytes / 2,
+                          "a full take of every body source leaves more than half of a song's room to the rest of it")
+        // Compared whole, not printed: a failure would otherwise write 400 000 points into the log.
+        XCTAssertTrue(try ProjectCodec.decode(data) == song, "and the song opens again with every value as it was")
+    }
+
+    func testTheCatalogNamesTheBodyTakeCommands() {
+        XCTAssertEqual(Command.setBodyTake(oneStretch(of: .breath)).kind, .setBodyTake)
+        XCTAssertEqual(Command.removeBodyTake(.breath).kind, .removeBodyTake)
+        XCTAssertEqual(CommandCatalog.spec(for: .setBodyTake).name, "body.take.set")
+        XCTAssertEqual(CommandCatalog.spec(for: .removeBodyTake).name, "body.take.remove")
+    }
 }

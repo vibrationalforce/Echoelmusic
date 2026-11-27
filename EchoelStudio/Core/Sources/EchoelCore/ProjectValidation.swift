@@ -213,10 +213,32 @@ extension Project {
             throw Self.invalid("modRoutes", "more than \(Modulation.routeLimit) routes, a repeated id, or a depth outside −1…1")
         }
         try validateKeptParts()
+        try validateBodyTakes()
         for lane in automation {
             // A lane on a parameter this build does not know is kept, but still plays safely.
             let range = descriptor(for: lane.target)?.range ?? -Double.infinity...Double.infinity
             try AutomationLane.validate(lane.points, range: range)
+        }
+    }
+
+    /// Body takes (format 5), as `setBodyTake` keeps them: at most `BodyTake.maximumPerSong`, one
+    /// per source, each a take a song can hold (`BodyTake.problem`). A take kept from a newer build
+    /// counts and obeys the same rules; only its source is not this build's to judge.
+    private func validateBodyTakes() throws {
+        guard let list = storedBodyTakes else { return }
+        guard list.count <= BodyTake.maximumPerSong else {
+            throw Self.invalid("bodyTakes", "more than \(BodyTake.maximumPerSong) takes")
+        }
+        var sources = Set<String>()
+        for take in list.known {
+            guard sources.insert(take.source.rawValue).inserted else { throw Self.invalid("bodyTakes", "two takes of one source") }
+            if let problem = take.problem { throw Self.invalid("bodyTakes", problem) }
+        }
+        for part in list.kept {
+            guard sources.insert(part.source).inserted else { throw Self.invalid("bodyTakes", "two takes of one source") }
+            if let problem = BodyTake.problem(runs: part.runs, tolerance: part.tolerance) {
+                throw Self.invalid("bodyTakes", problem)
+            }
         }
     }
 

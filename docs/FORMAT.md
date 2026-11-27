@@ -1,4 +1,4 @@
-# The Echoel song format (format 4)
+# The Echoel song format (format 5)
 
 A song is a folder ending in `.echoel` — a package of the type `com.echoelmusic.song`, which the
 Files app shows as one file and opens in Echoel:
@@ -15,16 +15,22 @@ lacks is left out, and the song opens without it, as it would where it came from
 
 `project.json` is written pretty-printed with sorted keys, so the same song always produces the
 same bytes and a diff shows only real changes. Nothing in it is encrypted, compressed or signed.
-Every audio and video file is a plain file you can take out of `Media/`.
+Every audio and video file is a plain file you can take out of `Media/`. A `project.json` larger
+than 64 MiB (67 108 864 bytes) is refused before it is read, and Echoel never writes one: a save
+that would be larger fails, and the song on disk stays as it was.
 
 ## Versioning
 
-- `formatVersion` (integer) is required. This document describes **4**. A reader of format 4
-  opens every format-3, format-2 and format-1 file too; the differences are at the end
-  ("Format 3", "Format 2", "Format 1").
+- `formatVersion` (integer) is required. This document describes **5**. A reader of format 5
+  opens every format-4, format-3, format-2 and format-1 file too; the differences are at the end
+  ("Format 4", "Format 3", "Format 2", "Format 1").
 - A file with a **newer** number is refused rather than opened with parts missing; a number below
   1 is refused as damaged.
 - An older file is read into today's shape, so saving it writes today's number.
+- Where this document says what an earlier format-4 build does with a field added inside format 4
+  (ignores it, opens the song without it), it speaks of files a format-4 build wrote. A song saved
+  as format 5 opens in no format-4 build: each refuses it as newer by its `formatVersion`, before it
+  reads any other field ("Format 4").
 - Inside one format, fields are only ever **added**. A reader treats a missing optional field as
   its default; the fields marked *optional* below were added after the first format-1 builds and
   older files lack them.
@@ -37,8 +43,8 @@ Every audio and video file is a plain file you can take out of `Media/`.
   fallback, so a new kind comes with a new format number and an unknown one refuses the song.
   The same holds for a parameter address's owner (`project`, `master`, `track`): a new owner is
   a new format number, and an address with an owner this build does not know refuses the song.
-  A modulation route or an insert with a name it does not know is kept but plays nothing — see
-  "Reading newer songs".
+  A modulation route, an insert or a body take with a name it does not know is kept but plays
+  nothing — see "Reading newer songs".
 - On open, the song is checked against the same rules the editor enforces (ranges, unique ids,
   references that resolve, what each kind of track holds, names). A file that breaks one is
   refused, not repaired silently.
@@ -82,6 +88,7 @@ Every audio and video file is a plain file you can take out of `Media/`.
 | `midiMappings` | `[mapping]` | optional; learned controllers |
 | `automation` | `[lane]` | optional; one lane per parameter |
 | `modRoutes` | `[route]` | **required** in format 3; sources that move parameters |
+| `bodyTakes` | `[body take]` | optional, format 5; how body sources moved during a recording, one take per source (below) |
 
 **Tempo change:** `{tick, bpm, curve}`. `curve` says how the tempo reaches the change: `step`
 (absent = `step`) — the tempo jumps on `tick`; `linear` — it glides from the tempo before the
@@ -379,22 +386,60 @@ meter, the share of the lit cells in that bar's row of the Weave — rule 90 on 
 started from the key's pitch classes as twelve cells at 24 … 35 (C at 24), one generation per bar
 counted from the song's first bar. From the previous bar's share it glides into the bar's own over
 the bar's first eighth (at least a sixteenth note, all of a shorter bar), along a smoothstep, and
-holds it to the bar's end; the first bar starts at its own. A song stores the routes, never a measured
-value: what a body did during a take is not in the file.
+holds it to the bar's end; the first bar starts at its own. A route stores how a source moves a
+parameter, never what the source measured. How a body source moved during a recording is kept only
+as its body take (below, format 5).
+
+**Body take:** `{source, enabled, tolerance, runs}` in `bodyTakes` — how one body source moved during
+a recording: positions on the timeline and the source's value at each, with gaps where it was not
+measured. Added with format 5 (2026-11-27). Echoel reads, checks and keeps body takes; it does not
+record or play them yet. It writes the key only when the song holds a take, so a song without one
+is stored as before. A song holds at most one take per source and at most 64 takes, those kept from
+a newer build ("Reading newer songs") included; two takes of one source, or more than 64, refuse
+the song.
+
+- `source` — a modulation source that measures the body, named as a route names it: `body.heartRate`
+  `body.hrv` `body.coherence` `body.breath` `body.motion.tiltX` `body.motion.tiltY`
+  `body.motion.rotation` `body.motion.energy`. A take of `lfo.1`, `macro.1`, `midi.cc.1` or `weave.1`
+  refuses the song.
+- `runs` — `[{ticks, values}]`, at least one, in song order: the stretches in which the source was
+  measured without a break. A run holds its points as two lists of one length, the n-th value at the
+  n-th tick: at least two points in a run and at most 50 000 in the whole take. Every tick lies on
+  the timeline, from 0 to the song's last tick, and after the tick before it in the take, so the
+  ticks rise within a run and each run starts after the one before it ended. Every value is the
+  source as a route reads it, 0 … 1 of its travel (the pulse: 0 at 40 bpm, 1 at 200): a value as it
+  was read or, where a run ends or was cut, one held from a reading or taken from the line between
+  two; never rounded, never clamped. Between two points of a run the source moves in a straight
+  line, `v₀ + (v₁ − v₀) · (t − t₀) / (t₁ − t₀)`; outside every run it is absent, as a source that is
+  not measured at the moment.
+- `tolerance` — the stated error: the largest distance, as a share of the source's travel, between
+  the take and any reading it was made from, measured at the reading's tick; 0 … 0.01, and 0 when
+  every reading is a point. A writer thins a recording to 0.001 (for the pulse, 0.16 bpm). When the
+  take would then hold more than 50 000 points, it uses the first of 0.002, 0.004, 0.008 and 0.01 at
+  which the take fits, and states it; when not even 0.01 fits, the take keeps the recording only up
+  to a reading at which it still fits, nothing after it, and states 0.01.
+- `enabled` — `true`: a player reads the take where it would read the live source; `false`: the take
+  is kept and nothing reads it.
+
+A tick or a value outside its range, ticks that do not rise, two lists of a run that differ in
+length, a run of one point, a take without a run or with more than 50 000 points, and a stated
+error outside 0 … 0.01 refuse the song. Echoel writes no reading from Apple Health into a song.
+Every route follows its live source, whether the song holds a take of it or not.
 
 ## Reading newer songs
 
-Names are only ever added inside format 4, so a song saved by a newer build can name something
+Names are only ever added inside a format, so a song saved by a newer build can name something
 an older build does not know. Since 2026-11-05 a reader follows one rule for it (FWD):
 
 - **Where leaving the part out of the playback is safe, the song opens and the part is kept.**
   That is a modulation route whose `source`, `curve` or `polarity` the reader does not know, or
   whose `target` is a parameter it does not know of a track (or the master, or the song) that is
-  in the file; and an insert whose plugin `type` is not an effect type the reader takes in an
-  insert slot (a MIDI effect `aumi`, or a type it does not know at all). A kept part plays
-  nothing — a kept route moves no parameter, a kept insert is passed by as if bypassed — and the
-  musician is told when the song opens: "This song was saved by a newer Echoelmusic. N items
-  are kept but inactive until you update."
+  in the file; an insert whose plugin `type` is not an effect type the reader takes in an
+  insert slot (a MIDI effect `aumi`, or a type it does not know at all); and, from format 5, a
+  body take whose `source` the reader does not know. A kept part plays nothing — a kept route
+  moves no parameter, a kept insert is passed by as if bypassed, a kept take is read by no
+  route — and the musician is told when the song opens: "This song was saved by a newer
+  Echoelmusic. N items are kept but inactive until you update."
 - **A kept part is written back as it was read.** The reader holds it as the JSON it found —
   every key, the ones it does not know included — and saving writes it again at its place in its
   list, byte for byte, so the newer build finds it unchanged. A part whose place an edit removed
@@ -402,44 +447,55 @@ an older build does not know. Since 2026-11-05 a reader follows one rule for it 
   removes every other route on them.
 - **A kept part still obeys the rules of its list.** A route has all seven keys of their types,
   a depth within −1 … 1, an id unique among the song's routes, and an owner the reader knows
-  whose track is in the song; an insert has an id unique among the song's inserts; kept parts
-  count against the list's limit (64 routes, 8 inserts in one place). A part that breaks one of
-  these is damage and refuses the song, as before. An instrument (`aumu`) in an insert slot is
-  no newer build's doing and refuses the song.
+  whose track is in the song; an insert has an id unique among the song's inserts; a body take
+  has all four keys of their types, obeys every rule of a take but the one on its source, and
+  records a source no other take of the song records; kept parts count against the list's limit
+  (64 routes, 8 inserts in one place, 64 body takes). A part that breaks one of these is damage
+  and refuses the song, as before. An instrument (`aumu`) in an insert slot is no newer build's
+  doing and refuses the song.
 - **Where nothing can stand in for the name, the song is refused, naming it.** A track's `kind`,
   a media file's `kind`, a parameter address's owner, and a choice index past the end of its list
   (`synth.engine`, `synth.waveform`, `synth.filter`, `synth.textureRule`, `synth.ddspProfile`) — the reader says which
   name is missing and that a newer build is needed.
 - The editor never makes a kept part: no command can name a source, an effect type or an id a
-  kept part holds. Nothing here changes what a format-4 build writes for a song without kept parts.
+  kept part holds. Nothing here changes what a build writes for a song without kept parts.
 
 Elsewhere the earlier rules hold: a key the reader does not know is ignored (so it is not
 written back), and the names listed under "Versioning" are kept and play their fallback.
+
+## Format 4
+
+Format 4 is format 5 without `bodyTakes`. A reader of format 5 opens it with no takes and as the
+same song in every other part; a format-4 file that carries `bodyTakes`, even an empty list, is
+refused, since no format-4 build wrote one. A song saved again is written as format 5, and builds
+before format 5 do not open it.
 
 ## Format 3
 
 Format 3 is format 4 without video: no track of kind `video` and no media file with a `kind`. A
 format-3 file that carries either is refused, since no format-3 build wrote one. A song saved
-again is written as format 4, and builds before format 4 do not open it.
+again is written as format 5, and builds before format 5 do not open it.
 
 ## Format 2
 
-Format 2 is format 3 without `modRoutes`. A reader of format 3 opens it with no routes; a
+Format 2 is format 3 without `modRoutes`. A reader of format 3 or later opens it with no routes; a
 format-2 file that carries `modRoutes` is refused, since no format-2 build wrote one. A song saved
-again is written as format 3, and builds before format 3 (Echoelmusic 10012 and earlier) do not
-open it.
+again is written as format 5, and builds before format 5 do not open it (those before format 3
+were Echoelmusic 10012 and earlier).
 
 ## Format 1
 
 Format 1 is format 2 with one difference: a parameter address was an object, the owner in the
 form `{"project": {}}`, `{"master": {}}` or `{"track": {"_0": "<track id>"}}` plus the key —
 `{"owner": {"master": {}}, "key": "mixer.volume"}`, and it has no `modRoutes`. A reader of
-format 3 opens it, and a song saved again is written as format 3.
+format 5 opens it, and a song saved again is written as format 5.
 
 ## What is not in the file
 
 No account, no device identifier, no usage data, no licence information. What you bought lives
 with the App Store, not in your songs; a song made with the free app opens anywhere.
+
+No reading from Apple Health: Echoel writes none into a song, a body take included.
 
 The reference reader is `EchoelStudio/Core/Sources/EchoelCore/ProjectCodec.swift`; the files in
 `EchoelStudio/Core/Tests/EchoelCoreTests/FormatGoldenTests.swift` are examples that every build

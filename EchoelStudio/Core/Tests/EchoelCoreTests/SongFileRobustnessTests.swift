@@ -142,6 +142,36 @@ final class SongFileRobustnessTests: XCTestCase {
         XCTAssertThrowsError(try library.readRecovering(url), "no previous copy to fall back on")
     }
 
+    /// The same limit holds for a save: a song whose document would pass it is not written, so a
+    /// save never leaves a song that is refused when it is opened again. The song on disk stays as
+    /// it was, no copy is moved aside, and a shared copy is not left half made. At the limit itself
+    /// the document is written.
+    func testASongTooLargeToOpenAgainIsNeverWritten() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("robust-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let library = ProjectLibrary(directory: directory)
+        let url = library.newURL(for: "Long")
+        try library.write(song(), to: url)
+        let document = url.appendingPathComponent(ProjectLibrary.documentName)
+        let written = try Data(contentsOf: document)
+
+        // Its name fills the document to the limit, then one byte past it.
+        var long = try song()
+        let rest = try ProjectCodec.encode(long).count - long.name.utf8.count
+        long.name = String(repeating: "x", count: ProjectCodec.maximumDocumentBytes - rest)
+        XCTAssertEqual(try ProjectCodec.encode(long).count, ProjectCodec.maximumDocumentBytes)
+        long.name += "x"
+        XCTAssertThrowsError(try library.write(long, to: url)) { error in
+            XCTAssertEqual(error as? ProjectCodec.EncodeError, .tooLarge(bytes: ProjectCodec.maximumDocumentBytes + 1))
+        }
+        XCTAssertEqual(try Data(contentsOf: document), written, "the song on disk stays as it was")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.previousDocumentName).path),
+                       "and nothing was moved aside for it")
+        let shared = directory.appendingPathComponent("Shared.echoel")
+        XCTAssertThrowsError(try ProjectLibrary.shareableCopy(of: long, mediaIn: url, at: shared))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: shared.path), "a copy to share is not left half made")
+    }
+
     /// Fifty thousand scenes that share one id: refused by the rule against duplicates, whole.
     func testAHugeArrayOfDuplicatesIsRefused() throws {
         var project = try song()

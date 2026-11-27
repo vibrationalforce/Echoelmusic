@@ -7,7 +7,8 @@ public struct Project: Codable, Equatable, Sendable {
     /// 2 (2026-10-20): a parameter address is stored as its text form (`docs/FORMAT.md`).
     /// 3 (2026-10-28): `modRoutes`, required; an older file opens with none (wave W2).
     /// 4 (2026-10-29): video tracks and video media files; an older file has neither (wave W7).
-    public static let currentFormatVersion = 4
+    /// 5 (2026-11-27): `bodyTakes`, optional; an older file opens with none (body recording BR-2).
+    public static let currentFormatVersion = 5
 
     /// Always `currentFormatVersion` in memory: an older file is read into today's shape, so the
     /// next save writes today's number over today's shape and never an old number over it.
@@ -76,6 +77,20 @@ public struct Project: Codable, Equatable, Sendable {
     }
     /// The routes as stored, with any kept from a newer build (`NewerSongParts.swift`).
     var storedRoutes: KeptList<ModulationRoute>
+    /// How body sources moved while Record ran (body recording BR-2, format 5): at most one take per
+    /// source, in the order of `ModulationSource.allCases` as the commands keep them. Takes kept
+    /// from a newer build are not here (`keptBodyTakeCount`).
+    public var bodyTakes: [BodyTake] {
+        get { storedBodyTakes?.known ?? [] }
+        set {
+            var list = storedBodyTakes ?? BodyTakeList()
+            list.known = newValue
+            storedBodyTakes = list.count == 0 ? nil : list
+        }
+    }
+    /// The takes as stored, with any kept from a newer build (`NewerSongParts.swift`). Absent — nil —
+    /// while there are none, so a song without a take is stored exactly as before.
+    var storedBodyTakes: BodyTakeList?
 
     public init(
         name: String = "Untitled",
@@ -121,6 +136,7 @@ public struct Project: Codable, Equatable, Sendable {
         case storedMarkers = "markers"
         case storedLighting = "lighting"
         case storedSubtitles = "subtitles"
+        case storedBodyTakes = "bodyTakes"
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -180,6 +196,18 @@ public struct Project: Codable, Equatable, Sendable {
                 throw DecodingError.dataCorruptedError(forKey: .media, in: c,
                                                        debugDescription: "format \(stored) has no video files")
             }
+        }
+        // Body takes arrived with format 5 (BR-2), optional there; an older build never wrote one, so
+        // the key in an older file came from somewhere this reader cannot vouch for. Each take is
+        // read with its source unread, to tell a take from a newer build from a damaged one.
+        if stored < 5 {
+            guard !c.contains(.storedBodyTakes) else {
+                throw DecodingError.dataCorruptedError(forKey: .storedBodyTakes, in: c,
+                                                       debugDescription: "format \(stored) has no body takes")
+            }
+        } else {
+            let list = BodyTakeList(reading: try c.decodeIfPresent([LooseBodyTake].self, forKey: .storedBodyTakes) ?? [])
+            storedBodyTakes = list.count == 0 ? nil : list
         }
     }
 

@@ -166,7 +166,8 @@ final class VideoTrackTests: XCTestCase {
         let data = try ProjectCodec.encode(p)
         XCTAssertEqual(try ProjectCodec.decode(data), p)
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        XCTAssertEqual(root["formatVersion"] as? Int, 4)
+        // Video arrived with format 4; a song is saved in today's format.
+        XCTAssertEqual(root["formatVersion"] as? Int, Project.currentFormatVersion)
         let media = try XCTUnwrap(root["media"] as? [[String: Any]])
         XCTAssertEqual(media.first?["kind"] as? String, "video")
         XCTAssertEqual(Set(try XCTUnwrap(media.last).keys), ["id", "name", "path", "frameCount", "sampleRate"],

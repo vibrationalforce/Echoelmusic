@@ -110,6 +110,13 @@ public enum Command: Codable, Equatable, Sendable {
     case setModRoute(ModulationRoute)
     case removeModRoute(UUID)
 
+    // Body takes (body recording BR-2, format 5)
+    /// Keeps how a body source moved while Record ran: adds `take`, or replaces the take of its
+    /// source. One take per source.
+    case setBodyTake(BodyTake)
+    /// Removes the take of a body source.
+    case removeBodyTake(ModulationSource)
+
     // Clips
     case createClip(track: TrackID, id: ClipID, name: String, length: Tick)
     /// An audio clip on an audio track: a session loop of `length` ticks playing a song file.
@@ -1003,6 +1010,30 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "route", reason: "is not in this song")
             }
             project.modRoutes.removeAll { $0.id == id }
+
+        case let .setBodyTake(take):
+            if let problem = take.problem { throw CommandError.invalidValue(parameter: "take", reason: problem) }
+            var takes = project.bodyTakes
+            if let index = takes.firstIndex(where: { $0.source == take.source }) {
+                takes[index] = take
+            } else {
+                guard (project.storedBodyTakes?.count ?? 0) < BodyTake.maximumPerSong else {
+                    throw CommandError.invalidValue(parameter: "take",
+                                                    reason: "a song holds at most \(BodyTake.maximumPerSong) body takes")
+                }
+                // In the order of the sources, so a song does not depend on the order in which a Stop
+                // landed its takes.
+                let place = { (source: ModulationSource) -> Int in ModulationSource.allCases.firstIndex(of: source) ?? 0 }
+                let at = takes.firstIndex { place($0.source) > place(take.source) } ?? takes.count
+                takes.insert(take, at: at)
+            }
+            project.bodyTakes = takes
+
+        case let .removeBodyTake(source):
+            guard project.bodyTakes.contains(where: { $0.source == source }) else {
+                throw CommandError.invalidValue(parameter: "source", reason: "the source has no take in this song")
+            }
+            project.bodyTakes.removeAll { $0.source == source }
 
         case let .unmapMIDI(control):
             guard project.midiMappings.contains(where: { $0.control == control }) else {

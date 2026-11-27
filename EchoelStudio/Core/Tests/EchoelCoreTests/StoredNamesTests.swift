@@ -76,6 +76,30 @@ final class StoredNamesTests: XCTestCase {
         } else {
             XCTFail("a subtitle encodes")
         }
+        // A body take stores its fields by these names (body recording BR-2, format 5), its source
+        // by the name a route stores (below), each stretch as its ticks and its values in two lists,
+        // and a song keeps its takes under `bodyTakes`.
+        let take = BodyTake(source: .breath, runs: [BodyTake.Run(points: [BodyTake.Point(tick: 0, value: 0.5),
+                                                                          BodyTake.Point(tick: 32, value: 0.75)])])
+        if let data = try? JSONEncoder().encode(take),
+           let stored = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            XCTAssertEqual(Set(stored.keys), ["source", "enabled", "tolerance", "runs"])
+            XCTAssertEqual(stored["source"] as? String, "body.breath")
+            let run = (stored["runs"] as? [[String: Any]])?.first ?? [:]
+            XCTAssertEqual(Set(run.keys), ["ticks", "values"])
+            XCTAssertEqual((run["ticks"] as? [Any])?.compactMap { (tick: Any) -> Int? in tick as? Int }, [0, 32])
+            XCTAssertEqual((run["values"] as? [Any])?.compactMap { (value: Any) -> Double? in value as? Double }, [0.5, 0.75])
+        } else {
+            XCTFail("a body take encodes")
+        }
+        var taken = Project()
+        taken.bodyTakes = [take]
+        if let data = try? ProjectCodec.encode(taken),
+           let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            XCTAssertEqual((root["bodyTakes"] as? [[String: Any]])?.count, 1)
+        } else {
+            XCTFail("a song with a body take encodes")
+        }
         // A light show stores its fixture profiles, the attributes of a cue's values and a cue's
         // look by name, and every field by these keys (CUES); a new profile or attribute goes at the end.
         XCTAssertEqual(FixtureProfile.allCases.map(\.rawValue), ["dimmer", "rgb", "rgbw", "rgbaUV", "movingHead", "strobe"])

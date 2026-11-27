@@ -275,4 +275,116 @@ final class ProjectValidationTests: XCTestCase {
         s.project.tracks[0].name = String(repeating: "x", count: Names.maximumLength + 1)
         XCTAssertNoThrow(try s.project.validate(), "a name just past the editor's limit still opens")
     }
+
+    // MARK: - Body takes (body recording BR-2)
+
+    /// A body take drawn at random: mostly whole, on a body source, and one in four damaged in one
+    /// way, as a broken or crafted caller would send it; now and then a removal.
+    private func bodyTakeCommand(_ walk: inout Walk) -> Command {
+        let bodySources = ModulationSource.allCases.filter { (source: ModulationSource) -> Bool in
+            BioEgressPolicy.measuresBody(source)
+        }
+        let source = (walk.chance(85) ? walk.pick(bodySources) : walk.pick(ModulationSource.allCases)) ?? .breath
+        if walk.chance(15) { return .removeBodyTake(source) }
+        var runs: [BodyTake.Run] = []
+        var tick = Tick(walk.next(8)) * 480
+        for _ in 0..<(1 + walk.next(3)) {
+            var points: [BodyTake.Point] = []
+            for _ in 0..<(2 + walk.next(4)) {
+                points.append(BodyTake.Point(tick: tick, value: Double(walk.next(1_001)) / 1_000))
+                tick += 1 + Tick(walk.next(200))
+            }
+            runs.append(BodyTake.Run(points: points))
+            tick += Tick(walk.next(400))
+        }
+        var tolerance = walk.pick(BodyTake.tolerances) ?? BodyTake.defaultTolerance
+        if walk.chance(25) {
+            switch walk.next(6) {
+            case 0: runs[0].points[1].tick = runs[0].points[0].tick
+            case 1: runs[0].points[0].value = walk.chance(50) ? Double.nan : 1 + Double(1 + walk.next(9)) / 10
+            case 2: runs[0].points.removeLast(runs[0].points.count - 1)
+            case 3: runs = []
+            case 4: tolerance = walk.pick([-0.001, 0.0101, Double.nan, Double.infinity]) ?? Double.nan
+            default:
+                if runs.count > 1, let last = runs[0].points.last {
+                    runs[1].points[0].tick = last.tick
+                } else {
+                    runs[0].points[0].tick = -1
+                }
+            }
+        }
+        return .setBodyTake(BodyTake(source: source, enabled: walk.chance(70), tolerance: tolerance, runs: runs))
+    }
+
+    /// The door and the reader agree on body takes: a take `setBodyTake` lets in, the reader opens; a
+    /// take or a removal the door refuses leaves the song as it was.
+    func testEveryStateTheBodyTakeCommandsReachPassesTheReader() throws {
+        var walk = Walk(state: 0xB0D7_7A4E)
+        var project = Project()
+        var applied = 0, refused = 0
+        for step in 0..<2_000 {
+            let next = bodyTakeCommand(&walk)
+            var draft = project
+            do {
+                try next.apply(to: &draft)
+            } catch {
+                XCTAssertEqual(draft, project, "step \(step): a refused \(next.kind) left the song changed")
+                refused += 1
+                continue
+            }
+            project = draft
+            applied += 1
+            do {
+                try project.validate()
+            } catch {
+                return XCTFail("step \(step): \(next.kind) made a song the reader refuses: \(error)")
+            }
+        }
+        XCTAssertGreaterThan(applied, 500, "the walk records and removes takes, not only refusals")
+        XCTAssertGreaterThan(refused, 300, "and the refusals are walked too")
+        XCTAssertFalse(project.bodyTakes.isEmpty, "it ends with takes to check")
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
+    }
+
+    /// A format-5 song with `count` takes on sources this build does not know, each one stretch.
+    private func songWithTakesFromANewerBuild(_ count: Int) -> Data {
+        let takes = (0..<count).map { (number: Int) -> String in
+            "{ \"source\": \"body.later.\(number)\", \"enabled\": true, \"tolerance\": 0.001, "
+                + "\"runs\": [ { \"ticks\": [0, 32], \"values\": [0.5, 0.5] } ] }"
+        }
+        return Data("""
+        { "formatVersion": 5, "name": "Later", "tempo": 120, "timeSignature": { "numerator": 4, "denominator": 4 },
+          "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false }, "scenes": [], "tracks": [],
+          "modRoutes": [], "bodyTakes": [ \(takes.joined(separator: ", ")) ] }
+        """.utf8)
+    }
+
+    /// One take per source, those kept from a newer build included, and at most
+    /// `BodyTake.maximumPerSong` in a song: a file past either is refused, and the door adds no take
+    /// of a new source to a full song, while recording again over one it holds still lands.
+    func testEachSourceHasOneTakeAndASongAtMostSixtyFour() throws {
+        var s = try song()
+        let breath = BodyTake(source: .breath, runs: [BodyTake.Run(points: [BodyTake.Point(tick: 0, value: 0.5),
+                                                                            BodyTake.Point(tick: 960, value: 0.6)])])
+        s.project.bodyTakes = [breath]
+        XCTAssertNoThrow(try s.project.validate())
+        try refuses({ s in s.project.bodyTakes = [breath, breath] }, "two takes of one source")
+
+        let full = try ProjectCodec.decode(songWithTakesFromANewerBuild(BodyTake.maximumPerSong))
+        XCTAssertEqual(full.keptBodyTakeCount, BodyTake.maximumPerSong)
+        XCTAssertThrowsError(try ProjectCodec.decode(songWithTakesFromANewerBuild(BodyTake.maximumPerSong + 1)),
+                             "one take past the limit, kept ones counted")
+
+        var nearly = try ProjectCodec.decode(songWithTakesFromANewerBuild(BodyTake.maximumPerSong - 1))
+        try Command.setBodyTake(breath).apply(to: &nearly)
+        let before = nearly
+        let pulse = BodyTake(source: .heartRate, runs: breath.runs)
+        XCTAssertThrowsError(try Command.setBodyTake(pulse).apply(to: &nearly), "no room for the take of another source")
+        XCTAssertEqual(nearly, before)
+        var again = breath
+        again.runs[0].points[1].value = 0.7
+        XCTAssertNoThrow(try Command.setBodyTake(again).apply(to: &nearly), "a source's own take is replaced")
+        XCTAssertEqual(nearly.bodyTake(of: .breath), again)
+        XCTAssertNoThrow(try ProjectCodec.decode(ProjectCodec.encode(nearly)))
+    }
 }

@@ -66,6 +66,7 @@ extension Command {
         case addCue, setCue, removeCue, placeCue, removeCuePlacement
         case makePlacementUnique
         case placeSubtitles, setSubtitleText, setSubtitleTiming, removeSubtitle
+        case setBodyTake, removeBodyTake
     }
 
     public var kind: Kind {
@@ -122,6 +123,8 @@ extension Command {
         case .setAutomation: .setAutomation
         case .setModRoute: .setModRoute
         case .removeModRoute: .removeModRoute
+        case .setBodyTake: .setBodyTake
+        case .removeBodyTake: .removeBodyTake
         case .createClip: .createClip
         case .createAudioClip: .createAudioClip
         case .deleteClip: .deleteClip
@@ -440,6 +443,14 @@ public enum CommandCatalog {
             return CommandSpec(name: "modulation.remove", title: "Remove Modulation",
                                summary: "Removes one modulation route.",
                                parameters: [P("id", .string, "The route's identifier.")])
+        case .setBodyTake:
+            return CommandSpec(name: "body.take.set", title: "Edit Body Take",
+                               summary: "Keeps how one body source (the heart rate, HRV, coherence, breath or the phone's motion) moved while Record ran: stretches of song positions and values 0…1, with gaps where it was not measured, within an error the take states. Replaces that source's take.",
+                               parameters: [P("take", .string, "The take: its source, on or off, the stated error (0–1 % of the source's travel) and its stretches of points, tick and value, ticks rising.")])
+        case .removeBodyTake:
+            return CommandSpec(name: "body.take.remove", title: "Delete Body Take",
+                               summary: "Deletes the take of one body source.",
+                               parameters: [P("source", .string, "The body source, e.g. body.breath.")])
         case .unmapMIDI:
             return CommandSpec(name: "midi.unmap", title: "Forget MIDI",
                                summary: "Stops a controller knob or fader moving anything.",

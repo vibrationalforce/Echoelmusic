@@ -2,13 +2,13 @@ import Foundation
 
 /// Reading a song a newer build saved (FWD, 2026-11-05; `docs/FORMAT.md`, "Reading newer songs").
 ///
-/// Names are only ever appended inside format 4, so a song saved by a newer build may name a
+/// Names are only ever appended inside a format, so a song saved by a newer build may name a
 /// modulation source or an effect type this build does not know. Where leaving such a part out
-/// of the playback is safe — a modulation route, an insert — the song opens, the part is KEPT as
-/// the JSON it was read from, plays nothing, and is written back in its place, byte for byte, on
-/// the next save. Where it is not safe — what a track is, what a media file is, who owns a
-/// parameter, a choice index past the end of its list — the song is refused with the name that
-/// is missing (`UnknownStoredName`), never opened with parts silently gone.
+/// of the playback is safe — a modulation route, an insert, a body take (format 5) — the song
+/// opens, the part is KEPT as the JSON it was read from, plays nothing, and is written back in its
+/// place, byte for byte, on the next save. Where it is not safe — what a track is, what a media
+/// file is, who owns a parameter, a choice index past the end of its list — the song is refused
+/// with the name that is missing (`UnknownStoredName`), never opened with parts silently gone.
 ///
 /// Only the reader makes kept parts. No command can create one (Law 1): commands carry typed
 /// values, and a kept part has no type here.
@@ -70,6 +70,26 @@ public indirect enum StoredJSON: Codable, Equatable, Sendable {
         case .object(let value): try single.encode(value)
         }
     }
+
+    /// Writes a stored list as ONE array: `known` with each kept part back at the place it was read
+    /// from, so an untouched list is written back exactly as it was read. A part whose place no
+    /// longer exists after an edit goes to the end, in the order the parts were read. Every list
+    /// that keeps parts (`KeptList`, `BodyTakeList`) writes through this.
+    static func encodeList<Element: Encodable>(_ known: [Element], keeping kept: [(position: Int, raw: StoredJSON)],
+                                               to encoder: any Encoder) throws {
+        var list = encoder.unkeyedContainer()
+        let parts = kept.sorted { $0.position < $1.position }
+        var nextKnown = 0, nextPart = 0
+        for place in 0..<(known.count + kept.count) {
+            if nextPart < parts.count, parts[nextPart].position <= place || nextKnown >= known.count {
+                try list.encode(parts[nextPart].raw)
+                nextPart += 1
+            } else {
+                try list.encode(known[nextKnown])
+                nextKnown += 1
+            }
+        }
+    }
 }
 
 /// One part of a list this build cannot play: where it stood in the stored list, its id (so no
@@ -111,26 +131,18 @@ struct KeptList<Element: Encodable & Equatable & Sendable>: Encodable, Equatable
     var count: Int { known.count + kept.count }
 
     func encode(to encoder: any Encoder) throws {
-        var list = encoder.unkeyedContainer()
-        let parts = kept.sorted { $0.position < $1.position }
-        var nextKnown = 0, nextPart = 0
-        for place in 0..<count {
-            if nextPart < parts.count, parts[nextPart].position <= place || nextKnown >= known.count {
-                try list.encode(parts[nextPart].raw)
-                nextPart += 1
-            } else {
-                try list.encode(known[nextKnown])
-                nextKnown += 1
-            }
-        }
+        try StoredJSON.encodeList(known, keeping: kept.map { (part: KeptPart) -> (position: Int, raw: StoredJSON) in
+            (part.position, part.raw)
+        }, to: encoder)
     }
 }
 
 extension Project {
     /// The parts of this song a newer build saved that this build keeps but does not play:
-    /// modulation routes and inserts (`docs/FORMAT.md`, "Reading newer songs").
+    /// modulation routes, inserts and body takes (`docs/FORMAT.md`, "Reading newer songs").
     public var keptFromNewerBuild: Int {
         storedRoutes.kept.count + storedMasterInserts.kept.count + tracks.reduce(0) { $0 + $1.keptInsertCount }
+            + keptBodyTakeCount
     }
 
     /// What the musician reads when such a song opens; nil when there is nothing kept.
@@ -145,6 +157,9 @@ extension Project {
     public var keptRouteCount: Int { storedRoutes.kept.count }
     /// Master inserts kept from a newer build. They take a place of `Insert.maximumPerTrack`.
     public var keptMasterInsertCount: Int { storedMasterInserts.kept.count }
+    /// Body takes kept from a newer build: each records a source this build does not know, so
+    /// nothing reads it. They count against `BodyTake.maximumPerSong` with the others.
+    public var keptBodyTakeCount: Int { storedBodyTakes?.kept.count ?? 0 }
 
     /// The routes a song stores, split: those this build plays, and those it keeps. A route is kept
     /// when it names a source, curve or polarity this build does not know, or a parameter of a
@@ -230,5 +245,78 @@ extension KeptList where Element == Insert {
     static func reading(_ inserts: [Insert], raw: [StoredJSON]) -> KeptList<Insert> {
         KeptList(elements: inserts, raw: raw, id: \.id.rawValue,
                  plays: { $0.plugin.role == .effect || $0.plugin.role == .instrument })
+    }
+}
+
+// MARK: - Body takes (format 5)
+
+/// A body take as every format-5 build stores it, its source still unread (BR-2), so a take on a
+/// source from a newer build can be told from a damaged one: all four keys of their types, or the
+/// song is refused. A take is read once, as values; only one on a source this build does not know
+/// is read a second time, as its JSON, so that it can be written back as it was. A take of the
+/// pulse holds up to 50 000 points, and reading every take twice would double the work of
+/// opening a song for nothing.
+struct LooseBodyTake: Decodable {
+    let source: String
+    let enabled: Bool
+    let tolerance: Double
+    let runs: [BodyTake.Run]
+    /// The take as it was read, when this build does not know its source; nil otherwise.
+    let raw: StoredJSON?
+
+    private enum CodingKeys: String, CodingKey { case source, enabled, tolerance, runs }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        source = try c.decode(String.self, forKey: .source)
+        enabled = try c.decode(Bool.self, forKey: .enabled)
+        tolerance = try c.decode(Double.self, forKey: .tolerance)
+        runs = try c.decode([BodyTake.Run].self, forKey: .runs)
+        raw = ModulationSource(rawValue: source) == nil ? try StoredJSON(from: decoder) : nil
+    }
+}
+
+/// A body take kept from a newer build: where it stood in the stored list, the source it records,
+/// what it holds (so that it obeys the rules of every take), and its JSON, written back as read.
+struct KeptTake: Equatable, Sendable {
+    var position: Int
+    var source: String
+    var tolerance: Double
+    var runs: [BodyTake.Run]
+    var raw: StoredJSON
+}
+
+/// The body takes as a song stores them: those this build knows, and those it keeps from a newer
+/// build. Encoded as ONE array again, each kept take back at the place it was read from, as
+/// `KeptList` writes routes and inserts.
+struct BodyTakeList: Encodable, Equatable, Sendable {
+    var known: [BodyTake]
+    var kept: [KeptTake]
+
+    init(known: [BodyTake] = [], kept: [KeptTake] = []) {
+        self.known = known
+        self.kept = kept
+    }
+
+    /// Splits the takes read from disk: one on a source this build knows is known, whatever the
+    /// source (the validation refuses a take of a source that does not measure the body); one on a
+    /// source it does not know is kept.
+    init(reading takes: [LooseBodyTake]) {
+        self.init()
+        for (index, take) in takes.enumerated() {
+            if let source = ModulationSource(rawValue: take.source) {
+                known.append(BodyTake(source: source, enabled: take.enabled, tolerance: take.tolerance, runs: take.runs))
+            } else if let raw = take.raw {
+                kept.append(KeptTake(position: index, source: take.source, tolerance: take.tolerance, runs: take.runs, raw: raw))
+            }
+        }
+    }
+
+    var count: Int { known.count + kept.count }
+
+    func encode(to encoder: any Encoder) throws {
+        try StoredJSON.encodeList(known, keeping: kept.map { (part: KeptTake) -> (position: Int, raw: StoredJSON) in
+            (part.position, part.raw)
+        }, to: encoder)
     }
 }

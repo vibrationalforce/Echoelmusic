@@ -34,15 +34,26 @@ public enum ProjectCodec {
         }
     }
 
-    /// The most bytes a song document may have. Media lives beside it in the package, never in it,
-    /// so a real document is kilobytes to a few megabytes; this leaves a wide margin for long songs
-    /// full of notes and automation (team SAFE 2026-11-04).
+    /// Why a song could not be written.
+    public enum EncodeError: Error, Equatable, Sendable {
+        /// The document would be larger than `maximumDocumentBytes`, which `decode` refuses: nothing
+        /// is written, so a save never leaves a song that does not open again.
+        case tooLarge(bytes: Int)
+    }
+
+    /// The most bytes a song document may have, written or read. Media lives beside it in the
+    /// package, never in it, so a real document is kilobytes to a few megabytes; this leaves a wide
+    /// margin for long songs full of notes, automation and body takes (team SAFE 2026-11-04).
     public static let maximumDocumentBytes = 64 * 1024 * 1024
 
+    /// The song as its document, or `EncodeError.tooLarge` when that would be larger than any song
+    /// document a build opens.
     public static func encode(_ project: Project) throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        return try encoder.encode(project)
+        let data = try encoder.encode(project)
+        guard data.count <= maximumDocumentBytes else { throw EncodeError.tooLarge(bytes: data.count) }
+        return data
     }
 
     public static func decode(_ data: Data) throws -> Project {

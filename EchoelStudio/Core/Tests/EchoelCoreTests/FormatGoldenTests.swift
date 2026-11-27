@@ -9,6 +9,8 @@ import XCTest
 /// address is stored; every format-1 file here opens unchanged. Format 3 (2026-10-28) adds the
 /// required `modRoutes`; every format-1 and format-2 file opens with none. Format 4 (2026-10-29)
 /// adds video tracks and video media files; every older file opens unchanged and has neither.
+/// Format 5 (2026-11-27) adds the optional `bodyTakes`; every older file opens unchanged and has
+/// none.
 final class FormatGoldenTests: XCTestCase {
     /// The first format-1 shape: only the keys those builds wrote.
     private let earliest = Data("""
@@ -824,6 +826,42 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 5 (body recording BR-2, 2026-11-27): two body takes beside the routes on their sources —
+    /// the pulse switched off and stating 0.2 %, the breath in two stretches with a gap between them,
+    /// each stretch its ticks and its values in two lists, and among the values one that needs all
+    /// seventeen digits. Written with every key the encoder writes, so a save writes this document
+    /// back, every value to the last bit.
+    static let formatFiveBodyTakes = Data("""
+    {
+      "formatVersion": 5,
+      "name": "Taken",
+      "tempo": 120,
+      "tempoChanges": [],
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "context": { "root": 0, "scale": "chromatic", "tuning": "edo12", "concertPitch": 440, "swing": 0 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "masterInserts": [],
+      "media": [],
+      "midiMappings": [],
+      "automation": [],
+      "scenes": [],
+      "tracks": [],
+      "modRoutes": [
+        { "id": "40D00000-0000-4000-8000-000000000021", "source": "body.heartRate", "target": "master/mixer.pan",
+          "depth": 0.25, "curve": "linear", "polarity": "bipolar", "enabled": true },
+        { "id": "40D00000-0000-4000-8000-000000000022", "source": "body.breath", "target": "master/mixer.volume",
+          "depth": -0.5, "curve": "square", "polarity": "unipolar", "enabled": true }
+      ],
+      "bodyTakes": [
+        { "source": "body.heartRate", "enabled": false, "tolerance": 0.002,
+          "runs": [ { "ticks": [0, 1920, 7680], "values": [0.4375, 0.45625, 0.30000000000000004] } ] },
+        { "source": "body.breath", "enabled": true, "tolerance": 0.001,
+          "runs": [ { "ticks": [3840, 3872], "values": [0.43121907, 0.44518033] },
+                    { "ticks": [9600, 9631, 9663], "values": [0.50200017, 0.50771932, 1] } ] }
+      ]
+    }
+    """.utf8)
+
     private let pad = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000004") ?? UUID())
     private let room = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000005") ?? UUID())
 
@@ -858,7 +896,7 @@ final class FormatGoldenTests: XCTestCase {
         for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour,
                      formatFourRegionEdits, formatFourArpeggio, formatFourMarkers, formatFourTakes, formatFourLighting,
                      formatFourTexture, formatFourBake, formatFourMotion, formatFourGrade, formatFourSubtitles,
-                     formatFourDDSPProfile, formatFourStereoInput, Self.formatFourFromTheFuture] {
+                     formatFourDDSPProfile, formatFourStereoInput, Self.formatFourFromTheFuture, Self.formatFiveBodyTakes] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -915,7 +953,9 @@ final class FormatGoldenTests: XCTestCase {
         let routes = try XCTUnwrap(root["modRoutes"] as? [[String: Any]])
         XCTAssertEqual(routes.compactMap { $0["source"] as? String },
                        ["body.motion.tiltX", "body.motion.tiltY", "body.motion.rotation", "body.motion.energy"])
-        XCTAssertEqual(root["formatVersion"] as? Int, 4, "added inside format 4, no new number")
+        // The names were added inside format 4 and needed no number of their own; the song is saved
+        // in today's format, as every older song is.
+        XCTAssertEqual(root["formatVersion"] as? Int, Project.currentFormatVersion)
     }
 
     /// F08 and F09: format 3 without routes, and an older file that carries some, are refused.
@@ -1502,6 +1542,194 @@ final class FormatGoldenTests: XCTestCase {
             let project = try ProjectCodec.decode(data)
             XCTAssertFalse(project.tracks.contains { $0.kind == .video })
             XCTAssertTrue(project.media.allSatisfy { $0.kind == .audio })
+        }
+    }
+
+    // MARK: - Body takes (format 5)
+
+    /// A document as the JSON value it stores, whatever its spacing.
+    private static func jsonValue(_ data: Data) throws -> StoredJSON {
+        try JSONDecoder().decode(StoredJSON.self, from: data)
+    }
+
+    /// One key of a document's root, as stored.
+    private static func rootValue(_ data: Data, _ key: String) throws -> StoredJSON? {
+        guard case .object(let fields) = try jsonValue(data) else { return nil }
+        return fields[key]
+    }
+
+    /// The bytes the codec's encoder writes for a stored value.
+    private static func canonicalBytes(_ value: StoredJSON?) throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        return try encoder.encode(value ?? .null)
+    }
+
+    /// The format-4 songs, each of which must be the same song with its number raised to 5.
+    private var formatFourFiles: [Data] {
+        [formatFour, formatFourRegionEdits, formatFourGrade, formatFourBake, formatFourArpeggio, formatFourSlices,
+         formatFourWavetable, formatFourTexture, formatFourDDSPProfile, formatFourStereoInput, formatFourMarkers,
+         formatFourMotion, formatFourLighting, formatFourSubtitles, formatFourTakes, Self.formatFourFromTheFuture]
+    }
+
+    func testAFormatFiveFileOpensWithItsBodyTakesAndSavesThemByteForByte() throws {
+        let project = try ProjectCodec.decode(Self.formatFiveBodyTakes)
+        XCTAssertEqual(project.bodyTakes.map(\.source), [.heartRate, .breath])
+        XCTAssertEqual(project.keptBodyTakeCount, 0)
+        let pulse = try XCTUnwrap(project.bodyTake(of: .heartRate))
+        XCTAssertFalse(pulse.enabled, "a take switched off is kept, and kept off")
+        XCTAssertEqual(pulse.tolerance, 0.002)
+        XCTAssertEqual(pulse.runs, [BodyTake.Run(points: [BodyTake.Point(tick: 0, value: 0.4375),
+                                                          BodyTake.Point(tick: 1_920, value: 0.45625),
+                                                          BodyTake.Point(tick: 7_680, value: 0.1 + 0.2)])],
+                       "every value to the last bit: 0.1 + 0.2 is not 0.3")
+        let breath = try XCTUnwrap(project.bodyTake(of: .breath))
+        XCTAssertTrue(breath.enabled)
+        XCTAssertEqual(breath.tolerance, 0.001)
+        XCTAssertEqual(breath.runs.map(\.points.count), [2, 3])
+        XCTAssertEqual(breath.value(atPosition: 3_840), 0.43121907)
+        XCTAssertNil(breath.value(atPosition: 5_000), "between its stretches the breath is absent")
+        XCTAssertEqual(breath.value(atPosition: 9_663), 1)
+
+        let saved = try ProjectCodec.encode(project)
+        XCTAssertEqual(try Self.jsonValue(saved), try Self.jsonValue(Self.formatFiveBodyTakes),
+                       "saved, it is the same document: every key and every value")
+        XCTAssertEqual(saved, try Self.canonicalBytes(Self.jsonValue(Self.formatFiveBodyTakes)),
+                       "byte for byte, as the encoder writes the file")
+        XCTAssertEqual(try ProjectCodec.encode(ProjectCodec.decode(saved)), saved, "and the second save is the first")
+    }
+
+    /// The migration: every older song opens with no body takes and saves none — today's number over
+    /// today's shape — and a format-4 song is the same song whether its number says 4 or 5.
+    func testAnOlderSongOpensWithNoBodyTakes() throws {
+        for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree] + formatFourFiles {
+            let project = try ProjectCodec.decode(data)
+            XCTAssertEqual(project.bodyTakes, [], "an older song has no take")
+            XCTAssertEqual(project.keptBodyTakeCount, 0)
+            let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+            XCTAssertNil(root["bodyTakes"], "a song without a take writes no key")
+            XCTAssertEqual(root["formatVersion"] as? Int, Project.currentFormatVersion, "it is saved in today's format")
+        }
+        for data in formatFourFiles {
+            let text = String(decoding: data, as: UTF8.self)
+            let five = text.replacingOccurrences(of: "\"formatVersion\": 4", with: "\"formatVersion\": 5")
+            XCTAssertNotEqual(five, text, "the replacement must land")
+            XCTAssertEqual(try ProjectCodec.decode(Data(five.utf8)), try ProjectCodec.decode(data),
+                           "format 5 is format 4 and body takes: without a take it is the same song")
+        }
+    }
+
+    /// No format-4 build wrote a body take: a format-4 file that carries the key came from somewhere
+    /// this reader cannot vouch for, as a format-3 file with video does, and is refused. A format-5
+    /// file without the key opens with none; a number past today's is a newer build's, refused.
+    func testBodyTakesBelongToFormatFiveAndOnlyThere() throws {
+        let text = String(decoding: Self.formatFiveBodyTakes, as: UTF8.self)
+        let four = text.replacingOccurrences(of: "\"formatVersion\": 5", with: "\"formatVersion\": 4")
+        XCTAssertNotEqual(four, text, "the replacement must land")
+        XCTAssertThrowsError(try ProjectCodec.decode(Data(four.utf8)))
+        let emptyInFour = Data("""
+        { "formatVersion": 4, "name": "Odd", "tempo": 120, "timeSignature": { "numerator": 4, "denominator": 4 },
+          "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false }, "scenes": [], "tracks": [],
+          "modRoutes": [], "bodyTakes": [] }
+        """.utf8)
+        XCTAssertThrowsError(try ProjectCodec.decode(emptyInFour), "not even an empty list")
+        let bare = Data("""
+        { "formatVersion": 5, "name": "Bare", "tempo": 120, "timeSignature": { "numerator": 4, "denominator": 4 },
+          "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false }, "scenes": [], "tracks": [],
+          "modRoutes": [] }
+        """.utf8)
+        XCTAssertEqual(try ProjectCodec.decode(bare).bodyTakes, [], "absent is no take")
+        let next = Project.currentFormatVersion + 1
+        let newer = text.replacingOccurrences(of: "\"formatVersion\": 5", with: "\"formatVersion\": \(next)")
+        XCTAssertThrowsError(try ProjectCodec.decode(Data(newer.utf8))) { error in
+            XCTAssertEqual(error as? ProjectCodec.DecodeError, .newerFormat(found: next, supported: Project.currentFormatVersion))
+        }
+    }
+
+    /// FWD for body takes: a take on a source this build does not know is kept as it was read — a key
+    /// this build does not know included — plays nothing (the takes a player reads leave it out), is
+    /// counted in the notice, and is written back at its place, byte for byte, also once every take
+    /// this build plays is deleted. It is still a take: one that breaks a rule of every take, its
+    /// stated error included, or a second take of its source, refuses the song.
+    func testATakeOnASourceThisBuildDoesNotKnowIsKeptAndPlaysNothing() throws {
+        let text = String(decoding: Self.formatFiveBodyTakes, as: UTF8.self)
+        let later = text.replacingOccurrences(of: "\"source\": \"body.heartRate\", \"enabled\": false, \"tolerance\": 0.002,",
+                                              with: "\"source\": \"body.gaze\", \"enabled\": false, \"tolerance\": 0.002, \"smoothing\": 0.25,")
+        XCTAssertNotEqual(later, text, "the replacement must land")
+        let project = try ProjectCodec.decode(Data(later.utf8))
+        XCTAssertEqual(project.bodyTakes.map(\.source), [.breath], "only the take of a source this build knows plays")
+        XCTAssertNil(project.bodyTake(of: .heartRate))
+        XCTAssertEqual(project.keptBodyTakeCount, 1)
+        XCTAssertEqual(project.keptFromNewerBuild, 1)
+        XCTAssertEqual(project.newerBuildNotice,
+                       "This song was saved by a newer Echoelmusic. 1 item is kept but inactive until you update.")
+
+        let saved = try ProjectCodec.encode(project)
+        XCTAssertEqual(try Self.canonicalBytes(Self.rootValue(saved, "bodyTakes")),
+                       try Self.canonicalBytes(Self.rootValue(Data(later.utf8), "bodyTakes")),
+                       "written back at its place, its unknown key included, byte for byte")
+        XCTAssertEqual(try ProjectCodec.encode(ProjectCodec.decode(saved)), saved, "and the second save is the first")
+
+        // The door records every source this build knows beside it, and never reaches it.
+        var edited = project
+        let heard = BodyTake(source: .heartRate, runs: [BodyTake.Run(points: [BodyTake.Point(tick: 0, value: 0.5),
+                                                                              BodyTake.Point(tick: 960, value: 0.55)])])
+        try Command.setBodyTake(heard).apply(to: &edited)
+        let reopened = try ProjectCodec.decode(ProjectCodec.encode(edited))
+        XCTAssertEqual(reopened.bodyTakes.map(\.source), [.heartRate, .breath])
+        XCTAssertEqual(reopened.keptBodyTakeCount, 1, "the kept take stays")
+
+        // Deleting the last take this build plays deletes none it keeps: the newer build's take is
+        // left alone in the list, as it was read.
+        var cleared = project
+        try Command.removeBodyTake(.breath).apply(to: &cleared)
+        XCTAssertEqual(cleared.bodyTakes, [])
+        let left = try ProjectCodec.encode(cleared)
+        let alone = try ProjectCodec.decode(left)
+        XCTAssertEqual(alone.bodyTakes, [])
+        XCTAssertEqual(alone.keptBodyTakeCount, 1, "the newer build's take outlives the last take this build plays")
+        guard case .array(let read)? = try Self.rootValue(Data(later.utf8), "bodyTakes"), let gaze = read.first else {
+            return XCTFail("the song stores its takes as one list")
+        }
+        XCTAssertEqual(try Self.rootValue(left, "bodyTakes"), .array([gaze]), "written back alone, as it was read")
+
+        // A kept take obeys every rule of a take but the one on its source.
+        let damage: [(reason: String, from: String, to: String)] = [
+            ("a value past 1", "\"values\": [0.4375,", "\"values\": [1.5,"),
+            ("a stated error past 1 %", "\"tolerance\": 0.002,", "\"tolerance\": 0.5,"),
+            ("ticks that fall back", "\"ticks\": [0, 1920, 7680]", "\"ticks\": [0, 7680, 1920]"),
+            ("a value without its tick", "\"ticks\": [0, 1920, 7680]", "\"ticks\": [0, 1920]"),
+            ("a key missing", "\"source\": \"body.gaze\", \"enabled\": false,", "\"source\": \"body.gaze\","),
+            ("a second take of its source", "\"source\": \"body.breath\", \"enabled\": true,",
+             "\"source\": \"body.gaze\", \"enabled\": true,"),
+        ]
+        for (reason, from, to) in damage {
+            let broken = later.replacingOccurrences(of: from, with: to)
+            XCTAssertNotEqual(broken, later, "\(reason): the replacement must land")
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), reason)
+        }
+    }
+
+    /// A stretch is stored as two lists of one length, its ticks and its values, and no format-5
+    /// build wrote one any other way: a value without its tick, a tick without its value, a tick
+    /// between two and a stretch written as an object per point are damage. The song is refused,
+    /// and not as a newer build's. (The lists cut are of the stretch of three, so the two points
+    /// left would make a stretch the rules let in: only the lengths tell the damage.)
+    func testAStretchIsItsTicksAndItsValuesInTwoListsOfOneLength() throws {
+        let text = String(decoding: Self.formatFiveBodyTakes, as: UTF8.self)
+        let damage: [(reason: String, from: String, to: String)] = [
+            ("a value without its tick", "\"ticks\": [9600, 9631, 9663]", "\"ticks\": [9600, 9631]"),
+            ("a tick without its value", "\"values\": [0.50200017, 0.50771932, 1]", "\"values\": [0.50200017, 0.50771932]"),
+            ("a tick between two", "\"ticks\": [9600, 9631, 9663]", "\"ticks\": [9600, 9631.5, 9663]"),
+            ("an object per point", "{ \"ticks\": [3840, 3872], \"values\": [0.43121907, 0.44518033] }",
+             "{ \"points\": [ { \"tick\": 3840, \"value\": 0.43121907 }, { \"tick\": 3872, \"value\": 0.44518033 } ] }"),
+        ]
+        for (reason, from, to) in damage {
+            let broken = text.replacingOccurrences(of: from, with: to)
+            XCTAssertNotEqual(broken, text, "\(reason): the replacement must land")
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(broken.utf8)), reason) { error in
+                XCTAssertNotEqual((error as? ProjectCodec.DecodeError)?.isFromNewerBuild, true, "\(reason): damage")
+            }
         }
     }
 }
