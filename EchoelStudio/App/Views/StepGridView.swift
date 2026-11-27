@@ -43,6 +43,10 @@ struct StepGridView: View {
                             stepColumn(index, meter: meter)
                         }
                     }
+                    .overlay(alignment: .topLeading) {
+                        StepPlayhead(clip: clip.id, step: step, columnWidth: cellSize + Theme.Space.xxs,
+                                     height: CGFloat(lanes.count) * (cellSize + Theme.Space.xxs))
+                    }
                 }
             }
             .padding(Theme.Space.m)
@@ -231,5 +235,33 @@ private struct StepCell: View {
         case .on: color
         case .accent: Theme.Color.text
         }
+    }
+}
+
+/// The step the song plays in the grid, as a thin line at its left edge: while the song plays the
+/// clip from a placement (`Arranging.position`); nothing otherwise. It moves from step to step and
+/// never lights a cell, so it adds no flash. A leaf of its own, so the clock redraws only the line
+/// (Law 6).
+private struct StepPlayhead: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
+    let clip: ClipID
+    let step: Tick
+    let columnWidth: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        let playing = engine.isPlaying
+        let project = store.project
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !playing)) { _ in
+            if playing, step > 0, let at = Arranging.position(inClip: clip, of: project, atSongTick: engine.heardTick(in: project)) {
+                Rectangle()
+                    .fill(Theme.Color.accent)
+                    .frame(width: 2, height: height)
+                    .offset(x: CGFloat(Int(at) / Int(step)) * columnWidth)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }

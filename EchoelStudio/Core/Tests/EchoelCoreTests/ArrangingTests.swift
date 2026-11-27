@@ -334,4 +334,24 @@ final class ArrangingTests: XCTestCase {
         XCTAssertEqual(three, 3 * MusicalTime.ticksPerQuarter)
         XCTAssertEqual(Arranging.loopRegion(from: three + 1, to: three + 2, meter: waltz.meterMap), three..<(2 * three))
     }
+
+    /// The note editor's playhead stands inside the clip where a placement of it plays, and
+    /// nowhere else.
+    func testTheEditorsPlayheadIsWhereAPlacementOfTheClipPlays() throws {
+        var project = Project()
+        let track = TrackID(), clip = ClipID(), other = ClipID()
+        let bar = project.meterMap.ticksPerBar(at: 0)
+        try Command.addTrack(id: track, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        try Command.createClip(track: track, id: clip, name: "A", length: bar).apply(to: &project)
+        try Command.createClip(track: track, id: other, name: "B", length: bar).apply(to: &project)
+        try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 0).apply(to: &project)
+        try Command.placeClip(track: track, id: PlacementID(), clip: other, start: bar).apply(to: &project)
+        try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 2 * bar).apply(to: &project)
+        XCTAssertEqual(Arranging.position(inClip: clip, of: project, atSongTick: 100.5), 100.5)
+        XCTAssertNil(Arranging.position(inClip: clip, of: project, atSongTick: Double(bar) + 10), "clip B plays there")
+        XCTAssertEqual(Arranging.position(inClip: clip, of: project, atSongTick: Double(2 * bar) + 960), 960, "its second placement")
+        XCTAssertNil(Arranging.position(inClip: clip, of: project, atSongTick: Double(3 * bar)), "after its last placement")
+        XCTAssertNil(Arranging.position(inClip: clip, of: project, atSongTick: .nan))
+        XCTAssertNil(Arranging.position(inClip: ClipID(), of: project, atSongTick: 0), "no such clip")
+    }
 }

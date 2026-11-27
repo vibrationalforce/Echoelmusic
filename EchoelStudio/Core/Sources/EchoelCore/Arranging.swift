@@ -63,6 +63,22 @@ public enum Arranging {
         return start..<end
     }
 
+    /// Where inside clip `clip` the song stands at `songTick`, in ticks from the clip's start: under
+    /// the placement of it that covers that tick (the latest-starting one where several overlap),
+    /// nil where no placement of it plays there, or for a tick that is no number. What the note
+    /// editor's playhead shows; a clip launched in the session has no song position here.
+    public static func position(inClip clip: ClipID, of project: Project, atSongTick songTick: Double) -> Double? {
+        guard songTick.isFinite, let location = project.clipLocation(clip) else { return nil }
+        let track = project.tracks[location.track]
+        let length = Double(track.clips[location.clip].length)
+        guard length > 0 else { return nil }
+        let covering = track.placements.filter { (placement: Placement) -> Bool in
+            placement.clip == clip && Double(placement.start) <= songTick && songTick < Double(placement.start) + length
+        }
+        guard let placement = covering.max(by: { $0.start < $1.start }) else { return nil }
+        return songTick - Double(placement.start)
+    }
+
     /// The bar line of the song's meter at or before `tick`; never before bar 1.
     public static func barStart(_ tick: Tick, meter: MeterMap) -> Tick {
         meter.barStart(at: Swift.max(0, tick))

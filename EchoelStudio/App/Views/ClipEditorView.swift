@@ -289,6 +289,33 @@ struct ClipEditorView: View {
 /// empty space scroll. One drag is one undo step. With VoiceOver the grid's Add Note writes the
 /// note after the last one, each note is said in bars and beats and is edited from its actions,
 /// and every action says what it did (accessibility audit 2026-11-01, B1/M4/m1).
+/// Where the song stands inside the edited clip, as a line over the notes: while it plays, at the
+/// heard position under the placement that plays the clip (`Arranging.position`); nothing while it
+/// plays elsewhere or stands still. A leaf of its own, so the clock redraws only the line (Law 6).
+struct ClipPlayheadLine: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
+    let clip: ClipID
+    let pointsPerTick: CGFloat
+
+    var body: some View {
+        let playing = engine.isPlaying
+        let project = store.project
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !playing)) { _ in
+            if playing, let at = Arranging.position(inClip: clip, of: project, atSongTick: engine.heardTick(in: project)) {
+                Rectangle()
+                    .fill(Theme.Color.accent)
+                    .frame(width: 1)
+                    .frame(maxHeight: .infinity)
+                    .offset(x: CGFloat(at) * pointsPerTick)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
 struct PianoRoll: View {
     @Environment(ProjectStore.self) private var store
     let clip: Clip
@@ -429,6 +456,7 @@ struct PianoRoll: View {
                     .accessibilitySortPriority(-(Double(note.start) * 128 + Double(note.pitch)))
             }
         }
+        .overlay(alignment: .topLeading) { ClipPlayheadLine(clip: clip.id, pointsPerTick: pointsPerTick) }
         .frame(width: gridWidth, height: gridHeight, alignment: .topLeading)
         .coordinateSpace(.named(NoteBlock.gridSpace))
         .accessibilityElement(children: .contain)
