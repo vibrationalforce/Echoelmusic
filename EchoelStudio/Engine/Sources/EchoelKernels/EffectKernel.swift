@@ -18,6 +18,13 @@ public struct EffectParameter: Sendable, Equatable {
     /// The names of a `choice` parameter's values, index 0 first; empty for every other unit.
     public let choices: [String]
 
+    /// Whether the parameter keeps time with the song: a delay's time and a modulation rate (chorus,
+    /// phaser, flanger, tremolo). While times read as note values, a moved control lands on note
+    /// values at the song's tempo.
+    public var isRhythmic: Bool {
+        (unit == .seconds && identifier == "time") || (unit == .hertz && identifier == "rate")
+    }
+
     /// The name of the choice at `value`, for a `choice` parameter.
     public func choice(at value: Float) -> String? {
         guard unit == .choice, value.isFinite else { return nil }

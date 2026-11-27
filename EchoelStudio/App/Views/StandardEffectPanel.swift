@@ -4,6 +4,7 @@ import EchoelEngine
 import EchoelHost
 import EchoelKernels
 import SwiftUI
+import UIKit
 
 /// The controls of one of Echoel's standard effects on an insert: every parameter as a value
 /// field. They move the effect through the same path as a plugin's own interface, so automation
@@ -270,8 +271,11 @@ private struct EffectChoiceLabel: View {
 /// song still stores the position along the parameter's own travel.
 private struct EffectParameterField: View {
     @Environment(AudioEngine.self) private var engine
+    @Environment(ProjectStore.self) private var store
     @Environment(ParameterWriter.self) private var writer
     @Environment(NumberPadController.self) private var pad: NumberPadController?
+    /// How times and slow rates read on this device (`TimeReading`), note values by default.
+    @AppStorage(TimeReadingSetting.key) private var timeReading = TimeReading.standard.rawValue
     let address: ParameterAddress
     let parameter: EffectParameter
     /// The drag in progress: the place on the control it has reached and the translation last read.
@@ -302,6 +306,12 @@ private struct EffectParameterField: View {
     /// an amount — before it becomes a position. The range's ends stay where they are.
     private func snapped(_ value: Double) -> Double {
         guard value.isFinite, value > low, value < high else { return value }
+        // A delay's time and a modulation rate keep time with the song: on note values while times
+        // read as note values.
+        if parameter.isRhythmic, TimeReadingSetting.reading(timeReading) == .noteValue, let unit = rhythmUnit,
+           let note = ParameterText.nearestNote(to: value, unit: unit, range: low...high, bpm: store.project.tempo) {
+            return note
+        }
         let grid: Double
         switch parameter.unit {
         case .hertz, .seconds: grid = ParameterDescriptor.significant(value, digits: ParameterDescriptor.movedDigits)
@@ -321,10 +331,19 @@ private struct EffectParameterField: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
                 .lineLimit(1)
-            Text(text(shown))
-                .font(Theme.Font.value)
-                .foregroundStyle(position == nil ? Theme.Color.textSecondary : (engaged ? Theme.Color.accent : Theme.Color.text))
-                .lineLimit(1)
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Space.xs) {
+                Text(text(shown))
+                    .font(Theme.Font.value)
+                    .foregroundStyle(position == nil ? Theme.Color.textSecondary : (engaged ? Theme.Color.accent : Theme.Color.text))
+                    .lineLimit(1)
+                if let others = rhythm(of: shown)?.others, !others.isEmpty {
+                    Text(others.joined(separator: " · "))
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Color.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+            }
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Rectangle().fill(Theme.Color.surfaceRaised)
@@ -365,7 +384,7 @@ private struct EffectParameterField: View {
         }
         .accessibilityElement()
         .accessibilityLabel(parameter.title)
-        .accessibilityValue(text(shown))
+        .accessibilityValue(spoken(shown))
         .accessibilityAddTraits(isSwitch ? .isToggle : [])
         .accessibilityAdjustableAction { direction in
             let step = isSwitch ? 1 : 0.02
@@ -382,7 +401,48 @@ private struct EffectParameterField: View {
                 Button("Reset") { reset() }
             }
         }
-        .midiLearnable(address, title: parameter.title)
+        .midiLearnable(address, title: parameter.title) { timeMenu(shown) }
+    }
+
+    /// The long-press choices of a time or a slow rate: how such values read, a note value to set,
+    /// and the exact value to copy. Nothing for any other parameter.
+    @ViewBuilder private func timeMenu(_ shown: Double) -> some View {
+        if let unit = rhythmUnit, let reading = rhythm(of: shown) {
+            Section(([reading.mainFull] + reading.othersFull).joined(separator: " = ")) {
+                Button("Copy \(reading.mainFull)", systemImage: "doc.on.doc") { UIPasteboard.general.string = reading.mainFull }
+                ForEach(reading.othersFull, id: \.self) { (form: String) in
+                    Button("Copy \(form)", systemImage: "doc.on.doc") { UIPasteboard.general.string = form }
+                }
+            }
+            Section {
+                TimeReadingMenu(unit: unit, range: low...high, bpm: store.project.tempo) { chosen in
+                    writer.set(address, normalized: position(of: chosen), gesture: false)
+                    writer.endGesture()
+                }
+            }
+        }
+    }
+
+    /// The parameter's unit as a rhythm reads it; nil for anything that is no time or rate.
+    private var rhythmUnit: ParameterUnit? {
+        switch parameter.unit {
+        case .seconds: .seconds
+        case .hertz: .hertz
+        default: nil
+        }
+    }
+
+    /// The value as a rhythm in the chosen reading; nil for a pitch, a level or a switch.
+    private func rhythm(of value: Double) -> ParameterText.RhythmText? {
+        guard let unit = rhythmUnit else { return nil }
+        return ParameterText.rhythm(value, unit: unit, bpm: store.project.tempo,
+                                    reading: TimeReadingSetting.reading(timeReading), marks: ParameterFormat.marks)
+    }
+
+    /// What VoiceOver reads: a rhythm in all its forms, anything else as the field shows it.
+    private func spoken(_ value: Double) -> String {
+        guard let reading = rhythm(of: value) else { return text(value) }
+        return ([reading.mainSpoken] + reading.othersSpoken).joined(separator: ", ")
     }
 
     private var owner: String { "\(address)" }
@@ -453,8 +513,8 @@ private struct EffectParameterField: View {
 
     private func text(_ value: Double) -> String {
         switch parameter.unit {
-        case .hertz: ParameterFormat.text(value, unit: .hertz)
-        case .seconds: ParameterFormat.text(value, unit: .seconds)
+        case .hertz: rhythm(of: value)?.main ?? ParameterFormat.text(value, unit: .hertz)
+        case .seconds: rhythm(of: value)?.main ?? ParameterFormat.text(value, unit: .seconds)
         // Exact (2026-11-27), like every value field: what the song holds, every digit of it.
         case .decibels: (value > 0 ? "+" : "") + ParameterFormat.text(value, unit: .decibel)
         case .ratio: ParameterFormat.text(value, unit: .amount) + (parameter.identifier == "ratio" ? " : 1" : "")

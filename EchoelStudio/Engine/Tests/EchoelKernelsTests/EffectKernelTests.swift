@@ -458,4 +458,16 @@ final class EffectKernelTests: XCTestCase {
         _ = process(kernel, [Float](repeating: 0, count: 9_600))
         XCTAssertEqual(kernel.playingValue(10), -6, accuracy: 1e-3, "the newer value wins over the ramp")
     }
+
+    /// A delay's time and the modulation rates keep time with the song; a reverb's times, a
+    /// compressor's and every frequency do not.
+    func testTheParametersThatKeepTimeAreTheDelayTimeAndTheModulationRates() {
+        var rhythmic: [String] = []
+        for effect in StandardEffect.allCases {
+            for parameter in EffectKernel.parameters(for: effect) where parameter.isRhythmic {
+                rhythmic.append("\(effect).\(parameter.identifier)")
+            }
+        }
+        XCTAssertEqual(Set(rhythmic), ["delay.time", "chorus.rate", "phaser.rate", "flanger.rate", "tremolo.rate"])
+    }
 }

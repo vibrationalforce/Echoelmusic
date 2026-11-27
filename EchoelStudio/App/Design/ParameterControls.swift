@@ -233,11 +233,40 @@ struct ParameterField: View {
     /// segment is always this value, read here without building the map).
     private var bpm: Double { store.project.tempo }
 
+    /// How times and slow rates read on this device (`TimeReading`), note values by default.
+    @AppStorage(TimeReadingSetting.key) private var timeReading = TimeReading.standard.rawValue
+
+    /// The value as a rhythm in the chosen reading: nil for anything that is no time or slow rate.
+    private func rhythm(of value: Double, _ descriptor: ParameterDescriptor) -> ParameterText.RhythmText? {
+        guard descriptor.address.key != SynthParameter.samplerRoot.key else { return nil }
+        return ParameterText.rhythm(value, unit: descriptor.unit, bpm: bpm, reading: TimeReadingSetting.reading(timeReading),
+                                    marks: ParameterFormat.marks)
+    }
+
+    /// A move to `position` (0…1): on note values at the song's tempo for a rhythmic parameter while
+    /// times read as note values, else on the field's own grid (`movedValue`).
+    private func move(to position: Double, _ descriptor: ParameterDescriptor) -> Double? {
+        if descriptor.isRhythmic, TimeReadingSetting.reading(timeReading) == .noteValue,
+           let note = ParameterText.nearestNote(to: descriptor.value(forNormalized: position), unit: descriptor.unit,
+                                                range: descriptor.range, bpm: bpm) {
+            return writer.set(address, to: note, coalescingKey: "parameter.\(address)")
+        }
+        return writer.set(address, normalized: position, gesture: true)
+    }
+
+    /// What the field shows large.
+    private func mainText(of value: Double, _ descriptor: ParameterDescriptor) -> String {
+        rhythm(of: value, descriptor)?.main ?? ParameterFormat.text(value, descriptor: descriptor)
+    }
+
     /// The value in the calculator's other two forms, small beside it (2026-11-27): a time as its
     /// rate and note value, a slow rate as its time and note value — "2,6̅ Hz · 1/8 dotted" beside
     /// 375 ms at 120 BPM; "≈ 1/8 dotted" when the time is near the note, not on it. A cutoff in
     /// hertz is a pitch, not a rhythm, and has none.
     private func companions(of value: Double, _ descriptor: ParameterDescriptor) -> String? {
+        if let rhythm = rhythm(of: value, descriptor) {
+            return rhythm.others.isEmpty ? nil : rhythm.others.joined(separator: " · ")
+        }
         let forms = ParameterText.companions(value, unit: descriptor.unit, bpm: bpm, marks: ParameterFormat.marks)
         let parts = [forms.other?.compact, forms.note?.name].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
@@ -245,6 +274,9 @@ struct ParameterField: View {
 
     /// The companions as VoiceOver reads them, after the value.
     private func spokenCompanions(of value: Double, _ descriptor: ParameterDescriptor) -> String {
+        if let rhythm = rhythm(of: value, descriptor) {
+            return rhythm.othersSpoken.isEmpty ? "" : ", " + rhythm.othersSpoken.joined(separator: ", ")
+        }
         let forms = ParameterText.companions(value, unit: descriptor.unit, bpm: bpm, marks: ParameterFormat.marks)
         let parts = [forms.other?.spoken, forms.note?.name].compactMap { $0 }
         return parts.isEmpty ? "" : ", " + parts.joined(separator: ", ")
@@ -263,6 +295,14 @@ struct ParameterField: View {
                     Button("Copy \(other.full)", systemImage: "doc.on.doc") { UIPasteboard.general.string = other.full }
                 }
             }
+            if ParameterText.isRhythm(value, unit: descriptor.unit) {
+                Section {
+                    TimeReadingMenu(unit: descriptor.unit, range: descriptor.range, bpm: bpm) { chosen in
+                        writer.set(address, to: chosen, coalescingKey: nil)
+                        writer.endGesture()
+                    }
+                }
+            }
         }
     }
 
@@ -278,7 +318,7 @@ struct ParameterField: View {
                 ParameterMarkBadges(address: address)
             }
             HStack(alignment: .firstTextBaseline, spacing: Theme.Space.xs) {
-                Text(ParameterFormat.text(value, descriptor: descriptor))
+                Text(mainText(of: value, descriptor))
                     .font(Theme.Font.value)
                     .foregroundStyle(engaged ? Theme.Color.accent : Theme.Color.text)
                     .lineLimit(1)
@@ -316,7 +356,7 @@ struct ParameterField: View {
                     let scale = DragPrecision.scale(speed: Double(gesture.velocity.height))
                     let next = Swift.min(Swift.max(reached.position - Double(moved / Self.travel) * scale, 0), 1)
                     drag = (position: next, translation: gesture.translation.height)
-                    passed = writer.set(address, normalized: next, gesture: true)
+                    passed = move(to: next, descriptor)
                 }
                 .onEnded { _ in
                     drag = nil
@@ -332,8 +372,8 @@ struct ParameterField: View {
         }
         .accessibilityElement()
         .accessibilityLabel(spokenTitle(descriptor))
-        .accessibilityValue(ParameterFormat.spoken(value, descriptor: descriptor) + spokenCompanions(of: value, descriptor)
-                            + ParameterMarks.spoken(address, in: store.project))
+        .accessibilityValue((rhythm(of: value, descriptor)?.mainSpoken ?? ParameterFormat.spoken(value, descriptor: descriptor))
+                            + spokenCompanions(of: value, descriptor) + ParameterMarks.spoken(address, in: store.project))
         .accessibilityAdjustableAction { direction in
             let step = Self.step(descriptor)
             writer.set(address, normalized: position + (direction == .increment ? step : -step), gesture: false)
