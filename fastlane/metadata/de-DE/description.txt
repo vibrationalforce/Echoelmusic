@@ -4,12 +4,12 @@ Echoelmusic ist eine Musik-Workstation für iPhone und iPad: Instrumente, Effekt
 SPUREN UND KLANG
 
 - Ein Song hat Instrument-, Audio- und Return-Spuren (bis zu 32, 64 und 8). Eine neue Schlagzeugspur bringt ein leeres Ein-Takt-Muster zum Füllen mit. Spuren umfärben, stumm- oder soloschalten und löschen.
-- Der eingebaute Synth mit 16 Stimmen und sechs Engines (Classic, Supersaw, FM, Sub, Morph und Mallet), je einem Character-Regler, Clean- oder Ladder-Filter und Presets.
+- Der eingebaute Synth mit 16 Stimmen und elf Engines, je einem Character-Regler, Clean- oder Ladder-Filter und Presets.
 - Ein synthetisches Schlagzeug mit acht Teilen auf den General-MIDI-Notennummern.
 - Ein Sampler spielt eine importierte Audiodatei (bis zu zehn Minuten) über die Tastatur, in Originalhöhe auf C4.
 - Installierte Audio-Unit-Instrumente anderer Hersteller (Stereo) mit eigener Oberfläche; ihre Einstellungen speichert der Song.
-- Je Spur und am Master eine Insert-Kette mit bis zu acht Effekten: EQ, Compressor, Delay, Reverb, Chorus, Phaser und Flanger oder installierte Stereo-Audio-Unit-Effekte.
-- Die sieben eingebauten Effekte gibt es auch als Audio Units für andere Apps.
+- Je Spur und am Master eine Insert-Kette mit bis zu acht Effekten aus fünfundzwanzig eingebauten (unter anderem EQ, Compressor, Delay, Reverb, Limiter und Pitch Correction) oder installierte Stereo-Audio-Unit-Effekte.
+- Die fünfundzwanzig eingebauten Effekte gibt es auch als Audio Units für andere Apps.
 
 
 SPIELEN UND ARRANGIEREN

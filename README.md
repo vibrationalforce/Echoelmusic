@@ -69,7 +69,7 @@ Network routing (OSC · ADM-OSC · Art-Net · sACN · MIDI out) is a patchbay re
 
 ---
 
-## What ships today
+## What the earlier app (10.x) shipped
 
 - **`EngineBus`** (`Core/EngineBus.swift`) — hybrid isolation: `@MainActor @Observable` control plane for SwiftUI snapshots; lock-free `SPSCQueue` data plane for audio-thread consumers. Two queues, one snapshot: the continuous bio signal flows over the `latestBio` snapshot polled at 10 Hz (the snapshot is the correct path for a slow signal); `controllerEvents` is drained and consumed (MIDI); `bioEvents` is drained by exactly one consumer, `OSCSender.drainAndSendEvents` (OSC egress only — no synth reads it). A third queue, `bioFrames`, had no consumer and was removed on 2026-09-24.
 - **Bio publishers**, all pushing source-tagged `BioSampleFrame`:

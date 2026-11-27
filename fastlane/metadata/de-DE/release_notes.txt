@@ -1,6 +1,6 @@
 Echoelmusic 11 ist eine neue App, neu gebaut als Musik-Workstation für iPhone und iPad. Die Oberfläche ist auf Englisch.
 
-- Sechs Synth-Engines, ein Drumkit und ein Sampler; installierte Audio-Unit-Instrumente und -Effekte auf Spuren
+- Elf Synth-Engines, ein Drumkit und ein Sampler; installierte Audio-Unit-Instrumente und -Effekte auf Spuren
 - Pianorolle, Drum-Step-Raster, Arrangement-Zeitleiste und ein Session-Raster für Live-Sets
 - Tasten auf dem Bildschirm, MIDI-Keyboards und -Controller, MIDI Learn, MIDI-Clock ein und aus
 - Audio-Aufnahme vom Mikrofon oder Interface; MIDI-Aufnahme als Clips
