@@ -186,7 +186,11 @@ struct StudioView: View {
             DiagnosticLog.app.note(event)
         }
         // Another song: Play starts and Stop returns at its bar 1, not at the last song's cue.
-        .onChange(of: store.documentGeneration) { engine.forgetCue() }
+        .onChange(of: store.documentGeneration) {
+            engine.forgetCue()
+            // A drawn loop belongs to the song it was drawn on.
+            engine.setLoopRegion(nil)
+        }
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
         .onChange(of: scenePhase) { _, phase in connections.scene(sceneID, is: ScenePresence.Phase(phase)) }
         .onDisappear { connections.sceneLeft(sceneID) }

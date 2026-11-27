@@ -246,19 +246,33 @@ final class AudioEngine {
         applyLoop()
     }
 
+    /// The bars the musician drew on the loop strip; nil loops the whole song. Kept for this song
+    /// while the app runs, never in the song file (Law 3); a song opened clears it.
+    private(set) var loopRegion: Range<Tick>?
+
+    /// Loops `region` instead of the whole song, and turns the loop on; nil goes back to the whole
+    /// song.
+    func setLoopRegion(_ region: Range<Tick>?) {
+        loopRegion = region.flatMap { $0.isEmpty ? nil : $0 }
+        if loopRegion != nil, !loopsSong { setLoopsSong(true) } else { applyLoop() }
+    }
+
+    /// What plays round while the loop is on: the drawn region, else bar 1 to the song's end.
+    private var playedLoop: Range<Tick>? { loopRegion ?? songLoop }
+
     /// The loop runs while it is on — except under a free take when it is shorter than a loop
     /// record takes (`LoopRecording.minimumBars`): an audio take (one file cannot be placed twice,
     /// so it runs freely, as every audio take did before loop record) or a first MIDI take on a
     /// song that plays nothing yet — and except while a chased timecode runs
     /// (`LoopRecording.loopRuns`).
     private var loopRuns: Bool {
-        LoopRecording.loopRuns(isOn: loopsSong, freeTake: take != nil, freeMIDITake: freeMIDITake, over: songLoop,
+        LoopRecording.loopRuns(isOn: loopsSong, freeTake: take != nil, freeMIDITake: freeMIDITake, over: playedLoop,
                                meter: songMeter, timecodeRuns: timecodeRuns)
     }
 
     /// Whether a take started now is cut into passes of the loop.
     var recordsLoopPasses: Bool {
-        LoopRecording.takeRecordsPasses(isOn: loopsSong, over: songLoop, meter: songMeter, timecodeRuns: timecodeRuns)
+        LoopRecording.takeRecordsPasses(isOn: loopsSong, over: playedLoop, meter: songMeter, timecodeRuns: timecodeRuns)
     }
 
     /// The sender of the timecode chase runs (`MTCChaseInput`): its clock is the master, and the
@@ -274,7 +288,7 @@ final class AudioEngine {
     var loopWrapCount: Int64 { core?.wrapCount ?? 0 }
 
     private func applyLoop() {
-        core?.setLoop(loopRuns ? songLoop : nil)
+        core?.setLoop(loopRuns ? playedLoop : nil)
     }
 
     /// Bar 1 to the end of the last bar a clip, a note or an audio region reaches, in the bars of
@@ -1289,7 +1303,7 @@ final class AudioEngine {
     /// time signature); nil while the loop is off. A jam's guest comes in on
     /// the bar of its own loop that matches the host's (`JamStart.songTick`).
     var activeLoop: Range<Tick>? {
-        loopRuns ? songLoop : nil
+        loopRuns ? playedLoop : nil
     }
 
     /// The decoded audio files sampler tracks play. Republishes the current project with them.

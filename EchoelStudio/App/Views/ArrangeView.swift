@@ -160,6 +160,7 @@ struct ArrangeView: View {
         let meter = project.meterMap
         return ScrollView(.horizontal) {
             VStack(alignment: .leading, spacing: Theme.Space.hairline) {
+                LoopStrip(meter: meter, ticksPerPoint: ticksPerPoint, width: laneWidth)
                 RulerLocator(bars: bars, meter: meter, ticksPerPoint: ticksPerPoint, width: laneWidth)
                     .overlay(alignment: .bottomLeading) {
                         MarkerStrip(markers: project.markers, meter: meter, ticksPerPoint: ticksPerPoint)
@@ -440,6 +441,102 @@ private struct BarRuler: View {
 ///
 /// Reads the cue and whether the song plays — both change with a press, never with the clock — and
 /// never the moving playhead (Law 6); VoiceOver's step reads it in its action.
+/// The loop strip above the ruler (2026-11-27): drag across it to draw the bars the song loops
+/// over, as on a cycle bar; a tap on the drawn bars turns the loop on or off; the menu goes back
+/// to the whole song. The bars snap to bar lines (`Arranging.loopRegion`). Locked while a take
+/// records or an export is written, as the ruler is: a take's passes are cut at the loop.
+///
+/// Reads the drawn region and the loop switch — both change with a press, never with the clock
+/// (Law 6).
+private struct LoopStrip: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(RecordController.self) private var recording
+    @Environment(DocumentController.self) private var documents
+    /// Where the drag started and where the finger is, in points along the strip.
+    @GestureState private var drawing: (from: CGFloat, to: CGFloat)? = nil
+    let meter: MeterMap
+    let ticksPerPoint: Double
+    let width: CGFloat
+
+    static let height: CGFloat = 22
+    /// Points a touch may move and still be a tap.
+    private static let tapSlop: CGFloat = 6
+
+    private var locked: Bool {
+        !TimelineGeometry.mayLocate(recording: recording.isRecording, exporting: documents.isExporting)
+    }
+
+    var body: some View {
+        let region = engine.loopRegion
+        ZStack(alignment: .leading) {
+            Rectangle().fill(Theme.Color.surface)
+            if let drawing, !locked, let shown = self.region(from: drawing.from, to: drawing.to) {
+                band(shown, active: true, drawing: true)
+            } else if let region {
+                band(region, active: engine.loopsSong, drawing: false)
+            }
+        }
+        .frame(width: width, height: Self.height)
+        .contentShape(Rectangle())
+        // From the first touch, as the ruler's, so the strip draws instead of scrolling the lanes.
+        // A touch that hardly moves is a tap: on the drawn bars it turns the loop on or off.
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .updating($drawing) { value, state, _ in
+                    guard Swift.abs(value.location.x - value.startLocation.x) >= Self.tapSlop else { return }
+                    state = (value.startLocation.x, value.location.x)
+                }
+                .onEnded { value in
+                    guard !locked else { return }
+                    if Swift.abs(value.location.x - value.startLocation.x) < Self.tapSlop {
+                        if engine.loopRegion != nil { engine.setLoopsSong(!engine.loopsSong) }
+                        return
+                    }
+                    guard let drawn = self.region(from: value.startLocation.x, to: value.location.x) else { return }
+                    engine.setLoopRegion(drawn)
+                    Theme.Accessibility.announce(Announcement("Loop \(spoken(drawn))", priority: .normal))
+                }
+        )
+        .contextMenu {
+            if engine.loopRegion != nil {
+                Button("Loop the Whole Song", systemImage: "arrow.left.and.right") { engine.setLoopRegion(nil) }
+            }
+            Button(engine.loopsSong ? "Loop Off" : "Loop On", systemImage: "repeat") { engine.setLoopsSong(!engine.loopsSong) }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Loop Region")
+        .accessibilityValue((region.map(spoken) ?? "Whole song") + (engine.loopsSong ? ", on" : ", off"))
+        .accessibilityHint(locked ? "Locked while a take records or an export is written."
+                                  : "Drag across it to choose the bars the song loops over.")
+        .accessibilityAction(named: "Loop the Whole Song") { engine.setLoopRegion(nil) }
+        .accessibilityAction(named: engine.loopsSong ? "Loop Off" : "Loop On") { engine.setLoopsSong(!engine.loopsSong) }
+    }
+
+    /// The drawn bars as a band: the accent while the loop is on, an outline while it is off.
+    private func band(_ region: Range<Tick>, active: Bool, drawing: Bool) -> some View {
+        let start = CGFloat(TimelineGeometry.x(ofTick: region.lowerBound, ticksPerPoint: ticksPerPoint))
+        let end = CGFloat(TimelineGeometry.x(ofTick: region.upperBound, ticksPerPoint: ticksPerPoint))
+        return RoundedRectangle(cornerRadius: Theme.Radius.small)
+            .fill(active ? Theme.Color.accent.opacity(drawing ? 0.35 : 0.5) : Color.clear)
+            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.small).strokeBorder(Theme.Color.accent, lineWidth: 1))
+            .frame(width: Swift.max(end - start, 2), height: Self.height - 6)
+            .offset(x: start)
+    }
+
+    /// The bars a drag between two points along the strip draws.
+    private func region(from: CGFloat, to: CGFloat) -> Range<Tick>? {
+        Arranging.loopRegion(from: TimelineGeometry.tick(clamping: Double(from) * ticksPerPoint),
+                             to: TimelineGeometry.tick(clamping: Double(to) * ticksPerPoint), meter: meter)
+    }
+
+    /// "bars 3 to 4", "bar 3".
+    private func spoken(_ region: Range<Tick>) -> String {
+        let first = meter.bar(at: region.lowerBound) + 1
+        let last = meter.bar(at: region.upperBound - 1) + 1
+        return first == last ? "bar \(first)" : "bars \(first) to \(last)"
+    }
+}
+
 private struct RulerLocator: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine

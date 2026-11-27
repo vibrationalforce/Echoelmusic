@@ -47,6 +47,22 @@ public enum Arranging {
         return 0..<Swift.min(end, MusicalTime.maximumTick)
     }
 
+    /// The bars a drag on the loop strip from `from` to `to` draws, in either direction: from the
+    /// bar line at or before the earlier point to the bar line after the later one, so a touch
+    /// inside one bar draws that bar. Never before bar 1, never past the last tick a song holds;
+    /// nil for a point that is no tick a song can hold.
+    public static func loopRegion(from: Tick, to: Tick, meter: MeterMap) -> Range<Tick>? {
+        guard from >= 0 || to >= 0, from < MusicalTime.maximumTick || to < MusicalTime.maximumTick else { return nil }
+        let early = Swift.max(0, Swift.min(from, to))
+        let late = Swift.min(Swift.max(from, to), MusicalTime.maximumTick - 1)
+        let start = meter.barStart(at: early)
+        // A drag that ends exactly on a bar line ends there; anywhere else it takes the bar it is in.
+        let afterLate = late > early && meter.barStart(at: late) == late ? late : meter.nextBarLine(atOrAfter: late + 1)
+        let end = Swift.min(Swift.max(afterLate, start + meter.ticksPerBar(at: start)), MusicalTime.maximumTick)
+        guard end > start else { return nil }
+        return start..<end
+    }
+
     /// The bar line of the song's meter at or before `tick`; never before bar 1.
     public static func barStart(_ tick: Tick, meter: MeterMap) -> Tick {
         meter.barStart(at: Swift.max(0, tick))

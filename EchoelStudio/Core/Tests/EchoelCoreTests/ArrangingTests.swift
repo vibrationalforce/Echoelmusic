@@ -313,4 +313,25 @@ final class ArrangingTests: XCTestCase {
         XCTAssertNil(Arranging.moved(placed, in: t, byTicks: bar / 3, signature: .common))
     }
 
+
+    /// A drag on the loop strip draws whole bars, in either direction; a touch inside a bar draws
+    /// that bar, a drag that ends on a bar line ends there, and nothing lies before bar 1.
+    func testADragOnTheLoopStripDrawsWholeBars() throws {
+        let meter = Project().meterMap
+        let bar = meter.ticksPerBar(at: 0)
+        XCTAssertEqual(Arranging.loopRegion(from: 100, to: 200, meter: meter), 0..<bar, "a touch inside bar 1 draws bar 1")
+        XCTAssertEqual(Arranging.loopRegion(from: bar + 10, to: 100, meter: meter), 0..<(2 * bar), "right to left as left to right")
+        XCTAssertEqual(Arranging.loopRegion(from: 0, to: bar, meter: meter), 0..<bar, "ending on a bar line ends there")
+        XCTAssertEqual(Arranging.loopRegion(from: 2 * bar + 5, to: 4 * bar - 1, meter: meter), (2 * bar)..<(4 * bar), "bars 3 and 4")
+        XCTAssertEqual(Arranging.loopRegion(from: -500, to: 10, meter: meter), 0..<bar, "nothing before bar 1")
+        let last = try XCTUnwrap(Arranging.loopRegion(from: MusicalTime.maximumTick - 10, to: MusicalTime.maximumTick + 99, meter: meter))
+        XCTAssertLessThanOrEqual(last.upperBound, MusicalTime.maximumTick)
+        XCTAssertFalse(last.isEmpty)
+        // A meter of three: bars of three quarters.
+        var waltz = Project()
+        waltz.timeSignature = TimeSignature(3, 4)
+        let three = waltz.meterMap.ticksPerBar(at: 0)
+        XCTAssertEqual(three, 3 * MusicalTime.ticksPerQuarter)
+        XCTAssertEqual(Arranging.loopRegion(from: three + 1, to: three + 2, meter: waltz.meterMap), three..<(2 * three))
+    }
 }
