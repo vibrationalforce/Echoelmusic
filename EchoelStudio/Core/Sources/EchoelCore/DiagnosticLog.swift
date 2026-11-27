@@ -34,6 +34,9 @@ public final class DiagnosticLog: @unchecked Sendable {
     private var handle: FileHandle?
     private var written = 0
     private var isFull = false
+    /// When this run began, and the moments it has written (`milestone`).
+    private var began: Date?
+    private var reached: Set<String> = []
 
     public init(url: URL, capacity: Int = 256 * 1024, clock: @escaping @Sendable () -> Date = { Date() }) {
         self.url = url
@@ -51,13 +54,16 @@ public final class DiagnosticLog: @unchecked Sendable {
     /// folder cannot be made or written stays silent and never throws.
     public func begin(version: String, build: String) {
         let launch = "app: launch v\(Self.plain(version)) (\(Self.plain(build))), times in UTC"
-        let time = Self.timestamp(clock())
+        let now = clock()
+        let time = Self.timestamp(now)
         lock.lock()
         defer { lock.unlock() }
         try? handle?.close()
         handle = nil
         written = 0
         isFull = false
+        began = now
+        reached = []
         let files = FileManager.default
         do {
             try files.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -91,6 +97,24 @@ public final class DiagnosticLog: @unchecked Sendable {
         defer { lock.unlock() }
         append(line, at: time)
         return line
+    }
+
+    /// Writes `event` with `s=`, the seconds since this run began, the first time the run reaches
+    /// it and never again until the next `begin`: for a moment a run has once, as its first sound,
+    /// however often the app comes past it. Returns those seconds, as `note` returns its line even
+    /// when the file cannot be written; nil once the run has the event, or before any run began.
+    @discardableResult
+    public func milestone(_ event: StaticString) -> Double? {
+        let name = event.description
+        let now = clock()
+        let time = Self.timestamp(now)
+        lock.lock()
+        defer { lock.unlock() }
+        guard let began, !reached.contains(name) else { return nil }
+        reached.insert(name)
+        let elapsed = Swift.max(0, now.timeIntervalSince(began))
+        append("\(name) s=\(Self.number(elapsed))", at: time)
+        return elapsed
     }
 
     /// Writes `event` with the error's domain and code — never its description.

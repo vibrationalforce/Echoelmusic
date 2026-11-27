@@ -95,6 +95,19 @@ struct StudioView: View {
             case .mixer, .field, .cycles: .neverShown
             }
         }
+
+        /// The view as Learn and the diagnostics log name it (`StudioPlace.shownEvent`).
+        var place: StudioPlace {
+            switch self {
+            case .instrument: .instrument
+            case .tracks: .tracks
+            case .arrange: .arrange
+            case .session: .session
+            case .mixer: .mixer
+            case .field: .field
+            case .cycles: .cycleTones
+            }
+        }
     }
 
     /// What the transport's Keys switch does under the chosen view (`Surface.keysSwitch`).
@@ -136,6 +149,12 @@ struct StudioView: View {
                         connections: connections)
         }
         .onChange(of: store.project) { _, project in engine.update(project) }
+        // The view shown goes to the diagnostics log once when the window appears and once per
+        // change, in fixed words, so the report can say where an edit was refused.
+        .onChange(of: surface, initial: true) { _, shown in
+            guard let event = shown.place.shownEvent else { return }
+            DiagnosticLog.app.note(event)
+        }
         // Another song: Play starts and Stop returns at its bar 1, not at the last song's cue.
         .onChange(of: store.documentGeneration) { engine.forgetCue() }
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }

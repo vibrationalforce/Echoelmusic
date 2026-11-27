@@ -17,6 +17,26 @@ final class DiagnosticLogTests: XCTestCase {
         DiagnosticLog(url: url, capacity: capacity, clock: { DiagnosticLogTests.moment })
     }
 
+    /// A clock the test moves by hand, for the seconds a moment is written with.
+    private final class Hands: @unchecked Sendable {
+        private let lock = NSLock()
+        private var current: Date
+
+        init(_ start: Date) { current = start }
+
+        var now: Date {
+            lock.lock()
+            defer { lock.unlock() }
+            return current
+        }
+
+        func advance(by seconds: TimeInterval) {
+            lock.lock()
+            defer { lock.unlock() }
+            current += seconds
+        }
+    }
+
     func testARunStartsWithItsVersionAndBuild() throws {
         let url = try folder().appendingPathComponent("Diagnostics/Echoel diagnostics.log")
         let diagnostics = log(at: url)
@@ -206,6 +226,42 @@ final class DiagnosticLogTests: XCTestCase {
         let url = try folder().appendingPathComponent("a.log")
         let diagnostics = log(at: url)
         diagnostics.note("engine: start")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+    }
+
+    /// A moment a run has once — its first sound, its first note — is one line with the seconds
+    /// since the run began, however often the app comes past it; the next run has its own.
+    func testAMomentIsWrittenOnceARunWithTheSecondsSinceTheLaunch() throws {
+        let url = try folder().appendingPathComponent("a.log")
+        let hands = Hands(Self.moment)
+        let diagnostics = DiagnosticLog(url: url, clock: { hands.now })
+        hands.advance(by: 7)
+        diagnostics.begin(version: "11.0.0", build: "1")
+        hands.advance(by: 95.25)
+        XCTAssertEqual(diagnostics.milestone("launch: first sound"), 95.25, "from the run's begin, not from the log's making")
+        hands.advance(by: 10)
+        XCTAssertNil(diagnostics.milestone("launch: first sound"), "once a run")
+        XCTAssertEqual(diagnostics.milestone("launch: first note"), 105.25, "each moment has its own once")
+        let text = diagnostics.text()
+        XCTAssertTrue(text.contains("2026-10-23T01:16:42.500Z  launch: first sound s=95.25\n"), text)
+        XCTAssertTrue(text.contains("2026-10-23T01:16:52.500Z  launch: first note s=105.25\n"), text)
+        XCTAssertEqual(text.components(separatedBy: "launch: first sound").count, 2, "one line")
+
+        hands.advance(by: 20)
+        diagnostics.begin(version: "11.0.0", build: "2")
+        hands.advance(by: 3)
+        XCTAssertEqual(diagnostics.milestone("launch: first sound"), 3, "the next run has its own, counted from its begin")
+        let next = diagnostics.text()
+        let latest = try XCTUnwrap(next.range(of: DiagnosticLog.latestRunHeader + "\n"))
+        let before = try XCTUnwrap(next.range(of: DiagnosticLog.runBeforeHeader + "\n"))
+        XCTAssertTrue(next[latest.upperBound...].contains("  launch: first sound s=3\n"), next)
+        XCTAssertTrue(next[before.upperBound..<latest.lowerBound].contains("  launch: first sound s=95.25\n"), next)
+    }
+
+    func testAMomentBeforeTheRunBeganIsNotWritten() throws {
+        let url = try folder().appendingPathComponent("a.log")
+        let diagnostics = log(at: url)
+        XCTAssertNil(diagnostics.milestone("launch: first sound"))
         XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
     }
 

@@ -203,6 +203,240 @@ final class DiagnosticReportTests: XCTestCase {
                        ["The Field lowered its picture detail once; the slowest second showed 41 frames."])
     }
 
+    /// An error that is no `CommandError`, as a refused edit may carry.
+    private struct ElsewhereError: Error {}
+
+    func testManyRefusedEditsAreANoticeWithTheirCountTheirViewAndWhatTheStatusLineSaid() throws {
+        let gone = "2026-11-27T10:30:00.000Z  edit: refused (part gone)"
+        let value = "2026-11-27T10:30:05.000Z  edit: refused (value)"
+        let duplicate = "2026-11-27T10:31:05.000Z  edit: refused (already there)"
+        let report = DiagnosticReport(log: log([launch,
+                                                "2026-11-27T10:26:01.000Z  view: tracks",
+                                                "2026-11-27T10:29:00.000Z  view: arrange"]
+            + Array(repeating: gone, count: 6) + Array(repeating: value, count: 3)
+            + ["2026-11-27T10:31:00.000Z  view: mixer", duplicate]))
+        let finding = try XCTUnwrap(report.findings.first)
+        XCTAssertEqual(report.findings.count, 1, "a view shown is no finding")
+        XCTAssertEqual(finding.weight, .notice)
+        XCTAssertEqual(finding.title, "The song refused 10 edits, 9 of them while Arrange was shown.")
+        XCTAssertEqual(finding.suggestion,
+                       "The status line said 6 times “that part of the song is no longer there”, once “that is already in the song” and 3 times why it did not fit. A refused edit leaves the song as it was. Share this report and say what you did while Arrange was shown; the times of the lines say when.")
+        XCTAssertEqual(finding.count, 10)
+        XCTAssertEqual(finding.evidence, [value, value, duplicate])
+        XCTAssertEqual(report.latest.refusedEdits, 10)
+    }
+
+    func testAFewRefusedEditsAreOnlyANote() {
+        let gone = "2026-11-27T10:30:00.000Z  edit: refused (part gone)"
+        let report = DiagnosticReport(log: log([launch, "2026-11-27T10:29:00.000Z  view: arrange", gone, gone]))
+        XCTAssertEqual(report.findings.map(\.weight), [.note])
+        XCTAssertEqual(report.findings.first?.title, "The song refused 2 edits while Arrange was shown.")
+        XCTAssertEqual(report.findings.first?.suggestion,
+                       "The status line said “that part of the song is no longer there” each time. A refused edit leaves the song as it was.")
+        let alone = DiagnosticReport(log: log([launch, "2026-11-27T10:30:00.000Z  edit: refused (value)"]))
+        XCTAssertEqual(alone.findings.first?.title, "The song refused an edit.", "no view line, no view named")
+        XCTAssertEqual(alone.findings.first?.suggestion,
+                       "The status line said why it did not fit. A refused edit leaves the song as it was.")
+    }
+
+    /// The report made from one refused edit the app wrote for `error`, as the app writes it.
+    private func refusing(_ error: any Error) throws -> DiagnosticReport.Finding {
+        let report = DiagnosticReport(log: log([launch, "2026-11-27T10:30:00.000Z  edit: refused (\(CommandError.logReason(for: error)))"]))
+        return try XCTUnwrap(report.findings.first)
+    }
+
+    /// What the app writes for a refused edit is read back as the sentence its status line showed,
+    /// and the line holds fixed words only: never the edit's own reason, which can quote a value.
+    func testEachRefusalTheAppWritesIsReadBackAsWhatTheStatusLineSaid() throws {
+        let inside = CommandError.invalidValue(parameter: "at", reason: "must fall inside the region")
+        let range = CommandError.invalidValue(parameter: "channel", reason: "0…14")
+        // Each with the sentence its status line showed; the report quotes that sentence's clause.
+        let quoted: [(error: any Error, sentence: String)] = [
+            (CommandError.unknownTrack(TrackID()), CommandError.unknownTrack(TrackID()).sentence),
+            (CommandError.duplicateID("x"), CommandError.duplicateID("x").sentence),
+            (inside, inside.sentence),
+            (range, range.sentence),
+            (ElsewhereError(), "Not done: that does not fit here."),
+        ]
+        for (error, sentence) in quoted {
+            XCTAssertTrue(sentence.hasPrefix("Not done: ") && sentence.hasSuffix("."), sentence)
+            let clause = sentence.dropFirst("Not done: ".count).dropLast()
+            let finding = try refusing(error)
+            XCTAssertTrue(finding.suggestion.hasPrefix("The status line said “\(clause)”."), finding.suggestion)
+        }
+        // A reason that reads alone was said as it was and can quote a name: the log and the report
+        // say only that the status line said why.
+        let named = CommandError.invalidValue(parameter: "name", reason: "My Secret Song is taken")
+        XCTAssertEqual(named.sentence, "Not done: My Secret Song is taken.")
+        XCTAssertFalse(CommandError.logReason(for: named).description.contains("Secret"))
+        let finding = try refusing(named)
+        XCTAssertTrue(finding.suggestion.hasPrefix("The status line said why it did not fit."), finding.suggestion)
+        XCTAssertFalse(finding.suggestion.contains("Secret"))
+        XCTAssertEqual(Set(CommandError.Refusal.allCases.map { $0.reason.description }).count,
+                       CommandError.Refusal.allCases.count, "one word for each kind")
+    }
+
+    func testRefusalsTheStatusLineSaidAlikeAreCountedTogether() {
+        let unfit = "2026-11-27T10:30:00.000Z  edit: refused (does not fit)"
+        let other = "2026-11-27T10:30:01.000Z  edit: refused (other)"
+        let gone = "2026-11-27T10:30:02.000Z  edit: refused (part gone)"
+        let alike = DiagnosticReport(log: log([launch, unfit, other, unfit]))
+        XCTAssertEqual(alike.findings.first?.suggestion,
+                       "The status line said “that does not fit here” each time. A refused edit leaves the song as it was.")
+        let mixed = DiagnosticReport(log: log([launch, unfit, gone, other]))
+        XCTAssertEqual(mixed.findings.first?.suggestion,
+                       "The status line said once “that part of the song is no longer there” and 2 times “that does not fit here”. A refused edit leaves the song as it was.")
+    }
+
+    func testARunFromAnEarlierBuildShowsNoCountOfRefusedEdits() {
+        let report = DiagnosticReport(log: log(
+            [launch, "2026-11-27T10:26:01.000Z  view: tracks"],
+            before: ["2026-11-26T18:00:00.000Z  app: launch v11.0.0 (10087), times in UTC",
+                     "2026-11-26T18:00:05.000Z  app: active"]))
+        XCTAssertTrue(report.latest.countsRefusals, "a view line comes from a build that writes refused edits")
+        XCTAssertEqual(report.before?.countsRefusals, false)
+        XCTAssertTrue(report.markdown.contains("| Edits refused | 0 | – |"), report.markdown)
+        let refusedOnly = DiagnosticReport(log: log([launch, "2026-11-27T10:30:00.000Z  edit: refused (part gone)"]))
+        XCTAssertTrue(refusedOnly.markdown.contains("| Edits refused | 1 | – |"), refusedOnly.markdown)
+    }
+
+    func testALongWaitForTheFirstSoundIsOnlyANoteWhenNothingInTheLogWasDueSooner() throws {
+        let started = "2026-11-27T10:26:02.100Z  engine: started Hz=48000 out_Hz=48000 io_ms=10.667 in_ms=0 out_ms=5 buffers=0"
+        let sound = "2026-11-27T10:27:35.200Z  launch: first sound s=95.2"
+        let report = DiagnosticReport(log: log([launch, started, sound]))
+        let finding = try XCTUnwrap(report.findings.first)
+        XCTAssertEqual(report.findings.count, 1)
+        XCTAssertEqual(finding.weight, .note, "the log does not say when Play was pressed")
+        XCTAssertEqual(finding.title, "The first sound came 95 s after the launch; the audio was running after 2.1 s.")
+        XCTAssertEqual(finding.suggestion,
+                       "The first sound is the first time the song or a note played live reached the master. If you pressed Play or a key well before then, the lines before it are what the app did meanwhile; share this report. If not, it only says when you first played.")
+        XCTAssertEqual(finding.evidence, [started, sound])
+        XCTAssertEqual(report.latest.firstSound, 95.2)
+        XCTAssertTrue(report.markdown.contains(DiagnosticReport.nothingFound), "a note leaves the all-clear standing")
+
+        let unstarted = DiagnosticReport(log: log([launch, sound]))
+        XCTAssertEqual(unstarted.findings.first?.title, "The first sound came 95 s after the launch.",
+                       "without its start the audio's time is not claimed")
+        let reordered = DiagnosticReport(log: log([launch, sound, "2026-11-27T10:28:00.000Z  engine: started Hz=48000"]))
+        XCTAssertEqual(reordered.findings.first?.title, "The first sound came 95 s after the launch.",
+                       "a start after the sound, as only an edited file has it, is not claimed either")
+        let keyThatSounded = DiagnosticReport(log: log([launch, started,
+                                                         "2026-11-27T10:27:34.500Z  launch: first note s=94.5", sound]))
+        XCTAssertEqual(keyThatSounded.findings.map(\.weight), [.note], "the note made the sound")
+        XCTAssertEqual(keyThatSounded.findings.first?.title, finding.title)
+    }
+
+    func testANoteThatStayedSilentMakesALongWaitForTheFirstSoundANotice() throws {
+        let started = "2026-11-27T10:26:02.000Z  engine: started Hz=48000"
+        let note = "2026-11-27T10:26:05.000Z  launch: first note s=5"
+        let sound = "2026-11-27T10:27:01.000Z  launch: first sound s=61"
+        let report = DiagnosticReport(log: log([launch, started, note, sound]))
+        let finding = try XCTUnwrap(report.findings.first)
+        XCTAssertEqual(finding.weight, .notice)
+        XCTAssertEqual(finding.title,
+                       "The first sound came 61 s after the launch; the audio was running after 2.0 s, and a note was played live after 5.0 s.")
+        XCTAssertEqual(finding.suggestion,
+                       "The first sound is the first time the song or a note played live reached the master. The lines before it are what the app did meanwhile; share this report.")
+        XCTAssertEqual(finding.evidence, [started, note, sound], "oldest first")
+        XCTAssertFalse(report.markdown.contains(DiagnosticReport.nothingFound))
+    }
+
+    func testAudioThatStartedOnlyAfterAMinuteMakesTheWaitForTheFirstSoundANotice() throws {
+        let started = "2026-11-27T10:27:10.000Z  engine: started Hz=48000"
+        let sound = "2026-11-27T10:27:15.000Z  launch: first sound s=75"
+        let report = DiagnosticReport(log: log([launch, "2026-11-27T10:26:01.000Z  engine: configure failed error=NSOSStatusErrorDomain code=561017449",
+                                                started, sound]))
+        let finding = try XCTUnwrap(report.findings.first { $0.title.hasPrefix("The first sound") })
+        XCTAssertEqual(finding.weight, .notice)
+        XCTAssertEqual(finding.title, "The first sound came 75 s after the launch; the audio was running after 70 s.")
+        XCTAssertEqual(finding.evidence, [started, sound])
+    }
+
+    func testAQuickFirstSoundAndTheFirstNoteGoIntoTheOverviewAndTheNumbers() {
+        let report = DiagnosticReport(log: log([launch,
+                                                "2026-11-27T10:26:03.200Z  launch: first sound s=3.2",
+                                                "2026-11-27T10:26:12.000Z  launch: first note s=12",
+                                                "2026-11-27T10:34:00.000Z  app: background"]))
+        XCTAssertTrue(report.findings.isEmpty, "a first sound within a minute is no finding")
+        XCTAssertEqual(report.latest.firstNote, 12)
+        XCTAssertEqual(report.overview, [
+            "Latest run: version 11.0.0 (10088), 2026-11-27 10:26 to 10:34 UTC, 8 min, 4 lines, first sound 3.2 s after launch, first note 12 s after launch.",
+        ])
+        XCTAssertTrue(report.markdown.contains("| First sound after launch | 3.2 s | – |"), report.markdown)
+        XCTAssertTrue(report.markdown.contains("| First note after launch | 12 s | – |"), report.markdown)
+    }
+
+    func testViewsAndTheSongsBarsGoIntoTheNumbersNotTheFindings() {
+        let report = DiagnosticReport(log: log(
+            [launch,
+             "2026-11-27T10:26:00.500Z  document: opened bars=16",
+             "2026-11-27T10:26:01.000Z  view: tracks",
+             "2026-11-27T10:27:00.000Z  view: arrange",
+             "2026-11-27T10:28:00.000Z  view: mixer",
+             "2026-11-27T10:29:00.000Z  view: arrange"],
+            before: ["2026-11-26T18:00:00.000Z  app: launch v11.0.0 (10087), times in UTC",
+                     "2026-11-26T18:00:01.000Z  document: opened bars=1",
+                     "2026-11-26T18:05:00.000Z  document: opened bars=24"]))
+        XCTAssertTrue(report.findings.isEmpty)
+        XCTAssertEqual(report.latest.views, [.tracks: 1, .arrange: 2, .mixer: 1])
+        XCTAssertEqual(report.latest.songBars, 16)
+        XCTAssertEqual(report.before?.songsOpened, 2)
+        XCTAssertEqual(report.before?.songBars, 24, "the last song opened")
+        XCTAssertTrue(report.overview[0].hasSuffix(", 6 lines, a song of 16 bars."), report.overview[0])
+        XCTAssertTrue(report.overview[1].hasSuffix(", 3 lines, 2 songs, the last of 24 bars."), report.overview[1])
+        XCTAssertTrue(report.markdown.contains("| Song opened | 16 bars | 2 songs, the last of 24 bars |"), report.markdown)
+        XCTAssertTrue(report.markdown.contains("| Views shown | Arrange 2 · Tracks 1 · Mixer 1 | – |"), report.markdown)
+    }
+
+    func testEveryViewOfTheBarHasALineOfItsOwnThatTheReportCounts() throws {
+        var lines = [launch]
+        for (index, place) in StudioPlace.views.enumerated() {
+            let event = try XCTUnwrap(place.shownEvent, "\(place) is a view of the bar")
+            lines.append("2026-11-27T10:27:0\(index).000Z  \(event)")
+        }
+        let report = DiagnosticReport(log: log(lines))
+        XCTAssertEqual(report.latest.views, Dictionary(uniqueKeysWithValues: StudioPlace.views.map { ($0, 1) }))
+        XCTAssertEqual(Set(StudioPlace.views.compactMap { $0.shownEvent?.description }).count, StudioPlace.views.count,
+                       "one line per view")
+        XCTAssertEqual(StudioPlace.views.map(\.title), ["Instrument", "Tracks", "Arrange", "Session", "Mixer", "Field", "Cycle Tones"])
+        XCTAssertNil(StudioPlace.play.shownEvent, "a button is no view")
+        XCTAssertTrue(report.findings.isEmpty)
+    }
+
+    func testFollowPlayheadIsReadAsTheRunLeftItWithItsSwitches() {
+        let report = DiagnosticReport(log: log([launch,
+                                                "2026-11-27T10:27:00.000Z  view: arrange",
+                                                "2026-11-27T10:27:00.001Z  arrange: follow playhead on=1",
+                                                "2026-11-27T10:28:00.000Z  arrange: follow playhead on=0",
+                                                "2026-11-27T10:29:00.000Z  view: arrange",
+                                                "2026-11-27T10:29:00.001Z  arrange: follow playhead on=0"]))
+        XCTAssertEqual(report.latest.followsPlayhead, false)
+        XCTAssertEqual(report.latest.followSwitches, 1)
+        XCTAssertTrue(report.markdown.contains("| Follow Playhead in Arrange | off, switched once | – |"), report.markdown)
+        XCTAssertTrue(report.findings.isEmpty)
+        let untouched = DiagnosticReport(log: log([launch]))
+        XCTAssertNil(untouched.latest.followsPlayhead, "a run that never showed Arrange does not know")
+        XCTAssertTrue(untouched.markdown.contains("| Follow Playhead in Arrange | – | – |"), untouched.markdown)
+    }
+
+    func testEditedNumbersInTheNewLinesCannotStopTheReport() {
+        let report = DiagnosticReport(log: log([launch,
+                                                "2026-11-27T10:26:01.000Z  launch: first sound s=-5",
+                                                "2026-11-27T10:26:02.000Z  launch: first note s=nan",
+                                                "2026-11-27T10:26:03.000Z  document: opened bars=1e300",
+                                                "2026-11-27T10:26:04.000Z  arrange: follow playhead on=7",
+                                                "2026-11-27T10:26:05.000Z  edit: refused (My Song)"]))
+        XCTAssertNil(report.latest.firstSound, "a wait below zero is no wait")
+        XCTAssertNil(report.latest.firstNote)
+        XCTAssertEqual(report.latest.songBars, 1_000_000_000, "held within a billion")
+        XCTAssertEqual(report.latest.followsPlayhead, true)
+        XCTAssertEqual(report.latest.refusedEdits, 1)
+        XCTAssertEqual(report.findings.map(\.title), ["The song refused an edit."])
+        XCTAssertEqual(report.findings.first?.suggestion, "A refused edit leaves the song as it was.",
+                       "a reason the app never writes is not repeated")
+        XCTAssertTrue(report.markdown.contains("| Song opened | 1000000000 bars | – |"), report.markdown)
+    }
+
     func testAQuietLogSaysNothingPointsToAFault() {
         let report = DiagnosticReport(log: log([launch, "2026-11-27T10:26:05.000Z  app: active", load("10:26:10", peak: 0.3)]))
         XCTAssertTrue(report.findings.isEmpty)

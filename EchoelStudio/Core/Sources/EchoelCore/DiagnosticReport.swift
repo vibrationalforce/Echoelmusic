@@ -83,6 +83,25 @@ public struct DiagnosticReport: Equatable, Sendable {
         public var sampleJumps = 0
         /// The largest share of its time one callback used, 1 = all of it.
         public var highestLoad = 0.0
+        /// Songs opened (`Event.songOpened`), and the length of the last of them in the bars Arrange
+        /// counts; nil before one.
+        public var songsOpened = 0
+        public var songBars: Int?
+        /// Seconds from the launch to the first sound that reached the master and to the first note
+        /// played live (`DiagnosticLog.milestone`); nil when the run had none.
+        public var firstSound: Double?
+        public var firstNote: Double?
+        /// Edits the song refused (`Event.editRefused`), and whether the run's build writes them:
+        /// it does when the run holds any line of `Event` or a view line, which came in the same
+        /// build. A run from an earlier build has none, and its refused edits are not in the log.
+        public var refusedEdits = 0
+        public var countsRefusals = false
+        /// How often each view of the bar was shown, the one at launch included.
+        public var views: [StudioPlace: Int] = [:]
+        /// Follow Playhead in Arrange as the run last wrote it — when Arrange showed, or when it was
+        /// switched — and how often it changed; nil when Arrange never showed.
+        public var followsPlayhead: Bool?
+        public var followSwitches = 0
 
         /// Whole minutes from the first line to the last; nil without two readable times.
         public var minutes: Int? {
@@ -95,6 +114,17 @@ public struct DiagnosticReport: Equatable, Sendable {
 
     /// The most lines a finding quotes.
     public static let evidenceLimit = 3
+
+    /// Refused edits in one run from which they are a notice rather than a note.
+    public static let manyRefusedEdits = 5
+
+    /// Seconds from the launch from which the run's first sound is a finding: a notice when a note
+    /// played live or the audio's own start says it was due sooner, a note otherwise.
+    public static let longWaitForSound = 60.0
+
+    /// Seconds a note played live may come before the run's first sound: a note that sounds reaches
+    /// the master's meter within a fraction of a second, so a longer gap is a note that did not.
+    public static let noteBeforeSound = 2.0
 
     /// What the report says when no rule above a note matched. It speaks for the rules, not for the
     /// app: a fault the log does not write, or no rule reads, is not ruled out.
@@ -220,8 +250,55 @@ public struct DiagnosticReport: Equatable, Sendable {
             summary.sampleJumps += whole(line.number("gaps"))
             summary.highestLoad = Swift.max(summary.highestLoad, line.number("peak") ?? 0)
         }
+        var follow: Bool?
+        for line in lines {
+            if eventsSinceRefusals.contains(line.event) { summary.countsRefusals = true }
+            if let place = viewsByEvent[line.event] {
+                summary.views[place, default: 0] += 1
+                continue
+            }
+            switch line.event {
+            case Event.songOpened.description:
+                summary.songsOpened += 1
+                summary.songBars = line.number("bars").map { Swift.max(0, whole($0)) }
+            case Event.editRefused.description:
+                summary.refusedEdits += 1
+            case Event.firstSound.description where summary.firstSound == nil:
+                summary.firstSound = waited(line)
+            case Event.firstNote.description where summary.firstNote == nil:
+                summary.firstNote = waited(line)
+            case Event.followPlayhead.description:
+                guard let value = line.number("on") else { continue }
+                let on = value != 0
+                if let follow, follow != on { summary.followSwitches += 1 }
+                follow = on
+            default:
+                break
+            }
+        }
+        summary.followsPlayhead = follow
         return summary
     }
+
+    /// The seconds since the launch a moment's line names (`DiagnosticLog.milestone`); nil for
+    /// none, or for a wait below zero, which an edit in Files could write.
+    private static func waited(_ line: Line) -> Double? {
+        line.number("s").flatMap { $0 >= 0 ? $0 : nil }
+    }
+
+    /// Each view's line (`StudioPlace.shownEvent`), to the view.
+    private static let viewsByEvent: [String: StudioPlace] = Dictionary(
+        StudioPlace.views.compactMap { (place: StudioPlace) -> (String, StudioPlace)? in
+            place.shownEvent.map { ($0.description, place) }
+        },
+        uniquingKeysWith: { first, _ in first })
+
+    /// The lines that came in the build that writes refused edits (`Event` and the view lines):
+    /// one of them in a run says its build would have written its refusals.
+    private static let eventsSinceRefusals: Set<String> = Set(
+        [Event.editRefused, Event.songOpened, Event.firstSound, Event.firstNote, Event.followPlayhead]
+            .map { (event: StaticString) -> String in event.description })
+        .union(viewsByEvent.keys)
 
     // MARK: - The rules
 
@@ -359,6 +436,9 @@ public struct DiagnosticReport: Equatable, Sendable {
         out += bodySourceRules(on: lines, run: run)
         add(.notice, [DiagnosticLog.fullLine], { _ in "The log filled up; the rest of that run is not in it." },
             "Opening the app again starts a new run with room in the log.")
+        let refused = lines.filter { $0.event == Event.editRefused.description }
+        if !refused.isEmpty { out.append(refusals(refused, among: lines, run: run)) }
+        if let slow = slowFirstSound(in: lines, run: run) { out.append(slow) }
 
         add(.note, ["engine: interruption began"], { times("Another app or a call interrupted the audio", $0.count) },
             "The song paused; press Play to go on.")
@@ -369,6 +449,104 @@ public struct DiagnosticReport: Equatable, Sendable {
             { times("iOS kept its own sample rate or buffer size", $0.count) },
             "Nothing to do: the audio plays with the values iOS chose. Another app or an audio device usually sets them.")
         return out
+    }
+
+    /// The edits the song refused in one run: how many, the view that was shown when most of them
+    /// came — the one the last view line before each named; a sheet over it, or another window on
+    /// iPad, may have made the edit — and what the status line said, which each line's reason
+    /// tells (`CommandError.logReason(for:)`). A notice from `manyRefusedEdits` on, below that a
+    /// note: a refused edit changes nothing, and the status line said at the time that it was not
+    /// done.
+    private static func refusals(_ refused: [Line], among lines: [Line], run: Run) -> Finding {
+        var shown: StudioPlace?
+        var perView: [StudioPlace: Int] = [:]
+        for line in lines {
+            if let place = viewsByEvent[line.event] {
+                shown = place
+            } else if line.event == Event.editRefused.description, let shown {
+                perView[shown, default: 0] += 1
+            }
+        }
+        // The view with the most, the first of the bar on a tie (`max` keeps the first).
+        let most = StudioPlace.views.compactMap { (place: StudioPlace) -> (place: StudioPlace, edits: Int)? in
+            perView[place].map { (place, $0) }
+        }.max { $0.edits < $1.edits }
+        let total = refused.count
+        var title = total == 1 ? "The song refused an edit" : "The song refused \(total) edits"
+        if let most {
+            let place = "while \(most.place.title) was shown"
+            title += most.edits == total ? " \(place)" : ", \(most.edits) of them \(place)"
+        }
+        // What the status line said, by the kind each line names, kinds that said the same counted
+        // together; a reason the app never writes is counted and not repeated.
+        var kinds: [(said: String, hits: Int)] = []
+        for kind in CommandError.Refusal.allCases {
+            let hits = refused.filter { $0.reason == kind.reason.description }.count
+            guard hits > 0 else { continue }
+            if let same = kinds.firstIndex(where: { $0.said == kind.said }) {
+                kinds[same].hits += hits
+            } else {
+                kinds.append((kind.said, hits))
+            }
+        }
+        var suggestion = ""
+        if kinds.count == 1, let only = kinds.first, only.hits == total {
+            suggestion = total == 1 ? "The status line said \(only.said). " : "The status line said \(only.said) each time. "
+        } else if !kinds.isEmpty {
+            suggestion = "The status line said " + listed(kinds.map { "\(count($0.hits)) \($0.said)" }) + ". "
+        }
+        suggestion += "A refused edit leaves the song as it was."
+        let weight: Finding.Weight = total >= manyRefusedEdits ? .notice : .note
+        if weight == .notice {
+            let place = most.map { " while \($0.place.title) was shown" } ?? " then"
+            suggestion += " Share this report and say what you did\(place); the times of the lines say when."
+        }
+        return Finding(weight: weight, run: run, title: title + ".", suggestion: suggestion,
+                       count: total, evidence: refused.suffix(evidenceLimit).map(\.text))
+    }
+
+    /// The run's first sound, when it came `longWaitForSound` or more after the launch, with the
+    /// seconds, since when the audio was running (the first start's line) and when a note was
+    /// played live before it. A notice when the log shows that something should have sounded
+    /// sooner: a note `noteBeforeSound` or more before it, or audio that itself started only
+    /// `longWaitForSound` after the launch. Otherwise a note: the log does not say when Play was
+    /// pressed, so a slow sound and a musician who played nothing yet read the same.
+    private static func slowFirstSound(in lines: [Line], run: Run) -> Finding? {
+        guard let heard = lines.firstIndex(where: { $0.event == Event.firstSound.description }),
+              let wait = waited(lines[heard]), wait >= longWaitForSound else { return nil }
+        let sound = lines[heard]
+        var parts: [String] = []
+        var shown = [heard]
+        var overdue = false
+        if let launch = lines.first(where: { $0.event == "app: launch" }),
+           let started = lines.firstIndex(where: { $0.event == "engine: started" }),
+           let from = seconds(of: launch.time), let to = seconds(of: lines[started].time),
+           let at = seconds(of: sound.time), from <= to, to <= at {
+            parts.append("the audio was running after \(seconds(to - from))")
+            shown.append(started)
+            overdue = to - from >= longWaitForSound
+        }
+        if let struck = lines.firstIndex(where: { $0.event == Event.firstNote.description }),
+           let played = waited(lines[struck]), wait - played >= noteBeforeSound {
+            parts.append("a note was played live after \(seconds(played))")
+            shown.append(struck)
+            overdue = true
+        }
+        let title = "The first sound came \(seconds(wait)) after the launch"
+            + (parts.isEmpty ? "" : "; " + parts.joined(separator: ", and "))
+        let master = "The first sound is the first time the song or a note played live reached the master."
+        let suggestion = overdue
+            ? master + " The lines before it are what the app did meanwhile; share this report."
+            : master + " If you pressed Play or a key well before then, the lines before it are what the app did meanwhile; share this report. If not, it only says when you first played."
+        let evidence = shown.sorted().map { lines[$0].text }
+        return Finding(weight: overdue ? .notice : .note, run: run, title: title + ".", suggestion: suggestion,
+                       count: evidence.count, evidence: evidence)
+    }
+
+    /// "a", "a and b", "a, b and c".
+    private static func listed(_ parts: [String]) -> String {
+        guard parts.count > 1, let last = parts.last else { return parts.first ?? "" }
+        return parts.dropLast().joined(separator: ", ") + " and " + last
     }
 
     private static func times(_ text: String, _ count: Int) -> String {
@@ -590,6 +768,12 @@ public struct DiagnosticReport: Equatable, Sendable {
         row("Callbacks that missed their time") { "\($0.missedTime)" }
         row("Sample-time jumps") { "\($0.sampleJumps)" }
         row("Highest load") { $0.audioWindows > 0 ? Self.percent($0.highestLoad) : "–" }
+        row("Song opened") { Self.songsPhrase($0, inTable: true) ?? "–" }
+        row("First sound after launch") { summary in summary.firstSound.map { Self.seconds($0) } ?? "–" }
+        row("First note after launch") { summary in summary.firstNote.map { Self.seconds($0) } ?? "–" }
+        row("Edits refused") { $0.countsRefusals ? "\($0.refusedEdits)" : "–" }
+        row("Views shown") { Self.viewsPhrase($0.views) }
+        row("Follow Playhead in Arrange") { Self.followPhrase($0) }
         text += "\n## The log\n\n```\n" + log + (log.hasSuffix("\n") || log.isEmpty ? "" : "\n") + "```\n"
         return text
     }
@@ -602,7 +786,43 @@ public struct DiagnosticReport: Equatable, Sendable {
         }
         if let minutes = summary.minutes { parts.append("\(minutes) min") }
         parts.append("\(summary.lines) \(summary.lines == 1 ? "line" : "lines")")
+        if let songs = Self.songsPhrase(summary, inTable: false) { parts.append(songs) }
+        if let sound = summary.firstSound { parts.append("first sound \(Self.seconds(sound)) after launch") }
+        if let played = summary.firstNote { parts.append("first note \(Self.seconds(played)) after launch") }
         return "\(name): " + parts.joined(separator: ", ") + "."
+    }
+
+    /// "16 bars", "1 bar".
+    private static func barsPhrase(_ bars: Int) -> String {
+        bars == 1 ? "1 bar" : "\(bars) bars"
+    }
+
+    /// The songs a run opened: "a song of 16 bars" (in the table "16 bars"), "2 songs, the last of
+    /// 24 bars"; nil before one, or when the last line names no length.
+    private static func songsPhrase(_ summary: RunSummary, inTable: Bool) -> String? {
+        guard summary.songsOpened > 0, let bars = summary.songBars else { return nil }
+        guard summary.songsOpened == 1 else { return "\(summary.songsOpened) songs, the last of \(barsPhrase(bars))" }
+        return inTable ? barsPhrase(bars) : "a song of \(barsPhrase(bars))"
+    }
+
+    /// "Arrange 6 · Mixer 4 · Tracks 3": each view shown, the most shown first and the bar's order
+    /// on a tie; "–" for none.
+    private static func viewsPhrase(_ views: [StudioPlace: Int]) -> String {
+        var shown: [(order: Int, place: StudioPlace, shows: Int)] = []
+        for (order, place) in StudioPlace.views.enumerated() {
+            if let shows = views[place] { shown.append((order, place, shows)) }
+        }
+        guard !shown.isEmpty else { return "–" }
+        return shown.sorted { $0.shows != $1.shows ? $0.shows > $1.shows : $0.order < $1.order }
+            .map { "\($0.place.title) \($0.shows)" }
+            .joined(separator: " · ")
+    }
+
+    /// "on", "off, switched once"; "–" for a run in which Arrange never showed.
+    private static func followPhrase(_ summary: RunSummary) -> String {
+        guard let on = summary.followsPlayhead else { return "–" }
+        let state = on ? "on" : "off"
+        return summary.followSwitches > 0 ? "\(state), switched \(count(summary.followSwitches))" : state
     }
 
     /// `2026-11-27T10:26:00.250Z` → `2026-11-27`.
@@ -613,5 +833,106 @@ public struct DiagnosticReport: Equatable, Sendable {
         let characters = Array(stamp)
         guard characters.count >= 16 else { return stamp }
         return String(characters[11..<16])
+    }
+}
+
+// MARK: - The words the app writes for the report
+
+extension DiagnosticReport {
+    /// Events the app writes for the report since 2026-11-27 (TA-R3), as the app writes them and
+    /// the rules above read them — one list, so the writer and the reader cannot drift apart. Each
+    /// is fixed words; what varies is a number, or a reason from a fixed list. The words stay as
+    /// they are: the run before in the file may come from an earlier build.
+    public enum Event {
+        /// An edit the song refused, its kind as the reason (`CommandError.logReason(for:)`).
+        public static let editRefused: StaticString = "edit: refused"
+        /// A song opened; `bars` is its length as Arrange counts it (`Arranging.songBars`).
+        public static let songOpened: StaticString = "document: opened"
+        /// The run's first sound on the master; `s` is the seconds since the launch
+        /// (`DiagnosticLog.milestone`).
+        public static let firstSound: StaticString = "launch: first sound"
+        /// The run's first note played live, on the screen's keys or a controller; `s` as above.
+        public static let firstNote: StaticString = "launch: first note"
+        /// Follow Playhead in Arrange, `on` 1 or 0: when Arrange shows, and when it is switched.
+        public static let followPlayhead: StaticString = "arrange: follow playhead"
+    }
+}
+
+extension StudioPlace {
+    /// The views of the bar at the bottom of the studio, in its order.
+    static let views: [StudioPlace] = [.instrument, .tracks, .arrange, .session, .mixer, .field, .cycleTones]
+
+    /// The line the diagnostics log gets when this view is shown — at launch and at each change —
+    /// so the report can count the views and place a refused edit in one; nil for a place that is
+    /// not a view of the bar.
+    public var shownEvent: StaticString? {
+        switch self {
+        case .instrument: "view: instrument"
+        case .tracks: "view: tracks"
+        case .arrange: "view: arrange"
+        case .session: "view: session"
+        case .mixer: "view: mixer"
+        case .field: "view: field"
+        case .cycleTones: "view: cycle tones"
+        default: nil
+        }
+    }
+}
+
+extension CommandError {
+    /// The kinds of refusal the diagnostics log tells apart; their words stay as they are, like
+    /// the events (`DiagnosticReport.Event`), and a new kind goes at the end.
+    enum Refusal: CaseIterable {
+        case partGone, alreadyThere
+        /// A value whose reason the status line said as it was (`readableClause`).
+        case value
+        /// An error that is no `CommandError`.
+        case other
+        /// A value whose reason does not read alone, so the status line said only that it did not
+        /// fit here.
+        case unfit
+
+        /// The reason the log writes: `edit: refused (part gone)`.
+        var reason: StaticString {
+            switch self {
+            case .partGone: "part gone"
+            case .alreadyThere: "already there"
+            case .value: "value"
+            case .other: "other"
+            case .unfit: "does not fit"
+            }
+        }
+
+        /// What the status line said for it (`sentence`), as the report repeats it: the clause in
+        /// quotes, or, for a value whose reason reads alone, only that it said why — that reason
+        /// can quote what the musician typed, so the log never holds it.
+        var said: String {
+            switch self {
+            case .partGone: "“\(CommandError.goneClause)”"
+            case .alreadyThere: "“\(CommandError.duplicateClause)”"
+            case .value: "why it did not fit"
+            case .other, .unfit: "“\(CommandError.unfitClause)”"
+            }
+        }
+    }
+
+    /// The reason the diagnostics log gives a refused edit: its kind in fixed words — never the
+    /// sentence, whose clause can quote a value, nor an id. An error that is no `CommandError` is
+    /// "other"; the app's status line then says that it does not fit here.
+    public static func logReason(for error: any Error) -> StaticString {
+        refusal(of: error).reason
+    }
+
+    static func refusal(of error: any Error) -> Refusal {
+        guard let refused = error as? CommandError else { return .other }
+        switch refused {
+        case .unknownTrack, .unknownClip, .unknownPlacement, .unknownScene, .unknownNote, .unknownMedia,
+             .unknownRegion, .unknownInsert:
+            return .partGone
+        case .duplicateID:
+            return .alreadyThere
+        case .invalidValue(_, let reason):
+            return readableClause(reason) == nil ? .unfit : .value
+        }
     }
 }

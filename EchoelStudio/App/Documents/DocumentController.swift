@@ -558,7 +558,14 @@ final class DocumentController {
             starterMadeFolder = FileManager.default.fileExists(atPath: url.path)
             saveError = nil
         }
+        logOpenedSong(project)
         loadMedia(of: project)
+    }
+
+    /// A song opened: its length in the bars Arrange counts goes to the diagnostics log — a
+    /// number, never the song's name.
+    private func logOpenedSong(_ project: Project) {
+        DiagnosticLog.app.note(DiagnosticReport.Event.songOpened, [("bars", Double(Arranging.songBars(of: project)))])
     }
 
     /// A song chosen by hand, or handed to the app. A held song opens again at launch from now on.
@@ -627,6 +634,7 @@ final class DocumentController {
                              project.newerBuildNotice]
                     .compactMap { $0 }.joined(separator: " ")
             }
+            logOpenedSong(project)
             loadMedia(of: project)
             recoverLostTakes(in: url, of: project)
             return url
@@ -2826,6 +2834,9 @@ final class DocumentController {
             return true
         } catch {
             let line = (error as? CommandError)?.sentence ?? "Not done: that does not fit here."
+            // The log gets the kind of refusal in fixed words, never this sentence: its clause can
+            // quote a value the musician typed.
+            DiagnosticLog.app.note(DiagnosticReport.Event.editRefused, because: CommandError.logReason(for: error))
             lastError = line
             shownRefusal = line
             return false

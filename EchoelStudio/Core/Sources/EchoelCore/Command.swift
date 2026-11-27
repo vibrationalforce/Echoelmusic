@@ -1635,16 +1635,31 @@ extension CommandError {
         switch self {
         case .unknownTrack, .unknownClip, .unknownPlacement, .unknownScene, .unknownNote, .unknownMedia,
              .unknownRegion, .unknownInsert:
-            return "Not done: that part of the song is no longer there."
+            return "Not done: \(Self.goneClause)."
         case .duplicateID:
-            return "Not done: that is already in the song."
+            return "Not done: \(Self.duplicateClause)."
         case .invalidValue(_, let reason):
-            let clause = reason.trimmingCharacters(in: .whitespacesAndNewlines)
-            let leading = clause.split(separator: " ").first.map(String.init) ?? ""
-            let readable = !clause.isEmpty && !["must", "needs", "need"].contains(leading)
-                && clause.first.map { $0.isLetter } == true
-            guard readable else { return "Not done: that does not fit here." }
+            guard let clause = Self.readableClause(reason) else { return "Not done: \(Self.unfitClause)." }
             return "Not done: \(clause)."
         }
     }
+
+    /// `reason` trimmed, when it reads as a clause of its own; nil for one written against a
+    /// parameter name (its first word "must", "needs" or "need"), one that does not start with a
+    /// letter ("0…14") and an empty one. Decided here only, so the sentence and the app's report,
+    /// which says whether the status line gave a reason (`DiagnosticReport`), cannot disagree.
+    static func readableClause(_ reason: String) -> String? {
+        let clause = reason.trimmingCharacters(in: .whitespacesAndNewlines)
+        let leading = clause.split(separator: " ").first.map(String.init) ?? ""
+        guard !clause.isEmpty, !["must", "needs", "need"].contains(leading),
+              clause.first.map({ $0.isLetter }) == true else { return nil }
+        return clause
+    }
+
+    /// What the sentence says after "Not done:" for a part of the song that is gone, for an id the
+    /// song already has, and for a value whose reason does not read alone — kept once, because the
+    /// app's report quotes them for the refusals the diagnostics log counts (`DiagnosticReport`).
+    static let goneClause = "that part of the song is no longer there"
+    static let duplicateClause = "that is already in the song"
+    static let unfitClause = "that does not fit here"
 }

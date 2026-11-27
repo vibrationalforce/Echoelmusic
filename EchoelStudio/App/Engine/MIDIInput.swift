@@ -38,6 +38,10 @@ final class LiveRouter: Sendable {
     /// Nil while nothing records. The MIDI thread appends; never the render thread.
     private let capture = Mutex<[Captured]?>(nil)
 
+    /// Set by the first note this router plays in the run, which goes into the diagnostics log
+    /// (`receive`).
+    private let playedFirstNote = Atomic<Bool>(false)
+
     /// `lock` maps each key to the pitch it plays (`LiveKeys.lock(for:instrument:)`); nil plays every
     /// key as itself. A held key keeps the pitch it struck when the lock changes.
     func set(core: EngineCore?, slot: Int?, lock: [UInt8]?) {
@@ -74,6 +78,7 @@ final class LiveRouter: Sendable {
     /// its note only when both let go. The take keeps what was HEARD — the merged notes the engine
     /// got, a second press as an off and an on — never one voice per keyboard.
     func receive(source: UInt8 = LiveKeys.defaultSource, status: UInt8, _ data1: UInt8, _ data2: UInt8) {
+        var struck = false
         target.withLock { (state: inout Target) in
             guard let core = state.core else { return }
             let decided = Self.decide(&state, source: source, status: status, data1, data2)
@@ -82,6 +87,7 @@ final class LiveRouter: Sendable {
             if isNote {
                 // A note plays as the held keys decide, and the take keeps what was heard.
                 for note in decided.notes { core.playLive(slot: note.slot, status: note.status, note.pitch, note.velocity) }
+                struck = decided.notes.contains { $0.velocity > 0 }
             } else if kind == 0xA0 {
                 // Poly pressure reaches the note its key sounds: under a key lock the pitch its press
                 // latched, in the slot the press went to, whatever is live now. A key that is up
@@ -115,6 +121,11 @@ final class LiveRouter: Sendable {
                     events?.append(Captured(sample: sample, played: played, status: status, data1: data1, data2: data2))
                 }
             }
+        }
+        // The run's first note goes to the diagnostics log from the main actor, once: no file write
+        // on the MIDI thread, and one hop for the run, not one per note.
+        if struck, !playedFirstNote.exchange(true, ordering: .relaxed) {
+            Task { @MainActor in DiagnosticLog.app.milestone(DiagnosticReport.Event.firstNote) }
         }
     }
 

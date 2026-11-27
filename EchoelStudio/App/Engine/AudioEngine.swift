@@ -1563,15 +1563,35 @@ final class AudioEngine {
         core?.setLaunchQuantum(ticks)
     }
 
-    /// Reads the render thread's launch reports a few times a second; writes only on change.
+    /// Reads the render thread's launch reports a few times a second; writes only on change. The
+    /// same look notes the run's first sound (`noteFirstSound`).
     private func pollLaunchReports() {
         reportTask?.cancel()
         reportTask = Task { [weak self] in
             while !Task.isCancelled {
                 self?.drainLaunchReports()
+                self?.noteFirstSound()
                 try? await Task.sleep(for: .milliseconds(30))
             }
         }
+    }
+
+    /// The run's first sound is in the diagnostics log (`noteFirstSound`).
+    @ObservationIgnored private var soundedOnce = false
+    /// The master level the first sound must reach: −60 dBFS. A silent mix reads exactly 0.
+    private static let firstSoundLevel: Float = 0.001
+
+    /// The first time in the run that the song's mix reaches the master — a track, a return, an
+    /// instrument played live; the click and the browser's listening come after the master's meter
+    /// and do not count — the diagnostics log gets the seconds since the launch, once
+    /// (`DiagnosticLog.milestone`). Read on the main actor from the master's meter, which the render
+    /// thread fills anyway: nothing on the render thread changed for it.
+    private func noteFirstSound() {
+        guard !soundedOnce else { return }
+        let master = meterLevel(nil)
+        guard Swift.max(master.left, master.right) >= Self.firstSoundLevel else { return }
+        soundedOnce = true
+        DiagnosticLog.app.milestone(DiagnosticReport.Event.firstSound)
     }
 
     private func drainLaunchReports() {

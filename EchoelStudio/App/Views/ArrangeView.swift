@@ -100,6 +100,13 @@ struct ArrangeView: View {
         .task(id: videoMedia(of: project)) {
             videoHits?.find(in: store.project) { documents.mediaURL($0) }
         }
+        .onAppear { noteFollow(followsPlayhead) }
+    }
+
+    /// Follow Playhead as it stands goes to the diagnostics log each time Arrange shows and each
+    /// time it is switched, so a shared log says whether the lanes followed the playhead.
+    private func noteFollow(_ on: Bool) {
+        DiagnosticLog.app.note(DiagnosticReport.Event.followPlayhead, [("on", on ? 1 : 0)])
     }
 
     /// "1 bar", "4 bars": the song's length and a clip's, said and shown.
@@ -224,7 +231,11 @@ struct ArrangeView: View {
 
     /// Turns the lanes' paging with the playhead on or off; drawn as on while it follows.
     private var followToggle: some View {
-        Button { followsPlayhead.toggle() } label: {
+        Button {
+            let on = !followsPlayhead
+            followsPlayhead = on
+            noteFollow(on)
+        } label: {
             Image(systemName: "arrow.right.to.line")
                 .font(Theme.Font.label)
                 .foregroundStyle(followsPlayhead ? Theme.Color.accent : Theme.Color.textTertiary)
