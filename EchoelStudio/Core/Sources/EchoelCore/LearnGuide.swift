@@ -378,7 +378,7 @@ public enum LearnGuide {
             summary: "A picture that moves with the song, on the phone or a projector.",
             paragraphs: [
                 "“Field” in the bar of views shows the picture; “Field Window” in the transport keeps it as a small window over the other views, and “Full Screen” fills the screen with it.",
-                "The button with the grid, “Pattern”, chooses the look, a second look under “Blend With”, and under “Show” a meter of the master in its place.",
+                "The button with the palette, “Pattern”, chooses the look, a second look under “Blend With”, and under “Show” a meter of the master in its place.",
                 "Connect a display or projector and the Field goes out there; “Field on External Display” under “External Display” turns that off. “Corner Pin” squares a projected picture, and “Reset Corners” takes it back.",
             ],
             paths: [[.field, .pattern], [.field, .pattern, .externalDisplay]],

@@ -368,12 +368,11 @@ private final class FieldGridTouchView: UIView {
         return FieldGridTouches.Contact(x: Double(point.x), y: Double(point.y), velocity: played)
     }
 
-    /// Sends what the grid says, in its order: notes down the live path, drops into the touch light,
-    /// all stamped with one reading of the renderers' clock; then the notes that sound, for the
-    /// clouds. With VoiceOver on, a struck note says its name (`announcing`).
+    /// Sends what the grid says, in its order: notes down the live path, then the notes that sound,
+    /// for the clouds. The drops are held back for now (see the case below). With VoiceOver on, a
+    /// struck note says its name (`announcing`).
     private func send(_ events: [FieldGridTouches.Event], announcing: Bool = false) {
         guard !events.isEmpty else { return }
-        let now = CFAbsoluteTimeGetCurrent()
         var struck: Int?
         for event in events {
             switch event {
@@ -384,8 +383,11 @@ private final class FieldGridTouchView: UIView {
             case let .noteOff(pitch):
                 guard (0...127).contains(pitch) else { continue }
                 router.receive(status: Self.noteOff, UInt8(pitch), 0)
-            case let .drop(x, y, toneHz, velocity, strong):
-                FieldTouchChannel.shared.drop(x: x, y: y, toneHz: toneHz, velocity: velocity, strong: strong, at: now)
+            case .drop:
+                // Not shown yet. Tapped faster than three times a second in a red tone, the drops
+                // flash red (measured in `FieldTouchLight`'s doc); the clouds alone pass. They come
+                // back once their light is bounded, through `FieldTouchChannel.drop`.
+                continue
             }
         }
         if let grid {
