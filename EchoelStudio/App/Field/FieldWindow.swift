@@ -159,6 +159,9 @@ struct FieldSurface: View {
 
 /// The Field filling the screen, under the sensor housing and the home indicator; one button leads
 /// back. Layered over the studio by `StudioView`, never presented: no modal chain grows for it.
+/// The note grid plays the picture while it is switched on (`FieldGridView`); its switch, Hold and
+/// its octave sit in the bar, the two settings in a second row while the grid shows, so the bar
+/// still fits a phone held upright. Leaving the full screen ends every note the grid holds.
 struct FieldFullscreen: View {
     let close: () -> Void
 
@@ -166,11 +169,16 @@ struct FieldFullscreen: View {
         ZStack(alignment: .topTrailing) {
             Theme.Color.background.ignoresSafeArea()
             FieldView().ignoresSafeArea()
-            HStack(spacing: Theme.Space.s) {
-                FieldPatternMenu()
-                Button(action: close) { Image(systemName: "arrow.down.right.and.arrow.up.left") }
-                    .buttonStyle(ToolButtonStyle())
-                    .accessibilityLabel("Leave Full Screen")
+            FieldGridView()
+            VStack(alignment: .trailing, spacing: Theme.Space.s) {
+                HStack(spacing: Theme.Space.s) {
+                    FieldGridSwitch()
+                    FieldPatternMenu()
+                    Button(action: close) { Image(systemName: "arrow.down.right.and.arrow.up.left") }
+                        .buttonStyle(ToolButtonStyle())
+                        .accessibilityLabel("Leave Full Screen")
+                }
+                FieldGridControls()
             }
             .padding(Theme.Space.m)
             FieldBlendMix()
@@ -221,7 +229,8 @@ struct FieldPatternMenu: View {
                 .pickerStyle(.menu)
                 externalDisplay
             } label: {
-                Image(systemName: "square.grid.3x3")
+                // The grid glyph belongs to the note grid's switch, as in the earlier app.
+                Image(systemName: "paintpalette")
             }
             .menuStyle(.button)
             .buttonStyle(ToolButtonStyle())

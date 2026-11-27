@@ -130,8 +130,17 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
 
     /// The numbers the shader reads. Mirrored by BYTE LAYOUT, not by name, in the MSL `Uniforms`
     /// struct of `FieldShader.field` (EchoelCore) — no compiler checks the two agree, so a field is only ever
-    /// appended at the end, in both places, in one commit.
+    /// appended at the end, in both places, in one commit. Fifteen floats, a spare, then the touch
+    /// light's 22 `float4`: 416 bytes, as the MSL struct is.
     private struct Uniforms {
+        /// The touch light's words as the shader's `float4 touch[22]` holds them
+        /// (`FieldShader.touchWords`): eleven spots, two `float4` each. A tuple, because the MSL side
+        /// is a fixed array and Swift has none in a struct.
+        typealias TouchWords = (SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>,
+                                SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>,
+                                SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>,
+                                SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>)
+
         var aspect: Float = 1
         var beatPhase: Float = 0
         var fieldPhase: Float = 0
@@ -147,6 +156,12 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         var hasCoherence: Float = 0
         var ringsK: Float = Float(FieldMotion.ringsK(density: FieldMotion.ringDensity, toneHz: FieldFrame.middleC))
         var ringsCoherence: Float = 0.5
+        /// Written out, so the touch light starts on the 16-byte boundary a `float4` keeps in MSL
+        /// without padding the comparison of two frames would read (`bytesEqual`).
+        var spare: Float = 0
+        /// The touch light (G3); all zero is none, which is what the video export binds.
+        var touch: TouchWords = (.zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero,
+                                 .zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero)
 
         init() {}
 
@@ -167,6 +182,17 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             hasCoherence = shown.hasCoherence ? 1 : 0
             ringsK = Float(shown.ringsK)
             ringsCoherence = Float(shown.ringsCoherence)
+        }
+
+        /// This frame's touch light (`FieldShader.touchWords`), word by word into `touch`; a word
+        /// `words` lacks is zero.
+        mutating func setTouch(_ words: [Float]) {
+            withUnsafeMutableBytes(of: &touch) { (raw: UnsafeMutableRawBufferPointer) in
+                let wordSize = MemoryLayout<Float>.stride
+                for index in 0..<(raw.count / wordSize) {
+                    raw.storeBytes(of: index < words.count ? words[index] : 0, toByteOffset: index * wordSize, as: Float.self)
+                }
+            }
         }
     }
 
@@ -270,12 +296,15 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
     private var chladniMotion = ChladniMotion()
     /// The master's partials as last read on the main thread, for this frame's plate.
     private var peaks = SpectralPeaks.silent
+    /// This frame's touch light (`FieldTouchChannel`), as the shader's words; all zero is none.
+    private var touchWords = [Float](repeating: 0, count: FieldShader.touchWordCount)
 
     /// The renderer goes (a window closes, a stream stops): it stops asking the engine for the
-    /// spectrum, so no analysis runs for a picture nobody draws.
+    /// spectrum, so no analysis runs for a picture nobody draws, and its touch light goes.
     @MainActor
     func letGo() {
         setLooks(primary: .rings, partner: nil, mix: 0)
+        FieldTouchChannel.shared.forget(ObjectIdentifier(self))
     }
 
     /// Switches the picture and its blend; every look but the rings listens to the master while it
@@ -392,6 +421,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         pass.colorAttachments[0].clearColor = ground
         guard let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) else { return false }
         encoder.setRenderPipelineState(pipeline)
+        // No touch light: the film has no live touches, so the uniforms' touch words stay zero.
         var sent = Uniforms(aspect: aspect, shown: shown)
         var plate = figure.map { ChladniUniforms($0, grains: grainsPerSide) } ?? ChladniUniforms()
         var looks = LookUniforms(look)
@@ -424,6 +454,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
             peaks = listeningTo?.fieldSpectrum.peaks ?? .silent
             sampleDevice(at: now)
             settleDrawable(of: view)
+            readTouch(at: now)
         }
 
         step(seconds: seconds)
@@ -477,6 +508,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         let still = reduceMotion || detail.isStill
         let shown = motion.step(frame, after: seconds, still: still, patternScale: detail.patternScale)
         uniforms = Uniforms(aspect: uniforms.aspect, shown: shown)
+        uniforms.setTouch(touchWords)
         // The looks hear the master's strongest partials — pitch and drive — and blend two looks,
         // the share and the lattice's light flash-guarded (EchoelCore `FieldLookMotion`: tested).
         let heard = FieldLookMotion.hearing(frequencies: peaks.frequencies, amplitudes: peaks.amplitudes, count: peaks.count)
@@ -517,6 +549,7 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         }
         peaks = listeningTo?.fieldSpectrum.peaks ?? .silent
         uniforms.aspect = texture.height > 0 ? Float(texture.width) / Float(texture.height) : 1
+        readTouch(at: now)
         step(seconds: seconds)
         guard let queue = commandQueue, let buffer = queue.makeCommandBuffer() else { return false }
         let pass = MTLRenderPassDescriptor()
@@ -548,6 +581,15 @@ final class MetalFieldRenderer: NSObject, MTKViewDelegate {
         buffer.addCompletedHandler { @Sendable _ in completed() }
         buffer.commit()
         return true
+    }
+
+    /// The touch light at `now` (`FieldTouchChannel`), the clock the grid stamps its drops with, as
+    /// this renderer's own frame of it: still while its picture is (Reduce Motion, the lowest detail).
+    @MainActor
+    private func readTouch(at now: CFAbsoluteTime) {
+        let shown = FieldTouchChannel.shared.shown(by: ObjectIdentifier(self), now: now,
+                                                   still: reduceMotion || detail.isStill)
+        touchWords = FieldShader.touchWords(shown)
     }
 
     /// Once a second: the frame rate this loop achieved, the heat and the power → the detail

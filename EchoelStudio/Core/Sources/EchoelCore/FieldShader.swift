@@ -16,7 +16,8 @@ public enum FieldShader {
         public let fragmentFunction: String
     }
 
-    /// The Field window (W3): the rings, the Chladni plate and the four looks, one fragment for all.
+    /// The Field window (W3): the rings, the Chladni plate and the four looks, one fragment for all,
+    /// and the light of the grid's touches over them (`touchWords`).
     public static let field = Program(source: fieldSource, vertexFunction: "field_vertex",
                                       fragmentFunction: "field_fragment")
     /// The Field laid over a video frame (W15).
@@ -24,6 +25,60 @@ public enum FieldShader {
                                       fragmentFunction: "layer_fragment")
     /// Every program the app compiles, for the gate.
     public static let all: [Program] = [field, layer]
+
+    // MARK: - The touch light's words
+
+    /// The touch light's spots (`FieldTouchLight`): its drops, then its clouds.
+    public static let touchSpots = FieldTouchLight.dropSlots + FieldTouchLight.cloudSlots
+    /// Two `float4` a spot: x, y, progress and strength, then the colour's red, green and blue and a
+    /// spare zero.
+    public static let wordsPerTouchSpot = 8
+    /// The words of the field shader's `touch` array, the last field of its `Uniforms`.
+    public static let touchWordCount = wordsPerTouchSpot * touchSpots
+
+    /// One frame of the touch light as the field shader reads it: `touchSpots` spots of
+    /// `wordsPerTouchSpot` words, the drops in the first `FieldTouchLight.dropSlots` slots and the
+    /// clouds after them, each in its slot. The shader draws them as `FieldTouchLight.Shown.light`
+    /// does, so what that leaves dark is all zero here — a spot with no strength, a place or a
+    /// strength that is no number, a drop whose life is over — and so is a slot `shown` does not
+    /// fill. A cloud's growth that is no number counts as grown and a colour channel that is no
+    /// number as dark, as the CPU takes them. All zero is no touch light: what a pass without live
+    /// touches binds (the video export, whose film has none).
+    public static func touchWords(_ shown: FieldTouchLight.Shown) -> [Float] {
+        var words = [Float](repeating: 0, count: touchWordCount)
+        for slot in 0..<FieldTouchLight.dropSlots where slot < shown.drops.count {
+            let spot = shown.drops[slot]
+            guard spot.progress.isFinite, spot.progress < 1 else { continue }
+            write(spot, progress: spot.progress, into: &words, at: slot)
+        }
+        for index in 0..<FieldTouchLight.cloudSlots where index < shown.clouds.count {
+            let spot = shown.clouds[index]
+            write(spot, progress: spot.progress.isFinite ? spot.progress : 1, into: &words,
+                  at: FieldTouchLight.dropSlots + index)
+        }
+        return words
+    }
+
+    /// `spot` into its slot, or nothing (its slot stays dark) where its place, progress or strength
+    /// is not a finite number in the shader's precision, or it has no strength.
+    private static func write(_ spot: FieldTouchLight.Spot, progress: Double, into words: inout [Float], at slot: Int) {
+        let x = Float(spot.x), y = Float(spot.y), growth = Float(progress), strength = Float(spot.amplitude)
+        guard x.isFinite, y.isFinite, growth.isFinite, strength.isFinite, strength > 0 else { return }
+        let base = slot * wordsPerTouchSpot
+        words[base] = x
+        words[base + 1] = y
+        words[base + 2] = growth
+        words[base + 3] = strength
+        words[base + 4] = channel(spot.colour.red)
+        words[base + 5] = channel(spot.colour.green)
+        words[base + 6] = channel(spot.colour.blue)
+    }
+
+    /// A colour channel in the shader's precision; one that is no number there is dark.
+    private static func channel(_ value: Double) -> Float {
+        let shown = Float(value)
+        return shown.isFinite ? shown : 0
+    }
 
     private static let fieldSource = """
     #include <metal_stdlib>
@@ -33,7 +88,11 @@ public enum FieldShader {
     struct Uniforms { float aspect; float beatPhase; float fieldPhase; float pulsePhase;
                       float beatLight; float centreLight; float levelLight; float coherence;
                       float breath; float toneHz; float density; float hasPulse; float hasCoherence;
-                      float ringsK; float ringsCoherence; };
+                      float ringsK; float ringsCoherence;
+                      // The touch light (FieldShader.touchWords): a spare word to the float4 boundary,
+                      // then two float4 a spot (x, y, progress, strength; red, green, blue, spare), the
+                      // drops first, then the clouds. All zero draws no touch light.
+                      float spare; float4 touch[\(2 * FieldShader.touchSpots)]; };
     struct Chladni { float4 fromM; float4 fromN; float4 fromW; float4 toM; float4 toN; float4 toW;
                      float active; float mix; float light; float grains; };
     // The looks (FieldLookMotion): which two patterns (FieldPattern.shaderIndex), how much of the
@@ -388,6 +447,59 @@ public enum FieldShader {
         return film * (ambient + (1.0 - ambient) * energy);
     }
 
+    // The touch light (EchoelCore FieldTouchLight.Shown.light, exactly): each drop a bloom that
+    // grows as it dissolves and one thin ring travelling out from it, each cloud a soft gaussian on
+    // its note's cell; the drops' sum held to their luminance, the clouds' to theirs, the whole to
+    // the screen's gamut. That keeps the luminance it adds under the general-flash threshold; the
+    // red flash it does not cover (FieldTouchLight says why).
+    float touchDropShape(float progress, float d) {
+        if (!(progress < 1.0)) return 0.0;
+        float lived = max(progress, 0.0);
+        float life = 1.0 - lived;
+        float onset = smoothstep(0.0, \(FieldTouchLight.dropOnset), lived);
+        float spread = 1.0 - life * life;
+        float sigma = mix(\(FieldTouchLight.dropBloomRadius.lowerBound), \(FieldTouchLight.dropBloomRadius.upperBound), spread);
+        float bloom = exp(-d * d / (2.0 * sigma * sigma)) * life * \(FieldTouchLight.dropBloomGain);
+        float radius = mix(\(FieldTouchLight.dropRingRadius.lowerBound), \(FieldTouchLight.dropRingRadius.upperBound), spread);
+        float edge = (d - radius) / \(FieldTouchLight.dropRingWidth);
+        float ring = exp(-edge * edge) * life * life * \(FieldTouchLight.dropRingGain);
+        return onset * (bloom + ring);
+    }
+    float touchCloudShape(float progress, float d) {
+        float grown = clamp(progress, 0.0, 1.0);
+        float sigma = mix(\(FieldTouchLight.cloudRadius.lowerBound), \(FieldTouchLight.cloudRadius.upperBound), grown);
+        return exp(-d * d / (2.0 * sigma * sigma));
+    }
+    float3 touchHeld(float3 rgb, float ceiling) {
+        float lit = dot(rgb, float3(0.2126, 0.7152, 0.0722));
+        return lit > ceiling ? rgb * (ceiling / lit) : rgb;
+    }
+    float3 touchLight(float2 uv, constant Uniforms& u) {
+        // Distances in heights of the frame, so a drop is round on any screen.
+        float side = u.aspect > 0.0 ? u.aspect : 1.0;
+        float2 p = float2(uv.x * side, uv.y);
+        float3 drops = float3(0.0);
+        for (int i = 0; i < \(FieldTouchLight.dropSlots); i++) {
+            float4 spot = u.touch[2 * i];
+            if (spot.w > 0.0) {
+                float d = distance(p, float2(spot.x * side, spot.y));
+                drops += u.touch[2 * i + 1].rgb * (spot.w * touchDropShape(spot.z, d));
+            }
+        }
+        float3 clouds = float3(0.0);
+        for (int i = \(FieldTouchLight.dropSlots); i < \(FieldShader.touchSpots); i++) {
+            float4 spot = u.touch[2 * i];
+            if (spot.w > 0.0) {
+                float d = distance(p, float2(spot.x * side, spot.y));
+                clouds += u.touch[2 * i + 1].rgb * (spot.w * touchCloudShape(spot.z, d));
+            }
+        }
+        float3 total = touchHeld(drops, \(FieldTouchLight.dropLuminance)) + touchHeld(clouds, \(FieldTouchLight.cloudLuminance));
+        float peak = max(total.r, max(total.g, total.b));
+        if (peak > 1.0) total /= peak;
+        return total;
+    }
+
     float3 lookColour(float look, VOut in, constant Uniforms& u, constant Chladni& c, constant Look& l,
                       constant Weave& w, float turns) {
         if (look < 0.5) return ringsColour(in, u, turns);
@@ -431,6 +543,10 @@ public enum FieldShader {
             col = mix(col, lookColour(look.partner, partnerIn, u, plate, look, weave, turns), share);
         }
         col *= 1.0 - clamp(look.foldDark, 0.0, 1.0);
+        // The touch light laid over the picture as a screen (FieldTouchLight.composite): it brightens
+        // and never passes full. Unfolded and unfaded: it lies where the finger is.
+        float3 touched = touchLight(in.uv, u);
+        col = col + touched * (1.0 - col);
         col += (echoelHash(in.uv * 1000.0) - 0.5) / 255.0;
         return float4(clamp(col, 0.0, 1.0), 1.0);
     }
