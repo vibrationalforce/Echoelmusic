@@ -112,7 +112,6 @@ public struct NumberEntryFormat: Sendable, Equatable {
 
     /// The format for `descriptor`, nil for a named choice.
     public init?(_ descriptor: ParameterDescriptor) {
-        let span = descriptor.range.upperBound - descriptor.range.lowerBound
         switch descriptor.unit {
         case .choice:
             return nil
