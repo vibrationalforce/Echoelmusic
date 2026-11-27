@@ -37,6 +37,16 @@ final class TempoCalculatorTests: XCTestCase {
         XCTAssertEqual(typed.seconds(ofQuarters: 1), Rational.constant(24, 53))
     }
 
+    func testTheTableReadsInSecondsMillisecondsOrHertz() throws {
+        let calculator = TempoCalculator(bpm: 150)
+        let triplet = try note(2, .triplet)
+        XCTAssertEqual(calculator.value(of: triplet, in: .seconds), Rational.constant(8, 15))
+        XCTAssertEqual(calculator.value(of: triplet, in: .milliseconds), Rational.constant(1_600, 3))
+        XCTAssertEqual(calculator.value(of: triplet, in: .hertz), Rational.constant(15, 8))
+        XCTAssertEqual(calculator.value(of: try note(64, .triplet), in: .hertz), 60)
+        XCTAssertEqual(TempoCalculator.DelayUnit.allCases.map(\.symbol), ["s", "ms", "Hz"])
+    }
+
     func testALengthGivesItsTempo() {
         let length = Rational.constant(1_818, 1_000)
         XCTAssertEqual(TempoCalculator.bpm(quarters: 4, lasting: length), Rational.constant(40_000, 303),

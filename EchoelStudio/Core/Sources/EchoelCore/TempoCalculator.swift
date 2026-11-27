@@ -117,6 +117,30 @@ public struct TempoCalculator: Equatable, Sendable {
         return quarters.multiplied(by: 60)?.divided(by: seconds)
     }
 
+    /// The unit the delay table reads in: seconds, milliseconds, or hertz (one cycle per note,
+    /// the rate an LFO needs to move once per note).
+    public enum DelayUnit: String, CaseIterable, Sendable {
+        case seconds, milliseconds, hertz
+
+        public var symbol: String {
+            switch self {
+            case .seconds: "s"
+            case .milliseconds: "ms"
+            case .hertz: "Hz"
+            }
+        }
+    }
+
+    /// `note` in `unit`, exact.
+    public func value(of note: NoteValue, in unit: DelayUnit) -> Rational? {
+        guard let length = seconds(of: note) else { return nil }
+        switch unit {
+        case .seconds: return length
+        case .milliseconds: return length.multiplied(by: 1_000)
+        case .hertz: return TempoCalculator.hertz(ofSeconds: length)
+        }
+    }
+
     /// The delay table's rows: 1/2 to 1/64, straight, dotted and triplet.
     public static let delayNotes: [NoteValue] = NoteValue.all.filter { $0.denominator >= 2 }
 

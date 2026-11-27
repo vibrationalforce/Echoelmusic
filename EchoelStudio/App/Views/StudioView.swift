@@ -209,6 +209,7 @@ struct StudioView: View {
         case .about: AboutView()
         case .learn: LearnView()
         case .report: ReportView()
+        case .tempoCalculator: TempoCalculatorView()
         case .renameSong: RenameSongView()
         case .rename(let target): RenameView(target: target)
         case .streaming: StreamingView()
@@ -1373,6 +1374,8 @@ struct SongMenu: View {
                 Button("Subtitles…", systemImage: "captions.bubble") { router.sheet = .subtitles }
                 keyAndScale
                 timeSignatureMenu
+                // Bar and note lengths at the song's tempo, exactly, in s, ms, Hz, samples and frames.
+                Button("Tempo Calculator…", systemImage: "metronome") { router.sheet = .tempoCalculator }
             }
             Section("Export") {
                 // Why the entries below are dimmed, as a line of the menu that cannot be tapped

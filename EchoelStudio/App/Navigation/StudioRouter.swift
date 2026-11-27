@@ -33,6 +33,8 @@ enum StudioSheet: Identifiable, Hashable {
     case learn
     /// What the diagnostics log says, as findings to read and a report to share (test agent, 2026-11-27).
     case report
+    /// Bar and note lengths at a tempo in s, samples, Hz and frames, exactly (2026-11-27).
+    case tempoCalculator
     /// A new name for the open song, which its package takes too.
     case renameSong
     /// A new name for a track, a clip or a scene.
