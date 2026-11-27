@@ -28,6 +28,7 @@ struct RegionColorView: View {
                             store.endGesture()
                             dismiss()
                         }
+                        .keyboardShortcut(.cancelAction)
                     }
                 }
         }

@@ -20,6 +20,7 @@ struct SubtitlesView: View {
                             store.endGesture()
                             dismiss()
                         }
+                        .keyboardShortcut(.cancelAction)
                     }
                 }
         }
