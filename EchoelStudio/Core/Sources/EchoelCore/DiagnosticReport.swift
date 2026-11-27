@@ -96,6 +96,10 @@ public struct DiagnosticReport: Equatable, Sendable {
     /// The most lines a finding quotes.
     public static let evidenceLimit = 3
 
+    /// What the report says when no rule above a note matched. It speaks for the rules, not for the
+    /// app: a fault the log does not write, or no rule reads, is not ruled out.
+    public static let nothingFound = "None of the report's rules found a fault in the log."
+
     public let lines: [Line]
     public let findings: [Finding]
     public let latest: RunSummary
@@ -109,7 +113,7 @@ public struct DiagnosticReport: Equatable, Sendable {
         var parsed: [Line] = []
         var run: Run = .latest
         var sawBefore = false
-        for raw in text.split(separator: "\n", omittingEmptySubsequences: true) {
+        for raw in text.split(whereSeparator: \.isNewline) {
             let line = String(raw)
             if line == DiagnosticLog.runBeforeHeader { run = .before; sawBefore = true; continue }
             if line == DiagnosticLog.latestRunHeader { run = .latest; continue }
@@ -252,18 +256,22 @@ public struct DiagnosticReport: Equatable, Sendable {
                                count: matching.count, evidence: matching.suffix(evidenceLimit).map(\.text)))
         }
 
-        add(.failure, ["metrickit: crash"], { times("The app ended with a crash", $0.count) },
-            "Share this report: the time and the crash's signal point to the fix. iOS reports a crash at the next launch, so it can stand in the run after the one that ended.")
-        add(.failure, ["engine: render still stalled after rebuilds", "engine: automatic tries used up"],
-            { _ in "The audio stayed silent after the app rebuilt it." },
-            "Note what you did just before. Closing and opening the app starts the audio afresh; sharing this report shows where it stopped.")
+        add(.failure, ["metrickit: crash"],
+            { $0.count == 1 ? "iOS reported that the app ended with a crash." : "iOS reported \($0.count) crashes of the app." },
+            "iOS hands a crash over at the next launch, so the line stands in the run after the one that ended, and its time is when iOS reported it. The last lines of the run before show what the app was doing. Share this report.")
+        add(.failure, ["engine: render still stalled after rebuilds"],
+            { _ in "The audio stayed silent after the app rebuilt it, so the song paused." },
+            "Tap Restart Audio. Note what you did just before; the lines before this one show where it stopped.")
+        add(.failure, ["engine: automatic tries used up"],
+            { _ in "The audio could not start after several tries." },
+            "Tap Restart Audio once the call or the other app using audio has ended.")
         add(.failure, ["record: writing failed"], { times("A take could not be written", $0.count) },
             "Check the free space on the device, then record again. The report names the error's code.")
 
         add(.problem, ["launch: safe start"], { matching in
             let deaths = matching.compactMap { $0.number("deaths") }.max().map { whole($0) } ?? 2
             return "The app did not finish starting \(deaths) times in a row, so it started safely."
-        }, "The Field window is off and plugins from other makers wait until you load them. Load them one by one; the one that stops the app is the one to report.")
+        }, "The Field window is off and plugins from other makers wait. Tap Load Plugins from Other Makers in the status line; if the app stops again, share this report and name the song's plugins from other makers.")
         add(.problem, ["metrickit: hang"], { matching in
             let longest = matching.compactMap { $0.number("s") }.max() ?? 0
             return "The app stopped responding \(count(matching.count)), the longest for \(seconds(longest))."
@@ -271,9 +279,14 @@ public struct DiagnosticReport: Equatable, Sendable {
         add(.problem, ["engine: render stalled, rebuilding"],
             { times("The audio stopped and the app rebuilt it", $0.count) },
             "If you heard a gap, it was here. Share the report with what was playing.")
-        add(.problem, ["engine: configure failed", "session: preferred buffer refused", "session: preferred rate refused"],
-            { times("iOS refused an audio setting the app asked for", $0.count) },
-            "Another app, a call or an audio device may hold the audio. Unplug and plug the device again, or restart the app.")
+        add(.problem, ["engine: configure failed"], { times("The audio could not be set up", $0.count) },
+            "Another app, a call or an audio device may hold the audio. Tap Restart Audio once it is free; the line names the error's code.")
+        add(.problem, ["graph: stream tap refused the format"],
+            { times("A live stream could not take the song's sound format", $0.count) },
+            "The stream went out without the song's sound. Share this report; the lines around it show the format.")
+        add(.problem, ["field layer: shader compile failed", "field layer: shader entry point missing", "field layer: pipeline failed"],
+            { _ in "The Field layer for video could not be built." },
+            "A video export and the Field Layer export show no Field until it builds. Share this report; it names the step that failed.")
         add(.problem, ["field: shader compile failed, flat picture", "field: shader entry point missing, flat picture",
                        "field: pipeline failed, flat picture"],
             { _ in "The Field fell back to a flat picture." },
@@ -293,7 +306,7 @@ public struct DiagnosticReport: Equatable, Sendable {
             let busy = windows.filter { ($0.number("over75") ?? 0) > 0 }
             out.append(Finding(weight: .notice, run: run,
                                title: "The audio came close to its time limit: the highest load was \(percent(peak)).",
-                               suggestion: "Nothing was missed. Adding more at once may cross the limit; this is the song to measure it with.",
+                               suggestion: "The engine's own render never ran over its time. Adding more at once may cross the limit; this is the song to measure it with.",
                                count: Swift.max(busy.count, 1), evidence: (busy.isEmpty ? windows : busy).suffix(evidenceLimit).map(\.text)))
         }
         if jumps > 0 {
@@ -306,37 +319,54 @@ public struct DiagnosticReport: Equatable, Sendable {
 
         add(.notice, ["metrickit: cpu exception", "metrickit: disk write exception"],
             { times("iOS reported the app using too much processor time or writing too much", $0.count) },
-            "Share the report; iOS sends these a day later, so the run it names can be an earlier one.")
+            "Share this report; the lines before it show what the app was doing.")
         add(.notice, ["engine: media services lost", "engine: replace after media services reset"],
             { _ in "iOS restarted its audio services, and the app rebuilt its audio." },
-            "Nothing to do if it played on. If it recurs, note what ran at the same time.")
-        add(.notice, ["memory: warning"], { times("The device ran low on memory", $0.count) },
-            "Samples not playing were released to make room. Close other apps if it repeats.")
+            "The song paused; press Play to go on. If it recurs, note what ran at the same time.")
+        let warnings = lines.filter { $0.event == "memory: warning" }
+        if !warnings.isEmpty {
+            let released = warnings.reduce(0) { $0 + whole($1.number("released")) }
+            let noun = released == 1 ? "sample that was" : "samples that were"
+            let freed = released > 0 ? "The app released \(released) \(noun) not playing. " : ""
+            out.append(Finding(weight: .notice, run: run,
+                               title: times("The device ran low on memory", warnings.count),
+                               suggestion: freed + "Close other apps if it repeats.",
+                               count: warnings.count, evidence: warnings.suffix(evidenceLimit).map(\.text)))
+        }
         add(.notice, ["field: memory warning, detail down"], { times("The Field lowered its detail for memory", $0.count) },
-            "The picture comes back to full detail when memory allows.")
+            "Full detail comes back after at most a minute without another warning.")
+        add(.notice, ["record: take ends before rebuild"], { times("A take ended early because the audio was rebuilt", $0.count) },
+            "The take keeps what it recorded up to then. The lines before it show why the audio was rebuilt.")
+        add(.notice, ["engine: stopped underneath, rebuilding"], { times("iOS stopped the audio without notice, and the app rebuilt it", $0.count) },
+            "If you heard a gap, this is when it was.")
         let lowered = lines.filter { $0.event == "field: detail" && ($0.number("level") ?? 2) < 2 }
         if !lowered.isEmpty {
             let slowest = lowered.compactMap { $0.number("fps") }.min()
             let slowestText = slowest.map { "; the slowest second showed \(whole($0)) frames" } ?? ""
             out.append(Finding(weight: .notice, run: run,
                                title: "The Field lowered its picture detail \(count(lowered.count))\(slowestText).",
-                               suggestion: "Heat, Low Power Mode or a heavy song lowers it on purpose, so the sound keeps its time. A cooler device brings it back.",
+                               suggestion: "Heat, Low Power Mode, a low battery, a memory warning or a frame rate the device cannot hold lower it on purpose; it comes back when they pass.",
                                count: lowered.count, evidence: lowered.suffix(evidenceLimit).map(\.text)))
         }
         add(.notice, ["document: recovered takes"], { _ in "Takes were recovered after the app ended without saving them." },
-            "They are on their tracks. Listen to their ends: a take cut short by the end is kept as far as it was written.")
+            "They are on a new track, Recovered Takes, one after another from the start; move each to its place. A take cut short by the end keeps what was written.")
         add(.notice, ["stream: ended"], { times("A live stream ended without Stop", $0.count) },
-            "The network or the server ended it. The time says when.")
+            "Leaving the app, a call, the network or a server ends a stream; the Go Live page said which.")
         add(.notice, ["jam: host lost"], { times("The jam lost its host", $0.count) },
             "Being apart or a weak link ends a jam; start it again from Jam.")
-        add(.notice, [DiagnosticLog.fullLine], { _ in "The log filled up; what came after is not in it." },
-            "Share the report soon after something happens, so the moment is still in the log.")
+        add(.notice, ["jam: refused"], { times("A jam could not connect", $0.count) },
+            "The Jam page said why; most often Local Network is off for Echoelmusic in Settings. Allow it, then try again.")
+        add(.notice, [DiagnosticLog.fullLine], { _ in "The log filled up; the rest of that run is not in it." },
+            "Opening the app again starts a new run with room in the log.")
 
         add(.note, ["engine: interruption began"], { times("Another app or a call interrupted the audio", $0.count) },
-            "Nothing to do; the audio comes back when the interruption ends.")
+            "The song paused; press Play to go on.")
         add(.note, ["route: output device gone while playing, pausing"],
             { times("The output device went away while playing, so the song paused", $0.count) },
-            "Headphones or an interface was unplugged. Play goes on from where it stopped.")
+            "Headphones or an interface was unplugged. Press Play to go on.")
+        add(.note, ["session: preferred rate refused", "session: preferred buffer refused"],
+            { times("iOS kept its own sample rate or buffer size", $0.count) },
+            "Nothing to do: the audio plays with the values iOS chose. Another app or an audio device usually sets them.")
         return out
     }
 
@@ -378,11 +408,11 @@ public struct DiagnosticReport: Equatable, Sendable {
     public var markdown: String {
         var text = "# Echoelmusic report\n\n"
         for sentence in overview { text += sentence + "\n" }
-        text += "\nMade on this device from the app's diagnostics log, which holds what the audio and the app did as fixed words and numbers, never a name you typed. Nothing has been sent anywhere.\n\n"
+        text += "\nMade on this device from the app's diagnostics log, which holds what the audio and the app did as fixed words and numbers, never a name you typed. The app sent nothing; this file leaves the device only when you share it.\n\n"
         text += "## Findings\n\n"
         let actionable = findings.filter { $0.weight > .note }
         if actionable.isEmpty {
-            text += "Nothing in the log points to a fault.\n\n"
+            text += "\(Self.nothingFound)\n\n"
         }
         for (index, finding) in findings.enumerated() {
             text += "\(index + 1). **\(finding.weight.word)** · \(finding.run.rawValue) · \(finding.title)\n"

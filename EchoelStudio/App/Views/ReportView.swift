@@ -40,7 +40,7 @@ struct ReportView: View {
     }
 
     private func runs(_ report: DiagnosticReport) -> some View {
-        EchoelSection("Runs", footer: "Made from the diagnostics log, which holds what the audio and the app did as fixed words and numbers, never a name you typed. Nothing has been sent anywhere.") {
+        EchoelSection("Runs", footer: "Made from the diagnostics log, which holds what the audio and the app did as fixed words and numbers, never a name you typed. The app sends nothing; the report leaves the device only when you share it.") {
             ForEach(report.overview, id: \.self) { sentence in
                 ParagraphText(sentence)
             }
@@ -50,7 +50,7 @@ struct ReportView: View {
     private func findings(_ report: DiagnosticReport) -> some View {
         EchoelSection("Findings") {
             if !report.findings.contains(where: { $0.weight > .note }) {
-                ParagraphText("Nothing in the log points to a fault.")
+                ParagraphText(DiagnosticReport.nothingFound)
             }
             ForEach(Array(report.findings.enumerated()), id: \.offset) { _, finding in
                 FindingRow(finding: finding)

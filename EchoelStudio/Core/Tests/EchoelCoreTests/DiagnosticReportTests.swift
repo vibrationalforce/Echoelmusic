@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import EchoelCore
 
@@ -117,7 +118,7 @@ final class DiagnosticReportTests: XCTestCase {
         let first = try XCTUnwrap(report.findings.first)
         XCTAssertEqual(first.weight, .failure)
         XCTAssertEqual(first.run, .before)
-        XCTAssertEqual(first.title, "The app ended with a crash.")
+        XCTAssertEqual(first.title, "iOS reported that the app ended with a crash.")
         XCTAssertEqual(report.findings.dropFirst().first?.weight, .problem)
     }
 
@@ -141,6 +142,51 @@ final class DiagnosticReportTests: XCTestCase {
         XCTAssertEqual(finding.evidence, Array(warnings.suffix(DiagnosticReport.evidenceLimit)))
     }
 
+    func testACrashIsUsuallyHandedOverInTheRunAfterIt() throws {
+        let report = DiagnosticReport(log: log([launch, "2026-11-27T10:26:02.000Z  metrickit: crash signal=6 exceptionType=10 exceptionCode=0"]))
+        let crash = try XCTUnwrap(report.findings.first)
+        XCTAssertEqual(crash.weight, .failure)
+        XCTAssertEqual(crash.run, .latest)
+        XCTAssertTrue(crash.suggestion.contains("The last lines of the run before show what the app was doing."), crash.suggestion)
+    }
+
+    func testAnAudioWishIOSKeptIsANoteAndASetupThatFailedIsAProblem() {
+        let report = DiagnosticReport(log: log([
+            launch,
+            "2026-11-27T10:26:01.000Z  session: preferred rate refused error=NSOSStatusErrorDomain code=-50",
+            "2026-11-27T10:26:02.000Z  engine: configure failed error=NSOSStatusErrorDomain code=561017449",
+        ]))
+        XCTAssertEqual(report.findings.map(\.weight), [.problem, .note])
+        XCTAssertEqual(report.findings.map(\.title),
+                       ["The audio could not be set up.", "iOS kept its own sample rate or buffer size."])
+    }
+
+    func testAMemoryWarningSaysWhatWasReleasedOnlyWhenSomethingWas() {
+        let none = DiagnosticReport(log: log([launch, "2026-11-27T10:26:01.000Z  memory: warning released=0 loaded=4"]))
+        XCTAssertEqual(none.findings.first?.suggestion, "Close other apps if it repeats.")
+        let some = DiagnosticReport(log: log([launch, "2026-11-27T10:26:01.000Z  memory: warning released=3 loaded=4"]))
+        XCTAssertEqual(some.findings.first?.suggestion,
+                       "The app released 3 samples that were not playing. Close other apps if it repeats.")
+    }
+
+    func testAStreamWithoutTheSongsSoundAndAFieldLayerThatFailedAreProblems() {
+        let report = DiagnosticReport(log: log([
+            launch,
+            "2026-11-27T10:26:01.000Z  graph: stream tap refused the format",
+            "2026-11-27T10:26:02.000Z  field layer: pipeline failed error=MTLLibraryErrorDomain code=3",
+        ]))
+        XCTAssertEqual(report.findings.map(\.weight), [.problem, .problem])
+        XCTAssertEqual(report.findings.map(\.title),
+                       ["A live stream could not take the song's sound format.", "The Field layer for video could not be built."])
+    }
+
+    func testALogSavedWithWindowsLineEndsIsReadToo() {
+        let report = DiagnosticReport(log: log([launch, "2026-11-27T10:27:00.000Z  memory: warning released=1 loaded=2"])
+            .replacingOccurrences(of: "\n", with: "\r\n"))
+        XCTAssertEqual(report.lines.map(\.event), ["app: launch", "memory: warning"])
+        XCTAssertEqual(report.latest.build, "10088")
+    }
+
     func testASafeStartSaysHowOftenTheLaunchDidNotFinish() {
         let report = DiagnosticReport(log: log([launch, "2026-11-27T10:26:01.000Z  launch: safe start deaths=3"]))
         XCTAssertEqual(report.findings.map(\.weight), [.problem])
@@ -160,7 +206,9 @@ final class DiagnosticReportTests: XCTestCase {
     func testAQuietLogSaysNothingPointsToAFault() {
         let report = DiagnosticReport(log: log([launch, "2026-11-27T10:26:05.000Z  app: active", load("10:26:10", peak: 0.3)]))
         XCTAssertTrue(report.findings.isEmpty)
-        XCTAssertTrue(report.markdown.contains("Nothing in the log points to a fault."))
+        XCTAssertTrue(report.markdown.contains(DiagnosticReport.nothingFound))
+        XCTAssertEqual(DiagnosticReport.nothingFound, "None of the report's rules found a fault in the log.",
+                       "it speaks for the rules, not for the app")
     }
 
     func testANumberEditedInTheFileCannotStopTheReport() {
