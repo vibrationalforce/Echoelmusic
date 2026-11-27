@@ -483,6 +483,86 @@ struct PianoRoll: View {
                 addsToSelection = false
             }
             .buttonStyle(ToolButtonStyle())
+            selectionEdits(notes)
+        } else if !clip.notes.isEmpty {
+            Button("Select All", systemImage: "checkmark.circle") {
+                selected = Set(clip.notes.map(\.id))
+                announce("All \(clip.notes.count) notes chosen.")
+            }
+            .buttonStyle(ToolButtonStyle())
+            .labelStyle(.iconOnly)
+            .accessibilityLabel("Select All")
+            .keyboardShortcut("a", modifiers: .command)
+        }
+    }
+
+    /// The chosen notes moved a semitone or an octave, copied right after themselves, or joined
+    /// legato: each one undo step, whole or not at all (`NoteSelection`).
+    @ViewBuilder private func selectionEdits(_ notes: [Note]) -> some View {
+        // One menu, so the bar still fits a phone held upright beside the chord and timing menus.
+        Menu {
+            Section("Transpose") {
+                Button("Up an Octave", systemImage: "arrow.up.to.line") { transpose(notes, by: 12) }
+                Button("Up a Semitone", systemImage: "arrow.up") { transpose(notes, by: 1) }
+                    .keyboardShortcut(.upArrow, modifiers: .option)
+                Button("Down a Semitone", systemImage: "arrow.down") { transpose(notes, by: -1) }
+                    .keyboardShortcut(.downArrow, modifiers: .option)
+                Button("Down an Octave", systemImage: "arrow.down.to.line") { transpose(notes, by: -12) }
+            }
+            Button(notes.count == 1 ? "Duplicate Note" : "Duplicate \(notes.count) Notes", systemImage: "plus.square.on.square") {
+                duplicate(notes)
+            }
+            .keyboardShortcut("d", modifiers: .command)
+            if notes.count > 1 {
+                Button("Legato", systemImage: "arrow.right.to.line") { legato(notes) }
+            }
+        } label: {
+            Label("Edit Notes", systemImage: "ellipsis.circle")
+        }
+        .menuStyle(.button)
+        .buttonStyle(ToolButtonStyle())
+        .labelStyle(.iconOnly)
+        .accessibilityLabel("Edit Notes")
+        .accessibilityHint("Transpose, duplicate or join the chosen notes.")
+    }
+
+    private func transpose(_ notes: [Note], by semitones: Int) {
+        guard let moved = NoteSelection.transposed(notes, by: semitones) else {
+            announce("Not moved: a note would leave the keyboard.", urgent: true)
+            return
+        }
+        do {
+            try store.perform([.updateNotes(clip.id, moved)], title: "Transpose")
+            announce(semitones > 0 ? "Moved up." : "Moved down.")
+        } catch {
+            announce("The notes could not be moved.", urgent: true)
+        }
+    }
+
+    private func duplicate(_ notes: [Note]) {
+        guard let copies = NoteSelection.duplicated(notes, in: clip) else {
+            announce("Not copied: there is no room after the notes in this clip. Make the clip longer first.", urgent: true)
+            return
+        }
+        do {
+            try store.perform([.addNotes(clip.id, copies)], title: "Duplicate Notes")
+            selected = Set(copies.map(\.id))
+            announce(copies.count == 1 ? "Note copied after it." : "\(copies.count) notes copied after them.")
+        } catch {
+            announce("The notes could not be copied.", urgent: true)
+        }
+    }
+
+    private func legato(_ notes: [Note]) {
+        guard let joined = NoteSelection.legato(notes) else {
+            announce("Already legato.")
+            return
+        }
+        do {
+            try store.perform([.updateNotes(clip.id, joined)], title: "Legato")
+            announce("Legato.")
+        } catch {
+            announce("The notes could not be joined.", urgent: true)
         }
     }
 
