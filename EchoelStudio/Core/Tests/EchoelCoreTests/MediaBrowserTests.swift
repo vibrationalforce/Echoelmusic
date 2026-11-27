@@ -213,6 +213,30 @@ final class MediaBrowserTests: XCTestCase {
         XCTAssertEqual(filmed.track(newTrack)?.regions.first?.media, video.id)
     }
 
+    /// A video that needs a new track names it as Add Track names a video track: the first
+    /// "Video <n>" no track carries. By count, a deleted video track made the next one repeat the
+    /// name of the last.
+    func testANewVideoTrackNeverRepeatsAName() throws {
+        let fixture = try song()
+        var project = fixture.0
+        let video = fixture.video
+        let first = TrackID(), second = TrackID(), third = TrackID()
+        for id in [first, second] {
+            for command in try MediaBrowser.commands(placing: video.id, on: .video(nil, at: 0), in: project, newTrack: id) {
+                try command.apply(to: &project)
+            }
+        }
+        XCTAssertEqual(project.track(first)?.name, "Video 1")
+        XCTAssertEqual(project.track(second)?.name, "Video 2")
+        try Command.removeTrack(first).apply(to: &project)
+        for command in try MediaBrowser.commands(placing: video.id, on: .video(nil, at: 0), in: project, newTrack: third) {
+            try command.apply(to: &project)
+        }
+        XCTAssertEqual(project.track(third)?.name, "Video 1", "by count it would be Video 2, which is there")
+        XCTAssertEqual(Set(project.tracks.map(\.name)).count, project.tracks.count)
+        XCTAssertEqual(project.nextVideoTrackName(), "Video 3")
+    }
+
     func testAFileGoesOnlyWhereItsKindBelongs() throws {
         let fixture = try song()
         var project = fixture.0

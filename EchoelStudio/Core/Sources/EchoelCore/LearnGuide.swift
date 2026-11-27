@@ -276,7 +276,7 @@ public enum LearnGuide {
             id: "firstTrack", title: "Your First Track and Recording",
             summary: "Add a track, play it on the keys, and record.",
             paragraphs: [
-                "Open “Tracks” in the bar of views at the bottom and use “Add Track”: “Instrument”, “Audio”, “Return”, “Video” or “Drums”. Tap an instrument track to open its editor. The length menu at the bottom of the editor repeats a clip or sets its length, from one bar to sixteen.",
+                "Open “Tracks” in the bar of views at the bottom and use “Add Track”: “Instrument”, “Drums”, “Audio”, “Video” or “Return”. Tap an instrument track to open its editor. The length menu at the bottom of the editor repeats a clip or sets its length, from one bar to sixteen.",
                 "The “Keys” under the views play the live track. “Record” in the transport starts the song and records the armed track; with nothing armed, it records the track the keys play. A MIDI take becomes a new clip, as one undo step.",
                 "To record audio, arm an audio track with the round record button on its row and choose its input on the “Mixer”: the input menu of its strip also holds “Monitor”. Takes stay on the device.",
                 "Every edit is one undo step: Undo and Redo sit beside the “Song menu”. Songs save on their own.",

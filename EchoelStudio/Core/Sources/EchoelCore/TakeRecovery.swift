@@ -57,10 +57,10 @@ public enum TakeRecovery {
             .map { (id: $0.id, path: $0.path) }
     }
 
-    /// The commands that put `takes` back into the song: one new audio track named `trackName`,
-    /// each take as a media file and a region on it, back to back from the song's start. Takes
-    /// without a usable length are left out; nil when none is left. Performed as one step, one
-    /// Undo takes them all back.
+    /// The commands that put `takes` back into the song: one new audio track named `trackName`
+    /// ("Recovered Takes 2" while another track carries that name), each take as a media file and
+    /// a region on it, back to back from the song's start. Takes without a usable length are left
+    /// out; nil when none is left. Performed as one step, one Undo takes them all back.
     public static func commands(for project: Project, takes: [Take], track: TrackID = TrackID()) -> [Command]? {
         let usable = takes.filter {
             MediaFile(id: $0.id, name: takeName, path: $0.path, frameCount: $0.frameCount, sampleRate: $0.sampleRate).hasUsableFormat
@@ -68,7 +68,7 @@ public enum TakeRecovery {
         }
         guard !usable.isEmpty else { return nil }
         let map = project.tempoMap
-        var commands: [Command] = [.addTrack(id: track, name: trackName, kind: .audio, index: nil)]
+        var commands: [Command] = [.addTrack(id: track, name: project.uniqueTrackName(trackName), kind: .audio, index: nil)]
         var seconds = 0.0
         for (number, take) in usable.enumerated() {
             let name = usable.count == 1 ? takeName : "\(takeName) \(number + 1)"

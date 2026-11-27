@@ -221,14 +221,64 @@ public enum CommandError: Error, Equatable, Sendable {
 public enum Names {
     public static let maximumLength = 128
 
+    /// The most digits a number at the end of a name may have to count as one ("Take 999999999"):
+    /// longer runs are no number the app gave, and the arithmetic stays far from overflow.
+    static let maximumDigits = 9
+
     /// "<base> <n>" with the first n from 1 that no name in `taken` carries — so a new track after
     /// a deleted one never repeats a name (two tracks named "Drums 2" in the 10083 recording came
-    /// from numbering by count).
+    /// from numbering by count). Shortened on the base like `derived`, so it always passes
+    /// `validated`, however long the base is.
     public static func firstFree(_ base: String, taken: [String]) -> String {
         let used = Set(taken)
-        var number = 1
-        while used.contains("\(base) \(number)") { number += 1 }
-        return "\(base) \(number)"
+        var n = 1
+        while used.contains(numbered(base, n)) { n += 1 }
+        return numbered(base, n)
+    }
+
+    /// `wanted` as it is while no name in `taken` carries it, else "<wanted> 2", "<wanted> 3" … —
+    /// the first that is free. For a name the app composes from another one ("Keys Baked", "Keys
+    /// Clip", a file's name, the track name a MIDI file carries), which reads best plain: "Keys
+    /// Baked 1" would read as the first of a row. Shortened like `derived`, so it always passes
+    /// `validated`.
+    public static func unique(_ wanted: String, taken: [String]) -> String {
+        let name = derived(wanted, suffix: "")
+        let used = Set(taken)
+        guard used.contains(name) else { return name }
+        var n = 2
+        while used.contains(numbered(name, n)) { n += 1 }
+        return numbered(name, n)
+    }
+
+    /// "<base> <n>" with n one above the highest "<base> <number>" in `taken`, 1 when there is
+    /// none — for takes: a newer take never gets a smaller number than one still beside it in a
+    /// take folder; a number below the highest is not given again. Never a name in `taken`.
+    public static func after(_ base: String, taken: [String]) -> String {
+        numbered(base, number(after: base, taken: taken))
+    }
+
+    /// The number `after(_:taken:)` puts behind `base`. A name counts when it is the base, a
+    /// space and at most `maximumDigits` digits ("Take 3"); "Take 3 (baked)" and
+    /// "Recovered Take 3" do not.
+    public static func number(after base: String, taken: [String]) -> Int {
+        let lead = derived(base, suffix: "") + " "
+        let highest = taken.compactMap { name -> Int? in
+            guard name.hasPrefix(lead) else { return nil }
+            let digits = name.dropFirst(lead.count)
+            guard !digits.isEmpty, digits.count <= maximumDigits,
+                  digits.allSatisfy({ $0.isASCII && $0.isNumber }) else { return nil }
+            return Int(digits)
+        }.max() ?? 0
+        let used = Set(taken)
+        var n = highest + 1
+        while used.contains(numbered(base, n)) { n += 1 }
+        return n
+    }
+
+    /// "<base> <n>", the base as `derived` gives it alone ("Untitled" for nothing at all), so the
+    /// rules above name and count the same stem.
+    private static func numbered(_ base: String, _ n: Int) -> String {
+        derived(derived(base, suffix: ""), suffix: "\(n)")
     }
 
     /// Trimmed, non-empty, at most `maximumLength` characters.
@@ -259,6 +309,45 @@ public enum Names {
         case (false, true): return head
         case (false, false): return "\(head) \(tail)"
         }
+    }
+}
+
+// The names the app gives what it makes, each by the `Names` rule that fits what it numbers. Two
+// tracks, scenes or clips of one name read alike in the mixer, the arrangement and the session:
+// recording 10088 shows two tracks "Drums 2", and VoiceOver would say "Mute Drums 2" twice
+// (MixerView).
+
+extension Project {
+    /// The name Add Scene gives: "Scene <n>", the first number no scene carries.
+    public func nextSceneName() -> String {
+        Names.firstFree("Scene", taken: scenes.map(\.name))
+    }
+
+    /// The name of the video track the app makes for a video: "Video <n>", the first number no
+    /// track carries — the name Add Track gives a video track.
+    public func nextVideoTrackName() -> String {
+        Names.firstFree("Video", taken: tracks.map(\.name))
+    }
+
+    /// The name of a take recorded now: "Take <n>", one above the highest take among the song's
+    /// files, audio and video alike — so a new take never repeats the name of a file the song holds.
+    public func nextTakeName() -> String {
+        Names.after("Take", taken: media.map(\.name))
+    }
+
+    /// `wanted` as the name of a new track, numbered from 2 while another track carries it.
+    public func uniqueTrackName(_ wanted: String) -> String {
+        Names.unique(wanted, taken: tracks.map(\.name))
+    }
+}
+
+extension Track {
+    /// The name of a new clip on the track, in Arrange, the clip editor and the session alike:
+    /// "<track> Clip", then "<track> Clip 2", "<track> Clip 3" … — the first no clip of the track
+    /// carries. Never two numbers in a row ("Drums 2 1" on the track "Drums 2" is easy to mix up),
+    /// and never a name Add Track gives: by count, the session called a clip on "Drums" "Drums 2".
+    public func nextClipName() -> String {
+        Names.unique(Names.derived(name, suffix: "Clip"), taken: clips.map(\.name))
     }
 }
 
@@ -475,7 +564,7 @@ extension Command {
                                                 reason: "a song holds at most \(Track.limit(for: kind)) tracks of this kind")
             }
             let track = Track(id: id, name: try Names.validated(name, parameter: "name"), kind: kind,
-                              colorIndex: project.tracks.count % Palette.trackColorCount)
+                              colorIndex: Palette.colorIndexForNewTrack(in: project))
             let at = index ?? project.tracks.count
             guard (0...project.tracks.count).contains(at) else {
                 throw CommandError.invalidValue(parameter: "index", reason: "must be within 0…\(project.tracks.count)")
@@ -1530,6 +1619,14 @@ extension Command {
 public enum Palette {
     /// Number of track colours the UI offers. The document stores an index into them.
     public static let trackColorCount = 12
+
+    /// The colour a new track of `project` takes: the first no track carries, so a deletion never
+    /// leaves two tracks of one colour beside an unused one; with every colour in use, by count as
+    /// before. A song built without deletions or recolouring is dealt the same colours either way.
+    static func colorIndexForNewTrack(in project: Project) -> Int {
+        let used = Set(project.tracks.map(\.colorIndex))
+        return (0..<trackColorCount).first { !used.contains($0) } ?? project.tracks.count % trackColorCount
+    }
 }
 
 extension Track {

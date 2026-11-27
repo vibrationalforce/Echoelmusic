@@ -341,8 +341,7 @@ public enum MediaBrowser {
                 target = id
             } else {
                 target = newTrack
-                let count = project.tracks.filter { $0.kind == .video }.count + 1
-                commands.append(.addTrack(id: target, name: "Video \(count)", kind: .video, index: nil))
+                commands.append(.addTrack(id: target, name: project.nextVideoTrackName(), kind: .video, index: nil))
             }
             commands.append(.placeVideo(track: target, id: region, media: media, start: start))
             return commands

@@ -278,7 +278,7 @@ struct ClipEditorView: View {
         // Four bars of the song's meter from bar 1, where the clip is placed.
         let length = Swift.max(Arranging.ticks(movingBars: Self.newClipBars, from: 0, meter: store.project.meterMap), 1)
         try? store.perform([
-            .createClip(track: track.id, id: clip, name: Names.derived(track.name, suffix: "Clip"), length: length),
+            .createClip(track: track.id, id: clip, name: track.nextClipName(), length: length),
             .placeClip(track: track.id, id: PlacementID(), clip: clip, start: 0),
         ], title: "New Clip")
     }

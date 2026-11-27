@@ -12,8 +12,9 @@ enum RenameTarget: Hashable {
 }
 
 /// Renames a track, a clip or a scene through its command — one undo step. The button holds back
-/// a name the door would refuse, or the one the object already has; an object that went away
-/// while the sheet was open (undo, the assistant, another song) closes it.
+/// a name the door would refuse, or the one the object already has; a track name another track
+/// carries is said under the field and allowed. An object that went away while the sheet was open
+/// (undo, the assistant, another song) closes it.
 struct RenameView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -72,11 +73,16 @@ struct RenameView: View {
                 .frame(minHeight: Theme.Size.touch)
                 .background(Theme.Color.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.medium))
                 .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.borderStrong, lineWidth: 1))
-                .accessibilityHint(isTooLong ? caption : "")
+                .accessibilityHint(isTooLong ? caption : sharedCaption ?? "")
             if isTooLong {
                 Text(caption)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.record)
+            }
+            if let note = sharedCaption {
+                Text(note)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
             }
             Spacer(minLength: 0)
         }
@@ -98,6 +104,13 @@ struct RenameView: View {
     private var isTooLong: Bool { trimmed.count > Names.maximumLength }
 
     private var caption: String { "At most \(Names.maximumLength) characters." }
+
+    /// While another track carries the typed name: said, and still allowed — two tracks may share
+    /// a name on purpose, and the track list numbers them in one tap.
+    private var sharedCaption: String? {
+        guard case .track(let id) = target else { return nil }
+        return TrackNaming.caption(renaming: id, to: name, in: store.project)
+    }
 
     private var canRename: Bool {
         !trimmed.isEmpty && !isTooLong && current != nil && trimmed != current

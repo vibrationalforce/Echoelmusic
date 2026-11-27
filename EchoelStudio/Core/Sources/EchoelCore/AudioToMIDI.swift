@@ -128,7 +128,9 @@ public enum AudioToMIDI {
         switch destination {
         case .newTrack(let id):
             guard project.canAddTrack(.instrument) else { return nil }
-            let trackName = String("\(name) MIDI".prefix(Names.maximumLength))
+            // Numbered while another track carries it: one region converted twice gives
+            // "Melody MIDI" and "Melody MIDI 2".
+            let trackName = project.uniqueTrackName(Names.derived(name, suffix: "MIDI"))
             let index = project.trackIndex(trackID).map { $0 + 1 }
             commands.append(.addTrack(id: id, name: trackName, kind: .instrument, index: index))
             target = id

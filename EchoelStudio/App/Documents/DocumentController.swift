@@ -2183,8 +2183,7 @@ final class DocumentController {
            bring(url, to: there, into: here) {
             source = there
         }
-        let number = store.project.media.filter { $0.kind == .video && $0.name.hasPrefix("Take ") }.count + 1
-        let name = "Take \(number)"
+        let name = store.project.nextTakeName()
         let path = target.path
         let id = target.id
         let read = source
@@ -2216,8 +2215,7 @@ final class DocumentController {
             target = track
         } else {
             target = TrackID()
-            let count = store.project.tracks.filter { $0.kind == .video }.count + 1
-            commands.append(.addTrack(id: target, name: "Video \(count)", kind: .video, index: nil))
+            commands.append(.addTrack(id: target, name: store.project.nextVideoTrackName(), kind: .video, index: nil))
         }
         commands.append(.addMedia(file))
         commands.append(.placeVideo(track: target, id: RegionID(), media: file.id,
@@ -2494,7 +2492,8 @@ final class DocumentController {
         let media = MediaFile(id: target.id, name: "\(file.name) (baked)", path: target.path,
                               frameCount: baked.count, sampleRate: rate)
         let commands: [Command] = [
-            .addTrack(id: baker, name: "\(track.name) Baked", kind: .audio, index: index),
+            .addTrack(id: baker, name: store.project.uniqueTrackName(Names.derived(track.name, suffix: "Baked")),
+                      kind: .audio, index: index),
             .setVolume(.track(baker), db: track.mixer.volumeDB),
             .setPan(.track(baker), pan: track.mixer.pan),
             .addMedia(media),
@@ -2764,8 +2763,7 @@ final class DocumentController {
         // from the file's header, loaded or not.
         mediaChannels[target.id] = take.channels
         mediaRevision += 1
-        let number = store.project.media.filter { $0.name.hasPrefix("Take ") }.count + 1
-        let file = MediaFile(id: target.id, name: "Take \(number)", path: target.path,
+        let file = MediaFile(id: target.id, name: store.project.nextTakeName(), path: target.path,
                              frameCount: frameCount, sampleRate: sampleRate)
         // A take over earlier audio joins it as a lane of a take folder and sounds over its span
         // (Recovery 4); what was there stays, to be comped. Over nothing it stays a plain region.

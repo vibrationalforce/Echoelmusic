@@ -158,6 +158,24 @@ final class MIDIFileImportTests: XCTestCase {
         }
     }
 
+    /// Two tracks of one name in a file come in under two names, and a name the song already
+    /// carries is numbered: "Drums" and "Drums 2", then "Drums 3" and "Drums 4" — never two
+    /// tracks called alike in the mixer.
+    func testTwoTracksCalledDrumsComeInAsDrumsAndDrumsTwo() throws {
+        let named = join([0x00, 0xFF, 0x03, 0x05], Array("Drums".utf8), [0x00, 0x99, 36, 100], vlq(240), [0x89, 36, 0])
+        let content = try MIDIFileImport.read(file(format: 1, division: 960, tracks: [named, named]))
+        XCTAssertEqual(content.tracks.map(\.name), ["Drums", "Drums"])
+        var project = Project()
+        for command in try MIDIFileImport.commands(for: content, fileName: "Beats", in: project) {
+            try command.apply(to: &project)
+        }
+        XCTAssertEqual(project.tracks.map(\.name), ["Drums", "Drums 2"])
+        for command in try MIDIFileImport.commands(for: content, fileName: "Beats", in: project) {
+            try command.apply(to: &project)
+        }
+        XCTAssertEqual(project.tracks.map(\.name), ["Drums", "Drums 2", "Drums 3", "Drums 4"])
+    }
+
     func testASongThatPlaysKeepsItsTempoAndMeter() throws {
         var project = Project(tempo: 100)
         let track = TrackID(), clip = ClipID()

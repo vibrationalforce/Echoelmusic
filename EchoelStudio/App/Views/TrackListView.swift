@@ -15,6 +15,11 @@ struct TrackListView: View {
                 ForEach(store.project.tracks) { track in
                     TrackRow(track: track, open: open)
                 }
+                // Two tracks of one name read alike in the mixer, the arrangement and the session
+                // (recording 10088 shows two called "Drums 2"): said here, numbered in one tap.
+                if let notice = TrackNaming.notice(in: store.project) {
+                    SharedNamesRow(notice: notice)
+                }
                 AddTrackMenu()
                     .padding(Theme.Space.m)
                 // A song of one or two tracks left most of the page empty (device video 10021):
@@ -212,21 +217,15 @@ struct AddTrackMenu: View {
     var body: some View {
         Menu {
             // A full kind stays in the list, off, with the limit as the item's second line —
-            // the name stays the name.
-            ForEach(TrackKind.allCases, id: \.self) { kind in
+            // the name stays the name. Drums comes right after Instrument.
+            ForEach(TrackKind.addTrackOrder, id: \.self) { kind in
                 Button { add(kind) } label: {
                     Text(kind.displayName)
                     if !store.project.canAddTrack(kind) { Text("The song holds \(Track.limit(for: kind)), the most it can.") }
                 }
                 .disabled(!store.project.canAddTrack(kind))
+                if kind == .instrument { drumsButton }
             }
-            Button { addDrums() } label: {
-                Text("Drums")
-                if !store.project.canAddTrack(.instrument) {
-                    Text("The song holds \(Track.limit(for: .instrument)) instrument tracks, the most it can.")
-                }
-            }
-            .disabled(!store.project.canAddTrack(.instrument))
         } label: {
             Label("Add Track", systemImage: "plus")
                 .font(Theme.Font.label)
@@ -238,6 +237,16 @@ struct AddTrackMenu: View {
                         .stroke(Theme.Color.borderStrong, lineWidth: 1)
                 )
         }
+    }
+
+    private var drumsButton: some View {
+        Button { addDrums() } label: {
+            Text("Drums")
+            if !store.project.canAddTrack(.instrument) {
+                Text("The song holds \(Track.limit(for: .instrument)) instrument tracks, the most it can.")
+            }
+        }
+        .disabled(!store.project.canAddTrack(.instrument))
     }
 
     /// An instrument track playing the drum kit, with an empty one-bar pattern ready to fill.
@@ -270,6 +279,45 @@ extension TrackKind {
         case .returnTrack: "Return"
         case .video: "Video"
         }
+    }
+
+    /// The kinds in Add Track's order — Instrument, then (Drums), Audio, Video, Return: the
+    /// everyday ones first (audit 2026-11-27, F12). The menu's order only; the cases keep theirs.
+    static var addTrackOrder: [TrackKind] { allCases.sorted { $0.addTrackRank < $1.addTrackRank } }
+
+    /// A new kind does not build until it has its place in Add Track.
+    private var addTrackRank: Int {
+        switch self {
+        case .instrument: 0
+        case .audio: 1
+        case .video: 2
+        case .returnTrack: 3
+        }
+    }
+}
+
+/// The line over Add Track while two or more tracks carry one name, and the one tap that numbers
+/// all but one track of each such name — one undo step (`TrackNaming.numbering`).
+struct SharedNamesRow: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
+    let notice: String
+
+    var body: some View {
+        HStack(spacing: Theme.Space.m) {
+            Text(notice)
+                .font(Theme.Font.label)
+                .foregroundStyle(Theme.Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button("Number Them") {
+                documents.attempt(TrackNaming.numbering(in: store.project), title: TrackNaming.title)
+            }
+            .buttonStyle(ToolButtonStyle())
+            .accessibilityHint("Numbers all but one track of each shared name, so no two tracks share a name.")
+        }
+        .padding(.horizontal, Theme.Space.m)
+        .padding(.top, Theme.Space.m)
     }
 }
 

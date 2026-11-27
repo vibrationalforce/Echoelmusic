@@ -68,7 +68,7 @@ struct SessionView: View {
 
     private var addScene: some View {
         Button("Add Scene", systemImage: "plus") {
-            let name = "Scene \(store.project.scenes.count + 1)"
+            let name = store.project.nextSceneName()
             documents.attempt(.addScene(id: SceneID(), name: name, index: nil))
         }
         .buttonStyle(ToolButtonStyle())
@@ -252,7 +252,7 @@ struct SessionCell: View {
     private func makeClip() {
         let clip = ClipID()
         let length = MusicalTime.ticksPerBar(store.project.timeSignature)
-        let name = Names.derived(track.name, suffix: "\(track.clips.count + 1)")
+        let name = track.nextClipName()
         do {
             try store.perform([.createClip(track: track.id, id: clip, name: name, length: length),
                                .setSlot(track: track.id, scene: scene.id, clip: clip)], title: "New Clip")

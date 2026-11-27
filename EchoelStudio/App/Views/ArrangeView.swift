@@ -875,7 +875,7 @@ private struct ArrangeLane: View {
         guard track.kind == .instrument else { return }
         let clip = ClipID()
         documents.attempt([
-            .createClip(track: track.id, id: clip, name: Names.derived(track.name, suffix: "Clip"),
+            .createClip(track: track.id, id: clip, name: track.nextClipName(),
                         length: Swift.max(Arranging.ticks(movingBars: 4, from: start, meter: meter), 1)),
             .placeClip(track: track.id, id: PlacementID(), clip: clip, start: start),
         ], title: "New Clip")

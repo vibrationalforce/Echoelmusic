@@ -276,10 +276,15 @@ public enum MIDIFileImport {
 
         let bar = meter.ticksPerBar(at: 0)
         let base = fileName.trimmingCharacters(in: .whitespacesAndNewlines)
+        // A name the song or an earlier track of the file carries is numbered: a file with two
+        // tracks called "Drums" comes in as "Drums" and "Drums 2".
+        var taken = project.tracks.map(\.name)
         for (index, imported) in tracks.enumerated() {
             let track = TrackID(), clip = ClipID()
-            let name = imported.name.map { Names.derived($0, suffix: "") }
+            let wanted = imported.name
                 ?? Names.derived(base.isEmpty ? "MIDI" : base, suffix: tracks.count == 1 ? "" : "\(index + 1)")
+            let name = Names.unique(wanted, taken: taken)
+            taken.append(name)
             let last = imported.notes.map { $0.start + $0.length }.max() ?? bar
             let length = Swift.min(Swift.max(meter.nextBarLine(atOrAfter: last), bar), MusicalTime.maximumTick)
             commands.append(.addTrack(id: track, name: name, kind: .instrument, index: nil))

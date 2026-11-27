@@ -56,4 +56,17 @@ final class TakeRecoveryTests: XCTestCase {
         XCTAssertNil(TakeRecovery.commands(for: project, takes: [empty]), "nothing usable, nothing to do")
         XCTAssertNil(TakeRecovery.commands(for: project, takes: [first]), "a take the song holds now is not added twice")
     }
+
+    /// A second recovery goes on a track of a name of its own, "Recovered Takes 2", not beside a
+    /// second "Recovered Takes".
+    func testASecondRecoveryTakesATrackOfItsOwnName() throws {
+        var project = Project()
+        try Command.addTrack(id: TrackID(), name: TakeRecovery.trackName, kind: .audio, index: nil).apply(to: &project)
+        let take = TakeRecovery.Take(id: MediaID(), path: "Media/a.caf", frameCount: 48_000, sampleRate: 48_000)
+        let track = TrackID()
+        for command in try XCTUnwrap(TakeRecovery.commands(for: project, takes: [take], track: track)) {
+            try command.apply(to: &project)
+        }
+        XCTAssertEqual(project.track(track)?.name, "Recovered Takes 2")
+    }
 }

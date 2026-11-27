@@ -303,7 +303,8 @@ final class RecordController {
         if passes.count > 1, let span = loop.loop {
             passes = LoopRecording.newest(passes, room: LoopRecording.room(on: held, in: store.project, over: span))
         }
-        let number = held.clips.filter { $0.name.hasPrefix("Take ") }.count + 1
+        // One above the track's highest take, never by count: after Take 1 and Take 3 comes Take 4.
+        let number = Names.number(after: "Take", taken: held.clips.map(\.name))
         // A take over earlier ones joins them as a lane of their take folder and sounds over its
         // span (Recovery 4); the earlier takes stay, to be comped. Over nothing it stays a clip.
         try? store.perform(LoopRecording.midiCommands(passes, track: track, firstNumber: number),

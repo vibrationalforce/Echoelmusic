@@ -233,4 +233,147 @@ final class CommandTests: XCTestCase {
         XCTAssertEqual(Names.firstFree("Drums", taken: ["Drums", "Drums 2"]), "Drums 1")
     }
 
+    /// A numbered name passes the door whatever its base is called: a base of 128 characters still
+    /// gives a free "… 1", shortened on the base, never on the number.
+    func testAFirstFreeNameAlwaysPassesTheDoor() throws {
+        let long = String(repeating: "x", count: Names.maximumLength)
+        let numbered = Names.firstFree(long, taken: [])
+        XCTAssertEqual(numbered.count, Names.maximumLength)
+        XCTAssertTrue(numbered.hasSuffix(" 1"))
+        XCTAssertNotEqual(Names.firstFree(long, taken: [numbered]), numbered)
+        XCTAssertEqual(Names.firstFree("  ", taken: []), "Untitled 1", "nothing at all is named as `derived` names it")
+        var project = Project()
+        try Command.addTrack(id: TrackID(), name: numbered, kind: .instrument, index: nil).apply(to: &project)
+        XCTAssertEqual(project.tracks.map(\.name), [numbered])
+    }
+
+    /// A name the app composes from another one ("Keys Baked", "Melody MIDI", a track name a MIDI
+    /// file carries) stays as it is while it is free, and takes " 2", " 3" … once a name in the
+    /// song carries it.
+    func testAComposedNameThatIsTakenIsNumberedFromTwo() {
+        XCTAssertEqual(Names.unique("Keys Baked", taken: ["Keys"]), "Keys Baked")
+        XCTAssertEqual(Names.unique("Keys Baked", taken: ["Keys", "Keys Baked"]), "Keys Baked 2")
+        XCTAssertEqual(Names.unique("Keys Baked", taken: ["Keys Baked", "Keys Baked 2"]), "Keys Baked 3")
+        XCTAssertEqual(Names.unique("  Drums ", taken: []), "Drums", "trimmed as the door trims")
+        XCTAssertEqual(Names.unique("", taken: ["Untitled"]), "Untitled 2")
+        let long = String(repeating: "x", count: Names.maximumLength + 10)
+        let first = Names.unique(long, taken: [])
+        XCTAssertEqual(first.count, Names.maximumLength)
+        let second = Names.unique(long, taken: [first])
+        XCTAssertEqual(second.count, Names.maximumLength)
+        XCTAssertTrue(second.hasSuffix(" 2"))
+    }
+
+    /// A baked track is named after its track and numbered when that name is taken: baking one
+    /// track twice leaves "Keys Baked" and "Keys Baked 2", never two tracks of one name.
+    func testABakedTrackWhoseNameIsTakenGetsTwo() throws {
+        var project = Project()
+        try Command.addTrack(id: TrackID(), name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        let baked = Names.derived("Keys", suffix: "Baked")
+        XCTAssertEqual(project.uniqueTrackName(baked), "Keys Baked")
+        try Command.addTrack(id: TrackID(), name: project.uniqueTrackName(baked), kind: .audio, index: nil)
+            .apply(to: &project)
+        XCTAssertEqual(project.uniqueTrackName(baked), "Keys Baked 2")
+    }
+
+    /// A take is numbered one above the highest take, never by count: after "Take 1" and "Take 3"
+    /// (Take 2 deleted) comes "Take 4", so a newer take never reads as older than one beside it in
+    /// a take folder. Audio and video takes of a song count as one row.
+    func testATakeAfterTakeOneAndTakeThreeIsTakeFour() throws {
+        XCTAssertEqual(Names.after("Take", taken: ["Take 1", "Take 3"]), "Take 4")
+        XCTAssertEqual(Names.number(after: "Take", taken: ["Take 1", "Take 3"]), 4)
+        XCTAssertEqual(Names.after("Take", taken: []), "Take 1")
+        let others = ["Take", "Takeover 9", "Take 2 (baked)", "Recovered Take 7", "take 5", "Take 2"]
+        XCTAssertEqual(Names.after("Take", taken: others), "Take 3", "only “Take <number>” counts")
+        XCTAssertEqual(Names.after("Take", taken: ["Take 9999999999"]), "Take 1", "a number past nine digits is not a take")
+        XCTAssertEqual(Names.after("", taken: ["Untitled 1"]), "Untitled 2", "the name it gives is the name it counts")
+
+        var project = Project()
+        let audio = [MediaFile(name: "Take 1", path: "Media/a.caf", frameCount: 48_000, sampleRate: 48_000),
+                     MediaFile(name: "Take 3", path: "Media/b.caf", frameCount: 48_000, sampleRate: 48_000)]
+        for file in audio { try Command.addMedia(file).apply(to: &project) }
+        XCTAssertEqual(project.nextTakeName(), "Take 4")
+        let video = MediaFile(name: "Take 4", path: "Media/c.mov", frameCount: 240_000,
+                              sampleRate: MediaFile.videoTimeBase, kind: .video)
+        try Command.addMedia(video).apply(to: &project)
+        XCTAssertEqual(project.nextTakeName(), "Take 5")
+    }
+
+    /// Add Scene takes the first number no scene carries — after a deleted scene, its number —
+    /// never the count, which repeated the name of the last scene.
+    func testASceneAfterADeletedOneTakesTheFreeNumber() throws {
+        var project = Project()
+        let scenes = [SceneID(), SceneID(), SceneID()]
+        for id in scenes {
+            try Command.addScene(id: id, name: project.nextSceneName(), index: nil).apply(to: &project)
+        }
+        XCTAssertEqual(project.scenes.map(\.name), ["Scene 1", "Scene 2", "Scene 3"])
+        try Command.removeScene(scenes[1]).apply(to: &project)
+        XCTAssertEqual(project.nextSceneName(), "Scene 2", "the count would say Scene 3, which is there")
+        try Command.addScene(id: SceneID(), name: project.nextSceneName(), index: nil).apply(to: &project)
+        XCTAssertEqual(project.nextSceneName(), "Scene 4")
+    }
+
+    /// A new clip is "<track> Clip", then "<track> Clip 2", "<track> Clip 3" … — the first no clip
+    /// of its track carries — so two numbers never stand in a row: on the track "Drums 2" a clip
+    /// "Drums 2 1" is easy to mix up, "Drums 2 Clip" is not. By count, a deleted clip made the next
+    /// one repeat a name, and the first session clip on the starter's Drums, whose only clip is
+    /// "Beat", was called "Drums 2" — the name of a track.
+    func testANewClipIsNamedAfterItsTrackAndNeverRepeatsAName() throws {
+        var project = Project()
+        let drums = TrackID()
+        try Command.addTrack(id: drums, name: "Drums", kind: .instrument, index: nil).apply(to: &project)
+        try Command.createClip(track: drums, id: ClipID(), name: "Beat", length: bar).apply(to: &project)
+        XCTAssertEqual(project.track(drums)?.nextClipName(), "Drums Clip")
+        var made: [ClipID] = []
+        for _ in 0..<3 {
+            let clip = ClipID()
+            let name = try XCTUnwrap(project.track(drums)?.nextClipName())
+            try Command.createClip(track: drums, id: clip, name: name, length: bar).apply(to: &project)
+            made.append(clip)
+        }
+        XCTAssertEqual(project.track(drums)?.clips.map(\.name), ["Beat", "Drums Clip", "Drums Clip 2", "Drums Clip 3"])
+        try Command.deleteClip(made[1]).apply(to: &project)
+        XCTAssertEqual(project.track(drums)?.nextClipName(), "Drums Clip 2", "a gap is filled")
+        let names = try XCTUnwrap(project.track(drums)?.clips.map(\.name))
+        XCTAssertFalse(names.contains(try XCTUnwrap(project.track(drums)?.nextClipName())))
+
+        let numbered = TrackID()
+        try Command.addTrack(id: numbered, name: "Drums 2", kind: .instrument, index: nil).apply(to: &project)
+        XCTAssertEqual(project.track(numbered)?.nextClipName(), "Drums 2 Clip", "never “Drums 2 1”")
+
+        let long = TrackID()
+        try Command.addTrack(id: long, name: String(repeating: "x", count: Names.maximumLength), kind: .instrument,
+                             index: nil).apply(to: &project)
+        for _ in 0..<2 {
+            let name = try XCTUnwrap(project.track(long)?.nextClipName())
+            XCTAssertNoThrow(try Command.createClip(track: long, id: ClipID(), name: name, length: bar).apply(to: &project))
+        }
+        let longNames = try XCTUnwrap(project.track(long)?.clips.map(\.name))
+        XCTAssertEqual(Set(longNames).count, 2, "a track named with 128 characters gets two clips of two names")
+    }
+
+    /// A new track takes the first colour no track carries, so a deletion never leaves two tracks
+    /// of one colour beside a free one; with all twelve in use the count deals it, as before. A
+    /// song built without deletions gets the same colours under both rules.
+    func testANewTrackTakesTheFirstColourNoTrackCarries() throws {
+        var project = Project()
+        let ids = [TrackID(), TrackID(), TrackID()]
+        for (n, id) in ids.enumerated() {
+            try Command.addTrack(id: id, name: "T\(n)", kind: .instrument, index: nil).apply(to: &project)
+        }
+        XCTAssertEqual(project.tracks.map(\.colorIndex), [0, 1, 2])
+        try Command.removeTrack(ids[1]).apply(to: &project)
+        try Command.addTrack(id: TrackID(), name: "New", kind: .audio, index: nil).apply(to: &project)
+        XCTAssertEqual(project.tracks.map(\.colorIndex), [0, 2, 1], "by count it would take 2 a second time")
+
+        var full = Project()
+        for n in 0..<Palette.trackColorCount {
+            try Command.addTrack(id: TrackID(), name: "T\(n)", kind: .instrument, index: nil).apply(to: &full)
+        }
+        let dealt: [Int] = Array(0..<Palette.trackColorCount)
+        XCTAssertEqual(full.tracks.map(\.colorIndex), dealt)
+        try Command.addTrack(id: TrackID(), name: "One More", kind: .audio, index: nil).apply(to: &full)
+        XCTAssertEqual(full.tracks.last?.colorIndex, 0, "all twelve in use: by count, 12 tracks → colour 0")
+    }
 }

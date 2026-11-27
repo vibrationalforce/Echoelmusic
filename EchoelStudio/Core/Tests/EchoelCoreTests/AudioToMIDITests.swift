@@ -97,6 +97,21 @@ final class AudioToMIDITests: XCTestCase {
         }
     }
 
+    /// Converting one region twice onto new tracks gives two names: "Melody MIDI", then
+    /// "Melody MIDI 2".
+    func testASecondConversionOntoANewTrackIsNumbered() throws {
+        let fixture = try song()
+        var project = fixture.project
+        let first = TrackID(), second = TrackID()
+        for target in [first, second] {
+            let commands = try XCTUnwrap(AudioToMIDI.commands(heard: melody, region: fixture.region, on: fixture.track,
+                                                              in: project, destination: .newTrack(target)))
+            for command in commands { try command.apply(to: &project) }
+        }
+        XCTAssertEqual(project.track(first)?.name, "Melody MIDI")
+        XCTAssertEqual(project.track(second)?.name, "Melody MIDI 2")
+    }
+
     func testConvertOntoAChosenInstrumentTrack() throws {
         var (project, track, id) = try song()
         let keys = TrackID()
