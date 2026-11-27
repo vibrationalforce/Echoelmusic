@@ -587,7 +587,7 @@ final class MIDIInput {
                 guard let descriptor = store.project.descriptor(for: mapping.target) else { continue }
                 // One undo step per turn of the knob: the step closes when it rests. With
                 // automation write armed, the turn is written into the lane.
-                writer.set(mapping.target, to: descriptor.value(forNormalized: value),
+                writer.set(mapping.target, to: descriptor.movedValue(forNormalized: value),
                            coalescingKey: "midi.\(control.description)")
             }
         }

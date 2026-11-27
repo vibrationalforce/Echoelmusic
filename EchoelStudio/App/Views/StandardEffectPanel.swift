@@ -413,9 +413,10 @@ private struct EffectParameterField: View {
         switch parameter.unit {
         case .hertz: ParameterFormat.text(value, unit: .hertz)
         case .seconds: ParameterFormat.text(value, unit: .seconds)
-        case .decibels: NumberText.signed(value, decimals: 1, unit: "dB")
-        case .ratio: parameter.identifier == "ratio" ? NumberText.string(value, decimals: 1) + " : 1" : NumberText.string(value, decimals: 2)
-        case .amount: NumberText.string(value, decimals: 2)
+        // Exact (2026-11-27), like every value field: what the song holds, every digit of it.
+        case .decibels: (value > 0 ? "+" : "") + ParameterFormat.text(value, unit: .decibel)
+        case .ratio: ParameterFormat.text(value, unit: .amount) + (parameter.identifier == "ratio" ? " : 1" : "")
+        case .amount: ParameterFormat.text(value, unit: .amount)
         case .boolean: value >= 0.5 ? "On" : "Off"
         case .choice: parameter.choice(at: Float(value)) ?? ""
         }

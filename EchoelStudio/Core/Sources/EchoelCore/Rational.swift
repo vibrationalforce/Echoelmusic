@@ -73,6 +73,47 @@ public struct Rational: Hashable, Sendable {
         self.init(decimal: "\(value)")
     }
 
+    /// The ratio a stored `Double` stands for: the simplest ratio, denominator at most
+    /// `maxDenominator`, whose `Double` is exactly this one — 1/6 for 0.16666666666666666, 20/11 for
+    /// 60 / 132 × 4 — else the decimal it prints. A value computed from a tempo and a note value
+    /// thus reads as the ratio it is (166,6̅ ms), not as the binary fraction that holds it. nil for a
+    /// value that is not finite.
+    public init?(stored value: Double, maxDenominator: Int64 = 1_000_000) {
+        guard let ratio = Rational.simplest(for: value, maxDenominator: maxDenominator)
+            ?? Rational(roundTripping: value) else { return nil }
+        self = ratio
+    }
+
+    /// The first continued-fraction convergent of `value` whose `Double` equals `value` exactly.
+    static func simplest(for value: Double, maxDenominator: Int64) -> Rational? {
+        guard value.isFinite else { return nil }
+        let negative = value < 0
+        let target = Swift.abs(value)
+        var (previousTop, top): (Int64, Int64) = (0, 1)
+        var (previousBottom, bottom): (Int64, Int64) = (1, 0)
+        var rest = target
+        for _ in 0..<48 {
+            let whole = rest.rounded(.down)
+            guard whole < 9.0e18 else { return nil }
+            let term = Int64(whole)
+            let (scaledTop, topOverflow) = term.multipliedReportingOverflow(by: top)
+            let (nextTop, nextTopOverflow) = scaledTop.addingReportingOverflow(previousTop)
+            let (scaledBottom, bottomOverflow) = term.multipliedReportingOverflow(by: bottom)
+            let (nextBottom, nextBottomOverflow) = scaledBottom.addingReportingOverflow(previousBottom)
+            guard !topOverflow, !nextTopOverflow, !bottomOverflow, !nextBottomOverflow,
+                  nextBottom <= maxDenominator else { return nil }
+            if Double(nextTop) / Double(nextBottom) == target {
+                return Rational(numerator: negative ? -nextTop : nextTop, denominator: nextBottom)
+            }
+            (previousTop, top) = (top, nextTop)
+            (previousBottom, bottom) = (bottom, nextBottom)
+            let fraction = rest - whole
+            guard fraction > 0 else { return nil }
+            rest = 1 / fraction
+        }
+        return nil
+    }
+
     public static let zero: Rational = 0
     public static let one: Rational = 1
 

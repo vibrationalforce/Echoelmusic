@@ -29,10 +29,12 @@ final class ParameterWriter {
     /// A control moved to `normalized` (0…1) of its travel. Returns the value written into the
     /// lane when the move went there, nil when it set the parameter: during a pass the song's own
     /// value does not change, so the control shows this one under the finger (audit 2026-10-23).
+    /// The value lands on the grid its field shows (`ParameterDescriptor.movedValue`), so what is
+    /// read is every digit there is (2026-11-27).
     @discardableResult
     func set(_ address: ParameterAddress, normalized: Double, gesture: Bool) -> Double? {
         guard let descriptor = store.project.descriptor(for: address) else { return nil }
-        return set(address, to: descriptor.value(forNormalized: normalized), coalescingKey: gesture ? "parameter.\(address)" : nil)
+        return set(address, to: descriptor.movedValue(forNormalized: normalized), coalescingKey: gesture ? "parameter.\(address)" : nil)
     }
 
     /// Double-tap: back to the parameter's default.

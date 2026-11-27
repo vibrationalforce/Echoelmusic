@@ -1,35 +1,41 @@
 import EchoelCore
 import SwiftUI
+import UIKit
 
 /// The controls every continuous parameter uses — fader and pan today, knobs and value
 /// fields later. Each one addresses its parameter by `ParameterAddress` and writes through
 /// `Command.setParameter`, so a fader, a MIDI controller and the agent change a value the
 /// same way, with the same validation and undo. A drag is one undo step.
 enum ParameterFormat {
+    /// The reader's decimal mark, as every number on screen (`NumberText`).
+    static var marks: NumberMarks { NumberMarks(locale: .current) }
+
+    /// Exact (2026-11-27): a time, a rate, a tempo, octaves, a level or an amount shows every digit
+    /// the song holds — a repeating digit with a bar, and past six digits the compact form with
+    /// "…" (the full value on a long press). A moved control writes on this grid
+    /// (`ParameterDescriptor.movedValue`), so it never needs the mark. A pan reads L/C/R in whole
+    /// percent, which is its grid.
     static func text(_ value: Double, unit: ParameterUnit) -> String {
         switch unit {
-        case .decibel:
-            return value <= MixerStrip.volumeRange.lowerBound ? "−∞ dB" : NumberText.string(value, decimals: 1, unit: "dB")
+        case .decibel where value <= MixerStrip.volumeRange.lowerBound:
+            return "−∞ dB"
         case .pan:
             let percent = Int((abs(value) * 100).rounded())
             return percent == 0 ? "C" : (value < 0 ? "L\(percent)" : "R\(percent)")
-        case .bpm:
-            return NumberText.string(value, decimalsUpTo: 2, unit: "BPM")
-        // As fine as the ear asks for (Michael on 10083: "alles etwas genauer … auch in den Effekten
-        // die Herz Zahlen"): a slow rate in hundredths (0.25 Hz showed "0 Hz"), a tuning in tenths
-        // (440.5 Hz showed "441 Hz"), a short time in tenths of a millisecond; trailing zeros dropped.
-        case .hertz:
-            if value >= 1_000 { return NumberText.string(value / 1_000, decimalsUpTo: value >= 10_000 ? 2 : 3, unit: "kHz") }
-            return NumberText.string(value, decimalsUpTo: value < 100 ? 2 : 1, unit: "Hz")
-        case .seconds:
-            if value >= 1 { return NumberText.string(value, decimalsUpTo: 3, unit: "s") }
-            return NumberText.string(value * 1_000, decimalsUpTo: value < 0.1 ? 1 : 0, unit: "ms")
-        case .octaves:
-            return NumberText.string(value, decimalsUpTo: 2, unit: "oct")
-        case .amount:
-            return NumberText.string(value, decimals: 2)
         case .choice:
             return String(Int(value.rounded()))
+        default:
+            return ParameterText.value(value, unit: unit, marks: marks)?.compact ?? "–"
+        }
+    }
+
+    /// What VoiceOver reads: the full value, repeating digits in words.
+    static func spoken(_ value: Double, unit: ParameterUnit) -> String {
+        switch unit {
+        case .decibel where value <= MixerStrip.volumeRange.lowerBound, .pan, .choice:
+            return text(value, unit: unit)
+        default:
+            return ParameterText.value(value, unit: unit, marks: marks)?.spoken ?? text(value, unit: unit)
         }
     }
 
@@ -41,6 +47,14 @@ enum ParameterFormat {
         }
         if descriptor.taper == .stepped, descriptor.unit == .amount { return String(Int(value.rounded())) }
         return text(value, unit: descriptor.unit)
+    }
+
+    /// As `spoken(_:unit:)`, with the root key as a note and a stepped number whole.
+    static func spoken(_ value: Double, descriptor: ParameterDescriptor) -> String {
+        if descriptor.address.key == SynthParameter.samplerRoot.key || (descriptor.taper == .stepped && descriptor.unit == .amount) {
+            return text(value, descriptor: descriptor)
+        }
+        return spoken(value, unit: descriptor.unit)
     }
 }
 
@@ -98,7 +112,7 @@ struct Fader: View {
             .accessibilityElement()
             .overlay(alignment: .top) { ParameterMarkBadges(address: address).offset(y: -2) }
             .accessibilityLabel(descriptor.title)
-            .accessibilityValue(ParameterFormat.text(value, unit: descriptor.unit) + ParameterMarks.spoken(address, in: store.project))
+            .accessibilityValue(ParameterFormat.spoken(value, unit: descriptor.unit) + ParameterMarks.spoken(address, in: store.project))
             .accessibilityAdjustableAction { direction in
                 let step = direction == .increment ? 0.02 : -0.02
                 writer.set(address, normalized: position + step, gesture: false)
@@ -215,18 +229,39 @@ struct ParameterField: View {
 
     private var isTyped: Bool { pad?.request?.owner == owner }
 
-    /// The note value a time or a slow rate is at the song's tempo (`TempoNote`, the studio
-    /// calculator): "1/8 dotted" beside 375 ms at 120 BPM. Times from 10 ms to 8 s and rates up
-    /// to 40 Hz only — a cutoff in hertz is a pitch, not a rhythm. The tempo at the song's start.
-    private func noteValue(of value: Double, _ descriptor: ParameterDescriptor) -> String? {
-        let bpm = store.project.tempoMap.bpm(at: 0)
-        switch descriptor.unit {
-        case .seconds where (0.01...8).contains(value):
-            return TempoNote.division(forSeconds: value, bpm: bpm)?.name
-        case .hertz where value > 0 && value <= 40:
-            return TempoNote.division(forHertz: value, bpm: bpm)?.name
-        default:
-            return nil
+    /// The tempo the companions are read at: the song's tempo at its start.
+    private var bpm: Double { store.project.tempoMap.bpm(at: 0) }
+
+    /// The value in the calculator's other two forms, small beside it (2026-11-27): a time as its
+    /// rate and note value, a slow rate as its time and note value — "2,6̅ Hz · 1/8 dotted" beside
+    /// 375 ms at 120 BPM; "≈ 1/8 dotted" when the time is near the note, not on it. A cutoff in
+    /// hertz is a pitch, not a rhythm, and has none.
+    private func companions(of value: Double, _ descriptor: ParameterDescriptor) -> String? {
+        let forms = ParameterText.companions(value, unit: descriptor.unit, bpm: bpm, marks: ParameterFormat.marks)
+        let parts = [forms.other?.compact, forms.note?.name].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    /// The companions as VoiceOver reads them, after the value.
+    private func spokenCompanions(of value: Double, _ descriptor: ParameterDescriptor) -> String {
+        let forms = ParameterText.companions(value, unit: descriptor.unit, bpm: bpm, marks: ParameterFormat.marks)
+        let parts = [forms.other?.spoken, forms.note?.name].compactMap { $0 }
+        return parts.isEmpty ? "" : ", " + parts.joined(separator: ", ")
+    }
+
+    /// The long-press menu's exact values: the full value and its other forms, each to copy.
+    @ViewBuilder private func exactMenu(_ descriptor: ParameterDescriptor, value: Double) -> some View {
+        if let shown = ParameterText.value(value, unit: descriptor.unit, marks: ParameterFormat.marks) {
+            let forms = ParameterText.companions(value, unit: descriptor.unit, bpm: bpm, marks: ParameterFormat.marks)
+            let tempo = ParameterText.value(bpm, unit: .bpm, marks: ParameterFormat.marks)?.full ?? ""
+            let line = [shown.full, forms.other?.full, forms.note.map { "\($0.name) at \(tempo)" }]
+                .compactMap { $0 }.joined(separator: " = ")
+            Section(line) {
+                Button("Copy \(shown.full)", systemImage: "doc.on.doc") { UIPasteboard.general.string = shown.full }
+                if let other = forms.other {
+                    Button("Copy \(other.full)", systemImage: "doc.on.doc") { UIPasteboard.general.string = other.full }
+                }
+            }
         }
     }
 
@@ -246,7 +281,7 @@ struct ParameterField: View {
                     .font(Theme.Font.value)
                     .foregroundStyle(engaged ? Theme.Color.accent : Theme.Color.text)
                     .lineLimit(1)
-                if let note = noteValue(of: value, descriptor) {
+                if let note = companions(of: value, descriptor) {
                     Text(note)
                         .font(Theme.Font.caption)
                         .foregroundStyle(Theme.Color.textSecondary)
@@ -296,7 +331,8 @@ struct ParameterField: View {
         }
         .accessibilityElement()
         .accessibilityLabel(spokenTitle(descriptor))
-        .accessibilityValue(ParameterFormat.text(value, descriptor: descriptor) + ParameterMarks.spoken(address, in: store.project))
+        .accessibilityValue(ParameterFormat.spoken(value, descriptor: descriptor) + spokenCompanions(of: value, descriptor)
+                            + ParameterMarks.spoken(address, in: store.project))
         .accessibilityAdjustableAction { direction in
             let step = Self.step(descriptor)
             writer.set(address, normalized: position + (direction == .increment ? step : -step), gesture: false)
@@ -306,7 +342,7 @@ struct ParameterField: View {
         .accessibilityAction { openPad(descriptor, value: value) }
         .accessibilityAction(named: "Type a Value") { openPad(descriptor, value: value) }
         .accessibilityAction(named: "Reset") { writer.reset(address) }
-        .midiLearnable(address, title: spokenTitle(descriptor))
+        .midiLearnable(address, title: spokenTitle(descriptor)) { exactMenu(descriptor, value: value) }
     }
 
     /// The pad for this field, typed in the unit a musician reads (ms, %, Hz).

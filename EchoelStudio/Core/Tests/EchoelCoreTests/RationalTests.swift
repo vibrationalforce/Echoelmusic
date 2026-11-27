@@ -37,6 +37,19 @@ final class RationalTests: XCTestCase {
         XCTAssertNil(Rational(roundTripping: 1e300))
     }
 
+    func testAStoredDoubleReadsAsTheRatioItStandsFor() {
+        XCTAssertEqual(Rational(stored: 1.0 / 6), Rational.constant(1, 6), "166,6̅ ms, not 166,66666666666666 ms")
+        XCTAssertEqual(Rational(stored: 60.0 / 132 * 4), Rational.constant(20, 11))
+        XCTAssertEqual(Rational(stored: 0.3751), Rational.constant(3_751, 10_000))
+        XCTAssertEqual(Rational(stored: 0.1), Rational.constant(1, 10))
+        XCTAssertEqual(Rational(stored: -0.25), Rational.constant(-1, 4))
+        XCTAssertEqual(Rational(stored: 30_000.0 / 1_001), Rational.constant(30_000, 1_001))
+        XCTAssertEqual(Rational(stored: 0), .zero)
+        XCTAssertEqual(Rational(stored: Double.pi), Rational(decimal: "3.141592653589793"),
+                       "no small ratio holds pi, so it reads as the decimal it prints")
+        XCTAssertNil(Rational(stored: .nan))
+    }
+
     func testArithmeticIsExactOrNothing() {
         let third = Rational.constant(1, 3)
         let sixth = Rational.constant(1, 6)

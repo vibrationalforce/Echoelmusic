@@ -4,12 +4,15 @@ import SwiftUI
 /// MIDI Learn on any parameter control: while learning, a tap chooses the control as the target
 /// (outlined in the accent colour) and the next knob or fader moved on the controller is mapped
 /// to it. A mapped control carries a small outline and a menu entry to forget it.
-private struct MIDILearnable: ViewModifier {
+private struct MIDILearnable<Extra: View>: ViewModifier {
     @Environment(MIDIInput.self) private var midi
     let address: ParameterAddress
     /// The control's own name: while learning, VoiceOver says which control it chooses and what it
     /// is mapped to, not a bare "Not mapped" (W18, m21).
     let title: String
+    /// What else the control's hold menu shows, above Forget: a value field's exact values
+    /// (2026-11-27). Empty for most controls, and an empty menu does not open.
+    let extra: Extra
 
     func body(content: Content) -> some View {
         let mapped = midi.mapping(for: address)
@@ -30,6 +33,7 @@ private struct MIDILearnable: ViewModifier {
                 }
             }
             .contextMenu {
+                extra
                 if let mapped {
                     Button("Forget \(mapped.description)", systemImage: "xmark") { midi.forget(address) }
                         .accessibilityLabel("Forget \(Spoken.control(mapped))")
@@ -41,7 +45,13 @@ private struct MIDILearnable: ViewModifier {
 extension View {
     /// `title` is the control's name as VoiceOver says it ("Bass Volume", "Send to Return 1").
     func midiLearnable(_ address: ParameterAddress, title: String) -> some View {
-        modifier(MIDILearnable(address: address, title: title))
+        modifier(MIDILearnable(address: address, title: title, extra: EmptyView()))
+    }
+
+    /// As `midiLearnable(_:title:)`, with `extra` at the top of the control's hold menu.
+    func midiLearnable<Extra: View>(_ address: ParameterAddress, title: String,
+                                    @ViewBuilder extra: () -> Extra) -> some View {
+        modifier(MIDILearnable(address: address, title: title, extra: extra()))
     }
 }
 
