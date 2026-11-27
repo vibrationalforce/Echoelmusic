@@ -46,23 +46,42 @@ public struct ExactText: Equatable, Sendable {
         self.spoken = spoken
     }
 
-    /// `value`, exactly.
+    /// `value`, exactly. A decimal whose repeating group is longer than the digit limit (1600/823 s,
+    /// a bar at 123,45 BPM, repeats after 822 digits) also carries its fraction, which is exact:
+    /// the long press shows "= 1600/823" and VoiceOver says "exactly 1600 over 823".
     public init(_ value: Rational, marks: NumberMarks, compactDigits: Int = ExactText.compactDigits) {
-        self.init(digits: value.decimalDigits(), marks: marks, compactDigits: compactDigits)
+        let digits = value.decimalDigits()
+        let plain = ExactText(digits: digits, marks: marks, compactDigits: compactDigits)
+        guard !digits.isComplete else {
+            self = plain
+            return
+        }
+        let sign = value.isNegative ? ExactText.minus : ""
+        let fraction = "\(value.numerator.magnitude)/\(value.denominator)"
+        self.init(full: plain.full + " = " + sign + fraction, compact: plain.compact,
+                  spoken: (value.isNegative ? "minus " : "") + "exactly \(value.numerator.magnitude) over \(value.denominator)")
     }
 
-    /// A value that is no ratio of whole numbers (an equal-tempered pitch, 2^(n/12)), or one whose
-    /// ratio would not fit: every digit the `Double` holds, then "…", because its digits go on.
-    /// "–" for a value that is not a number.
+    /// A value that is no ratio of whole numbers (an equal-tempered pitch, 2^(n/12)): every digit
+    /// the `Double` prints, then "…", because its digits go on. "–" for a value that is not a number.
     public init(approximately value: Double, marks: NumberMarks, compactDigits: Int = ExactText.compactDigits) {
-        guard value.isFinite, let ratio = Rational(roundTripping: value) else {
+        guard let printed = DecimalDigits(printed: value) else {
             self.init(full: "–", compact: "–", spoken: "no value")
             return
         }
-        let digits = ratio.decimalDigits()
-        let open = DecimalDigits(isNegative: digits.isNegative, whole: digits.whole,
-                                 fixed: digits.fixed + digits.repeating, repeating: "", isComplete: false)
+        let open = DecimalDigits(isNegative: printed.isNegative, whole: printed.whole, fixed: printed.fixed,
+                                 repeating: "", isComplete: false)
         self.init(digits: open, marks: marks, compactDigits: compactDigits)
+    }
+
+    /// A stored value whose ratio does not fit in `Int64` (a drag saved by an earlier build, such as
+    /// 0.0012345678901234567 s): the digits it prints, every one of them — never "–" for a number.
+    public init(printed value: Double, marks: NumberMarks, compactDigits: Int = ExactText.compactDigits) {
+        guard let printed = DecimalDigits(printed: value) else {
+            self.init(full: "–", compact: "–", spoken: "no value")
+            return
+        }
+        self.init(digits: printed, marks: marks, compactDigits: compactDigits)
     }
 
     public init(digits: DecimalDigits, marks: NumberMarks, compactDigits: Int = ExactText.compactDigits) {
@@ -115,6 +134,21 @@ public struct ExactText: Equatable, Sendable {
 /// A value and its unit, exactly, in the unit that reads best — the rule every time and rate on
 /// screen follows (2026-11-27).
 public enum ExactUnits {
+    /// A unit as VoiceOver says it: "milliseconds", not "ms" (the rest of the app speaks words).
+    public static func spoken(_ unit: String) -> String {
+        switch unit {
+        case "s": "seconds"
+        case "ms": "milliseconds"
+        case "Hz": "hertz"
+        case "kHz": "kilohertz"
+        case "BPM": "beats per minute"
+        case "dB": "decibels"
+        case "oct": "octaves"
+        case "m": "metres"
+        default: unit
+        }
+    }
+
     /// Seconds below one read in milliseconds ("533,3̅ ms"), one and above in seconds ("1,6 s").
     public static func time(_ seconds: Rational, marks: NumberMarks) -> (text: ExactText, unit: String) {
         if seconds.numerator.magnitude < UInt64(seconds.denominator), let milliseconds = seconds.multiplied(by: 1_000) {
@@ -129,5 +163,38 @@ public enum ExactUnits {
             return (ExactText(kilohertz, marks: marks), "kHz")
         }
         return (ExactText(hertz, marks: marks), "Hz")
+    }
+}
+
+extension DecimalDigits {
+    /// The digits a `Double` prints — its shortest form that reads back as the same Double — with
+    /// no size limit: 1.2345678901234567e-05 is 0.000012345678901234567. Complete: these are the
+    /// stored number's digits. nil for a value that is not finite.
+    public init?(printed value: Double) {
+        guard value.isFinite else { return nil }
+        var text = "\(Swift.abs(value))"
+        var exponent = 0
+        if let mark = text.firstIndex(where: { $0 == "e" || $0 == "E" }) {
+            guard let power = Int(text[text.index(after: mark)...]) else { return nil }
+            exponent = power
+            text = String(text[..<mark])
+        }
+        let parts = text.split(separator: ".", omittingEmptySubsequences: false)
+        guard let first = parts.first else { return nil }
+        let wholePart = String(first)
+        let fractionPart = parts.count > 1 ? String(parts[1]) : ""
+        var digits = wholePart + fractionPart
+        var point = wholePart.count + exponent
+        if point <= 0 {
+            digits = String(repeating: "0", count: 1 - point) + digits
+            point = 1
+        }
+        if point > digits.count { digits += String(repeating: "0", count: point - digits.count) }
+        var whole = String(digits.prefix(point))
+        var fraction = String(digits.dropFirst(point))
+        while whole.count > 1, whole.first == "0" { whole.removeFirst() }
+        while fraction.last == "0" { fraction.removeLast() }
+        guard whole.allSatisfy(\.isNumber), fraction.allSatisfy(\.isNumber) else { return nil }
+        self.init(isNegative: value < 0, whole: whole, fixed: fraction, repeating: "", isComplete: true)
     }
 }

@@ -30,7 +30,8 @@ struct ExactValueText: View {
             .foregroundStyle(color)
             .lineLimit(1)
             .contextMenu { ExactValueMenu(text: text, unit: unit) }
-            .accessibilityLabel((name.map { $0 + ", " } ?? "") + text.spoken + suffix)
+            .accessibilityLabel((name.map { $0 + ", " } ?? "") + text.spoken
+                                + (unit.isEmpty ? "" : " " + ExactUnits.spoken(unit)))
     }
 }
 

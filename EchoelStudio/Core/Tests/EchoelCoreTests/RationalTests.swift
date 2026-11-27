@@ -50,6 +50,14 @@ final class RationalTests: XCTestCase {
         XCTAssertNil(Rational(stored: .nan))
     }
 
+    func testALargeValueIsNeverReadAsAFractionItDoesNotHold() {
+        XCTAssertEqual(Rational(stored: 8_000.123456789), Rational(decimal: "8000.123456789"),
+                       "a random cutoff reads as the decimal it prints, not as a 7-digit fraction")
+        XCTAssertEqual(Rational(stored: 1_600.0 / 823), Rational.constant(1_600, 823), "a bar at 123,45 BPM")
+        XCTAssertEqual(Rational(stored: 70_560_000.0 / 883), Rational.constant(70_560_000, 883), "its samples")
+        XCTAssertEqual(Rational(stored: 40_000.0 / 303), Rational.constant(40_000, 303))
+    }
+
     func testArithmeticIsExactOrNothing() {
         let third = Rational.constant(1, 3)
         let sixth = Rational.constant(1, 6)

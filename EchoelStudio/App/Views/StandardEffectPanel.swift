@@ -1,3 +1,4 @@
+import AudioToolbox
 import EchoelCore
 import EchoelEngine
 import EchoelHost
@@ -270,8 +271,33 @@ private struct EffectParameterField: View {
         }
     }
 
+    /// The unit's own value: a Float, read within its precision (`FloatReading`), so 0,6 Hz reads
+    /// 0,6 and −6 dB reads −6 — not the binary residue a Float leaves in a Double, nor the last-place
+    /// steps the position path adds (2026-11-27, exact values). nil while the unit is not loaded.
+    private func unitValue() -> Double? {
+        guard let plugin = address.key.pluginParameter, case .insert(let insert) = plugin.unit,
+              let unit = engine.plugins.standardEffect(.insert(insert)),
+              let found = unit.parameterTree?.parameter(withAddress: plugin.address) else { return nil }
+        return FloatReading.value(found.value)
+    }
+
+    /// Where a moved value lands: on the grid the field reads, in the effect's own unit — four
+    /// significant digits for a time or a frequency, a tenth of a decibel, a hundredth of a ratio or
+    /// an amount — before it becomes a position. The range's ends stay where they are.
+    private func snapped(_ value: Double) -> Double {
+        guard value.isFinite, value > low, value < high else { return value }
+        let grid: Double
+        switch parameter.unit {
+        case .hertz, .seconds: grid = ParameterDescriptor.significant(value, digits: ParameterDescriptor.movedDigits)
+        case .decibels: grid = (value * 10).rounded() / 10
+        case .ratio, .amount: grid = (value * 100).rounded() / 100
+        case .boolean, .choice: grid = value
+        }
+        return Swift.min(Swift.max(grid, low), high)
+    }
+
     @ViewBuilder private func field(position: Double?) -> some View {
-        let shown = value(at: position ?? self.position(of: parameter.defaultValue))
+        let shown = unitValue() ?? value(at: position ?? self.position(of: parameter.defaultValue))
         let place = curve(of: shown)
         let engaged = drag != nil || pad?.request?.owner == owner
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
@@ -308,7 +334,7 @@ private struct EffectParameterField: View {
                     let scale = DragPrecision.scale(speed: Double(gesture.velocity.height))
                     let next = Swift.min(Swift.max(reached.place - Double(moved / Self.travel) * scale, 0), 1)
                     drag = (place: next, translation: gesture.translation.height)
-                    writer.set(address, normalized: self.position(of: self.value(atCurve: next)), gesture: true)
+                    writer.set(address, normalized: self.position(of: self.snapped(self.value(atCurve: next))), gesture: true)
                 }
                 .onEnded { _ in
                     drag = nil
@@ -328,7 +354,7 @@ private struct EffectParameterField: View {
         .accessibilityAdjustableAction { direction in
             let step = isSwitch ? 1 : 0.02
             let moved = Swift.min(Swift.max(place + (direction == .increment ? step : -step), 0), 1)
-            writer.set(address, normalized: self.position(of: self.value(atCurve: moved)), gesture: false)
+            writer.set(address, normalized: self.position(of: self.snapped(self.value(atCurve: moved))), gesture: false)
         }
         // VoiceOver's double-tap is the tap's own action — type the value, flip a switch — never the
         // touch double-tap that resets it (W18, the double-tap trap). A switch has nothing to type:

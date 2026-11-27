@@ -84,11 +84,16 @@ public struct Rational: Hashable, Sendable {
         self = ratio
     }
 
-    /// The first continued-fraction convergent of `value` whose `Double` equals `value` exactly.
+    /// The first continued-fraction convergent of `value` whose `Double` equals `value` exactly. The
+    /// denominator is bounded by the value's size too (q² · ulp below 10⁻⁴): a large Double is the
+    /// exact Double of many fractions, and reading 8 000,3 Hz as some 7-digit fraction would invent
+    /// repeating digits the song never held. 40000/303 BPM, 8/15 s and 70560000/883 samples stay.
     static func simplest(for value: Double, maxDenominator: Int64) -> Rational? {
         guard value.isFinite else { return nil }
         let negative = value < 0
         let target = Swift.abs(value)
+        let sizeBound = target == 0 ? Double(maxDenominator) : (1e-4 / target.ulp).squareRoot()
+        let maxDenominator = Int64(Swift.min(Double(maxDenominator), Swift.max(sizeBound, 1)))
         var (previousTop, top): (Int64, Int64) = (0, 1)
         var (previousBottom, bottom): (Int64, Int64) = (1, 0)
         var rest = target

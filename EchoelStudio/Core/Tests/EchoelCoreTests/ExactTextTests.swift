@@ -43,6 +43,22 @@ final class ExactTextTests: XCTestCase {
         XCTAssertEqual(ExactText(approximately: .nan, marks: .point).full, "–")
     }
 
+    func testAStoredValueTooLongForARatioReadsAsTheDigitsItPrints() {
+        let attack = ExactText(printed: 0.0012345678901234567, marks: .point)
+        XCTAssertEqual(attack.full, "0.0012345678901234567")
+        XCTAssertEqual(attack.compact, "0.00123456…")
+        XCTAssertEqual(ExactText(printed: 1e16, marks: .point).full, "10000000000000000")
+        XCTAssertEqual(ExactText(printed: -2.5e-7, marks: .comma).full, "\u{2212}0,00000025")
+        XCTAssertEqual(ExactText(printed: .infinity, marks: .point).full, "–")
+    }
+
+    func testARepeatingGroupLongerThanTheLimitCarriesItsFraction() {
+        let bar = ExactText(Rational.constant(1_600, 823), marks: .comma)
+        XCTAssertTrue(bar.full.hasSuffix("… = 1600/823"), bar.full)
+        XCTAssertEqual(bar.compact, "1,94410…")
+        XCTAssertEqual(bar.spoken, "exactly 1600 over 823")
+    }
+
     func testTimesAndRatesTakeTheUnitThatReadsBest() {
         let triplet = ExactUnits.time(Rational.constant(8, 15), marks: .comma)
         XCTAssertEqual(triplet.text.full, "533,3\(bar)")

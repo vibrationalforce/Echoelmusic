@@ -65,6 +65,40 @@ final class ParameterTextTests: XCTestCase {
         XCTAssertEqual(mix.movedValue(forNormalized: .nan), 0, "a position that is not a number reads as 0")
     }
 
+    func testAPluginPositionIsNeverSnapped() {
+        let plugin = ParameterDescriptor(address: .plugin(TrackID(), PluginParameter(.instrument, address: 7)),
+                                         title: "Cutoff", unit: .amount, range: 0...1, defaultValue: 0.5,
+                                         taper: .linear)
+        XCTAssertEqual(plugin.movedValue(forNormalized: 0.525), 0.525, "a position along the unit's own travel")
+        for pick in 0..<128 {
+            let position = Double(pick) / 127
+            XCTAssertEqual(plugin.movedValue(forNormalized: position), position, "pick \(pick) of 128 names")
+        }
+    }
+
+    func testAValueFromAnEarlierBuildReadsItsDigitsNeverADash() {
+        let attack = ParameterText.value(0.0012345678901234567, unit: .seconds, marks: .point)
+        XCTAssertEqual(attack?.unit, "ms")
+        XCTAssertEqual(attack?.text.compact.hasPrefix("1.23456"), true)
+        XCTAssertNotEqual(attack?.compact, "–")
+    }
+
+    func testVoiceOverHearsUnitsAsWords() {
+        XCTAssertEqual(ParameterText.value(0.375, unit: .seconds, marks: .point)?.spoken, "375 milliseconds")
+        XCTAssertEqual(ParameterText.value(2_500, unit: .hertz, marks: .point)?.spoken, "2.5 kilohertz")
+        XCTAssertEqual(ParameterText.value(-6, unit: .decibel, marks: .point)?.spoken, "minus 6 decibels")
+    }
+
+    func testAFloatReadsAsTheDecimalItHolds() {
+        XCTAssertEqual(FloatReading.value(Float(0.6)), 0.6, "not 0.6000000238418579")
+        XCTAssertEqual(FloatReading.value(Float(-5.9999995)), -6, "one last-place step from −6 reads −6")
+        XCTAssertEqual(FloatReading.value(Float(0.37509997)), 0.3751)
+        XCTAssertEqual(FloatReading.value(Float(1.813)), 1.813)
+        XCTAssertEqual(FloatReading.value(Float(0.123)), 0.123, "nothing farther than a few last places moves")
+        XCTAssertEqual(FloatReading.value(Float(8_000)), 8_000)
+        XCTAssertTrue(FloatReading.value(Float.nan).isNaN)
+    }
+
     func testSignificantDigits() {
         XCTAssertEqual(ParameterDescriptor.significant(0.0123456, digits: 4), 0.01235)
         XCTAssertEqual(ParameterDescriptor.significant(12_345, digits: 4), 12_350)

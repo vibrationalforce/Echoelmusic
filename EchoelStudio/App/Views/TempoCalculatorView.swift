@@ -89,7 +89,7 @@ private struct TempoCalculatorPage: View {
         }
     }
 
-    private var songTempo: Rational? { Rational(roundTripping: store.project.tempo) }
+    private var songTempo: Rational? { Rational(stored: store.project.tempo) }
 
     /// The rate the audio runs at now; 48 kHz before the engine has started.
     private var sampleRate: Rational {

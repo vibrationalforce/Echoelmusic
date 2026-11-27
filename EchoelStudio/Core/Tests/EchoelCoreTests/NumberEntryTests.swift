@@ -70,7 +70,7 @@ final class NumberEntryTests: XCTestCase {
                                          range: 0.001...10, defaultValue: 0.003, taper: .exponential)
         let time = try XCTUnwrap(NumberEntryFormat(attack))
         XCTAssertEqual(time.unit, "ms")
-        XCTAssertEqual(time.decimals, 0)
+        XCTAssertEqual(time.decimals, 3, "a time types to the microsecond: 166,667 ms")
         XCTAssertEqual(time.displayRange(attack.range), 1...10_000)
         XCTAssertEqual(time.parameter(fromDisplay: 250), 0.25, accuracy: 1e-12)
 
@@ -88,6 +88,18 @@ final class NumberEntryTests: XCTestCase {
         let choice = ParameterDescriptor(address: .tempo, title: "Waveform", unit: .choice,
                                          range: 0...3, defaultValue: 1, taper: .stepped, choices: ["A", "B", "C", "D"])
         XCTAssertNil(NumberEntryFormat(choice), "a named choice is a picker, never typed")
+    }
+
+    func testAConcertPitchTypesToTheHundredth() throws {
+        let pitch = ParameterDescriptor(address: .tempo, title: "Concert Pitch", unit: .hertz,
+                                        range: 400...480, defaultValue: 440, taper: .linear)
+        let format = try XCTUnwrap(NumberEntryFormat(pitch))
+        XCTAssertEqual(format.decimals, 2)
+        var entry = format.entry(for: pitch.range)
+        for digit in [4, 3, 2] { entry.type(digit) }
+        entry.typeDecimal()
+        for digit in [1, 0] { entry.type(digit) }
+        XCTAssertEqual(entry.value(else: 440), 432.1, accuracy: 1e-9)
     }
 
     func testATempoIsTypedToTheHundredthAndTheSongKeepsIt() throws {

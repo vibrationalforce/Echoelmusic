@@ -229,8 +229,9 @@ struct ParameterField: View {
 
     private var isTyped: Bool { pad?.request?.owner == owner }
 
-    /// The tempo the companions are read at: the song's tempo at its start.
-    private var bpm: Double { store.project.tempoMap.bpm(at: 0) }
+    /// The tempo the companions are read at: the song's tempo at its start (the tempo map's first
+    /// segment is always this value, read here without building the map).
+    private var bpm: Double { store.project.tempo }
 
     /// The value in the calculator's other two forms, small beside it (2026-11-27): a time as its
     /// rate and note value, a slow rate as its time and note value — "2,6̅ Hz · 1/8 dotted" beside
